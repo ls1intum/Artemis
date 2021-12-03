@@ -7,7 +7,6 @@ import { Team } from 'app/entities/team.model';
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { restore, SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { mockFileStudents, mockFileTeamsConverted } from '../../helpers/mocks/service/mock-team.service';
 import { unparse } from 'papaparse';
 
@@ -45,10 +44,10 @@ describe('TeamsImportFromFileFormComponent', () => {
             resetComponent();
         });
         afterEach(() => {
-            restore();
+            jest.restoreAllMocks();
         });
         it('should convert and call teamsChanged with converted teams', () => {
-            const setImportStub: SinonSpy = spy(comp, 'setImportFile');
+            const setImportStub = jest.spyOn(comp, 'setImportFile');
             const inputElement = debugElement.query(By.css('input')).nativeElement;
             inputElement.dispatchEvent(new Event('change'));
             expect(setImportStub).toHaveBeenCalledTimes(1);
@@ -64,30 +63,22 @@ describe('TeamsImportFromFileFormComponent', () => {
     });
 
     describe('onFileLoadImport', () => {
-        let convertTeamsStub: SinonStub;
+        let convertTeamsStub: jest.SpyInstance;
         let teams: Team[];
         let reader: FileReader;
-        let getElementStub: SinonStub;
+        let getElementStub: jest.SpyInstance;
         const element = document.createElement('input');
         let control: any;
         beforeEach(() => {
             resetComponent();
-            convertTeamsStub = stub(comp, 'convertTeams').returns(mockFileTeamsConverted);
+            convertTeamsStub = jest.spyOn(comp, 'convertTeams').mockReturnValue(mockFileTeamsConverted);
             comp.teamsChanged.subscribe((value: Team[]) => (teams = value));
             control = { ...element, value: 'test' };
-            getElementStub = stub(document, 'getElementById').returns(control);
+            getElementStub = jest.spyOn(document, 'getElementById').mockReturnValue(control);
         });
         afterEach(() => {
-            restore();
-        });
-        it('should parse json file and send converted teams', () => {
-            reader = { ...reader, result: JSON.stringify(mockFileStudents), onload: null };
-            comp.importFile = new File([''], 'file.json', { type: 'application/json' });
-            comp.importFileName = 'file.json';
-            expect(control.value).toEqual('test');
-            comp.onFileLoadImport(reader);
             expect(convertTeamsStub).toHaveBeenCalledTimes(1);
-            expect(comp.importedTeams).toStrictEqual(mockFileStudents);
+            expect(comp.importedTeams).toEqual(mockFileStudents);
             expect(comp.sourceTeams).toStrictEqual(mockFileTeamsConverted);
             expect(teams).toStrictEqual(mockFileTeamsConverted);
             expect(comp.loading).toEqual(false);
@@ -95,6 +86,14 @@ describe('TeamsImportFromFileFormComponent', () => {
             expect(comp.importFileName).toEqual('');
             expect(getElementStub).toHaveBeenCalledTimes(1);
             expect(control.value).toEqual('');
+            jest.restoreAllMocks();
+        });
+        it('should parse json file and send converted teams', () => {
+            reader = { ...reader, result: JSON.stringify(mockFileStudents), onload: null };
+            comp.importFile = new File([''], 'file.json', { type: 'application/json' });
+            comp.importFileName = 'file.json';
+            expect(control.value).toEqual('test');
+            comp.onFileLoadImport(reader);
         });
         it('should parse csv file and send converted teams', async () => {
             reader = {
@@ -107,26 +106,17 @@ describe('TeamsImportFromFileFormComponent', () => {
             comp.importFileName = 'file.csv';
             expect(control.value).toEqual('test');
             await comp.onFileLoadImport(reader);
-            expect(convertTeamsStub).toHaveBeenCalledTimes(1);
-            expect(comp.importedTeams).toEqual(mockFileStudents);
-            expect(comp.sourceTeams).toStrictEqual(mockFileTeamsConverted);
-            expect(teams).toStrictEqual(mockFileTeamsConverted);
-            expect(comp.loading).toEqual(false);
-            expect(comp.importFile).toEqual(undefined);
-            expect(comp.importFileName).toEqual('');
-            expect(getElementStub).toHaveBeenCalledTimes(1);
-            expect(control.value).toEqual('');
         });
     });
 
     describe('setImportFile', () => {
-        let changeDetectorDetectChangesStub: SinonStub;
+        let changeDetectorDetectChangesSpy: jest.SpyInstance;
         beforeEach(() => {
             resetComponent();
-            changeDetectorDetectChangesStub = stub(changeDetector.constructor.prototype, 'detectChanges');
+            changeDetectorDetectChangesSpy = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
         });
         afterEach(() => {
-            restore();
+            jest.restoreAllMocks();
         });
         it('should set import file correctly', () => {
             const file = new File(['content'], 'testFileName', { type: 'text/plain' });
@@ -134,14 +124,14 @@ describe('TeamsImportFromFileFormComponent', () => {
             comp.setImportFile(ev);
             expect(comp.importFile).toStrictEqual(file);
             expect(comp.importFileName).toEqual('testFileName');
-            expect(changeDetectorDetectChangesStub).toHaveBeenCalledTimes(1);
+            expect(changeDetectorDetectChangesSpy).toHaveBeenCalledTimes(1);
         });
         it('should set import file correctly', () => {
             const ev = { target: { files: [] } };
             comp.setImportFile(ev);
             expect(comp.importFile).toEqual(undefined);
             expect(comp.importFileName).toEqual('');
-            expect(changeDetectorDetectChangesStub).not.toHaveBeenCalled();
+            expect(changeDetectorDetectChangesSpy).not.toHaveBeenCalled();
         });
     });
 
