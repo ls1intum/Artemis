@@ -25,6 +25,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
+import { Result } from 'app/entities/result.model';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -79,6 +80,9 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
 
     @Input()
     participation: Participation;
+
+    @Input()
+    referencedFeedback: Feedback[] = [];
 
     /** END WIP */
 

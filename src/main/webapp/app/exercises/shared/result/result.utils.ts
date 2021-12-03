@@ -34,3 +34,12 @@ export const addParticipationToResult = (result: Result | undefined, participati
 export const getUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feedback[] | undefined => {
     return feedbacks ? feedbacks.filter((feedbackElement) => !feedbackElement.reference && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED) : undefined;
 };
+
+/**
+ * searches for all referenced feedback in an array of feedbacks of a result
+ * @param feedbacks the feedback of a result
+ * @returns an array with the referenced feedback of the result
+ */
+export const getReferencedFeedback = (feedbacks: Feedback[] | undefined): Feedback[] | undefined => {
+    return feedbacks ? feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL) : undefined;
+};

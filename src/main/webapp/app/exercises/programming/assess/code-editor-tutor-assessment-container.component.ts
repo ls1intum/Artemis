@@ -521,6 +521,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     return;
                 }
                 this.complaint = res.body;
+                if (this.manualResult) {
+                    this.complaint.result = this.manualResult;
+                }
             },
             (err: HttpErrorResponse) => {
                 this.onError(err?.message);

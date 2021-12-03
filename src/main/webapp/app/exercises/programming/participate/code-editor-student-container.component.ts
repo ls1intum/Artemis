@@ -20,7 +20,7 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/e
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
+import { getReferencedFeedback, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { SubmissionType } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
@@ -189,6 +189,16 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     get unreferencedFeedback(): Feedback[] {
         if (this.latestResult) {
             return getUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
+        }
+        return [];
+    }
+
+    /**
+     * Check whether or not a latestResult exists and if, returns the unreferenced feedback of it
+     */
+    get referencedFeedback(): Feedback[] {
+        if (this.latestResult) {
+            return getReferencedFeedback(this.latestResult.feedbacks) ?? [];
         }
         return [];
     }
