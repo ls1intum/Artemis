@@ -165,7 +165,6 @@ dependencies {
     implementation "org.gitlab4j:gitlab4j-api:4.18.0"
 
     implementation files("libs/jplag-3.0.0.jar")
-    implementation files("libs/athene-protobuf-client-0.0.1.jar")
 
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
@@ -259,6 +258,7 @@ dependencies {
     implementation "org.apache.pdfbox:pdfbox:2.0.24"
     implementation "com.google.protobuf:protobuf-java:3.19.1"
     implementation "org.commonmark:commonmark:0.18.0"
+    implementation "de.tum.in.ase.athene:client:0.0.2"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
