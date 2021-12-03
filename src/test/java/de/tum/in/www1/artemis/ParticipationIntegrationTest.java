@@ -11,7 +11,6 @@ import java.util.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -579,7 +578,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
         participation.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
 
-        Mockito.doNothing().when(programmingExerciseParticipationService).unlockStudentRepository(exercise, participation);
+        doNothing().when(programmingExerciseParticipationService).unlockStudentRepository(exercise, participation);
 
         final var participationsToUpdate = new StudentParticipationList(participation);
         final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,

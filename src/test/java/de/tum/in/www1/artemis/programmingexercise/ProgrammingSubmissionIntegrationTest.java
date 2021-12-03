@@ -764,7 +764,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getProgrammingSubmissionWithoutAssessmentWithIndividualDueDate(boolean isIndividualDueDateInFuture) throws Exception {
+    public void testGetProgrammingSubmissionWithoutAssessmentWithIndividualDueDate(boolean isIndividualDueDateInFuture) throws Exception {
         // exercise due date in the past
         exercise.setDueDate(ZonedDateTime.now().minusDays(1));
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));

@@ -194,7 +194,7 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @ParameterizedTest
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = "student1", roles = "STUDENT")
-    public void testGetFeedbacksForResultAsStudent_shouldOnlyFilterAutomaticResultBeforeLastDueDate(AssessmentType assessmentType) {
+    public void testGetFeedbacksForResultAsStudentShouldOnlyFilterAutomaticResultBeforeLastDueDate(AssessmentType assessmentType) {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setAssessmentDueDate(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -222,7 +222,7 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @ParameterizedTest
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = "student1", roles = "STUDENT")
-    public void testGetFeedbacksForResultAsStudent_shouldNotFilterAfterLatestDueDate(AssessmentType assessmentType) {
+    public void testGetFeedbacksForResultAsStudentShouldNotFilterAfterLatestDueDate(AssessmentType assessmentType) {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setAssessmentDueDate(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);

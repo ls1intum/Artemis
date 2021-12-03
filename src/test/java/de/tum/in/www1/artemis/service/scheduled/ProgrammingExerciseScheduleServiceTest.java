@@ -189,7 +189,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         // Lock student repository must be called once per participation.
         verifyLockStudentRepositoryOperation(true);
-        verify(programmingSubmissionService, Mockito.times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+        verify(programmingSubmissionService, times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
     @Test

@@ -585,11 +585,14 @@ public class ParticipationService {
                 continue;
             }
 
-            ZonedDateTime newIndividualDueDate = toBeUpdated.getIndividualDueDate();
             // individual due dates can only exist if the exercise has a due date
             // they also have to be after the exercise due date
-            if (exercise.getDueDate() == null || (newIndividualDueDate != null && newIndividualDueDate.isBefore(exercise.getDueDate()))) {
+            final ZonedDateTime newIndividualDueDate;
+            if (exercise.getDueDate() == null || (toBeUpdated.getIndividualDueDate() != null && toBeUpdated.getIndividualDueDate().isBefore(exercise.getDueDate()))) {
                 newIndividualDueDate = null;
+            }
+            else {
+                newIndividualDueDate = toBeUpdated.getIndividualDueDate();
             }
 
             if (!Objects.equals(originalParticipation.get().getIndividualDueDate(), newIndividualDueDate)) {
