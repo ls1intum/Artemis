@@ -81,4 +81,11 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
         return countOtherBlocksInSameClusterForSubmissionId(submissionId, exerciseId).stream()
                 .collect(toMap(TextBlockCount::getBlockId, count -> count.getNumberOfOtherBlocks().intValue()));
     }
+
+    /**
+     * This function finds all text blocks based on the knowledge id
+     * @param knowledgeId Id of the knowledge
+     * @return Set of all texts blocks have the same knowledge ID
+     */
+    List<TextBlock> findAllByKnowledgeId(Long knowledgeId);
 }

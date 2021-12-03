@@ -42,6 +42,14 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     List<Feedback> findByReferenceInAndResult_Submission_Participation_Exercise(List<String> references, Exercise exercise);
 
+    @Query("""
+                SELECT DISTINCT f
+                FROM Feedback f
+                LEFT JOIN TextBlock tb ON f.id = tb.feedback.id
+                WHERE tb.id IN :textBlockIds
+            """)
+    List<Feedback> findFeedbackByTextBlockIds(@Param("textBlockIds") List<String> textBlockIds);
+
     @Query("select feedback from Feedback feedback where feedback.gradingInstruction.id in :gradingInstructionsIds")
     List<Feedback> findFeedbackByGradingInstructionIds(@Param("gradingInstructionsIds") List<Long> gradingInstructionsIds);
 
@@ -78,9 +86,8 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
      * @return Map<TextBlockId, Feedback>
      */
     default Map<String, Feedback> getFeedbackForTextExerciseInCluster(TextCluster cluster) {
-        final List<String> references = cluster.getBlocks().stream().map(TextBlock::getId).collect(toList());
-        final TextExercise exercise = cluster.getExercise();
-        return findByReferenceInAndResult_Submission_Participation_Exercise(references, exercise).parallelStream().collect(toMap(Feedback::getReference, feedback -> feedback));
+        final List<String> textBlockIds = cluster.getBlocks().stream().map(TextBlock::getId).collect(toList());
+        return findFeedbackByTextBlockIds(textBlockIds).parallelStream().collect(toMap(Feedback::getReference, feedback -> feedback));
     }
 
     /**

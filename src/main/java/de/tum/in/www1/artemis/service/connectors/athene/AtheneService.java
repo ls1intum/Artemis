@@ -75,10 +75,13 @@ public class AtheneService {
 
         public List<TextSubmission> submissions;
 
-        RequestDTO(@NotNull long courseId, @NotNull List<TextSubmission> submissions, @NotNull String callbackUrl) {
+        public List<TextBlock> existingTextBlocks;
+
+        RequestDTO(@NotNull long courseId, @NotNull List<TextSubmission> submissions, @NotNull List<TextBlock> existingTextBlocks, @NotNull String callbackUrl) {
             this.courseId = courseId;
             this.callbackUrl = callbackUrl;
             this.submissions = createSubmissionDTOs(submissions);
+            this.existingTextBlocks = existingTextBlocks;
         }
 
         /**
@@ -161,8 +164,12 @@ public class AtheneService {
 
         log.info("Calling Remote Service to calculate automatic feedback for {} submissions.", textSubmissions.size());
 
+        // Fetch existing TextBlocks of same knowledge ID
+        List<TextBlock> existingTextBlocks = textBlockRepository.findAllByKnowledgeId(exercise.getKnowledge().getId());
+        log.info("Sending {} existing text blocks to Athene.", existingTextBlocks.size());
+
         try {
-            final RequestDTO request = new RequestDTO(exercise.getId(), textSubmissions, artemisServerUrl + ATHENE_RESULT_API_PATH + exercise.getId());
+            final RequestDTO request = new RequestDTO(exercise.getId(), textSubmissions, existingTextBlocks, artemisServerUrl + ATHENE_RESULT_API_PATH + exercise.getId());
             ResponseDTO response = connector.invokeWithRetry(atheneUrl + "/submit", request, maxRetries);
             log.info("Remote Service to calculate automatic feedback responded: {}", response.detail);
 
@@ -192,8 +199,18 @@ public class AtheneService {
         // Save textBlocks in Database
         final Map<String, TextBlock> textBlockMap = textBlockRepository.saveAll(textBlocks).stream().collect(toMap(TextBlock::getId, block -> block));
 
+        // Find exercise, which the clusters belong to
+        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
+        if (optionalTextExercise.isEmpty()) {
+            log.error("Error while processing Athene clusters. Exercise with id {} not found", exerciseId);
+            return;
+        }
+        TextExercise textExercise = optionalTextExercise.get();
+        List<TextBlock> existingBlocks = textBlockRepository.findAllByKnowledgeId(textExercise.getKnowledge().getId());
+        existingBlocks.forEach(block -> textBlockMap.put(block.getId(), block));
+
         // Save clusters in Database
-        processClusters(textClusters, textBlockMap, exerciseId);
+        processClusters(textClusters, textBlockMap, textExercise);
 
         // Notify atheneService of finished task
         finishTask(exerciseId);
@@ -271,19 +288,11 @@ public class AtheneService {
      *
      * @param textClusters The list of textClusters to process
      * @param textBlockMap The map of textBlocks belonging to the clusters
-     * @param exerciseId   The exerciseId of the exercise the blocks belong to
+     * @param textExercise   The exercise the blocks belong to
      */
-    public void processClusters(List<TextCluster> textClusters, Map<String, TextBlock> textBlockMap, Long exerciseId) {
+    public void processClusters(List<TextCluster> textClusters, Map<String, TextBlock> textBlockMap, TextExercise textExercise) {
 
         final List<TextCluster> savedClusters = textClusterRepository.saveAll(textClusters);
-
-        // Find exercise, which the clusters belong to
-        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
-        if (optionalTextExercise.isEmpty()) {
-            log.error("Error while processing Athene clusters. Exercise with id {} not found", exerciseId);
-            return;
-        }
-        TextExercise textExercise = optionalTextExercise.get();
 
         // Link clusters with blocks
         for (TextCluster cluster : savedClusters) {
