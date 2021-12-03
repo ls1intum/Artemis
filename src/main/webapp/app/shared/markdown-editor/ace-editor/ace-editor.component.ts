@@ -1,8 +1,9 @@
 import { Component, EventEmitter, Output, ElementRef, Input, forwardRef, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
-import { edit } from 'ace-builds';
 import 'brace';
 import 'brace/theme/monokai';
+
+declare var ace: any;
 
 @Component({
     selector: 'jhi-ace-editor',
@@ -34,7 +35,7 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
     constructor(elementRef: ElementRef, private zone: NgZone) {
         const el = elementRef.nativeElement;
         this.zone.runOutsideAngular(() => {
-            this._editor = edit(el);
+            this._editor = ace['edit'](el);
         });
         this._editor.$blockScrolling = Infinity;
     }
