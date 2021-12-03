@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.lecture.web.rest.lecture;
+package de.tum.in.www1.artemis.lecture.web.rest;
 
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
