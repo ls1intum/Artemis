@@ -78,21 +78,21 @@ export class UserRouteAccessService implements CanActivate {
      */
     checkLogin(authorities: string[], url: string): Promise<boolean> {
         const accountService = this.accountService;
-        return Promise.resolve(
+        return new Promise<boolean>((resolve) =>
             accountService.identity().subscribe((account) => {
                 if (!authorities || authorities.length === 0) {
-                    return true;
+                    return resolve(true);
                 }
 
                 if (account) {
                     return accountService.hasAnyAuthority(authorities).then((response) => {
                         if (response) {
-                            return true;
+                            return resolve(true);
                         }
                         if (isDevMode()) {
                             console.error('User has not any of required authorities: ', authorities);
                         }
-                        return false;
+                        return resolve(false);
                     });
                 }
 
@@ -103,7 +103,7 @@ export class UserRouteAccessService implements CanActivate {
                         this.router.navigate(['/']);
                     }
                 });
-                return false;
+                return resolve(false);
             }),
         );
     }

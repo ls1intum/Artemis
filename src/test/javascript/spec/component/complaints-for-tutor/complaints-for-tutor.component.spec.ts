@@ -71,7 +71,7 @@ describe('ComplaintsForTutorComponent', () => {
                         }),
                     ),
                 );
-                refreshLockStub = jest.spyOn(injectedComplaintResponseService, 'refreshLock').mockReturnValue(
+                jest.spyOn(injectedComplaintResponseService, 'refreshLock').mockReturnValue(
                     of(
                         new HttpResponse({
                             body: freshlyCreatedComplaintResponse,
