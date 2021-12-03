@@ -7,9 +7,10 @@ import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics
 import { ChartsModule } from 'ng2-charts';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterModule } from '@angular/router';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ChartsModule, RouterModule],
+    imports: [ArtemisSharedModule, ChartsModule, RouterModule, NgxChartsModule],
     declarations: [DoughnutChartComponent, ChartComponent, StatisticsAverageScoreGraphComponent, StatisticsGraphComponent, StatisticsScoreDistributionGraphComponent],
     exports: [DoughnutChartComponent, ChartComponent, StatisticsAverageScoreGraphComponent, StatisticsGraphComponent, StatisticsScoreDistributionGraphComponent],
 })
