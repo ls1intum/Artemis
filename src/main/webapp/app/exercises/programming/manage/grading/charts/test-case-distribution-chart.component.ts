@@ -7,16 +7,16 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 
 @Component({
     selector: 'jhi-test-case-distribution-chart',
+    styleUrls: ['./sca-category-distribution-chart.scss'],
     template: `
         <div>
             <div>
                 <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.title' | artemisTranslate }}</h4>
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.description' | artemisTranslate"></p>
             </div>
-            <div #containerRefWeight class="bg-light">
-                <!--<jhi-chart [preset]="weightChartPreset" [datasets]="weightChartDatasets"></jhi-chart>-->
+            <div #containerRefWeight class="chart bg-light">
                 <ngx-charts-bar-horizontal-normalized
-                    [view]="[containerRefWeight.offsetWidth, 130]"
+                    [view]="[containerRefWeight.offsetWidth, containerRefWeight.offsetHeight]"
                     [results]="ngxWeightData"
                     [xAxis]="true"
                     [yAxis]="true"
@@ -63,10 +63,10 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
                 <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.title' | artemisTranslate }}</h4>
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.description' | artemisTranslate"></p>
             </div>
-            <div #containerRefPoints class="bg-light" style="height: 100px">
+            <div #containerRefPoints class="points-chart bg-light">
                 <!--<jhi-chart [preset]="pointsChartPreset" [datasets]="pointsChartDatasets"></jhi-chart>-->
                 <ngx-charts-bar-horizontal-stacked
-                    [view]="[containerRefPoints.offsetWidth, 100]"
+                    [view]="[containerRefPoints.offsetWidth, containerRefPoints.offsetHeight]"
                     [results]="ngxPointsData"
                     [xAxis]="true"
                     [yAxis]="true"
@@ -94,13 +94,13 @@ export class TestCaseDistributionChartComponent implements OnChanges {
 
     @Output() testCaseColorsChange = new EventEmitter<{}>();
 
+    // ngx
     ngxWeightData: any[] = [
         { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weight'), series: [] as any[] },
         { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonus'), series: [] as any[] },
     ];
     ngxPointsData: any[] = [{ name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.points'), series: [] as any[] }];
 
-    ngxData: any[] = [];
     ngxColors = {
         name: 'test case distribution',
         selectable: true,
@@ -162,30 +162,15 @@ export class TestCaseDistributionChartComponent implements OnChanges {
                 const element = testCaseScores[i];
 
                 const label = element.label;
-                const backgroundColor = this.getColor(+i / this.testCases.length, 50);
-                const color = this.hslToHex(backgroundColor);
-                // const hoverBackgroundColor = this.getColor(+i / this.testCases.length, 60);
+                const color = this.getColor(+i / this.testCases.length, 50);
 
                 weight.series.push({ name: element.label, value: element.relWeight, bonus: element.relScore });
                 weightAndBonus.series.push({ name: element.label, value: element.relScore, weight: element.relWeight });
 
                 points.series.push({ name: element.label, value: element.relPoints });
+
                 testCaseColors[label] = color;
                 this.ngxColors.domain.push(color);
-
-                /*this.weightChartDatasets.push({
-                    label,
-                    backgroundColor,
-                    hoverBackgroundColor,
-                    data: [element.relWeight, element.relScore],
-                });
-
-                this.pointsChartDatasets.push({
-                    label,
-                    backgroundColor,
-                    hoverBackgroundColor,
-                    data: [element.relPoints],
-                });*/
             }
 
             this.ngxWeightData.push(weight);
@@ -199,9 +184,6 @@ export class TestCaseDistributionChartComponent implements OnChanges {
             // update values in-place
             for (let i = 0; i < testCaseScores.length; i++) {
                 const element = testCaseScores[i];
-                /*this.weightChartDatasets[i].data![0] = element.relWeight;
-                this.weightChartDatasets[i].data![1] = element.relScore;
-                this.pointsChartDatasets[i].data![0] = element.relPoints;*/
 
                 this.ngxWeightData[0].series[i].value = element.relWeight;
                 this.ngxWeightData[1].series[i].value = element.relScore;
@@ -213,28 +195,22 @@ export class TestCaseDistributionChartComponent implements OnChanges {
         this.ngxPointsData = [...this.ngxPointsData];
     }
 
-    getColor(i: number, l: number): number[] {
-        return [(i * 360 * 3) % 360, 55, l];
-        // return `hsl(${(i * 360 * 3) % 360}, 55%, ${l}%)`;
+    /**
+     * Dynamically generates a color based on the input
+     * @param i factor that is modifying the first coordinate of the color
+     * @param l percentage defining the last part of the color
+     * @returns color in hsl format
+     */
+    getColor(i: number, l: number): string {
+        return `hsl(${(i * 360 * 3) % 360}, 55%, ${l}%)`;
     }
 
-    xAxisFormatting(value: any) {
-        return value + '%';
-    }
-
-    private hslToHex(hsl: number[]): string {
-        const h = hsl[0];
-        const s = hsl[1];
-        let l = hsl[2];
-        l /= 100;
-        const a = (s * Math.min(l, 1 - l)) / 100;
-        const f = (n: number) => {
-            const k = (n + h / 30) % 12;
-            const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-            return Math.round(255 * color)
-                .toString(16)
-                .padStart(2, '0'); // convert to Hex and prefix "0" if needed
-        };
-        return `#${f(0)}${f(8)}${f(4)}`;
+    /**
+     * Appends a percentage sign to every tick on the x axis
+     * @param tick the default tick label as string
+     * @returns tick label string that is extended by an percentage sign
+     */
+    xAxisFormatting(tick: string): string {
+        return tick + '%';
     }
 }

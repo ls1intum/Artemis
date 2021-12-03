@@ -7,16 +7,16 @@ import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-sca-category-distribution-chart',
+    styleUrls: ['./sca-category-distribution-chart.scss'],
     template: `
         <div>
             <div>
                 <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.title' | artemisTranslate }}</h4>
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.description' | artemisTranslate"></p>
             </div>
-            <div #containerRef class="bg-light">
-                <!--<jhi-chart [preset]="chartPreset" [datasets]="chartDatasets" [ngxData]="ngxData"></jhi-chart>-->
+            <div #containerRef class="chart bg-light">
                 <ngx-charts-bar-horizontal-normalized
-                    [view]="[containerRef.offsetWidth, 200]"
+                    [view]="[containerRef.offsetWidth, 150]"
                     [scheme]="ngxColors"
                     [results]="ngxData"
                     [xAxis]="true"
@@ -49,19 +49,17 @@ import { TranslateService } from '@ngx-translate/core';
                                     {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
                                 </span>
                             </div>
-                        </div>
-                        <div *ngIf="['Deductions', 'Punkte'].includes(model.series)">
-                            <span>
-                                {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.penalty.toFixed(2) } }}
-                            </span>
-                            <br />
-                            <span>
-                                {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
-                            </span>
-                            <br />
-                            <span>
-                                {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
-                            </span>
+                            <div *ngSwitchDefault>
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.penalty.toFixed(2) } }}
+                                </span>
+                                <br />
+                                <span>{{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.issues.toFixed(2) } }}</span>
+                                <br />
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
+                                </span>
+                            </div>
                         </div>
                     </ng-template>
                 </ngx-charts-bar-horizontal-normalized>
@@ -76,6 +74,7 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
 
     @Output() categoryColorsChange = new EventEmitter<{}>();
 
+    // ngx
     ngxData: any[] = [];
     ngxColors = {
         name: 'category distribution',
@@ -122,20 +121,6 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
         // sum of all penalty points
         const totalPenaltyPoints = categoryPenalties.reduce((sum, { penaltyPoints }) => sum + penaltyPoints, 0);
 
-        /*this.chartDatasets = categoryPenalties.map((element, i) => ({
-            label: element.category.name,
-            data: [
-                // relative penalty percentage
-                totalPenalty > 0 ? (Math.min(element.category.penalty, element.category.maxPenalty) / totalPenalty) * 100 : 0,
-                // relative issues percentage
-                totalIssues > 0 ? (element.issues / totalIssues) * 100 : 0,
-                // relative penalty points percentage
-                totalPenaltyPoints > 0 ? (element.penaltyPoints / totalPenaltyPoints) * 100 : 0,
-            ],
-            backgroundColor: this.getColor(i / this.categories.length, 50),
-            hoverBackgroundColor: this.getColor(i / this.categories.length, 60),
-        }));*/
-
         const penalty = { name: this.translateService.instant('artemisApp.programmingAssessment.penalty'), series: [] as any[] };
         const issue = { name: this.translateService.instant('artemisApp.programmingAssessment.issues'), series: [] as any[] };
         const deductions = { name: this.translateService.instant('artemisApp.programmingAssessment.deductions'), series: [] as any[] };
@@ -150,9 +135,8 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
             issue.series.push({ name: element.category.name, value: issuesScore, penalty: penaltyScore, points: penaltyPoints });
             deductions.series.push({ name: element.category.name, value: penaltyPoints, penalty: penaltyScore, issues: issuesScore });
 
-            this.ngxColors.domain.push(this.hslToHex(color));
-
-            categoryColors[element.category.name] = this.hslToHex(color);
+            this.ngxColors.domain.push(color);
+            categoryColors[element.category.name] = color;
         });
         this.ngxData.push(penalty);
         this.ngxData.push(issue);
@@ -163,32 +147,22 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
         this.categoryColorsChange.emit(categoryColors);
     }
 
-    getColor(i: number, l: number): number[] {
-        return [(i * 360 * 3) % 360, 55, l];
-        // return `hsl(${(i * 360 * 3) % 360}, 55%, ${l}%)`;
+    /**
+     * Dynamically generates a color based on the input
+     * @param i factor that is modifying the first coordinate of the color
+     * @param l percentage defining the last part of the color
+     * @returns color in hsl format
+     */
+    getColor(i: number, l: number): string {
+        return `hsl(${(i * 360 * 3) % 360}, 55%, ${l}%)`;
     }
 
-    private hslToHex(hsl: number[]): string {
-        const h = hsl[0];
-        const s = hsl[1];
-        let l = hsl[2];
-        l /= 100;
-        const a = (s * Math.min(l, 1 - l)) / 100;
-        const f = (n: number) => {
-            const k = (n + h / 30) % 12;
-            const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-            return Math.round(255 * color)
-                .toString(16)
-                .padStart(2, '0'); // convert to Hex and prefix "0" if needed
-        };
-        return `#${f(0)}${f(8)}${f(4)}`;
-    }
-
-    stringify(value: any) {
-        return JSON.stringify(value);
-    }
-
-    xAxisFormatting(value: any): string {
-        return value + '%';
+    /**
+     * Appends a percentage sign to every tick on the x axis
+     * @param tick the default tick label as string
+     * @returns tick label string that is extended by an percentage sign
+     */
+    xAxisFormatting(tick: string): string {
+        return tick + '%';
     }
 }
