@@ -13,12 +13,12 @@ export class AceEditorDirective implements OnInit, OnDestroy {
     _options: any = {};
     _readOnly = false;
     _theme = 'monokai';
-    _mode: any = 'html';
+    _mode = 'html';
     _autoUpdateContent = true;
     _durationBeforeCallback = 0;
     _text = '';
     editor: any;
-    oldText: any;
+    oldText: string;
     timeoutSaving: any;
 
     constructor(elementRef: ElementRef, private zone: NgZone) {
@@ -85,23 +85,23 @@ export class AceEditorDirective implements OnInit, OnDestroy {
     }
 
     @Input()
-    set readOnly(readOnly: any) {
+    set readOnly(readOnly: boolean) {
         this._readOnly = readOnly;
         this.editor.setReadOnly(readOnly);
     }
 
     @Input()
-    set theme(theme: any) {
+    set theme(theme: string) {
         this._theme = theme;
         this.editor.setTheme(`ace/theme/${theme}`);
     }
 
     @Input()
-    set mode(mode: any) {
+    set mode(mode: string) {
         this.setMode(mode);
     }
 
-    setMode(mode: any) {
+    setMode(mode: string) {
         this._mode = mode;
         if (typeof this._mode === 'object') {
             this.editor.getSession().setMode(this._mode);
@@ -119,9 +119,9 @@ export class AceEditorDirective implements OnInit, OnDestroy {
         this.setText(text);
     }
 
-    setText(text: any) {
+    setText(text: string) {
         if (this._text !== text) {
-            if (text === null || text === undefined) {
+            if (text == undefined) {
                 text = '';
             }
 
@@ -134,7 +134,7 @@ export class AceEditorDirective implements OnInit, OnDestroy {
     }
 
     @Input()
-    set autoUpdateContent(status: any) {
+    set autoUpdateContent(status: boolean) {
         this._autoUpdateContent = status;
     }
 

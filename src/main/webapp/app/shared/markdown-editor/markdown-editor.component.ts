@@ -1,5 +1,7 @@
 import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
+// Note: this import has to be before the 'brace' imports
+import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import 'brace/mode/latex';
@@ -30,7 +32,6 @@ import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainC
 import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorderedListCommand';
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
