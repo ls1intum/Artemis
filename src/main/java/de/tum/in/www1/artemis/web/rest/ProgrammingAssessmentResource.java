@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
+import java.util.Optional;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -188,6 +189,10 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         if (submit) {
             newManualResult = resultRepository.submitManualAssessment(existingManualResult.getId());
+            Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
+            if (optionalStudent.isPresent()) {
+                singleUserNotificationService.notifyUserAboutAssessedExerciseSubmission(programmingExercise, optionalStudent.get());
+            }
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
