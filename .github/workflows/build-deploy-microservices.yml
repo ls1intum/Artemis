@@ -153,3 +153,117 @@ jobs:
     # TODO: Push to Docker Hub (develop + tag)
 
     # TODO: Push to Chair Habour (??)
+    #
+  deploy:
+    needs: docker_push_images
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - environment: artemistest6
+            url: https://artemistest6.ase.in.tum.de
+    environment:
+      url: ${{ matrix.url }}
+      name: ${{ matrix.environment }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Compute Tag
+      uses: actions/github-script@v5
+      id: compute-tag
+      with:
+        result-encoding: string
+        script: |
+          if (context.eventName === "pull_request") {
+            return "pr-" + context.issue.number;
+          }
+          if (context.eventName === "push") {
+            if (context.ref.startsWith("refs/tags/")) {
+              return context.ref.slice(10); 
+            }
+            if (context.ref === "refs/heads/develop") {
+              return "latest";
+            }
+          }
+          return "FALSE";
+
+    - name: Check "lock:${{ matrix.environment }}" label
+      uses: actions/github-script@v5
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const opts = github.rest.issues.listForRepo.endpoint.merge({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['lock:${{ matrix.environment }}']
+          })
+          const issues = await github.paginate(opts)
+          if (issues.length == 1 && (!context.issue || issues[0].number != context.issue.number)) {
+            core.setFailed(`Testserver "${{ matrix.environment }}" is already in use by PR #${issues[0].number}.`);
+          } else if (issues.length > 1) {
+            core.setFailed('Testserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.environment }}"!');
+          } else if (context.issue && context.issue.number) {
+            await github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['lock:${{ matrix.environment }}']
+            })
+          }
+
+    - name: Install OpenVPN
+      run: sudo apt-get --assume-yes --no-install-recommends install openvpn
+
+    # Fill config from Secret (https://tum.eduvpn.lrz.de/vpn-user-portal/configurations)
+    - name: Configure LRZ eduVPN
+      run: echo "${{ secrets.LRZ_OVPN_CONFIG }}" > lrz.ovpn
+
+    - name: Connect VPN
+      run: sudo openvpn --config "lrz.ovpn" --log "vpn.log" --daemon
+
+    - name: Wait for a VPN connection. Ping nas.ads.mwn.de (only accessible inside MWN)
+      run: until ping -c1 nas.ads.mwn.de; do sleep 2; done
+      timeout-minutes: 2
+
+    # Configure SSH Key
+    - name: Setup SSH Keys and known_hosts
+      env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          DEPLOYMENT_HOSTS: "${{ secrets.DEPLOYMENT_HOSTS }}"
+          SSH_PRIVATE_KEY: "${{ secrets.SSH_PRIVATE_KEY }}"
+      run: |
+          mkdir -p ~/.ssh
+          for host in $DEPLOYMENT_HOSTS; do
+            ssh-keyscan $host >> ~/.ssh/known_hosts
+          done
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< $SSH_PRIVATE_KEY
+
+    - name: Deploy Docker Compose Files 
+      env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          DEPLOYMENT_HOSTS: "${{ secrets.DEPLOYMENT_HOSTS }}"
+          DEPLOYMENT_USER: ${{ secrets.DEPLOYMENT_USER }}
+      run: |
+        for host in $DEPLOYMENT_HOSTS; do
+          # Copy docker-compose files to remote host 
+          scp docker-compose-microservices* $DEPLOYMENT_USER@$host:/opt/artemis/
+
+          # Pull and Start images
+          ssh -t $DEPLOYMENT_USER@$host "
+            cd /opt/artemis && 
+            echo TAG=${{ steps.compute-tag.outputs.result }} > .env && 
+            docker-compose -f docker-compose-microservices.yml -f docker-compose-microservices.override-prod.yml down && 
+            docker-compose -f docker-compose-microservices.yml -f docker-compose-microservices.override-prod.yml pull && 
+            docker-compose -f docker-compose-microservices.yml -f docker-compose-microservices.override-prod.yml up -d"
+
+          sleep 20
+        done
+
+    # Always disconnect from VPN
+    - name: Disconncet VPN
+      run: |
+        sudo killall openvpn
+        rm lrz.ovpn
+      if: always()

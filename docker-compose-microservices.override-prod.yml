@@ -2,12 +2,12 @@ version: '2'
 services:
     artemis-app:
         image: ghcr.io/ls1intum/artemis-service:${TAG:-latest}
-        build:
-            context: .
-            dockerfile: ./src/main/docker/Dockerfile
+        volumes:
+            - ${PWD}/config/application-prod.yml:/home/artemis/application-prod.yml:ro
+            - ${PWD}/config/application-artemis.yml:/home/artemis/application-artemis.yml:ro
         environment:
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
-            - SPRING_PROFILES_ACTIVE=dev,artemis,openapi
+            - SPRING_PROFILES_ACTIVE=prod,artemis,openapi,jira,bamboo,bitbucket,scheduling
             - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
             - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
             - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
@@ -21,14 +21,15 @@ services:
         depends_on:
             - artemis-mysql
             - jhipster-registry
+
     usermanagement-app:
         image: ghcr.io/ls1intum/artemis-usermanagement-service:${TAG:-latest}
-        build:
-            context: .
-            dockerfile: ./user-management/src/main/docker/Dockerfile
+        volumes:
+            - ${PWD}/config/application-prod-user-management.yml:/home/artemis/user-management/application-prod.yml:ro
+            - ${PWD}/config/application-artemis.yml:/home/artemis/user-management/application-artemis.yml:ro
         environment:
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
-            - SPRING_PROFILES_ACTIVE=dev,artemis
+            - SPRING_PROFILES_ACTIVE=prod,artemis,jira,scheduling
             - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
             - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
             - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
@@ -42,14 +43,14 @@ services:
         depends_on:
             - artemis-mysql
             - jhipster-registry
+
     gateway-app:
         image: ghcr.io/ls1intum/artemis-gateway:${TAG:-latest}
-        build:
-            context: .
-            dockerfile: ./gateway/src/main/docker/Dockerfile
+        volumes:
+            - ${PWD}/config/application-prod-gateway.yml:/home/artemis/gateway/application-prod.yml:ro
         environment:
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
-            - SPRING_PROFILES_ACTIVE=dev,api-docs
+            - SPRING_PROFILES_ACTIVE=prod,api-docs
             - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
             - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
             - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
@@ -60,22 +61,27 @@ services:
             - artemis
         depends_on:
             - jhipster-registry
+
     jhipster-registry:
         image: jhipster/jhipster-registry:v6.8.0
+        volumes:
+            - ${PWD}/config/registry-config:/central-config
         environment:
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
-            - SPRING_PROFILES_ACTIVE=dev,api-docs
+            - SPRING_PROFILES_ACTIVE=prod,api-docs
             - SPRING_SECURITY_USER_PASSWORD=admin
             - JHIPSTER_REGISTRY_PASSWORD=admin
             - SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_TYPE=native
-            - SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_SEARCH_LOCATIONS=file:./central-config/docker-config/
+            - SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_SEARCH_LOCATIONS=file:./central-config/
         ports:
             - 8761:8761
         networks:
             - artemis
+
     artemis-mysql:
         image: mysql:8.0.27
-        platform: linux/x86_64
+        volumes:
+            - ./db/:/var/lib/mysql/
         container_name: artemis_mysql
         environment:
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes
@@ -86,6 +92,7 @@ services:
         command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
         networks:
             - artemis
+
     activemq-broker:
         image: vromero/activemq-artemis:latest
         environment:
