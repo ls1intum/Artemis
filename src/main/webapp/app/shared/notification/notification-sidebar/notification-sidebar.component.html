@@ -26,14 +26,14 @@
             <div class="text-end">
                 <button id="hide-until-toggle" class="border-0 bg-transparent pe-2" (click)="toggleNotificationDisplay()">
                     <fa-icon
-                        *ngIf="showAllNotificationsInSideBar; else hiddenNotifications"
+                        *ngIf="showButtonToHideCurrentlyDisplayedNotifications; else showButtonToDisplayAllNotifications"
                         class="ng-fa-icon"
-                        [icon]="'eye'"
+                        [icon]="'archive'"
                         [ngbTooltip]="'artemisApp.notification.hideAllCurrentlyDisplayedNotifications' | artemisTranslate"
                     >
                     </fa-icon>
-                    <ng-template #hiddenNotifications>
-                        <fa-icon class="ng-fa-icon" [icon]="'eye-slash'" [ngbTooltip]="'artemisApp.notification.showAllSavedNotifications' | artemisTranslate"> </fa-icon>
+                    <ng-template #showButtonToDisplayAllNotifications>
+                        <fa-icon class="ng-fa-icon" [icon]="'eye'" [ngbTooltip]="'artemisApp.notification.showAllSavedNotifications' | artemisTranslate"> </fa-icon>
                     </ng-template>
                 </button>
                 <small class="text-muted">
