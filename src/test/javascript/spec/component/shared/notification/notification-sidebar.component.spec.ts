@@ -296,12 +296,12 @@ describe('Notification Sidebar Component', () => {
         });
 
         it('should toggle which notifications are displayed (hide until property) when user clicks on eye button', () => {
-            expect(notificationSidebarComponent.showAllNotificationsInSideBar).to.be.true;
+            expect(notificationSidebarComponent.showButtonToHideCurrentlyDisplayedNotifications).to.be.true;
             sinon.spy(notificationSidebarComponent, 'toggleNotificationDisplay');
             sinon.spy(userService, 'updateNotificationVisibility');
             const hideUntilToggle = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('#hide-until-toggle');
             hideUntilToggle.click();
-            expect(notificationSidebarComponent.showAllNotificationsInSideBar).to.be.false;
+            expect(notificationSidebarComponent.showButtonToHideCurrentlyDisplayedNotifications).to.be.false;
             expect(notificationSidebarComponent.toggleNotificationDisplay).to.have.been.calledOnce;
             expect(userService.updateNotificationVisibility).to.have.been.calledOnce;
         });
