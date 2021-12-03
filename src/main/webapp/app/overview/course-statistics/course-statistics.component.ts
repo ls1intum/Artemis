@@ -44,14 +44,18 @@ type ExerciseTypeMap = {
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy {
-    readonly QUIZ = ExerciseType.QUIZ;
-
     courseId: number;
     private courseExercises: Exercise[];
     private paramSubscription?: Subscription;
     private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
     course?: Course;
+
+    private courseExercisesNotIncludedInScore: Exercise[];
+    currentlyHidingNotIncludedInScoreExercises = true;
+    filteredExerciseIDs: number[];
+
+    // TODO: improve the types here and use maps instead of java script objects, also avoid the use of 'any'
 
     // overall points
     overallPoints = 0;
@@ -196,7 +200,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     color: FILE_UPLOAD_EXERCISE_COLOR,
                 },
             };
-            this.groupExercisesByType();
+            this.groupExercisesByType(this.courseExercises);
             this.ngxExerciseGroups = [...this.ngxExerciseGroups];
         });
 
@@ -222,28 +226,38 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private onCourseLoad(): void {
         if (this.course?.exercises) {
             this.courseExercises = this.course.exercises;
+            this.calculateAndFilterNotIncludedInScore();
             this.calculateMaxPoints();
             this.calculateReachablePoints();
             this.calculateAbsoluteScores();
             this.calculateRelativeScores();
             this.calculatePresentationScores();
             this.calculateCurrentRelativeScores();
-            this.groupExercisesByType();
+            this.groupExercisesByType(this.courseExercises);
         }
     }
 
     /**
-     * Sorts the exercises of a course into their corresponding exercise groups and creates dedicated objects that
+     * Sorts exercises into their corresponding exercise groups and creates dedicated objects that
      * can be processed by ngx-charts in order to visualize the students score for each exercise
+     * @param exercises the exercises that should be grouped
      * @private
      */
-    private groupExercisesByType(): void {
-        if (!this.course?.exercises) {
-            return;
-        }
-        let exercises = this.course.exercises;
+    private groupExercisesByType(exercises: Exercise[]): void {
         const exerciseTypes: string[] = [];
         this.ngxExerciseGroups = [];
+        // this reset is now necessary because of the filtering option that triggers the grouping again.
+        this.ngxModelingExercises = [];
+        this.ngxProgrammingExercises = [];
+        this.ngxQuizExercises = [];
+        this.ngxFileUploadExercises = [];
+        this.ngxTextExercises = [];
+
+        this.quizPresentationScoreEnabled = false;
+        this.programmingPresentationScoreEnabled = false;
+        this.modelingPresentationScoreEnabled = false;
+        this.textPresentationScoreEnabled = false;
+        this.fileUploadPresentationScoreEnabled = false;
         // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for the order inside the statistic charts
         exercises = sortBy(exercises, [(exercise: Exercise) => (exercise.dueDate || dayjs().add(5, 'year')).valueOf()]);
         exercises.forEach((exercise) => {
@@ -301,6 +315,19 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const allGroups = [this.ngxProgrammingExercises, this.ngxQuizExercises, this.ngxModelingExercises, this.ngxTextExercises, this.ngxFileUploadExercises];
         const allTypes = [ExerciseType.PROGRAMMING, ExerciseType.QUIZ, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
         this.pushExerciseGroupsToData(allGroups, allTypes);
+    }
+
+    toggleNotIncludedInScoreExercises() {
+        if (this.currentlyHidingNotIncludedInScoreExercises) {
+            this.courseExercises = this.courseExercises.concat(this.courseExercisesNotIncludedInScore);
+            this.filteredExerciseIDs = [];
+        } else {
+            this.courseExercises = this.courseExercises.filter((exercise) => !this.courseExercisesNotIncludedInScore.includes(exercise));
+            this.filteredExerciseIDs = this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!);
+        }
+        this.currentlyHidingNotIncludedInScoreExercises = !this.currentlyHidingNotIncludedInScoreExercises;
+
+        this.groupExercisesByType(this.courseExercises);
     }
 
     /**
@@ -490,6 +517,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private calculateTotalScoreForTheCourse(scoreType: string): number {
         const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises, this.course!);
         return scores.get(scoreType)!;
+    }
+
+    calculateAndFilterNotIncludedInScore() {
+        this.courseExercisesNotIncludedInScore = this.courseExercises.filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED);
+        this.courseExercises = this.courseExercises.filter((exercise) => !this.courseExercisesNotIncludedInScore.includes(exercise));
+        this.filteredExerciseIDs = this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!);
     }
 
     /**

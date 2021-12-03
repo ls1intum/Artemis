@@ -66,7 +66,7 @@ describe('CourseStatisticsComponent', () => {
             title: 'test 17.06. 2',
             dueDate: dayjs('2019-06-17T17:50:08+02:00'),
             assessmentDueDate: dayjs('2019-06-17T17:51:13+02:00'),
-            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+            includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED,
             maxPoints: 12.0,
             studentParticipations: [
                 {
@@ -93,7 +93,7 @@ describe('CourseStatisticsComponent', () => {
             id: 194,
             title: 'test 18.06. 1',
             dueDate: dayjs('2019-06-18T07:56:41+02:00'),
-            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS,
             maxPoints: 12.0,
             studentParticipations: [],
             diagramType: 'ClassDiagram',
@@ -355,6 +355,8 @@ describe('CourseStatisticsComponent', () => {
         jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(courseToAdd);
         fixture.detectChanges();
         comp.ngOnInit();
+        // Include all exercises
+        comp.toggleNotIncludedInScoreExercises();
         fixture.detectChanges();
         expect(comp.ngxExerciseGroups.length).toBe(4);
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
@@ -385,6 +387,37 @@ describe('CourseStatisticsComponent', () => {
         expect(fileUpload.series[3].absoluteValue).toBe(9);
     });
 
+    it('should filter all exercises not included in score', () => {
+        const courseToAdd = { ...course };
+        courseToAdd.exercises = [...modelingExercises];
+        jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(courseToAdd);
+        fixture.detectChanges();
+        comp.ngOnInit();
+
+        let exercises = comp.ngxExerciseGroups[0];
+        expect(exercises[0].name).toBe('Until 18:20');
+        expect(exercises[1].name).toBe('Until 18:20 too');
+        expect(exercises[2].name).toBe('test 17.06. 1');
+        expect(exercises[3].name).toBe('test 18.06. 1');
+
+        comp.toggleNotIncludedInScoreExercises();
+
+        exercises = comp.ngxExerciseGroups[0];
+        expect(exercises[0].name).toBe('Until 18:20');
+        expect(exercises[1].name).toBe('Until 18:20 too');
+        expect(exercises[2].name).toBe('test 17.06. 1');
+        expect(exercises[3].name).toBe('test 17.06. 2');
+        expect(exercises[4].name).toBe('test 18.06. 1');
+
+        comp.toggleNotIncludedInScoreExercises();
+
+        exercises = comp.ngxExerciseGroups[0];
+        expect(exercises[0].name).toBe('Until 18:20');
+        expect(exercises[1].name).toBe('Until 18:20 too');
+        expect(exercises[2].name).toBe('test 17.06. 1');
+        expect(exercises[3].name).toBe('test 18.06. 1');
+    });
+
     it('should calculate scores correctly', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [...modelingExercises];
@@ -395,8 +428,8 @@ describe('CourseStatisticsComponent', () => {
         expect(comp.ngxExerciseGroups.length).toBe(1);
         let exercise: any = comp.ngxExerciseGroups[0][0];
         expect(exercise.absoluteScore).toBe(20);
-        expect(exercise.reachableScore).toBe(60);
-        expect(exercise.overallMaxPoints).toBe(60);
+        expect(exercise.reachableScore).toBe(36);
+        expect(exercise.overallMaxPoints).toBe(36);
 
         const newExercise = [
             {
@@ -477,13 +510,13 @@ describe('CourseStatisticsComponent', () => {
         // check that exerciseGroup scores are untouched
         exercise = comp.ngxExerciseGroups[0][0];
         expect(exercise.absoluteScore).toBe(20);
-        expect(exercise.reachableScore).toBe(60);
-        expect(exercise.overallMaxPoints).toBe(60);
+        expect(exercise.reachableScore).toBe(36);
+        expect(exercise.overallMaxPoints).toBe(36);
 
         // check that overall course score is adapted accordingly -> one exercise after assessment, one before
         expect(comp.overallPoints).toBe(25.5);
-        expect(comp.reachablePoints).toBe(70);
-        expect(comp.overallMaxPoints).toBe(80);
+        expect(comp.reachablePoints).toBe(46);
+        expect(comp.overallMaxPoints).toBe(56);
 
         // check that html file displays the correct elements
         let debugElement = fixture.debugElement.query(By.css('#absolute-course-score'));
