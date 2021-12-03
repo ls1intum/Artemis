@@ -219,7 +219,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         this.modelingSubmission.explanationText = this.explanationText;
         this.modelingSubmission.exampleSubmission = true;
         if (this.result) {
-            this.result.feedbacks = this.referencedFeedback.concat(this.unreferencedFeedback);
+            this.result.feedbacks = this.assessments;
             setLatestSubmissionResult(this.modelingSubmission, this.result);
             delete this.result.submission;
         }
