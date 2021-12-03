@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import com.google.gson.Gson;
+import com.google.gson.*;
+import com.google.gson.annotations.SerializedName;
 
 import de.tum.in.www1.artemis.domain.metis.Post;
 
@@ -11,7 +12,8 @@ import de.tum.in.www1.artemis.domain.metis.Post;
  */
 public final class NotificationTarget {
 
-    private final int id;
+    @SerializedName(value = "id")
+    private final int notificationId;
 
     private final String entity;
 
@@ -19,8 +21,8 @@ public final class NotificationTarget {
 
     private final int course;
 
-    public NotificationTarget(String message, int id, String entity, int course, String mainPage) {
-        this.id = id;
+    public NotificationTarget(int notificationId, String entity, int course, String mainPage) {
+        this.notificationId = notificationId;
         this.entity = entity;
         this.course = course;
         this.mainPage = mainPage;
@@ -55,6 +57,6 @@ public final class NotificationTarget {
      * @return the extracted viable URL
      */
     private String turnToUrl(String baseUrl) {
-        return baseUrl + "/" + mainPage + "/" + course + "/" + entity + "/" + id;
+        return baseUrl + "/" + mainPage + "/" + course + "/" + entity + "/" + notificationId;
     }
 }
