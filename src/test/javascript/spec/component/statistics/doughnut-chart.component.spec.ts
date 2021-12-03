@@ -1,16 +1,14 @@
-import { ChartsModule } from 'ng2-charts';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { DoughnutChartComponent } from 'app/exercises/shared/statistics/doughnut-chart.component';
 import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { PieChartModule } from '@swimlane/ngx-charts';
 
 describe('DoughnutChartComponent', () => {
     let fixture: ComponentFixture<DoughnutChartComponent>;
@@ -23,13 +21,9 @@ describe('DoughnutChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ChartsModule)],
+            imports: [ArtemisTestModule, MockModule(PieChartModule)],
             declarations: [DoughnutChartComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
-            providers: [
-                { provide: Router, useClass: MockRouter },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-            ],
+            providers: [{ provide: Router, useClass: MockRouter }],
         })
             .compileComponents()
             .then(() => {
@@ -53,31 +47,33 @@ describe('DoughnutChartComponent', () => {
         component.ngOnChanges();
         const expected = [absolute, max - absolute];
         expect(component.stats).toEqual(expected);
-        expect(component.doughnutChartData[0].data).toEqual(expected);
+        expect(component.ngxDoughnutData[0].value).toBe(expected[0]);
+        expect(component.ngxDoughnutData[1].value).toBe(expected[1]);
 
         component.currentMax = 0;
         component.ngOnChanges();
-        expect(component.doughnutChartData[0].data).toEqual([-1, 0]);
+        expect(component.ngxDoughnutData[0].value).toBe(1);
+        expect(component.ngxDoughnutData[1].value).toBe(0);
     });
     describe('setting titles for different chart types', () => {
         it('should set title for average exercise score', () => {
             component.contentType = DoughnutChartType.AVERAGE_EXERCISE_SCORE;
             component.ngOnInit();
-            expect(component.doughnutChartTitle).toEqual('averageScore');
+            expect(component.doughnutChartTitle).toBe('averageScore');
             expect(component.titleLink).toEqual([`/course-management/${component.course.id}/${component.exerciseType}-exercises/${component.exerciseId}/scores`]);
         });
 
         it('should set title for participations', () => {
             component.contentType = DoughnutChartType.PARTICIPATIONS;
             component.ngOnInit();
-            expect(component.doughnutChartTitle).toEqual('participationRate');
+            expect(component.doughnutChartTitle).toBe('participationRate');
             expect(component.titleLink).toEqual([`/course-management/${component.course.id}/${component.exerciseType}-exercises/${component.exerciseId}/participations`]);
         });
 
         it('should set title for question chart', () => {
             component.contentType = DoughnutChartType.QUESTIONS;
             component.ngOnInit();
-            expect(component.doughnutChartTitle).toEqual('resolved_posts');
+            expect(component.doughnutChartTitle).toBe('resolved_posts');
             expect(component.titleLink).toEqual([`/courses/${component.course.id}/exercises/${component.exerciseId}`]);
         });
     });
