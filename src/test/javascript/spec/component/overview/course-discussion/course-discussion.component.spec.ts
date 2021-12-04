@@ -50,7 +50,6 @@ import {
     metisUpVoteReactionUser1,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
-import { faLongArrowAltDown } from '@fortawesome/free-solid-svg-icons';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -139,9 +138,6 @@ describe('CourseDiscussionComponent', () => {
             lectureId: undefined,
         });
         expect(component.formGroup.get('sortBy')?.value).toEqual(PostSortCriterion.CREATION_DATE);
-        fixture.detectChanges();
-        const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
-        expect(selectedDirectionOption.innerHTML).toContain('long-arrow-alt-down');
     }));
 
     it('should initialize overview page with course posts for default settings correctly', fakeAsync(() => {
@@ -174,8 +170,6 @@ describe('CourseDiscussionComponent', () => {
         const selectedSortByOption = getElement(fixture.debugElement, 'select[name=sortBy]');
         expect(selectedSortByOption.value).not.toBeNull();
         // descending should be selected as sort direction
-        const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
-        expect(selectedDirectionOption.innerHTML).toContain(faLongArrowAltDown);
         // show correct number of posts found
         const postCountInformation = getElement(fixture.debugElement, '.post-result-information');
         expect(component.posts).toEqual(metisCoursePosts);
