@@ -18,6 +18,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import de.jplag.ExitException;
+import de.jplag.JPlag;
+import de.jplag.JPlagResult;
+import de.jplag.options.JPlagOptions;
+import de.jplag.options.LanguageOption;
+import de.jplag.reporting.Report;
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
@@ -36,12 +42,6 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import jplag.ExitException;
-import jplag.JPlag;
-import jplag.JPlagOptions;
-import jplag.JPlagResult;
-import jplag.options.LanguageOption;
-import jplag.reporting.Report;
 
 @Service
 public class ProgrammingPlagiarismDetectionService {
@@ -231,7 +231,7 @@ public class ProgrammingPlagiarismDetectionService {
 
         // Write JPlag report result to the file.
         log.info("Write JPlag report to file system");
-        Report jplagReport = new Report(outputFolderFile);
+        Report jplagReport = new Report(outputFolderFile, jPlagResult.getOptions());
         jplagReport.writeResult(jPlagResult);
 
         // Zip the file
