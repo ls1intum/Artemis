@@ -34,7 +34,23 @@ import { MAX_SIZE_UNIT } from 'app/exercises/quiz/manage/apollon-diagrams/exerci
 import { filter, debounceTime } from 'rxjs/operators';
 import { SecuredImageComponent, ImageLoadingStatus } from 'app/shared/image/secured-image.component';
 import { generateTextHintExplanation } from 'app/shared/util/markdown.util';
-import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faCopy, faEye, faFont, faPencilAlt, faPlus, faTrash, faUndo, faUnlink, faUpload } from '@fortawesome/free-solid-svg-icons';
+import {
+    faAngleDown,
+    faAngleRight,
+    faBan,
+    faBars,
+    faChevronDown,
+    faChevronUp,
+    faCopy,
+    faEye,
+    faFont,
+    faPencilAlt,
+    faPlus,
+    faTrash,
+    faUndo,
+    faUnlink,
+    faUpload,
+} from '@fortawesome/free-solid-svg-icons';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
