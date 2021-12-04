@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
@@ -45,6 +45,20 @@ describe('User Service', () => {
             const req = httpMock.expectOne({ method: 'GET' });
 
             req.flush([Authority.USER, Authority.ADMIN]);
+        });
+
+        it('should call correct URL to update lastNotificationRead', () => {
+            service.updateLastNotificationRead().subscribe();
+            const req = httpMock.expectOne({ method: 'PUT' });
+            const resourceUrl = SERVER_API_URL + 'api/users/notification-date';
+            expect(req.request.url).toEqual(`${resourceUrl}`);
+        });
+
+        it('should call correct URL to update notification visibility', () => {
+            service.updateNotificationVisibility(true).subscribe();
+            const req = httpMock.expectOne({ method: 'PUT' });
+            const resourceUrl = SERVER_API_URL + 'api/users/notification-visibility';
+            expect(req.request.url).toEqual(`${resourceUrl}`);
         });
 
         it('should propagate not found response', () => {
