@@ -426,7 +426,12 @@ export class CourseManagementRequests {
         const submittedTexts = textAnswers.map((answer, index) => {
             return {
                 text: answer,
-                spot: quizExercise.quizQuestions[0].spots[index].body,
+                spot: {
+                    id: quizExercise.quizQuestions[0].spots[index].id,
+                    spotNr: quizExercise.quizQuestions[0].spots[index].spotNr,
+                    width: quizExercise.quizQuestions[0].spots[index].width,
+                    invalid: quizExercise.quizQuestions[0].spots[index].invalid,
+                },
             };
         });
         const submittedAnswers = [
