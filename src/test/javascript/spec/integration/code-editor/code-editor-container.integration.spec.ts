@@ -1,9 +1,6 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslateModule } from '@ngx-translate/core';
 import dayjs from 'dayjs';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, of, Subject } from 'rxjs';
@@ -14,7 +11,6 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { CommitState, DeleteFileChange, DomainType, EditorState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { buildLogs, extractedBuildLogErrors, extractedErrorFiles } from '../../helpers/sample/build-logs';
 import { problemStatement } from '../../helpers/sample/problemStatement.json';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
@@ -94,8 +90,8 @@ describe('CodeEditorContainerIntegration', () => {
     const result = { id: 3, successful: false, completionDate: dayjs().subtract(2, 'days') };
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule],
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, AceEditorModule],
             declarations: [
                 CodeEditorContainerComponent,
                 MockComponent(CodeEditorGridComponent),
@@ -117,11 +113,9 @@ describe('CodeEditorContainerIntegration', () => {
                 MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
             ],
             providers: [
-                JhiLanguageHelper,
                 ChangeDetectorRef,
                 DeviceDetectorService,
                 CodeEditorConflictStateService,
-                { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
@@ -170,23 +164,20 @@ describe('CodeEditorContainerIntegration', () => {
                 commitStub = jest.spyOn(codeEditorRepositoryService, 'commit');
                 getStudentParticipationWithLatestResultStub = jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
                 getLatestPendingSubmissionStub = jest.spyOn(submissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(getLatestPendingSubmissionSubject);
+                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
+                subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
+                getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
+                getLatestPendingSubmissionStub.mockReturnValue(getLatestPendingSubmissionSubject);
             });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
-
-        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
-        subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
-
-        getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
-        getLatestPendingSubmissionStub.mockReturnValue(getLatestPendingSubmissionSubject);
     });
 
     const cleanInitialize = () => {
         const exercise = { id: 1, problemStatement };
         const participation = { id: 2, exercise, student: { id: 99 }, results: [result] } as StudentParticipation;
-        const commitState = CommitState.UNDEFINED;
         const isCleanSubject = new Subject();
         const getRepositoryContentSubject = new Subject();
         const getBuildLogsSubject = new Subject();
@@ -202,7 +193,7 @@ describe('CodeEditorContainerIntegration', () => {
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
         containerFixture.detectChanges();
 
-        container.commitState = commitState;
+        container.commitState = CommitState.UNDEFINED;
 
         isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
         getBuildLogsSubject.next(buildLogs);
@@ -242,7 +233,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.buildOutput.isBuilding).toBe(false);
 
         // instructions
-        expect(container.instructions).not.toBe(null);
+        expect(container.instructions).not.toBe(undefined);
 
         // called by build output
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
@@ -265,7 +256,6 @@ describe('CodeEditorContainerIntegration', () => {
     it('should not load files and render other components correctly if the repository status cannot be retrieved', (done: any) => {
         const exercise = { id: 1, problemStatement, course: { id: 2 } };
         const participation = { id: 2, exercise, results: [result] } as StudentParticipation;
-        const commitState = CommitState.UNDEFINED;
         const isCleanSubject = new Subject();
         const getBuildLogsSubject = new Subject();
         checkIfRepositoryIsCleanStub.mockReturnValue(isCleanSubject);
@@ -279,7 +269,7 @@ describe('CodeEditorContainerIntegration', () => {
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
         containerFixture.detectChanges();
 
-        container.commitState = commitState;
+        container.commitState = CommitState.UNDEFINED;
 
         isCleanSubject.error('fatal error');
         getBuildLogsSubject.next(buildLogs);
@@ -295,7 +285,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // file browser
         expect(checkIfRepositoryIsCleanStub).toHaveBeenCalledTimes(1);
-        expect(getRepositoryContentStub).not.toHaveBeenCalled;
+        expect(getRepositoryContentStub).not.toHaveBeenCalled();
         expect(container.fileBrowser.errorFiles).toEqual(extractedErrorFiles);
         expect(container.fileBrowser.unsavedFiles).toBeEmpty();
 
@@ -319,7 +309,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.buildOutput.isBuilding).toBe(false);
 
         // instructions
-        expect(container.instructions).not.toBe(null);
+        expect(container.instructions).not.toBe(undefined);
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
@@ -426,7 +416,6 @@ describe('CodeEditorContainerIntegration', () => {
         const successfulSubmission = { id: 1, buildFailed: false } as ProgrammingSubmission;
         const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
         successfulResult.submission = successfulSubmission;
-        const expectedBuildLog = new BuildLogEntryArray();
         expect(container.unsavedFiles).toBeEmpty();
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
         containerFixture.detectChanges();
@@ -455,7 +444,7 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
 
         expect(container.buildOutput.isBuilding).toBe(false);
-        expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
+        expect(container.buildOutput.rawBuildLogs).toEqual(new BuildLogEntryArray());
         expect(container.fileBrowser.errorFiles).toBeEmpty();
     });
 
@@ -464,7 +453,6 @@ describe('CodeEditorContainerIntegration', () => {
         const successfulSubmission = { id: 1, buildFailed: false } as ProgrammingSubmission;
         const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
         successfulResult.submission = successfulSubmission;
-        const expectedBuildLog = new BuildLogEntryArray();
         const unsavedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
         const saveFilesSubject = new Subject();
         saveFilesStub.mockReturnValue(saveFilesSubject);
@@ -483,7 +471,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.editorState).toEqual(EditorState.SAVING);
         expect(container.fileBrowser.status.editorState).toEqual(EditorState.SAVING);
         // committing
-        expect(commitStub).not.toHaveBeenCalled;
+        expect(commitStub).not.toHaveBeenCalled();
         expect(container.commitState).toEqual(CommitState.COMMITTING);
         expect(container.fileBrowser.status.commitState).toEqual(CommitState.COMMITTING);
         saveFilesSubject.next({ [unsavedFile]: undefined });
@@ -510,7 +498,7 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
 
         expect(container.buildOutput.isBuilding).toBe(false);
-        expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
+        expect(container.buildOutput.rawBuildLogs).toEqual(new BuildLogEntryArray());
         expect(container.fileBrowser.errorFiles).toBeEmpty();
 
         containerFixture.destroy();
@@ -546,7 +534,7 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
 
         expect(container.commitState).toEqual(CommitState.CONFLICT);
-        expect(getRepositoryContentStub).not.toHaveBeenCalled;
+        expect(getRepositoryContentStub).not.toHaveBeenCalled();
 
         // Resolve conflict.
         conflictService.notifyConflictState(GitConflictState.OK);
