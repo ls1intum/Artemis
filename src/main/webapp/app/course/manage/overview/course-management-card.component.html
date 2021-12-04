@@ -106,7 +106,7 @@
                 <div class="section-content" *ngIf="courseWithExercises">
                     <div *ngIf="futureExercises && futureExercises.length > 0">
                         <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
-                            <fa-icon class="control-icon" [icon]="showFutureExercises ? 'angle-down' : 'angle-up'"></fa-icon>
+                            <fa-icon class="control-icon" [icon]="showFutureExercises ? faAngleDown : faAngleUp"></fa-icon>
                             <strong>{{ 'artemisApp.course.releasedSoon' | artemisTranslate }}</strong>
                         </div>
                         <div *ngIf="showFutureExercises">
@@ -122,7 +122,7 @@
                     </div>
                     <div *ngIf="currentExercises && currentExercises.length > 0">
                         <div class="control-label" (click)="showCurrentExercises = !showCurrentExercises">
-                            <fa-icon class="control-icon" [icon]="showCurrentExercises ? 'angle-down' : 'angle-up'"></fa-icon>
+                            <fa-icon class="control-icon" [icon]="showCurrentExercises ? faAngleDown : faAngleUp"></fa-icon>
                             <strong>{{ 'artemisApp.course.currentWorking' | artemisTranslate }}</strong>
                         </div>
                         <div *ngIf="showCurrentExercises">
@@ -138,7 +138,7 @@
                     </div>
                     <div *ngIf="exercisesInAssessment && exercisesInAssessment.length > 0">
                         <div class="control-label" (click)="showExercisesInAssessment = !showExercisesInAssessment">
-                            <fa-icon class="control-icon" [icon]="showExercisesInAssessment ? 'angle-down' : 'angle-up'"></fa-icon>
+                            <fa-icon class="control-icon" [icon]="showExercisesInAssessment ? faAngleDown : faAngleUp"></fa-icon>
                             <strong>{{ 'artemisApp.course.inAssessment' | artemisTranslate }}</strong>
                         </div>
                         <div *ngIf="showExercisesInAssessment">
@@ -154,7 +154,7 @@
                     </div>
                     <div *ngIf="pastExercises && pastExercises.length > 0">
                         <div class="control-label" (click)="showPastExercises = !showPastExercises">
-                            <fa-icon class="control-icon" [icon]="showPastExercises ? 'angle-down' : 'angle-up'"></fa-icon>
+                            <fa-icon class="control-icon" [icon]="showPastExercises ? faAngleDown : faAngleUp"></fa-icon>
                             <strong>{{ 'artemisApp.course.pastExercises' | artemisTranslate: { amount: pastExercises.length, total: pastExerciseCount } }}</strong>
                         </div>
                         <div *ngIf="showPastExercises">

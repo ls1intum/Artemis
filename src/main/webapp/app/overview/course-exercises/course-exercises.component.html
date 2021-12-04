@@ -42,7 +42,7 @@
                     </div>
                     <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
                         <button id="flip" (click)="flipOrder()" class="btn btn-primary">
-                            <fa-icon [icon]="sortingOrder === ASC ? 'sort-numeric-up' : 'sort-numeric-down'"></fa-icon>
+                            <fa-icon [icon]="sortingOrder === ASC ? faSortNumericUp : faSortNumericDown"></fa-icon>
                             <span class="d-none d-md-inline ms-1">{{
                                 'artemisApp.courseOverview.exerciseList.' + (sortingOrder === ASC ? 'oldFirst' : 'newFirst') | artemisTranslate
                             }}</span>
@@ -91,7 +91,7 @@
                     [ngClass]="{ 'text-primary': weeklyExercisesGrouped[weekKey] ? weeklyExercisesGrouped[weekKey].isCurrentWeek : false }"
                     (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed"
                 >
-                    <fa-icon class="pe-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
+                    <fa-icon class="pe-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? faAngleDown : faAngleUp"></fa-icon>
                     <span *ngIf="weeklyExercisesGrouped[weekKey].start && weeklyExercisesGrouped[weekKey].end">
                         <strong>{{ weeklyExercisesGrouped[weekKey].start | artemisDate: 'long-date' }}</strong> -
                         <strong>{{ weeklyExercisesGrouped[weekKey].end | artemisDate: 'long-date' }}</strong>

@@ -16,7 +16,7 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { faFilter, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -72,6 +72,10 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     // Icons
     faPlayCircle = faPlayCircle;
     faFilter = faFilter;
+    faAngleUp = faAngleUp;
+    faAngleDown = faAngleDown;
+    faSortNumericUp = faSortNumericUp;
+    faSortNumericDown = faSortNumericDown;
 
     constructor(
         private courseService: CourseManagementService,

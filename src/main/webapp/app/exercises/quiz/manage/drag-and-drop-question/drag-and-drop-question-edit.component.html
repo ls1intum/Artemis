@@ -6,7 +6,7 @@
             [attr.aria-expanded]="!isQuestionCollapsed"
             [attr.aria-controls]="'collapseQuestion' + questionIndex"
         >
-            <fa-icon size="3x" [icon]="isQuestionCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
+            <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown"></fa-icon>
         </button>
         <div class="form-group question-title">
             <input
@@ -283,7 +283,7 @@
             <div class="input-group col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
                 <div class="input-group-prepend">
                     <button class="btn btn-outline-secondary" [disabled]="isUploadingDragItemFile || !dragItemFile" (click)="uploadDragItem()">
-                        <fa-icon [icon]="reEvaluationInProgress ? 'upload' : 'plus'"></fa-icon>
+                        <fa-icon [icon]="reEvaluationInProgress ? faUpload : faPlus"></fa-icon>
                         <span *ngIf="isUploadingDragItemFile" jhiTranslate="artemisApp.dragAndDropQuestion.uploading"></span>
                         <span *ngIf="!isUploadingDragItemFile && !reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemPicture"> </span>
                         <span *ngIf="!isUploadingDragItemFile && reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.changeDragItemPicture"> </span>

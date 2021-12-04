@@ -51,7 +51,7 @@
                 [attr.aria-expanded]="!isCollapsed(exercise.id!)"
                 [attr.aria-controls]="isCollapsed(exercise.id!)"
             >
-                <fa-icon size="2x" [icon]="isCollapsed(exercise.id!) ? 'angle-right' : 'angle-down'"></fa-icon>
+                <fa-icon size="2x" [icon]="isCollapsed(exercise.id!) ? faAngleRight : faAngleDown"></fa-icon>
             </button>
         </div>
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise.id!)">
