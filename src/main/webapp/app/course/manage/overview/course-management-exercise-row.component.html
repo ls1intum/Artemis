@@ -139,7 +139,7 @@
                     ><fa-icon [icon]="'wrench'"></fa-icon
                 ></a>
                 <a
-                    *ngIf="course.isAtLeastInstructor"
+                    *ngIf="course.isAtLeastTutor"
                     [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id, 'scores']"
                     class="btn btn-info me-1 mb-1"
                     [ngbTooltip]="'entity.action.scores' | artemisTranslate"

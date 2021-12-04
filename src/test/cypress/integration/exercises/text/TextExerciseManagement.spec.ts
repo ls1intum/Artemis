@@ -47,7 +47,7 @@ describe('Text exercise management', () => {
         textCreation.typeProblemStatement(problemStatement);
         textCreation.typeExampleSolution(exampleSolution);
         cy.get('[jhitranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise"]').should('be.visible');
-        textCreation.create();
+        textCreation.create().its('response.statusCode').should('eq', 201);
 
         // Create an example submission
         exampleSubmissions.clickCreateExampleSubmission();
@@ -56,11 +56,13 @@ describe('Text exercise management', () => {
         exampleSubmissionCreation.showsExampleSolution(exampleSolution);
         const submission = 'This is an\nexample\nsubmission';
         exampleSubmissionCreation.typeExampleSubmission(submission);
-        exampleSubmissionCreation.clickCreateNewExampleSubmission().its('response.body.submission.text').should('eq', submission);
-
-        // Make sure example submission is shown in the list
-        cy.contains('Example Submissions Board').click();
-        cy.contains('Example Submission 1').should('be.visible');
+        exampleSubmissionCreation
+            .clickCreateNewExampleSubmission()
+            .its('response')
+            .then((response: any) => {
+                expect(response.statusCode).to.equal(200);
+                expect(response.body.submission.text).to.equal(submission);
+            });
 
         // Make sure text exercise is shown in exercises list
         cy.visit(`course-management/${course.id}/exercises`);
