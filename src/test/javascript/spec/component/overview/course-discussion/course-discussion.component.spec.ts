@@ -50,6 +50,7 @@ import {
     metisUpVoteReactionUser1,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
+import { faLongArrowAltDown } from '@fortawesome/free-solid-svg-icons';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -174,7 +175,7 @@ describe('CourseDiscussionComponent', () => {
         expect(selectedSortByOption.value).not.toBeNull();
         // descending should be selected as sort direction
         const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
-        expect(selectedDirectionOption.innerHTML).toContain('long-arrow-alt-down');
+        expect(selectedDirectionOption.innerHTML).toContain(faLongArrowAltDown);
         // show correct number of posts found
         const postCountInformation = getElement(fixture.debugElement, '.post-result-information');
         expect(component.posts).toEqual(metisCoursePosts);
