@@ -140,7 +140,7 @@
                                     </span>
                                 </a>
                                 <a
-                                    *ngIf="quizExercise.isAtLeastInstructor"
+                                    *ngIf="quizExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'scores']"
                                     class="btn btn-info btn-sm me-1 mb-1"
                                 >

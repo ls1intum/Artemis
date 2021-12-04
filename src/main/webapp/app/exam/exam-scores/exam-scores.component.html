@@ -304,10 +304,28 @@
             </tbody>
         </table>
 
-        <div style="display: block">
+        <div #containerRef class="d-block">
             <!-- Histogram -->
-            <canvas baseChart height="400" [datasets]="barChartData" [labels]="barChartLabels" [options]="barChartOptions" [legend]="barChartLegend" [chartType]="barChartType">
-            </canvas>
+            <ngx-charts-bar-vertical
+                [view]="[containerRef.offsetWidth, 400]"
+                [results]="ngxData"
+                [scheme]="ngxColor"
+                [yAxis]="true"
+                [xAxis]="true"
+                [yAxisLabel]="yAxisLabel"
+                [showYAxisLabel]="true"
+                [xAxisLabel]="xAxisLabel"
+                [showXAxisLabel]="true"
+                [yScaleMax]="yScaleMax"
+                [dataLabelFormatting]="dataLabelFormatting"
+                [showDataLabel]="true"
+            >
+                <ng-template #tooltipTemplate let-model="model">
+                    <b>{{ model.name }}</b
+                    ><br />
+                    <span>{{ 'statistics.amountOfStudents' | artemisTranslate }}: {{ model.value }}</span>
+                </ng-template>
+            </ngx-charts-bar-vertical>
         </div>
 
         <!-- Exercise Statistics -->

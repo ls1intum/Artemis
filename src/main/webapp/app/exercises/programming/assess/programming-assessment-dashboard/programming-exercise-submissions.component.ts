@@ -19,9 +19,9 @@ import { map } from 'rxjs/operators';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    templateUrl: './programming-assessment-dashboard.component.html',
+    templateUrl: './programming-exercise-submissions.component.html',
 })
-export class ProgrammingAssessmentDashboardComponent implements OnInit {
+export class ProgrammingExerciseSubmissionsComponent implements OnInit {
     ExerciseType = ExerciseType;
     exercise: ProgrammingExercise;
     submissions: ProgrammingSubmission[] = [];
