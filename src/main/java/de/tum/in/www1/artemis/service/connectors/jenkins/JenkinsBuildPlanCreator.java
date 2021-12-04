@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.getDockerImageName;
-
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
@@ -12,6 +10,7 @@ import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -23,6 +22,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.connectors.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
@@ -74,6 +74,9 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     @Value("${artemis.continuous-integration.artemis-authentication-token-key}")
     private String ARTEMIS_AUTHENTICATION_TOKEN_KEY;
 
+    @Autowired
+    private ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+
     private final ResourceLoaderService resourceLoaderService;
 
     public JenkinsBuildPlanCreator(ResourceLoaderService resourceLoaderService) {
@@ -94,6 +97,10 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
             boolean isStaticCodeAnalysisEnabled) {
+
+        if (!programmingLanguageConfiguration.containsLanguage(programmingLanguage))
+            throw new IllegalArgumentException("Your configuration contains no configured docker image for " + programmingLanguage);
+
         Map<String, String> replacements = new HashMap<>();
         replacements.put(REPLACE_TEST_REPO, testRepositoryURL.getURL().toString());
         replacements.put(REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.getURL().toString());
@@ -102,7 +109,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_TESTS_CHECKOUT_PATH, Constants.TESTS_CHECKOUT_PATH);
         replacements.put(REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl);
         replacements.put(REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
-        replacements.put(REPLACE_DOCKER_IMAGE_NAME, getDockerImageName(programmingLanguage));
+        replacements.put(REPLACE_DOCKER_IMAGE_NAME, programmingLanguageConfiguration.getBuildImages().get(programmingLanguage));
         replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);
         // at the moment, only Java and Swift are supported
         if (isStaticCodeAnalysisEnabled) {
