@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
  */
 public final class NotificationTarget {
 
-    @SerializedName(value = "id")
+    @SerializedName("id")
     private final int notificationSubjectId;
 
     private final String entity;
