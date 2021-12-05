@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -31,7 +32,7 @@ public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGi
 
     @BeforeEach
     void init() {
-        database.addUsers(3, 0, 0, 0);
+        database.addUsers(3, 0, 0, 1);
         Course course = database.addCourseWithOneProgrammingExercise();
         this.programmingExercise = database.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         MockitoAnnotations.openMocks(this);
@@ -41,6 +42,7 @@ public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGi
      * Test for methods of {@link ParticipationService} used by {@link de.tum.in.www1.artemis.web.rest.ResultResource#createResultForExternalSubmission(Long, String, Result)}.
      */
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateParticipationForExternalSubmission() throws Exception {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin("student1");
         var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
