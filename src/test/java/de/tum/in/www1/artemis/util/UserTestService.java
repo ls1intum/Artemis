@@ -520,14 +520,14 @@ public class UserTestService {
     }
 
     // Test
-    public void updateUserNotificationVisibility_showAll_asStudent_isSuccessful() throws Exception {
+    public void updateUserNotificationVisibilityShowAllAsStudentIsSuccessful() throws Exception {
         request.put("/api/users/notification-visibility", true, HttpStatus.OK);
         User userInDB = userRepository.findOneByLogin("student1").get();
         assertThat(userInDB.getHideNotificationsUntil()).isNull();
     }
 
     // Test
-    public void updateUserNotificationVisibility_hideUntil_asStudent_isSuccessful() throws Exception {
+    public void updateUserNotificationVisibilityHideUntilAsStudentIsSuccessful() throws Exception {
         request.put("/api/users/notification-visibility", false, HttpStatus.OK);
         User userInDB = userRepository.findOneByLogin("student1").get();
         assertThat(userInDB.getHideNotificationsUntil()).isNotNull();

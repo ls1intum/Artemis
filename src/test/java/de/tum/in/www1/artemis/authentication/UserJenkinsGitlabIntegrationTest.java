@@ -292,13 +292,13 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void updateUserNotificationVisibility_showAll_asStudent_isSuccessful() throws Exception {
-        userTestService.updateUserNotificationVisibility_showAll_asStudent_isSuccessful();
+        userTestService.updateUserNotificationVisibilityShowAllAsStudentIsSuccessful();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void updateUserNotificationVisibility_hideUntil_asStudent_isSuccessful() throws Exception {
-        userTestService.updateUserNotificationVisibility_hideUntil_asStudent_isSuccessful();
+        userTestService.updateUserNotificationVisibilityHideUntilAsStudentIsSuccessful();
     }
 
     @Test
