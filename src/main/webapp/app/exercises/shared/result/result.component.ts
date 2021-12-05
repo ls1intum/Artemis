@@ -21,7 +21,7 @@ import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/browser';
 import { faCircleNotch, faExclamationCircle, faFile } from '@fortawesome/free-solid-svg-icons';
-import { faCircle } from '@fortawesome/free-regular-svg-icons';
+import { faCheckCircle, faCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 
 /**
  * Enumeration object representing the possible options that
@@ -447,27 +447,27 @@ export class ResultComponent implements OnInit, OnChanges {
 
         // Build failure so return times icon.
         if (this.isBuildFailedAndResultIsAutomatic(result)) {
-            return ['far', 'times-circle'];
+            return faTimesCircle;
         }
 
         if (this.resultIsPreliminary(result)) {
-            return ['far', 'question-circle'];
+            return faQuestionCircle;
         }
 
         if (this.onlyShowSuccessfulCompileStatus) {
-            return ['far', 'check-circle'];
+            return faCheckCircle;
         }
 
         if (result.score == undefined) {
             if (result.successful) {
-                return ['far', 'check-circle'];
+                return faCheckCircle;
             }
-            return ['far', 'times-circle'];
+            return faTimesCircle;
         }
         if (result.score > 80) {
-            return ['far', 'check-circle'];
+            return faCheckCircle;
         }
-        return ['far', 'times-circle'];
+        return faTimesCircle;
     }
 
     /**

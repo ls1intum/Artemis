@@ -23,11 +23,11 @@ enum SortOrder {
  * @readonly
  * @enum {string}
  */
-const SortIcon = Object.freeze({
+const SortIcon = {
     NONE: faSort,
     ASC: faSortUp,
     DESC: faSortDown,
-});
+};
 
 const SortOrderIcon = {
     [SortOrder.ASC]: SortIcon.ASC,
