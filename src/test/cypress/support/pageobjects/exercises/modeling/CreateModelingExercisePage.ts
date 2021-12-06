@@ -52,7 +52,7 @@ export class CreateModelingExercisePage {
     }
 
     includeInOverallScore() {
-        cy.get('#modeling-includeInScore-picker').children().eq(2).click({ force: true });
+        cy.get('#modeling-includeInScore-picker').children().eq(0).children().eq(2).click({ force: true });
     }
 
     pickDifficulty(options: { hard?: boolean; medium?: boolean; easy?: boolean }) {

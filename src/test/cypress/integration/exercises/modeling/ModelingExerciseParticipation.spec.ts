@@ -35,7 +35,7 @@ describe('Modeling Exercise Participation Spec', () => {
     it('Student can start and submit their model', () => {
         cy.login(student, `/courses/${course.id}`);
         courseOverview.startExercise(modelingExercise.title, CypressExerciseType.MODELING);
-        cy.get('#next-course-exercise-row').find('#open-modeling-editor-action').click();
+        cy.get('#open-modeling-editor-action').click();
         modelingEditor.addComponentToModel(1);
         modelingEditor.addComponentToModel(2);
         modelingEditor.addComponentToModel(3);
