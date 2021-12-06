@@ -2,7 +2,7 @@
  * A class which encapsulates UI selectors and actions for the course assessment dashboard page.
  */
 export class CourseAssessmentDashboardPage {
-    readonly exerciseDashboardButtonSelector = '[jhitranslate="entity.action.exerciseDashboard"]';
+    readonly exerciseDashboardButtonSelector = '#open-exercise-dashboard';
 
     openComplaints(courseId: number) {
         cy.get(`[href="/course-management/${courseId}/complaints"]`).click();

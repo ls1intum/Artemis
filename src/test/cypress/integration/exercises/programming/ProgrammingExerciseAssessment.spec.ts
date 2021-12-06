@@ -50,8 +50,6 @@ describe('Programming exercise assessment', () => {
         courseAssessment.checkShowFinishedExercises();
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
-        cy.contains('There are no complaints at the moment').should('be.visible');
-        cy.contains('There are no requests at the moment.').should('be.visible');
         exerciseAssessment.clickStartNewAssessment();
         programmingAssessment.getInstructionsRootElement().contains(exercise.title).should('be.visible');
         programmingAssessment.getInstructionsRootElement().find('[jhitranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution"]').should('be.visible');

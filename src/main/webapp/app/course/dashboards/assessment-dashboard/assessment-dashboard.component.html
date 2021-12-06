@@ -141,6 +141,7 @@
                         <ng-container *ngIf="!exercise.teamMode; else teamsLink">
                             <ng-container>
                                 <a
+                                    id="open-exercise-dashboard"
                                     [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
                                     class="btn btn-info btn-sm me-1"
                                     [class.guided-tour]="exercise === exerciseForGuidedTour"
