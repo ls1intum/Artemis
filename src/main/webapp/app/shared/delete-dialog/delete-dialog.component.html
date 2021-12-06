@@ -17,14 +17,16 @@
             <div *ngFor="let checkKey of objectKeys(additionalChecks)">
                 <div class="checkbox" *ngIf="additionalChecks[checkKey]">
                     <label class="control-label text-danger">
-                        <input type="checkbox" name="checkbox" [(ngModel)]="additionalChecksValues[checkKey]" />&nbsp;{{ additionalChecks[checkKey] | artemisTranslate }}
+                        <input id="additional-check" type="checkbox" name="checkbox" [(ngModel)]="additionalChecksValues[checkKey]" />&nbsp;{{
+                            additionalChecks[checkKey] | artemisTranslate
+                        }}
                     </label>
                 </div>
             </div>
         </div>
         <div class="form-group" *ngIf="deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)">
             <label class="text-danger" [jhiTranslate]="deleteConfirmationText">Please type in the name to confirm</label>
-            <input type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
+            <input id="confirm-exercise-name" type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
         </div>
     </div>
     <div class="modal-footer">

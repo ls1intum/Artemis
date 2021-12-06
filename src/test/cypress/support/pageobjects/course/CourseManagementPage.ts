@@ -13,14 +13,14 @@ export class CourseManagementPage {
      * This can be used to find specific elements within this course card.
      */
     getCourseCard(courseName: string, courseShortName: string) {
-        return cy.contains(this.courseSelector(courseName, courseShortName)).parent().parent().parent();
+        return cy.contains(this.courseSelector(courseName, courseShortName)).parent('#course-card');
     }
 
     /**
      * Opens the exercises (of the first found course).
      */
     openExercisesOfCourse(courseName: string, courseShortName: string) {
-        this.getCourseCard(courseName, courseShortName).find('.card-footer').children().eq(0).click();
+        this.getCourseCard(courseName, courseShortName).find('#course-card-open-exercises').click();
         cy.url().should('include', '/exercises');
     }
 

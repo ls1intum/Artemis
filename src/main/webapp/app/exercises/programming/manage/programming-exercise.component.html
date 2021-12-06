@@ -31,7 +31,7 @@
         </ng-container>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
-    <div class="table-responsive" *ngIf="programmingExercises && filteredProgrammingExercises.length > 0">
+    <div class="table-responsive" *ngIf="programmingExercises && filteredProgrammingExercises.length > 0" id="exercise-card">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
@@ -305,6 +305,7 @@
                                         deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
                                     }"
                                     class="mb-1"
+                                    id="delete-exercise"
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>
                                 </button>

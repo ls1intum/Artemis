@@ -46,17 +46,15 @@ describe('Programming Exercise Management', () => {
             cy.login(admin, '/').wait(500);
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
-            cy.get('[deletequestion="artemisApp.programmingExercise.delete.question"]').click();
+            cy.get('#delete-exercise').click();
             // Check all checkboxes to get rid of the git repositories and build plans
-            cy.get('.modal-body')
-                .find('[type="checkbox"]')
-                .each(($el) => {
-                    cy.wrap($el).check();
-                });
+            cy.get('#additional-check').each(($el) => {
+                cy.wrap($el).check();
+            });
             cy.intercept(DELETE, PROGRAMMING_EXERCISE_BASE + '*').as('deleteProgrammingExerciseQuery');
-            cy.get('[type="text"], [name="confirmExerciseName"]').type(programmingExercise.title).type('{enter}');
-            cy.wait('@deleteProgrammingExerciseQuery');
-            cy.contains('No Programming Exercises').should('be.visible');
+            cy.get('#confirm-exercise-name').type(programmingExercise.title).type('{enter}');
+            cy.wait('@deleteProgrammingExerciseQuery').its('response.statusCode').should('eq', 200);
+            cy.contains(programmingExercise.title).should('not.exist');
         });
     });
 
