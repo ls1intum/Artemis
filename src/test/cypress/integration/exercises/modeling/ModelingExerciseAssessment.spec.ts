@@ -79,7 +79,6 @@ describe('Modeling Exercise Assessment Spec', () => {
             courseAssessmentDashboard.openComplaints(course.id);
             courseAssessmentDashboard.showTheComplaint();
             assessmentEditor.rejectComplaint('You are wrong.');
-            cy.get('.alerts').should('be.visible');
         });
     });
 
