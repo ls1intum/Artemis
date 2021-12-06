@@ -120,7 +120,7 @@ export class OnlineEditorPage {
      * @returns the root element of the result panel. This can be used for further querying inside this panel
      */
     getResultPanel() {
-        return cy.get('jhi-updating-result');
+        return cy.get('#result');
     }
 
     /**
