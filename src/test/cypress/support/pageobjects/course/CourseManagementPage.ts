@@ -12,15 +12,15 @@ export class CourseManagementPage {
      * @returns Returns the cypress chainable containing the root element of the course card of our created course.
      * This can be used to find specific elements within this course card.
      */
-    getCourseCard(courseName: string, courseShortName: string) {
-        return cy.contains(this.courseSelector(courseName, courseShortName)).parent('#course-card');
+    getCourseCard(courseName: string) {
+        return cy.get('#course-card-' + courseName);
     }
 
     /**
      * Opens the exercises (of the first found course).
      */
     openExercisesOfCourse(courseName: string, courseShortName: string) {
-        this.getCourseCard(courseName, courseShortName).find('#course-card-open-exercises').click();
+        this.getCourseCard(courseName).find('#course-card-open-exercises').click();
         cy.url().should('include', '/exercises');
     }
 
@@ -99,8 +99,8 @@ export class CourseManagementPage {
     /**
      * Opens the exams of a course.
      */
-    openExamsOfCourse(courseName: string, courseShortName: string) {
-        this.getCourseCard(courseName, courseShortName).find('.card-footer').children().eq(1).click();
+    openExamsOfCourse(courseName: string) {
+        this.getCourseCard(courseName).find('.card-footer').children().eq(1).click();
         cy.url().should('include', '/exams');
     }
 
