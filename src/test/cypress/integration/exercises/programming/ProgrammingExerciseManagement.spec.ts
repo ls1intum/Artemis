@@ -45,7 +45,7 @@ describe('Programming Exercise Management', () => {
         it('Deletes an existing programming exercise', function () {
             cy.login(admin, '/').wait(500);
             navigationBar.openCourseManagement();
-            courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
+            courseManagementPage.openExercisesOfCourse(course.shortName);
             cy.get('#delete-exercise').click();
             // Check all checkboxes to get rid of the git repositories and build plans
             cy.get('#additional-check').each(($el) => {
@@ -62,7 +62,7 @@ describe('Programming Exercise Management', () => {
         it('Creates a new programming exercise', function () {
             cy.login(admin, '/');
             navigationBar.openCourseManagement();
-            courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
+            courseManagementPage.openExercisesOfCourse(course.shortName);
             courseExercises.clickCreateProgrammingExerciseButton();
             cy.url().should('include', '/programming-exercises/new');
             cy.log('Filling out programming exercise info...');

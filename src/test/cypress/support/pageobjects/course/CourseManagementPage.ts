@@ -12,15 +12,15 @@ export class CourseManagementPage {
      * @returns Returns the cypress chainable containing the root element of the course card of our created course.
      * This can be used to find specific elements within this course card.
      */
-    getCourseCard(courseName: string) {
-        return cy.get('#course-card-' + courseName);
+    getCourseCard(courseShortName: string) {
+        return cy.get('#course-card-' + courseShortName);
     }
 
     /**
      * Opens the exercises (of the first found course).
      */
-    openExercisesOfCourse(courseName: string, courseShortName: string) {
-        this.getCourseCard(courseName).find('#course-card-open-exercises').click();
+    openExercisesOfCourse(courseShortName: string) {
+        this.getCourseCard(courseShortName).find('#course-card-open-exercises').click();
         cy.url().should('include', '/exercises');
     }
 
@@ -34,21 +34,10 @@ export class CourseManagementPage {
 
     /**
      * Opens a course.
-     * @param courseName
      * @param courseShortName
      */
-    openCourse(courseName: string, courseShortName: string) {
-        return cy.contains(this.courseSelector(courseName, courseShortName)).parent().parent().click();
-    }
-
-    /**
-     * Retrieves the course selector. This is returns the element, which is used to identify a course card. It does not return the root of the course card!
-     * @param courseName the title of the course
-     * @param courseShortName the short name of the course
-     * @returns the title element (not the root element!) of the course card.
-     */
-    courseSelector(courseName: string, courseShortName: string) {
-        return `${courseName} (${courseShortName})`;
+    openCourse(courseShortName: string) {
+        return this.getCourseCard(courseShortName).find('#course-card-header').click();
     }
 
     /**

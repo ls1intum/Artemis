@@ -31,7 +31,7 @@ describe('Text exercise management', () => {
     it('Creates a text exercise in the UI', () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
-        courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
+        courseManagementPage.openExercisesOfCourse(course.shortName);
         cy.get('[jhitranslate="artemisApp.textExercise.home.createLabel"]').click();
 
         // Fill out text exercise form
@@ -79,7 +79,7 @@ describe('Text exercise management', () => {
 
         it('Deletes an existing text exercise', () => {
             navigationBar.openCourseManagement();
-            courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
+            courseManagementPage.openExercisesOfCourse(course.shortName);
             courseManagementExercises.clickDeleteExercise(exerciseTitle);
             cy.intercept(DELETE, BASE_API + 'text-exercises/*').as('deleteTextExercise');
             cy.get('[type="text"], [name="confirmExerciseName"]').type(exerciseTitle).type('{enter}');
