@@ -15,6 +15,7 @@
     </p>
     <div class="mt-4" *ngIf="isCorrectUserToFileAction && !complaint">
         <button
+            id="complain"
             *ngIf="isExamMode || (course?.maxComplaints && course!.maxComplaints! > 0)"
             class="btn btn-primary"
             [class.not-allowed]="(!isExamMode && remainingNumberOfComplaints == 0) || !timeOfComplaintValid"

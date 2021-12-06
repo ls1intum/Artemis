@@ -67,7 +67,7 @@ describe('Programming exercise assessment', () => {
             const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
             const percentage = totalPoints * 10;
             exerciseResult.shouldShowExerciseTitle(exercise.title);
-            exerciseResult.clickOpenCodeEditor();
+            exerciseResult.clickOpenCodeEditor(exercise.id);
             programmingFeedback.shouldShowRepositoryLockedWarning();
             programmingFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
             programmingFeedback.shouldShowScore(totalPoints, exercise.maxPoints, percentage);
