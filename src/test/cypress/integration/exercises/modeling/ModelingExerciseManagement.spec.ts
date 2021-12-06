@@ -107,11 +107,8 @@ describe('Modeling Exercise Management Spec', () => {
             createModelingExercise.setPoints(points);
             createModelingExercise.save();
             cy.visit(`/course-management/${course.id}/exercises`);
-            cy.get('modeling-exercise-card').children().eq(1).should('contain.text', newTitle);
-            cy.get('#exercise-card-' + modelingExercise.id)
-                .children()
-                .eq(5)
-                .should('contain.text', points.toString());
+            cy.get('#modeling-exercise-card').children().eq(1).should('contain.text', newTitle);
+            cy.get('#modeling-exercise-card').children().eq(5).should('contain.text', points.toString());
         });
     });
 
