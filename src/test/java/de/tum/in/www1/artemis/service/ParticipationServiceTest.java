@@ -8,6 +8,7 @@ import static org.mockito.Mockito.doReturn;
 
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
@@ -36,6 +37,13 @@ public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGi
         Course course = database.addCourseWithOneProgrammingExercise();
         this.programmingExercise = database.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         MockitoAnnotations.openMocks(this);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        database.resetDatabase();
+        gitlabRequestMockProvider.reset();
+        jenkinsRequestMockProvider.reset();
     }
 
     /**
