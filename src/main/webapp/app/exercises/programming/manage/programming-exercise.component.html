@@ -31,7 +31,7 @@
         </ng-container>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
-    <div class="table-responsive" *ngIf="programmingExercises && filteredProgrammingExercises.length > 0" id="exercise-card">
+    <div class="table-responsive" *ngIf="programmingExercises && filteredProgrammingExercises.length > 0">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
@@ -66,7 +66,7 @@
             </thead>
 
             <tbody>
-                <tr *ngFor="let programmingExercise of filteredProgrammingExercises; trackBy: trackId">
+                <tr *ngFor="let programmingExercise of filteredProgrammingExercises; trackBy: trackId" [id]="'exercise-card-' + programmingExercise.title">
                     <td *ngIf="programmingExercise.isAtLeastEditor" class="d-md-table-cell">
                         <input type="checkbox" (change)="toggleProgrammingExercise(programmingExercise)" [ngModel]="isExerciseSelected(programmingExercise)" />
                     </td>

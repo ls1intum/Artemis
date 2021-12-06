@@ -8,7 +8,7 @@ export class CourseOverviewPage {
     readonly participationRequestId = 'participateInExerciseQuery';
 
     private getExerciseCardRootElement(exerciseName: string) {
-        return cy.get('.course-body-container').contains(exerciseName).parents('.course-exercise-row');
+        return cy.get('#exercise-card-' + exerciseName);
     }
 
     startExercise(exerciseName: string, exerciseType: CypressExerciseType) {
