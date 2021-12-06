@@ -10,7 +10,7 @@ const ASSESSMENT_CONTAINER = '#modeling-assessment-container';
  */
 export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessmentPage {
     openAssessmentForComponent(componentNumber: number) {
-        cy.get('.apollon-row').getSettled(`${MODELING_EDITOR_CANVAS} >>> :nth-child(${componentNumber})`).children().eq(0).dblclick('top', { force: true });
+        cy.get('#apollon-assessment-row').getSettled(`${MODELING_EDITOR_CANVAS} >>> :nth-child(${componentNumber})`).children().eq(0).dblclick('top', { force: true });
     }
 
     assessComponent(points: number, feedback: string) {
