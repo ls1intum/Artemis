@@ -47,7 +47,10 @@ describe('Text exercise management', () => {
         textCreation.typeProblemStatement(problemStatement);
         textCreation.typeExampleSolution(exampleSolution);
         cy.get('[jhitranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise"]').should('be.visible');
-        textCreation.create().its('response.statusCode').should('eq', 201);
+        let exercise: any;
+        textCreation.create().then((request: any) => {
+            exercise = request.response.body;
+        });
 
         // Create an example submission
         exampleSubmissions.clickCreateExampleSubmission();
@@ -66,25 +69,27 @@ describe('Text exercise management', () => {
 
         // Make sure text exercise is shown in exercises list
         cy.visit(`course-management/${course.id}/exercises`);
-        courseManagementExercises.getExerciseRowRootElement(exerciseTitle).should('be.visible');
+        courseManagementExercises.getExerciseRowRootElement(exercise.id).should('be.visible');
     });
 
     describe('Text exercise deletion', () => {
-        const exerciseTitle = 'Text exercise' + generateUUID();
+        let exercise: any;
 
         beforeEach(() => {
             cy.login(users.getAdmin(), '/');
-            courseManagement.createTextExercise({ course }, exerciseTitle);
+            courseManagement.createTextExercise({ course }).then((request: any) => {
+                exercise = request.response.body;
+            });
         });
 
         it('Deletes an existing text exercise', () => {
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(course.shortName);
-            courseManagementExercises.clickDeleteExercise(exerciseTitle);
+            courseManagementExercises.clickDeleteExercise(exercise.id);
             cy.intercept(DELETE, BASE_API + 'text-exercises/*').as('deleteTextExercise');
-            cy.get('[type="text"], [name="confirmExerciseName"]').type(exerciseTitle).type('{enter}');
+            cy.get('[type="text"], [name="confirmExerciseName"]').type(exercise.title).type('{enter}');
             cy.wait('@deleteTextExercise');
-            cy.contains(exerciseTitle).should('not.exist');
+            cy.contains(exercise.title).should('not.exist');
         });
     });
 

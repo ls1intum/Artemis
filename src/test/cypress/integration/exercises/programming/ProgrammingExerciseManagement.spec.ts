@@ -73,9 +73,12 @@ describe('Programming Exercise Management', () => {
             programmingCreation.setPackageName('de.test');
             programmingCreation.setPoints(100);
             programmingCreation.checkAllowOnlineEditor();
-            programmingCreation.generate().its('response.statusCode').should('eq', 201);
+            let exercise: any;
+            programmingCreation.generate().then((request: any) => {
+                exercise = request.response.body;
+            });
             cy.url().should('include', '/exercises');
-            courseExercises.shouldContainExerciseWithName(exerciseTitle);
+            courseExercises.shouldContainExerciseWithName(exercise.id);
         });
     });
 
