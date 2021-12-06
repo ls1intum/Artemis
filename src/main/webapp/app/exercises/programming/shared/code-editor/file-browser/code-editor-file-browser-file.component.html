@@ -5,7 +5,7 @@
     [class.node-selected]="item.checked"
     [class.text-danger]="!item.checked && hasError"
     [class.bg-warning]="hasChanges"
-    [id]="'file-browser-file-' + item.text"
+    id="file-browser-file"
 >
     <fa-icon aria-hidden="true" [icon]="'file'" [fixedWidth]="true"></fa-icon>
     <span class="ms-1 list-group-item__fileName" *ngIf="!isBeingRenamed" [ngClass]="item.checked ? 'text-white' : 'primary'">{{ item.text }}</span>

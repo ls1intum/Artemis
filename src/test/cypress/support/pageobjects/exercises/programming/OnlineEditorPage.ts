@@ -11,6 +11,13 @@ const buildingAndTesting = 'Building and testing...';
  */
 export class OnlineEditorPage {
     /**
+     * @returns the root element of the file browser. Useful for further querying.
+     */
+    findFileBrowser() {
+        return cy.get('#cardFiles');
+    }
+
+    /**
      * Focuses the code editor content to allow typing into it.
      */
     focusCodeEditor() {
@@ -54,10 +61,10 @@ export class OnlineEditorPage {
      */
     deleteFile(name: string) {
         cy.intercept(DELETE, BASE_API + 'repository/*/**').as('deleteFile');
-        this.findFile(name).find('[data-icon="trash"]').click();
-        cy.get('[jhitranslate="artemisApp.editor.fileBrowser.delete"]').click();
+        this.findFile(name).find('#file-browser-file-delete').click();
+        cy.get('#delete-file').click();
         cy.wait('@deleteFile').its('response.statusCode').should('eq', 200);
-        this.findFile(name).should('not.exist');
+        this.findFileBrowser().contains(name).should('not.exist');
     }
 
     /**
@@ -65,7 +72,7 @@ export class OnlineEditorPage {
      * @returns the root element of a file in the filebrowser
      */
     private findFile(name: string) {
-        return cy.get('#file-browser-file-' + name);
+        return this.findFileBrowser().contains(name).parents('#file-browser-file');
     }
 
     /**
@@ -106,7 +113,7 @@ export class OnlineEditorPage {
         cy.wait('@' + getRequestId)
             .its('response.statusCode')
             .should('eq', 200);
-        this.findFile(fileName).should('be.visible').wait(500);
+        this.findFileBrowser().contains(fileName).should('be.visible').wait(500);
     }
 
     /**
