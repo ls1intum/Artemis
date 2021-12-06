@@ -30,7 +30,7 @@ describe('Exam creation/deletion', () => {
     it('Creates an exam', function () {
         const creationPage = artemis.pageobjects.examCreation;
         navigationBar.openCourseManagement();
-        courseManagement.openExamsOfCourse(course.title);
+        courseManagement.openExamsOfCourse(course.shortName);
 
         examManagement.createNewExam();
         creationPage.setTitle(examTitle);
@@ -56,7 +56,7 @@ describe('Exam creation/deletion', () => {
 
         it('Deletes an existing exam', () => {
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.title);
+            courseManagement.openExamsOfCourse(course.shortName);
             examManagement.deleteExam(examTitle);
             examManagement.getExamSelector(examTitle).should('not.exist');
         });

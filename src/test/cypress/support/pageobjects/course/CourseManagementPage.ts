@@ -88,13 +88,13 @@ export class CourseManagementPage {
     /**
      * Opens the exams of a course.
      */
-    openExamsOfCourse(courseName: string) {
-        this.getCourseCard(courseName).find('.card-footer').children().eq(1).click();
+    openExamsOfCourse(courseShortName: string) {
+        this.getCourseCard(courseShortName).find('#course-card-open-exams').click();
         cy.url().should('include', '/exams');
     }
 
-    openAssessmentDashboardOfCourseWithId(courseId: number) {
-        cy.get(`[href="/course-management/${courseId}/assessment-dashboard"]`).click();
-        cy.url().should('contain', `/course-management/${courseId}/assessment-dashboard`);
+    openAssessmentDashboardOfCourseWithId(courseShortName: string) {
+        this.getCourseCard(courseShortName).find('#course-card-open-assessment-dashboard').click();
+        cy.url().should('include', '/assessment-dashboard');
     }
 }
