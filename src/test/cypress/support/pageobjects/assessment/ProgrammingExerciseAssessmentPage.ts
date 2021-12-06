@@ -16,7 +16,7 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
     }
 
     private typeIntoFeedbackEditor(text: string) {
-        cy.get('#feedback-text-area').type(text, { parseSpecialCharSequences: false });
+        cy.get('#feedback-textarea').type(text, { parseSpecialCharSequences: false });
     }
 
     private typePointsIntoFeedbackEditor(points: number) {
