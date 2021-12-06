@@ -6,6 +6,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -214,8 +215,7 @@ public class SubmissionService {
             return Optional.empty();
         }
         else {
-            final Random random = new Random();
-            return Optional.of(submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size())));
+            return Optional.of(submissionsWithoutResult.get(ThreadLocalRandom.current().nextInt(submissionsWithoutResult.size())));
         }
     }
 
