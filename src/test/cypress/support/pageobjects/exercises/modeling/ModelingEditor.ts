@@ -1,7 +1,6 @@
 import { BASE_API, PUT } from '../../../constants';
 import scrollBehaviorOptions = Cypress.scrollBehaviorOptions;
 
-// TODO: find or create better selectors for modeling objects
 export const MODELING_EDITOR_CANVAS = '#modeling-editor-canvas';
 
 /**
