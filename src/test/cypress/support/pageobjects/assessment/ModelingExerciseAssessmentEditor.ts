@@ -2,7 +2,7 @@ import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage
 import { MODELING_EDITOR_CANVAS } from '../exercises/modeling/ModelingEditor';
 import { CypressExerciseType } from '../../requests/CourseManagementRequests';
 import { BASE_API, PUT } from '../../constants';
-// TODO: find or create better selectors for this
+
 const ASSESSMENT_CONTAINER = '#modeling-assessment-container';
 
 /**
