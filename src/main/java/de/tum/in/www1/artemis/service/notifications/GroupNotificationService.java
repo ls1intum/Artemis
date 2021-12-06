@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.notification.ExamNotificationTargetWithoutProblemStatement;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -42,13 +41,16 @@ public class GroupNotificationService {
 
     private final NotificationSettingsService notificationSettingsService;
 
+    private final NotificationTargetService notificationTargetService;
+
     public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
-            MailService mailService, NotificationSettingsService notificationSettingsService) {
+            MailService mailService, NotificationSettingsService notificationSettingsService, NotificationTargetService notificationTargetService) {
         this.groupNotificationRepository = groupNotificationRepository;
         this.messagingTemplate = messagingTemplate;
         this.userRepository = userRepository;
         this.mailService = mailService;
         this.notificationSettingsService = notificationSettingsService;
+        this.notificationTargetService = notificationTargetService;
     }
 
     /**
@@ -419,7 +421,7 @@ public class GroupNotificationService {
      */
     private void saveExamNotification(GroupNotification notification) {
         String originalTarget = notification.getTarget();
-        String targetWithoutProblemStatement = ExamNotificationTargetWithoutProblemStatement.getTargetWithoutProblemStatement(notification.getTarget());
+        String targetWithoutProblemStatement = notificationTargetService.getTargetWithoutProblemStatement(notification.getTargetTransient());
         notification.setTarget(targetWithoutProblemStatement);
         groupNotificationRepository.save(notification);
         notification.setTarget(originalTarget);

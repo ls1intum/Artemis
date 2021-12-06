@@ -125,6 +125,11 @@ public abstract class Notification extends DomainObject {
         this.targetTransient = targetTransient;
     }
 
+    public void setTransientAndStringTarget(JsonObject targetTransient) {
+        this.setTargetTransient(targetTransient);
+        this.setTarget(targetTransient.toString());
+    }
+
     public NotificationPriority getPriority() {
         return priority;
     }

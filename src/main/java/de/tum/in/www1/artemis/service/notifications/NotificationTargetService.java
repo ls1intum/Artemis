@@ -15,43 +15,43 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 public class NotificationTargetService {
 
     // shared constants
-    private static final String MESSAGE_TEXT = "message";
+    public static final String MESSAGE_TEXT = "message";
 
-    private static final String ID_TEXT = "id";
+    public static final String ID_TEXT = "id";
 
-    private static final String ENTITY_TEXT = "entity";
+    public static final String ENTITY_TEXT = "entity";
 
-    private static final String COURSE_TEXT = "course";
+    public static final String COURSE_TEXT = "course";
 
-    private static final String COURSES_TEXT = "courses";
+    public static final String COURSES_TEXT = "courses";
 
-    private static final String MAIN_PAGE_TEXT = "mainPage";
+    public static final String MAIN_PAGE_TEXT = "mainPage";
 
-    private static final String PROGRAMMING_EXERCISES_TEXT = "programming-exercises";
+    public static final String PROGRAMMING_EXERCISES_TEXT = "programming-exercises";
 
-    private static final String COURSE_MANAGEMENT_TEXT = "course-management";
+    public static final String COURSE_MANAGEMENT_TEXT = "course-management";
 
-    private static final String PROBLEM_STATEMENT_TEXT = "problemStatement";
+    public static final String PROBLEM_STATEMENT_TEXT = "problemStatement";
 
-    private static final String EXERCISE_TEXT = "exercise";
+    public static final String EXERCISE_TEXT = "exercise";
 
-    private static final String EXERCISES_TEXT = "exercises";
+    public static final String EXERCISES_TEXT = "exercises";
 
-    private static final String EXERCISE_ID_TEXT = "exerciseId";
+    public static final String EXERCISE_ID_TEXT = "exerciseId";
 
-    private static final String EXAM_TEXT = "exam";
+    public static final String EXAM_TEXT = "exam";
 
-    private static final String EXAMS_TEXT = "exams";
+    public static final String EXAMS_TEXT = "exams";
 
-    private static final String LECTURES_TEXT = "lectures";
+    public static final String LECTURES_TEXT = "lectures";
 
-    private static final String LECTURE_ID_TEXT = "lectureId";
+    public static final String LECTURE_ID_TEXT = "lectureId";
 
-    private static final String ATTACHMENT_UPDATED_TEXT = "attachmentUpdated";
+    public static final String ATTACHMENT_UPDATED_TEXT = "attachmentUpdated";
 
-    private static final String EXERCISE_RELEASED_TEXT = "exerciseReleased";
+    public static final String EXERCISE_RELEASED_TEXT = "exerciseReleased";
 
-    private static final String EXERCISE_UPDATED_TEXT = "exerciseUpdated";
+    public static final String EXERCISE_UPDATED_TEXT = "exerciseUpdated";
 
     // EXERCISE related targets
 
@@ -60,7 +60,7 @@ public class NotificationTargetService {
      * @param exercise that was released
      * @return the final target property
      */
-    public String getExerciseReleasedTarget(Exercise exercise) {
+    public JsonObject getExerciseReleasedTarget(Exercise exercise) {
         return getExerciseTarget(exercise, EXERCISE_RELEASED_TEXT);
     }
 
@@ -69,7 +69,7 @@ public class NotificationTargetService {
      * @param exercise that was updated
      * @return the final target property
      */
-    public String getExerciseUpdatedTarget(Exercise exercise) {
+    public JsonObject getExerciseUpdatedTarget(Exercise exercise) {
         return getExerciseTarget(exercise, EXERCISE_UPDATED_TEXT);
     }
 
@@ -80,14 +80,14 @@ public class NotificationTargetService {
      * @param message             to use for the notification
      * @return the stringified JSON of the target
      */
-    public String getExamProgrammingExerciseOrTestCaseTarget(ProgrammingExercise programmingExercise, String message) {
+    public JsonObject getExamProgrammingExerciseOrTestCaseTarget(ProgrammingExercise programmingExercise, String message) {
         JsonObject target = new JsonObject();
         target.addProperty(MESSAGE_TEXT, message);
         target.addProperty(ID_TEXT, programmingExercise.getId());
         target.addProperty(ENTITY_TEXT, PROGRAMMING_EXERCISES_TEXT);
         target.addProperty(COURSE_TEXT, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         target.addProperty(MAIN_PAGE_TEXT, COURSE_MANAGEMENT_TEXT);
-        return target.toString();
+        return target;
     }
 
     /**
@@ -96,7 +96,7 @@ public class NotificationTargetService {
      * @param exercise for which to create the notification
      * @return the stringified JSON of the target with the updated problem statement of exercise
      */
-    public String getExamExerciseTargetWithExerciseUpdate(Exercise exercise) {
+    public JsonObject getExamExerciseTargetWithExerciseUpdate(Exercise exercise) {
         JsonObject target = new JsonObject();
         target.addProperty(PROBLEM_STATEMENT_TEXT, exercise.getProblemStatement());
         target.addProperty(EXERCISE_TEXT, exercise.getId());
@@ -104,7 +104,7 @@ public class NotificationTargetService {
         target.addProperty(ENTITY_TEXT, EXAMS_TEXT);
         target.addProperty(COURSE_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId());
         target.addProperty(MAIN_PAGE_TEXT, COURSES_TEXT);
-        return target.toString();
+        return target;
     }
 
     /**
@@ -114,14 +114,14 @@ public class NotificationTargetService {
      * @param message to use for the notification
      * @return the stringified JSON of the target
      */
-    public String getExerciseTarget(Exercise exercise, String message) {
+    public JsonObject getExerciseTarget(Exercise exercise, String message) {
         JsonObject target = new JsonObject();
         target.addProperty(MESSAGE_TEXT, message);
         target.addProperty(ID_TEXT, exercise.getId());
         target.addProperty(ENTITY_TEXT, EXERCISES_TEXT);
         target.addProperty(COURSE_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId());
         target.addProperty(MAIN_PAGE_TEXT, COURSES_TEXT);
-        return target.toString();
+        return target;
     }
 
     // LECTURE related targets
@@ -133,14 +133,14 @@ public class NotificationTargetService {
      * @param message to use for the notification
      * @return the stringified JSON of the target
      */
-    public String getLectureTarget(Lecture lecture, String message) {
+    public JsonObject getLectureTarget(Lecture lecture, String message) {
         JsonObject target = new JsonObject();
         target.addProperty(MESSAGE_TEXT, message);
         target.addProperty(ID_TEXT, lecture.getId());
         target.addProperty(ENTITY_TEXT, LECTURES_TEXT);
         target.addProperty(COURSE_TEXT, lecture.getCourse().getId());
         target.addProperty(MAIN_PAGE_TEXT, COURSES_TEXT);
-        return target.toString();
+        return target;
     }
 
     /**
@@ -148,7 +148,7 @@ public class NotificationTargetService {
      * @param lecture where an attachment was updated
      * @return the final target property
      */
-    public String getAttachmentUpdatedTarget(Lecture lecture) {
+    public JsonObject getAttachmentUpdatedTarget(Lecture lecture) {
         return getLectureTarget(lecture, ATTACHMENT_UPDATED_TEXT);
     }
 
@@ -161,14 +161,14 @@ public class NotificationTargetService {
      * @param message to use for the notification
      * @return the stringified JSON of the target
      */
-    public String getCourseTarget(Course course, String message) {
+    public JsonObject getCourseTarget(Course course, String message) {
         JsonObject target = new JsonObject();
         target.addProperty(MESSAGE_TEXT, message);
         target.addProperty(ID_TEXT, course.getId());
         target.addProperty(ENTITY_TEXT, COURSES_TEXT);
         target.addProperty(COURSE_TEXT, course.getId());
         target.addProperty(MAIN_PAGE_TEXT, COURSES_TEXT);
-        return target.toString();
+        return target;
     }
 
     // POST related targets
@@ -179,12 +179,12 @@ public class NotificationTargetService {
      * @param course the post belongs to
      * @return the final target property
      */
-    public String getLecturePostTarget(Post post, Course course) {
+    public JsonObject getLecturePostTarget(Post post, Course course) {
         JsonObject target = new JsonObject();
         target.addProperty(ID_TEXT, post.getId());
         target.addProperty(LECTURE_ID_TEXT, post.getLecture().getId());
         target.addProperty(COURSE_TEXT, course.getId());
-        return target.toString();
+        return target;
     }
 
     /**
@@ -193,12 +193,12 @@ public class NotificationTargetService {
      * @param course the post belongs to
      * @return the final target property
      */
-    public String getExercisePostTarget(Post post, Course course) {
+    public JsonObject getExercisePostTarget(Post post, Course course) {
         JsonObject target = new JsonObject();
         target.addProperty(ID_TEXT, post.getId());
         target.addProperty(EXERCISE_ID_TEXT, post.getExercise().getId());
         target.addProperty(COURSE_TEXT, course.getId());
-        return target.toString();
+        return target;
     }
 
     /**
@@ -207,11 +207,22 @@ public class NotificationTargetService {
      * @param course the post belongs to
      * @return the final target property
      */
-    public String getCoursePostTarget(Post post, Course course) {
+    public JsonObject getCoursePostTarget(Post post, Course course) {
         JsonObject target = new JsonObject();
         target.addProperty(ID_TEXT, post.getId());
         target.addProperty(COURSE_TEXT, course.getId());
-        return target.toString();
+        return target;
+    }
+
+    /// Exam related
+
+    /**
+     * Extracts the target from an exam notification without the problem statement
+     * @param transientTarget of the original exam notification with problem statement
+     * @return the target of the exam notification without the problem statement (for saving)
+     */
+    public static String getTargetWithoutProblemStatement(JsonObject transientTarget) {
+        return transientTarget.remove(PROBLEM_STATEMENT_TEXT).toString();
     }
 
     /// URL/Link related methods
@@ -224,7 +235,7 @@ public class NotificationTargetService {
      */
     public String extractNotificationUrl(Notification notification, String baseUrl) {
         JsonObject target = notification.getTargetTransient();
-        return baseUrl + "/" + target.get("mainPage") + "/" + target.get("course") + "/" + target.get("entity") + "/" + target.get("notificationSubjectId");
+        return baseUrl + "/" + target.get(MAIN_PAGE_TEXT) + "/" + target.get(COURSE_TEXT) + "/" + target.get(ENTITY_TEXT) + "/" + target.get("notificationSubjectId");
     }
 
     /**
