@@ -1,4 +1,4 @@
-<div class="card" [id]="'course-card-' + course.shortName">
+<div class="card" [id]="'course-card-' + course.id">
     <div id="course-card-header" class="card-heading text-white" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
         <a class="stretched-link" [routerLink]="['/course-management', course.id]"></a>
         <div class="card-header-left">
