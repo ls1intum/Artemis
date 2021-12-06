@@ -41,7 +41,7 @@
                 "minlength": "Der Name muss mindestens 3 Zeichen lang sein."
             },
             "teamName": {
-                "missingTeamName": "Studierende:r {{ studentName }} in Eintrag {{ entryNr }} ist kein Teamname zuordnet.",
+                "missingTeamName": "Studierende:r {{ studentName }} in Eintrag {{ entryNr }} ist kein Teamname zugeordnet.",
                 "pattern": "Der Teamname {{ teamName }} in Eintrag {{ entryNr }} beginnt nicht mit einem Buchstaben."
             },
             "shortName": {
