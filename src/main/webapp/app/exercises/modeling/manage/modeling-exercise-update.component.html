@@ -26,7 +26,7 @@
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
             <div>
-                <jhi-difficulty-picker [exercise]="modelingExercise"></jhi-difficulty-picker>
+                <jhi-difficulty-picker [exercise]="modelingExercise" id="modeling-difficulty-picker"></jhi-difficulty-picker>
             </div>
         </div>
         <jhi-team-config-form-group class="form-element" [exercise]="modelingExercise" [isImport]="isImport"></jhi-team-config-form-group>
@@ -203,6 +203,7 @@
             type="button"
             [disabled]="editForm.form.invalid || isSaving || modelingExercise.dueDateError || modelingExercise.assessmentDueDateError"
             class="btn btn-primary"
+            id="modeling-exercise-creation-save"
             (click)="save()"
         >
             <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>

@@ -5,7 +5,6 @@ import { MODELING_EXERCISE_BASE } from '../../../requests/CourseManagementReques
  * Path: /course-management/{courseID}/modeling-exercises/{exerciseID}
  */
 export class CreateModelingExercisePage {
-    DIFFICULTY_BAR = 'jhi-difficulty-picker > :nth-child(1) >';
     setTitle(title: string) {
         cy.get('#field_title').clear().type(title);
     }
@@ -24,7 +23,7 @@ export class CreateModelingExercisePage {
 
     save() {
         cy.intercept(MODELING_EXERCISE_BASE).as('createModelingExercise');
-        cy.get('[jhitranslate="entity.action.save"]').click();
+        cy.get('#modeling-exercise-creation-save').click();
         return cy.wait('@createModelingExercise');
     }
 
@@ -58,13 +57,17 @@ export class CreateModelingExercisePage {
 
     pickDifficulty(options: { hard?: boolean; medium?: boolean; easy?: boolean }) {
         if (options.hard) {
-            cy.get(this.DIFFICULTY_BAR).eq(3).click();
+            this.getDiffifultyBar().eq(3).click();
         } else if (options.medium) {
-            cy.get(this.DIFFICULTY_BAR).eq(2).click();
+            this.getDiffifultyBar().eq(2).click();
         } else if (options.easy) {
-            cy.get(this.DIFFICULTY_BAR).eq(1).click();
+            this.getDiffifultyBar().eq(1).click();
         } else {
-            cy.get(this.DIFFICULTY_BAR).eq(0).click();
+            this.getDiffifultyBar().eq(0).click();
         }
+    }
+
+    private getDiffifultyBar() {
+        return cy.get('modeling-difficulty-picker').children().eq(0);
     }
 }
