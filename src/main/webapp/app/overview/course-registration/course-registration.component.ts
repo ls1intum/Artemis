@@ -34,10 +34,6 @@ export class CourseRegistrationComponent implements OnInit {
         });
     }
 
-    trackCourseById(index: number, item: Course) {
-        return item.id;
-    }
-
     loadAndFilterCourses() {
         this.courseService.findAllToRegister().subscribe((registerRes) => {
             this.coursesToSelect = registerRes

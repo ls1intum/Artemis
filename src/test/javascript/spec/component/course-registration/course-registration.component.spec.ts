@@ -48,11 +48,6 @@ describe('CourseRegistrationComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should track course by Id', () => {
-        const indexNumber = 1;
-        expect(component.trackCourseById(indexNumber, course1)).toEqual(indexNumber);
-    });
-
     it('should show registratable courses', fakeAsync(() => {
         component.courses = [course2];
 

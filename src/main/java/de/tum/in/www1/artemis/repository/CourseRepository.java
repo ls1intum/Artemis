@@ -96,6 +96,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals" })
     Course findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
 
+    // not used at the moment
     @Query("""
             SELECT DISTINCT c FROM Course c
             WHERE (c.startDate IS NULL

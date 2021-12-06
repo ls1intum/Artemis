@@ -181,7 +181,7 @@ export class CourseManagementService {
      */
     findAllToRegister(): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Course[]>(`${this.resourceUrl}/to-register`, { observe: 'response' })
+            .get<Course[]>(`${this.resourceUrl}/for-registration`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)));
     }
 

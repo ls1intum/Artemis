@@ -655,7 +655,7 @@ public class CourseTestService {
         courseRepo.save(courseNotActivePast);
         courseRepo.save(courseNotActiveFuture);
 
-        List<Course> courses = request.getList("/api/courses/to-register", HttpStatus.OK, Course.class);
+        List<Course> courses = request.getList("/api/courses/for-registration", HttpStatus.OK, Course.class);
         assertThat(courses.size()).as("Exactly one course is available to register").isEqualTo(1);
         courses.get(0).setId(courseActiveRegistrationEnabled.getId());
         assertThat(courses.get(0)).as("Only active course is returned").isEqualTo(courseActiveRegistrationEnabled);
