@@ -20,6 +20,7 @@ export class OnlineEditorPage {
      * Focuses the code editor content to allow typing into it.
      */
     focusCodeEditor() {
+        // The ace editor is an external element, so we can't freely add ids here
         return cy.get('#ace-code-editor').find('.ace_content').click();
     }
 
@@ -122,20 +123,6 @@ export class OnlineEditorPage {
     }
 
     /**
-     * @returns the root element of the panel on the right, which shows all instructions
-     */
-    getInstructionsPanel() {
-        return cy.get('#cardInstructions');
-    }
-
-    /**
-     * @returns returns all instruction symbols. Each test has one instruction symbol with its state (questionmark, cross or checkmark)
-     */
-    getInstructionSymbols() {
-        return this.getInstructionsPanel().get('.stepwizard-row').find('.stepwizard-step');
-    }
-
-    /**
      * @returns the root element of the panel, which shows the CI build output.
      */
     getBuildOutput() {
@@ -161,15 +148,15 @@ export function makeSubmissionAndVerifyResults(editorPage: OnlineEditorPage, pac
 /**
  * Starts the participation in the test programming exercise.
  */
-export function startParticipationInProgrammingExercise(courseName: string, programmingExerciseName: string, credentials: CypressCredentials) {
+export function startParticipationInProgrammingExercise(courseName: string, exerciseId: string, credentials: CypressCredentials) {
     const courseOverview = artemis.pageobjects.courseOverview;
     cy.login(credentials, '/');
     cy.url().should('include', '/courses');
     cy.log('Participating in the programming exercise as a student...');
     cy.contains(courseName).parents('.card-header').click();
     cy.url().should('include', '/exercises');
-    courseOverview.startExercise(programmingExerciseName, CypressExerciseType.PROGRAMMING);
-    courseOverview.openRunningProgrammingExercise(programmingExerciseName);
+    courseOverview.startExercise(exerciseId, CypressExerciseType.PROGRAMMING);
+    courseOverview.openRunningProgrammingExercise(exerciseId);
 }
 
 /**

@@ -14,24 +14,26 @@ const courseOverview = artemis.pageobjects.courseOverview;
 
 describe('Text exercise participation', () => {
     let course: any;
-    const exerciseTitle = 'Text exercise ' + generateUUID();
+    let exercise: any;
 
     before(() => {
         cy.login(users.getAdmin());
         courseManagement.createCourse().then((response) => {
             course = response.body;
             courseManagement.addStudentToCourse(course.id, users.getStudentOne().username);
-            courseManagement.createTextExercise({ course }, exerciseTitle);
+            courseManagement.createTextExercise({ course }).then((request: any) => {
+                exercise = request.response.body;
+            });
         });
     });
 
     it('Creates a text exercise in the UI', () => {
         cy.login(users.getStudentOne(), `/courses/${course.id}/exercises`);
-        courseOverview.startExercise(exerciseTitle, CypressExerciseType.TEXT);
-        courseOverview.openRunningExercise(exerciseTitle);
+        courseOverview.startExercise(exercise.id, CypressExerciseType.TEXT);
+        courseOverview.openRunningExercise(exercise.id);
 
         // Verify the initial state of the text editor
-        textEditor.shouldShowExerciseTitleInHeader(exerciseTitle);
+        textEditor.shouldShowExerciseTitleInHeader(exercise.title);
         textEditor.shouldShowProblemStatement();
         textEditor.getHeaderElement().contains('No Submission').should('be.visible');
 

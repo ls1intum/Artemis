@@ -13,6 +13,7 @@
             [routerLink]="['/courses', courseId, 'quiz-exercises', exercise.id, 'practice']"
         ></button>
         <button
+            [id]="'open-exercise-' + exercise.id"
             jhi-exercise-action-button
             buttonIcon="play-circle"
             [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | artemisTranslate"
@@ -23,6 +24,7 @@
             (click)="startExercise()"
         ></button>
         <button
+            [id]="'start-exercise-' + exercise.id"
             jhi-exercise-action-button
             buttonIcon="play-circle"
             [buttonLabel]="'artemisApp.exerciseActions.startQuiz' | artemisTranslate"
@@ -34,6 +36,7 @@
             (click)="startExercise()"
         ></button>
         <button
+            [id]="'open-exercise-' + exercise.id"
             jhi-exercise-action-button
             buttonIcon="play-circle"
             [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | artemisTranslate"
@@ -97,6 +100,7 @@
             [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
         ></button>
         <button
+            [id]="'start-exercise-' + exercise.id"
             jhi-exercise-action-button
             buttonIcon="play-circle"
             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
@@ -107,6 +111,7 @@
             (click)="startExercise()"
         ></button>
         <button
+            [id]="'open-exercise-' + exercise.id"
             jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'artemisApp.exerciseActions.openModelingEditor' | artemisTranslate"
@@ -175,6 +180,7 @@
             [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
         ></button>
         <button
+            [id]="'start-exercise-' + exercise.id"
             class="start-exercise"
             jhi-exercise-action-button
             buttonIcon="play-circle"
@@ -191,6 +197,7 @@
         <ng-container *ngIf="participationStatusWrapper() == ParticipationStatus.INITIALIZED && exercise.studentParticipations && exercise.studentParticipations.length > 0">
             <ng-container *jhiExtensionPoint="overrideCloneOnlineEditorButton; context: { exercise: exercise }">
                 <button
+                    [id]="'open-exercise-' + exercise.id"
                     jhi-exercise-action-button
                     buttonIcon="folder-open"
                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
@@ -213,6 +220,7 @@
         </ng-container>
         <!-- NOTE: we use the same logic 'isStartExerciseAvailable' in ngIf as above because start and resume are not always possible -->
         <button
+            [id]="'resume-exercise-' + exercise.id"
             jhi-exercise-action-button
             buttonIcon="play-circle"
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"

@@ -23,7 +23,7 @@ describe('Static code analysis tests', () => {
 
     it('Configures SCA grading and makes a successful submission with SCA errors', () => {
         configureStaticCodeAnalysisGrading();
-        startParticipationInProgrammingExercise(course.title, exercise.title, users.getStudentOne());
+        startParticipationInProgrammingExercise(course.title, exercise.id, users.getStudentOne());
         makeSuccessfulSubmissionWithScaErrors();
     });
 

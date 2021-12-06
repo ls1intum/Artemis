@@ -1,4 +1,4 @@
-<div class="course-exercise-row row align-items-center mb-2 mt-2" (click)="showDetails($event)" [class.guided-tour]="hasGuidedTour">
+<div [id]="'exercise-card-' + exercise.id" class="course-exercise-row row align-items-center mb-2 mt-2" (click)="showDetails($event)" [class.guided-tour]="hasGuidedTour">
     <div class="col-auto d-none d-sm-block">
         <div class="exercise-row-icon">
             <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" size="2x" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
