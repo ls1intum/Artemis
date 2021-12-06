@@ -1,3 +1,4 @@
+import { DELETE } from './../../../constants';
 import { artemis } from './../../../ArtemisTesting';
 import { CypressExerciseType } from '../../../requests/CourseManagementRequests';
 import { GET, BASE_API, POST } from '../../../constants';
@@ -9,13 +10,6 @@ const buildingAndTesting = 'Building and testing...';
  * A class which encapsulates UI selectors and actions for the Online Editor Page.
  */
 export class OnlineEditorPage {
-    /**
-     * @returns the root element of the file browser. Useful for further querying.
-     */
-    findFileBrowser() {
-        return cy.get('#cardFiles');
-    }
-
     /**
      * Focuses the code editor content to allow typing into it.
      */
@@ -59,11 +53,11 @@ export class OnlineEditorPage {
      * @param name the file name
      */
     deleteFile(name: string) {
-        cy.intercept('DELETE', '/api/repository/*/**').as('deleteFile');
+        cy.intercept(DELETE, BASE_API + 'repository/*/**').as('deleteFile');
         this.findFile(name).find('[data-icon="trash"]').click();
         cy.get('[jhitranslate="artemisApp.editor.fileBrowser.delete"]').click();
         cy.wait('@deleteFile').its('response.statusCode').should('eq', 200);
-        this.findFileBrowser().contains(name).should('not.exist');
+        this.findFile(name).should('not.exist');
     }
 
     /**
@@ -71,7 +65,7 @@ export class OnlineEditorPage {
      * @returns the root element of a file in the filebrowser
      */
     private findFile(name: string) {
-        return this.findFileBrowser().contains(name).parent();
+        return cy.get('#file-browser-file-' + name);
     }
 
     /**
@@ -102,17 +96,17 @@ export class OnlineEditorPage {
         const postRequestId = 'createFile' + fileName;
         const getRequestId = 'getFile' + fileName;
         const requestPath = BASE_API + 'repository/*/file?file=' + filePath;
-        cy.get('.file-icons').children('button').first().click().wait(500);
+        cy.get('#file-browser-folder-create-file').click().wait(500);
         cy.intercept(POST, requestPath).as(postRequestId);
         cy.intercept(GET, requestPath).as(getRequestId);
-        cy.get('jhi-code-editor-file-browser-create-node').type(fileName).wait(500).type('{enter}');
+        cy.get('#file-browser-create-node').type(fileName).wait(500).type('{enter}');
         cy.wait('@' + postRequestId)
             .its('response.statusCode')
             .should('eq', 200);
         cy.wait('@' + getRequestId)
             .its('response.statusCode')
             .should('eq', 200);
-        this.findFileBrowser().contains(fileName).should('be.visible').wait(500);
+        this.findFile(fileName).should('be.visible').wait(500);
     }
 
     /**

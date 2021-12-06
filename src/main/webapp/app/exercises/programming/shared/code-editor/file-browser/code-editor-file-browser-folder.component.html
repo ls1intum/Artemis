@@ -1,5 +1,5 @@
 <!--Folder-->
-<li (click)="onCollapseExpand()" class="list-group-item list-group-item--folder">
+<li (click)="onCollapseExpand()" class="list-group-item list-group-item--folder" id="file-browser-folder">
     <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'chevron-right' : 'chevron-down'" [fixedWidth]="true" class="me-1" size="xs"></fa-icon>
     <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'folder' : 'folder-open'" [fixedWidth]="true"></fa-icon>
     <span class="ms-1 list-group-item__fileName" *ngIf="!isBeingRenamed">{{ item.text }}</span>
@@ -16,7 +16,7 @@
     <!-- Folder level actions -->
     <span class="file-icons">
         <button [disabled]="disableActions" (click)="setCreatingNodeInFolder($event, FileType.FILE)" class="btn btn-small">
-            <fa-icon [icon]="'file'" title="{{ 'artemisApp.editor.fileBrowser.createFile' | artemisTranslate }}"></fa-icon>
+            <fa-icon id="file-browser-folder-create-file" [icon]="'file'" title="{{ 'artemisApp.editor.fileBrowser.createFile' | artemisTranslate }}"></fa-icon>
         </button>
         <button [disabled]="disableActions" (click)="setCreatingNodeInFolder($event, FileType.FOLDER)" class="btn btn-small">
             <fa-icon [icon]="'folder'" title="{{ 'artemisApp.editor.fileBrowser.createFolder' | artemisTranslate }}"></fa-icon>
