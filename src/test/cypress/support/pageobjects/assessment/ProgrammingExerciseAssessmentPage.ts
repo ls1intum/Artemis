@@ -8,27 +8,23 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
     readonly feedbackEditorSelector = '.inline-feedback';
 
     provideFeedbackOnCodeLine(lineIndex: number, points: number, feedback: string) {
+        // We can't adjust change elements from the ace editor, so we can't use custom ids here
         cy.get(`.ace_gutter > .ace_layer > :nth-child(${lineIndex})`).find('[data-icon="plus-square"]').click({ force: true });
         this.typeIntoFeedbackEditor(feedback);
         this.typePointsIntoFeedbackEditor(points);
         this.saveFeedback();
-        this.shouldShowEditButtonForCreatedFeedback();
     }
 
     private typeIntoFeedbackEditor(text: string) {
-        cy.get(this.feedbackEditorSelector).find('textarea').should('be.visible').type(text, { parseSpecialCharSequences: false });
+        cy.get('#feedback-text-area').type(text, { parseSpecialCharSequences: false });
     }
 
     private typePointsIntoFeedbackEditor(points: number) {
-        cy.get(this.feedbackEditorSelector).find('[type="number"]').clear().type(points.toString());
+        cy.get('#feedback-points').clear().type(points.toString());
     }
 
     private saveFeedback() {
-        cy.get(this.feedbackEditorSelector).find('[jhitranslate="entity.action.save"]').click();
-    }
-
-    private shouldShowEditButtonForCreatedFeedback() {
-        cy.get(this.feedbackEditorSelector).find('[jhitranslate="entity.action.edit"]').should('be.visible');
+        cy.get('#feedback-save').click();
     }
 
     rejectComplaint(response: string) {
