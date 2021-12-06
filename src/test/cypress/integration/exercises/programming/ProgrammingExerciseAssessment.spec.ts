@@ -51,8 +51,6 @@ describe('Programming exercise assessment', () => {
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
         exerciseAssessment.clickStartNewAssessment();
-        programmingAssessment.getInstructionsRootElement().contains(exercise.title).should('be.visible');
-        programmingAssessment.getInstructionsRootElement().find('[jhitranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution"]').should('be.visible');
         onlineEditor.openFileWithName('BubbleSort.java');
         programmingAssessment.provideFeedbackOnCodeLine(9, tutorCodeFeedbackPoints, tutorCodeFeedback);
         programmingAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);

@@ -7,10 +7,6 @@ import { CypressExerciseType } from '../../requests/CourseManagementRequests';
 export abstract class AbstractExerciseAssessmentPage {
     readonly unreferencedFeedbackSelector = 'jhi-unreferenced-feedback';
 
-    getInstructionsRootElement() {
-        return cy.get('[jhitranslate="artemisApp.exercise.instructions"]').parents('.card');
-    }
-
     addNewFeedback(points: number, feedback?: string) {
         cy.get('.btn-success').contains('Add new Feedback').click();
         cy.get(this.unreferencedFeedbackSelector).find('input[type="number"]').clear().type(points.toString());

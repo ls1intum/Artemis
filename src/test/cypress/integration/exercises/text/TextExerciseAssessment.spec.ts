@@ -54,10 +54,6 @@ describe('Text exercise assessment', () => {
         cy.contains('There are no complaints at the moment').should('be.visible');
         cy.contains('There are no requests at the moment.').should('be.visible');
         exerciseAssessment.clickStartNewAssessment();
-        textAssessment.getInstructionsRootElement().contains(exercise.title).should('be.visible');
-        textAssessment.getInstructionsRootElement().contains(exercise.problemStatement).should('be.visible');
-        textAssessment.getInstructionsRootElement().contains(exercise.sampleSolution).should('be.visible');
-        textAssessment.getInstructionsRootElement().contains(exercise.gradingInstructions).should('be.visible');
         cy.contains('Number of words: 100').should('be.visible');
         cy.contains('Number of characters: 591').should('be.visible');
         textAssessment.provideFeedbackOnTextSection('sed diam voluptua', tutorTextFeedbackPoints, tutorTextFeedback);
