@@ -4,10 +4,6 @@
 export class CourseAssessmentDashboardPage {
     readonly exerciseDashboardButtonSelector = '#open-exercise-dashboard';
 
-    openComplaints(courseId: number) {
-        cy.get(`[href="/course-management/${courseId}/complaints"]`).click();
-    }
-
     showTheComplaint() {
         cy.get('.btn-primary').should('contain.text', 'Show the complaint').click();
     }
