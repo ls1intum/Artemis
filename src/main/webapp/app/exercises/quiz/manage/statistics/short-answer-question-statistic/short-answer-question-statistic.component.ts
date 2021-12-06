@@ -17,7 +17,7 @@ import { blueColor, greenColor, QuestionStatisticComponent } from 'app/exercises
     selector: 'jhi-short-answer-question-statistic',
     templateUrl: './short-answer-question-statistic.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
-    styleUrls: ['./short-answer-question-statistic.component.scss'],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', './short-answer-question-statistic.component.scss'],
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {
     question: ShortAnswerQuestion;

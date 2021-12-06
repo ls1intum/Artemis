@@ -12,7 +12,7 @@
                         </li>
                     </ol>
                 </div>
-                <div class="col-md-8 text-center">
+                <div #containerRef class="col-md-8 text-center">
                     <p>&nbsp;</p>
                     <div class="row">
                         <div class="col-md-7 text-start">
@@ -27,7 +27,25 @@
                             </p>
                         </div>
                     </div>
-                    <canvas baseChart [datasets]="datasets" [labels]="chartLabels" [options]="options" [chartType]="chartType" [colors]="colors"> </canvas>
+                    <!--<canvas baseChart [datasets]="datasets" [labels]="chartLabels" [options]="options" [chartType]="chartType" [colors]="colors"> </canvas>-->
+                    <ngx-charts-bar-vertical
+                        [view]="[containerRef.offsetWidth, 350]"
+                        [results]="ngxData"
+                        [scheme]="ngxColor"
+                        [showDataLabel]="true"
+                        [showXAxisLabel]="true"
+                        [showYAxisLabel]="true"
+                        [xAxisLabel]="xAxisLabel"
+                        [yAxisLabel]="yAxisLabel"
+                        [xAxis]="true"
+                        [yAxis]="true"
+                        [yScaleMax]="maxScale"
+                        [tooltipDisabled]="true"
+                        [rotateXAxisTicks]="false"
+                        [maxXAxisTickLength]="17"
+                        [dataLabelFormatting]="bindFormatting"
+                    >
+                    </ngx-charts-bar-vertical>
 
                     <div class="col-md-12 text-center">
                         <button (click)="switchSolution()" type="button" class="btn btn-primary">

@@ -12,6 +12,8 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { Authority } from 'app/shared/constants/authority.constants';
 import { BaseChartDirective, Color } from 'ng2-charts';
 import { round } from 'app/shared/util/utils';
+import { ScaleType } from '@swimlane/ngx-charts';
+import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/quiz-statistics.directive';
 
 /**
  * this interface is adapted from chart.js
@@ -147,30 +149,43 @@ export function calculateHeightOfChartData(data: number[]) {
 @Component({
     selector: 'jhi-quiz-statistic',
     templateUrl: './quiz-statistic.component.html',
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss'],
 })
-export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
+export class QuizStatisticComponent extends QuizStatisticsDirective implements OnInit, OnDestroy, DataSetProvider {
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
     quizExercise: QuizExercise;
     private sub: Subscription;
 
-    labels: string[] = [];
-    data: number[] = [];
+    // labels: string[] = [];
+    // data: number[] = [];
     colors: Color[] = [];
     chartType: ChartType = 'bar';
     datasets: DataSet[] = [];
 
     label: string[] = [];
-    ratedData: number[] = [];
-    unratedData: number[] = [];
+    // ratedData: number[] = [];
+    // unratedData: number[] = [];
     backgroundColor: string[] = [];
     ratedAverage: number;
     unratedAverage: number;
 
     maxScore: number;
-    rated = true;
-    participants: number;
+    // rated = true;
+    // participants: number;
     websocketChannelForData: string;
+
+    // ngx
+    /*ngxData: any[] = [];
+    ngxColor = {
+        name: 'quiz statistics',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: [],
+    } as any;
+    xAxisLabel = this.translateService.instant('showStatistic.quizStatistic.xAxes');
+    yAxisLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
+    maxScale: number;*/
 
     // options for chart.js style
     options: ChartOptions;
@@ -183,7 +198,9 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         private quizExerciseService: QuizExerciseService,
         private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
-    ) {}
+    ) {
+        super();
+    }
 
     loadDataInDiagram(): void {
         throw new Error('Method not implemented.');
@@ -298,22 +315,24 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         this.unratedData.push(this.unratedAverage / this.maxScore);
 
         // load data into the chart
-        this.labels = this.label;
+        // this.labels = this.label;
         this.colors = this.backgroundColor.map((backgroundColor) => ({ backgroundColor }));
 
         // add Text for last label based on the language
         const lastLabel = this.translateService.instant('showStatistic.quizStatistic.average');
         this.label.push(lastLabel);
+        this.chartLabels = this.label;
 
         // if this.rated == true  -> load the rated data
-        if (this.rated) {
+        /*if (this.rated) {
             this.participants = this.quizExercise.quizPointStatistic!.participantsRated!;
             this.data = this.ratedData;
         } else {
             // load the unrated data
             this.participants = this.quizExercise.quizPointStatistic!.participantsUnrated!;
             this.data = this.unratedData;
-        }
+        }*/
+        this.setData(this.quizExercise.quizPointStatistic!);
 
         this.updateChart();
     }
@@ -343,9 +362,15 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
      * updates the chart by setting the data set, re-calculating the height and calling update on the chart view child
      */
     updateChart() {
+        /*this.ngxData = [];
         this.datasets = [{ data: this.data, backgroundColor: this.colors.map((color) => color.backgroundColor as string) }];
+        this.data.forEach((score, index) => {
+            this.ngxData.push({ name: this.labels[index], value: score });
+        });
+        this.ngxColor.domain = this.backgroundColor;
         // recalculate the height of the chart because rated/unrated might have changed or new results might have appeared
         const height = calculateHeightOfChart(this);
+        this.maxScale = calculateHeightOfChartData(this.data);
         // add Axes-labels based on selected language
         const xLabel = this.translateService.instant('showStatistic.quizStatistic.xAxes');
         const yLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
@@ -353,5 +378,10 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         if (this.chart) {
             this.chart.update(0);
         }
+        this.ngxData = [...this.ngxData];*/
+        this.pushDataToNgxEntry();
+        this.ngxColor.domain = this.backgroundColor;
+        this.xAxisLabel = this.translateService.instant('showStatistic.quizStatistic.xAxes');
+        this.yAxisLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
     }
 }

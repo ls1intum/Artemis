@@ -15,13 +15,14 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { blueColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { round } from 'app/shared/util/utils';
+import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/quiz-statistics.directive';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
     styleUrls: ['./quiz-point-statistic.component.scss'],
 })
-export class QuizPointStatisticComponent implements OnInit, OnDestroy {
+export class QuizPointStatisticComponent extends QuizStatisticsDirective implements OnInit, OnDestroy {
     readonly round = round;
 
     quizExercise: QuizExercise;
@@ -29,26 +30,26 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
     private sub: Subscription;
 
     labels: string[] = [];
-    data: number[] = [];
+    // data: number[] = [];
 
     label: string[] = [];
-    ratedData: number[] = [];
-    unratedData: number[] = [];
+    // ratedData: number[] = [];
+    // unratedData: number[] = [];
     backgroundColor: string[] = [];
 
     maxScore: number;
-    rated = true;
-    participants: number;
+    // rated = true;
+    // participants: number;
     websocketChannelForData: string;
     quizExerciseChannel: string;
 
     // variables for ngx-charts
-    ngxData: any[] = []; // data presented by the chart
+    /*ngxData: any[] = []; // data presented by the chart
     maxScale: number;
     xAxisLabel: string;
     yAxisLabel: string;
     color: any;
-    totalParticipants: number;
+    totalParticipants: number;*/
     legend = false;
     showXAxisLabel = true;
     showYAxisLabel = true;
@@ -74,7 +75,9 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
         private quizExerciseService: QuizExerciseService,
         private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
-    ) {}
+    ) {
+        super();
+    }
 
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
@@ -233,8 +236,10 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
             this.backgroundColor.push(blueColor);
         });
 
-        this.labels = this.label;
-        this.color = { domain: this.backgroundColor };
+        // this.labels = this.label;
+        this.chartLabels = this.label;
+        // this.color = { domain: this.backgroundColor };
+        this.ngxColor.domain = this.backgroundColor;
 
         // load data into the chart
         this.loadDataInDiagram();
@@ -245,16 +250,17 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
      * load the rated or unrated data into the diagram
      */
     loadDataInDiagram() {
-        if (this.rated) {
+        /*if (this.rated) {
             this.participants = this.quizPointStatistic.participantsRated!;
             this.data = this.ratedData;
         } else {
             // load the unrated data
             this.participants = this.quizPointStatistic.participantsUnrated!;
             this.data = this.unratedData;
-        }
+        }*/
+        this.setData(this.quizPointStatistic);
         // this reset is necessary in order to switch between rated and unrated results
-        this.ngxData = [];
+        /*this.ngxData = [];
         this.totalParticipants = 0;
 
         this.data.forEach((data) => (this.totalParticipants += data));
@@ -263,7 +269,8 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
             this.ngxData.push({ name: label, value: this.data[index] });
         });
         // recalculate the height of the chart because rated/unrated might have changed or new results might have appeared
-        this.maxScale = calculateHeightOfChartData(this.data);
+        this.maxScale = calculateHeightOfChartData(this.data);*/
+        this.pushDataToNgxEntry();
 
         // add Axes-labels based on selected language
         this.xAxisLabel = this.translateService.instant('showStatistic.quizPointStatistic.xAxes');
@@ -307,12 +314,12 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
             return 0;
         });
     }
-    formatDataLabel(value: any) {
+    /*formatDataLabel(value: any) {
         const relativeValue = (value / this.totalParticipants) * 100;
         if (isNaN(relativeValue)) {
             return value + ' (0%)';
         } else {
             return value + ' (' + round((value / this.totalParticipants) * 100, 1) + '%)';
         }
-    }
+    }*/
 }

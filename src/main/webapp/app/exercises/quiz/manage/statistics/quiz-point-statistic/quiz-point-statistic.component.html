@@ -26,7 +26,7 @@
             <ngx-charts-bar-vertical
                 [view]="[containerRef.offsetWidth, height]"
                 [results]="ngxData"
-                [scheme]="color"
+                [scheme]="ngxColor"
                 [xAxisLabel]="xAxisLabel"
                 [yAxisLabel]="yAxisLabel"
                 [legend]="legend"
@@ -37,7 +37,7 @@
                 [yScaleMax]="maxScale"
                 [roundEdges]="roundEdges"
                 [showDataLabel]="showDataLabel"
-                [dataLabelFormatting]="formatDataLabel.bind(this)"
+                [dataLabelFormatting]="bindFormatting"
                 [animations]="animations"
                 [tooltipDisabled]="tooltipDisabled"
             >
