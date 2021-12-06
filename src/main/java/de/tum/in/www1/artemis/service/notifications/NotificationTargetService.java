@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.notification.Notification;
 
 @Service
 public class NotificationTargetService {
@@ -211,5 +212,29 @@ public class NotificationTargetService {
         target.addProperty(ID_TEXT, post.getId());
         target.addProperty(COURSE_TEXT, course.getId());
         return target.toString();
+    }
+
+    /// URL/Link related methods
+
+    /**
+     * Extracts a viable URL from the provided notification and baseUrl
+     * @param notification which transient target property will be used for creating the URL
+     * @param baseUrl the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
+     * @return viable URL to the notification related page
+     */
+    public String extractNotificationUrl(Notification notification, String baseUrl) {
+        JsonObject target = notification.getTargetTransient();
+        return baseUrl + "/" + target.get("mainPage") + "/" + target.get("course") + "/" + target.get("entity") + "/" + target.get("notificationSubjectId");
+    }
+
+    /**
+     * Extracts a viable URL from the provided notification that is based on a Post and baseUrl
+     * @param post which information will be needed to created the URL
+     * @param baseUrl the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
+     * @return viable URL to the notification related page
+     */
+    public String extractNotificationUrl(Post post, String baseUrl) {
+        // e.g. http://localhost:8080/courses/1/discussion?searchText=%2382 for announcement post
+        return baseUrl + "/courses/" + post.getCourse().getId() + "/discussion?searchText=%23" + post.getId();
     }
 }
