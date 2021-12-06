@@ -5,6 +5,7 @@
     <jhi-button
         submitbutton
         class="guided-tour submission-button"
+        id="submit-modeling-submission"
         [disabled]="(!isActive && !isLate) || !submission || !!result || (isLate && !!submission.submitted)"
         [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
         (onClick)="submit()"
