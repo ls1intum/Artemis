@@ -1,23 +1,18 @@
 package de.tum.in.www1.artemis;
 
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.TreeMap;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
+import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.config.migration.MigrationRegistry;
 
-@SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
-        "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-// NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene", "apollon" })
-public class MigrationIntegrityTest {
+public class MigrationIntegrityTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private MigrationRegistry registry;
@@ -26,6 +21,78 @@ public class MigrationIntegrityTest {
     public void testIntegrity() {
         registry.instantiateEntryMap();
 
-        // assertThat(registry.checkIntegrity()).isTrue();
+        assertThat(registry.checkIntegrity()).as("Migration Integrity Check")
+                .withFailMessage("The Migration integrity check was not successful. Check the logs for errors in the registry.").isTrue();
+    }
+
+    @Test
+    public void testValidMap() {
+        TreeMap<Integer, MigrationEntry> map = new TreeMap<>() {
+
+            {
+                put(0, createEntryMock("20211214-231800", "Valid Author"));
+                put(1, createEntryMock("20211215-231800", "Valid Author"));
+                put(2, createEntryMock("20211216-231800", "Valid Author"));
+            }
+        };
+        assertThat(registry.checkIntegrity(map)).isTrue();
+        assertThat(registry.checkIntegrity(new TreeMap<>())).isTrue();
+    }
+
+    @Test
+    public void testBrokenEntriesFail() {
+        assertThat(registry.checkIntegrity(new TreeMap<>() {
+
+            {
+                put(0, createEntryMock("20211216-231800", null));
+            }
+        })).isFalse();
+        assertThat(registry.checkIntegrity(new TreeMap<>() {
+
+            {
+                put(0, createEntryMock("20211216-231800", ""));
+            }
+        })).isFalse();
+        assertThat(registry.checkIntegrity(new TreeMap<>() {
+
+            {
+                put(0, createEntryMock(null, "Valid Author"));
+            }
+        })).isFalse();
+        assertThat(registry.checkIntegrity(new TreeMap<>() {
+
+            {
+                put(0, createEntryMock("", "Valid Author"));
+            }
+        })).isFalse();
+    }
+
+    @Test
+    public void testDuplicateDateStringsFail() {
+        assertThat(registry.checkIntegrity(new TreeMap<>() {
+
+            {
+                put(0, createEntryMock("20211216-231800", "Valid Author"));
+                put(1, createEntryMock("20211216-231800", "Valid Author"));
+            }
+        })).isFalse();
+    }
+
+    @Test
+    public void testWrongOrderDateStringsFail() {
+        assertThat(registry.checkIntegrity(new TreeMap<>() {
+
+            {
+                put(0, createEntryMock("20211217-231800", "Valid Author"));
+                put(1, createEntryMock("20211216-231800", "Valid Author"));
+            }
+        })).isFalse();
+    }
+
+    private MigrationEntry createEntryMock(String date, String author) {
+        MigrationEntry mock = mock(MigrationEntry.class);
+        when(mock.date()).thenReturn(date);
+        when(mock.author()).thenReturn(author);
+        return mock;
     }
 }

@@ -1,13 +1,15 @@
 package de.tum.in.www1.artemis.config.migration;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.codec.binary.Hex;
@@ -15,14 +17,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.util.StringUtils;
 
-import de.tum.in.www1.artemis.config.migration.entries.MigrationEntry20211127_120000;
-import de.tum.in.www1.artemis.config.migration.entries.MigrationEntry20211128_120000;
+import de.tum.in.www1.artemis.config.migration.entries.*;
 import de.tum.in.www1.artemis.domain.MigrationChangelog;
 import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
 
@@ -38,9 +39,9 @@ public class MigrationRegistry {
     @Value("${artemis.version}")
     private String artemisVersion;
 
-    private final Map<Integer, Class<? extends MigrationEntry>> migrationEntryMap = new HashMap<>();
+    private final TreeMap<Integer, Class<? extends MigrationEntry>> migrationEntryMap = new TreeMap<>();
 
-    private Map<Integer, MigrationEntry> instantiatedMigrationEntryMap;
+    private TreeMap<Integer, MigrationEntry> instantiatedMigrationEntryMap;
 
     private final AutowireCapableBeanFactory beanFactory;
 
@@ -50,8 +51,7 @@ public class MigrationRegistry {
 
     public MigrationRegistry(AutowireCapableBeanFactory beanFactory, MigrationChangeRepository migrationChangeRepository) throws NoSuchAlgorithmException {
         // Here we define the order of the ChangeEntries
-        migrationEntryMap.put(0, MigrationEntry20211127_120000.class);
-        migrationEntryMap.put(1, MigrationEntry20211128_120000.class);
+        // migrationEntryMap.put(0, MigrationEntry20211127_120000.class);
         this.beanFactory = beanFactory;
         this.migrationChangeRepository = migrationChangeRepository;
     }
@@ -62,6 +62,10 @@ public class MigrationRegistry {
      */
     @EventListener
     public void execute(ApplicationReadyEvent event) throws IOException, NoSuchAlgorithmException {
+        if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return;
+        }
+
         log.info("Starting Artemis migration");
         String startupHash = toMD5(ZonedDateTime.now().toString());
 
@@ -69,7 +73,9 @@ public class MigrationRegistry {
 
         if (!checkIntegrity()) {
             log.error(getClass().getSimpleName() + " corrupted. Aborting startup.");
-            System.exit(SpringApplication.exit(event.getApplicationContext(), () -> 1));
+            event.getApplicationContext().close();
+            System.exit(1);
+            // System.exit(SpringApplication.exit(event.getApplicationContext(), () -> 1));
         }
         else {
             log.info("Integrity check passed.");
@@ -105,9 +111,9 @@ public class MigrationRegistry {
     }
 
     public void instantiateEntryMap() {
-        this.instantiatedMigrationEntryMap = this.migrationEntryMap.entrySet().stream().collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, e ->
+        this.instantiatedMigrationEntryMap = this.migrationEntryMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e ->
         // We have to manually autowire the components here
-        (MigrationEntry) beanFactory.autowire(e.getValue(), AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR, true)));
+        (MigrationEntry) beanFactory.autowire(e.getValue(), AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR, true), (prev, next) -> next, TreeMap::new));
     }
 
     /**
@@ -115,43 +121,42 @@ public class MigrationRegistry {
      * It is set public to allow an external integrity check without starting the actual application and therefore migration.
      * All occurring errors will be logged but duplicate errors are not logged.
      */
-    public boolean checkIntegrity() {
+    public boolean checkIntegrity(TreeMap<Integer, MigrationEntry> entryMap) {
         log.info("Starting migration integrity check");
         boolean passed = true;
-        long mapSize = migrationEntryMap.size();
-        Map<Integer, MigrationEntry> brokenInstances = this.instantiatedMigrationEntryMap.entrySet().stream()
+        Map<Integer, MigrationEntry> brokenInstances = entryMap.entrySet().stream()
                 .filter(e -> StringUtils.isEmpty(e.getValue().date()) || StringUtils.isEmpty(e.getValue().author()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        long distinctDateStrings = this.instantiatedMigrationEntryMap.values().stream().map(MigrationEntry::date).distinct().count();
-
         if (!brokenInstances.isEmpty()) {
             passed = false;
             log.error(getClass().getSimpleName() + " corrupted. Migration entries not properly set up.");
             brokenInstances.forEach((key, value) -> log.error("Entry " + value.getClass().getSimpleName() + " has not all information methods defined."));
             log.info("Please refer to the documentation on how to set up migration entries.");
         }
-        if (mapSize != distinctDateStrings) {
-            log.error(getClass().getSimpleName() + " corrupted. Duplicated dates detected.");
-            passed = false;
-        }
-        List<MigrationEntry> entryList = this.instantiatedMigrationEntryMap.values().stream().toList();
+        List<MigrationEntry> entryList = entryMap.values().stream().toList();
         if (entryList.size() > 0) {
             int startIndex = 1;
-            String baseDateString = entryList.get(0).date();
-            while (StringUtils.isEmpty(baseDateString) && startIndex < entryList.size()) {
-                baseDateString = entryList.get(startIndex).date();
+            MigrationEntry baseEntry = entryList.get(0);
+            // Make sure the base date is not null. If it is, it was already caught and logged above.
+            while (StringUtils.isEmpty(baseEntry.date()) && startIndex < entryList.size()) {
+                baseEntry = entryList.get(startIndex);
                 startIndex++;
             }
             for (int i = startIndex; i < entryList.size(); i++) {
-                if (!StringUtils.isEmpty(entryList.get(i).date()) && baseDateString.compareTo(entryList.get(i).date()) >= 0) {
-                    log.error(getClass().getSimpleName() + " corrupted. Invalid date order detected. " + entryList.get(i).date() + " should come before " + baseDateString);
+                if (!StringUtils.isEmpty(entryList.get(i).date()) && baseEntry.date().compareTo(entryList.get(i).date()) >= 0) {
+                    log.error(getClass().getSimpleName() + " corrupted. Invalid date order detected. " + entryList.get(i).date() + " ("
+                            + entryList.get(i).getClass().getSimpleName() + ") should come before " + baseEntry.date() + " (" + baseEntry.getClass().getSimpleName() + ")");
                     passed = false;
                 }
-                baseDateString = entryList.get(i).date();
+                baseEntry = entryList.get(i);
             }
         }
         log.info("Ending migration integrity check.");
         return passed;
+    }
+
+    public boolean checkIntegrity() {
+        return checkIntegrity(this.instantiatedMigrationEntryMap);
     }
 
     private String toMD5(String string) {
