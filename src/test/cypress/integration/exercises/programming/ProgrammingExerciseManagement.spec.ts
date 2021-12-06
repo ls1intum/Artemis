@@ -52,8 +52,11 @@ describe('Programming Exercise Management', () => {
             cy.get('#additional-check-1').check();
             cy.get('#confirm-exercise-name').type(programmingExercise.title);
             cy.intercept(DELETE, PROGRAMMING_EXERCISE_BASE + '*').as('deleteProgrammingExerciseQuery');
-            cy.get('#delete').click();
-            cy.wait('@deleteProgrammingExerciseQuery').its('response.statusCode').should('eq', 200);
+            // For some reason the deletion sometimes fails if we do it immediately
+            cy.get('#delete').wait(4000).click();
+            cy.wait('@deleteProgrammingExerciseQuery').then((request: any) => {
+                expect(request.response.statusCode).to.equal(200);
+            });
             cy.contains(programmingExercise.title).should('not.exist');
         });
     });
@@ -72,12 +75,11 @@ describe('Programming Exercise Management', () => {
             programmingCreation.setPackageName('de.test');
             programmingCreation.setPoints(100);
             programmingCreation.checkAllowOnlineEditor();
-            let exercise: any;
             programmingCreation.generate().then((request: any) => {
-                exercise = request.response.body;
+                const exercise = request.response.body;
+                cy.url().should('include', '/exercises');
+                courseExercises.shouldContainExerciseWithName(exercise.id);
             });
-            cy.url().should('include', '/exercises');
-            courseExercises.shouldContainExerciseWithName(exercise.id);
         });
     });
 
