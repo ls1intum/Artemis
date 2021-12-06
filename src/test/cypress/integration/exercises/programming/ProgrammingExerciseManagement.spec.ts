@@ -51,8 +51,9 @@ describe('Programming Exercise Management', () => {
             cy.get('#additional-check').each(($el) => {
                 cy.wrap($el).check();
             });
+            cy.get('#confirm-exercise-name').type(programmingExercise.title);
             cy.intercept(DELETE, PROGRAMMING_EXERCISE_BASE + '*').as('deleteProgrammingExerciseQuery');
-            cy.get('#confirm-exercise-name').type(programmingExercise.title).type('{enter}');
+            cy.get('#delete').click();
             cy.wait('@deleteProgrammingExerciseQuery').its('response.statusCode').should('eq', 200);
             cy.contains(programmingExercise.title).should('not.exist');
         });
