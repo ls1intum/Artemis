@@ -24,28 +24,30 @@ describe('TeamsImportFromFileFormComponent', () => {
         comp.loading = false;
     }
 
-    beforeEach(
-        waitForAsync(() => {
-            TestBed.configureTestingModule({
-                imports: [],
-                declarations: [TeamsImportFromFileFormComponent, MockComponent(HelpIconComponent), MockComponent(FaIconComponent)],
-                providers: [MockProvider(TranslateService)],
-            }).compileComponents();
-        }),
-    );
     beforeEach(() => {
-        fixture = TestBed.createComponent(TeamsImportFromFileFormComponent);
-        comp = fixture.componentInstance;
-        debugElement = fixture.debugElement;
-        changeDetector = debugElement.injector.get(ChangeDetectorRef);
+        TestBed.configureTestingModule({
+            imports: [],
+            declarations: [TeamsImportFromFileFormComponent, MockComponent(HelpIconComponent), MockComponent(FaIconComponent)],
+            providers: [MockProvider(TranslateService)],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(TeamsImportFromFileFormComponent);
+                comp = fixture.componentInstance;
+                debugElement = fixture.debugElement;
+                changeDetector = debugElement.injector.get(ChangeDetectorRef);
+            });
     });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     describe('importing file', () => {
         beforeEach(() => {
             resetComponent();
         });
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
+
         it('should convert and call teamsChanged with converted teams', () => {
             const setImportStub = jest.spyOn(comp, 'setImportFile');
             const inputElement = debugElement.query(By.css('input')).nativeElement;
@@ -53,10 +55,12 @@ describe('TeamsImportFromFileFormComponent', () => {
             expect(setImportStub).toHaveBeenCalledTimes(1);
         });
     });
+
     describe('generateFileReader', () => {
         beforeEach(() => {
             resetComponent();
         });
+
         it('should return file reader when called', () => {
             expect(comp.generateFileReader()).toStrictEqual(new FileReader());
         });
@@ -68,7 +72,8 @@ describe('TeamsImportFromFileFormComponent', () => {
         let reader: FileReader;
         let getElementStub: jest.SpyInstance;
         const element = document.createElement('input');
-        let control: any;
+        let control = { ...element, value: 'test' };
+
         beforeEach(() => {
             resetComponent();
             convertTeamsStub = jest.spyOn(comp, 'convertTeams').mockReturnValue(mockFileTeamsConverted);
@@ -76,6 +81,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             control = { ...element, value: 'test' };
             getElementStub = jest.spyOn(document, 'getElementById').mockReturnValue(control);
         });
+
         afterEach(() => {
             expect(convertTeamsStub).toHaveBeenCalledTimes(1);
             expect(comp.importedTeams).toEqual(mockFileStudents);
@@ -86,8 +92,8 @@ describe('TeamsImportFromFileFormComponent', () => {
             expect(comp.importFileName).toBe('');
             expect(getElementStub).toHaveBeenCalledTimes(1);
             expect(control.value).toBe('');
-            jest.restoreAllMocks();
         });
+
         it('should parse json file and send converted teams', () => {
             reader = { ...reader, result: JSON.stringify(mockFileStudents), onload: null };
             comp.importFile = new File([''], 'file.json', { type: 'application/json' });
@@ -95,6 +101,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             expect(control.value).toBe('test');
             comp.onFileLoadImport(reader);
         });
+
         it('should parse csv file and send converted teams', async () => {
             reader = {
                 ...reader,
@@ -111,13 +118,12 @@ describe('TeamsImportFromFileFormComponent', () => {
 
     describe('setImportFile', () => {
         let changeDetectorDetectChangesSpy: jest.SpyInstance;
+
         beforeEach(() => {
             resetComponent();
             changeDetectorDetectChangesSpy = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
         });
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
+
         it('should set import file correctly', () => {
             const file = new File(['content'], 'testFileName', { type: 'text/plain' });
             const ev = { target: { files: [file] } };
@@ -126,6 +132,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             expect(comp.importFileName).toBe('testFileName');
             expect(changeDetectorDetectChangesSpy).toHaveBeenCalledTimes(1);
         });
+
         it('should set import file correctly', () => {
             const ev = { target: { files: [] } };
             comp.setImportFile(ev);
@@ -139,6 +146,7 @@ describe('TeamsImportFromFileFormComponent', () => {
         beforeEach(() => {
             resetComponent();
         });
+
         it('should convert file teams correctly', () => {
             expect(comp.convertTeams(mockFileStudents)).toEqual(mockFileTeamsConverted);
         });
@@ -148,6 +156,7 @@ describe('TeamsImportFromFileFormComponent', () => {
         beforeEach(() => {
             resetComponent();
         });
+
         it('should throw error', () => {
             const invalidFileStudents = [...mockFileStudents];
             invalidFileStudents[0].teamName = '1invalidTeamName';

@@ -155,13 +155,13 @@ export class TeamsImportFromFileFormComponent {
      */
     convertTeams(importTeam: StudentWithTeam[]): Team[] {
         const teams: Team[] = [];
-        let entryNr = 1;
-        importTeam.forEach((student) => {
+        importTeam.forEach((student, index) => {
             const newStudent = new User();
             newStudent.firstName = student.firstName ?? '';
             newStudent.lastName = student.lastName ?? '';
             newStudent.visibleRegistrationNumber = student.registrationNumber;
             newStudent.login = student.username;
+            const entryNr = index + 1;
 
             if ((typeof student.username !== 'string' || !student.username.trim()) && (typeof student.registrationNumber !== 'string' || !student.registrationNumber.trim())) {
                 throw new Error(this.translate.instant('artemisApp.team.missingUserNameOrId', { entryNr }));
@@ -177,17 +177,16 @@ export class TeamsImportFromFileFormComponent {
                 throw new Error(this.translate.instant('artemisApp.team.teamName.pattern', { entryNr, teamName: shortName }));
             }
 
-            const index = teams.findIndex((team) => team.name === student.teamName);
-            if (index === -1) {
+            const teamIndex = teams.findIndex((team) => team.name === student.teamName);
+            if (teamIndex === -1) {
                 const newTeam = new Team();
                 newTeam.name = student.teamName;
                 newTeam.shortName = shortName;
                 newTeam.students = [newStudent];
                 teams.push(newTeam);
             } else {
-                teams[index].students = [...teams[index].students!, newStudent];
+                teams[teamIndex].students = [...teams[teamIndex].students!, newStudent];
             }
-            entryNr++;
         });
         return teams;
     }
