@@ -19,7 +19,7 @@ describe('Modeling Exercise Participation Spec', () => {
         cy.login(admin);
         courseManagementRequests.createCourse().then((courseResp: any) => {
             course = courseResp.body;
-            cy.visit(`/course-management/${course.id}`).get('.row-md > :nth-child(2)').should('contain.text', course.title);
+            cy.visit(`/course-management/${course.id}`);
             courseManagement.addStudentToCourse(student);
             courseManagementRequests.createModelingExercise({ course }).then((resp: any) => {
                 modelingExercise = resp.body;
@@ -35,12 +35,10 @@ describe('Modeling Exercise Participation Spec', () => {
     it('Student can start and submit their model', () => {
         cy.login(student, `/courses/${course.id}`);
         courseOverview.startExercise(modelingExercise.title, CypressExerciseType.MODELING);
-        cy.get('.course-exercise-row').find('.btn-primary').should('contain.text', 'Open modelling editor').click();
+        cy.get('#next-course-exercise-row').find('#open-modeling-editor-action').click();
         modelingEditor.addComponentToModel(1);
         modelingEditor.addComponentToModel(2);
         modelingEditor.addComponentToModel(3);
         modelingEditor.submit();
-        cy.get('.alerts').should('contain.text', 'Your submission was successful! You can change your submission or wait for your feedback.');
-        cy.contains('No graded result').should('be.visible');
     });
 });

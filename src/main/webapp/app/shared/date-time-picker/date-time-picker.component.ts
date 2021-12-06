@@ -21,6 +21,7 @@ import dayjs from 'dayjs';
             <input
                 #dateInput="ngModel"
                 class="form-control position-relative ps-5"
+                id="date-input-field"
                 [ngClass]="{ 'is-invalid': error }"
                 [ngModel]="value"
                 [disabled]="disabled"

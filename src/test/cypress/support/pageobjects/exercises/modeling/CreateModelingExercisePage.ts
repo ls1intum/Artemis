@@ -32,7 +32,7 @@ export class CreateModelingExercisePage {
      * @param date should be in Format: YYYY-MM-DDTHH:mm:ss.SSS
      * */
     setReleaseDate(date: string) {
-        cy.get(':nth-child(1) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(date, { force: true });
+        cy.get('#pick-modeling-releaseDate').find('#date-input-field').clear().type(date, { force: true });
     }
 
     /**
@@ -40,7 +40,7 @@ export class CreateModelingExercisePage {
      * @param date should be in Format: YYYY-MM-DDTHH:mm:ss.SSS
      * */
     setDueDate(date: string) {
-        cy.get('.ms-3 > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(date, { force: true });
+        cy.get('#pick-modeling-dueDate').find('#date-input-field').clear().type(date, { force: true });
     }
 
     /**
@@ -48,11 +48,11 @@ export class CreateModelingExercisePage {
      * @param date should be in Format: YYYY-MM-DDTHH:mm:ss.SSS
      * */
     setAssessmentDueDate(date: string) {
-        cy.get(':nth-child(9) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(date, { force: true });
+        cy.get('#pick-modeling-assessmentDueDate').find('#date-input-field').clear().type(date, { force: true });
     }
 
     includeInOverallScore() {
-        cy.get('jhi-included-in-overall-score-picker > .btn-group > :nth-child(3)').click({ force: true });
+        cy.get('#modeling-includeInScore-picker').children().eq(2).click({ force: true });
     }
 
     pickDifficulty(options: { hard?: boolean; medium?: boolean; easy?: boolean }) {
