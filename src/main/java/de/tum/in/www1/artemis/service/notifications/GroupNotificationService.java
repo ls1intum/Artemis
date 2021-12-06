@@ -41,16 +41,16 @@ public class GroupNotificationService {
 
     private final NotificationSettingsService notificationSettingsService;
 
-    private final NotificationTargetService notificationTargetService;
+    private final NotificationTargetProvider notificationTargetProvider;
 
     public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
-            MailService mailService, NotificationSettingsService notificationSettingsService, NotificationTargetService notificationTargetService) {
+            MailService mailService, NotificationSettingsService notificationSettingsService, NotificationTargetProvider notificationTargetProvider) {
         this.groupNotificationRepository = groupNotificationRepository;
         this.messagingTemplate = messagingTemplate;
         this.userRepository = userRepository;
         this.mailService = mailService;
         this.notificationSettingsService = notificationSettingsService;
-        this.notificationTargetService = notificationTargetService;
+        this.notificationTargetProvider = notificationTargetProvider;
     }
 
     /**
@@ -421,7 +421,7 @@ public class GroupNotificationService {
      */
     private void saveExamNotification(GroupNotification notification) {
         String originalTarget = notification.getTarget();
-        String targetWithoutProblemStatement = notificationTargetService.getTargetWithoutProblemStatement(notification.getTargetTransient());
+        String targetWithoutProblemStatement = notificationTargetProvider.getTargetWithoutProblemStatement(notification.getTargetTransient());
         notification.setTarget(targetWithoutProblemStatement);
         groupNotificationRepository.save(notification);
         notification.setTarget(originalTarget);

@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 
 @Service
-public class NotificationTargetService {
+public class NotificationTargetProvider {
 
     // shared constants
     public static final String MESSAGE_TEXT = "message";
@@ -52,6 +52,8 @@ public class NotificationTargetService {
     public static final String EXERCISE_RELEASED_TEXT = "exerciseReleased";
 
     public static final String EXERCISE_UPDATED_TEXT = "exerciseUpdated";
+
+    public static final String DUPLICATE_TEST_CASE_TEXT = "duplicateTestCase";
 
     // EXERCISE related targets
 
@@ -235,7 +237,8 @@ public class NotificationTargetService {
      */
     public String extractNotificationUrl(Notification notification, String baseUrl) {
         JsonObject target = notification.getTargetTransient();
-        return baseUrl + "/" + target.get(MAIN_PAGE_TEXT) + "/" + target.get(COURSE_TEXT) + "/" + target.get(ENTITY_TEXT) + "/" + target.get("notificationSubjectId");
+        return baseUrl + "/" + target.get(MAIN_PAGE_TEXT).getAsString() + "/" + target.get(COURSE_TEXT).getAsString() + "/" + target.get(ENTITY_TEXT).getAsString() + "/"
+                + target.get(ID_TEXT).getAsString();
     }
 
     /**
