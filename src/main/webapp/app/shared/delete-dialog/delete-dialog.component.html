@@ -14,10 +14,10 @@
         <jhi-alert></jhi-alert>
         <p [jhiTranslate]="deleteQuestion" [translateValues]="{ title: entityTitle }">Are you sure you want to delete?</p>
         <div *ngIf="additionalChecks">
-            <div *ngFor="let checkKey of objectKeys(additionalChecks)">
+            <div *ngFor="let checkKey of objectKeys(additionalChecks); let i = index">
                 <div class="checkbox" *ngIf="additionalChecks[checkKey]">
                     <label class="control-label text-danger">
-                        <input id="additional-check" type="checkbox" name="checkbox" [(ngModel)]="additionalChecksValues[checkKey]" />&nbsp;{{
+                        <input [id]="'additional-check-' + i" type="checkbox" name="checkbox" [(ngModel)]="additionalChecksValues[checkKey]" />&nbsp;{{
                             additionalChecks[checkKey] | artemisTranslate
                         }}
                     </label>

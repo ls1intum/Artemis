@@ -48,9 +48,8 @@ describe('Programming Exercise Management', () => {
             courseManagementPage.openExercisesOfCourse(course.shortName);
             cy.get('#delete-exercise').click();
             // Check all checkboxes to get rid of the git repositories and build plans
-            cy.get('#additional-check').each(($el) => {
-                cy.wrap($el).check();
-            });
+            cy.get('#additional-check-0').check();
+            cy.get('#additional-check-1').check();
             cy.get('#confirm-exercise-name').type(programmingExercise.title);
             cy.intercept(DELETE, PROGRAMMING_EXERCISE_BASE + '*').as('deleteProgrammingExerciseQuery');
             cy.get('#delete').click();
