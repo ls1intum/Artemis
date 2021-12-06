@@ -14,11 +14,12 @@ export class ScaFeedbackModal {
     }
 
     shouldShowCodeIssue(feedbackText: string, pointReduction: string) {
-        cy.get('#feedback-text')
+        // We have to query for a css class here. If we query for an id Cypress will return the first id it finds instead of all elements matching the selector.
+        cy.get('.feedback-text')
             .contains(feedbackText)
             .scrollIntoView()
             .should('be.visible')
-            .parents('#feedback-message')
+            .parents(this.feedbackSelector)
             .find('#feedback-points')
             .scrollIntoView()
             .should('contain.text', `-${pointReduction}P`)
@@ -26,7 +27,7 @@ export class ScaFeedbackModal {
     }
 
     closeModal() {
-        cy.get('.modal-footer').find('.btn').click();
-        cy.get('.modal').should('not.exist');
+        cy.get('#feedback-close').find('.btn').click();
+        cy.get('#result-detail-body').should('not.exist');
     }
 }

@@ -39,11 +39,9 @@
             <div class="feedback-list">
                 <div *ngFor="let feedback of filteredFeedbackList; last as isLast" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedback)]" id="feedback-message">
                     <span>{{ feedback.category }}</span>
-                    <span id="feedback-points" class="feedback-points" *ngIf="feedback.credits"
-                        >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, getCourseFromExercise(exercise!)) }}P</span
-                    >
+                    <span class="feedback-points" *ngIf="feedback.credits">{{ roundScoreSpecifiedByCourseSettings(feedback.credits, getCourseFromExercise(exercise!)) }}P</span>
                     <span class="feedback-title" *ngIf="feedback.title">{{ feedback.title }}</span>
-                    <jhi-feedback-collapse id="feedback-text" *ngIf="feedback.text" [text]="feedback.text!" [previewText]="feedback.previewText"></jhi-feedback-collapse>
+                    <jhi-feedback-collapse *ngIf="feedback.text" [text]="feedback.text!" [previewText]="feedback.previewText"></jhi-feedback-collapse>
                     <p *ngElse>No feedback available!</p>
                 </div>
             </div>
@@ -81,5 +79,5 @@
     </p>
 </div>
 <div class="modal-footer">
-    <button type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
+    <button id="feedback-close" type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
 </div>
