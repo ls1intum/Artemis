@@ -81,7 +81,7 @@ describe('Modeling Exercise Management Spec', () => {
                     modelingExerciseExampleSubmission.assessComponent(0, 'Unnecessary');
                     modelingExerciseExampleSubmission.submitExample();
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}`);
-                    cy.get('.apollon-editor').should('exist');
+                    cy.get('#modeling-editor-canvas').should('exist');
                 });
         });
     });
