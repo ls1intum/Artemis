@@ -7,8 +7,8 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "javadatachangelog")
-public class JavaDataChangelog extends DomainObject {
+@Table(name = "migration_changelog")
+public class MigrationChangelog extends DomainObject {
     // ID documents the execution order
 
     @Column(name = "author")

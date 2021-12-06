@@ -1,19 +1,19 @@
-package de.tum.in.www1.artemis.config.javaDataChange.entries;
+package de.tum.in.www1.artemis.config.migration.entries;
 
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import de.tum.in.www1.artemis.config.javaDataChange.JavaDataChangeEntry;
+import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 
 @Component
-public class ChangeEntry20211128_120000 extends JavaDataChangeEntry {
+public class MigrationEntry20211128_120000 extends MigrationEntry {
 
     private final CourseRepository courseRepository;
 
-    public ChangeEntry20211128_120000(CourseRepository courseRepository) {
+    public MigrationEntry20211128_120000(CourseRepository courseRepository) {
         this.courseRepository = courseRepository;
     }
 
@@ -29,7 +29,7 @@ public class ChangeEntry20211128_120000 extends JavaDataChangeEntry {
      */
     @Override
     public String date() {
-        return "20211128-120000";
+        return /* "20211128-120000" */"";
     }
 
     @Override

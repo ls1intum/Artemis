@@ -2,7 +2,7 @@
     <property name="autoIncrement" value="true"/>
 <changeSet id="20211128134300" author="julian-christl">
     <!-- create new entity programming exercise test case -->
-    <createTable tableName="javadatachangelog">
+    <createTable tableName="migration_changelog">
         <column name="id" type="bigint" autoIncrement="${autoIncrement}">
             <constraints primaryKey="true" nullable="false"/>
         </column>

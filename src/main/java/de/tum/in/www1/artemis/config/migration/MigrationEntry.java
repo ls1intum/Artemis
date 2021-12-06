@@ -1,12 +1,14 @@
-package de.tum.in.www1.artemis.config.javaDataChange;
+package de.tum.in.www1.artemis.config.migration;
 
 import java.io.Serializable;
 
-public abstract class JavaDataChangeEntry implements Serializable {
+public abstract class MigrationEntry implements Serializable {
 
     public abstract void execute();
 
-    // force entries to define an author
+    /**
+     * @return Author of the entry. Either full name or GitHub name.
+     */
     public abstract String author();
 
     /**
