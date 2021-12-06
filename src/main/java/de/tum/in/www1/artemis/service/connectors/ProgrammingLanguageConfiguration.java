@@ -19,6 +19,11 @@ public class ProgrammingLanguageConfiguration {
 
     private Map<ProgrammingLanguage, String> images = new HashMap<>();
 
+    /**
+     * Set the map of languages to build images.
+     *
+     * @param buildImages the map of languages to build images
+     */
     public void setImages(Map<ProgrammingLanguage, String> buildImages) {
         if (!Arrays.stream(ProgrammingLanguage.values()).allMatch(buildImages::containsKey)) {
             var missing = Arrays.stream(ProgrammingLanguage.values()).filter(programmingLanguage -> !buildImages.containsKey(programmingLanguage)).toList();
