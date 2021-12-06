@@ -57,17 +57,17 @@ export class CreateModelingExercisePage {
 
     pickDifficulty(options: { hard?: boolean; medium?: boolean; easy?: boolean }) {
         if (options.hard) {
-            this.getDiffifultyBar().eq(3).click();
+            this.getDiffifultyBar().children().eq(3).click();
         } else if (options.medium) {
-            this.getDiffifultyBar().eq(2).click();
+            this.getDiffifultyBar().children().eq(2).click();
         } else if (options.easy) {
-            this.getDiffifultyBar().eq(1).click();
+            this.getDiffifultyBar().children().eq(1).click();
         } else {
-            this.getDiffifultyBar().eq(0).click();
+            this.getDiffifultyBar().children().eq(0).click();
         }
     }
 
     private getDiffifultyBar() {
-        return cy.get('modeling-difficulty-picker').children().eq(0);
+        return cy.get('#modeling-difficulty-picker').children().eq(0);
     }
 }
