@@ -160,11 +160,7 @@ describe('TeamsImportFromFileFormComponent', () => {
         it('should throw error', () => {
             const invalidFileStudents = [...mockFileStudents];
             invalidFileStudents[0].teamName = '1invalidTeamName';
-            try {
-                comp.convertTeams(invalidFileStudents);
-            } catch (e) {
-                expect(e.stack).not.toBe(null);
-            }
+            expect(() => comp.convertTeams(invalidFileStudents)).toThrowError();
         });
     });
 });
