@@ -400,9 +400,7 @@ public class BambooBuildPlanService {
     }
 
     private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage programmingLanguage) {
-        if (!programmingLanguageConfiguration.containsLanguage(programmingLanguage))
-            throw new IllegalArgumentException("Your configuration contains no configured docker image for " + programmingLanguage);
-        var dockerImage = programmingLanguageConfiguration.getBuildImages().get(programmingLanguage);
+        var dockerImage = programmingLanguageConfiguration.getImages().get(programmingLanguage);
         return new DockerConfiguration().image(dockerImage);
     }
 }

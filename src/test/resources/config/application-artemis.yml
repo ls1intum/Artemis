@@ -48,16 +48,19 @@ artemis:
         vcs-credentials: fake-key
         artemis-authentication-token-key: fake-key
         artemis-authentication-token-value: fake-token
-        build-images:
-            JAVA: "ls1tum/artemis-maven-template:java17-2"
-            KOTLIN: "ls1tum/artemis-maven-template:java17-2"
-            EMPTY: "ls1tum/artemis-maven-template:java17-2"
-            C: "ls1tum/artemis-c-docker:latest"
-            HASKELL: "tumfpv/fpv-stack:8.8.4"
-            VHDL: "tizianleonhardt/era-artemis-vhdl:latest"
-            ASSEMBLER: "tizianleonhardt/era-artemis-assembler:latest"
-            SWIFT: "norionomura/swiftlint:latest"
-            OCAML: "ls1tum/artemis-ocaml-docker:v1"
+        build:
+            images:
+                JAVA: "~~invalid~~"
+                KOTLIN: "~~invalid~~"
+                EMPTY: "~~invalid~~"
+                PYTHON: "~~invalid~~"
+                C: "~~invalid~~"
+                HASKELL: "~~invalid~~"
+                VHDL: "~~invalid~~"
+                ASSEMBLER: "~~invalid~~"
+                SWIFT: "~~invalid~~"
+                OCAML: "~~invalid~~"
+
     lti:
         id: artemis_lti
         oauth-key: artemis_lti_key

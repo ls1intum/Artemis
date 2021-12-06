@@ -96,10 +96,6 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
             boolean isStaticCodeAnalysisEnabled) {
-
-        if (!programmingLanguageConfiguration.containsLanguage(programmingLanguage))
-            throw new IllegalArgumentException("Your configuration contains no configured docker image for " + programmingLanguage);
-
         Map<String, String> replacements = new HashMap<>();
         replacements.put(REPLACE_TEST_REPO, testRepositoryURL.getURL().toString());
         replacements.put(REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.getURL().toString());
@@ -108,7 +104,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_TESTS_CHECKOUT_PATH, Constants.TESTS_CHECKOUT_PATH);
         replacements.put(REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl);
         replacements.put(REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
-        replacements.put(REPLACE_DOCKER_IMAGE_NAME, programmingLanguageConfiguration.getBuildImages().get(programmingLanguage));
+        replacements.put(REPLACE_DOCKER_IMAGE_NAME, programmingLanguageConfiguration.getImages().get(programmingLanguage));
         replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);
         // at the moment, only Java and Swift are supported
         if (isStaticCodeAnalysisEnabled) {

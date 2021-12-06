@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,13 +14,17 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
  *
  * @author Dominik Fuchss
  */
-@ConfigurationProperties(prefix = "artemis.continuous-integration")
+@ConfigurationProperties(prefix = "artemis.continuous-integration.build")
 public class ProgrammingLanguageConfiguration {
 
-    private Map<ProgrammingLanguage, String> buildImages = new HashMap<>();
+    private Map<ProgrammingLanguage, String> images = new HashMap<>();
 
-    public void setBuildImages(Map<ProgrammingLanguage, String> buildImages) {
-        this.buildImages = buildImages;
+    public void setImages(Map<ProgrammingLanguage, String> buildImages) {
+        if (!Arrays.stream(ProgrammingLanguage.values()).allMatch(buildImages::containsKey)) {
+            var missing = Arrays.stream(ProgrammingLanguage.values()).filter(programmingLanguage -> !buildImages.containsKey(programmingLanguage)).toList();
+            throw new IllegalArgumentException("Not all Build Images for Programming Languages are set in configuration. Missing: " + missing);
+        }
+        this.images = buildImages;
     }
 
     /**
@@ -27,17 +32,7 @@ public class ProgrammingLanguageConfiguration {
      *
      * @return the map of languages to their docker images
      */
-    public Map<ProgrammingLanguage, String> getBuildImages() {
-        return Collections.unmodifiableMap(buildImages);
-    }
-
-    /**
-     * Check whether the image for some {@link ProgrammingLanguage} is defined.
-     *
-     * @param programmingLanguage the language to check
-     * @return indicator whether the image for the language is configured
-     */
-    public boolean containsLanguage(ProgrammingLanguage programmingLanguage) {
-        return buildImages.containsKey(programmingLanguage);
+    public Map<ProgrammingLanguage, String> getImages() {
+        return Collections.unmodifiableMap(images);
     }
 }
