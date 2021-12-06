@@ -9,6 +9,9 @@ import { Result } from 'app/entities/result.model';
  * For exam test runs, the original assessor is allowed to respond to complaints.
  */
 export const isAllowedToRespondToComplaintAction = (isAtLeastInstructor: boolean, isTestRun: boolean, isAssessor: boolean, complaint: Complaint, exercise?: Exercise): boolean => {
+    if (complaint.accepted !== undefined) {
+        return false;
+    }
     if (isAtLeastInstructor) {
         return true;
     }

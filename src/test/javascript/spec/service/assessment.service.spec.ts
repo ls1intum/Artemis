@@ -99,5 +99,10 @@ describe('Assessment Service', () => {
             expect(isAllowedAssessor).toBe(true);
             expect(isAllowedNotAssessor).toBe(false);
         });
+
+        it('should hide for resolved complaint', () => {
+            const isAllowed = isAllowedToRespondToComplaintAction(true, false, false, { ...complaint, accepted: true }, exercise);
+            expect(isAllowed).toBe(false);
+        });
     });
 });
