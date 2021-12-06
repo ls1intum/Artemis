@@ -47,7 +47,6 @@ describe('ComplaintsForTutorComponent', () => {
     const freshlyCreatedComplaintResponse = { ...lockComplaintResponse, isCurrentlyLocked: true, complaint: getUnhandledComplaint() };
 
     let createLockStub: jest.SpyInstance<Observable<HttpResponse<ComplaintResponse>>, [complaintId: number]>;
-    let refreshLockStub: jest.SpyInstance<Observable<HttpResponse<ComplaintResponse>>, [complaintId: number]>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
