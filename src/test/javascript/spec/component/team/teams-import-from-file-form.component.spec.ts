@@ -81,18 +81,18 @@ describe('TeamsImportFromFileFormComponent', () => {
             expect(comp.importedTeams).toEqual(mockFileStudents);
             expect(comp.sourceTeams).toStrictEqual(mockFileTeamsConverted);
             expect(teams).toStrictEqual(mockFileTeamsConverted);
-            expect(comp.loading).toEqual(false);
-            expect(comp.importFile).toEqual(undefined);
-            expect(comp.importFileName).toEqual('');
+            expect(comp.loading).toBe(false);
+            expect(comp.importFile).toBe(undefined);
+            expect(comp.importFileName).toBe('');
             expect(getElementStub).toHaveBeenCalledTimes(1);
-            expect(control.value).toEqual('');
+            expect(control.value).toBe('');
             jest.restoreAllMocks();
         });
         it('should parse json file and send converted teams', () => {
             reader = { ...reader, result: JSON.stringify(mockFileStudents), onload: null };
             comp.importFile = new File([''], 'file.json', { type: 'application/json' });
             comp.importFileName = 'file.json';
-            expect(control.value).toEqual('test');
+            expect(control.value).toBe('test');
             comp.onFileLoadImport(reader);
         });
         it('should parse csv file and send converted teams', async () => {
@@ -104,7 +104,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             };
             comp.importFile = new File([''], 'file.csv', { type: 'text/csv' });
             comp.importFileName = 'file.csv';
-            expect(control.value).toEqual('test');
+            expect(control.value).toBe('test');
             await comp.onFileLoadImport(reader);
         });
     });
@@ -123,14 +123,14 @@ describe('TeamsImportFromFileFormComponent', () => {
             const ev = { target: { files: [file] } };
             comp.setImportFile(ev);
             expect(comp.importFile).toStrictEqual(file);
-            expect(comp.importFileName).toEqual('testFileName');
+            expect(comp.importFileName).toBe('testFileName');
             expect(changeDetectorDetectChangesSpy).toHaveBeenCalledTimes(1);
         });
         it('should set import file correctly', () => {
             const ev = { target: { files: [] } };
             comp.setImportFile(ev);
-            expect(comp.importFile).toEqual(undefined);
-            expect(comp.importFileName).toEqual('');
+            expect(comp.importFile).toBe(undefined);
+            expect(comp.importFileName).toBe('');
             expect(changeDetectorDetectChangesSpy).not.toHaveBeenCalled();
         });
     });
