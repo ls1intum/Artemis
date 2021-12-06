@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
@@ -76,8 +75,7 @@ public class BambooBuildPlanService {
     @Value("${artemis.continuous-integration.vcs-application-link-name}")
     private String vcsApplicationLinkName;
 
-    @Autowired
-    private ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -87,11 +85,13 @@ public class BambooBuildPlanService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, Optional<VersionControlService> versionControlService) {
+    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, Optional<VersionControlService> versionControlService,
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
         this.env = env;
         this.versionControlService = versionControlService;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     /**

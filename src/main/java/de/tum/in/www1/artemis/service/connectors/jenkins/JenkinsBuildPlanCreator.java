@@ -10,7 +10,6 @@ import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -74,13 +73,13 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     @Value("${artemis.continuous-integration.artemis-authentication-token-key}")
     private String ARTEMIS_AUTHENTICATION_TOKEN_KEY;
 
-    @Autowired
-    private ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     private final ResourceLoaderService resourceLoaderService;
 
-    public JenkinsBuildPlanCreator(ResourceLoaderService resourceLoaderService) {
+    public JenkinsBuildPlanCreator(ResourceLoaderService resourceLoaderService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.resourceLoaderService = resourceLoaderService;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     @PostConstruct
