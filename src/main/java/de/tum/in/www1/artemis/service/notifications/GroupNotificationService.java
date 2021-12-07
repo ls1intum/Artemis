@@ -38,9 +38,9 @@ public class GroupNotificationService {
 
     private final UserRepository userRepository;
 
-    private MailService mailService;
+    private final MailService mailService;
 
-    private NotificationSettingsService notificationSettingsService;
+    private final NotificationSettingsService notificationSettingsService;
 
     public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
             MailService mailService, NotificationSettingsService notificationSettingsService) {
