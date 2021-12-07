@@ -15,6 +15,7 @@ import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, getSubmissionResultById, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { TextAssessmentEvent } from 'app/entities/text-assesment-event.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 type EntityResponseType = HttpResponse<Result>;
 type EntityResponseEventType = HttpResponse<TextAssessmentEvent>;
@@ -26,7 +27,7 @@ type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
 export class TextAssessmentService {
     private readonly resourceUrl = SERVER_API_URL + 'api';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private accountService: AccountService) {}
 
     /**
      * Saves the passed feedback items of the assessment.
@@ -144,6 +145,9 @@ export class TextAssessmentService {
                 // Wire up Result and Submission
                 tap((response: HttpResponse<StudentParticipation>) => {
                     const participation = response.body!;
+                    if (participation.exercise) {
+                        this.accountService.setAccessRightsForExercise(participation.exercise);
+                    }
                     const submission = participation.submissions![0];
                     let result;
                     if (resultId) {
