@@ -3,7 +3,7 @@ import { MultipleChoiceQuestionEditComponent } from './multiple-choice-question/
 import { DragAndDropQuestionEditComponent } from './drag-and-drop-question/drag-and-drop-question-edit.component';
 import { ShortAnswerQuestionEditComponent } from './short-answer-question/short-answer-question-edit.component';
 import { AngularFittextModule } from 'angular-fittext';
-import { AceEditorModule } from 'ng2-ace-editor';
+import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { DndModule } from 'ng2-dnd';
 import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-scoring-info-modal.component';
