@@ -539,20 +539,10 @@
                 <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-secondary"> </span>
                 <ng-template #tooltipTranslate>
                     <div *ngFor="let reason of getInvalidReasons()">
-                        <p
-                            *ngIf="(reason.translateValues | json) != '{}'"
-                            jhiTranslate="{{ reason.translateKey }}"
-                            [translateValues]="{ index: reason.translateValues.index, threshold: reason.translateValues.threshold }"
-                        ></p>
-                        <p *ngIf="(reason.translateValues | json) == '{}'" jhiTranslate="{{ reason.translateKey }}"></p>
+                        <p jhiTranslate="{{ reason.translateKey }}" [translateValues]="{ index: reason.translateValues.index, threshold: reason.translateValues.threshold }"></p>
                     </div>
                 </ng-template>
-                <span
-                    *ngIf="editForm.form.invalid || !validIdeSelection() || !auxiliaryRepositoriesValid || submissionPolicyForm.invalid"
-                    class="badge bg-danger"
-                    [ngbTooltip]="tooltipTranslate"
-                    tooltip-placement="top-right"
-                >
+                <span *ngIf="getInvalidReasons().length > 0" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right">
                     <fa-icon [icon]="'exclamation-circle'"></fa-icon>
                     <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
                     <span>({{ getInvalidReasons().length }})</span>
@@ -563,7 +553,7 @@
                 <jhi-button
                     id="save-entity"
                     [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-                    [disabled]="editForm.form.invalid || !validIdeSelection() || !auxiliaryRepositoriesValid || submissionPolicyForm.invalid"
+                    [disabled]="getInvalidReasons().length > 0"
                     [isLoading]="isSaving"
                     [icon]="'save'"
                     [title]="submitButtonTitle"
