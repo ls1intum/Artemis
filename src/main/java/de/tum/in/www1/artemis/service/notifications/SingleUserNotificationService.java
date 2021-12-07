@@ -106,6 +106,7 @@ public class SingleUserNotificationService {
     /**
      * Checks if a new assessed-exercise-submission notification has to be created now or scheduled
      *
+     * @param submission that is needed for potential scheduling
      * @param exercise which the submission is based on
      * @param recipient of the notification (i.e. the student)
      * @param instanceMessageSendService that will call the service to update the scheduled assessed-exercise-submission notification

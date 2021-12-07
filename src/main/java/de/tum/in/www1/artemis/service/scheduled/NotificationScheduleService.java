@@ -52,8 +52,11 @@ public class NotificationScheduleService {
         this.singleUserNotificationService = singleUserNotificationService;
     }
 
+    /**
+     * Schedules ongoing notification processes on server start up
+     */
     @PostConstruct
-    public void scheduleRunningExercisesOnStartup() {
+    public void scheduleRunningNotificationProcessesOnStartup() {
         try {
             Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
             if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
@@ -61,7 +64,8 @@ public class NotificationScheduleService {
                 // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
                 return;
             }
-            SecurityUtils.setAuthorizationObject();
+
+            checkSecurityUtils();
 
             // EXERCISE_RELEASED
             Set<Exercise> exercisesToBeScheduled = exerciseRepository.findAllExercisesWithCurrentOrUpcomingReleaseDate(ZonedDateTime.now());
@@ -78,6 +82,15 @@ public class NotificationScheduleService {
         }
         catch (Exception exception) {
             log.error("Failed to start NotificationScheduleService", exception);
+        }
+    }
+
+    /**
+     * Checks the SecurityUtils for authentication, if not yet authenticated do so.
+     */
+    private void checkSecurityUtils() {
+        if (!SecurityUtils.isAuthenticated()) {
+            SecurityUtils.setAuthorizationObject();
         }
     }
 
@@ -104,15 +117,11 @@ public class NotificationScheduleService {
      */
     private void scheduleNotificationForReleasedExercise(Exercise exercise) {
         try {
-            if (!SecurityUtils.isAuthenticated()) {
-                SecurityUtils.setAuthorizationObject();
-            }
+            checkSecurityUtils();
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, () -> {
-                if (!SecurityUtils.isAuthenticated()) {
-                    SecurityUtils.setAuthorizationObject();
-                }
-                Exercise foundCurrentVersionOfScheduledExercise;
+                checkSecurityUtils();
                 // if the exercise has been updated in the meantime the scheduled immutable exercise is outdated and has to be replaced by the current one in the DB
+                Exercise foundCurrentVersionOfScheduledExercise;
                 try {
                     foundCurrentVersionOfScheduledExercise = exerciseRepository.findByIdElseThrow(exercise.getId());
                 }
@@ -160,14 +169,9 @@ public class NotificationScheduleService {
      */
     private void scheduleNotificationForAssessedExercisesSubmissions(Exercise exercise, Submission submission) {
         try {
-            if (!SecurityUtils.isAuthenticated()) {
-                SecurityUtils.setAuthorizationObject();
-            }
+            checkSecurityUtils();
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.ASSESSMENT_DUE, () -> {
-                if (!SecurityUtils.isAuthenticated()) {
-                    SecurityUtils.setAuthorizationObject();
-                }
-
+                checkSecurityUtils();
                 // if the exercise has been updated in the meantime the scheduled immutable exercise is outdated and has to be replaced by the current one in the DB
                 Exercise foundCurrentVersionOfScheduledExercise;
                 try {
