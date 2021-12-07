@@ -14,8 +14,8 @@ export class ScaFeedbackModal {
     }
 
     shouldShowCodeIssue(feedbackText: string, pointReduction: string) {
-        // We have to query for a css class here. If we query for an id Cypress will return the first id it finds instead of all elements matching the selector.
-        cy.get('.feedback-text')
+        // This is a workaround to avoid Cypress only returning the first element matching the id
+        cy.get('[id="feedback-text"]')
             .contains(feedbackText)
             .scrollIntoView()
             .should('be.visible')
@@ -27,7 +27,7 @@ export class ScaFeedbackModal {
     }
 
     closeModal() {
-        cy.get('#feedback-close').find('.btn').click();
+        cy.get('#feedback-close').click();
         cy.get('#result-detail-body').should('not.exist');
     }
 }
