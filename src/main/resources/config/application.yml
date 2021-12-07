@@ -156,6 +156,12 @@ spring:
         phone:
             home:
                 enabled: false
+    artemis: # ActiveMQ Artemis configuration
+        mode: native
+        host: localhost
+        port: 61616
+        user: guest
+        password: guest
 
 hazelcast:
     phone:
@@ -215,7 +221,7 @@ jhipster:
     mail:
         from: artemis@localhost
     registry:
-        password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
+        password: admin
     cache: # Cache configuration
         hazelcast: # Hazelcast distributed cache
             time-to-live-seconds: 3600
@@ -224,7 +230,7 @@ jhipster:
 # Eureka configuration
 eureka:
     client:
-        enabled: false
+        enabled: true
         service-url:
             defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
         healthcheck:

@@ -130,6 +130,15 @@ spring:
                     uri: lb://GATEWAY
                     predicates:
                         - Path=/api/gateway/**
+                -   id: usermanagement
+                    uri: lb://usermanagement
+                    predicates:
+                        - Path=/api/users, /api/users/**, /api/users/authorities, /api/guided-tour-settings/**
+                -   id: usermanagement
+                    uri: lb://usermanagement
+                    predicates:
+                        - Path=/api/authenticate
+                        - Method=GET
                 -   id: artemis
                     uri: lb://ARTEMIS
                     predicates:

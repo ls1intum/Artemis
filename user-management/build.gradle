@@ -92,6 +92,11 @@ sourceSets {
             include 'de/tum/in/www1/artemis/config/DateTimeFormatConfiguration.*'
             include 'de/tum/in/www1/artemis/config/JacksonConfiguration.*'
             include 'de/tum/in/www1/artemis/config/LocaleConfiguration.*'
+            include 'de/tum/in/www1/artemis/config/RestTemplateConfiguration.*'
+            include 'de/tum/in/www1/artemis/config/auth/AtheneAuthorizationInterceptor.*' // needed from RestTemplateConfiguration
+            include 'de/tum/in/www1/artemis/config/auth/JiraAuthorizationInterceptor.*' // needed from RestTemplateConfiguration
+            include 'de/tum/in/www1/artemis/config/connector/GitLabApiConfiguration.*'
+            include 'de/tum/in/www1/artemis/config/connector/JenkinsServerConfiguration.*'
 
             // de.tum.in.www1.artemis.service
             include 'de/tum/in/www1/artemis/service/FilePathService.*'
@@ -104,7 +109,37 @@ sourceSets {
             include 'de/tum/in/www1/artemis/service/dto/**'
             include 'de/tum/in/www1/artemis/service/util/**'
             include 'de/tum/in/www1/artemis/service/listeners/**'
+            include 'de/tum/in/www1/artemis/service/ldap/**'
+            include 'de/tum/in/www1/artemis/service/user/PasswordService.*'
 
+            include 'de/tum/in/www1/artemis/service/connectors/bamboo/BambooAuthorizationInterceptor.*' // needed from RestTemplateConfiguration
+            include 'de/tum/in/www1/artemis/service/connectors/bitbucket/BitbucketAuthorizationInterceptor.*' // needed from RestTemplateConfiguration
+            include 'de/tum/in/www1/artemis/service/connectors/gitlab/GitLabAuthorizationInterceptor.*' // needed from RestTemplateConfiguration
+            include 'de/tum/in/www1/artemis/service/connectors/jenkins/JenkinsAuthorizationInterceptor.*' // needed from RestTemplateConfiguration
+            include 'de/tum/in/www1/artemis/service/connectors/ConnectorHealth.*'
+
+            // VcsUserManagementService related dependencies
+            include 'de/tum/in/www1/artemis/service/connectors/VcsUserManagementService.*'
+            include 'de/tum/in/www1/artemis/service/connectors/gitlab/GitLabUserManagementService.*'
+            include 'de/tum/in/www1/artemis/service/connectors/gitlab/GitLabUserDoesNotExistException.*'
+            include 'de/tum/in/www1/artemis/service/connectors/gitlab/GitLabException.*'
+            include 'de/tum/in/www1/artemis/service/connectors/gitlab/GitlabInfoContributor.*'
+
+            // CIUserManagementService related dependencies
+            include 'de/tum/in/www1/artemis/service/connectors/CIUserManagementService.*'
+            include 'de/tum/in/www1/artemis/service/connectors/jenkins/JenkinsUserManagementService.*'
+            include 'de/tum/in/www1/artemis/service/connectors/jenkins/dto/JenkinsUserDTO.*'
+            include 'de/tum/in/www1/artemis/service/connectors/jenkins/jobs/JenkinsJobPermissionsService.*'
+            include 'de/tum/in/www1/artemis/service/connectors/jenkins/jobs/JenkinsJobPermissionsUtils.*'
+            include 'de/tum/in/www1/artemis/service/connectors/jenkins/jobs/JenkinsJobPermission.*'
+            include 'de/tum/in/www1/artemis/service/connectors/jenkins/jobs/JenkinsJobService.*'
+            include 'de/tum/in/www1/artemis/exception/JenkinsException.*'
+            include 'de/tum/in/www1/artemis/service/xml/XmlFileUtils.*'
+
+            // JiraAuthenticationProvider
+            include 'de/tum/in/www1/artemis/service/connectors/jira/dto/JiraUserDTO.*'
+
+            // Include all DB entities. repositories and exceptions
             include 'de/tum/in/www1/artemis/domain/**'
             include 'de/tum/in/www1/artemis/exception/**'
             include 'de/tum/in/www1/artemis/repository/**'
@@ -119,19 +154,36 @@ sourceSets {
             include 'de/tum/in/www1/artemis/web/rest/errors/InternalServerErrorException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/AccessForbiddenException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/ErrorConstants.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/CaptchaRequiredException.*'
+            include 'de/tum/in/www1/artemis/web/rest/util/HeaderUtil.*'
+            include 'de/tum/in/www1/artemis/web/rest/vm/ManagedUserVM.*'
         }
         resources {
             srcDir '../src/main/resources'
             include 'config/liquibase/**'
-            include 'config/aplication-artemis.yml'
-            include 'config/aplication-gitlab.yml'
-            include 'config/aplication-jenkins.yml'
+            include 'config/application-artemis.yml'
+            include 'config/application-gitlab.yml'
+            include 'config/application-jenkins.yml'
         }
     }
     externalTest {
         java {
             srcDir file("../src/test")
             include "java/de/tum/in/www1/artemis/util/RequestUtilService.*"
+            include "java/de/tum/in/www1/artemis/util/DatabaseCleanupService.*"
+            include "java/de/tum/in/www1/artemis/util/ConfigUtil.*"
+            include "java/de/tum/in/www1/artemis/util/ModelFactory.*"
+            include "java/de/tum/in/www1/artemis/util/TestConstants.*"
+            include "java/de/tum/in/www1/artemis/connector/GitlabRequestMockProvider.*"
+            include "java/de/tum/in/www1/artemis/connector/JenkinsRequestMockProvider.*"
+            include "java/de/tum/in/www1/artemis/connector/JiraRequestMockProvider.*"
+
+
+            srcDir file("../src/main")
+            include "java/de/tum/in/www1/artemis/util/FileUtils.*"
+            include "java/de/tum/in/www1/artemis/service/UrlService.*"
+            include "java/de/tum/in/www1/artemis/service/connectors/bamboo/dto/**"
+            include "java/de/tum/in/www1/artemis/service/connectors/jenkins/dto/**"
         }
     }
     main {
@@ -230,6 +282,9 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-undertow:${spring_boot_version}"
 
+    implementation "org.springframework.ldap:spring-ldap-core:${spring_ldap_core_version}"
+    implementation "org.springframework.data:spring-data-ldap:${spring_data_ldap_version}"
+
     implementation "com.fasterxml.jackson.module:jackson-module-jaxb-annotations"
     implementation "javax.annotation:javax.annotation-api"
     implementation "io.dropwizard.metrics:metrics-core"
@@ -248,6 +303,8 @@ dependencies {
     implementation "com.github.seancfoley:ipaddress:${github_seancfoley_ipaddress_version}"
     implementation "org.apache.maven:maven-model:${apache_model_version}"
     implementation "org.apache.pdfbox:pdfbox:${apache_pdfbox_version}"
+
+    implementation "org.springframework.boot:spring-boot-starter-artemis:${spring_boot_version}"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {

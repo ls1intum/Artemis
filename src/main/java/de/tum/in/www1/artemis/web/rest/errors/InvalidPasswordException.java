@@ -5,6 +5,7 @@ import java.io.Serial;
 import org.zalando.problem.AbstractThrowableProblem;
 import org.zalando.problem.Status;
 
+@Deprecated // Moved to user management microservice. To be removed
 public class InvalidPasswordException extends AbstractThrowableProblem {
 
     @Serial

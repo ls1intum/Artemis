@@ -58,6 +58,7 @@ import tech.jhipster.web.util.ResponseUtil;
  * <p>
  * Another option would be to have a specific JPA entity graph to handle this case.
  */
+@Deprecated // Moved to user management microservice. To be removed.
 @RestController
 @RequestMapping("/api")
 @PreAuthorize("hasRole('ADMIN')")

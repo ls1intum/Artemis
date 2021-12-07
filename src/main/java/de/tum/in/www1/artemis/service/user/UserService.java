@@ -40,6 +40,7 @@ import tech.jhipster.security.RandomUtil;
 /**
  * Service class for managing users.
  */
+@Deprecated // Moved to user management microservice. To be removed.
 @Service
 public class UserService {
 
