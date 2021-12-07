@@ -1,5 +1,4 @@
 import { artemis } from '../../../support/ArtemisTesting';
-import { generateUUID } from '../../../support/utils';
 import { CypressExerciseType } from '../../../support/requests/CourseManagementRequests';
 
 // The user management object
@@ -22,7 +21,7 @@ describe('Text exercise participation', () => {
             course = response.body;
             courseManagement.addStudentToCourse(course.id, users.getStudentOne().username);
             courseManagement.createTextExercise({ course }).then((request: any) => {
-                exercise = request.response.body;
+                exercise = request.body;
             });
         });
     });

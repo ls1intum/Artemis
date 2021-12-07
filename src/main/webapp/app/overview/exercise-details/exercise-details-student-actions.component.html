@@ -250,6 +250,7 @@
             [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
         ></button>
         <button
+            [id]="'start-exercise-' + exercise.id"
             class="start-exercise"
             jhi-exercise-action-button
             buttonIcon="play-circle"
@@ -261,6 +262,7 @@
             (click)="startExercise()"
         ></button>
         <button
+            [id]="'open-exercise-' + exercise.id"
             jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'artemisApp.exerciseActions.openTextEditor' | artemisTranslate"
