@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -47,9 +48,10 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
             WebsocketMessagingService messagingService, LtiService ltiService, StudentParticipationRepository studentParticipationRepository,
-            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
+            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService,
+            InstanceMessageSendService instanceMessageSendService) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
-                submissionRepository, singleUserNotificationService);
+                submissionRepository, singleUserNotificationService, instanceMessageSendService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.ltiService = ltiService;
@@ -191,7 +193,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             newManualResult = resultRepository.submitManualAssessment(existingManualResult.getId());
             Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
             if (optionalStudent.isPresent()) {
-                singleUserNotificationService.notifyUserAboutAssessedExerciseSubmission(programmingExercise, optionalStudent.get());
+                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(submission, programmingExercise, optionalStudent.get(), instanceMessageSendService);
             }
         }
         // remove information about the student for tutors to ensure double-blind assessment

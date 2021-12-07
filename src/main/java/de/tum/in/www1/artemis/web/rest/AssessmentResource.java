@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -46,9 +47,11 @@ public abstract class AssessmentResource {
 
     protected final SingleUserNotificationService singleUserNotificationService;
 
+    protected final InstanceMessageSendService instanceMessageSendService;
+
     public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, AssessmentService assessmentService,
             ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
+            SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService, InstanceMessageSendService instanceMessageSendService) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -59,6 +62,7 @@ public abstract class AssessmentResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.singleUserNotificationService = singleUserNotificationService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     abstract String getEntityName();
@@ -122,7 +126,7 @@ public abstract class AssessmentResource {
             result = assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
             Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
             if (optionalStudent.isPresent()) {
-                singleUserNotificationService.notifyUserAboutAssessedExerciseSubmission(exercise, optionalStudent.get());
+                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(submission, exercise, optionalStudent.get(), instanceMessageSendService);
             }
         }
         var participation = result.getParticipation();

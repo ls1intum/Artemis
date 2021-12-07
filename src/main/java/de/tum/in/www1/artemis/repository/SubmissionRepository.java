@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -425,6 +426,13 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             WHERE submission.id = :#{#submissionId}
             """)
     Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
+
+    @Query("""
+            SELECT DISTINCT s FROM Submission s LEFT JOIN FETCH s.results r
+                WHERE s.submitted = TRUE AND r.rated = TRUE
+                AND s.participation.exercise.assessmentDueDate >= :#{#now}
+            """)
+    List<Submission> getAllSubmittedAndRatedSubmissionsWithFutureOrCurrentAssessmentDueDate(@Param("now") ZonedDateTime now);
 
     /**
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the

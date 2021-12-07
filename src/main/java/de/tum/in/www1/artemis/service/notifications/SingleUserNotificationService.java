@@ -9,16 +9,14 @@ import java.time.ZonedDateTime;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 import de.tum.in.www1.artemis.service.MailService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 
 @Service
 public class SingleUserNotificationService {
@@ -91,6 +89,7 @@ public class SingleUserNotificationService {
 
     /**
      * Notify student about the finished assessment for an exercise submission.
+     * Only do so if no AssessmentDueDate is set or if it is now.
      * Also creates and sends an email.
      *
      * @param exercise that was assessed
@@ -101,6 +100,25 @@ public class SingleUserNotificationService {
         if (exercise.getAssessmentDueDate() == null
                 || (!exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now()))) {
             notifyRecipientWithNotificationType(exercise, EXERCISE_SUBMISSION_ASSESSED, recipient);
+        }
+    }
+
+    /**
+     * Checks if a new assessed-exercise-submission notification has to be created now or scheduled
+     *
+     * @param exercise which the submission is based on
+     * @param recipient of the notification (i.e. the student)
+     * @param instanceMessageSendService that will call the service to update the scheduled assessed-exercise-submission notification
+     */
+    public void checkNotificationForAssessmentExerciseSubmission(Submission submission, Exercise exercise, User recipient, InstanceMessageSendService instanceMessageSendService) {
+        if (exercise.isCourseExercise()) {
+            // only send the notification now if no assessment due date was set or if it is in the past
+            if (exercise.getAssessmentDueDate() == null || !exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
+                notifyUserAboutAssessedExerciseSubmission(exercise, recipient);
+            }
+            else {
+                instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(submission.getId());
+            }
         }
     }
 

@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.PostConstruct;
 
@@ -14,16 +12,21 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import tech.jhipster.config.JHipsterConstants;
 
 @Service
 @Profile("scheduling")
-public class NotificationScheduleService implements IExerciseScheduleService<Exercise> {
+public class NotificationScheduleService {
 
     private final Logger log = LoggerFactory.getLogger(NotificationScheduleService.class);
 
@@ -31,20 +34,25 @@ public class NotificationScheduleService implements IExerciseScheduleService<Exe
 
     private final ExerciseRepository exerciseRepository;
 
+    private final SubmissionRepository submissionRepository;
+
     private final Environment environment;
 
     private final GroupNotificationService groupNotificationService;
 
+    private final SingleUserNotificationService singleUserNotificationService;
+
     public NotificationScheduleService(ScheduleService scheduleService, ExerciseRepository exerciseRepository, GroupNotificationService groupNotificationService,
-            Environment environment) {
+            Environment environment, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
         this.scheduleService = scheduleService;
         this.exerciseRepository = exerciseRepository;
         this.environment = environment;
         this.groupNotificationService = groupNotificationService;
+        this.submissionRepository = submissionRepository;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     @PostConstruct
-    @Override
     public void scheduleRunningExercisesOnStartup() {
         try {
             Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
@@ -55,25 +63,38 @@ public class NotificationScheduleService implements IExerciseScheduleService<Exe
             }
             SecurityUtils.setAuthorizationObject();
 
+            // EXERCISE_RELEASED
             Set<Exercise> exercisesToBeScheduled = exerciseRepository.findAllExercisesWithCurrentOrUpcomingReleaseDate(ZonedDateTime.now());
-            exercisesToBeScheduled.forEach(this::scheduleNotificationForExercise);
+            exercisesToBeScheduled.forEach(this::scheduleNotificationForReleasedExercise);
 
-            log.info("Scheduled {} exercise notifications.", exercisesToBeScheduled.size());
+            // EXERCISE_SUBMISSION_ASSESSED
+            List<Submission> submissionsToBeScheduled = submissionRepository.getAllSubmittedAndRatedSubmissionsWithFutureOrCurrentAssessmentDueDate(ZonedDateTime.now());
+            submissionsToBeScheduled.forEach(submission -> {
+                Exercise foundExercise = submission.getParticipation().getExercise();
+                scheduleNotificationForAssessedExercisesSubmissions(foundExercise, submission);
+            });
+
+            log.info("Scheduled {} released exercise notifications.", exercisesToBeScheduled.size());
         }
         catch (Exception exception) {
             log.error("Failed to start NotificationScheduleService", exception);
         }
     }
 
-    @Override
-    public void updateScheduling(Exercise exercise) {
+    /// EXERCISE_RELEASED
+
+    /**
+     * updateScheduling method for the notificationType EXERCISE_RELEASED
+     * @param exercise that should trigger a notification when it is released
+     */
+    public void updateSchedulingForReleasedExercises(Exercise exercise) {
         if (exercise.getReleaseDate() == null || ZonedDateTime.now().isAfter(exercise.getReleaseDate())) {
             // to avoid canceling more important tasks we simply return here.
             // to make sure no wrong notification is sent out the date is checked again in the concrete notification method
             return;
         }
         if (exercise.isCourseExercise()) {
-            scheduleNotificationForExercise(exercise);
+            scheduleNotificationForReleasedExercise(exercise);
         }
     }
 
@@ -81,7 +102,7 @@ public class NotificationScheduleService implements IExerciseScheduleService<Exe
      * The place where the actual tasks/methods are called/scheduled that should be run at the exercise release time
      * @param exercise which will be announced by a notifications at release date
      */
-    private void scheduleNotificationForExercise(Exercise exercise) {
+    private void scheduleNotificationForReleasedExercise(Exercise exercise) {
         try {
             if (!SecurityUtils.isAuthenticated()) {
                 SecurityUtils.setAuthorizationObject();
@@ -96,17 +117,102 @@ public class NotificationScheduleService implements IExerciseScheduleService<Exe
                     foundCurrentVersionOfScheduledExercise = exerciseRepository.findByIdElseThrow(exercise.getId());
                 }
                 catch (EntityNotFoundException entityNotFoundException) {
-                    log.debug("Scheduled notification is no longer in the database " + exercise.getId());
+                    log.debug("Exercise is no longer in the database " + exercise.getId());
                     return;
                 }
                 // only send a notification if ReleaseDate is defined and not in the future (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
-                if (foundCurrentVersionOfScheduledExercise.getReleaseDate() != null
-                        && !foundCurrentVersionOfScheduledExercise.getReleaseDate().isBefore(ZonedDateTime.now().minusMinutes(2))
-                        && !foundCurrentVersionOfScheduledExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+                ZonedDateTime releaseDate = foundCurrentVersionOfScheduledExercise.getReleaseDate();
+                if (releaseDate != null && !releaseDate.isBefore(ZonedDateTime.now().minusMinutes(2)) && !releaseDate.isAfter(ZonedDateTime.now())) {
                     groupNotificationService.notifyAllGroupsAboutReleasedExercise(foundCurrentVersionOfScheduledExercise);
                 }
             });
             log.debug("Scheduled notify about started exercise after due date for exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getReleaseDate());
+        }
+        catch (Exception exception) {
+            log.error("Failed to schedule notification for exercise " + exercise.getId(), exception);
+        }
+    }
+
+    /// EXERCISE_SUBMISSION_ASSESSED
+
+    /**
+     * updateScheduling method for the notificationType EXERCISE_SUBMISSION_ASSESSED
+     * @param submission that should trigger a notification when the assessment due date (of the respective exercise) is over
+     */
+    public void updateSchedulingForAssessedExercisesSubmissions(Submission submission) {
+        StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        if (exercise.getAssessmentDueDate() == null || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate())) {
+            // to avoid canceling more important tasks we simply return here.
+            // to make sure no wrong notification is sent out the date is checked again in the concrete notification method
+            return;
+        }
+        if (exercise.isCourseExercise()) {
+            scheduleNotificationForAssessedExercisesSubmissions(exercise, submission);
+        }
+    }
+
+    /**
+     * The place where the actual tasks/methods are called/scheduled that should be run when at the assessment due date of the exercise
+     * @param exercise which will be announced by a notifications at release date
+     */
+    private void scheduleNotificationForAssessedExercisesSubmissions(Exercise exercise, Submission submission) {
+        try {
+            if (!SecurityUtils.isAuthenticated()) {
+                SecurityUtils.setAuthorizationObject();
+            }
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.ASSESSMENT_DUE, () -> {
+                if (!SecurityUtils.isAuthenticated()) {
+                    SecurityUtils.setAuthorizationObject();
+                }
+
+                // if the exercise has been updated in the meantime the scheduled immutable exercise is outdated and has to be replaced by the current one in the DB
+                Exercise foundCurrentVersionOfScheduledExercise;
+                try {
+                    foundCurrentVersionOfScheduledExercise = exerciseRepository.findByIdElseThrow(exercise.getId());
+                }
+                catch (EntityNotFoundException entityNotFoundException) {
+                    log.debug("Exercise is no longer in the database " + exercise.getId());
+                    return;
+                }
+
+                // check if submission is still available (could have been deleted in the meantime)
+                Submission foundCurrentVersionOfScheduledSubmission;
+                try {
+                    // findByIdWithResultsElseThrow() is strangely throwing an EntityNotFound exception even though the submission is found
+                    Optional<Submission> foundSubmission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId());
+                    if (foundSubmission.isPresent()) {
+                        foundCurrentVersionOfScheduledSubmission = foundSubmission.get();
+                    }
+                    else {
+                        throw new EntityNotFoundException("Submission is missing");
+                    }
+                }
+                catch (EntityNotFoundException entityNotFoundException) {
+                    log.debug("Submission is no longer in the database " + submission.getId());
+                    return;
+                }
+
+                // check if user is available
+                Optional<User> optionalStudent = ((StudentParticipation) foundCurrentVersionOfScheduledSubmission.getParticipation()).getStudent();
+                User student;
+                if (optionalStudent.isPresent()) {
+                    student = optionalStudent.get();
+                }
+                else {
+                    throw new EntityNotFoundException("The student of the submission could not be found. No scheduled notification will be created.");
+                }
+
+                // only send a notification if AssessmentDueDate is defined and not in the future (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
+                ZonedDateTime assessmentDueDate = foundCurrentVersionOfScheduledExercise.getAssessmentDueDate();
+                if (assessmentDueDate != null && !assessmentDueDate.isBefore(ZonedDateTime.now().minusMinutes(2)) && !assessmentDueDate.isAfter(ZonedDateTime.now())) {
+                    singleUserNotificationService.notifyUserAboutAssessedExerciseSubmission(foundCurrentVersionOfScheduledExercise, student);
+                }
+            });
+            log.debug("Scheduled notify about assessed exercise submission after assessment due date for exercise '{}' (#{}) and submission (#{}) at {}.", exercise.getTitle(),
+                    exercise.getId(), exercise.getAssessmentDueDate(), submission.getId());
         }
         catch (Exception exception) {
             log.error("Failed to schedule notification for exercise " + exercise.getId(), exception);
