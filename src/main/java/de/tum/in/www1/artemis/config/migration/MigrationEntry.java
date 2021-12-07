@@ -12,7 +12,7 @@ public abstract class MigrationEntry implements Serializable {
     public abstract String author();
 
     /**
-     * Format YYYYMMDD-HHmmss
+     * Format YYYYMMDD_HHmmss
      * @return Current time in given format
      */
     public abstract String date();
