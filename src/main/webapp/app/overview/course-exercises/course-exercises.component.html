@@ -1,21 +1,44 @@
 <div class="row">
     <div class="col-12 col-lg-8">
         <div class="mt-3 position-relative" *ngIf="course">
-            <div class="exercise-controls" *ngIf="course!.exercises && course!.exercises.length > 0">
+            <div class="course-overview-controls" *ngIf="course!.exercises && course!.exercises.length > 0">
                 <div class="d-flex align-items-center me-2">
-                    <label class="d-flex align-items-center mb-0 me-2" *ngIf="course.isAtLeastTutor">
-                        <input (change)="toggleFilters([filterType.UNRELEASED])" [checked]="activeFilters.has(filterType.UNRELEASED)" type="checkbox" />
-                        <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.unreleased">Hide unreleased</span>
-                    </label>
-                    <div class="flex-column">
-                        <label class="d-flex align-items-center mb-0 me-2">
-                            <input (change)="toggleFilters([filterType.OVERDUE])" [checked]="activeFilters.has(filterType.OVERDUE)" type="checkbox" />
-                            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.overdue">Hide overdue</span>
-                        </label>
-                        <label class="d-flex align-items-center mb-0 me-2">
-                            <input (change)="toggleFilters([filterType.NEEDS_WORK])" [checked]="activeFilters.has(filterType.NEEDS_WORK)" type="checkbox" />
-                            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.fullScore">Hide full score</span>
-                        </label>
+                    <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+                        <button
+                            class="btn"
+                            [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }"
+                            ngbDropdownToggle
+                            id="filter-dropdown-button"
+                        >
+                            <fa-icon icon="filter"></fa-icon>
+                            <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size } }}</span>
+                        </button>
+                        <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                            <li *ngIf="course.isAtLeastTutor">
+                                <label>
+                                    <input class="ms-2" (change)="toggleFilters([filterType.UNRELEASED])" [checked]="activeFilters.has(filterType.UNRELEASED)" type="checkbox" />
+                                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.unreleased">Hide unreleased</span>
+                                </label>
+                            </li>
+                            <li>
+                                <label>
+                                    <input class="ms-2" (change)="toggleFilters([filterType.OVERDUE])" [checked]="activeFilters.has(filterType.OVERDUE)" type="checkbox" />
+                                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.overdue">Hide overdue</span>
+                                </label>
+                            </li>
+                            <li>
+                                <label>
+                                    <input class="ms-2" (change)="toggleFilters([filterType.NEEDS_WORK])" [checked]="activeFilters.has(filterType.NEEDS_WORK)" type="checkbox" />
+                                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.fullScore">Hide full score</span>
+                                </label>
+                            </li>
+                            <li>
+                                <label>
+                                    <input class="ms-2" (change)="toggleFilters([filterType.OPTIONAL])" [checked]="activeFilters.has(filterType.OPTIONAL)" type="checkbox" />
+                                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.optional">Hide optional</span>
+                                </label>
+                            </li>
+                        </ul>
                     </div>
                     <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
                         <button id="flip" (click)="flipOrder()" class="btn btn-primary">
