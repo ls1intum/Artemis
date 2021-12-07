@@ -303,7 +303,7 @@ public class ProgrammingPlagiarismDetectionService {
 
     private LanguageOption getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
         return switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA -> LanguageOption.JAVA_1_9;
+            case JAVA -> LanguageOption.JAVA;
             case C -> LanguageOption.C_CPP;
             case PYTHON -> LanguageOption.PYTHON_3;
             default -> throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
