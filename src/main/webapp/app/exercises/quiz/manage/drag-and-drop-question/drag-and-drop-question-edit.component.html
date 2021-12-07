@@ -11,6 +11,7 @@
         <div class="form-group question-title">
             <input
                 class="form-control"
+                id="drag-and-drop-question-title"
                 [(ngModel)]="question.title"
                 (ngModelChange)="questionUpdated.emit()"
                 placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
@@ -141,7 +142,7 @@
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.uploadBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="!reEvaluationInProgress"></span>
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.changeBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="reEvaluationInProgress"></span>
             </div>
-            <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file">
+            <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file" id="background-image-input-form">
                 <input id="backgroundFileInput{{ questionIndex }}" type="file" accept="image/*" class="form-control" (change)="setBackgroundFile($event)" />
                 <div class="input-group-prepend">
                     <button class="btn btn-outline-primary" (click)="uploadBackground()" [disabled]="isUploadingBackgroundFile || !backgroundFile">
@@ -301,7 +302,7 @@
             <ng-container *ngIf="!reEvaluationInProgress">
                 <div class="question-options">
                     <div class="col">
-                        <button class="btn btn-outline-secondary" (click)="addTextDragItem()">
+                        <button class="btn btn-outline-secondary" id="add-text-drag-item" (click)="addTextDragItem()">
                             <fa-icon [icon]="'plus'"></fa-icon>
                             <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
                         </button>
