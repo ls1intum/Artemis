@@ -52,7 +52,7 @@
                 </tr>
             </thead>
             <tbody class="markdown-preview">
-                <tr *ngFor="let textExercise of filteredTextExercises; trackBy: trackId" [id]="'exercise-card-' + textExercise.id">
+                <tr *ngFor="let textExercise of filteredTextExercises; trackBy: trackId" id="exercise-card-{{ textExercise.id }}">
                     <td>
                         <a [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{ textExercise.id }}</a>
                     </td>
