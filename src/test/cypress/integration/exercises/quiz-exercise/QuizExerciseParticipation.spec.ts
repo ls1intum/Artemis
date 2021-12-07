@@ -51,7 +51,7 @@ describe('Quiz Exercise Participation', () => {
         it('Student can see a visible quiz', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
-            courseOverview.startExercise(quizExercise.id, CypressExerciseType.QUIZ);
+            courseOverview.openRunningExercise(quizExercise.id);
             cy.get('.quiz-waiting-for-start-overlay > span').should('contain.text', 'This page will refresh automatically, when the quiz starts.');
         });
 
