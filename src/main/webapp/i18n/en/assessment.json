@@ -58,7 +58,7 @@
                 "empty": "No Submissions for this exercise!",
                 "loading": "Loading...",
                 "columns": {
-                    "submissionDate": "Submission date",
+                    "submissionDate": "Submission Date",
                     "result": "Latest Result",
                     "submissionCount": "Submissions",
                     "score": "Points",

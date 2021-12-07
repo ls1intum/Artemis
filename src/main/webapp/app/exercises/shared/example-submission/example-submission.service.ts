@@ -4,12 +4,17 @@ import { Observable } from 'rxjs';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { map } from 'rxjs/operators';
+import { Submission } from 'app/entities/submission.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class ExampleSubmissionService {
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService, private stringCountService: StringCountService) {}
 
     /**
      * Creates an example submission
@@ -97,5 +102,22 @@ export class ExampleSubmissionService {
             jsonCopy.exercise.categories = this.exerciseService.stringifyExerciseCategories(jsonCopy.exercise);
         }
         return jsonCopy;
+    }
+
+    /**
+     * Calculates the number of elements for the example submission
+     *
+     * @param submission associated with the example submission
+     * @param exercise   needed to decide submission type
+     * @returns number of words for text submission, or number of element for the modeling submission
+     */
+    getSubmissionSize(submission?: Submission, exercise?: Exercise): number {
+        if (submission && exercise && exercise.type === ExerciseType.TEXT) {
+            return this.stringCountService.countWords((submission as TextSubmission).text);
+        } else if (submission && exercise && exercise.type === ExerciseType.MODELING) {
+            const umlModel = JSON.parse((submission as ModelingSubmission).model!);
+            return umlModel ? umlModel.elements?.length + umlModel.relationships?.length : 0;
+        }
+        return 0;
     }
 }

@@ -409,7 +409,7 @@ public class GitLabService extends AbstractVersionControlService {
             gitlab.getProjectApi().createProject(project);
         }
         catch (GitLabApiException e) {
-            if (e.getValidationErrors().containsKey("path") && e.getValidationErrors().get("path").contains("has already been taken")) {
+            if (e.getValidationErrors() != null && e.getValidationErrors().containsKey("path") && e.getValidationErrors().get("path").contains("has already been taken")) {
                 log.info("Repository {} (parent {}) already exists, reusing it...", repoName, projectKey);
                 return;
             }
