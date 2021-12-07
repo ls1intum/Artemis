@@ -67,9 +67,9 @@ describe('Quiz Exercise Management', () => {
             cy.login(admin, '/course-management/');
             courseManagement.openExercisesOfCourse(course.title, course.shortName);
             cy.get('#delete-quiz-' + quizExercise.id).click();
-            cy.get('.form-control').type(quizExercise.title);
+            cy.get('#confirm-name-delete-dialog').type(quizExercise.title);
             cy.intercept(DELETE, '/api/quiz-exercises/*').as('deleteQuizQuery');
-            cy.get('.modal-footer').find('.btn-danger').click();
+            cy.get('#confirm-button-delete-dialog').click();
             cy.wait('@deleteQuizQuery').then((deleteResponse) => {
                 expect(deleteResponse?.response?.statusCode).to.eq(200);
             });

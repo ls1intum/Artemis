@@ -24,7 +24,7 @@
         </div>
         <div class="form-group" *ngIf="deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)">
             <label class="text-danger" [jhiTranslate]="deleteConfirmationText">Please type in the name to confirm</label>
-            <input type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
+            <input type="text" class="form-control" id="confirm-name-delete-dialog" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
         </div>
     </div>
     <div class="modal-footer">
@@ -34,6 +34,7 @@
         <button
             type="submit"
             class="btn btn-danger"
+            id="confirm-button-delete-dialog"
             [style.cursor]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled ? 'not-allowed' : 'pointer'"
             [disabled]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled"
             [ngSwitch]="actionType"
