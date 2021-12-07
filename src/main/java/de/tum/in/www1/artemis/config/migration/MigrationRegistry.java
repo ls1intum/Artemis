@@ -23,7 +23,6 @@ import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.util.StringUtils;
 
-import de.tum.in.www1.artemis.config.migration.entries.*;
 import de.tum.in.www1.artemis.domain.MigrationChangelog;
 import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
 
