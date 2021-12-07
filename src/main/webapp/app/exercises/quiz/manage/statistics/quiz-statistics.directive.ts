@@ -1,6 +1,5 @@
 import { Directive } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { QuizQuestionStatistic } from 'app/entities/quiz/quiz-question-statistic.model';
 import { calculateHeightOfChartData } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { round } from 'app/shared/util/utils';
 import { NgxDataEntry } from 'app/entities/course.model';
@@ -29,6 +28,12 @@ export abstract class QuizStatisticsDirective {
     chartLabels: string[] = [];
     totalParticipants = 0;
 
+    /**
+     * Depending on if the rated or unrated results should be displayed,
+     * The amount of participants as well as the corresponding scores are set
+     * @param statistic the statistic containing amount of participation
+     * @protected
+     */
     protected setData(statistic: QuizStatistic): void {
         if (this.rated) {
             this.participants = statistic.participantsRated!;
@@ -41,6 +46,12 @@ export abstract class QuizStatisticsDirective {
         }
     }
 
+    /**
+     * Creates dedicated objects of type NgxDataEntry that can be processed by ngx-charts
+     * in order to visualize the scores and calculates the maximum value on the y axis
+     * in order to ensure a shapely display.
+     * @protected
+     */
     protected pushDataToNgxEntry(): void {
         this.ngxData = [];
         this.data.forEach((score, index) => {
@@ -50,12 +61,19 @@ export abstract class QuizStatisticsDirective {
         this.ngxData = [...this.ngxData];
     }
 
-    protected formatDataLabel(value: any) {
-        const relativeValue = (value / this.totalParticipants) * 100;
+    /**
+     * Modifies the datalabel for each bar to the following pattern:
+     * absolute value (absolute value/amount of participants)
+     * @param absoluteValue the absolute value represented by the corresponding bar
+     * @returns string of the following pattern: absolute value (relative value)
+     * @protected
+     */
+    protected formatDataLabel(absoluteValue: number): string {
+        const relativeValue = (absoluteValue / this.totalParticipants) * 100;
         if (isNaN(relativeValue)) {
-            return value + ' (0%)';
+            return absoluteValue + ' (0%)';
         } else {
-            return value + ' (' + round((value / this.participants) * 100, 1) + '%)';
+            return absoluteValue + ' (' + round((absoluteValue / this.participants) * 100, 1) + '%)';
         }
     }
 }
