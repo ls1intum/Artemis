@@ -3,7 +3,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 
-import { AceEditorModule } from 'ng2-ace-editor';
+import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisTestModule } from '../../test.module';
