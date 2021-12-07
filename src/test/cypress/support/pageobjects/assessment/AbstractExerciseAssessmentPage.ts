@@ -5,11 +5,13 @@ import { CypressExerciseType } from '../../requests/CourseManagementRequests';
  * Parent class for all exercise assessment pages.
  */
 export abstract class AbstractExerciseAssessmentPage {
+    readonly unreferencedFeedbackSelector = '#assessment-detail';
+
     addNewFeedback(points: number, feedback?: string) {
         cy.get('#add-unreferenced-feedback').click();
-        cy.get('#feedback-points').clear().type(points.toString());
+        cy.get(this.unreferencedFeedbackSelector).find('#feedback-points').clear().type(points.toString());
         if (feedback) {
-            cy.get('#feedback-textarea').clear().type(feedback);
+            cy.get(this.unreferencedFeedbackSelector).find('#feedback-textarea').clear().type(feedback);
         }
     }
 
