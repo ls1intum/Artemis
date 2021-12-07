@@ -2,7 +2,7 @@ import { POST, EXERCISE_BASE } from '../../../constants';
 
 export class ShortAnswerQuiz {
     getQuizBody() {
-        return cy.get('.sa-question');
+        return cy.get('#question0').children().first();
     }
 
     typeAnswer(optionNumber: number, answer: string) {
@@ -11,7 +11,7 @@ export class ShortAnswerQuiz {
 
     submit() {
         cy.intercept(POST, EXERCISE_BASE + '*/submissions/live').as('createQuizExercise');
-        cy.get('.jhi-btn').contains('Submit').click();
+        cy.get('#submit-quiz').contains('Submit').click();
         return cy.wait('@createQuizExercise');
     }
 }

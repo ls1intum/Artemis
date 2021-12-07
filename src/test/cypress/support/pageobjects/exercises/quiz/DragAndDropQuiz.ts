@@ -7,7 +7,7 @@ export class DragAndDropQuiz {
 
     submit() {
         cy.intercept(POST, EXERCISE_BASE + '*/submissions/live').as('createQuizExercise');
-        cy.get('.jhi-btn').contains('Submit').click();
+        cy.get('#submit-quiz').contains('Submit').click();
         return cy.wait('@createQuizExercise');
     }
 }

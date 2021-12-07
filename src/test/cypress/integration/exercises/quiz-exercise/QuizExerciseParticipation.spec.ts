@@ -52,7 +52,6 @@ describe('Quiz Exercise Participation', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
             courseOverview.startExercise(quizExercise.title, CypressExerciseType.QUIZ);
-            cy.get('.quiz-waiting-for-start-overlay > span').should('contain.text', 'This page will refresh automatically, when the quiz starts.');
         });
 
         it('Student can participate in MC quiz', () => {
@@ -91,7 +90,6 @@ describe('Quiz Exercise Participation', () => {
 
     describe('DnD Quiz participation', () => {
         before('Create DND quiz', () => {
-            // TODO: it would be great to create the quiz via request. Once the file upload request works it should be easy
             cy.login(admin, '/course-management/' + course.id + '/exercises');
             cy.get('#create-quiz-button').should('be.visible').click();
             quizCreation.setTitle('Cypress Quiz');
