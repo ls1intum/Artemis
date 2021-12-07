@@ -68,8 +68,9 @@ describe('Text exercise management', () => {
             });
 
         // Make sure text exercise is shown in exercises list
-        cy.visit(`course-management/${course.id}/exercises`);
-        courseManagementExercises.getExerciseRowRootElement(exercise.id).should('be.visible');
+        cy.visit(`course-management/${course.id}/exercises`).then(() => {
+            courseManagementExercises.getExerciseRowRootElement(exercise.id).should('be.visible');
+        });
     });
 
     describe('Text exercise deletion', () => {
@@ -78,7 +79,7 @@ describe('Text exercise management', () => {
         beforeEach(() => {
             cy.login(users.getAdmin(), '/');
             courseManagement.createTextExercise({ course }).then((request: any) => {
-                exercise = request.response.body;
+                exercise = request.body;
             });
         });
 
