@@ -36,7 +36,7 @@
                         </div>
                         <div *ngIf="!isAtLeastInstructor">
                             {{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }}) |
-                            <a [routerLink]="complaintsLink" [queryParams]="{ tutorId: tutorId }">
+                            <a id="open-complaints" [routerLink]="complaintsLink" [queryParams]="{ tutorId: tutorId }">
                                 {{ complaints.tutor }}
                             </a>
                         </div>

@@ -4,6 +4,10 @@
 export class CourseAssessmentDashboardPage {
     readonly exerciseDashboardButtonSelector = '#open-exercise-dashboard';
 
+    openComplaints() {
+        cy.get('#open-complaints').click();
+    }
+
     showTheComplaint() {
         cy.get('.btn-primary').should('contain.text', 'Show the complaint').click();
     }
