@@ -93,7 +93,7 @@ export class CourseManagementPage {
         cy.url().should('include', '/exams');
     }
 
-    openAssessmentDashboardOfCourseWithId(courseShortName: string) {
+    openAssessmentDashboardOfCourse(courseShortName: string) {
         this.getCourseCard(courseShortName).find('#course-card-open-assessment-dashboard').click();
         cy.url().should('include', '/assessment-dashboard');
     }
