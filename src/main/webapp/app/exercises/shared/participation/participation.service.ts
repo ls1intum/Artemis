@@ -30,48 +30,19 @@ export class ParticipationService {
         const copy = this.convertDateFromClient(participation);
         return this.http
             .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.setAccessRightsParticipationEntityResponseType(res)));
+            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     find(participationId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/${participationId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.setAccessRightsParticipationEntityResponseType(res)));
-    }
-
-    private setAccessRightsParticipationEntityResponseType(res: EntityResponseType): EntityResponseType {
-        if (res.body?.exercise) {
-            this.setAccessRightsExercise(res.body.exercise);
-        }
-        return res;
-    }
-
-    /**
-     * To reduce the error proneness the access rights for exercises and also
-     * their referenced course are set.
-     * @param exercise the course for which the access rights are set
-     * @private
-     */
-    private setAccessRightsExercise(exercise: Exercise): Exercise {
-        if (exercise) {
-            this.accountService.setAccessRightsForExercise(exercise);
-            if (exercise.course) {
-                this.accountService.setAccessRightsForCourse(exercise.course);
-            }
-        }
-        return exercise;
+            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     findWithLatestResult(participationId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/${participationId}/withLatestResult`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.setAccessRightsParticipationEntityResponseType(res)));
+            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     /*
@@ -224,6 +195,41 @@ export class ParticipationService {
             }
         }
         return undefined;
+    }
+
+    /**
+     * This method bundles recurring conversion steps for Participation EntityResponses.
+     * @param participationRes
+     * @private
+     */
+    private processParticipationEntityResponseType(participationRes: EntityResponseType): EntityResponseType {
+        this.convertDateFromServer(participationRes);
+        this.adjustRepositoryUrlFromServer(participationRes);
+        this.setAccessRightsParticipationEntityResponseType(participationRes);
+        return participationRes;
+    }
+
+    private setAccessRightsParticipationEntityResponseType(res: EntityResponseType): EntityResponseType {
+        if (res.body?.exercise) {
+            this.setAccessRightsExercise(res.body.exercise);
+        }
+        return res;
+    }
+
+    /**
+     * To reduce the error proneness the access rights for exercises and also
+     * their referenced course are set.
+     * @param exercise the course for which the access rights are set
+     * @private
+     */
+    private setAccessRightsExercise(exercise: Exercise): Exercise {
+        if (exercise) {
+            this.accountService.setAccessRightsForExercise(exercise);
+            if (exercise.course) {
+                this.accountService.setAccessRightsForCourse(exercise.course);
+            }
+        }
+        return exercise;
     }
 
     private mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {
