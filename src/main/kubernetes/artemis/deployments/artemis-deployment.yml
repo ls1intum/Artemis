@@ -5,15 +5,15 @@ metadata:
     field.cattle.io/creatorId: user-gpcv5
   labels:
     cattle.io/creator: norman
-    workload.user.cattle.io/workloadselector: deployment-artemis-service-artemis
-  name: artemis-service
+    workload.user.cattle.io/workloadselector: deployment-artemis-artemis
+  name: artemis
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      workload.user.cattle.io/workloadselector: deployment-artemis-service-artemis
+      workload.user.cattle.io/workloadselector: deployment-artemis-artemis
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -22,7 +22,7 @@ spec:
   template:
     metadata:
       labels:
-        workload.user.cattle.io/workloadselector: deployment-artemis-service-artemis
+        workload.user.cattle.io/workloadselector: deployment-artemis-artemis
     spec:
       containers:
       - envFrom:
@@ -31,9 +31,9 @@ spec:
             optional: false
         - secretRef:
             name: artemis-secrets
-        image: <DockerId>/artemis-service
+        image: <DockerId>/artemis
         imagePullPolicy: Always
-        name: artemis-service
+        name: artemis
         ports:
         - containerPort: 8080
           name: 8080tcp02
