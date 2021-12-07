@@ -539,7 +539,7 @@
                 <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-secondary"> </span>
                 <ng-template #tooltipTranslate>
                     <div *ngFor="let reason of getInvalidReasons()">
-                        <p jhiTranslate="{{ reason.translateKey }}" [translateValues]="{ index: reason.translateValues.index, threshold: reason.translateValues.threshold }"></p>
+                        <p jhiTranslate="{{ reason.translateKey }}"></p>
                     </div>
                 </ng-template>
                 <span *ngIf="getInvalidReasons().length > 0" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right">
