@@ -1,9 +1,11 @@
 buildscript {
     repositories {
-        gradlePluginPortal()
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://repo.spring.io/plugins-release" }
     }
     dependencies {
-        //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
+        classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
     }
 }
 
@@ -22,7 +24,6 @@ plugins {
     id "com.github.andygoossens.gradle-modernizer-plugin"
     id "org.openapi.generator" version "5.1.1" // version is included since the plugin is not used by Artemis
     id "io.spring.nohttp" version "0.0.8" // version is included since the plugin is not used by Artemis
-    //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
 group = "de.tum.in.www1.artemis"

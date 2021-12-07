@@ -54,6 +54,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Value("${spring.prometheus.monitoringIp:#{null}}")
     private Optional<String> monitoringIpAddress;
 
+    @Value("${artemis.encryption-password}")
+    private String encryptionPassword;
+
     public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
                                  CorsFilter corsFilter, SecurityProblemSupport problemSupport, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
@@ -77,13 +80,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             remoteUserAuthenticationProvider.ifPresent(authenticationManagerBuilder::authenticationProvider);
             // When users try to authenticate, Spring will always first ask the remote user authentication provider (e.g. JIRA) if available, and only if this one fails,
             // it will ask the user details service (internal DB) for authentication.
-        } catch (Exception e) {
-            throw new BeanInitializationException("Security configuration failed", e);
+        } catch (Exception exception) {
+            throw new BeanInitializationException("Security configuration failed", exception);
         }
     }
-
-    @Value("${artemis.encryption-password}")
-    private String encryptionPassword;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
