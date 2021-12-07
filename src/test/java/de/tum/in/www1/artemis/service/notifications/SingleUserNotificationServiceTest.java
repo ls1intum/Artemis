@@ -197,23 +197,6 @@ public class SingleUserNotificationServiceTest {
         verifyRepositoryCallWithCorrectNotification(EXERCISE_SUBMISSION_ASSESSED_TITLE);
     }
 
-    /**
-     * Test for notifyUserAboutAssessedExerciseSubmission method with respect to different assessment due dates
-     */
-    @Test
-    public void testNotifyUserAboutAssessedExerciseSubmission_withDifferentAssessmentDueDates() {
-        testCheckNotifyUserAboutAssessedExerciseSubmissionHelper(PAST_TIME, 0);
-        testCheckNotifyUserAboutAssessedExerciseSubmissionHelper(CURRENT_TIME, 1);
-        testCheckNotifyUserAboutAssessedExerciseSubmissionHelper(FUTURE_TIME, 0);
-    }
-
-    private void testCheckNotifyUserAboutAssessedExerciseSubmissionHelper(ZonedDateTime assessmentDueDate, int expectedNumberOfCreatedNotifications) {
-        when(exercise.getAssessmentDueDate()).thenReturn(assessmentDueDate);
-        singleUserNotificationService.notifyUserAboutAssessedExerciseSubmission(exercise, user);
-        verify(singleUserNotificationRepository, times(expectedNumberOfCreatedNotifications)).save(any());
-        cleanMocks();
-    }
-
     /// Save & Send related Tests
 
     /**

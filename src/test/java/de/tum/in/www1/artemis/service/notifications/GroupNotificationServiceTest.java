@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
@@ -51,6 +52,9 @@ public class GroupNotificationServiceTest {
     private static GroupNotificationRepository groupNotificationRepository;
 
     @Mock
+    private static SubmissionRepository submissionRepository;
+
+    @Mock
     private static SimpMessageSendingOperations messagingTemplate;
 
     @Mock
@@ -61,6 +65,9 @@ public class GroupNotificationServiceTest {
 
     @Mock
     private static NotificationSettingsService notificationSettingsService;
+
+    @Mock
+    private static SingleUserNotificationService singleUserNotificationService;
 
     @Mock
     private static Exercise exercise;
@@ -161,11 +168,16 @@ public class GroupNotificationServiceTest {
         groupNotificationRepository = mock(GroupNotificationRepository.class);
         when(groupNotificationRepository.save(any())).thenReturn(null);
 
+        submissionRepository = mock(SubmissionRepository.class);
+
         messagingTemplate = mock(SimpMessageSendingOperations.class);
 
         notificationSettingsService = mock(NotificationSettingsService.class);
 
-        groupNotificationService = spy(new GroupNotificationService(groupNotificationRepository, messagingTemplate, userRepository, mailService, notificationSettingsService));
+        singleUserNotificationService = mock(SingleUserNotificationService.class);
+
+        groupNotificationService = spy(new GroupNotificationService(groupNotificationRepository, messagingTemplate, userRepository, mailService, notificationSettingsService,
+                submissionRepository, singleUserNotificationService));
 
         archiveErrors = new ArrayList<>();
 

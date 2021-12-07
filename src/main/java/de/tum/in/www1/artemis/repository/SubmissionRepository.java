@@ -427,12 +427,27 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             """)
     Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
 
+    /**
+     * @param now is the current time
+     * @return all submitted and rated submissions where the underlying exercise has a future assessment due date
+     */
     @Query("""
             SELECT DISTINCT s FROM Submission s LEFT JOIN FETCH s.results r
                 WHERE s.submitted = TRUE AND r.rated = TRUE
                 AND s.participation.exercise.assessmentDueDate >= :#{#now}
             """)
-    List<Submission> getAllSubmittedAndRatedSubmissionsWithFutureOrCurrentAssessmentDueDate(@Param("now") ZonedDateTime now);
+    List<Submission> findAllSubmittedAndRatedSubmissionsWithFutureOrCurrentAssessmentDueDate(@Param("now") ZonedDateTime now);
+
+    /**
+     * @param exerciseId is the id of the exercise
+     * @return all submitted and rated submissions for a given exercise
+     */
+    @Query("""
+            SELECT DISTINCT s FROM Submission s LEFT JOIN FETCH s.results r
+                WHERE s.submitted = TRUE AND r.rated = TRUE
+                AND s.participation.exercise.id = :exerciseId
+            """)
+    List<Submission> findAllSubmittedAndRatedSubmissionsByExercise(@Param("exerciseId") Long exerciseId);
 
     /**
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the

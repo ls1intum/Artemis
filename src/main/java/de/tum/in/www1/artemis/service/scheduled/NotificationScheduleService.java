@@ -72,7 +72,7 @@ public class NotificationScheduleService {
             exercisesToBeScheduled.forEach(this::scheduleNotificationForReleasedExercise);
 
             // EXERCISE_SUBMISSION_ASSESSED
-            List<Submission> submissionsToBeScheduled = submissionRepository.getAllSubmittedAndRatedSubmissionsWithFutureOrCurrentAssessmentDueDate(ZonedDateTime.now());
+            List<Submission> submissionsToBeScheduled = submissionRepository.findAllSubmittedAndRatedSubmissionsWithFutureOrCurrentAssessmentDueDate(ZonedDateTime.now());
             submissionsToBeScheduled.forEach(submission -> {
                 Exercise foundExercise = submission.getParticipation().getExercise();
                 scheduleNotificationForAssessedExercisesSubmissions(foundExercise, submission);
@@ -186,13 +186,7 @@ public class NotificationScheduleService {
                 Submission foundCurrentVersionOfScheduledSubmission;
                 try {
                     // findByIdWithResultsElseThrow() is strangely throwing an EntityNotFound exception even though the submission is found
-                    Optional<Submission> foundSubmission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId());
-                    if (foundSubmission.isPresent()) {
-                        foundCurrentVersionOfScheduledSubmission = foundSubmission.get();
-                    }
-                    else {
-                        throw new EntityNotFoundException("Submission is missing");
-                    }
+                    foundCurrentVersionOfScheduledSubmission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).orElseThrow();
                 }
                 catch (EntityNotFoundException entityNotFoundException) {
                     log.debug("Submission is no longer in the database " + submission.getId());
@@ -200,14 +194,7 @@ public class NotificationScheduleService {
                 }
 
                 // check if user is available
-                Optional<User> optionalStudent = ((StudentParticipation) foundCurrentVersionOfScheduledSubmission.getParticipation()).getStudent();
-                User student;
-                if (optionalStudent.isPresent()) {
-                    student = optionalStudent.get();
-                }
-                else {
-                    throw new EntityNotFoundException("The student of the submission could not be found. No scheduled notification will be created.");
-                }
+                User student = ((StudentParticipation) foundCurrentVersionOfScheduledSubmission.getParticipation()).getStudent().orElseThrow();
 
                 // only send a notification if AssessmentDueDate is defined and not in the future (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
                 ZonedDateTime assessmentDueDate = foundCurrentVersionOfScheduledExercise.getAssessmentDueDate();

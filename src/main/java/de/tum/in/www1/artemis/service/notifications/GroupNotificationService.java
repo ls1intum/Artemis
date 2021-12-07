@@ -23,8 +23,10 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.ExamNotificationTargetWithoutProblemStatement;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
@@ -42,13 +44,20 @@ public class GroupNotificationService {
 
     private final NotificationSettingsService notificationSettingsService;
 
+    private final SubmissionRepository submissionRepository;
+
+    private final SingleUserNotificationService singleUserNotificationService;
+
     public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
-            MailService mailService, NotificationSettingsService notificationSettingsService) {
+            MailService mailService, NotificationSettingsService notificationSettingsService, SubmissionRepository submissionRepository,
+            SingleUserNotificationService singleUserNotificationService) {
         this.groupNotificationRepository = groupNotificationRepository;
         this.messagingTemplate = messagingTemplate;
         this.userRepository = userRepository;
         this.mailService = mailService;
         this.notificationSettingsService = notificationSettingsService;
+        this.submissionRepository = submissionRepository;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -60,10 +69,27 @@ public class GroupNotificationService {
      */
     public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate, String notificationText,
             InstanceMessageSendService instanceMessageSendService) {
+
         // send exercise update notification
         notifyAboutExerciseUpdate(exerciseAfterUpdate, notificationText);
 
         // handle and check exercise released notification
+        checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(exerciseBeforeUpdate, exerciseAfterUpdate, notificationText, instanceMessageSendService);
+
+        // handle and check assessed exercise submission notification
+        checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExercise(exerciseBeforeUpdate, exerciseAfterUpdate, notificationText, instanceMessageSendService);
+    }
+
+    /**
+     * Auxiliary method that checks and creates exercise-released notifications when updating an exercise
+     *
+     * @param exerciseBeforeUpdate is the initial exercise before it gets updated
+     * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
+     * @param notificationText holds the custom change message for the notification process
+     * @param instanceMessageSendService can initiate a scheduled notification
+     */
+    private void checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate, String notificationText,
+            InstanceMessageSendService instanceMessageSendService) {
 
         final ZonedDateTime initialReleaseDate = exerciseBeforeUpdate.getReleaseDate();
         final ZonedDateTime updatedReleaseDate = exerciseAfterUpdate.getReleaseDate();
@@ -117,6 +143,50 @@ public class GroupNotificationService {
 
         if (shouldNotifyAboutRelease) {
             checkNotificationForExerciseRelease(exerciseAfterUpdate, instanceMessageSendService);
+        }
+    }
+
+    /**
+     * Auxiliary method that checks and creates exercise-released notifications when updating an exercise
+     *
+     * @param exerciseBeforeUpdate is the initial exercise before it gets updated
+     * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
+     * @param notificationText holds the custom change message for the notification process
+     * @param instanceMessageSendService can initiate a scheduled notification
+     */
+    private void checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate, String notificationText,
+            InstanceMessageSendService instanceMessageSendService) {
+        final ZonedDateTime initialAssessmentDueDate = exerciseBeforeUpdate.getAssessmentDueDate();
+        final ZonedDateTime updatedAssessmentDueDate = exerciseAfterUpdate.getAssessmentDueDate();
+        ZonedDateTime timeNow = ZonedDateTime.now();
+
+        if (initialAssessmentDueDate == null) {
+            // there is no need to schedule or check currently scheduled notifications because the default logic/workflow will handle any change correctly
+            return;
+        }
+
+        // there is only a need to modify the notification behavior if the initialAssessmentDueDate was in the future
+        if (initialAssessmentDueDate.isAfter(timeNow)) {
+            // "decision matrix" based on initial and updated release date to decide if a notification has to be sent out now, scheduled, or not
+            if (initialAssessmentDueDate.isEqual(updatedAssessmentDueDate)) {
+                // if the updated time is the same as the initial one do nothing
+                return;
+            }
+            List<Submission> submissions = submissionRepository.findAllSubmittedAndRatedSubmissionsByExercise(exerciseAfterUpdate.getId());
+            if (updatedAssessmentDueDate.isAfter(timeNow)) {
+                // if the updated date is in the future reschedule all notifications
+                submissions.forEach(submission -> {
+                    instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(submission.getId());
+                });
+            }
+            else {
+                // the updated date is undefined or not in the future notify all students about their graded submissions
+                submissions.forEach(submission -> {
+                    Exercise exercise = submission.getParticipation().getExercise();
+                    User recipient = ((StudentParticipation) submission.getParticipation()).getStudent().orElseThrow();
+                    singleUserNotificationService.notifyUserAboutAssessedExerciseSubmission(exercise, recipient);
+                });
+            }
         }
     }
 

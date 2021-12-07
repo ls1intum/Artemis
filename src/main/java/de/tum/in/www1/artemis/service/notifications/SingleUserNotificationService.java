@@ -89,18 +89,13 @@ public class SingleUserNotificationService {
 
     /**
      * Notify student about the finished assessment for an exercise submission.
-     * Only do so if no AssessmentDueDate is set or if it is now.
      * Also creates and sends an email.
      *
      * @param exercise that was assessed
      * @param recipient who should be notified
      */
     public void notifyUserAboutAssessedExerciseSubmission(Exercise exercise, User recipient) {
-        // only send notification if no AssessmentDueDate is set or if it is now (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
-        if (exercise.getAssessmentDueDate() == null
-                || (!exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now()))) {
-            notifyRecipientWithNotificationType(exercise, EXERCISE_SUBMISSION_ASSESSED, recipient);
-        }
+        notifyRecipientWithNotificationType(exercise, EXERCISE_SUBMISSION_ASSESSED, recipient);
     }
 
     /**
