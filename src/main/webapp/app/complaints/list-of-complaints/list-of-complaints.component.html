@@ -127,7 +127,7 @@
                     </td>
 
                     <td class="text-center">
-                        <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)">
+                        <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)" id="show-complaint">
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}</span>
                             <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{

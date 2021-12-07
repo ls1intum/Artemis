@@ -35,7 +35,7 @@ export abstract class AbstractExerciseAssessmentPage {
 
     private handleComplaint(response: string, accept: boolean, exerciseType: CypressExerciseType) {
         if (exerciseType !== CypressExerciseType.MODELING) {
-            cy.get('tr > .text-center >').click();
+            cy.get('#show-complaint').click();
         }
         cy.get('#responseTextArea').type(response, { parseSpecialCharSequences: false });
         switch (exerciseType) {
