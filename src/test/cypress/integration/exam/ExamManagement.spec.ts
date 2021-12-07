@@ -1,4 +1,3 @@
-import { POST } from '../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
@@ -16,6 +15,7 @@ const examManagement = artemis.pageobjects.examManagement;
 const textCreation = artemis.pageobjects.textExercise.creation;
 const exerciseGroups = artemis.pageobjects.examExerciseGroups;
 const exerciseGroupCreation = artemis.pageobjects.examExerciseGroupCreation;
+const studentExamManagement = artemis.pageobjects.studentExamManagement;
 
 // Common primitives
 const uid = generateUUID();
@@ -68,9 +68,7 @@ describe('Exam management', () => {
         cy.visit(`/course-management/${course.id}/exams`);
         examManagement.getExamRow(examTitle).openStudentRegistration();
         cy.contains('Registered students: 0').should('be.visible');
-        cy.intercept(POST, '/api/courses/*/exams/*/register-course-students').as('registerCourseStudents');
-        cy.get('[jhitranslate="artemisApp.examManagement.examStudents.registerAllFromCourse"]').click();
-        cy.wait('@registerCourseStudents').its('response.statusCode').should('eq', 200);
+        studentExamManagement.clickRegisterCourseStudents().its('response.statusCode').should('eq', 200);
         cy.contains(users.getStudentOne().username).should('be.visible');
         cy.contains('Registered students: 1').should('be.visible');
     });
@@ -79,9 +77,7 @@ describe('Exam management', () => {
         cy.visit(`/course-management/${course.id}/exams`);
         examManagement.getExamRow(examTitle).openStudenExams();
         cy.contains('0 total').should('be.visible');
-        cy.intercept(POST, '/api/courses/*/exams/*/generate-student-exams').as('generateStudentExams');
-        cy.get('#generateStudentExamsButton').click();
-        cy.wait('@generateStudentExams');
+        studentExamManagement.clickGenerateStudentExams();
         cy.contains('1 total').should('be.visible');
         cy.get('#generateMissingStudentExamsButton').should('be.disabled');
     });

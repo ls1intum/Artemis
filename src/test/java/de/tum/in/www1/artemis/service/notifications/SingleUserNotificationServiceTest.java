@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.notifications;
 
+import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -15,7 +16,6 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 import de.tum.in.www1.artemis.service.MailService;
 
@@ -148,7 +148,7 @@ public class SingleUserNotificationServiceTest {
     @Test
     public void testNotifyUserAboutNewAnswerForExercise() {
         singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post, course);
-        verifyRepositoryCallWithCorrectNotification(NotificationTitleTypeConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_EXERCISE_POST_TITLE);
     }
 
     /**
@@ -157,7 +157,7 @@ public class SingleUserNotificationServiceTest {
     @Test
     public void testNotifyUserAboutNewAnswerForLecture() {
         singleUserNotificationService.notifyUserAboutNewAnswerForLecture(post, course);
-        verifyRepositoryCallWithCorrectNotification(NotificationTitleTypeConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_LECTURE_POST_TITLE);
     }
 
     /**
@@ -166,7 +166,7 @@ public class SingleUserNotificationServiceTest {
     @Test
     public void testNotifyUserAboutNewAnswerForCoursePost() {
         singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post, course);
-        verifyRepositoryCallWithCorrectNotification(NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
 
     /**
@@ -175,7 +175,7 @@ public class SingleUserNotificationServiceTest {
     @Test
     public void testNotifyUserAboutSuccessfulFileUploadSubmission() {
         singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(fileUploadExercise, user);
-        verifyRepositoryCallWithCorrectNotification(NotificationTitleTypeConstants.FILE_SUBMISSION_SUCCESSFUL_TITLE);
+        verifyRepositoryCallWithCorrectNotification(FILE_SUBMISSION_SUCCESSFUL_TITLE);
     }
 
     /// Save & Send related Tests

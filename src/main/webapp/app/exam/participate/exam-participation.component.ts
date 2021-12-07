@@ -332,11 +332,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
                         exercise.exerciseHints = [];
                     });
-                    this.alertService.addAlert({ type: 'success', message: 'studentExam.submitSuccessful', timeout: 20000 });
+                    this.alertService.addAlert({ type: 'success', message: 'artemisApp.studentExam.submitSuccessful', timeout: 20000 });
                 },
                 (error: Error) => {
                     // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible
-                    const alreadySubmitted = error.message === 'studentExam.alreadySubmitted';
+                    const alreadySubmitted = error.message === 'artemisApp.studentExam.alreadySubmitted';
 
                     // When we have already submitted load the existing submission
                     if (alreadySubmitted) {
@@ -370,7 +370,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     } else {
                         this.alertService.error(error.message);
                         this.submitInProgress = false;
-                        this.handInPossible = error.message !== 'studentExam.submissionNotInTime';
+                        this.handInPossible = error.message !== 'artemisApp.studentExam.submissionNotInTime';
                     }
                 },
             );

@@ -1,7 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ChartsModule } from 'ng2-charts';
 import { TreeviewModule } from 'ngx-treeview';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -23,9 +21,6 @@ import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RouterTestingModule } from '@angular/router/testing';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -69,7 +64,7 @@ describe('CourseStatisticsComponent', () => {
             title: 'test 17.06. 2',
             dueDate: dayjs('2019-06-17T17:50:08+02:00'),
             assessmentDueDate: dayjs('2019-06-17T17:51:13+02:00'),
-            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+            includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED,
             maxPoints: 12.0,
             studentParticipations: [
                 {
@@ -96,7 +91,7 @@ describe('CourseStatisticsComponent', () => {
             id: 194,
             title: 'test 18.06. 1',
             dueDate: dayjs('2019-06-18T07:56:41+02:00'),
-            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS,
             maxPoints: 12.0,
             studentParticipations: [],
             diagramType: 'ClassDiagram',
@@ -237,21 +232,44 @@ describe('CourseStatisticsComponent', () => {
         jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(courseToAdd);
         fixture.detectChanges();
         comp.ngOnInit();
+        // Include all exercises
+        comp.toggleNotIncludedInScoreExercises();
         fixture.detectChanges();
-        expect(comp.groupedExercises.length).to.equal(1);
+        expect(comp.groupedExercises.length).toEqual(1);
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
-        expect(modelingWrapper.query(By.css('h2')).nativeElement.textContent).to.exist;
-        expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).to.exist;
-        expect(modelingWrapper.query(By.css('#reachable-score')).nativeElement.textContent).to.exist;
-        expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).to.exist;
-        expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).to.exist;
+        expect(modelingWrapper.query(By.css('h2')).nativeElement.textContent).not.toBe(null);
+        expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).not.toBe(null);
+        expect(modelingWrapper.query(By.css('#reachable-score')).nativeElement.textContent).not.toBe(null);
+        expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).not.toBe(null);
+        expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).not.toBe(null);
         const exercise: any = comp.groupedExercises[0];
-        expect(exercise.presentationScore).to.equal(2);
-        expect(exercise.notGraded.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseNotGraded']);
-        expect(exercise.scores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseAchievedScore']);
-        expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate']);
-        expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseNotParticipated']);
-        expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseMissedScore']);
+        expect(exercise.presentationScore).toEqual(2);
+        expect(exercise.notGraded.tooltips).toContain('artemisApp.courseOverview.statistics.exerciseNotGraded');
+        expect(exercise.scores.tooltips).toContain('artemisApp.courseOverview.statistics.exerciseAchievedScore');
+        expect(exercise.missedScores.tooltips).toContain('artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate');
+        expect(exercise.missedScores.tooltips).toContain('artemisApp.courseOverview.statistics.exerciseNotParticipated');
+        expect(exercise.missedScores.tooltips).toContain('artemisApp.courseOverview.statistics.exerciseMissedScore');
+    });
+
+    it('should filter all exercises not included in score', () => {
+        const courseToAdd = { ...course };
+        courseToAdd.exercises = [...modelingExercises];
+        jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(courseToAdd);
+        fixture.detectChanges();
+        comp.ngOnInit();
+
+        let exercise = comp.groupedExercises[0];
+        expect(exercise.names).toEqual(['Until 18:20', 'Until 18:20 too', 'test 17.06. 1', 'test 18.06. 1']);
+
+        comp.toggleNotIncludedInScoreExercises();
+
+        exercise = comp.groupedExercises[0];
+        expect(exercise.names).toEqual(['Until 18:20', 'Until 18:20 too', 'test 17.06. 1', 'test 17.06. 2', 'test 18.06. 1']);
+
+        comp.toggleNotIncludedInScoreExercises();
+
+        exercise = comp.groupedExercises[0];
+        expect(exercise.names).toEqual(['Until 18:20', 'Until 18:20 too', 'test 17.06. 1', 'test 18.06. 1']);
     });
 
     it('should calculate scores correctly', () => {
@@ -261,11 +279,11 @@ describe('CourseStatisticsComponent', () => {
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.detectChanges();
-        expect(comp.groupedExercises.length).to.equal(1);
+        expect(comp.groupedExercises.length).toEqual(1);
         let exercise: any = comp.groupedExercises[0];
-        expect(exercise.absoluteScore).to.equal(20);
-        expect(exercise.reachableScore).to.equal(60);
-        expect(exercise.overallMaxPoints).to.equal(60);
+        expect(exercise.absoluteScore).toEqual(20);
+        expect(exercise.reachableScore).toEqual(36);
+        expect(exercise.overallMaxPoints).toEqual(36);
 
         const newExercise = [
             {
@@ -345,21 +363,21 @@ describe('CourseStatisticsComponent', () => {
 
         // check that exerciseGroup scores are untouched
         exercise = comp.groupedExercises[0];
-        expect(exercise.absoluteScore).to.equal(20);
-        expect(exercise.reachableScore).to.equal(60);
-        expect(exercise.overallMaxPoints).to.equal(60);
+        expect(exercise.absoluteScore).toEqual(20);
+        expect(exercise.reachableScore).toEqual(36);
+        expect(exercise.overallMaxPoints).toEqual(36);
 
         // check that overall course score is adapted accordingly -> one exercise after assessment, one before
-        expect(comp.overallPoints).to.equal(25.5);
-        expect(comp.reachablePoints).to.equal(70);
-        expect(comp.overallMaxPoints).to.equal(80);
+        expect(comp.overallPoints).toEqual(25.5);
+        expect(comp.reachablePoints).toEqual(46);
+        expect(comp.overallMaxPoints).toEqual(56);
 
         // check that html file displays the correct elements
         let debugElement = fixture.debugElement.query(By.css('#absolute-course-score'));
-        expect(debugElement.nativeElement.textContent).to.equal('artemisApp.courseOverview.statistics.yourPoints');
+        expect(debugElement.nativeElement.textContent).toEqual('artemisApp.courseOverview.statistics.yourPoints');
         debugElement = fixture.debugElement.query(By.css('#reachable-course-score'));
-        expect(debugElement.nativeElement.textContent).to.equal(' artemisApp.courseOverview.statistics.reachablePoints ');
+        expect(debugElement.nativeElement.textContent).toEqual(' artemisApp.courseOverview.statistics.reachablePoints ');
         debugElement = fixture.debugElement.query(By.css('#max-course-score'));
-        expect(debugElement.nativeElement.textContent).to.equal(' artemisApp.courseOverview.statistics.totalPoints ');
+        expect(debugElement.nativeElement.textContent).toEqual(' artemisApp.courseOverview.statistics.totalPoints ');
     });
 });
