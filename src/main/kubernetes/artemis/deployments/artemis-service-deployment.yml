@@ -29,8 +29,12 @@ spec:
         - configMapRef:
             name: artemis-app
             optional: false
+        - configMapRef:
+            name: jhipster-registry-config
+            optional: false
         - secretRef:
             name: artemis-secrets
+            optional: false
         image: <DockerId>/artemis-service
         imagePullPolicy: Always
         name: artemis-service
@@ -53,27 +57,31 @@ spec:
         - mountPath: /artemisdata/
           name: artemis
       dnsPolicy: ClusterFirst
+      initContainers:
+      - command:
+        - /bin/sh
+        - -c
+        - |-
+          while true
+          do
+            rt=$(nc -z -w 1 artemis-mysql 3306)
+            if [ $? -eq 0 ]; then
+              echo "DB is UP"
+              break
+            fi
+            echo "DB is not yet reachable;sleep for 10s before retry"
+            sleep 10
+          done
+        image: busybox:latest
+        imagePullPolicy: Always
+        name: init-ds
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30
-      initContainers:
-        - name: init-ds
-          image: busybox:latest
-          command:
-              - '/bin/sh'
-              - '-c'
-              - |
-                  while true
-                  do
-                    rt=$(nc -z -w 1 artemis-mysql 3306)
-                    if [ $? -eq 0 ]; then
-                      echo "DB is UP"
-                      break
-                    fi
-                    echo "DB is not yet reachable;sleep for 10s before retry"
-                    sleep 10
-                  done
       volumes:
       - name: artemis
         persistentVolumeClaim:

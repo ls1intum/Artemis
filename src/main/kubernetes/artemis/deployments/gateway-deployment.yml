@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    field.cattle.io/creatorId: user-gpcv5
+    field.cattle.io/creatorId: user-9jfkn
   labels:
     cattle.io/creator: norman
     workload.user.cattle.io/workloadselector: deployment-artemis-gateway
@@ -25,21 +25,29 @@ spec:
         workload.user.cattle.io/workloadselector: deployment-artemis-gateway
     spec:
       containers:
-      - envFrom:
+      - env:
+        - name: jhipster.registry.password
+          valueFrom:
+            secretKeyRef:
+              key: jhipster.registry.password
+              name: artemis-secrets
+        envFrom:
         - configMapRef:
             name: gateway
+            optional: false
+        - configMapRef:
+            name: jhipster-registry-config
             optional: false
         image: <DockerId>/artemis-gateway
         imagePullPolicy: Always
         name: gateway
         ports:
-        - containerPort: 8080
-          name: 8080tcp02
+        - containerPort: 8089
+          name: 8089tcp2
           protocol: TCP
         resources: {}
         securityContext:
           allowPrivilegeEscalation: false
-          capabilities: {}
           privileged: false
           readOnlyRootFilesystem: false
           runAsNonRoot: false

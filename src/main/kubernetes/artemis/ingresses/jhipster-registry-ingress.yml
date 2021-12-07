@@ -1,0 +1,18 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    field.cattle.io/creatorId: user-9jfkn
+  name: jhipster-registry
+spec:
+  rules:
+  - host: jhipster-registry.artemis.rancher.localhost
+    http:
+      paths:
+      - backend:
+          serviceName: jhipster-registry
+          servicePort: 8761
+        pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - jhipster-registry.artemis.rancher.localhost

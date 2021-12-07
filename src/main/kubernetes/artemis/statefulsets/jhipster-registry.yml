@@ -20,7 +20,7 @@ spec:
   # added to circumvent kustomize bug
   volumeClaimTemplates: []
   serviceName: jhipster-registry
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: jhipster-registry

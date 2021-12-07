@@ -2,18 +2,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    field.cattle.io/creatorId: user-gpcv5
+    field.cattle.io/creatorId: user-9jfkn
   labels:
     cattle.io/creator: norman
-    workload.user.cattle.io/workloadselector: deployment-artemis-zookeeper
-  name: zookeeper
+    workload.user.cattle.io/workloadselector: deployment-artemis-activemq-artemis
+  name: activemq-artemis
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      workload.user.cattle.io/workloadselector: deployment-artemis-zookeeper
+      workload.user.cattle.io/workloadselector: deployment-artemis-activemq-artemis
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -22,19 +22,25 @@ spec:
   template:
     metadata:
       labels:
-        workload.user.cattle.io/workloadselector: deployment-artemis-zookeeper
+        workload.user.cattle.io/workloadselector: deployment-artemis-activemq-artemis
     spec:
       containers:
       - envFrom:
-        - configMapRef:
-            name: zookeeper
+        - secretRef:
+            name: activemq-artemis-secrets
             optional: false
-        image: confluentinc/cp-zookeeper:5.5.3
+        - configMapRef:
+            name: activemq-artemis
+            optional: false
+        image: vromero/activemq-artemis
         imagePullPolicy: Always
-        name: zookeeper
+        name: activemq-artemis
         ports:
-        - containerPort: 2181
-          name: 2181tcp02
+        - containerPort: 61616
+          name: 61616tcp616162
+          protocol: TCP
+        - containerPort: 8161
+          name: 8161tcp81612
           protocol: TCP
         resources: {}
         securityContext:

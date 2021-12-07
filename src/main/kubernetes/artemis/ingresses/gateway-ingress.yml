@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    field.cattle.io/creatorId: user-9jfkn
+  labels:
+    cattle.io/creator: norman
+  name: artemis-gateway
+spec:
+  rules:
+  - host: artemis-gateway.artemis.rancher.localhost
+    http:
+      paths:
+      - backend:
+          serviceName: gateway
+          servicePort: 8089
+        pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - artemis-gateway.artemis.rancher.localhost
