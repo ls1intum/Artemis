@@ -8,6 +8,10 @@ import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage
 export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     readonly feedbackEditorSelector = 'jhi-textblock-feedback-editor';
 
+    getInstructionsRootElement() {
+        return cy.get('#instructions-card');
+    }
+
     provideFeedbackOnTextSection(section: string, points: number, feedback: string) {
         cy.contains(section).parents('jhi-textblock-assessment-card').first().click();
         this.typeIntoFeedbackEditor(feedback);
