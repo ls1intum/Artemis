@@ -48,9 +48,4 @@ public class FileUploadExercise extends Exercise {
     public ExerciseType getExerciseType() {
         return FILE_UPLOAD;
     }
-
-    @Override
-    public String getExerciseTypeAsReadableString() {
-        return "file upload";
-    }
 }

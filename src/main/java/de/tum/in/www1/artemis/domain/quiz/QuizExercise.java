@@ -430,11 +430,6 @@ public class QuizExercise extends Exercise {
         return QUIZ;
     }
 
-    @Override
-    public String getExerciseTypeAsReadableString() {
-        return "quiz";
-    }
-
     /**
      * undo all changes which are not allowed after the dueDate ( dueDate, releaseDate, question.points, adding Questions and Answers)
      *

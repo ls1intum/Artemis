@@ -63,7 +63,8 @@ public class SingleUserNotificationFactory {
         switch (notificationType) {
             case EXERCISE_SUBMISSION_ASSESSED -> {
                 title = EXERCISE_SUBMISSION_ASSESSED_TITLE;
-                notificationText = "Your submission for the " + exercise.getExerciseTypeAsReadableString() + " exercise \"" + exercise.getTitle() + "\" has been assessed.";
+                notificationText = "Your submission for the " + exercise.getExerciseType().getExerciseTypeAsReadableString() + " exercise \"" + exercise.getTitle()
+                        + "\" has been assessed.";
             }
             case FILE_SUBMISSION_SUCCESSFUL -> {
                 title = FILE_SUBMISSION_SUCCESSFUL_TITLE;
