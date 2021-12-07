@@ -77,10 +77,12 @@ describe('ExerciseScoresChartComponent', () => {
             body: [firstExercise, secondExercise],
             status: 200,
         });
+        component.filteredExerciseIDs = [];
         const getScoresStub = jest.spyOn(exerciseScoresChartService, 'getExerciseScoresForCourse').mockReturnValue(of(exerciseScoresResponse));
         component.ngAfterViewInit();
         expect(getScoresStub).toHaveBeenCalledTimes(1);
         expect(component.ngxData).toHaveLength(3);
+
         // datasets[0] is student score
         expect(component.ngxData[0].series).toHaveLength(2);
         const studentFirstExerciseDataPoint = component.ngxData[0].series[0];
@@ -115,6 +117,7 @@ describe('ExerciseScoresChartComponent', () => {
             status: 200,
         });
 
+        component.filteredExerciseIDs = [];
         const getScoresStub = jest.spyOn(exerciseScoresChartService, 'getExerciseScoresForCourse').mockReturnValue(of(exerciseScoresResponse));
         component.ngAfterViewInit();
 
