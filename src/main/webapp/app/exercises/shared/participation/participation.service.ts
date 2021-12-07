@@ -10,6 +10,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
@@ -23,28 +24,54 @@ export type BuildArtifact = {
 export class ParticipationService {
     public resourceUrl = SERVER_API_URL + 'api/participations';
 
-    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
+    constructor(private http: HttpClient, private submissionService: SubmissionService, private accountService: AccountService) {}
 
     update(exerciseId: number, participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(participation);
         return this.http
             .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)))
+            .pipe(map((res: EntityResponseType) => this.setAccessRightsParticipationEntityResponseType(res)));
     }
 
     find(participationId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/${participationId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)))
+            .pipe(map((res: EntityResponseType) => this.setAccessRightsParticipationEntityResponseType(res)));
+    }
+
+    private setAccessRightsParticipationEntityResponseType(res: EntityResponseType): EntityResponseType {
+        if (res.body?.exercise) {
+            this.setAccessRightsExercise(res.body.exercise);
+        }
+        return res;
+    }
+
+    /**
+     * To reduce the error proneness the access rights for exercises and also
+     * their referenced course are set.
+     * @param exercise the course for which the access rights are set
+     * @private
+     */
+    private setAccessRightsExercise(exercise: Exercise): Exercise {
+        if (exercise) {
+            this.accountService.setAccessRightsForExercise(exercise);
+            if (exercise.course) {
+                this.accountService.setAccessRightsForCourse(exercise.course);
+            }
+        }
+        return exercise;
     }
 
     findWithLatestResult(participationId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/${participationId}/withLatestResult`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)))
+            .pipe(map((res: EntityResponseType) => this.setAccessRightsParticipationEntityResponseType(res)));
     }
 
     /*
@@ -61,7 +88,8 @@ export class ParticipationService {
                     return this.convertDateFromServer(res);
                 }),
             )
-            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)))
+            .pipe(map((res: EntityResponseType) => this.setAccessRightsParticipationEntityResponseType(res)));
     }
 
     findAllParticipationsByExercise(exerciseId: number, withLatestResult = false): Observable<EntityArrayResponseType> {
@@ -72,7 +100,19 @@ export class ParticipationService {
                 observe: 'response',
             })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
-            .pipe(map((res: EntityArrayResponseType) => this.adjustRepositoryUrlArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.adjustRepositoryUrlArrayFromServer(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.setAccessRightsParticipationEntityArrayResponseType(res)));
+    }
+
+    private setAccessRightsParticipationEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((participation) => {
+                if (participation.exercise) {
+                    this.setAccessRightsExercise(participation.exercise as Exercise);
+                }
+            });
+        }
+        return res;
     }
 
     delete(participationId: number, req?: any): Observable<HttpResponse<any>> {
