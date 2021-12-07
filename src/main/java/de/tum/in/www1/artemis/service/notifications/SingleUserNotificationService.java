@@ -4,6 +4,8 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
 
+import java.time.ZonedDateTime;
+
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -95,7 +97,11 @@ public class SingleUserNotificationService {
      * @param recipient who should be notified
      */
     public void notifyUserAboutAssessedExerciseSubmission(Exercise exercise, User recipient) {
-        notifyRecipientWithNotificationType(exercise, EXERCISE_SUBMISSION_ASSESSED, recipient);
+        // only send notification if no AssessmentDueDate is set or if it is now (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
+        if (exercise.getAssessmentDueDate() == null
+                || (!exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now()))) {
+            notifyRecipientWithNotificationType(exercise, EXERCISE_SUBMISSION_ASSESSED, recipient);
+        }
     }
 
     /**

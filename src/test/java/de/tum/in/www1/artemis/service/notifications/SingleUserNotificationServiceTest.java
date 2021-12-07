@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeCo
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.time.ZonedDateTime;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,6 +63,12 @@ public class SingleUserNotificationServiceTest {
     private static Course course;
 
     private final static Long COURSE_ID = 27L;
+
+    private final static ZonedDateTime FUTURE_TIME = ZonedDateTime.now().plusHours(1);
+
+    private final static ZonedDateTime CURRENT_TIME = ZonedDateTime.now();
+
+    private final static ZonedDateTime PAST_TIME = ZonedDateTime.now().minusHours(1);
 
     /**
      * Sets up all needed mocks and their wanted behavior once for all test cases.
@@ -187,6 +195,23 @@ public class SingleUserNotificationServiceTest {
     public void testNotifyUserAboutAssessedExerciseSubmission() {
         singleUserNotificationService.notifyUserAboutAssessedExerciseSubmission(exercise, user);
         verifyRepositoryCallWithCorrectNotification(EXERCISE_SUBMISSION_ASSESSED_TITLE);
+    }
+
+    /**
+     * Test for notifyUserAboutAssessedExerciseSubmission method with respect to different assessment due dates
+     */
+    @Test
+    public void testNotifyUserAboutAssessedExerciseSubmission_withDifferentAssessmentDueDates() {
+        testCheckNotifyUserAboutAssessedExerciseSubmissionHelper(PAST_TIME, 0);
+        testCheckNotifyUserAboutAssessedExerciseSubmissionHelper(CURRENT_TIME, 1);
+        testCheckNotifyUserAboutAssessedExerciseSubmissionHelper(FUTURE_TIME, 0);
+    }
+
+    private void testCheckNotifyUserAboutAssessedExerciseSubmissionHelper(ZonedDateTime assessmentDueDate, int expectedNumberOfCreatedNotifications) {
+        when(exercise.getAssessmentDueDate()).thenReturn(assessmentDueDate);
+        singleUserNotificationService.notifyUserAboutAssessedExerciseSubmission(exercise, user);
+        verify(singleUserNotificationRepository, times(expectedNumberOfCreatedNotifications)).save(any());
+        cleanMocks();
     }
 
     /// Save & Send related Tests
