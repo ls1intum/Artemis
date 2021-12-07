@@ -43,6 +43,7 @@
     </a>
     <!-- Delete -->
     <button
+        id="delete-exercise"
         *ngIf="exercise.isAtLeastInstructor"
         jhiDeleteButton
         [entityTitle]="exercise.title || ''"
