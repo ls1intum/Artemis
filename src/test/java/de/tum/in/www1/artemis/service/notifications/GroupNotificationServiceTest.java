@@ -232,6 +232,8 @@ public class GroupNotificationServiceTest {
         reset(groupNotificationRepository);
         when(groupNotificationRepository.save(any())).thenReturn(null);
 
+        reset(submissionRepository);
+
         reset(messagingTemplate);
     }
 
@@ -348,16 +350,22 @@ public class GroupNotificationServiceTest {
      * Auxiliary method to set the needed mocks and testing utilities for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method
      */
     private void testCheckNotificationForExerciseReleaseHelper(ZonedDateTime dueDateOfInitialExercise, ZonedDateTime dueDateOfUpdatedExercise,
-            boolean expectNotifyAboutExerciseRelease) {
+            boolean expectNotifyAboutExerciseRelease, boolean expectNotifyUserAboutAssessedExerciseSubmission) {
         when(exercise.getReleaseDate()).thenReturn(dueDateOfInitialExercise);
+        when(exercise.getAssessmentDueDate()).thenReturn(dueDateOfInitialExercise);
         when(updatedExercise.getReleaseDate()).thenReturn(dueDateOfUpdatedExercise);
+        when(updatedExercise.getAssessmentDueDate()).thenReturn(dueDateOfUpdatedExercise);
         doNothing().when(groupNotificationService).notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         doNothing().when(groupNotificationService).checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
 
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exercise, updatedExercise, NOTIFICATION_TEXT, instanceMessageSendService);
 
+        // Exercise Released Notifications
         verify(groupNotificationService, times(1)).notifyAboutExerciseUpdate(any(), any());
         verify(groupNotificationService, times(expectNotifyAboutExerciseRelease ? 1 : 0)).checkNotificationForExerciseRelease(any(), any());
+
+        // Assessed Exercise Submitted Notifications
+        verify(submissionRepository, times(expectNotifyUserAboutAssessedExerciseSubmission ? 1 : 0)).findAllSubmittedAndRatedSubmissionsByExercise(any());
 
         cleanMocks();
     }
@@ -366,28 +374,28 @@ public class GroupNotificationServiceTest {
     * Test for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method based on a decision matrix
     */
     @Test
-    public void testCheckAndCreateAppropriateNotificationsWhenUpdatingExercise_unchangedReleaseDate_undefinedReleaseDates() {
-        testCheckNotificationForExerciseReleaseHelper(null, null, false);
-        testCheckNotificationForExerciseReleaseHelper(null, PAST_TIME, false);
-        testCheckNotificationForExerciseReleaseHelper(null, CURRENT_TIME, false);
-        testCheckNotificationForExerciseReleaseHelper(null, FUTURE_TIME, true);
+    public void testCheckAndCreateAppropriateNotificationsWhenUpdatingExercise() {
+        testCheckNotificationForExerciseReleaseHelper(null, null, false, false);
+        testCheckNotificationForExerciseReleaseHelper(null, PAST_TIME, false, false);
+        testCheckNotificationForExerciseReleaseHelper(null, CURRENT_TIME, false, false);
+        testCheckNotificationForExerciseReleaseHelper(null, FUTURE_TIME, true, false);
 
-        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, null, false);
-        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, ANCIENT_TIME, false);
-        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, PAST_TIME, false); // same time -> no change
-        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, CURRENT_TIME, false);
-        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, FUTURE_TIME, true);
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, null, false, false);
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, ANCIENT_TIME, false, false);
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, PAST_TIME, false, false); // same time -> no change
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, CURRENT_TIME, false, false);
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, FUTURE_TIME, true, false);
 
-        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, null, false);
-        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, PAST_TIME, false);
-        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, CURRENT_TIME, false); // same time -> no change
-        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, FUTURE_TIME, true);
+        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, null, false, false);
+        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, PAST_TIME, false, false);
+        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, CURRENT_TIME, false, false); // same time -> no change
+        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, FUTURE_TIME, true, false);
 
-        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, null, true);
-        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, PAST_TIME, true);
-        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, CURRENT_TIME, true);
-        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, FUTURE_TIME, false); // same time -> no change
-        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, FUTURISTIC_TIME, true);
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, null, true, true);
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, PAST_TIME, true, true);
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, CURRENT_TIME, true, true);
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, FUTURE_TIME, false, false); // same time -> no change
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, FUTURISTIC_TIME, true, true);
     }
 
     /// General notifyGroupX Tests

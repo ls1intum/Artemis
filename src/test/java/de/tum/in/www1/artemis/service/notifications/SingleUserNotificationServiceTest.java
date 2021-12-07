@@ -5,8 +5,6 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeCo
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.time.ZonedDateTime;
-
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,12 +61,6 @@ public class SingleUserNotificationServiceTest {
     private static Course course;
 
     private final static Long COURSE_ID = 27L;
-
-    private final static ZonedDateTime FUTURE_TIME = ZonedDateTime.now().plusHours(1);
-
-    private final static ZonedDateTime CURRENT_TIME = ZonedDateTime.now();
-
-    private final static ZonedDateTime PAST_TIME = ZonedDateTime.now().minusHours(1);
 
     /**
      * Sets up all needed mocks and their wanted behavior once for all test cases.

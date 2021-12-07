@@ -74,10 +74,10 @@ public class GroupNotificationService {
         notifyAboutExerciseUpdate(exerciseAfterUpdate, notificationText);
 
         // handle and check exercise released notification
-        checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(exerciseBeforeUpdate, exerciseAfterUpdate, notificationText, instanceMessageSendService);
+        checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(exerciseBeforeUpdate, exerciseAfterUpdate, instanceMessageSendService);
 
         // handle and check assessed exercise submission notification
-        checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExercise(exerciseBeforeUpdate, exerciseAfterUpdate, notificationText, instanceMessageSendService);
+        checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExercise(exerciseBeforeUpdate, exerciseAfterUpdate, instanceMessageSendService);
     }
 
     /**
@@ -85,10 +85,9 @@ public class GroupNotificationService {
      *
      * @param exerciseBeforeUpdate is the initial exercise before it gets updated
      * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
-     * @param notificationText holds the custom change message for the notification process
      * @param instanceMessageSendService can initiate a scheduled notification
      */
-    private void checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate, String notificationText,
+    private void checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate,
             InstanceMessageSendService instanceMessageSendService) {
 
         final ZonedDateTime initialReleaseDate = exerciseBeforeUpdate.getReleaseDate();
@@ -151,10 +150,9 @@ public class GroupNotificationService {
      *
      * @param exerciseBeforeUpdate is the initial exercise before it gets updated
      * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
-     * @param notificationText holds the custom change message for the notification process
      * @param instanceMessageSendService can initiate a scheduled notification
      */
-    private void checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate, String notificationText,
+    private void checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate,
             InstanceMessageSendService instanceMessageSendService) {
         final ZonedDateTime initialAssessmentDueDate = exerciseBeforeUpdate.getAssessmentDueDate();
         final ZonedDateTime updatedAssessmentDueDate = exerciseAfterUpdate.getAssessmentDueDate();
@@ -168,12 +166,12 @@ public class GroupNotificationService {
         // there is only a need to modify the notification behavior if the initialAssessmentDueDate was in the future
         if (initialAssessmentDueDate.isAfter(timeNow)) {
             // "decision matrix" based on initial and updated release date to decide if a notification has to be sent out now, scheduled, or not
-            if (initialAssessmentDueDate.isEqual(updatedAssessmentDueDate)) {
+            if (updatedAssessmentDueDate != null && initialAssessmentDueDate.isEqual(updatedAssessmentDueDate)) {
                 // if the updated time is the same as the initial one do nothing
                 return;
             }
             List<Submission> submissions = submissionRepository.findAllSubmittedAndRatedSubmissionsByExercise(exerciseAfterUpdate.getId());
-            if (updatedAssessmentDueDate.isAfter(timeNow)) {
+            if (updatedAssessmentDueDate != null && updatedAssessmentDueDate.isAfter(timeNow)) {
                 // if the updated date is in the future reschedule all notifications
                 submissions.forEach(submission -> {
                     instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(submission.getId());

@@ -20,9 +20,9 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
     @Autowired
     private ExerciseRepository exerciseRepository;
 
-    private static long DELAY_IN_SECONDS = 1;
+    private final long DELAY_IN_SECONDS = 2;
 
-    private static long TIME_MULTIPLICITY_TO_REDUCE_TEST_FLAKINESS = 2;
+    private final long TIME_MULTIPLICITY_TO_REDUCE_TEST_FLAKINESS = 2;
 
     @Test
     void shouldCreateNotificationAtReleaseDate() throws Exception {
