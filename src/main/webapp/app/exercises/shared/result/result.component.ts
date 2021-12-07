@@ -158,12 +158,14 @@ export class ResultComponent implements OnInit, OnChanges {
         } else if (this.participation) {
             this.exercise = this.exercise || getExercise(this.participation);
             this.participation.exercise = this.exercise;
-        } else {
+        } else if (!this.result?.exampleResult) {
+            // result of example submission does not have participation
             captureException(new Error('The result component did not get a participation or result as parameter and can therefore not display the score'));
             return;
         }
 
-        this.submission = this.result!.submission;
+        // Note: it can still happen here that this.result is undefined, e.g. when this.participation.results.length == 0
+        this.submission = this.result?.submission;
         this.evaluate();
     }
 

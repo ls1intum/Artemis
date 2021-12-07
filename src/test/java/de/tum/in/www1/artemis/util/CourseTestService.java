@@ -661,7 +661,8 @@ public class CourseTestService {
         assertThat(courses.get(0)).as("Only active course is returned").isEqualTo(courseActiveRegistrationEnabled);
     }
 
-    private void getCourseForDashboardWithStats(boolean isInstructor) throws Exception {
+    // Test
+    public void testGetCourseForAssessmentDashboardWithStats() throws Exception {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
@@ -690,6 +691,9 @@ public class CourseTestService {
                     TutorParticipation tutorParticipation = exercise.getTutorParticipations().iterator().next();
                     assertThat(tutorParticipation.getStatus()).as("Tutor participation status is correctly initialized").isEqualTo(TutorParticipationStatus.NOT_PARTICIPATED);
                 }
+
+                // There is no average rating for exercises with no assessments and therefore no ratings
+                assertThat(exercise.getAverageRating()).isNull();
             }
 
             StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
@@ -704,14 +708,25 @@ public class CourseTestService {
         }
     }
 
-    // Test
-    public void testGetCourseForAssessmentDashboardWithStats() throws Exception {
-        getCourseForDashboardWithStats(false);
-    }
+    // Tests that average rating and number of ratings are computed correctly in '/for-assessment-dashboard'
+    public void testGetCourseForAssessmentDashboard_averageRatingComputedCorrectly() throws Exception {
+        var testCourse = database.createCoursesWithExercisesAndLectures(true).get(0);
+        var exercise = (TextExercise) testCourse.getExercises().stream().filter(ex -> ex.getExerciseType() == ExerciseType.TEXT).findFirst().get();
 
-    // Test
-    public void testGetCourseForInstructorDashboardWithStats() throws Exception {
-        getCourseForDashboardWithStats(true);
+        int[] ratings = { 3, 4, 5 };
+        for (int i = 0; i < ratings.length; i++) {
+            var submission = database.createSubmissionForTextExercise(exercise, database.getUserByLogin("student" + (i + 1)), "text");
+            var assessment = database.addResultToSubmission(submission, AssessmentType.MANUAL, null, 0.0, true).getLatestResult();
+            database.addRatingToResult(assessment, ratings[i]);
+        }
+
+        var responseCourse = request.get("/api/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
+        var responseExercise = responseCourse.getExercises().stream().filter(ex -> ex.getExerciseType() == ExerciseType.TEXT).findFirst().get();
+
+        // Ensure that average rating and number of ratings is computed correctly
+        var averageRating = Arrays.stream(ratings).mapToDouble(Double::valueOf).sum() / ratings.length;
+        assertThat(responseExercise.getAverageRating()).isEqualTo(averageRating);
+        assertThat(responseExercise.getNumberOfRatings()).isEqualTo(ratings.length);
     }
 
     // Test

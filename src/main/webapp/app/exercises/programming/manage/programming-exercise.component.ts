@@ -148,6 +148,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     sortRows() {
         this.sortService.sortByProperty(this.programmingExercises, this.predicate, this.reverse);
+        this.applyFilter();
     }
 
     openImportModal() {

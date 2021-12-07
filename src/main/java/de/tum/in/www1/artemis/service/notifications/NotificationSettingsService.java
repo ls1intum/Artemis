@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 @Service
 public class NotificationSettingsService {
 
-    private NotificationSettingRepository notificationSettingRepository;
+    private final NotificationSettingRepository notificationSettingRepository;
 
     // notification settings settingIds analogous to client side
     // course wide discussion notification setting group

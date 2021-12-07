@@ -18,9 +18,9 @@ import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { map } from 'rxjs/operators';
 
 @Component({
-    templateUrl: './programming-assessment-dashboard.component.html',
+    templateUrl: './programming-exercise-submissions.component.html',
 })
-export class ProgrammingAssessmentDashboardComponent implements OnInit {
+export class ProgrammingExerciseSubmissionsComponent implements OnInit {
     ExerciseType = ExerciseType;
     exercise: ProgrammingExercise;
     submissions: ProgrammingSubmission[] = [];
