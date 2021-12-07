@@ -461,9 +461,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     /**
-     * Invokes exampleSubmissionService when importExampleSubmission is emitted in assessment-layout
+     * Invokes exampleSubmissionService when useAsExampleSubmission is emitted in assessment-layout
      */
-    importStudentSubmissionAsExampleSubmission(): void {
+    useStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.exercise) {
             this.exampleSubmissionService.import(this.submission.id!, this.exercise.id!).subscribe(
                 () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),

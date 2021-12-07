@@ -50,8 +50,8 @@
             "deleted": "Example submission deleted successfully",
             "assessmentExplanation": "Explanation",
             "assessmentExplanationInfo": "Additional explanation for this example assessment",
-            "importExampleSubmission": "Import Example Submission",
-            "importExampleSubmissionLabel": "Import an Example Submission",
+            "useAsExampleSubmission": "Use as Example Submission",
+            "useAsExampleSubmissionLabel": "Use as Example Submission",
             "searchSubmission": "Search for Submission"
         },
         "tutorParticipation": {

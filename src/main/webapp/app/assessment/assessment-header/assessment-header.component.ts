@@ -50,7 +50,7 @@ export class AssessmentHeaderComponent {
     @Output() cancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() highlightDifferencesChange = new EventEmitter<boolean>();
-    @Output() importExampleSubmission = new EventEmitter<void>();
+    @Output() useAsExampleSubmission = new EventEmitter<void>();
 
     private _highlightDifferences: boolean;
     readonly ExerciseType = ExerciseType;
@@ -98,12 +98,12 @@ export class AssessmentHeaderComponent {
     }
 
     /**
-     * Opens dialog to verify that instructor wants to import as example submission
+     * Opens dialog to verify that instructor wants to use current submission as example submission
      */
-    onImportExampleSolutionClicked() {
-        const verificationMessage = this.translatePipe.transform('artemisApp.assessment.importVerificationQuestion');
+    onUseAsExampleSolutionClicked() {
+        const verificationMessage = this.translatePipe.transform('artemisApp.assessment.useAsExampleSubmissionVerificationQuestion');
         if (confirm(verificationMessage)) {
-            this.importExampleSubmission.emit();
+            this.useAsExampleSubmission.emit();
         }
     }
 }

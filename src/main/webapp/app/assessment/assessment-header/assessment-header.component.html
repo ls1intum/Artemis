@@ -174,12 +174,12 @@
             </button>
             <button
                 class="btn m-1 btn-primary"
-                id="importExampleSubmission"
+                id="useAsExampleSubmission"
                 *ngIf="result?.completionDate && isAtLeastInstructor && (exercise!.type === ExerciseType.MODELING || exercise!.type === ExerciseType.TEXT)"
-                (click)="onImportExampleSolutionClicked()"
+                (click)="onUseAsExampleSolutionClicked()"
             >
                 <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true"></fa-icon>
-                <span jhiTranslate="artemisApp.assessment.button.importExampleSubmission">Import as Example Submission</span>
+                <span jhiTranslate="artemisApp.assessment.button.useAsExampleSubmission">Use as Example Submission</span>
             </button>
             <button
                 class="btn m-1 btn-success"

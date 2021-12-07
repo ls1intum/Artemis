@@ -24,7 +24,7 @@
     (nextSubmission)="nextSubmission()"
     [(highlightDifferences)]="highlightDifferences"
     (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
-    (importExampleSubmission)="importStudentSubmissionAsExampleSubmission()"
+    (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
 >
     <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
 </jhi-assessment-layout>
