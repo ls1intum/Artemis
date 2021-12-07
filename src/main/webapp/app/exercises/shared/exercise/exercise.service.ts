@@ -435,7 +435,7 @@ export class ExerciseService {
     private setAccessRightsExerciseEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((exercise: Exercise) => {
-                this.setAccessRightsExercise(exercise);
+                this.accountService.setAccessRightsForExercise(exercise);
             });
         }
         return res;
@@ -443,25 +443,9 @@ export class ExerciseService {
 
     private setAccessRightsExerciseEntityResponseType(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.setAccessRightsExercise(res.body);
+            this.accountService.setAccessRightsForExercise(res.body as Exercise);
         }
         return res;
-    }
-
-    /**
-     * To reduce the error proneness the access rights for exercises and also
-     * their referenced course are set.
-     * @param exercise the course for which the access rights are set
-     * @private
-     */
-    private setAccessRightsExercise(exercise: Exercise): Exercise {
-        if (exercise) {
-            this.accountService.setAccessRightsForExercise(exercise);
-            if (exercise.course) {
-                this.accountService.setAccessRightsForCourse(exercise.course);
-            }
-        }
-        return exercise;
     }
 }
 

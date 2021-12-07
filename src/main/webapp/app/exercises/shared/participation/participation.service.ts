@@ -79,7 +79,7 @@ export class ParticipationService {
         if (res.body) {
             res.body.forEach((participation) => {
                 if (participation.exercise) {
-                    this.setAccessRightsExercise(participation.exercise as Exercise);
+                    this.accountService.setAccessRightsForExercise(participation.exercise as Exercise);
                 }
             });
         }
@@ -211,25 +211,9 @@ export class ParticipationService {
 
     private setAccessRightsParticipationEntityResponseType(res: EntityResponseType): EntityResponseType {
         if (res.body?.exercise) {
-            this.setAccessRightsExercise(res.body.exercise);
+            this.accountService.setAccessRightsForExercise(res.body.exercise);
         }
         return res;
-    }
-
-    /**
-     * To reduce the error proneness the access rights for exercises and also
-     * their referenced course are set.
-     * @param exercise the course for which the access rights are set
-     * @private
-     */
-    private setAccessRightsExercise(exercise: Exercise): Exercise {
-        if (exercise) {
-            this.accountService.setAccessRightsForExercise(exercise);
-            if (exercise.course) {
-                this.accountService.setAccessRightsForCourse(exercise.course);
-            }
-        }
-        return exercise;
     }
 
     private mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {
