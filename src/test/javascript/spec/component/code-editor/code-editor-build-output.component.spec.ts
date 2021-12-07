@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
-import { AceEditorModule } from 'ng2-ace-editor';
+import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
