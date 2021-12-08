@@ -1,6 +1,7 @@
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
@@ -35,6 +36,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { AlertService } from 'app/core/util/alert.service';
+import { Component } from '@angular/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -67,6 +69,11 @@ const course1 = { id: 1, exams, exercises: [exercise1] };
 const course2 = { id: 2, exercises: [exercise2] };
 const courses: Course[] = [course1, course2];
 
+@Component({
+    template: '',
+})
+class DummyComponent {}
+
 describe('CoursesComponent', () => {
     let component: CoursesComponent;
     let fixture: ComponentFixture<CoursesComponent>;
@@ -74,13 +81,14 @@ describe('CoursesComponent', () => {
     let courseScoreCalculationService: CourseScoreCalculationService;
     let serverDateService: ArtemisServerDateService;
     let exerciseService: ExerciseService;
-    const router = new MockRouter();
+    let router: Router;
+    let location: Location;
 
     const route = { data: of({ courseId: course1.id }), children: [] } as any as ActivatedRoute;
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }])],
             declarations: [
                 CoursesComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -100,7 +108,6 @@ describe('CoursesComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseRowComponent },
                 { provide: AlertService, useClass: MockAlertService },
-                { provide: Router, useValue: router },
             ],
         })
             .compileComponents()
@@ -108,6 +115,8 @@ describe('CoursesComponent', () => {
                 fixture = TestBed.createComponent(CoursesComponent);
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
+                router = TestBed.inject(Router);
+                location = TestBed.inject(Location);
                 TestBed.inject(GuidedTourService);
                 courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
                 serverDateService = TestBed.inject(ArtemisServerDateService);
@@ -178,12 +187,14 @@ describe('CoursesComponent', () => {
         });
     });
 
-    it('Should load next relevant exam', () => {
+    it('Should load next relevant exam', fakeAsync(() => {
         const navigateSpy = sinon.spy(router, 'navigate');
         component.nextRelevantCourseForExam = course1;
         component.nextRelevantExams = [exam1];
         component.openExam();
+        tick();
 
         expect(navigateSpy).to.have.been.calledWith(['courses', 1, 'exams', 3]);
-    });
+        expect(location.path()).to.equal('/courses/1/exams/3');
+    }));
 });
