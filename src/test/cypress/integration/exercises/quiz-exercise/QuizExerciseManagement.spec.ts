@@ -11,7 +11,7 @@ const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
 const courseManagement = artemis.pageobjects.course.management;
-const quizCreation = artemis.pageobjects.e
+const quizCreation = artemis.pageobjects.exercise.quiz.creation;
 
 // Common primitives
 let course: any;
