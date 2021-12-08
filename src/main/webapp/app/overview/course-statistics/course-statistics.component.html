@@ -1,5 +1,16 @@
 <div *ngIf="course">
     <div class="row" *ngIf="course.exercises && course.exercises.length > 0 && groupedExercises.length > 0; else noStatistics">
+        <div class="col-8 mt-3 position-relative">
+            <div class="course-overview-controls">
+                <label class="d-flex align-items-center mb-0 me-2">
+                    <input type="checkbox" [checked]="currentlyHidingNotIncludedInScoreExercises" (change)="toggleNotIncludedInScoreExercises()" />
+                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.hideNotIncludedInScoreExercises">Hide Optional</span>
+                </label>
+            </div>
+        </div>
+        <!-- Make sure that the doughnut chart does not move to the right of the screen by occupying the last 4 col spaces-->
+        <div class="col-4"></div>
+
         <div class="co-12 col-md-4 statistic-summary">
             <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate }}</h2>
             <div class="chart-container" style="margin-bottom: 20px">
@@ -130,7 +141,7 @@
     <hr />
     <jhi-course-learning-goals [courseId]="courseId"></jhi-course-learning-goals>
     <hr />
-    <jhi-exercise-scores-chart></jhi-exercise-scores-chart>
+    <jhi-exercise-scores-chart [filteredExerciseIDs]="filteredExerciseIDs"></jhi-exercise-scores-chart>
     <ng-template #noStatistics>
         <div class="row">
             <div class="col mt-3">
