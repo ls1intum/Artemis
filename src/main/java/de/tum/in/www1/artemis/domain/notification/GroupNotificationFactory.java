@@ -142,7 +142,6 @@ public class GroupNotificationFactory {
         else {
             notification.setTransientAndStringTarget(NOTIFICATION_TARGET_PROVIDER.getExerciseUpdatedTarget(exercise));
         }
-
         return notification;
     }
 
@@ -174,6 +173,7 @@ public class GroupNotificationFactory {
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
                 notification.setTransientAndStringTarget(NOTIFICATION_TARGET_PROVIDER.getLecturePostTarget(post, course));
+                notification.setTarget(targetProvider.getLecturePostTarget(post, course));
             }
             case NEW_COURSE_POST -> {
                 title = NEW_COURSE_POST_TITLE;

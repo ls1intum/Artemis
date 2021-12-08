@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider;
 public class SingleUserNotificationFactory {
 
     private static final NotificationTargetProvider NOTIFICATION_TARGET_PROVIDER = new NotificationTargetProvider();
-
+  
     private static final String POST_NOTIFICATION_TEXT = "Your post got replied.";
 
     /**

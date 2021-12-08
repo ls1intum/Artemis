@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import org.springframework.stereotype.Service;
-
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
