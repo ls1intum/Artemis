@@ -11,7 +11,6 @@ import org.hibernate.annotations.DiscriminatorOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
@@ -48,12 +47,12 @@ public abstract class Notification extends DomainObject {
     private String target;
 
     /**
-     * The String target is created based on a JsonObject
+     * The String target is created based on custom JAVA class
      * which hold the needed information to build a valid URL/Link
      * it is used to create Emails without the need to parse it (e.g. via GSON)
      */
     @Transient
-    private transient JsonObject targetTransient;
+    private transient NotificationTarget targetTransient;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "priority", columnDefinition = "varchar(15) default 'MEDIUM'")
@@ -117,17 +116,17 @@ public abstract class Notification extends DomainObject {
         this.target = target;
     }
 
-    public JsonObject getTargetTransient() {
+    public NotificationTarget getTargetTransient() {
         return targetTransient;
     }
 
-    public void setTargetTransient(JsonObject targetTransient) {
+    public void setTargetTransient(NotificationTarget targetTransient) {
         this.targetTransient = targetTransient;
     }
 
-    public void setTransientAndStringTarget(JsonObject targetTransient) {
+    public void setTransientAndStringTarget(NotificationTarget targetTransient) {
         this.setTargetTransient(targetTransient);
-        this.setTarget(targetTransient.toString());
+        this.setTarget(targetTransient.toJsonString());
     }
 
     public NotificationPriority getPriority() {

@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
@@ -421,8 +422,9 @@ public class GroupNotificationService {
      */
     private void saveExamNotification(GroupNotification notification) {
         String originalTarget = notification.getTarget();
-        String targetWithoutProblemStatement = notificationTargetProvider.getTargetWithoutProblemStatement(notification.getTargetTransient());
-        notification.setTarget(targetWithoutProblemStatement);
+        NotificationTarget targetWithoutProblemStatement = notification.getTargetTransient();
+        targetWithoutProblemStatement.setProblemStatement(null);
+        notification.setTarget(targetWithoutProblemStatement.toJsonString());
         groupNotificationRepository.save(notification);
         notification.setTarget(originalTarget);
     }

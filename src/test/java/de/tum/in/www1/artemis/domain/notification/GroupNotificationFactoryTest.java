@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain.notification;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+import static de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -21,11 +22,15 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider;
 
 public class GroupNotificationFactoryTest {
 
     @Autowired
     private static GroupNotificationFactory groupNotificationFactory;
+
+    @Autowired
+    private static NotificationTargetProvider notificationTargetProvider;
 
     @Mock
     private User user;
@@ -66,7 +71,7 @@ public class GroupNotificationFactoryTest {
 
     private String expectedText;
 
-    private String expectedTarget;
+    private NotificationTarget expectedTransientTarget;
 
     private NotificationPriority expectedPriority;
 
@@ -78,11 +83,17 @@ public class GroupNotificationFactoryTest {
 
     private static List<String> archiveErrors = new ArrayList();
 
+    private enum Base {
+        ATTACHMENT, EXERCISE, POST, COURSE, EXAM
+    }
+
     /**
      * sets up all needed mocks and their wanted behavior once for all test cases.
      */
     @BeforeAll
     public static void setUp() {
+        notificationTargetProvider = new NotificationTargetProvider();
+
         course = mock(Course.class);
         when(course.getId()).thenReturn(courseId);
 
@@ -117,14 +128,14 @@ public class GroupNotificationFactoryTest {
      * @param createdNotification is the notification that should be checked for correctness.
      * @param expectedTitle is the expected title that the notification should have.
      * @param expectedText is the expected text that the notification should have.
-     * @param expectedTarget is the expected target that the notification should have.
+     * @param expectedTransientTarget is the expected target that the notification should have.
      * @param expectedPriority is the expected priority that the notification should have.
      */
-    private void checkCreatedNotification(GroupNotification createdNotification, String expectedTitle, String expectedText, String expectedTarget,
+    private void checkCreatedNotification(GroupNotification createdNotification, String expectedTitle, String expectedText, NotificationTarget expectedTransientTarget,
             NotificationPriority expectedPriority) {
         assertThat(createdNotification.getTitle()).isEqualTo(expectedTitle);
         assertThat(createdNotification.getText()).isEqualTo(expectedText);
-        assertThat(createdNotification.getTarget()).isEqualTo(expectedTarget);
+        assertThat(createdNotification.getTarget()).isEqualTo(expectedTransientTarget.toJsonString());
         assertThat(createdNotification.getPriority()).isEqualTo(expectedPriority);
         assertThat(createdNotification.getAuthor()).isEqualTo(user);
     }
@@ -133,51 +144,14 @@ public class GroupNotificationFactoryTest {
      * Shortcut method to call the checks for the created notification that has a manually set notification text.
      */
     private void checkCreatedNotificationWithNotificationText() {
-        checkCreatedNotification(createdNotification, expectedTitle, notificationText, expectedTarget, expectedPriority);
+        checkCreatedNotification(createdNotification, expectedTitle, notificationText, expectedTransientTarget, expectedPriority);
     }
 
     /**
      * Shortcut method to call the checks for the created notification that has no manually set notification text but instead a different expected text.
      */
     private void checkCreatedNotificationWithoutNotificationText() {
-        checkCreatedNotification(createdNotification, expectedTitle, expectedText, expectedTarget, expectedPriority);
-    }
-
-    /**
-     * Auxiliary method to create the most common expected target with specific properties.
-     * @param message is the message that should be included in the notification's target.
-     * @param entity is the entity that should be pointed at in the notification's target.
-     * @param relevantIdForCurrentTestCase is the id of a relevant object that should be part of the notification's target.
-     * @return is the final notification target as a String.
-     */
-    private String createDefaultExpectedTarget(String message, String entity, Long relevantIdForCurrentTestCase) {
-        return "{\"message\":\"" + message + "\",\"id\":" + relevantIdForCurrentTestCase + ",\"entity\":\"" + entity + "\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
-    }
-
-    /**
-     * Auxiliary method to create the most common expected target for Post Notifications with specific properties.
-     * @param postId is the id of the post
-     * @param relevantType can be "exerciseId" or "lectureId"
-     * @param idForRelevantType is the id of the exercise or lecture
-     * @param courseId is the course id that is needed for the url
-     * @return is the final notification target as a String.
-     */
-    private String createExpectedTargetForPosts(Long postId, String relevantType, Long idForRelevantType, Long courseId) {
-        return "{\"id\":" + postId + ",\"" + relevantType + "\":" + idForRelevantType + ",\"course\":" + courseId + "}";
-    }
-
-    /**
-     * Auxiliary method to create the most common expected target for Course Post Notifications with specific properties.
-     * @param postId is the id of the post
-     * @param courseId is the course id that is needed for the url
-     * @return is the final notification target as a String.
-     */
-    private String createExpectedTargetForPosts(Long postId, Long courseId) {
-        return "{\"id\":" + postId + ",\"course\":" + courseId + "}";
-    }
-
-    private enum Base {
-        ATTACHMENT, EXERCISE, POST, COURSE, EXAM
+        checkCreatedNotification(createdNotification, expectedTitle, expectedText, expectedTransientTarget, expectedPriority);
     }
 
     /**
@@ -225,7 +199,7 @@ public class GroupNotificationFactoryTest {
         notificationType = ATTACHMENT_CHANGE;
         expectedTitle = ATTACHMENT_CHANGE_TITLE;
         expectedText = "Attachment \"" + attachment.getName() + "\" updated.";
-        expectedTarget = createDefaultExpectedTarget("attachmentUpdated", "lectures", lectureId);
+        expectedTransientTarget = notificationTargetProvider.getLectureTarget(lecture, ATTACHMENT_UPDATED_TEXT);
         expectedPriority = MEDIUM;
         createAndCheckNotification(Base.ATTACHMENT);
     }
@@ -241,7 +215,7 @@ public class GroupNotificationFactoryTest {
         notificationType = EXERCISE_RELEASED;
         expectedTitle = EXERCISE_RELEASED_TITLE;
         expectedText = "A new exercise \"" + exercise.getTitle() + "\" got released.";
-        expectedTarget = createDefaultExpectedTarget("exerciseReleased", "exercises", exerciseId);
+        expectedTransientTarget = notificationTargetProvider.getExerciseTarget(exercise, EXERCISE_RELEASED_TEXT);
         expectedPriority = MEDIUM;
         createAndCheckNotification(Base.EXERCISE);
     }
@@ -255,7 +229,7 @@ public class GroupNotificationFactoryTest {
         notificationType = EXERCISE_PRACTICE;
         expectedTitle = EXERCISE_PRACTICE_TITLE;
         expectedText = "Exercise \"" + exercise.getTitle() + "\" is now open for practice.";
-        expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exerciseId);
+        expectedTransientTarget = notificationTargetProvider.getExerciseTarget(exercise, EXERCISE_UPDATED_TEXT);
         expectedPriority = MEDIUM;
         createAndCheckNotification(Base.EXERCISE);
     }
@@ -269,7 +243,7 @@ public class GroupNotificationFactoryTest {
         notificationType = QUIZ_EXERCISE_STARTED;
         expectedTitle = QUIZ_EXERCISE_STARTED_TITLE;
         expectedText = "Quiz \"" + exercise.getTitle() + "\" just started.";
-        expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exerciseId);
+        expectedTransientTarget = notificationTargetProvider.getExerciseTarget(exercise, EXERCISE_UPDATED_TEXT);
         expectedPriority = MEDIUM;
         createAndCheckNotification(Base.EXERCISE);
     }
@@ -284,7 +258,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = PROGRAMMING_TEST_CASES_CHANGED_TITLE;
         expectedText = "The test cases of the programming exercise \"" + exercise.getTitle() + "\" in the course \"" + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle()
                 + "\" were updated." + " The students' submissions should be rebuilt and tested in order to create new results.";
-        expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exerciseId);
+        expectedTransientTarget = notificationTargetProvider.getExerciseTarget(exercise, EXERCISE_UPDATED_TEXT);
         expectedPriority = MEDIUM;
         createAndCheckNotification(Base.EXERCISE);
     }
@@ -302,8 +276,11 @@ public class GroupNotificationFactoryTest {
         expectedTitle = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
         expectedPriority = HIGH;
         expectedText = "Exam Exercise \"" + exercise.getTitle() + "\" updated.";
-        expectedTarget = "{\"problemStatement\":\"" + exercise.getProblemStatement() + "\",\"exercise\":" + exerciseId + ",\"exam\":" + examId + ",\"entity\":\"exams\",\"course\":"
-                + courseId + ",\"mainPage\":\"courses\"}";
+
+        expectedTransientTarget = new NotificationTarget(EXAMS_TEXT, courseId, COURSES_TEXT);
+        expectedTransientTarget.setProblemStatement(exercise.getProblemStatement());
+        expectedTransientTarget.setExerciseId(exerciseId);
+        expectedTransientTarget.setExamId(examId);
 
         // EXERCISE_UPDATED's implementation differs from the other types therefore the testing has to be adjusted (more explicit)
 
@@ -313,7 +290,7 @@ public class GroupNotificationFactoryTest {
 
         // without notification text -> silent exam update (expectedText = null)
         createdNotification = groupNotificationFactory.createNotification(exercise, user, groupNotificationType, notificationType, null);
-        checkCreatedNotification(createdNotification, expectedTitle, null, expectedTarget, NotificationPriority.HIGH);
+        checkCreatedNotification(createdNotification, expectedTitle, null, expectedTransientTarget, NotificationPriority.HIGH);
 
         // set behavior back to course exercise
         when(exercise.isExamExercise()).thenReturn(false);
@@ -329,7 +306,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = EXERCISE_UPDATED_TITLE;
         expectedText = "Exercise \"" + exercise.getTitle() + "\" updated.";
         expectedPriority = MEDIUM;
-        expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exerciseId);
+        expectedTransientTarget = notificationTargetProvider.getExerciseTarget(exercise, EXERCISE_UPDATED_TEXT);
         createAndCheckNotification(Base.EXERCISE);
     }
 
@@ -345,7 +322,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = NEW_EXERCISE_POST_TITLE;
         expectedText = "Exercise \"" + exercise.getTitle() + "\" got a new post.";
         expectedPriority = MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), "exerciseId", post.getExercise().getId(), courseId);
+        expectedTransientTarget = notificationTargetProvider.getExercisePostTarget(post, course);
         createAndCheckNotification(Base.POST);
     }
 
@@ -359,7 +336,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = NEW_LECTURE_POST_TITLE;
         expectedText = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
         expectedPriority = MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), "lectureId", post.getLecture().getId(), courseId);
+        expectedTransientTarget = notificationTargetProvider.getLecturePostTarget(post, course);
         createAndCheckNotification(Base.POST);
     }
 
@@ -373,7 +350,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = NEW_COURSE_POST_TITLE;
         expectedText = "Course \"" + course.getTitle() + "\" got a new course-wide post.";
         expectedPriority = MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), courseId);
+        expectedTransientTarget = notificationTargetProvider.getCoursePostTarget(post, course);
         createAndCheckNotification(Base.POST);
     }
 
@@ -387,7 +364,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = NEW_ANNOUNCEMENT_POST_TITLE;
         expectedText = "Course \"" + course.getTitle() + "\" got a new announcement.";
         expectedPriority = MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), courseId);
+        expectedTransientTarget = notificationTargetProvider.getCoursePostTarget(post, course);
         createAndCheckNotification(Base.POST);
     }
 
@@ -403,7 +380,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
         expectedText = "Exercise \"" + exercise.getTitle() + "\" got a new reply.";
         expectedPriority = MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), "exerciseId", post.getExercise().getId(), courseId);
+        expectedTransientTarget = notificationTargetProvider.getExercisePostTarget(post, course);
         createAndCheckNotification(Base.POST);
     }
 
@@ -417,7 +394,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
         expectedText = "Lecture \"" + lecture.getTitle() + "\" got a new reply.";
         expectedPriority = MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), "lectureId", post.getLecture().getId(), courseId);
+        expectedTransientTarget = notificationTargetProvider.getLecturePostTarget(post, course);
         createAndCheckNotification(Base.POST);
     }
 
@@ -431,7 +408,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
         expectedText = "Course-wide post in course \"" + course.getTitle() + "\" got a new reply.";
         expectedPriority = MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), courseId);
+        expectedTransientTarget = notificationTargetProvider.getCoursePostTarget(post, course);
         createAndCheckNotification(Base.POST);
     }
 
@@ -447,7 +424,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = COURSE_ARCHIVE_STARTED_TITLE;
         expectedText = "The course \"" + course.getTitle() + "\" is being archived.";
         expectedPriority = MEDIUM;
-        expectedTarget = createDefaultExpectedTarget("courseArchiveUpdated", "courses", courseId);
+        expectedTransientTarget = notificationTargetProvider.getCourseTarget(course, COURSE_ARCHIVE_UPDATED_TEXT);
         createAndCheckNotification(Base.COURSE);
     }
 
@@ -461,7 +438,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = COURSE_ARCHIVE_FINISHED_TITLE;
         expectedText = "The course \"" + course.getTitle() + "\" has been archived.";
         expectedPriority = MEDIUM;
-        expectedTarget = createDefaultExpectedTarget("courseArchiveUpdated", "courses", courseId);
+        expectedTransientTarget = notificationTargetProvider.getCourseTarget(course, COURSE_ARCHIVE_UPDATED_TEXT);
         createAndCheckNotification(Base.COURSE);
     }
 
@@ -475,7 +452,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = COURSE_ARCHIVE_FAILED_TITLE;
         expectedText = "The was a problem archiving course \"" + course.getTitle() + "\": <br/><br/>" + String.join("<br/><br/>", archiveErrors);
         expectedPriority = MEDIUM;
-        expectedTarget = createDefaultExpectedTarget("courseArchiveUpdated", "courses", courseId);
+        expectedTransientTarget = notificationTargetProvider.getCourseTarget(course, COURSE_ARCHIVE_UPDATED_TEXT);
         createAndCheckNotification(Base.COURSE);
     }
 
@@ -491,7 +468,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = EXAM_ARCHIVE_STARTED_TITLE;
         expectedText = "The exam \"" + exam.getTitle() + "\" is being archived.";
         expectedPriority = MEDIUM;
-        expectedTarget = createDefaultExpectedTarget("examArchiveUpdated", "courses", courseId);
+        expectedTransientTarget = notificationTargetProvider.getCourseTarget(course, EXAM_ARCHIVE_UPDATED_TEXT);
         createAndCheckNotification(Base.EXAM);
     }
 
@@ -505,7 +482,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = EXAM_ARCHIVE_FINISHED_TITLE;
         expectedText = "The exam \"" + exam.getTitle() + "\" has been archived.";
         expectedPriority = MEDIUM;
-        expectedTarget = createDefaultExpectedTarget("examArchiveUpdated", "courses", courseId);
+        expectedTransientTarget = notificationTargetProvider.getCourseTarget(course, EXAM_ARCHIVE_UPDATED_TEXT);
         createAndCheckNotification(Base.EXAM);
     }
 
@@ -519,7 +496,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = EXAM_ARCHIVE_FAILED_TITLE;
         expectedText = "The was a problem archiving exam \"" + exam.getTitle() + "\": <br/><br/>" + String.join("<br/><br/>", archiveErrors);
         expectedPriority = MEDIUM;
-        expectedTarget = createDefaultExpectedTarget("examArchiveUpdated", "courses", courseId);
+        expectedTransientTarget = notificationTargetProvider.getCourseTarget(course, EXAM_ARCHIVE_UPDATED_TEXT);
         createAndCheckNotification(Base.EXAM);
     }
 }

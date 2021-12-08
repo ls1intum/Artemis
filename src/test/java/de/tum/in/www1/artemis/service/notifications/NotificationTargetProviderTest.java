@@ -11,14 +11,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.google.gson.JsonObject;
-
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 
 public class NotificationTargetProviderTest {
 
@@ -51,7 +50,7 @@ public class NotificationTargetProviderTest {
     @Mock
     private static Notification notification;
 
-    private JsonObject notificationTransientTarget;
+    private NotificationTarget notificationTransientTarget;
 
     private static final String BASE_URL = "https://artemistest.ase.in.tum.de";
 
@@ -63,7 +62,7 @@ public class NotificationTargetProviderTest {
 
     private static final Long EXAM_ID = 27L;
 
-    private static JsonObject originalTransientTargetWithProblemStatement;
+    private static NotificationTarget originalTransientTargetWithProblemStatement;
 
     /// Auxiliary constants
 
@@ -88,7 +87,7 @@ public class NotificationTargetProviderTest {
      * Auxiliary method to mock, extract and check the notificationTarget
      */
     private void mockExtractAndAssertNotificationTarget(String expectedURL) {
-        when(notification.getTarget()).thenReturn(notificationTransientTarget.toString());
+        when(notification.getTarget()).thenReturn(notificationTransientTarget.toJsonString());
         when(notification.getTargetTransient()).thenReturn(notificationTransientTarget);
         resultingURL = notificationTargetProvider.extractNotificationUrl(notification, BASE_URL);
         assertThat(resultingURL).isEqualTo(expectedURL);
@@ -130,13 +129,10 @@ public class NotificationTargetProviderTest {
      * Expected value -> "{\"problemStatement\":\"PROBLEM STATEMENT\",\"exercise\":3,\"exam\":1,\"entity\":\"exams\",\"course\":1,\"mainPage\":\"courses\"}"
      */
     private static void prepareOriginalTransientTargetWithProblemStatement() {
-        originalTransientTargetWithProblemStatement = new JsonObject();
-        originalTransientTargetWithProblemStatement.addProperty(PROBLEM_STATEMENT_TEXT, PROBLEM_STATEMENT);
-        originalTransientTargetWithProblemStatement.addProperty(EXERCISE_TEXT, EXERCISE_ID);
-        originalTransientTargetWithProblemStatement.addProperty(EXAM_TEXT, EXAM_ID);
-        originalTransientTargetWithProblemStatement.addProperty(ENTITY_TEXT, EXAMS_TEXT);
-        originalTransientTargetWithProblemStatement.addProperty(COURSE_TEXT, COURSE_ID);
-        originalTransientTargetWithProblemStatement.addProperty(MAIN_PAGE_TEXT, COURSES_TEXT);
+        originalTransientTargetWithProblemStatement = new NotificationTarget(EXAMS_TEXT, COURSE_ID, COURSES_TEXT);
+        originalTransientTargetWithProblemStatement.setProblemStatement(PROBLEM_STATEMENT);
+        originalTransientTargetWithProblemStatement.setExerciseId(EXERCISE_ID);
+        originalTransientTargetWithProblemStatement.setExamId(EXAM_ID);
     }
 
     /**
@@ -144,7 +140,8 @@ public class NotificationTargetProviderTest {
      */
     @Test
     public void getTargetWithoutProblemStatement() {
-        String resultingTarget = notificationTargetProvider.getTargetWithoutProblemStatement(originalTransientTargetWithProblemStatement);
+        NotificationTarget targetWithoutProblemStatement = originalTransientTargetWithProblemStatement;
+        String resultingTarget = originalTransientTargetWithProblemStatement.toJsonString();
         assertThat(!resultingTarget.equals(originalTransientTargetWithProblemStatement.toString())).as("resulting target differs from original one");
         assertThat(!resultingTarget.contains("\"" + PROBLEM_STATEMENT_TEXT + "\":")).as("problem statement was successfully removed from target");
     }

@@ -16,11 +16,15 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider;
 
 public class SingleUserNotificationFactoryTest {
 
     @Autowired
     private static SingleUserNotificationFactory singleUserNotificationFactory;
+
+    @Autowired
+    private static NotificationTargetProvider notificationTargetProvider;
 
     @Mock
     private User user;
@@ -28,17 +32,17 @@ public class SingleUserNotificationFactoryTest {
     @Mock
     private static Lecture lecture;
 
-    private static Long lectureId = 0L;
+    private static final Long LECTURE_ID = 0L;
 
     @Mock
     private static Course course;
 
-    private static Long courseId = 1L;
+    private static final Long COURSE_ID = 1L;
 
     @Mock
     private static Exercise exercise;
 
-    private static Long exerciseId = 42L;
+    private static final Long EXERCISE_ID = 42L;
 
     @Mock
     private static Post post;
@@ -52,7 +56,7 @@ public class SingleUserNotificationFactoryTest {
 
     private String expectedText;
 
-    private String expectedTarget;
+    private NotificationTarget expectedTransientTarget;
 
     private NotificationPriority expectedPriority;
 
@@ -65,15 +69,17 @@ public class SingleUserNotificationFactoryTest {
      */
     @BeforeAll
     public static void setUp() {
+        notificationTargetProvider = new NotificationTargetProvider();
+
         course = mock(Course.class);
-        when(course.getId()).thenReturn(courseId);
+        when(course.getId()).thenReturn(COURSE_ID);
 
         lecture = mock(Lecture.class);
-        when(lecture.getId()).thenReturn(lectureId);
+        when(lecture.getId()).thenReturn(LECTURE_ID);
         when(lecture.getCourse()).thenReturn(course);
 
         exercise = mock(Exercise.class);
-        when(exercise.getId()).thenReturn(exerciseId);
+        when(exercise.getId()).thenReturn(EXERCISE_ID);
         when(exercise.getTitle()).thenReturn("exercise title");
         when(exercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
         when(exercise.getProblemStatement()).thenReturn("problem statement");
@@ -111,42 +117,9 @@ public class SingleUserNotificationFactoryTest {
     private void checkNotification() {
         assertThat(createdNotification.getTitle()).isEqualTo(expectedTitle);
         assertThat(createdNotification.getText()).isEqualTo(expectedText);
-        assertThat(createdNotification.getTarget()).isEqualTo(expectedTarget);
+        assertThat(createdNotification.getTarget()).isEqualTo(expectedTransientTarget.toJsonString());
         assertThat(createdNotification.getPriority()).isEqualTo(expectedPriority);
         assertThat(createdNotification.getAuthor()).isEqualTo(user);
-    }
-
-    /**
-     * Auxiliary method to create the most common expected target with specific properties.
-     * @param message is the message that should be included in the notification's target.
-     * @param entity is the entity that should be pointed at in the notification's target.
-     * @param relevantIdForCurrentTestCase is the id of a relevant object that should be part of the notification's target.
-     * @return is the final notification target as a String.
-     */
-    private String createDefaultExpectedTarget(String message, String entity, Long relevantIdForCurrentTestCase) {
-        return "{\"message\":\"" + message + "\",\"id\":" + relevantIdForCurrentTestCase + ",\"entity\":\"" + entity + "\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
-    }
-
-    /**
-     * Auxiliary method to create the most common expected target for Post Notifications with specific properties.
-     * @param postId is the id of the post
-     * @param relevantType can be "exerciseId" or "lectureId"
-     * @param idForRelevantType is the id of the exercise or lecture
-     * @param courseId is the course id that is needed for the url
-     * @return is the final notification target as a String.
-     */
-    private String createExpectedTargetForPosts(Long postId, String relevantType, Long idForRelevantType, Long courseId) {
-        return "{\"id\":" + postId + ",\"" + relevantType + "\":" + idForRelevantType + ",\"course\":" + courseId + "}";
-    }
-
-    /**
-     * Auxiliary method to create the most common expected target for course wide Post Notifications with specific properties.
-     * @param postId is the id of the post
-     * @param courseId is the course id that is needed for the url
-     * @return is the final notification target as a String.
-     */
-    private String createExpectedTargetForCourseWidePosts(Long postId, Long courseId) {
-        return "{\"id\":" + postId + ",\"course\":" + courseId + "}";
     }
 
     /**
@@ -159,7 +132,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
         expectedPriority = MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), "exerciseId", post.getExercise().getId(), courseId);
+        expectedTransientTarget = notificationTargetProvider.getExercisePostTarget(post, course);
         createAndCheckPostNotification();
     }
 
@@ -173,7 +146,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
         expectedPriority = MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), "lectureId", post.getLecture().getId(), courseId);
+        expectedTransientTarget = notificationTargetProvider.getLecturePostTarget(post, course);
         createAndCheckPostNotification();
     }
 
@@ -187,7 +160,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
         expectedPriority = MEDIUM;
-        expectedTarget = createExpectedTargetForCourseWidePosts(post.getId(), courseId);
+        expectedTransientTarget = notificationTargetProvider.getCoursePostTarget(post, course);
         createAndCheckPostNotification();
     }
 
@@ -203,7 +176,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = FILE_SUBMISSION_SUCCESSFUL_TITLE;
         expectedText = "Your file for the exercise \"" + exercise.getTitle() + "\" was successfully submitted.";
         expectedPriority = MEDIUM;
-        expectedTarget = createDefaultExpectedTarget(FILE_SUBMISSION_SUCCESSFUL_TITLE, "exercises", exerciseId);
+        expectedTransientTarget = notificationTargetProvider.getExerciseTarget(exercise, FILE_SUBMISSION_SUCCESSFUL_TITLE);
         createAndCheckExerciseNotification();
     }
 }
