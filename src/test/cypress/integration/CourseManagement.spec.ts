@@ -1,3 +1,5 @@
+import { COURSE_BASE } from './../support/requests/CourseManagementRequests';
+import { GET, BASE_API, POST } from './../support/constants';
 import { artemis } from '../support/ArtemisTesting';
 import { CourseManagementPage } from '../support/pageobjects/course/CourseManagementPage';
 import { NavigationBar } from '../support/pageobjects/NavigationBar';
@@ -47,8 +49,8 @@ describe('Course management', () => {
             const username = artemis.users.getStudentOne().username;
             navigationBar.openCourseManagement();
             courseManagementPage.openStudentOverviewOfCourse(courseId);
-            cy.intercept('GET', '/api/users/search*').as('getStudentQuery');
-            cy.intercept('POST', '/api/courses/*/students/' + username).as('addStudentQuery');
+            cy.intercept(GET, BASE_API + 'users/search*').as('getStudentQuery');
+            cy.intercept(POST, COURSE_BASE + '*/students/' + username).as('addStudentQuery');
             cy.get('#typeahead-basic').type(username);
             cy.wait('@getStudentQuery');
             cy.get('#ngb-typeahead-0')
@@ -56,7 +58,7 @@ describe('Course management', () => {
                 .should('be.visible')
                 .click();
             cy.wait('@addStudentQuery');
-            cy.get('[deletequestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"]').should('be.visible');
+            cy.get('#registered-students').contains(username).should('be.visible');
         });
 
         after(() => {
