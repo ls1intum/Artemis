@@ -1,4 +1,5 @@
-<div class="row align-items-center mb-2 mt-2" (click)="showDetails()">
+<div class="row align-items-center mb-2 mt-2 position-relative">
+    <a *ngIf="course && lecture" class="stretched-link" [routerLink]="['/courses', course.id!, 'lectures', lecture.id!]"></a>
     <div class="col-auto d-none d-sm-block">
         <div class="exercise-row-icon">
             <fa-icon

@@ -67,8 +67,13 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
+/**
+ * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
+ * 1) Bamboo + Bitbucket
+ * 2) Jenkins + Gitlab
+ */
 @Service
-public class ProgrammingExerciseIntegrationServiceTest {
+public class ProgrammingExerciseIntegrationTestService {
 
     @Value("${artemis.repo-download-clone-path}")
     private String repoDownloadClonePath;

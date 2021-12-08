@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -184,8 +186,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 OR pe.solutionParticipation.id = :#{#participationId}
             """)
     Optional<ProgrammingExercise> findByParticipationId(@Param("participationId") Long participationId);
-
-    ProgrammingExercise findOneBySubmissionPolicyId(Long submissionPolicyId);
 
     /**
      * Query which fetches all the programming exercises for which the user is instructor in the course and matching the search criteria.
@@ -483,16 +483,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Find the ProgrammingExercise of the given Participation, which can be either a student, template or solution Participation
-     *
-     * @param participation The programming participation
-     * @return The ProgrammingExercise of the given Participation
-     */
-    default Optional<ProgrammingExercise> getExercise(ProgrammingExerciseParticipation participation) {
-        return findByParticipationId(participation.getId());
-    }
-
-    /**
      * Find a programming exercise by its id and throw an EntityNotFoundException if it cannot be found
      *
      * @param programmingExerciseId of the programming exercise.
@@ -647,5 +637,25 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationLatestResultById(programmingExerciseId);
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * Retrieve the programming exercise from a programming exercise participation. In case the programming exercise is null or not initialized,
+     * this method will load it properly from the database and connect it to the participation
+     * @param participation the programming exercise participation for which the programming exercise should be found
+     * @return the programming exercise
+     */
+    @Nullable
+    default ProgrammingExercise getProgrammingExerciseFromParticipation(ProgrammingExerciseParticipation participation) {
+        // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
+        if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
+            // Find the programming exercise for the given participation
+            var optionalProgrammingExercise = findByParticipationId(participation.getId());
+            if (optionalProgrammingExercise.isEmpty()) {
+                return null;
+            }
+            participation.setProgrammingExercise(optionalProgrammingExercise.get());
+        }
+        return participation.getProgrammingExercise();
     }
 }
