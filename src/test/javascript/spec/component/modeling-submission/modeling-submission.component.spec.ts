@@ -66,6 +66,8 @@ describe('ModelingSubmission Management Component', () => {
     const submission = <ModelingSubmission>(<unknown>{ id: 20, submitted: true, participation });
     const result = { id: 1 } as Result;
 
+    const originalConsoleError = console.error;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([routes[0]])],
@@ -110,10 +112,12 @@ describe('ModelingSubmission Management Component', () => {
                 router = debugElement.injector.get(Router);
                 comp.modelingEditor = TestBed.createComponent(MockComponent(ModelingEditorComponent)).componentInstance;
             });
+        console.error = jest.fn();
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+        console.error = originalConsoleError;
     });
 
     it('Should call load getDataForModelingEditor on init', () => {
