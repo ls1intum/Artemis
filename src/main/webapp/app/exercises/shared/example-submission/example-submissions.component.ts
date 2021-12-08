@@ -53,7 +53,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
      * Closes open modal on component destroy
      */
     ngOnDestroy() {
-        if (this.modalService.hasOpenModals()) {
+        if (this.modalService?.hasOpenModals()) {
             this.modalService.dismissAll();
         }
     }

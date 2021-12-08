@@ -35,6 +35,7 @@ describe('VideoUnitComponent', () => {
             imports: [BrowserModule],
             declarations: [
                 VideoUnitComponent,
+                SafeResourceUrlPipe,
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
