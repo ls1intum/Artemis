@@ -43,7 +43,7 @@ public class GroupNotificationService {
     private final NotificationSettingsService notificationSettingsService;
 
     public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
-            MailService mailService, NotificationSettingsService notificationSettingsService, NotificationTargetProvider notificationTargetProvider) {
+            MailService mailService, NotificationSettingsService notificationSettingsService) {
         this.groupNotificationRepository = groupNotificationRepository;
         this.messagingTemplate = messagingTemplate;
         this.userRepository = userRepository;
