@@ -14,19 +14,15 @@ const courseManagementPage: CourseManagementPage = new CourseManagementPage();
 const navigationBar: NavigationBar = new NavigationBar();
 
 // Common primitives
-let uid: string;
 let courseName: string;
 let courseShortName: string;
 
 // Selectors
-const fieldTitle = '#field_title';
-const shortName = '#field_shortName';
-const saveEntity = '#save-entity';
 const modalDeleteButton = '#delete';
 
 describe('Course management', () => {
     beforeEach(() => {
-        uid = generateUUID();
+        const uid = generateUUID();
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
         cy.login(artemis.users.getAdmin(), '/');
@@ -74,12 +70,12 @@ describe('Course management', () => {
         it('Creates a new course', () => {
             navigationBar.openCourseManagement();
             courseManagementPage.openCourseCreation();
-            cy.get(fieldTitle).type(courseName);
-            cy.get(shortName).type(courseShortName);
+            cy.get('#field_title').type(courseName);
+            cy.get('#field_shortName').type(courseShortName);
             cy.get('#field_testCourse').check();
             cy.get('#field_customizeGroupNamesEnabled').uncheck();
             cy.intercept(POST, BASE_API + 'courses').as('createCourseQuery');
-            cy.get(saveEntity).click();
+            cy.get('#save-entity').click();
             cy.wait('@createCourseQuery')
                 .its('response.body')
                 .then((body) => {
