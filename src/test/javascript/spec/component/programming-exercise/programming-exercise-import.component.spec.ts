@@ -25,6 +25,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { NgbHighlight, NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import '@angular/localize/init';
 
 chai.use(sinonChai);
 const expect = chai.expect;

@@ -126,7 +126,7 @@ describe('Exam participation', () => {
         modelingEditor.addComponentToModel(1, false);
         modelingEditor.addComponentToModel(2, false);
         modelingEditor.addComponentToModel(3, false);
-        modelingEditor.submit();
+        examNavigation.navigateRight();
     }
 
     function makeQuizExerciseSubmission() {
