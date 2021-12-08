@@ -53,19 +53,19 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let modelingExercise of filteredModelingExercises; trackBy: trackId" [id]="'exercise-card-' + modelingExercise.id">
+                <tr *ngFor="let modelingExercise of filteredModelingExercises; trackBy: trackId" id="{{ 'exercise-card-' + modelingExercise.id }}">
                     <td>
                         <a [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.id }}</a>
                     </td>
-                    <td>
+                    <td id="modeling-exercise-{{ modelingExercise.id }}-title">
                         <a [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.title }}</a>
                     </td>
-                    <td>{{ modelingExercise.releaseDate | artemisDate }}</td>
-                    <td>{{ modelingExercise.dueDate | artemisDate }}</td>
-                    <td>{{ modelingExercise.assessmentDueDate | artemisDate }}</td>
-                    <td>{{ modelingExercise.maxPoints }}</td>
-                    <td>{{ modelingExercise.bonusPoints }}</td>
-                    <td>{{ exerciseService.isIncludedInScore(modelingExercise) }}</td>
+                    <td id="modeling-exercise-{{ modelingExercise.id }}-releaseDate">{{ modelingExercise.releaseDate | artemisDate }}</td>
+                    <td id="modeling-exercise-{{ modelingExercise.id }}-dueDate">{{ modelingExercise.dueDate | artemisDate }}</td>
+                    <td id="modeling-exercise-{{ modelingExercise.id }}-assessmentDueDate">{{ modelingExercise.assessmentDueDate | artemisDate }}</td>
+                    <td id="modeling-exercise-{{ modelingExercise.id }}-maxPoints">{{ modelingExercise.maxPoints }}</td>
+                    <td id="modeling-exercise-{{ modelingExercise.id }}-bonusPoints">{{ modelingExercise.bonusPoints }}</td>
+                    <td id="modeling-exercise-{{ modelingExercise.id }}-included">{{ exerciseService.isIncludedInScore(modelingExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ modelingExercise.presentationScoreEnabled }}</td>
                     <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
                     <td class="text-end">
