@@ -290,7 +290,7 @@ public class GroupNotificationFactoryTest {
 
         // without notification text -> silent exam update (expectedText = null)
         createdNotification = groupNotificationFactory.createNotification(exercise, user, groupNotificationType, notificationType, null);
-        checkCreatedNotification(createdNotification, expectedTitle, null, expectedTransientTarget, NotificationPriority.HIGH);
+        checkCreatedNotification(createdNotification, expectedTitle, null, expectedTransientTarget, HIGH);
 
         // set behavior back to course exercise
         when(exercise.isExamExercise()).thenReturn(false);

@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -36,9 +37,6 @@ public class NotificationTarget {
     private Long examId; // will be "exam" in toJsonString()
 
     private Long lectureId; // will stay "lectureId" in toJsonString()
-
-    public NotificationTarget() {
-    };
 
     public NotificationTarget(Long identifier, Long courseId) {
         this.identifier = identifier;
@@ -145,7 +143,7 @@ public class NotificationTarget {
         try {
             result = new ObjectMapper().writeValueAsString(this);
         }
-        catch (Exception exception) {
+        catch (JsonProcessingException exception) {
             log.error(exception.getMessage(), exception);
         }
         return result;

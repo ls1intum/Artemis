@@ -42,8 +42,6 @@ public class GroupNotificationService {
 
     private final NotificationSettingsService notificationSettingsService;
 
-    private final NotificationTargetProvider notificationTargetProvider;
-
     public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
             MailService mailService, NotificationSettingsService notificationSettingsService, NotificationTargetProvider notificationTargetProvider) {
         this.groupNotificationRepository = groupNotificationRepository;
@@ -51,7 +49,6 @@ public class GroupNotificationService {
         this.userRepository = userRepository;
         this.mailService = mailService;
         this.notificationSettingsService = notificationSettingsService;
-        this.notificationTargetProvider = notificationTargetProvider;
     }
 
     /**

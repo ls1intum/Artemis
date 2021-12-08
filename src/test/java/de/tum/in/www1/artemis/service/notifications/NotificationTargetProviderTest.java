@@ -140,7 +140,6 @@ public class NotificationTargetProviderTest {
      */
     @Test
     public void getTargetWithoutProblemStatement() {
-        NotificationTarget targetWithoutProblemStatement = originalTransientTargetWithProblemStatement;
         String resultingTarget = originalTransientTargetWithProblemStatement.toJsonString();
         assertThat(!resultingTarget.equals(originalTransientTargetWithProblemStatement.toString())).as("resulting target differs from original one");
         assertThat(!resultingTarget.contains("\"" + PROBLEM_STATEMENT_TEXT + "\":")).as("problem statement was successfully removed from target");
