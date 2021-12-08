@@ -146,7 +146,7 @@
                 </div>
             </div>
             <div class="question-content" *ngIf="!reEvaluationInProgress">
-                <ace-editor
+                <jhi-ace-editor
                     #questionEditor
                     [(text)]="questionEditorText"
                     [mode]="questionEditorMode"
@@ -155,7 +155,7 @@
                     style="min-height: 200px; width: 100%; overflow: auto"
                     class="form-control"
                 >
-                </ace-editor>
+                </jhi-ace-editor>
             </div>
         </div>
         <div class="edit-sa-question" style="padding: 20px" *ngIf="showVisualMode || reEvaluationInProgress">

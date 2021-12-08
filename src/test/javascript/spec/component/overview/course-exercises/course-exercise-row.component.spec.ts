@@ -1,9 +1,6 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DebugElement } from '@angular/core';
 import { SinonStub, stub } from 'sinon';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Component, DebugElement } from '@angular/core';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -34,9 +31,12 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
+import { RouterTestingModule } from '@angular/router/testing';
 
-chai.use(sinonChai);
-const expect = chai.expect;
+@Component({
+    template: '',
+})
+class DummyComponent {}
 
 describe('CourseExerciseRowComponent', () => {
     let comp: CourseExerciseRowComponent;
@@ -47,7 +47,15 @@ describe('CourseExerciseRowComponent', () => {
 
     beforeAll(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule],
+            imports: [
+                ArtemisTestModule,
+                TranslateModule.forRoot(),
+                NgbModule,
+                RouterTestingModule.withRoutes([
+                    { path: 'courses/:courseId/exercises', component: DummyComponent },
+                    { path: 'courses/:courseId/exercises/:exerciseId', component: DummyComponent },
+                ]),
+            ],
             declarations: [
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
@@ -58,6 +66,7 @@ describe('CourseExerciseRowComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(OrionFilterDirective),
                 CourseExerciseRowComponent,
+                DummyComponent,
             ],
             providers: [
                 DeviceDetectorService,
@@ -81,79 +90,79 @@ describe('CourseExerciseRowComponent', () => {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_STARTED if release date is in the past and not planned to start', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(false, dayjs(), dayjs().subtract(3, 'minutes'), true, false);
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_NOT_STARTED);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_NOT_STARTED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_STARTED if release date is in the future and planned to start', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs(), dayjs().add(3, 'minutes'), true, false);
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_NOT_STARTED);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_NOT_STARTED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_UNINITIALIZED', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), true, false);
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_UNINITIALIZED);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_UNINITIALIZED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_PARTICIPATED if there are no participations', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs(), dayjs(), true, false);
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_NOT_PARTICIPATED);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_NOT_PARTICIPATED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_ACTIVE', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), true, true, InitializationState.INITIALIZED);
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_ACTIVE);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_ACTIVE);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_SUBMITTED', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), true, true, InitializationState.FINISHED);
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_SUBMITTED);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_SUBMITTED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_PARTICIPATED if there are no results', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), false, true, InitializationState.UNINITIALIZED, false);
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_NOT_PARTICIPATED);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_NOT_PARTICIPATED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_FINISHED', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), false, true, InitializationState.UNINITIALIZED, true);
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_FINISHED);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_FINISHED);
     });
 
     it('Participation status of text exercise should evaluate to EXERCISE_ACTIVE', () => {
         setupForTestingParticipationStatusExerciseTypeText(ExerciseType.TEXT, InitializationState.INITIALIZED, true);
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.EXERCISE_ACTIVE);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.EXERCISE_ACTIVE);
     });
 
     it('Participation status of text exercise should evaluate to EXERCISE_MISSED', () => {
         setupForTestingParticipationStatusExerciseTypeText(ExerciseType.TEXT, InitializationState.INITIALIZED, false);
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.EXERCISE_MISSED);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.EXERCISE_MISSED);
     });
 
     it('Participation status of text exercise should evaluate to EXERCISE_SUBMITTED', () => {
         setupForTestingParticipationStatusExerciseTypeText(ExerciseType.TEXT, InitializationState.FINISHED, false);
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.EXERCISE_SUBMITTED);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.EXERCISE_SUBMITTED);
     });
 
     it('Participation status of text exercise should evaluate to UNINITIALIZED', () => {
         setupForTestingParticipationStatusExerciseTypeText(ExerciseType.TEXT, InitializationState.UNINITIALIZED, false);
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.UNINITIALIZED);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.UNINITIALIZED);
     });
 
     it('Participation status of programming exercise should evaluate to EXERCISE_MISSED', () => {
         setupExercise(ExerciseType.PROGRAMMING, dayjs().subtract(1, 'day'));
         comp.ngOnInit();
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.EXERCISE_MISSED);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.EXERCISE_MISSED);
     });
 
     it('Participation status of programming exercise should evaluate to UNINITIALIZED', () => {
         setupExercise(ExerciseType.PROGRAMMING, dayjs().add(1, 'day'));
         comp.ngOnInit();
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.UNINITIALIZED);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.UNINITIALIZED);
     });
 
     it('Participation status of programming exercise should evaluate to INITIALIZED', () => {
@@ -168,7 +177,7 @@ describe('CourseExerciseRowComponent', () => {
         getAllParticipationsStub.returns(studentParticipation);
         comp.ngOnInit();
 
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.INITIALIZED);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.INITIALIZED);
     });
 
     it('Participation status of programming exercise should evaluate to EXERCISE_MISSED', () => {
@@ -183,7 +192,7 @@ describe('CourseExerciseRowComponent', () => {
         getAllParticipationsStub.returns(studentParticipation);
         comp.ngOnInit();
 
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.EXERCISE_MISSED);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.EXERCISE_MISSED);
     });
 
     const setupForTestingParticipationStatusExerciseTypeQuiz = (
