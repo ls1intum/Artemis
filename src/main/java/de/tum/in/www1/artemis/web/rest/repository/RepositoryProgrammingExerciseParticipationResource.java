@@ -78,7 +78,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalArgumentException();
         }
         ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);
-        // Error case 2: The programming exercise cannbot be found.
+        // Error case 2: The programming exercise cannot be found.
         if (programmingExercise == null) {
             throw new IllegalArgumentException();
         }
