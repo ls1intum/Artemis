@@ -8,12 +8,14 @@
             <thead>
                 <tr>
                     <th>{{ 'artemisApp.studentDashboard.register.signUp' | artemisTranslate }}</th>
+                    <th>Semester</th>
                 </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let course of coursesToSelect">
                     <td>
                         <span>{{ course.title }}</span>
+                        <span>{{ course.semester }}</span>
                     </td>
                     <td class="text-end">
                         <div class="btn-group">
