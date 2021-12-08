@@ -115,11 +115,14 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     }
 
     private String[] getResourcePath(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
+        if (programmingLanguage == null) {
+            throw new IllegalArgumentException("ProgrammingLanguage should not be null");
+        }
         final var pipelineScriptFilename = isStaticCodeAnalysisEnabled ? "Jenkinsfile-staticCodeAnalysis" : "Jenkinsfile";
         final var regularOrSequentialDir = isSequentialRuns ? "sequentialRuns" : "regularRuns";
         final var programmingLanguageName = programmingLanguage.name().toLowerCase();
 
-        if (projectType.isPresent() && programmingLanguage.equals(ProgrammingLanguage.C)) {
+        if (projectType.isPresent() && ProgrammingLanguage.C.equals(programmingLanguage)) {
             final var projectTypeName = projectType.get().name().toLowerCase();
             return new String[] { "templates", "jenkins", programmingLanguageName, projectTypeName, regularOrSequentialDir, pipelineScriptFilename };
         }
