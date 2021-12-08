@@ -61,6 +61,13 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { RouterTestingModule } from '@angular/router/testing';
+import { SortService } from 'app/shared/service/sort.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     // needed to make sure ace is defined
@@ -195,20 +202,33 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockComponent(ButtonComponent),
         MockComponent(ResultComponent),
         MockComponent(AlertComponent),
-        MockPipe(ArtemisTranslatePipe),
-        MockPipe(ArtemisDatePipe),
         MockDirective(ExtensionPointDirective),
         MockHasAnyAuthorityDirective,
         MockTranslateValuesDirective,
         MockDirective(NgbTooltip),
         MockComponent(AssessmentWarningComponent),
+        MockPipe(ArtemisDatePipe),
+        MockPipe(ArtemisTranslatePipe),
     ];
 
     const providers = [
-        MockProvider(ArtemisDatePipe),
+        { provide: TranslateService, useClass: MockTranslateService },
+        { provide: AccountService, useClass: MockAccountService },
         { provide: ActivatedRoute, useValue: route },
         { provide: LocalStorageService, useClass: MockSyncStorage },
         { provide: SessionStorageService, useClass: MockSyncStorage },
+        MockProvider(ExerciseService),
+        MockProvider(AlertService),
+        MockProvider(TutorParticipationService),
+        MockProvider(ArtemisMarkdownService),
+        MockProvider(ComplaintService),
+        MockProvider(GuidedTourService),
+        MockProvider(ArtemisDatePipe),
+        MockProvider(SortService),
+        MockProvider(TextSubmissionService),
+        MockProvider(ModelingSubmissionService),
+        MockProvider(FileUploadSubmissionService),
+        MockProvider(ProgrammingSubmissionService),
     ];
 
     beforeEach(() => {
@@ -282,7 +302,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(comp).not.toBe(null);
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
