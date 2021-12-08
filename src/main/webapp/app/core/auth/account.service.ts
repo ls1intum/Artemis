@@ -14,7 +14,6 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 
 export interface IAccountService {
-    fetch: () => Observable<HttpResponse<User>>;
     save: (account: any) => Observable<HttpResponse<any>>;
     authenticate: (identity?: User) => void;
     hasAnyAuthority: (authorities: string[]) => Promise<boolean>;
@@ -64,7 +63,7 @@ export class AccountService implements IAccountService {
         }
     }
 
-    fetch(): Observable<HttpResponse<User>> {
+    private fetch(): Observable<HttpResponse<User>> {
         return this.http.get<User>(SERVER_API_URL + 'api/account', { observe: 'response' });
     }
 
