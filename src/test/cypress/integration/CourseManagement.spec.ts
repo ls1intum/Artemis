@@ -45,7 +45,7 @@ describe('Course management', () => {
                 });
         });
 
-        it('Adds a student manually to the course', function () {
+        it('Adds a student manually to the course', () => {
             const username = artemis.users.getStudentOne().username;
             navigationBar.openCourseManagement();
             courseManagementPage.openStudentOverviewOfCourse(courseId);
@@ -71,7 +71,7 @@ describe('Course management', () => {
     describe('Course creation', () => {
         let courseId: number;
 
-        it('Creates a new course', function () {
+        it('Creates a new course', () => {
             navigationBar.openCourseManagement();
             courseManagementPage.openCourseCreation();
             cy.get(fieldTitle).type(courseName);
@@ -101,12 +101,12 @@ describe('Course management', () => {
             artemisRequests.courseManagement.createCourse(false, courseName, courseShortName).its('status').should('eq', 201);
         });
 
-        it('Deletes an existing course', function () {
+        it('Deletes an existing course', () => {
             navigationBar.openCourseManagement();
             courseManagementPage.openCourse(courseShortName);
             cy.get('#delete-course').click();
             cy.get(modalDeleteButton).should('be.disabled');
-            cy.get('[name="confirmExerciseName"]').type(courseName);
+            cy.get('#confirm-exercise-name').type(courseName);
             cy.get(modalDeleteButton).should('not.be.disabled').click();
             courseManagementPage.getCourseCard(courseShortName).should('not.exist');
         });
