@@ -5,7 +5,6 @@ import { By } from '@angular/platform-browser';
 import { DebugElement, SimpleChange } from '@angular/core';
 import { Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash-es';
-import { AceEditorModule } from 'ng2-ace-editor';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ArtemisTestModule } from '../../test.module';
 import { cartesianProduct } from 'app/shared/util/utils';
@@ -22,6 +21,7 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
+import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 
 describe('CodeEditorActionsComponent', () => {
     let comp: CodeEditorActionsComponent;
