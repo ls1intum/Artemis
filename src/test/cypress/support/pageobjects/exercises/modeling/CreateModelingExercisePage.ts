@@ -5,7 +5,6 @@ import { MODELING_EXERCISE_BASE } from '../../../requests/CourseManagementReques
  * Path: /course-management/{courseID}/modeling-exercises/{exerciseID}
  */
 export class CreateModelingExercisePage {
-    DIFFICULTY_BAR = 'jhi-difficulty-picker > :nth-child(1) >';
     setTitle(title: string) {
         cy.get('#field_title').clear().type(title);
     }
@@ -24,7 +23,7 @@ export class CreateModelingExercisePage {
 
     save() {
         cy.intercept(MODELING_EXERCISE_BASE).as('createModelingExercise');
-        cy.get('[jhitranslate="entity.action.save"]').click();
+        cy.get('#modeling-exercise-creation-save').click();
         return cy.wait('@createModelingExercise');
     }
 
@@ -33,7 +32,7 @@ export class CreateModelingExercisePage {
      * @param date should be in Format: YYYY-MM-DDTHH:mm:ss.SSS
      * */
     setReleaseDate(date: string) {
-        cy.get(':nth-child(1) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(date, { force: true });
+        cy.get('#pick-modeling-releaseDate').find('#date-input-field').clear().type(date, { force: true });
     }
 
     /**
@@ -41,7 +40,7 @@ export class CreateModelingExercisePage {
      * @param date should be in Format: YYYY-MM-DDTHH:mm:ss.SSS
      * */
     setDueDate(date: string) {
-        cy.get('.ms-3 > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(date, { force: true });
+        cy.get('#pick-modeling-dueDate').find('#date-input-field').clear().type(date, { force: true });
     }
 
     /**
@@ -49,22 +48,26 @@ export class CreateModelingExercisePage {
      * @param date should be in Format: YYYY-MM-DDTHH:mm:ss.SSS
      * */
     setAssessmentDueDate(date: string) {
-        cy.get(':nth-child(9) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(date, { force: true });
+        cy.get('#pick-modeling-assessmentDueDate').find('#date-input-field').clear().type(date, { force: true });
     }
 
     includeInOverallScore() {
-        cy.get('jhi-included-in-overall-score-picker > .btn-group > :nth-child(3)').click({ force: true });
+        cy.get('#modeling-includeInScore-picker').children().eq(0).children().eq(2).click({ force: true });
     }
 
     pickDifficulty(options: { hard?: boolean; medium?: boolean; easy?: boolean }) {
         if (options.hard) {
-            cy.get(this.DIFFICULTY_BAR).eq(3).click();
+            this.getDiffifultyBar().children().eq(3).click();
         } else if (options.medium) {
-            cy.get(this.DIFFICULTY_BAR).eq(2).click();
+            this.getDiffifultyBar().children().eq(2).click();
         } else if (options.easy) {
-            cy.get(this.DIFFICULTY_BAR).eq(1).click();
+            this.getDiffifultyBar().children().eq(1).click();
         } else {
-            cy.get(this.DIFFICULTY_BAR).eq(0).click();
+            this.getDiffifultyBar().children().eq(0).click();
         }
+    }
+
+    private getDiffifultyBar() {
+        return cy.get('#modeling-difficulty-picker').children().eq(0);
     }
 }
