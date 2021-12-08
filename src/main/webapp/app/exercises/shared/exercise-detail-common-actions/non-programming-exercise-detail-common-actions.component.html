@@ -24,7 +24,7 @@
         </a>
 
         <!-- Scores -->
-        <a *ngIf="course && exercise.isAtLeastInstructor" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
+        <a *ngIf="course && exercise.isAtLeastTutor" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
             <fa-icon [icon]="'table'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
         </a>

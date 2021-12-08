@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ProgrammingAssessmentDashboardComponent } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-assessment-dashboard.component';
+import { ProgrammingExerciseSubmissionsComponent } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-exercise-submissions.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
@@ -20,6 +20,6 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
         ArtemisResultModule,
         ArtemisAssessmentSharedModule,
     ],
-    declarations: [ProgrammingAssessmentDashboardComponent],
+    declarations: [ProgrammingExerciseSubmissionsComponent],
 })
 export class ArtemisProgrammingAssessmentDashboardModule {}
