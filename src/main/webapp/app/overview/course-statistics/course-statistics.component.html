@@ -143,7 +143,7 @@
                         </ng-template>
                     </ngx-charts-bar-horizontal-stacked>
                 </div>
-                <div class="col-12 col-md-4 align-self-center" *ngIf="exerciseGroup">
+                <div class="col-12 col-md-4 align-self-center" *ngIf="exerciseGroup && exerciseGroup.length > 0">
                     <h4 id="absolute-score">{{ 'artemisApp.courseOverview.statistics.yourPoints' | artemisTranslate: { number: exerciseGroup[0].absoluteScore } }}</h4>
                     <h4 id="reachable-score">
                         <span>
