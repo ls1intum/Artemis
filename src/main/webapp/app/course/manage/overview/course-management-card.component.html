@@ -23,7 +23,7 @@
 
         <div *ngIf="courseWithUsers && course.isAtLeastInstructor" class="float-end card-groups">
             <div>
-                <div>
+                <div id="open-student-management-{{ course.id }}">
                     <a
                         [routerLink]="['/course-management', course.id, 'groups', 'students']"
                         *ngIf="courseWithUsers.numberOfStudents !== undefined && courseWithUsers.numberOfStudents === 1"

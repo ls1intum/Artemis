@@ -29,7 +29,7 @@ export class CourseManagementPage {
      * @param courseId the id of the course
      */
     openStudentOverviewOfCourse(courseId: number) {
-        cy.get(`[href="/course-management/${courseId}/groups/students"]`).click();
+        cy.get('#open-student-management-' + courseId).click();
     }
 
     /**
