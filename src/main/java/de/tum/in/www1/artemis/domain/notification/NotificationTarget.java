@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * especially regarding the creation of valid URLs/Links on the server side for emails
  * NotificationTargets are intended to have different attributes, i.e. many will be null
  */
-@JsonInclude(NON_NULL)
+@JsonInclude(NON_NULL) // needed for ObjectMapper to ignore null values
 public class NotificationTarget {
 
     private final Logger log = LoggerFactory.getLogger(NotificationTarget.class);
@@ -25,17 +25,17 @@ public class NotificationTarget {
 
     private String entity; // infix of the URL e.g. programming-exercises
 
-    private Long courseId; // will be "course" in toString()
+    private Long courseId; // will be "course" in toJsonString()
 
     private String mainPage; // infix of the URL e.g. course-management
 
     private String problemStatement;
 
-    private Long exerciseId; // will be "exercise" in toString()
+    private Long exerciseId; // will be "exercise" in toJsonString()
 
-    private Long examId; // will be "exam" in toString()
+    private Long examId; // will be "exam" in toJsonString()
 
-    private Long lectureId; // will stay "lectureId" in toString()
+    private Long lectureId; // will stay "lectureId" in toJsonString()
 
     public NotificationTarget() {
     };

@@ -47,9 +47,9 @@ public abstract class Notification extends DomainObject {
     private String target;
 
     /**
-     * The String target is created based on custom JAVA class
+     * The String target is created based on a custom JAVA class
      * which hold the needed information to build a valid URL/Link
-     * it is used to create Emails without the need to parse it (e.g. via GSON)
+     * it is used to create Emails without the need to parse the target (e.g. via GSON)
      */
     @Transient
     private transient NotificationTarget targetTransient;
