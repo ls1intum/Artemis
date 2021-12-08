@@ -29,6 +29,7 @@ import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module
 import { PostingContentComponent } from './posting-content/posting-content.components';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
+import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 
 @NgModule({
     imports: [
@@ -65,6 +66,7 @@ import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-ma
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
         HtmlForPostingMarkdownPipe,
+        ReactingUsersOnPostingPipe,
     ],
     exports: [
         PostingThreadComponent,
