@@ -123,6 +123,7 @@ public class MigrationRegistry {
      * It is set public to allow an external integrity check without starting the actual application and therefore migration.
      * All occurring errors will be logged but duplicate errors are not logged.
      *
+     * @param entryMap A changelog in form of an entryMap that should be checked
      * @return True if the check was successful, otherwise false
      */
     public boolean checkIntegrity(TreeMap<Integer, MigrationEntry> entryMap) {
