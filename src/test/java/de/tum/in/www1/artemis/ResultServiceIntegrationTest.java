@@ -524,8 +524,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void testGetResultsForExamExercise_asTutor() throws Exception {
+    @WithMockUser(value = "student1", roles = "STUDENT")
+    public void testGetResultsForExamExercise_asStudent() throws Exception {
         setupExamModelingExerciseWithResults();
         request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.FORBIDDEN, Result.class);
     }

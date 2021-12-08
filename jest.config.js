@@ -1,4 +1,9 @@
-const esModules = ['ngx-treeview', 'lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collapse-white-space', '@ctrl/ngx-emoji-mart'].join('|');
+require('jest-preset-angular/ngcc-jest-processor');
+
+const esModules = ['ngx-treeview', 'lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collapse-white-space', '@angular/animations', '@angular/common',
+    '@angular/compiler', '@angular/core', '@angular/forms', '@angular/localize', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router',
+    '@ngx-translate/core', '@ngx-translate/http-loader', 'ngx-cookie-service', '@fortawesome/angular-fontawesome', '@angular/cdk',
+    'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-clipboard', 'ngx-device-detector', 'ngx-window-token'].join('|');
 
 const {
     compilerOptions: { paths = {}, baseUrl = './' },
@@ -35,7 +40,12 @@ module.exports = {
         },
     },
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-sinon', 'jest-extended/all'],
+    moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
+    resolver: 'jest-preset-angular/build/resolvers/ng-jest-resolver.js',
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
+    transform: {
+        '^.+\\.(ts|js|mjs|html|svg)$': 'jest-preset-angular',
+    },
     modulePathIgnorePatterns: [],
     testTimeout: 2000,
     testMatch: [
@@ -54,5 +64,6 @@ module.exports = {
         '@env': '<rootDir>/src/main/webapp/environments/environment',
         '@src/(.*)': '<rootDir>/src/src/$1',
         '@state/(.*)': '<rootDir>/src/app/state/$1',
+        "^lodash-es$": "lodash"
     },
 };

@@ -5,6 +5,7 @@
     <jhi-button
         submitbutton
         class="guided-tour submission-button"
+        id="submit-modeling-submission"
         [disabled]="(!isActive && !isLate) || !submission || !!result || (isLate && !!submission.submitted)"
         [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
         (onClick)="submit()"
@@ -78,7 +79,7 @@
                     </p>
                     <ng-container *ngIf="assessmentResult && assessmentResult!.feedbacks && assessmentResult!.feedbacks!.length > 0">
                         <p jhiTranslate="artemisApp.modelingSubmission.assessment.instructions">Select elements in the editor to filter the assessment.</p>
-                        <table class="table">
+                        <table class="table" id="component-feedback-table">
                             <thead class="thead-light">
                                 <tr>
                                     <th jhiTranslate="artemisApp.modelingSubmission.assessment.element">Element</th>

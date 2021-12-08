@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.domain.notification;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
-import static de.tum.in.www1.artemis.service.notifications.NotificationTargetService.COURSE_ARCHIVE_UPDATED_TEXT;
 
 import java.util.List;
 
@@ -12,11 +11,11 @@ import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.service.notifications.NotificationTargetService;
+import de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider;
 
 public class GroupNotificationFactory {
 
-    private static NotificationTargetService targetService = new NotificationTargetService();
+    private static final NotificationTargetProvider targetProvider = new NotificationTargetProvider();
 
     /**
      * Creates an instance of GroupNotification based on the passed parameters.
@@ -55,7 +54,7 @@ public class GroupNotificationFactory {
         Course course = lecture.getCourse();
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
 
-        notification.setTarget(targetService.getAttachmentUpdatedTarget(lecture));
+        notification.setTarget(targetProvider.getAttachmentUpdatedTarget(lecture));
 
         return notification;
     }
@@ -125,22 +124,22 @@ public class GroupNotificationFactory {
         // Exercises for exams
         if (exercise.isExamExercise()) {
             if (LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(title)) {
-                notification.setTarget(targetService.getExamExerciseTargetWithExerciseUpdate(exercise));
+                notification.setTarget(targetProvider.getExamExerciseTargetWithExerciseUpdate(exercise));
                 notification.setPriority(HIGH);
             }
             else if (exercise instanceof ProgrammingExercise) {
-                notification.setTarget(targetService.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
+                notification.setTarget(targetProvider.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
             }
         }
         // Exercises for courses (not for exams)
         else if (notificationType == EXERCISE_RELEASED) {
-            notification.setTarget(targetService.getExerciseReleasedTarget(exercise));
+            notification.setTarget(targetProvider.getExerciseReleasedTarget(exercise));
         }
         else if (notificationType == DUPLICATE_TEST_CASE) {
-            notification.setTarget(targetService.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "duplicateTestCase"));
+            notification.setTarget(targetProvider.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "duplicateTestCase"));
         }
         else {
-            notification.setTarget(targetService.getExerciseUpdatedTarget(exercise));
+            notification.setTarget(targetProvider.getExerciseUpdatedTarget(exercise));
         }
 
         return notification;
@@ -166,46 +165,46 @@ public class GroupNotificationFactory {
                 title = NEW_EXERCISE_POST_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new post.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
-                notification.setTarget(targetService.getExercisePostTarget(post, course));
+                notification.setTarget(targetProvider.getExercisePostTarget(post, course));
             }
             case NEW_LECTURE_POST -> {
                 Lecture lecture = post.getLecture();
                 title = NEW_LECTURE_POST_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
-                notification.setTarget(targetService.getLecturePostTarget(post, course));
+                notification.setTarget(targetProvider.getLecturePostTarget(post, course));
             }
             case NEW_COURSE_POST -> {
                 title = NEW_COURSE_POST_TITLE;
                 text = "Course \"" + course.getTitle() + "\" got a new course-wide post.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
-                notification.setTarget(targetService.getCoursePostTarget(post, course));
+                notification.setTarget(targetProvider.getCoursePostTarget(post, course));
             }
             case NEW_ANNOUNCEMENT_POST -> {
                 title = NEW_ANNOUNCEMENT_POST_TITLE;
                 text = "Course \"" + course.getTitle() + "\" got a new announcement.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
-                notification.setTarget(targetService.getCoursePostTarget(post, course));
+                notification.setTarget(targetProvider.getCoursePostTarget(post, course));
             }
             case NEW_REPLY_FOR_EXERCISE_POST -> {
                 Exercise exercise = post.getExercise();
                 title = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new reply.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
-                notification.setTarget(targetService.getExercisePostTarget(post, course));
+                notification.setTarget(targetProvider.getExercisePostTarget(post, course));
             }
             case NEW_REPLY_FOR_LECTURE_POST -> {
                 Lecture lecture = post.getLecture();
                 title = NEW_REPLY_FOR_LECTURE_POST_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new reply.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
-                notification.setTarget(targetService.getLecturePostTarget(post, course));
+                notification.setTarget(targetProvider.getLecturePostTarget(post, course));
             }
             case NEW_REPLY_FOR_COURSE_POST -> {
                 title = NEW_REPLY_FOR_COURSE_POST_TITLE;
                 text = "Course-wide post in course \"" + course.getTitle() + "\" got a new reply.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
-                notification.setTarget(targetService.getCoursePostTarget(post, course));
+                notification.setTarget(targetProvider.getCoursePostTarget(post, course));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
@@ -247,7 +246,7 @@ public class GroupNotificationFactory {
         }
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
-        notification.setTarget(targetService.getCourseTarget(course, COURSE_ARCHIVE_UPDATED_TEXT));
+        notification.setTarget(targetProvider.getCourseTarget(course, "courseArchiveUpdated"));
         return notification;
     }
 
@@ -286,7 +285,7 @@ public class GroupNotificationFactory {
         }
 
         GroupNotification notification = new GroupNotification(exam.getCourse(), title, text, author, groupNotificationType);
-        notification.setTarget(targetService.getCourseTarget(exam.getCourse(), "examArchiveUpdated"));
+        notification.setTarget(targetProvider.getCourseTarget(exam.getCourse(), "examArchiveUpdated"));
         return notification;
     }
 }

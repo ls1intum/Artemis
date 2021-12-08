@@ -26,7 +26,7 @@ describe('OrionConnectorService', () => {
             imports: [ArtemisTestModule],
             providers: [
                 OrionConnectorService,
-                MockProvider(Injector),
+                Injector,
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: Router, useValue: router },

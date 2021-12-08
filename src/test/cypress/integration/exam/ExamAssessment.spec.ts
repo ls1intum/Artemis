@@ -73,9 +73,6 @@ describe('Exam assessment', () => {
                     modelingEditor.addComponentToModel(1);
                     modelingEditor.addComponentToModel(2);
                     modelingEditor.addComponentToModel(3);
-                    modelingEditor.save().then((modelResponse) => {
-                        expect(modelResponse.response?.statusCode).to.equal(200);
-                    });
                     examNavigation.handInEarly();
                     examStartEnd.finishExam();
                 });
