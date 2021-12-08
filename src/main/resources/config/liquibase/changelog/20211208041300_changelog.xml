@@ -1,6 +1,6 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
     <property name="autoIncrement" value="true"/>
-<changeSet id="20211128134300" author="julian-christl">
+<changeSet id="20211208041300" author="julian-christl">
     <!-- create new entity programming exercise test case -->
     <createTable tableName="migration_changelog">
         <column name="id" type="bigint" autoIncrement="${autoIncrement}">

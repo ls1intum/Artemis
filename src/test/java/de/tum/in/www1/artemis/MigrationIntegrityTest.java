@@ -27,66 +27,48 @@ public class MigrationIntegrityTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     public void testValidMap() {
-        TreeMap<Integer, MigrationEntry> map = new TreeMap<>() {
+        TreeMap<Integer, MigrationEntry> map = new TreeMap<>();
+        map.put(0, createEntryMock("20211214-231800", "Valid Author"));
+        map.put(1, createEntryMock("20211215-231800", "Valid Author"));
+        map.put(2, createEntryMock("20211216-231800", "Valid Author"));
 
-            {
-                put(0, createEntryMock("20211214-231800", "Valid Author"));
-                put(1, createEntryMock("20211215-231800", "Valid Author"));
-                put(2, createEntryMock("20211216-231800", "Valid Author"));
-            }
-        };
         assertThat(registry.checkIntegrity(map)).isTrue();
         assertThat(registry.checkIntegrity(new TreeMap<>())).isTrue();
     }
 
     @Test
     public void testBrokenEntriesFail() {
-        assertThat(registry.checkIntegrity(new TreeMap<>() {
+        TreeMap<Integer, MigrationEntry> map = new TreeMap<>();
+        map.put(0, createEntryMock("20211216-231800", null));
+        assertThat(registry.checkIntegrity(map)).isFalse();
 
-            {
-                put(0, createEntryMock("20211216-231800", null));
-            }
-        })).isFalse();
-        assertThat(registry.checkIntegrity(new TreeMap<>() {
+        map.clear();
+        map.put(0, createEntryMock("20211216-231800", ""));
+        assertThat(registry.checkIntegrity(map)).isFalse();
 
-            {
-                put(0, createEntryMock("20211216-231800", ""));
-            }
-        })).isFalse();
-        assertThat(registry.checkIntegrity(new TreeMap<>() {
+        map.clear();
+        map.put(0, createEntryMock(null, "Valid Author"));
+        assertThat(registry.checkIntegrity(map)).isFalse();
 
-            {
-                put(0, createEntryMock(null, "Valid Author"));
-            }
-        })).isFalse();
-        assertThat(registry.checkIntegrity(new TreeMap<>() {
-
-            {
-                put(0, createEntryMock("", "Valid Author"));
-            }
-        })).isFalse();
+        map.clear();
+        map.put(0, createEntryMock("", "Valid Author"));
+        assertThat(registry.checkIntegrity(map)).isFalse();
     }
 
     @Test
     public void testDuplicateDateStringsFail() {
-        assertThat(registry.checkIntegrity(new TreeMap<>() {
-
-            {
-                put(0, createEntryMock("20211216-231800", "Valid Author"));
-                put(1, createEntryMock("20211216-231800", "Valid Author"));
-            }
-        })).isFalse();
+        TreeMap<Integer, MigrationEntry> map = new TreeMap<>();
+        map.put(0, createEntryMock("20211216-231800", "Valid Author"));
+        map.put(1, createEntryMock("20211216-231800", "Valid Author"));
+        assertThat(registry.checkIntegrity(map)).isFalse();
     }
 
     @Test
     public void testWrongOrderDateStringsFail() {
-        assertThat(registry.checkIntegrity(new TreeMap<>() {
-
-            {
-                put(0, createEntryMock("20211217-231800", "Valid Author"));
-                put(1, createEntryMock("20211216-231800", "Valid Author"));
-            }
-        })).isFalse();
+        TreeMap<Integer, MigrationEntry> map = new TreeMap<>();
+        map.put(0, createEntryMock("20211217-231800", "Valid Author"));
+        map.put(1, createEntryMock("20211216-231800", "Valid Author"));
+        assertThat(registry.checkIntegrity(map)).isFalse();
     }
 
     private MigrationEntry createEntryMock(String date, String author) {

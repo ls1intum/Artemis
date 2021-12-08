@@ -38,6 +38,7 @@ public class MigrationRegistry {
     @Value("${artemis.version}")
     private String artemisVersion;
 
+    // Using TreeMap to allow sorting. I'm using a map because with a list entries could accidentally be switched
     private final TreeMap<Integer, Class<? extends MigrationEntry>> migrationEntryMap = new TreeMap<>();
 
     private TreeMap<Integer, MigrationEntry> instantiatedMigrationEntryMap;
@@ -46,7 +47,7 @@ public class MigrationRegistry {
 
     private final MigrationChangeRepository migrationChangeRepository;
 
-    private final MessageDigest md = MessageDigest.getInstance("MD5");
+    private final MessageDigest messageDigest = MessageDigest.getInstance("MD5");
 
     public MigrationRegistry(AutowireCapableBeanFactory beanFactory, MigrationChangeRepository migrationChangeRepository) throws NoSuchAlgorithmException {
         // Here we define the order of the ChangeEntries
@@ -58,6 +59,8 @@ public class MigrationRegistry {
     /**
      * Hooks into the {@link ApplicationReadyEvent} and executes after a registry integration check each open migration entry.
      * After each execution it marks the entry as executed. All entries of one startup run get the same hash assigned.
+     *
+     * @param event Specifies when this method gets called and provides the event with all application data
      */
     @EventListener
     public void execute(ApplicationReadyEvent event) throws IOException, NoSuchAlgorithmException {
@@ -85,7 +88,7 @@ public class MigrationRegistry {
         Map<Integer, MigrationEntry> migrationEntryMap = this.instantiatedMigrationEntryMap.entrySet().stream().filter(e -> !executedChanges.contains(e.getValue().date()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        if (migrationEntryMap.size() > 0) {
+        if (!migrationEntryMap.isEmpty()) {
             log.info("Executing migration entries");
             for (Map.Entry<Integer, MigrationEntry> integerClassEntry : migrationEntryMap.entrySet()) {
                 MigrationEntry entry = integerClassEntry.getValue();
@@ -119,6 +122,8 @@ public class MigrationRegistry {
      * Checks the registry for integrity. It must have distinct keys, distinct date strings and the date strings must be in order.
      * It is set public to allow an external integrity check without starting the actual application and therefore migration.
      * All occurring errors will be logged but duplicate errors are not logged.
+     *
+     * @return True if the check was successful, otherwise false
      */
     public boolean checkIntegrity(TreeMap<Integer, MigrationEntry> entryMap) {
         log.info("Starting migration integrity check");
@@ -133,7 +138,7 @@ public class MigrationRegistry {
             log.info("Please refer to the documentation on how to set up migration entries.");
         }
         List<MigrationEntry> entryList = entryMap.values().stream().toList();
-        if (entryList.size() > 0) {
+        if (!entryList.isEmpty()) {
             int startIndex = 1;
             MigrationEntry baseEntry = entryList.get(0);
             // Make sure the base date is not null. If it is, it was already caught and logged above.
@@ -159,6 +164,6 @@ public class MigrationRegistry {
     }
 
     private String toMD5(String string) {
-        return Hex.encodeHexString(md.digest(string.getBytes(StandardCharsets.UTF_8)));
+        return Hex.encodeHexString(messageDigest.digest(string.getBytes(StandardCharsets.UTF_8)));
     }
 }
