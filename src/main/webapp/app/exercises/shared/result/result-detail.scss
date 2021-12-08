@@ -76,11 +76,11 @@
     cursor: pointer;
 }
 
+.chart-space {
+    height: 100px;
+}
+
 ::ng-deep .legend-labels {
     background-color: transparent !important;
     text-align: center !important;
-}
-
-.chart-space {
-    height: 100px;
 }
