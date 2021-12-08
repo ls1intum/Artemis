@@ -22,7 +22,7 @@ let courseShortName: string;
 const fieldTitle = '#field_title';
 const shortName = '#field_shortName';
 const saveEntity = '#save-entity';
-const modalDeleteButton = '.modal-footer > .btn-danger';
+const modalDeleteButton = '#delete';
 
 describe('Course management', () => {
     beforeEach(() => {
@@ -78,7 +78,7 @@ describe('Course management', () => {
             cy.get(shortName).type(courseShortName);
             cy.get('#field_testCourse').check();
             cy.get('#field_customizeGroupNamesEnabled').uncheck();
-            cy.intercept('POST', '/api/courses').as('createCourseQuery');
+            cy.intercept(POST, BASE_API + 'courses').as('createCourseQuery');
             cy.get(saveEntity).click();
             cy.wait('@createCourseQuery')
                 .its('response.body')
@@ -104,7 +104,7 @@ describe('Course management', () => {
         it('Deletes an existing course', function () {
             navigationBar.openCourseManagement();
             courseManagementPage.openCourse(courseShortName);
-            cy.get('.btn-danger').click();
+            cy.get('#delete-course').click();
             cy.get(modalDeleteButton).should('be.disabled');
             cy.get('[name="confirmExerciseName"]').type(courseName);
             cy.get(modalDeleteButton).should('not.be.disabled').click();
