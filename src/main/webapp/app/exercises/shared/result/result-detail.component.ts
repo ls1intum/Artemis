@@ -489,7 +489,7 @@ export class ResultDetailComponent implements OnInit {
             appliedNegative = appliedPositive;
         }
         const score = this.roundToDecimals(((appliedPositive - appliedNegative) / maxScore) * 100, 2);
-        this.xScaleMax = this.xScaleMax > score ? this.xScaleMax : score;
+        this.xScaleMax = Math.max(this.xScaleMax, score);
         this.ngxData[0].series[0].value = score;
         this.ngxData[0].series[0].name +=
             ': ' + this.roundToDecimals(appliedPositive, 1) + (appliedPositive !== receivedPositive ? ` of ${this.roundToDecimals(receivedPositive, 1)}` : '');

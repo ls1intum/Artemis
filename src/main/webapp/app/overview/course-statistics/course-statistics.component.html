@@ -95,7 +95,7 @@
                     >
                         <!-- This template is managing the tooltip content depending of the bar that is selected by the user and the properties of the corresponding exercise-->
                         <ng-template #tooltipTemplate let-model="model">
-                            <div *ngIf="['Achieved (included)', 'Achieved bonus', 'Achieved (not included)', 'No due date'].includes(model.name)">
+                            <div *ngIf="[barChartTitle.INCLUDED, barChartTitle.BONUS, barChartTitle.NOT_INCLUDED, barChartTitle.NO_DUE_DATE].includes(model.name)">
                                 <span *ngIf="!model.isProgrammingExercise">
                                     {{
                                         'artemisApp.courseOverview.statistics.exerciseAchievedScore'
@@ -108,15 +108,15 @@
                                             | artemisTranslate: { tests: model.absoluteValue, percentage: roundScoreSpecifiedByCourseSettings(model.value, course) }
                                     }}
                                 </span>
-                                <span *ngIf="model.name === 'Achieved bonus'">
+                                <span *ngIf="model.name === barChartTitle.BONUS">
                                     <span>| {{ 'artemisApp.courseOverview.statistics.bonusPointTooltip' | artemisTranslate }}</span>
                                 </span>
-                                <span *ngIf="model.name === 'Achieved (not included)'">
+                                <span *ngIf="model.name === barChartTitle.NOT_INCLUDED">
                                     <span>| {{ 'artemisApp.courseOverview.statistics.notIncludedTooltip' | artemisTranslate }}</span>
                                 </span>
                             </div>
                             <div [ngSwitch]="model.name">
-                                <div *ngSwitchCase="'Missed points'">
+                                <div *ngSwitchCase="barChartTitle.MISSED">
                                     <span *ngIf="!model.afterDueDate && !model.notParticipated && !model.isProgrammingExercise">
                                         {{
                                             'artemisApp.courseOverview.statistics.exerciseMissedScore'
@@ -136,7 +136,7 @@
                                         }}
                                     </span>
                                 </div>
-                                <div *ngSwitchCase="'Not graded'">
+                                <div *ngSwitchCase="barChartTitle.NOT_GRADED">
                                     <span> {{ 'artemisApp.courseOverview.statistics.exerciseNotGraded' | artemisTranslate: { exercise: model.exerciseTitle } }}</span>
                                 </div>
                             </div>

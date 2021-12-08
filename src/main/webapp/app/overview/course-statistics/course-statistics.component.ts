@@ -7,15 +7,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import dayjs from 'dayjs';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import {
-    ABSOLUTE_SCORE,
-    CourseScoreCalculationService,
-    CURRENT_RELATIVE_SCORE,
-    MAX_POINTS,
-    PRESENTATION_SCORE,
-    REACHABLE_POINTS,
-    RELATIVE_SCORE,
-} from 'app/overview/course-score-calculation.service';
+import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { GradeType } from 'app/entities/grading-scale.model';
@@ -29,14 +21,18 @@ const MODELING_EXERCISE_COLOR = '#6610f2';
 const TEXT_EXERCISE_COLOR = '#B00B6B';
 const FILE_UPLOAD_EXERCISE_COLOR = '#2D9C88';
 
-export interface CourseStatisticsDataSet {
-    data: Array<number>;
-    backgroundColor: Array<any>;
-}
-
 type ExerciseTypeMap = {
     [type in ExerciseType]: number;
 };
+
+enum ChartBarTitle {
+    NO_DUE_DATE = 'No due date',
+    INCLUDED = 'Achieved (included)',
+    NOT_INCLUDED = 'Achieved (not included)',
+    BONUS = 'Achieved bonus',
+    NOT_GRADED = 'Not graded',
+    MISSED = 'Missed points',
+}
 
 @Component({
     selector: 'jhi-course-statistics',
@@ -146,6 +142,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     } as Color;
 
     readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly barChartTitle = ChartBarTitle;
 
     // array containing every non-empty exercise group
     ngxExerciseGroups: any[] = [];
@@ -280,11 +277,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                             const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
                             if (participationResult && participationResult.rated) {
                                 const roundedParticipationScore = roundScoreSpecifiedByCourseSettings(participationResult.score!, this.course);
-                                const cappedParticipationScore = roundedParticipationScore >= 100 ? 100 : roundedParticipationScore;
+                                const cappedParticipationScore = Math.min(roundedParticipationScore, 100);
                                 const missedScore = 100 - cappedParticipationScore;
                                 const replaced = participationResult.resultString!.replace(',', '.');
                                 const split = replaced.split(' ');
-                                const missedPoints = parseFloat(split[2]) - parseFloat(split[0]) > 0 ? parseFloat(split[2]) - parseFloat(split[0]) : 0;
+                                const missedPoints = Math.min(parseFloat(split[2]) - parseFloat(split[0]), 0);
                                 series[5].value = missedScore;
                                 series[5].absoluteValue = missedPoints;
                                 series[5].afterDueDate = false;
@@ -337,12 +334,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      */
     private static generateDefaultSeries(): any[] {
         return [
-            { name: 'No due date', value: 0, absoluteValue: 0 },
-            { name: 'Achieved (included)', value: 0, absoluteValue: 0 },
-            { name: 'Achieved (not included)', value: 0, absoluteValue: 0 },
-            { name: 'Achieved bonus', value: 0, absoluteValue: 0 },
-            { name: 'Not graded', value: 0, exerciseTitle: '' },
-            { name: 'Missed points', value: 0, absoluteValue: 0, afterDueDate: false, notParticipated: false, exerciseTitle: '' },
+            { name: ChartBarTitle.NO_DUE_DATE, value: 0, absoluteValue: 0 },
+            { name: ChartBarTitle.INCLUDED, value: 0, absoluteValue: 0 },
+            { name: ChartBarTitle.NOT_INCLUDED, value: 0, absoluteValue: 0 },
+            { name: ChartBarTitle.BONUS, value: 0, absoluteValue: 0 },
+            { name: ChartBarTitle.NOT_GRADED, value: 0, exerciseTitle: '' },
+            { name: ChartBarTitle.MISSED, value: 0, absoluteValue: 0, afterDueDate: false, notParticipated: false, exerciseTitle: '' },
         ];
     }
 
@@ -351,12 +348,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * @private
      */
     private calculateAbsoluteScores(): void {
-        const quizzesTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ABSOLUTE_SCORE);
-        const programmingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, ABSOLUTE_SCORE);
-        const modelingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, ABSOLUTE_SCORE);
-        const textExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, ABSOLUTE_SCORE);
-        const fileUploadExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, ABSOLUTE_SCORE);
-        this.overallPoints = this.calculateTotalScoreForTheCourse(ABSOLUTE_SCORE);
+        const quizzesTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ScoreType.ABSOLUTE_SCORE);
+        const programmingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, ScoreType.ABSOLUTE_SCORE);
+        const modelingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, ScoreType.ABSOLUTE_SCORE);
+        const textExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, ScoreType.ABSOLUTE_SCORE);
+        const fileUploadExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, ScoreType.ABSOLUTE_SCORE);
+        this.overallPoints = this.calculateTotalScoreForTheCourse(ScoreType.ABSOLUTE_SCORE);
         let totalMissedPoints = this.reachablePoints - this.overallPoints;
         if (totalMissedPoints < 0) {
             totalMissedPoints = 0;
@@ -382,11 +379,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * @private
      */
     private calculateMaxPoints(): void {
-        const quizzesTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, MAX_POINTS);
-        const programmingExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, MAX_POINTS);
-        const modelingExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, MAX_POINTS);
-        const textExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, MAX_POINTS);
-        const fileUploadExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, MAX_POINTS);
+        const quizzesTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ScoreType.MAX_POINTS);
+        const programmingExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, ScoreType.MAX_POINTS);
+        const modelingExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, ScoreType.MAX_POINTS);
+        const textExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, ScoreType.MAX_POINTS);
+        const fileUploadExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, ScoreType.MAX_POINTS);
         const overallMaxPoints = {} as ExerciseTypeMap;
         overallMaxPoints[ExerciseType.QUIZ] = quizzesTotalMaxPoints;
         overallMaxPoints[ExerciseType.PROGRAMMING] = programmingExerciseTotalMaxPoints;
@@ -394,7 +391,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         overallMaxPoints[ExerciseType.TEXT] = textExerciseTotalMaxPoints;
         overallMaxPoints[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalMaxPoints;
         this.overallMaxPointsPerExercise = overallMaxPoints;
-        this.overallMaxPoints = this.calculateTotalScoreForTheCourse(MAX_POINTS);
+        this.overallMaxPoints = this.calculateTotalScoreForTheCourse(ScoreType.MAX_POINTS);
     }
 
     /**
@@ -402,11 +399,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * @private
      */
     private calculateRelativeScores(): void {
-        const quizzesRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, RELATIVE_SCORE);
-        const programmingExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, RELATIVE_SCORE);
-        const modelingExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, RELATIVE_SCORE);
-        const textExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, RELATIVE_SCORE);
-        const fileUploadExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, RELATIVE_SCORE);
+        const quizzesRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ScoreType.RELATIVE_SCORE);
+        const programmingExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, ScoreType.RELATIVE_SCORE);
+        const modelingExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, ScoreType.RELATIVE_SCORE);
+        const textExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, ScoreType.RELATIVE_SCORE);
+        const fileUploadExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, ScoreType.RELATIVE_SCORE);
         const relativeScores = {} as ExerciseTypeMap;
         relativeScores[ExerciseType.QUIZ] = quizzesRelativeScore;
         relativeScores[ExerciseType.PROGRAMMING] = programmingExerciseRelativeScore;
@@ -414,7 +411,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         relativeScores[ExerciseType.TEXT] = textExerciseRelativeScore;
         relativeScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseRelativeScore;
         this.relativeScoresPerExercise = relativeScores;
-        this.totalRelativeScore = this.calculateTotalScoreForTheCourse(RELATIVE_SCORE);
+        this.totalRelativeScore = this.calculateTotalScoreForTheCourse(ScoreType.RELATIVE_SCORE);
     }
 
     /**
@@ -422,11 +419,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * @private
      */
     private calculateReachablePoints(): void {
-        const quizzesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, REACHABLE_POINTS);
-        const programmingExercisesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, REACHABLE_POINTS);
-        const modelingExercisesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, REACHABLE_POINTS);
-        const textExercisesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, REACHABLE_POINTS);
-        const fileUploadExercisesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, REACHABLE_POINTS);
+        const quizzesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ScoreType.REACHABLE_POINTS);
+        const programmingExercisesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, ScoreType.REACHABLE_POINTS);
+        const modelingExercisesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, ScoreType.REACHABLE_POINTS);
+        const textExercisesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, ScoreType.REACHABLE_POINTS);
+        const fileUploadExercisesReachablePoints = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, ScoreType.REACHABLE_POINTS);
         const reachablePoints = {} as ExerciseTypeMap;
         reachablePoints[ExerciseType.QUIZ] = quizzesReachablePoints;
         reachablePoints[ExerciseType.PROGRAMMING] = programmingExercisesReachablePoints;
@@ -434,7 +431,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         reachablePoints[ExerciseType.TEXT] = textExercisesReachablePoints;
         reachablePoints[ExerciseType.FILE_UPLOAD] = fileUploadExercisesReachablePoints;
         this.reachablePointsPerExercise = reachablePoints;
-        this.reachablePoints = this.calculateTotalScoreForTheCourse(REACHABLE_POINTS);
+        this.reachablePoints = this.calculateTotalScoreForTheCourse(ScoreType.REACHABLE_POINTS);
     }
 
     /**
@@ -442,11 +439,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * @private
      */
     private calculateCurrentRelativeScores(): void {
-        const quizzesCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, CURRENT_RELATIVE_SCORE);
-        const programmingExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, CURRENT_RELATIVE_SCORE);
-        const modelingExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, CURRENT_RELATIVE_SCORE);
-        const textExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, CURRENT_RELATIVE_SCORE);
-        const fileUploadExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, CURRENT_RELATIVE_SCORE);
+        const quizzesCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ScoreType.CURRENT_RELATIVE_SCORE);
+        const programmingExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, ScoreType.CURRENT_RELATIVE_SCORE);
+        const modelingExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, ScoreType.CURRENT_RELATIVE_SCORE);
+        const textExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, ScoreType.CURRENT_RELATIVE_SCORE);
+        const fileUploadExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, ScoreType.CURRENT_RELATIVE_SCORE);
         const currentRelativeScores = {} as ExerciseTypeMap;
         currentRelativeScores[ExerciseType.QUIZ] = quizzesCurrentRelativeScore;
         currentRelativeScores[ExerciseType.PROGRAMMING] = programmingExerciseCurrentRelativeScore;
@@ -454,7 +451,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         currentRelativeScores[ExerciseType.TEXT] = textExerciseCurrentRelativeScore;
         currentRelativeScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseCurrentRelativeScore;
         this.currentRelativeScoresPerExercise = currentRelativeScores;
-        this.currentRelativeScore = this.calculateTotalScoreForTheCourse(CURRENT_RELATIVE_SCORE);
+        this.currentRelativeScore = this.calculateTotalScoreForTheCourse(ScoreType.CURRENT_RELATIVE_SCORE);
     }
 
     /**
@@ -462,10 +459,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * @private
      */
     private calculatePresentationScores(): void {
-        const programmingExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, PRESENTATION_SCORE);
-        const modelingExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, PRESENTATION_SCORE);
-        const textExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, PRESENTATION_SCORE);
-        const fileUploadExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, PRESENTATION_SCORE);
+        const programmingExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, ScoreType.PRESENTATION_SCORE);
+        const modelingExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, ScoreType.PRESENTATION_SCORE);
+        const textExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, ScoreType.PRESENTATION_SCORE);
+        const fileUploadExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, ScoreType.PRESENTATION_SCORE);
         // TODO: use a proper type here, e.g. a map
         const presentationScores = {} as ExerciseTypeMap;
         presentationScores[ExerciseType.QUIZ] = 0;
@@ -474,7 +471,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         presentationScores[ExerciseType.TEXT] = textExercisePresentationScore;
         presentationScores[ExerciseType.FILE_UPLOAD] = fileUploadExercisePresentationScore;
         this.presentationScoresPerExercise = presentationScores;
-        this.overallPresentationScore = this.calculateTotalScoreForTheCourse(PRESENTATION_SCORE);
+        this.overallPresentationScore = this.calculateTotalScoreForTheCourse(ScoreType.PRESENTATION_SCORE);
     }
 
     /**
@@ -498,7 +495,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * @returns requested score value
      * @private
      */
-    private calculateScoreTypeForExerciseType(exerciseType: ExerciseType, scoreType: string): number {
+    private calculateScoreTypeForExerciseType(exerciseType: ExerciseType, scoreType: ScoreType): number {
         if (exerciseType != undefined && scoreType != undefined) {
             const filterFunction = (courseExercise: Exercise) => courseExercise.type === exerciseType;
             const scores = this.calculateScores(filterFunction);
@@ -514,7 +511,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
      * @returns requested score type value
      * @private
      */
-    private calculateTotalScoreForTheCourse(scoreType: string): number {
+    private calculateTotalScoreForTheCourse(scoreType: ScoreType): number {
         const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises, this.course!);
         return scores.get(scoreType)!;
     }
