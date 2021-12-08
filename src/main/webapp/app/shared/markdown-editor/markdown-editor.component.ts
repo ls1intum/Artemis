@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { AceEditorComponent } from 'ng2-ace-editor';
+// Note: this import has to be before the 'brace' imports
+import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import 'brace/mode/latex';

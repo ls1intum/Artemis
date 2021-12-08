@@ -5,7 +5,7 @@
             <a ngbNavLink class="btn-sm text-dark" *ngIf="showEditButton">{{ 'entity.action.edit' | artemisTranslate }}</a>
             <ng-template ngbNavContent>
                 <div class="height-100 border-0 markdown-editor d-flex flex-column">
-                    <ace-editor
+                    <jhi-ace-editor
                         #aceEditor
                         [mode]="aceEditorOptions.mode"
                         [autoUpdateContent]="aceEditorOptions.autoUpdateContent"
@@ -16,7 +16,7 @@
                         (dragover)="enableFileUpload ? $event.preventDefault() : ''"
                         (drop)="enableFileUpload ? onFileDrop($event) : ''"
                         (paste)="enableFileUpload ? onFilePaste($event) : ''"
-                    ></ace-editor>
+                    ></jhi-ace-editor>
                     <!-- manual input for file upload -->
                     <ng-container *ngIf="enableFileUpload">
                         <input id="file-upload" class="markdown-editor__file-input" type="file" accept="image/*" [multiple]="true" (change)="onFileUpload($event)" />

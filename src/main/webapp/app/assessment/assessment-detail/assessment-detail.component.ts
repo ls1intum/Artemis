@@ -13,7 +13,6 @@ export class AssessmentDetailComponent {
     @Input() public assessment: Feedback;
     @Output() public assessmentChange = new EventEmitter<Feedback>();
     @Output() public deleteAssessment = new EventEmitter<Feedback>();
-    @Input() public disabled = false;
     @Input() public readOnly: boolean;
     @Input() highlightDifferences: boolean;
 

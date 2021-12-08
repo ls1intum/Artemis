@@ -13,7 +13,7 @@ import {
     ViewEncapsulation,
 } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { AceEditorComponent } from 'ng2-ace-editor';
+import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';

@@ -26,7 +26,7 @@
             >
             </jhi-code-editor-tutor-assessment-inline-feedback>
         </div>
-        <ace-editor
+        <jhi-ace-editor
             #editor
             id="ace-code-editor"
             [mode]="editorMode ? editorMode : 'java'"
@@ -37,7 +37,7 @@
             (textChanged)="onFileTextChanged($event)"
             class="code-editor-ace__content__editor"
         >
-        </ace-editor>
+        </jhi-ace-editor>
         <p
             *ngIf="!selectedFile && !isLoading"
             id="no-file-selected"

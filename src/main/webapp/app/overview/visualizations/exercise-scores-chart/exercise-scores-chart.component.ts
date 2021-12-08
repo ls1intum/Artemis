@@ -59,9 +59,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     }
 
     ngOnChanges(): void {
-        this.exerciseScores = this.exerciseScores.concat(this.excludedExerciseScores);
-        this.excludedExerciseScores = this.exerciseScores.filter((score) => this.filteredExerciseIDs.includes(score.exerciseId!));
-        this.exerciseScores = this.exerciseScores.filter((score) => !this.filteredExerciseIDs.includes(score.exerciseId!));
         this.initializeChart();
     }
 
@@ -84,6 +81,9 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     }
 
     private initializeChart(): void {
+        this.exerciseScores = this.exerciseScores.concat(this.excludedExerciseScores);
+        this.excludedExerciseScores = this.exerciseScores.filter((score) => this.filteredExerciseIDs.includes(score.exerciseId!));
+        this.exerciseScores = this.exerciseScores.filter((score) => !this.filteredExerciseIDs.includes(score.exerciseId!));
         // we show all the exercises ordered by their release data
         const sortedExerciseScores = sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
         this.addData(sortedExerciseScores);
