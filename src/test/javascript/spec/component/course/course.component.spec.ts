@@ -108,7 +108,6 @@ describe('CoursesComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseRowComponent },
                 { provide: AlertService, useClass: MockAlertService },
-                // { provide: Router, useValue: router },
             ],
         })
             .compileComponents()

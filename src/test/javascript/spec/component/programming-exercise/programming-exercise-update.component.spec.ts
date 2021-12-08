@@ -48,6 +48,7 @@ import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exe
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
 
 describe('ProgrammingExercise Management Update Component', () => {
@@ -64,10 +65,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            // OwlDateTimeModule can be readded if we ever find an Angular 13 + Ivy 100% compatible version
-            // For example: https://github.com/danielmoncada/date-time-picker/issues/133 which is a "maintained" fork
-            // For now, this will log NG0304 / NG0303 errors but pass
-            imports: [ArtemisTestModule, NgxDatatableModule /*, OwlDateTimeModule */],
+            imports: [ArtemisTestModule, NgxDatatableModule, OwlDateTimeModule],
             declarations: [
                 ProgrammingExerciseUpdateComponent,
                 // The following directives need to be imported raw because the SCA tests heavily rely on the UI interaction with the native inputs.
