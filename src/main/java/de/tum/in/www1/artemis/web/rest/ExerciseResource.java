@@ -268,9 +268,7 @@ public class ExerciseResource {
     @GetMapping(value = "/exercises/{exerciseId}/details")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
-        long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("{} requested access for exercise with exerciseId {}", user.getLogin(), exerciseId);
 
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
 
@@ -298,6 +296,7 @@ public class ExerciseResource {
         }
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
+            // TODO: instead fetch the policy without programming exercise, should be faster
             SubmissionPolicy policy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
             programmingExercise.setSubmissionPolicy(policy);
             programmingExercise.checksAndSetsIfProgrammingExerciseIsLocalSimulation();
@@ -309,9 +308,7 @@ public class ExerciseResource {
             exercise.filterSensitiveInformation();
         }
 
-        log.debug("getResultsForCurrentUser took {}ms", System.currentTimeMillis() - start);
-
-        return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
+        return ResponseEntity.ok(exercise);
     }
 
     /**
