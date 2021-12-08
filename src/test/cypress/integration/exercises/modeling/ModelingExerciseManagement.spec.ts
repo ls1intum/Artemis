@@ -126,7 +126,7 @@ describe('Modeling Exercise Management Spec', () => {
                 modelingExercise = resp.body;
             });
             cy.login(student, '/courses');
-            cy.get('.card-body').contains(course.title).click({ force: true });
+            cy.contains(course.title).click({ force: true });
             cy.contains('No exercises available for the course.').should('be.visible');
         });
 
