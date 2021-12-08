@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service.notifications;
 
+import static de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createNotification;
-import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -35,9 +38,9 @@ public class GroupNotificationService {
 
     private final UserRepository userRepository;
 
-    private MailService mailService;
+    private final MailService mailService;
 
-    private NotificationSettingsService notificationSettingsService;
+    private final NotificationSettingsService notificationSettingsService;
 
     public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
             MailService mailService, NotificationSettingsService notificationSettingsService) {
@@ -168,44 +171,23 @@ public class GroupNotificationService {
             GroupNotification resultingGroupNotification;
             resultingGroupNotification = switch (notificationType) {
                 // Post Types
-                case NEW_EXERCISE_POST -> createNotification((Post) notificationSubject, author, group, NotificationType.NEW_EXERCISE_POST, (Course) typeSpecificInformation);
-                case NEW_REPLY_FOR_EXERCISE_POST -> createNotification((Post) notificationSubject, author, group, NotificationType.NEW_REPLY_FOR_EXERCISE_POST,
-                        (Course) typeSpecificInformation);
-                case NEW_LECTURE_POST -> createNotification((Post) notificationSubject, author, group, NotificationType.NEW_LECTURE_POST, (Course) typeSpecificInformation);
-                case NEW_REPLY_FOR_LECTURE_POST -> createNotification((Post) notificationSubject, author, group, NotificationType.NEW_REPLY_FOR_LECTURE_POST,
-                        (Course) typeSpecificInformation);
-                case NEW_COURSE_POST -> createNotification((Post) notificationSubject, author, group, NotificationType.NEW_COURSE_POST, (Course) typeSpecificInformation);
-                case NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) notificationSubject, author, group, NotificationType.NEW_REPLY_FOR_COURSE_POST,
-                        (Course) typeSpecificInformation);
-                case NEW_ANNOUNCEMENT_POST -> createNotification((Post) notificationSubject, author, group, NotificationType.NEW_ANNOUNCEMENT_POST,
-                        (Course) typeSpecificInformation);
+                case NEW_EXERCISE_POST, NEW_REPLY_FOR_EXERCISE_POST, NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_ANNOUNCEMENT_POST -> createNotification(
+                        (Post) notificationSubject, author, group, notificationType, (Course) typeSpecificInformation);
                 // General Types
-                case ATTACHMENT_CHANGE -> createNotification((Attachment) notificationSubject, author, group, NotificationType.ATTACHMENT_CHANGE, (String) typeSpecificInformation);
-                case EXERCISE_PRACTICE -> createNotification((Exercise) notificationSubject, author, group, NotificationType.EXERCISE_PRACTICE, (String) typeSpecificInformation);
-                case QUIZ_EXERCISE_STARTED -> createNotification((QuizExercise) notificationSubject, author, group, NotificationType.QUIZ_EXERCISE_STARTED,
+                case ATTACHMENT_CHANGE -> createNotification((Attachment) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
+                case QUIZ_EXERCISE_STARTED -> createNotification((QuizExercise) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
+                case EXERCISE_UPDATED, EXERCISE_RELEASED, EXERCISE_PRACTICE -> createNotification((Exercise) notificationSubject, author, group, notificationType,
                         (String) typeSpecificInformation);
-                case EXERCISE_UPDATED -> createNotification((Exercise) notificationSubject, author, group, NotificationType.EXERCISE_UPDATED, (String) typeSpecificInformation);
-                case EXERCISE_RELEASED -> createNotification((Exercise) notificationSubject, author, group, NotificationType.EXERCISE_RELEASED, (String) typeSpecificInformation);
                 // Archive Types
-                case COURSE_ARCHIVE_STARTED -> createNotification((Course) notificationSubject, author, group, NotificationType.COURSE_ARCHIVE_STARTED,
+                case COURSE_ARCHIVE_STARTED, COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FAILED -> createNotification((Course) notificationSubject, author, group, notificationType,
                         (List<String>) typeSpecificInformation);
-                case COURSE_ARCHIVE_FINISHED -> createNotification((Course) notificationSubject, author, group, NotificationType.COURSE_ARCHIVE_FINISHED,
-                        (List<String>) typeSpecificInformation);
-                case COURSE_ARCHIVE_FAILED -> createNotification((Course) notificationSubject, author, group, NotificationType.COURSE_ARCHIVE_FAILED,
-                        (List<String>) typeSpecificInformation);
-                case EXAM_ARCHIVE_STARTED -> createNotification((Exam) notificationSubject, author, group, NotificationType.EXAM_ARCHIVE_STARTED,
-                        (List<String>) typeSpecificInformation);
-                case EXAM_ARCHIVE_FINISHED -> createNotification((Exam) notificationSubject, author, group, NotificationType.EXAM_ARCHIVE_FINISHED,
-                        (List<String>) typeSpecificInformation);
-                case EXAM_ARCHIVE_FAILED -> createNotification((Exam) notificationSubject, author, group, NotificationType.EXAM_ARCHIVE_FAILED,
+                case EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FAILED -> createNotification((Exam) notificationSubject, author, group, notificationType,
                         (List<String>) typeSpecificInformation);
                 // Critical Types
-                case DUPLICATE_TEST_CASE -> createNotification((Exercise) notificationSubject, author, group, NotificationType.DUPLICATE_TEST_CASE,
+                case DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION -> createNotification((Exercise) notificationSubject, author, group, notificationType,
                         (String) typeSpecificInformation);
-                case ILLEGAL_SUBMISSION -> createNotification((Exercise) notificationSubject, author, group, NotificationType.ILLEGAL_SUBMISSION, (String) typeSpecificInformation);
                 // Additional Types
-                case PROGRAMMING_TEST_CASES_CHANGED -> createNotification((Exercise) notificationSubject, author, group, NotificationType.PROGRAMMING_TEST_CASES_CHANGED,
-                        (String) typeSpecificInformation);
+                case PROGRAMMING_TEST_CASES_CHANGED -> createNotification((Exercise) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
                 default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
             };
             saveAndSend(resultingGroupNotification, notificationSubject);
@@ -224,8 +206,7 @@ public class GroupNotificationService {
             return;
         }
         // Create and send the notification.
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.STUDENT }, NotificationType.ATTACHMENT_CHANGE, attachment, notificationText,
-                userRepository.getUser());
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT }, ATTACHMENT_CHANGE, attachment, notificationText, userRepository.getUser());
     }
 
     /**
@@ -234,8 +215,7 @@ public class GroupNotificationService {
      * @param exercise that has been opened for practice
      */
     public void notifyStudentGroupAboutExercisePractice(Exercise exercise) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.STUDENT }, NotificationType.EXERCISE_PRACTICE, exercise, null,
-                userRepository.getUser());
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT }, EXERCISE_PRACTICE, exercise, null, userRepository.getUser());
     }
 
     /**
@@ -244,7 +224,7 @@ public class GroupNotificationService {
      * @param quizExercise that has been started
      */
     public void notifyStudentGroupAboutQuizExerciseStart(QuizExercise quizExercise) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.STUDENT }, NotificationType.QUIZ_EXERCISE_STARTED, quizExercise, null, null);
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT }, QUIZ_EXERCISE_STARTED, quizExercise, null, null);
     }
 
     /**
@@ -260,8 +240,7 @@ public class GroupNotificationService {
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
         }
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.STUDENT, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.EXERCISE_UPDATED, exercise, notificationText, userRepository.getUser());
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT, EDITOR, INSTRUCTOR }, EXERCISE_UPDATED, exercise, notificationText, userRepository.getUser());
     }
 
     /**
@@ -271,9 +250,7 @@ public class GroupNotificationService {
      * @param exercise that has been created
      */
     public void notifyAllGroupsAboutReleasedExercise(Exercise exercise) {
-        notifyGroupsWithNotificationType(
-                new GroupNotificationType[] { GroupNotificationType.STUDENT, GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.EXERCISE_RELEASED, exercise, null, null);
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT, TA, EDITOR, INSTRUCTOR }, EXERCISE_RELEASED, exercise, null, null);
     }
 
     /**
@@ -283,8 +260,7 @@ public class GroupNotificationService {
      * @param notificationText that should be displayed
      */
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR }, NotificationType.EXERCISE_UPDATED,
-                exercise, notificationText, null);
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, EXERCISE_UPDATED, exercise, notificationText, null);
     }
 
     /**
@@ -293,8 +269,7 @@ public class GroupNotificationService {
      * @param exercise that has been updated
      */
     public void notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.PROGRAMMING_TEST_CASES_CHANGED, exercise, null, null);
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, PROGRAMMING_TEST_CASES_CHANGED, exercise, null, null);
     }
 
     /**
@@ -304,9 +279,7 @@ public class GroupNotificationService {
      * @param course that the post belongs to
      */
     public void notifyAllGroupsAboutNewPostForExercise(Post post, Course course) {
-        notifyGroupsWithNotificationType(
-                new GroupNotificationType[] { GroupNotificationType.STUDENT, GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_EXERCISE_POST, post, course, post.getAuthor());
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT, TA, EDITOR, INSTRUCTOR }, NEW_EXERCISE_POST, post, course, post.getAuthor());
     }
 
     /**
@@ -316,8 +289,7 @@ public class GroupNotificationService {
      * @param notificationText that should be displayed
      */
     public void notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(Exercise exercise, String notificationText) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR }, NotificationType.DUPLICATE_TEST_CASE,
-                exercise, notificationText, null);
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, DUPLICATE_TEST_CASE, exercise, notificationText, null);
     }
 
     /**
@@ -328,7 +300,7 @@ public class GroupNotificationService {
      * @param notificationText that should be displayed
      */
     public void notifyInstructorGroupAboutIllegalSubmissionsForExercise(Exercise exercise, String notificationText) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.INSTRUCTOR }, NotificationType.ILLEGAL_SUBMISSION, exercise, notificationText, null);
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { INSTRUCTOR }, ILLEGAL_SUBMISSION, exercise, notificationText, null);
     }
 
     /**
@@ -338,9 +310,7 @@ public class GroupNotificationService {
      * @param course that the post belongs to
      */
     public void notifyAllGroupsAboutNewPostForLecture(Post post, Course course) {
-        notifyGroupsWithNotificationType(
-                new GroupNotificationType[] { GroupNotificationType.STUDENT, GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_LECTURE_POST, post, course, post.getAuthor());
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT, TA, EDITOR, INSTRUCTOR }, NEW_LECTURE_POST, post, course, post.getAuthor());
     }
 
     /**
@@ -350,9 +320,7 @@ public class GroupNotificationService {
      * @param course that the post belongs to
      */
     public void notifyAllGroupsAboutNewCoursePost(Post post, Course course) {
-        notifyGroupsWithNotificationType(
-                new GroupNotificationType[] { GroupNotificationType.STUDENT, GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_COURSE_POST, post, course, post.getAuthor());
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT, TA, EDITOR, INSTRUCTOR }, NEW_COURSE_POST, post, course, post.getAuthor());
     }
 
     /**
@@ -363,8 +331,7 @@ public class GroupNotificationService {
      * @param course that the post belongs to
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(Post post, AnswerPost answerPost, Course course) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_REPLY_FOR_COURSE_POST, post, course, answerPost.getAuthor());
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_COURSE_POST, post, course, answerPost.getAuthor());
     }
 
     /**
@@ -375,8 +342,7 @@ public class GroupNotificationService {
      * @param course that the post belongs to
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(Post post, AnswerPost answerPost, Course course) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_REPLY_FOR_EXERCISE_POST, post, course, answerPost.getAuthor());
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_EXERCISE_POST, post, course, answerPost.getAuthor());
     }
 
     /**
@@ -386,9 +352,7 @@ public class GroupNotificationService {
      * @param course that the post belongs to
      */
     public void notifyAllGroupsAboutNewAnnouncement(Post post, Course course) {
-        notifyGroupsWithNotificationType(
-                new GroupNotificationType[] { GroupNotificationType.STUDENT, GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_ANNOUNCEMENT_POST, post, course, post.getAuthor());
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT, TA, EDITOR, INSTRUCTOR }, NEW_ANNOUNCEMENT_POST, post, course, post.getAuthor());
     }
 
     /**
@@ -399,8 +363,7 @@ public class GroupNotificationService {
      * @param course that the post belongs to
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(Post post, AnswerPost answerPost, Course course) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.TA, GroupNotificationType.EDITOR, GroupNotificationType.INSTRUCTOR },
-                NotificationType.NEW_REPLY_FOR_LECTURE_POST, post, course, answerPost.getAuthor());
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_LECTURE_POST, post, course, answerPost.getAuthor());
     }
 
     /**
@@ -411,7 +374,7 @@ public class GroupNotificationService {
      * @param archiveErrors    list of errors that happened during archiving
      */
     public void notifyInstructorGroupAboutCourseArchiveState(Course course, NotificationType notificationType, List<String> archiveErrors) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.INSTRUCTOR }, notificationType, course, archiveErrors, null);
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { INSTRUCTOR }, notificationType, course, archiveErrors, null);
     }
 
     /**
@@ -422,7 +385,7 @@ public class GroupNotificationService {
      * @param archiveErrors    list of errors that happened during archiving
      */
     public void notifyInstructorGroupAboutExamArchiveState(Exam exam, NotificationType notificationType, List<String> archiveErrors) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { GroupNotificationType.INSTRUCTOR }, notificationType, exam, archiveErrors, null);
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { INSTRUCTOR }, notificationType, exam, archiveErrors, null);
     }
 
     /**
@@ -433,7 +396,7 @@ public class GroupNotificationService {
      * @param notificationSubject which information will be extracted to create the email
      */
     private void saveAndSend(GroupNotification notification, Object notificationSubject) {
-        if (NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
+        if (LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
             saveExamNotification(notification);
             messagingTemplate.convertAndSend(notification.getTopic(), notification);
             return;
