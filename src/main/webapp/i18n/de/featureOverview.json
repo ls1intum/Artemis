@@ -43,7 +43,7 @@
                 },
                 "anonymousAssessment": {
                     "title": "Anonyme Bewertung",
-                    "shortDescription": "Anonymes Bewertungsverfahren durch Korrektur Warteschlangen, um Vorurteile zu vermeiden.",
+                    "shortDescription": "Anonymes Bewertungsverfahren durch Korrektur-Warteschlangen, um Vorurteile zu vermeiden.",
                     "descriptionTextOne": "Dein Bewertungsteam kann über das Bewertungs-Dashboard auf die Abgaben der Studierenden zugreifen. In diesem Dashboard können sie eine neue Abgabe anfordern, sofern eine für die Bewertung verfügbar ist. Alle Abgaben sind anonymisiert, um Vorurteile oder Bevorzugung von Personen zu vermeiden. Um die Genauigkeit und Konsistenz der Bewertung zu verbessern, kannst du Bewertungsanweisungen, Musterabgaben und Musterbewertungen definieren, um eine gemeinsame Basis für die Benotungserwartungen zu schaffen, bevor die Bewertung beginnt."
                 },
                 "automaticAssessment": {

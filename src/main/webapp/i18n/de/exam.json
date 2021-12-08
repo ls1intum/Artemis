@@ -55,7 +55,7 @@
             "updated": "Klausur bearbeitet",
             "exercise": "Aufgabe {{nr}}",
             "startConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
-            "endConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Klausur eigenständig und nur mithilfe der angegebene Hilfsmittel bearbeitet habe.",
+            "endConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Klausur eigenständig und nur mithilfe der angegebenen Hilfsmittel bearbeitet habe.",
             "notConfirmed": "Bitte setze einen Haken in das Kästchen, um fortzufahren.",
             "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
             "notSet": "Nicht gesetzt",
