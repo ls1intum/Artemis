@@ -189,7 +189,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.8.0"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.8.1"
     implementation "net.logstash.logback:logstash-logback-encoder:7.0.1"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -289,7 +289,7 @@ dependencies {
     testImplementation "com.opencsv:opencsv:5.5.2"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation "org.json:json:20210307"
+    testImplementation "org.json:json:20211205"
 }
 
 task cleanResources(type: Delete) {
