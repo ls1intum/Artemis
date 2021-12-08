@@ -255,8 +255,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private updateProjectTypeSettings(type: ProjectType) {
         if (ProjectType.XCODE === type) {
-            // Enable SCA for Xcode
-            this.programmingExercise.staticCodeAnalysisEnabled = true;
             // Disable Online Editor
             this.programmingExercise.allowOnlineEditor = false;
         }
