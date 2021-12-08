@@ -63,9 +63,6 @@ public class GroupNotificationServiceTest {
     private static NotificationSettingsService notificationSettingsService;
 
     @Mock
-    private static NotificationTargetProvider notificationTargetProvider;
-
-    @Mock
     private static Exercise exercise;
 
     @Mock
@@ -168,10 +165,7 @@ public class GroupNotificationServiceTest {
 
         notificationSettingsService = mock(NotificationSettingsService.class);
 
-        notificationTargetProvider = mock(NotificationTargetProvider.class);
-
-        groupNotificationService = spy(
-                new GroupNotificationService(groupNotificationRepository, messagingTemplate, userRepository, mailService, notificationSettingsService, notificationTargetProvider));
+        groupNotificationService = spy(new GroupNotificationService(groupNotificationRepository, messagingTemplate, userRepository, mailService, notificationSettingsService));
 
         archiveErrors = new ArrayList<>();
 
