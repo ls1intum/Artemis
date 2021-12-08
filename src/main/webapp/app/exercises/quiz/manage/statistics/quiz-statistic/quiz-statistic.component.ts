@@ -1,8 +1,7 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { Chart, ChartAnimationOptions, ChartOptions, ChartType, LinearTickOptions } from 'chart.js';
 import { Subscription } from 'rxjs';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -10,9 +9,6 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { BaseChartDirective, Color } from 'ng2-charts';
-import { round } from 'app/shared/util/utils';
-import { ScaleType } from '@swimlane/ngx-charts';
 import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/quiz-statistics.directive';
 
 /**
@@ -21,114 +17,6 @@ import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/qu
 export interface DataSet {
     data: number[];
     backgroundColor: string[];
-}
-
-export interface ChartElement {
-    chart: Chart;
-}
-
-// this code is reused in 4 different statistic components
-export function createOptions(dataSetProvider: DataSetProvider, max: number, stepSize: number, xLabel: string, yLabel: string): ChartOptions {
-    return {
-        layout: {
-            padding: {
-                left: 0,
-                right: 0,
-                top: 0,
-                bottom: 30,
-            },
-        },
-        legend: {
-            display: false,
-        },
-        title: {
-            display: false,
-            text: '',
-            position: 'top',
-            fontSize: 16,
-            padding: 20,
-        },
-        tooltips: {
-            enabled: false,
-        },
-        scales: {
-            yAxes: [
-                {
-                    display: true,
-                    scaleLabel: {
-                        labelString: xLabel,
-                        display: true,
-                    },
-                    ticks: {
-                        beginAtZero: true,
-                        stepSize,
-                        max,
-                        min: 0,
-                    } as LinearTickOptions,
-                },
-            ],
-            xAxes: [
-                {
-                    scaleLabel: {
-                        labelString: yLabel,
-                        display: true,
-                    },
-                },
-            ],
-        },
-        hover: { animationDuration: 0 },
-        animation: createAnimation(dataSetProvider),
-    };
-}
-
-// this code is reused in 4 different statistic components
-export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimationOptions {
-    return {
-        duration: 500,
-        onComplete: (chartElement: ChartElement) => {
-            const chartInstance = chartElement.chart;
-            const ctx = chartInstance.ctx!;
-
-            ctx.font = Chart.helpers.fontString(Chart.defaults.global.defaultFontSize, Chart.defaults.global.defaultFontStyle, Chart.defaults.global.defaultFontFamily);
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
-            const participants = dataSetProvider.getParticipants();
-
-            dataSetProvider.getDataSets().forEach((dataset: DataSet, datasetIndex: number) => {
-                const meta = chartInstance.getDatasetMeta(datasetIndex);
-                meta.data.forEach((bar: any, dataIndex: number) => {
-                    const data = round(dataset.data[dataIndex], 2).toString();
-                    const dataPercentage = round((dataset.data[dataIndex] / participants) * 100 || 0, 1);
-                    ctx.fillText(data, bar._model.x, bar._model.y - 20);
-                    ctx.fillText(`(${dataPercentage}%)`, bar._model.x, bar._model.y - 5);
-                });
-            });
-        },
-    };
-}
-
-export interface DataSetProvider {
-    getDataSets(): DataSet[];
-    getParticipants(): number;
-
-    /**
-     * check if the rated or unrated
-     * load the rated or unrated data into the diagram
-     */
-    loadDataInDiagram(): void;
-}
-/**
- * Wrapper function to ensure that other ng2-implementations still work; should be removed as soon as not used anymore
- * Calculates the height of the chart depending of the data that has to be displayed
- * @param dataSetProvider the component instantiating the chart
- * @returns height depending on the size of the data set
- */
-export function calculateHeightOfChart(dataSetProvider: DataSetProvider) {
-    const data = dataSetProvider.getDataSets().map((dataset) => {
-        return dataset.data;
-    });
-    const flattened = ([] as number[]).concat(...data);
-    return calculateHeightOfChartData(flattened);
 }
 
 export function calculateHeightOfChartData(data: number[]) {
@@ -151,44 +39,17 @@ export function calculateHeightOfChartData(data: number[]) {
     templateUrl: './quiz-statistic.component.html',
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss'],
 })
-export class QuizStatisticComponent extends QuizStatisticsDirective implements OnInit, OnDestroy, DataSetProvider {
-    @ViewChild(BaseChartDirective) chart: BaseChartDirective;
-
+export class QuizStatisticComponent extends QuizStatisticsDirective implements OnInit, OnDestroy {
     quizExercise: QuizExercise;
     private sub: Subscription;
 
-    // labels: string[] = [];
-    // data: number[] = [];
-    colors: Color[] = [];
-    chartType: ChartType = 'bar';
-    datasets: DataSet[] = [];
-
     label: string[] = [];
-    // ratedData: number[] = [];
-    // unratedData: number[] = [];
     backgroundColor: string[] = [];
     ratedAverage: number;
     unratedAverage: number;
 
     maxScore: number;
-    // rated = true;
-    // participants: number;
     websocketChannelForData: string;
-
-    // ngx
-    /*ngxData: any[] = [];
-    ngxColor = {
-        name: 'quiz statistics',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [],
-    } as any;
-    xAxisLabel = this.translateService.instant('showStatistic.quizStatistic.xAxes');
-    yAxisLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
-    maxScale: number;*/
-
-    // options for chart.js style
-    options: ChartOptions;
 
     constructor(
         private route: ActivatedRoute,
@@ -232,14 +93,6 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
 
     ngOnDestroy() {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
-    }
-
-    getDataSets() {
-        return this.datasets;
-    }
-
-    getParticipants() {
-        return this.participants;
     }
 
     /**
@@ -314,26 +167,13 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
         this.ratedData.push(this.ratedAverage / this.maxScore);
         this.unratedData.push(this.unratedAverage / this.maxScore);
 
-        // load data into the chart
-        // this.labels = this.label;
-        this.colors = this.backgroundColor.map((backgroundColor) => ({ backgroundColor }));
-
         // add Text for last label based on the language
         const lastLabel = this.translateService.instant('showStatistic.quizStatistic.average');
         this.label.push(lastLabel);
         this.chartLabels = this.label;
-
-        // if this.rated == true  -> load the rated data
-        /*if (this.rated) {
-            this.participants = this.quizExercise.quizPointStatistic!.participantsRated!;
-            this.data = this.ratedData;
-        } else {
-            // load the unrated data
-            this.participants = this.quizExercise.quizPointStatistic!.participantsUnrated!;
-            this.data = this.unratedData;
-        }*/
         this.setData(this.quizExercise.quizPointStatistic!);
 
+        // load data into chart
         this.updateChart();
     }
 
@@ -362,23 +202,6 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
      * updates the chart by setting the data set, re-calculating the height and calling update on the chart view child
      */
     updateChart() {
-        /*this.ngxData = [];
-        this.datasets = [{ data: this.data, backgroundColor: this.colors.map((color) => color.backgroundColor as string) }];
-        this.data.forEach((score, index) => {
-            this.ngxData.push({ name: this.labels[index], value: score });
-        });
-        this.ngxColor.domain = this.backgroundColor;
-        // recalculate the height of the chart because rated/unrated might have changed or new results might have appeared
-        const height = calculateHeightOfChart(this);
-        this.maxScale = calculateHeightOfChartData(this.data);
-        // add Axes-labels based on selected language
-        const xLabel = this.translateService.instant('showStatistic.quizStatistic.xAxes');
-        const yLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
-        this.options = createOptions(this, height, height / 5, xLabel, yLabel);
-        if (this.chart) {
-            this.chart.update(0);
-        }
-        this.ngxData = [...this.ngxData];*/
         this.pushDataToNgxEntry();
         this.ngxColor.domain = this.backgroundColor;
         this.xAxisLabel = this.translateService.instant('showStatistic.quizStatistic.xAxes');

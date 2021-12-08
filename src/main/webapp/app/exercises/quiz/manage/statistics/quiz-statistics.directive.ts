@@ -12,7 +12,6 @@ export abstract class QuizStatisticsDirective {
     unratedData: number[] = [];
     rated = true;
     participants: number;
-    // questionStatistic: QuizQuestionStatistic;
 
     ngxData: NgxDataEntry[] = [];
     ngxColor = {
