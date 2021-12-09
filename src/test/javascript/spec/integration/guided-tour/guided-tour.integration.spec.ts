@@ -42,6 +42,7 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { NgbCollapse, NgbDropdown, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { PieChartModule } from '@swimlane/ngx-charts';
 
 describe('Guided tour integration', () => {
     const user = { id: 1 } as User;
@@ -67,6 +68,7 @@ describe('Guided tour integration', () => {
                         component: MockComponent(CoursesComponent),
                     },
                 ]),
+                MockModule(PieChartModule),
             ],
             declarations: [
                 CourseCardComponent,

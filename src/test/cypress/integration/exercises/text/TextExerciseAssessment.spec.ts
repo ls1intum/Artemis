@@ -47,7 +47,7 @@ describe('Text exercise assessment', () => {
 
     it('Assesses the text exercise submission', () => {
         cy.login(tutor, '/course-management');
-        coursesPage.openAssessmentDashboardOfCourseWithId(course.id);
+        coursesPage.openAssessmentDashboardOfCourse(course.shortName);
         courseAssessment.checkShowFinishedExercises();
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
@@ -81,8 +81,7 @@ describe('Text exercise assessment', () => {
         });
 
         it('Instructor can see complaint and reject it', () => {
-            cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
-            courseAssessment.openComplaints(course.id);
+            cy.login(instructor, `/course-management/${course.id}/complaints`);
             textAssessment.acceptComplaint('Makes sense').its('response.statusCode').should('eq', 200);
         });
     });

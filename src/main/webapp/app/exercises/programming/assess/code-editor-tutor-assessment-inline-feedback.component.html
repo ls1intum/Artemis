@@ -1,4 +1,5 @@
 <div
+    id="inline-feedback"
     class="border rounded"
     [style.max-width]="'780px'"
     [class.alert-success]="feedback.credits! > 0"
@@ -24,6 +25,7 @@
         <div class="row align-items-start">
             <div class="form-group col-8 p-2 m-0">
                 <textarea
+                    id="feedback-textarea"
                     class="form-control"
                     rows="5"
                     [(ngModel)]="feedback.detailText"
@@ -36,7 +38,14 @@
                 ></textarea>
             </div>
             <div class="form-group col-3 p-2 m-0">
-                <input class="form-control px-1" type="number" step="0.5" [(ngModel)]="feedback.credits" [readOnly]="viewOnly || feedback.gradingInstruction" />
+                <input
+                    id="feedback-points"
+                    class="form-control px-1"
+                    type="number"
+                    step="0.5"
+                    [(ngModel)]="feedback.credits"
+                    [readOnly]="viewOnly || feedback.gradingInstruction"
+                />
             </div>
         </div>
         <div>
@@ -46,7 +55,7 @@
             <button *ngIf="feedback.type === MANUAL" type="submit" (click)="deleteFeedback()" class="btn btn-danger btn-sm me-1">
                 <fa-icon [icon]="faTrashAlt"></fa-icon> <span jhiTranslate="entity.action.delete">Delete</span>
             </button>
-            <button type="submit" [disabled]="feedback.credits == null" class="btn btn-primary btn-sm" (click)="updateFeedback()">
+            <button id="feedback-save" type="submit" [disabled]="feedback.credits == null" class="btn btn-primary btn-sm" (click)="updateFeedback()">
                 <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
             </button>
         </div>
