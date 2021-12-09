@@ -160,7 +160,7 @@ public class PlagiarismResource {
         User user = userRepository.getUser();
 
         // check if current user is part of the comparison or not
-        if (!comparison.getSubmissionA().getStudentLogin().equals(user.getLogin()) && !comparison.getSubmissionB().getStudentLogin().equals(user.getLogin())) {
+        if (!(comparison.getSubmissionA().getStudentLogin().equals(user.getLogin()) || comparison.getSubmissionB().getStudentLogin().equals(user.getLogin()))) {
             throw new AccessForbiddenException("User tried updating plagiarism case they're not affected by.");
         }
 
