@@ -9,6 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -38,8 +39,8 @@ public class MigrationRegistry {
     @Value("${artemis.version}")
     private String artemisVersion;
 
-    // Using TreeMap to allow sorting. I'm using a map because with a list entries could accidentally be switched
-    private final TreeMap<Integer, Class<? extends MigrationEntry>> migrationEntryMap = new TreeMap<>();
+    // Using SortedMap to allow sorting. I'm using a map because with a list entries could accidentally be switched.
+    private final SortedMap<Integer, Class<? extends MigrationEntry>> migrationEntryMap = new TreeMap<>();
 
     private TreeMap<Integer, MigrationEntry> instantiatedMigrationEntryMap;
 
@@ -77,7 +78,6 @@ public class MigrationRegistry {
             log.error(getClass().getSimpleName() + " corrupted. Aborting startup.");
             event.getApplicationContext().close();
             System.exit(1);
-            // System.exit(SpringApplication.exit(event.getApplicationContext(), () -> 1));
         }
         else {
             log.info("Integrity check passed.");
@@ -112,8 +112,12 @@ public class MigrationRegistry {
         log.info("Ending Artemis migration");
     }
 
+    public SortedMap<Integer, Class<? extends MigrationEntry>> getMigrationEntryMap() {
+        return migrationEntryMap;
+    }
+
     public void instantiateEntryMap() {
-        this.instantiatedMigrationEntryMap = this.migrationEntryMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e ->
+        this.instantiatedMigrationEntryMap = this.getMigrationEntryMap().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e ->
         // We have to manually autowire the components here
         (MigrationEntry) beanFactory.autowire(e.getValue(), AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR, true), (prev, next) -> next, TreeMap::new));
     }
@@ -126,7 +130,7 @@ public class MigrationRegistry {
      * @param entryMap A changelog in form of an entryMap that should be checked
      * @return True if the check was successful, otherwise false
      */
-    public boolean checkIntegrity(TreeMap<Integer, MigrationEntry> entryMap) {
+    public boolean checkIntegrity(SortedMap<Integer, MigrationEntry> entryMap) {
         log.info("Starting migration integrity check");
         boolean passed = true;
         Map<Integer, MigrationEntry> brokenInstances = entryMap.entrySet().stream()
