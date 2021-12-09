@@ -53,6 +53,7 @@ import { UserImportModule } from 'app/shared/import/user-import.module';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
+import { Ng2ChartsModule } from 'app/shared/chart/ng2-charts.module';
 
 @NgModule({
     imports: [
@@ -96,6 +97,7 @@ import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiar
         UserImportModule,
         NgxChartsModule,
         ArtemisPlagiarismModule,
+        Ng2ChartsModule,
     ],
     declarations: [
         CourseManagementComponent,

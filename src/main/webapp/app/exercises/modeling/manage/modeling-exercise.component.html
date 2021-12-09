@@ -53,8 +53,8 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let modelingExercise of filteredModelingExercises; trackBy: trackId" id="{{ 'modeling-exercise-card-' + modelingExercise.id }}">
-                    <td id="modeling-exercise-{{ modelingExercise.id }}-id">
+                <tr *ngFor="let modelingExercise of filteredModelingExercises; trackBy: trackId" id="{{ 'exercise-card-' + modelingExercise.id }}">
+                    <td>
                         <a [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.id }}</a>
                     </td>
                     <td id="modeling-exercise-{{ modelingExercise.id }}-title">

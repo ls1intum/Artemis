@@ -2,7 +2,7 @@
   -- When using the result component make sure that the reference to the participation input is changed if the result changes
   -- e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
 -->
-<ng-container [ngSwitch]="templateStatus">
+<ng-container [ngSwitch]="templateStatus" id="result">
     <ng-container *ngSwitchCase="ResultTemplateStatus.IS_BUILDING">
         <span class="text-primary">
             <fa-icon [icon]="faCircleNotch" size="lg" [spin]="true" class="me-2"></fa-icon>

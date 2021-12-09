@@ -1,5 +1,5 @@
-<div class="card">
-    <div class="card-heading text-white" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
+<div class="card" id="course-card-{{ course.shortName }}">
+    <div id="course-card-header" class="card-heading text-white" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
         <a class="stretched-link" [routerLink]="['/course-management', course.id]"></a>
         <div class="card-header-left">
             <jhi-secured-image class="header-item" *ngIf="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
@@ -193,6 +193,7 @@
             [class.guided-tour]="isGuidedTour"
             class="btn btn-primary me-1 mb-1"
             [ngbTooltip]="'entity.action.exercise' | artemisTranslate"
+            id="course-card-open-exercises"
         >
             <fa-icon [icon]="faListAlt"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'entity.action.exercise' | artemisTranslate }}</span>
@@ -202,6 +203,7 @@
             [routerLink]="['/course-management', course.id, 'exams']"
             class="btn btn-primary me-1 mb-1"
             [ngbTooltip]="'entity.action.exams' | artemisTranslate"
+            id="course-card-open-exams"
         >
             <fa-icon [icon]="faGraduationCap"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'entity.action.exams' | artemisTranslate }}</span>
@@ -211,6 +213,7 @@
             [routerLink]="['/course-management', course.id, 'lectures']"
             class="btn btn-primary me-1 mb-1"
             [ngbTooltip]="'entity.action.lecture' | artemisTranslate"
+            id="course-card-open-lectures"
         >
             <fa-icon [icon]="faFilePdf"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'entity.action.lecture' | artemisTranslate }}</span>
@@ -220,6 +223,7 @@
             [routerLink]="['/courses', course.id, 'discussion']"
             class="btn btn-primary me-1 mb-1"
             [ngbTooltip]="'artemisApp.metis.discussion.label' | artemisTranslate"
+            id="course-card-open-discussions"
         >
             <fa-icon [icon]="faComments"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'artemisApp.metis.discussion.label' | artemisTranslate }}</span>
@@ -229,6 +233,7 @@
             [routerLink]="['/course-management', course.id, 'goal-management']"
             class="btn btn-primary me-1 mb-1 hidden-if-mobile"
             [ngbTooltip]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate"
+            id="course-card-open-learning-goals"
         >
             <fa-icon [icon]="faFlag"></fa-icon>
             <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate" class="d-none d-xl-inline"></span>
@@ -240,6 +245,7 @@
             [class]="isGuidedTour ? 'guided-tour-assessment-dashboard-btn' : ''"
             [ngbTooltip]="'entity.action.assessmentDashboard' | artemisTranslate"
             [class.guided-tour]="isGuidedTour"
+            id="course-card-open-assessment-dashboard"
         >
             <fa-icon [icon]="faUserCheck"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'entity.action.assessmentDashboard' | artemisTranslate }}</span>
@@ -249,6 +255,7 @@
             [routerLink]="['/course-management', course.id, 'scores']"
             class="btn btn-info me-1 mb-1"
             [ngbTooltip]="'entity.action.scores' | artemisTranslate"
+            id="course-card-open-scores"
         >
             <fa-icon [icon]="faTable"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
@@ -258,6 +265,7 @@
             [routerLink]="['/course-management', course.id, 'course-statistics']"
             class="btn btn-info me-1 mb-1 hidden-if-mobile"
             [ngbTooltip]="'artemisApp.courseStatistics.statistics' | artemisTranslate"
+            id="course-card-open-open-statistics"
         >
             <fa-icon [icon]="faChartBar"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'artemisApp.courseStatistics.statistics' | artemisTranslate }}</span>
@@ -267,6 +275,7 @@
             [routerLink]="['/course-management', course.id, 'grading-system']"
             class="btn btn-info me-1 mb-1 hidden-if-mobile"
             [ngbTooltip]="'artemisApp.course.gradingSystem' | artemisTranslate"
+            id="course-card-open-grading-system"
         >
             <fa-icon [icon]="faClipboard"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'artemisApp.course.gradingSystem' | artemisTranslate }}</span>
