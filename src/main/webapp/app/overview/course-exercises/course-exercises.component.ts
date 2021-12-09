@@ -19,6 +19,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -219,7 +220,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
         const unreleasedFilterActive = this.activeFilters.has(ExerciseFilter.UNRELEASED);
         const optionalFilterActive = this.activeFilters.has(ExerciseFilter.OPTIONAL);
         const filtered = this.course?.exercises?.filter((exercise) => {
-            const participation = exercise.studentParticipations && exercise.studentParticipations.length > 0 ? exercise.studentParticipations[0] : undefined;
+            const participation = CourseExercisesComponent.studentParticipation(exercise);
             return (
                 (!needsWorkFilterActive || this.needsWork(exercise)) &&
                 (!exercise.dueDate || !overdueFilterActive || !hasExerciseDueDatePassed(exercise, participation)) &&
@@ -271,7 +272,11 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     private static exerciseDueDate(exercise: Exercise): dayjs.Dayjs | undefined {
-        return getExerciseDueDate(exercise, exercise.studentParticipations?.[0]);
+        return getExerciseDueDate(exercise, CourseExercisesComponent.studentParticipation(exercise));
+    }
+
+    private static studentParticipation(exercise: Exercise): StudentParticipation | undefined {
+        return exercise.studentParticipations && exercise.studentParticipations.length > 0 ? exercise.studentParticipations[0] : undefined;
     }
 
     private groupExercises(exercises?: Exercise[]) {
