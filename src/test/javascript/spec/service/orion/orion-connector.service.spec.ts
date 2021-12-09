@@ -4,7 +4,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockProvider } from 'ng-mocks';
 import { Injector } from '@angular/core';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
@@ -26,7 +25,7 @@ describe('OrionConnectorService', () => {
             imports: [ArtemisTestModule],
             providers: [
                 OrionConnectorService,
-                MockProvider(Injector),
+                Injector,
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: Router, useValue: router },

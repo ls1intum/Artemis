@@ -17,6 +17,7 @@ import { Result } from 'app/entities/result.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
@@ -42,6 +43,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     filePath?: string;
+
+    // Icons
+    farListAlt = faListAlt;
 
     constructor(
         private route: ActivatedRoute,

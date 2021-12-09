@@ -11,6 +11,7 @@ import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
@@ -63,6 +64,9 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     wrongMap: string;
     rightGap: string;
     wrongGap: string;
+
+    // Icons
+    farQuestionCircle = faQuestionCircle;
 
     constructor(private modalService: NgbModal, private translateService: TranslateService) {}
 

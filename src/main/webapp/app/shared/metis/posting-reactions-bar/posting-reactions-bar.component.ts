@@ -3,34 +3,36 @@ import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/entities/metis/reaction.model';
+import { PLACEHOLDER_USER_REACTED } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 
 const PIN_EMOJI_ID = 'pushpin';
 const PIN_EMOJI_UNICODE = '1F4CC';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
 const ARCHIVE_EMOJI_UNICODE = '1F4C2';
 
-/*
-event triggered by the emoji mart component, including EmojiData
+/**
+ * event triggered by the emoji mart component, including EmojiData
  */
 interface ReactionEvent {
     $event: Event;
     emoji?: EmojiData;
 }
 
-/*
-represents the amount of users that reacted
-hasReacted indicates if the currently logged in user is among those counted users
+/**
+ * represents the amount of users that reacted
+ * hasReacted indicates if the currently logged in user is among those counted users
  */
-interface ReactionCount {
+interface ReactionMetaData {
     count: number;
     hasReacted: boolean;
+    reactingUsers: string[];
 }
 
-/*
-data structure used for displaying emoji reactions with counts on postings
+/**
+ * data structure used for displaying emoji reactions with meta data on postings
  */
-interface ReactionCountMap {
-    [emojiId: string]: ReactionCount;
+interface ReactionMetaDataMap {
+    [emojiId: string]: ReactionMetaData;
 }
 
 @Directive()
@@ -60,7 +62,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      * map that lists associated reaction (by emojiId) for the current posting together with its count
      * and a flag that indicates if the current user has used this reaction
      */
-    reactionCountMap: ReactionCountMap = {};
+    reactionMetaDataMap: ReactionMetaDataMap = {};
 
     constructor(protected metisService: MetisService) {
         this.selectedCourseEmojis = ['smile', 'joy', 'sunglasses', 'tada', 'rocket', 'heavy_plus_sign', 'thumbsup', 'memo', 'coffee', 'recycle'];
@@ -148,30 +150,32 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     }
 
     /**
-     * builds the ReactionCountMap data structure out of a given array of reactions
-     * @param reactions array of reactions associated to the current posting
-     */
-    buildEmojiIdCountMap(reactions: Reaction[]): ReactionCountMap {
-        return reactions.reduce((countMap: ReactionCountMap, reaction: Reaction) => {
-            const hasReacted = reaction.user?.id === this.metisService.getUser().id;
-            const reactionCount = {
-                count: countMap[reaction.emojiId!] ? countMap[reaction.emojiId!].count + 1 : 1,
-                hasReacted: countMap[reaction.emojiId!] ? countMap[reaction.emojiId!].hasReacted || hasReacted : hasReacted,
-            };
-            return { ...countMap, [reaction.emojiId!]: reactionCount };
-        }, {});
-    }
-
-    /**
-     * updates the posting's reactions by calling the build function for the reactionCountMap if there are any reaction on the posting
+     * updates the posting's reactions by calling the build function for the reactionMetaDataMap if there are any reaction on the posting
      */
     updatePostingWithReactions(): void {
         if (this.posting.reactions && this.posting.reactions.length > 0) {
-            // filter out emoji for pin and archive as they should not be listed in the reactionCountMap
+            // filter out emoji for pin and archive as they should not be listed in the reactionMetaDataMap
             const filteredReactions = this.posting.reactions.filter((reaction: Reaction) => reaction.emojiId !== this.pinEmojiId || reaction.emojiId !== this.archiveEmojiId);
-            this.reactionCountMap = this.buildEmojiIdCountMap(filteredReactions);
+            this.reactionMetaDataMap = this.buildReactionMetaDataMap(filteredReactions);
         } else {
-            this.reactionCountMap = {};
+            this.reactionMetaDataMap = {};
         }
+    }
+
+    /**
+     * builds the ReactionMetaDataMap data structure out of a given array of reactions
+     * @param reactions array of reactions associated to the current posting
+     */
+    buildReactionMetaDataMap(reactions: Reaction[]): ReactionMetaDataMap {
+        return reactions.reduce((metaDataMap: ReactionMetaDataMap, reaction: Reaction) => {
+            const hasReacted = reaction.user?.id === this.metisService.getUser().id;
+            const reactingUser = hasReacted ? PLACEHOLDER_USER_REACTED : reaction.user?.name!;
+            const reactionMetaData: ReactionMetaData = {
+                count: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].count + 1 : 1,
+                hasReacted: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].hasReacted || hasReacted : hasReacted,
+                reactingUsers: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].reactingUsers.concat(reactingUser) : [reactingUser],
+            };
+            return { ...metaDataMap, [reaction.emojiId!]: reactionMetaData };
+        }, {});
     }
 }
