@@ -10,7 +10,7 @@ export interface ChartPreset {
     selector: 'jhi-chart',
     template: `
         <div style="position: relative; width: 100%; height: 100%;">
-            <canvas baseChart [datasets]="chartDatasets" [labels]="chartLabels" [options]="chartOptions" [chartType]="chartType"></canvas>
+            <canvas id="chart" baseChart [datasets]="chartDatasets" [labels]="chartLabels" [options]="chartOptions" [chartType]="chartType"></canvas>
         </div>
     `,
 })
