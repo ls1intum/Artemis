@@ -4,7 +4,7 @@ import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-code-editor-repository-is-locked',
     template: `
-        <span class="badge bg-warning d-flex align-items-center locked-container">
+        <span id="repository-locked-warning" class="badge bg-warning d-flex align-items-center locked-container">
             <fa-icon [icon]="faInfoCircle" class="text-white" size="2x"></fa-icon>
             <span
                 class="ms-2 locked-lable"

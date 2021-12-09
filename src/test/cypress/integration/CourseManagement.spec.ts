@@ -84,7 +84,7 @@ describe('Course management', () => {
                     expect(body).property('id').to.be.a('number');
                     courseId = body.id;
                 });
-            courseManagementPage.getCourseCard(courseName, courseShortName).should('be.visible');
+            courseManagementPage.getCourseCard(courseShortName).should('be.visible');
         });
 
         after(() => {
@@ -101,12 +101,12 @@ describe('Course management', () => {
 
         it('Deletes an existing course', function () {
             navigationBar.openCourseManagement();
-            courseManagementPage.openCourse(courseName, courseShortName);
+            courseManagementPage.openCourse(courseShortName);
             cy.get('.btn-danger').click();
             cy.get(modalDeleteButton).should('be.disabled');
             cy.get('[name="confirmExerciseName"]').type(courseName);
             cy.get(modalDeleteButton).should('not.be.disabled').click();
-            cy.contains(courseManagementPage.courseSelector(courseName, courseShortName)).should('not.exist');
+            courseManagementPage.getCourseCard(courseShortName).should('not.exist');
         });
     });
 });

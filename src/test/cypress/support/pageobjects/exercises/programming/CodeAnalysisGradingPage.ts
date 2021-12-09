@@ -9,6 +9,7 @@ export class CodeAnalysisGradingPage {
     }
 
     makeEveryScaCategoryInfluenceGrading() {
+        // Using ids here would make the test more instable. Its unlikely that this selector will break in the future.
         cy.get('select').each((category) => {
             cy.wrap(category).select('GRADED');
         });
