@@ -75,7 +75,7 @@
     </div>
     <!--endregion-->
     <!--region Right Panel-->
-    <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
+    <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
     <span right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
     <p right-body class="mb-3 markdown-preview" *ngIf="fileUploadExercise!.problemStatement">
         <span [innerHTML]="fileUploadExercise!.problemStatement! | htmlForMarkdown"></span>

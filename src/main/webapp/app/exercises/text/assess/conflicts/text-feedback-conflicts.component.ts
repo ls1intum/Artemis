@@ -19,6 +19,7 @@ import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entiti
 import interact from 'interactjs';
 import dayjs from 'dayjs';
 import { lastValueFrom } from 'rxjs';
+import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-text-feedback-conflicts',
@@ -48,6 +49,9 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
             .filter(({ block, feedback }) => block?.type === TextBlockType.AUTOMATIC || !!feedback)
             .map(({ block }) => block!);
     }
+
+    // Icons
+    faGripLinesVertical = faGripLinesVertical;
 
     constructor(
         private activatedRoute: ActivatedRoute,

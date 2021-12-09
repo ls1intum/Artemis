@@ -7,11 +7,11 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.service.notifications.NotificationTargetService;
+import de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider;
 
 public class SingleUserNotificationFactory {
 
-    private static NotificationTargetService targetService = new NotificationTargetService();
+    private static final NotificationTargetProvider targetProvider = new NotificationTargetProvider();
 
     private static final String POST_NOTIFICATION_TEXT = "Your post got replied.";
 
@@ -31,17 +31,17 @@ public class SingleUserNotificationFactory {
             case NEW_REPLY_FOR_EXERCISE_POST -> {
                 title = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
-                notification.setTarget(targetService.getExercisePostTarget(post, course));
+                notification.setTarget(targetProvider.getExercisePostTarget(post, course));
             }
             case NEW_REPLY_FOR_LECTURE_POST -> {
                 title = NEW_REPLY_FOR_LECTURE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
-                notification.setTarget(targetService.getLecturePostTarget(post, course));
+                notification.setTarget(targetProvider.getLecturePostTarget(post, course));
             }
             case NEW_REPLY_FOR_COURSE_POST -> {
                 title = NEW_REPLY_FOR_COURSE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
-                notification.setTarget(targetService.getCoursePostTarget(post, course));
+                notification.setTarget(targetProvider.getCoursePostTarget(post, course));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
@@ -73,7 +73,7 @@ public class SingleUserNotificationFactory {
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
         notification = new SingleUserNotification(recipient, title, notificationText);
-        notification.setTarget(targetService.getExerciseTarget(exercise, title));
+        notification.setTarget(targetProvider.getExerciseTarget(exercise, title));
         return notification;
     }
 }

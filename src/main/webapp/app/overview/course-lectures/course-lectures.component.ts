@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { faAngleDown, faAngleUp, faSortAmountDown, faSortAmountUp } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-lectures',
@@ -26,6 +27,12 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     public weeklyLecturesGrouped: object;
 
     public exerciseCountMap: Map<string, number>;
+
+    // Icons
+    faSortAmountUp = faSortAmountUp;
+    faSortAmountDown = faSortAmountDown;
+    faAngleUp = faAngleUp;
+    faAngleDown = faAngleDown;
 
     constructor(
         private courseService: CourseManagementService,

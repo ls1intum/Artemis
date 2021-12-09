@@ -12,6 +12,8 @@ import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faBook, faExclamationTriangle, faEye, faFileExport, faFileSignature, faPencilAlt, faSignal, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
@@ -27,6 +29,20 @@ export class ExamExerciseRowButtonsComponent {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
+
+    // Icons
+    faTimes = faTimes;
+    faBook = faBook;
+    faEye = faEye;
+    faWrench = faWrench;
+    faUsers = faUsers;
+    faTable = faTable;
+    faExclamationTriangle = faExclamationTriangle;
+    faSignal = faSignal;
+    faPencilAlt = faPencilAlt;
+    faFileExport = faFileExport;
+    faFileSignature = faFileSignature;
+    farListAlt = faListAlt;
 
     constructor(
         private textExerciseService: TextExerciseService,
