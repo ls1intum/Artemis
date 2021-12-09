@@ -68,10 +68,10 @@
                     </div>
                 </div>
             </div>
-            <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise && isVisibleToStudents(nextRelevantExercise)">
+            <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise && isVisibleToStudents(nextRelevantExercise.exercise)">
                 <h3 class="text-primary">
                     <span *ngIf="nextRelevantExercise.dueDate; else noDueDate">
-                        {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | artemisTranslate: { date: nextRelevantExerciseDueDate | artemisDate } }}
+                        {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | artemisTranslate: { date: nextRelevantExercise.dueDate | artemisDate } }}
                     </span>
                     <ng-template #noDueDate>
                         {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeaderWithoutDueDate' | artemisTranslate }}
@@ -80,9 +80,9 @@
                 <jhi-course-exercise-row
                     class="pb-1"
                     id="next-course-exercise-row"
-                    [exercise]="nextRelevantExercise"
+                    [exercise]="nextRelevantExercise.exercise"
                     [course]="course"
-                    [hasGuidedTour]="nextRelevantExercise === exerciseForGuidedTour"
+                    [hasGuidedTour]="nextRelevantExercise.exercise === exerciseForGuidedTour"
                 ></jhi-course-exercise-row>
                 <div class="collapsed"></div>
             </div>
@@ -149,9 +149,9 @@
         </jhi-side-panel>
         <div class="guided-tour exercise-panel mt-3">
             <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.upcomingDeadlines' | artemisTranslate">
-                <div class="row mb-1 has-exercises align-items-center" *ngFor="let exercise of upcomingExercises" [routerLink]="[exercise.id]">
+                <div class="row mb-1 has-exercises align-items-center" *ngFor="let exercise of upcomingExercises" [routerLink]="[exercise.exercise.id]">
                     <div class="col-5">{{ exercise.dueDate | artemisDate }}</div>
-                    <div class="col-5">{{ exercise.title }}</div>
+                    <div class="col-5">{{ exercise.exercise.title }}</div>
                     <div class="col-2 icon">
                         <fa-icon [icon]="faPlayCircle"></fa-icon>
                     </div>
