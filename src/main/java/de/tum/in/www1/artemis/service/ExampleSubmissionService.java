@@ -96,7 +96,7 @@ public class ExampleSubmissionService {
      * @param exercise   The exercise to which the example submission belongs
      * @return the exampleSubmission entity
      */
-    public ExampleSubmission useStudentSubmissionAsExampleSubmission(Long submissionId, Exercise exercise) {
+    public ExampleSubmission importStudentSubmissionAsExampleSubmission(Long submissionId, Exercise exercise) {
         ExampleSubmission newExampleSubmission = new ExampleSubmission();
         newExampleSubmission.setExercise(exercise);
 

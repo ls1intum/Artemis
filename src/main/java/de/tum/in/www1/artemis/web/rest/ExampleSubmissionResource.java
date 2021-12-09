@@ -168,7 +168,7 @@ public class ExampleSubmissionResource {
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
-        ExampleSubmission exampleSubmission = exampleSubmissionService.useStudentSubmissionAsExampleSubmission(sourceSubmissionId, exercise);
+        ExampleSubmission exampleSubmission = exampleSubmissionService.importStudentSubmissionAsExampleSubmission(sourceSubmissionId, exercise);
 
         return ResponseEntity.ok(exampleSubmission);
     }
