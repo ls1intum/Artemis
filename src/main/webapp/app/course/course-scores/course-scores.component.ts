@@ -20,6 +20,7 @@ import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
+import { faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -84,6 +85,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     averageGrade?: string;
 
     private languageChangeSubscription?: Subscription;
+
+    // Icons
+    faSort = faSort;
+    faDownload = faDownload;
+    faSpinner = faSpinner;
 
     constructor(
         private route: ActivatedRoute,

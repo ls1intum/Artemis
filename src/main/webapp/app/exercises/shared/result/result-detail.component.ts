@@ -25,6 +25,7 @@ import { round, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/util
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 export enum FeedbackItemType {
     Issue,
@@ -98,6 +99,9 @@ export class ResultDetailComponent implements OnInit {
             return getExercise(this.result.participation);
         }
     }
+
+    // Icons
+    faCircleNotch = faCircleNotch;
 
     constructor(
         public activeModal: NgbActiveModal,

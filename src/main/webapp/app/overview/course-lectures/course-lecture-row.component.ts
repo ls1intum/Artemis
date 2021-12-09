@@ -2,6 +2,7 @@ import { Component, HostBinding, Input } from '@angular/core';
 import dayjs from 'dayjs';
 import { Course } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
+import { faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-lecture-row',
@@ -12,6 +13,9 @@ export class CourseLectureRowComponent {
     @HostBinding('class') classes = 'exercise-row';
     @Input() lecture: Lecture;
     @Input() course: Course;
+
+    // Icons
+    faChalkboardTeacher = faChalkboardTeacher;
 
     constructor() {}
 

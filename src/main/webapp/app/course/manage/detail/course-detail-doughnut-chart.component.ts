@@ -4,6 +4,8 @@ import { DoughnutChartType } from './course-detail.component';
 import { Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ScaleType, Color } from '@swimlane/ngx-charts';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+
 
 @Component({
     selector: 'jhi-course-detail-doughnut-chart',
@@ -21,6 +23,9 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     doughnutChartTitle: string;
     stats: number[];
     titleLink: string | undefined;
+
+    // Icons
+    faSpinner = faSpinner;
 
     constructor(private router: Router) {}
 

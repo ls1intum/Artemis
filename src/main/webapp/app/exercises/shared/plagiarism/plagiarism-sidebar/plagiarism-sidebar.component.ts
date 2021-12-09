@@ -3,6 +3,7 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
+import { faArrowLeft, faArrowRight, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-plagiarism-sidebar',
@@ -40,6 +41,11 @@ export class PlagiarismSidebarComponent implements OnChanges {
      * Number of comparisons per page.
      */
     public pageSize = 100;
+
+    // Icons
+    faChevronRight = faChevronRight;
+    faArrowLeft = faArrowLeft;
+    faArrowRight = faArrowRight;
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.comparisons) {

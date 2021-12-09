@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 
@@ -20,7 +21,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
                         >Presentation Score Enabled</label
                     >
                     <fa-icon
-                        icon="question-circle"
+                        [icon]="faQuestionCircle"
                         class="text-secondary"
                         placement="top"
                         ngbTooltip="{{ 'artemisApp.exercise.presentationScoreEnabled.description' | artemisTranslate }}"
@@ -35,6 +36,8 @@ export class PresentationScoreComponent {
     @Input() exercise: Exercise;
 
     Authority = Authority;
+    // Icons
+    faQuestionCircle = faQuestionCircle;
 
     showPresentationScoreCheckbox(): boolean {
         return !!(this.exercise.course && this.exercise.course.presentationScore !== 0);
