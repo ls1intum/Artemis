@@ -227,7 +227,7 @@
     <div class="col-12 text-center mt-2 mb-4" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED && !isTestRun">
         <p>{{ 'artemisApp.exerciseAssessmentDashboard.pleaseContactIfUnclear' | artemisTranslate }}</p>
 
-        <button class="btn btn-primary guided-tour-instructions-button p-1" (click)="readInstruction()" style="font-size: 17px">
+        <button id="participate-in-assessment" class="btn btn-primary guided-tour-instructions-button p-1" (click)="readInstruction()" style="font-size: 17px">
             <span *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0">
                 {{ 'artemisApp.exerciseAssessmentDashboard.readAndUnderstood' | artemisTranslate }}
             </span>
@@ -446,6 +446,7 @@
                                                     overrideOpenAssessmentButton;
                                                     context: { submission: 'new', queryParams: getAssessmentQueryParams(correctionRound), buttonLabel: 'startAssessment' }
                                                 "
+                                                id="start-new-assessment"
                                                 class="btn btn-success btn-sm guided-tour-new-assessment-btn"
                                                 [routerLink]="getAssessmentLink('new')"
                                                 [queryParams]="getAssessmentQueryParams(correctionRound)"

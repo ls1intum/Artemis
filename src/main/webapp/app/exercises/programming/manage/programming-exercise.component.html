@@ -66,7 +66,7 @@
             </thead>
 
             <tbody>
-                <tr *ngFor="let programmingExercise of filteredProgrammingExercises; trackBy: trackId">
+                <tr *ngFor="let programmingExercise of filteredProgrammingExercises; trackBy: trackId" id="exercise-card-{{ programmingExercise.id }}">
                     <td *ngIf="programmingExercise.isAtLeastEditor" class="d-md-table-cell">
                         <input type="checkbox" (change)="toggleProgrammingExercise(programmingExercise)" [ngModel]="isExerciseSelected(programmingExercise)" />
                     </td>
@@ -305,6 +305,7 @@
                                         deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
                                     }"
                                     class="mb-1"
+                                    id="delete-exercise"
                                 >
                                     <fa-icon [icon]="faTimes"></fa-icon>
                                 </button>
