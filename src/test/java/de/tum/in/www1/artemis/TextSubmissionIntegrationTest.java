@@ -23,6 +23,9 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -41,6 +44,9 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     private StudentParticipationRepository participationRepository;
 
     @Autowired
+    private PlagiarismComparisonRepository plagiarismComparisonRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -57,6 +63,8 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     private TextSubmission notSubmittedTextSubmission;
 
     private StudentParticipation lateParticipation;
+
+    private static final String INSTRUCTOR_STATEMENT_A = "instructor Statement A";
 
     @BeforeEach
     public void initTestCase() {
@@ -100,7 +108,26 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void getTextSubmissionWithResult_NotAllowed() throws Exception {
+    public void getTextSubmissionWithResult_involved_allowed() throws Exception {
+        textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
+        plagiarismComparison.setInstructorStatementA(INSTRUCTOR_STATEMENT_A);
+        PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
+        submissionA.setStudentLogin("student1");
+        submissionA.setSubmissionId(this.textSubmission.getId());
+        plagiarismComparison.setSubmissionA(submissionA);
+        plagiarismComparisonRepository.save(plagiarismComparison);
+
+        var submission = request.get("/api/text-submissions/" + this.textSubmission.getId(), HttpStatus.OK, TextSubmission.class);
+
+        assertThat(submission.getParticipation()).as("Should anonymize participation").isNull();
+        assertThat(submission.getResults()).as("Should anonymize results").isEmpty();
+        assertThat(submission.getSubmissionDate()).as("Should anonymize submission date").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getTextSubmissionWithResult_notInvolved_notAllowed() throws Exception {
         textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
         request.get("/api/text-submissions/" + this.textSubmission.getId(), HttpStatus.FORBIDDEN, TextSubmission.class);
     }

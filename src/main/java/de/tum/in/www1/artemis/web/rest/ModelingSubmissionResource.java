@@ -202,6 +202,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         if (!authCheckService.isAllowedToAssessExercise(modelingExercise, user, resultId)) {
             // anonymize and throw exception if not authorized to view submission
             plagiarismService.anonymizeSubmissionForStudentView(modelingSubmission, userRepository.getUser().getLogin());
+            return ResponseEntity.ok(modelingSubmission);
         }
 
         if (!withoutResults) {

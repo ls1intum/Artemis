@@ -174,6 +174,7 @@ public class TextSubmissionResource {
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
             // anonymize and throw exception if not authorized to view submission
             plagiarismService.anonymizeSubmissionForStudentView(textSubmission, userRepository.getUser().getLogin());
+            return ResponseEntity.ok(textSubmission);
         }
 
         // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set

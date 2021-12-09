@@ -26,6 +26,9 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
+import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.util.FileUtils;
@@ -63,6 +66,9 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @Autowired
     private CompassService compassService;
 
+    @Autowired
+    private PlagiarismComparisonRepository plagiarismComparisonRepository;
+
     private ModelingExercise classExercise;
 
     private ModelingExercise activityExercise;
@@ -88,6 +94,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     private TextExercise textExercise;
 
     private Course course;
+
+    private static final String INSTRUCTOR_STATEMENT_A = "instructor Statement A";
 
     @BeforeEach
     public void initTestCase() throws Exception {
@@ -391,11 +399,30 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1")
-    public void getModelSubmissionAsStudent() throws Exception {
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getModelSubmissionWithResult_involved_allowed() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmission(classExercise, submission, "student1");
+        PlagiarismComparison<ModelingSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
+        plagiarismComparison.setInstructorStatementA(INSTRUCTOR_STATEMENT_A);
+        PlagiarismSubmission<ModelingSubmissionElement> submissionA = new PlagiarismSubmission<>();
+        submissionA.setStudentLogin("student1");
+        submissionA.setSubmissionId(submission.getId());
+        plagiarismComparison.setSubmissionA(submissionA);
+        plagiarismComparisonRepository.save(plagiarismComparison);
 
+        var submissionResult = request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.OK, ModelingSubmission.class);
+
+        assertThat(submissionResult.getParticipation()).as("Should anonymize participation").isNull();
+        assertThat(submissionResult.getResults()).as("Should anonymize results").isEmpty();
+        assertThat(submissionResult.getSubmissionDate()).as("Should anonymize submission date").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getModelSubmissionWithResult_notInvolved_notAllowed() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = database.addModelingSubmission(classExercise, submission, "student1");
         request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
