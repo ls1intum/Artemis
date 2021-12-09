@@ -34,6 +34,24 @@ import { MAX_SIZE_UNIT } from 'app/exercises/quiz/manage/apollon-diagrams/exerci
 import { filter, debounceTime } from 'rxjs/operators';
 import { SecuredImageComponent, ImageLoadingStatus } from 'app/shared/image/secured-image.component';
 import { generateTextHintExplanation } from 'app/shared/util/markdown.util';
+import {
+    faAngleDown,
+    faAngleRight,
+    faBan,
+    faBars,
+    faChevronDown,
+    faChevronUp,
+    faCopy,
+    faEye,
+    faFont,
+    faPencilAlt,
+    faPlus,
+    faTrash,
+    faUndo,
+    faUnlink,
+    faUpload,
+} from '@fortawesome/free-solid-svg-icons';
+import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -111,6 +129,24 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
     /** {array} with domainCommands that are needed for a drag and drop question **/
     dragAndDropQuestionDomainCommands: DomainCommand[] = [this.explanationCommand, this.hintCommand];
+
+    // Icons
+    faBan = faBan;
+    faPlus = faPlus;
+    faTrash = faTrash;
+    faUndo = faUndo;
+    faFont = faFont;
+    faEye = faEye;
+    faChevronUp = faChevronUp;
+    faChevronDown = faChevronDown;
+    faPencilAlt = faPencilAlt;
+    faBars = faBars;
+    faUnlink = faUnlink;
+    faCopy = faCopy;
+    farFileImage = faFileImage;
+    faAngleRight = faAngleRight;
+    faAngleDown = faAngleDown;
+    faUpload = faUpload;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,

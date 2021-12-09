@@ -106,7 +106,7 @@
                 <div class="section-content" *ngIf="courseWithExercises">
                     <div *ngIf="futureExercises && futureExercises.length > 0">
                         <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
-                            <fa-icon class="control-icon" [icon]="showFutureExercises ? 'angle-down' : 'angle-up'"></fa-icon>
+                            <fa-icon class="control-icon" [icon]="showFutureExercises ? faAngleDown : faAngleUp"></fa-icon>
                             <strong>{{ 'artemisApp.course.releasedSoon' | artemisTranslate }}</strong>
                         </div>
                         <div *ngIf="showFutureExercises">
@@ -122,7 +122,7 @@
                     </div>
                     <div *ngIf="currentExercises && currentExercises.length > 0">
                         <div class="control-label" (click)="showCurrentExercises = !showCurrentExercises">
-                            <fa-icon class="control-icon" [icon]="showCurrentExercises ? 'angle-down' : 'angle-up'"></fa-icon>
+                            <fa-icon class="control-icon" [icon]="showCurrentExercises ? faAngleDown : faAngleUp"></fa-icon>
                             <strong>{{ 'artemisApp.course.currentWorking' | artemisTranslate }}</strong>
                         </div>
                         <div *ngIf="showCurrentExercises">
@@ -138,7 +138,7 @@
                     </div>
                     <div *ngIf="exercisesInAssessment && exercisesInAssessment.length > 0">
                         <div class="control-label" (click)="showExercisesInAssessment = !showExercisesInAssessment">
-                            <fa-icon class="control-icon" [icon]="showExercisesInAssessment ? 'angle-down' : 'angle-up'"></fa-icon>
+                            <fa-icon class="control-icon" [icon]="showExercisesInAssessment ? faAngleDown : faAngleUp"></fa-icon>
                             <strong>{{ 'artemisApp.course.inAssessment' | artemisTranslate }}</strong>
                         </div>
                         <div *ngIf="showExercisesInAssessment">
@@ -154,7 +154,7 @@
                     </div>
                     <div *ngIf="pastExercises && pastExercises.length > 0">
                         <div class="control-label" (click)="showPastExercises = !showPastExercises">
-                            <fa-icon class="control-icon" [icon]="showPastExercises ? 'angle-down' : 'angle-up'"></fa-icon>
+                            <fa-icon class="control-icon" [icon]="showPastExercises ? faAngleDown : faAngleUp"></fa-icon>
                             <strong>{{ 'artemisApp.course.pastExercises' | artemisTranslate: { amount: pastExercises.length, total: pastExerciseCount } }}</strong>
                         </div>
                         <div *ngIf="showPastExercises">
@@ -195,7 +195,7 @@
             [ngbTooltip]="'entity.action.exercise' | artemisTranslate"
             id="course-card-open-exercises"
         >
-            <fa-icon [icon]="'list-alt'"></fa-icon>
+            <fa-icon [icon]="faListAlt"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'entity.action.exercise' | artemisTranslate }}</span>
         </a>
         <a
@@ -205,7 +205,7 @@
             [ngbTooltip]="'entity.action.exams' | artemisTranslate"
             id="course-card-open-exams"
         >
-            <fa-icon [icon]="'graduation-cap'"></fa-icon>
+            <fa-icon [icon]="faGraduationCap"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'entity.action.exams' | artemisTranslate }}</span>
         </a>
         <a
@@ -215,7 +215,7 @@
             [ngbTooltip]="'entity.action.lecture' | artemisTranslate"
             id="course-card-open-lectures"
         >
-            <fa-icon [icon]="'file-pdf'"></fa-icon>
+            <fa-icon [icon]="faFilePdf"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'entity.action.lecture' | artemisTranslate }}</span>
         </a>
         <a
@@ -225,7 +225,7 @@
             [ngbTooltip]="'artemisApp.metis.discussion.label' | artemisTranslate"
             id="course-card-open-discussions"
         >
-            <fa-icon [icon]="'comments'"></fa-icon>
+            <fa-icon [icon]="faComments"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'artemisApp.metis.discussion.label' | artemisTranslate }}</span>
         </a>
         <a
@@ -235,7 +235,7 @@
             [ngbTooltip]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate"
             id="course-card-open-learning-goals"
         >
-            <fa-icon [icon]="'flag'"></fa-icon>
+            <fa-icon [icon]="faFlag"></fa-icon>
             <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate" class="d-none d-xl-inline"></span>
         </a>
         <a
@@ -247,7 +247,7 @@
             [class.guided-tour]="isGuidedTour"
             id="course-card-open-assessment-dashboard"
         >
-            <fa-icon [icon]="'user-check'"></fa-icon>
+            <fa-icon [icon]="faUserCheck"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'entity.action.assessmentDashboard' | artemisTranslate }}</span>
         </a>
         <a
@@ -257,7 +257,7 @@
             [ngbTooltip]="'entity.action.scores' | artemisTranslate"
             id="course-card-open-scores"
         >
-            <fa-icon [icon]="'table'"></fa-icon>
+            <fa-icon [icon]="faTable"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
         </a>
         <a
@@ -267,7 +267,7 @@
             [ngbTooltip]="'artemisApp.courseStatistics.statistics' | artemisTranslate"
             id="course-card-open-open-statistics"
         >
-            <fa-icon [icon]="'chart-bar'"></fa-icon>
+            <fa-icon [icon]="faChartBar"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'artemisApp.courseStatistics.statistics' | artemisTranslate }}</span>
         </a>
         <a
@@ -277,7 +277,7 @@
             [ngbTooltip]="'artemisApp.course.gradingSystem' | artemisTranslate"
             id="course-card-open-grading-system"
         >
-            <fa-icon [icon]="'clipboard'"></fa-icon>
+            <fa-icon [icon]="faClipboard"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'artemisApp.course.gradingSystem' | artemisTranslate }}</span>
         </a>
     </div>
