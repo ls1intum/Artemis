@@ -1,4 +1,5 @@
 import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 
 @Component({
@@ -16,6 +17,9 @@ export class LearningGoalsPopoverComponent implements OnInit {
     navigateTo: 'learningGoalManagement' | 'courseStatistics' = 'courseStatistics';
 
     navigationArray: string[] = [];
+
+    // Icons
+    faFlag = faFlag;
 
     constructor() {}
 

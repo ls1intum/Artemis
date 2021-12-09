@@ -16,6 +16,7 @@ import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import '@angular/localize/init';
 
 chai.use(sinonChai);
 const expect = chai.expect;

@@ -10,6 +10,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/quiz-statistics.directive';
+import { faSync } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * this interface is adapted from chart.js
@@ -50,6 +51,9 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
 
     maxScore: number;
     websocketChannelForData: string;
+
+    // Icons
+    faSync = faSync;
 
     constructor(
         private route: ActivatedRoute,

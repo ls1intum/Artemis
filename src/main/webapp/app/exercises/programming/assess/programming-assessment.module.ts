@@ -19,6 +19,7 @@ import { AssessmentInstructionsModule } from 'app/assessment/assessment-instruct
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisProgrammingAssessmentDashboardModule } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-exercises-submissions.module';
 import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
+import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
 @NgModule({
     imports: [
@@ -38,6 +39,7 @@ import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-
         AssessmentInstructionsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisProgrammingAssessmentDashboardModule,
+        SubmissionResultStatusModule,
     ],
     declarations: [
         ProgrammingAssessmentRepoExportButtonComponent,

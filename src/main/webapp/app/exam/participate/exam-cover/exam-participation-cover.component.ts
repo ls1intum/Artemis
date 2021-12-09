@@ -14,6 +14,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs';
 import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -54,6 +55,10 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
 
     graceEndDate: dayjs.Dayjs;
     criticalTime = dayjs.duration(30, 'seconds');
+
+    // Icons
+    faSpinner = faSpinner;
+    faArrowLeft = faArrowLeft;
 
     constructor(
         private courseService: CourseManagementService,

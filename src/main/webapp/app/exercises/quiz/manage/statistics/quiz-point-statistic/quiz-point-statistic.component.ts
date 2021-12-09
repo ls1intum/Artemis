@@ -15,6 +15,7 @@ import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { round } from 'app/shared/util/utils';
 import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/quiz-statistics.directive';
 import { TranslateService } from '@ngx-translate/core';
+import { faSync } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -54,6 +55,9 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
     remainingTimeText = '?';
     remainingTimeSeconds = 0;
     interval: any;
+
+    // Icons
+    faSync = faSync;
 
     constructor(
         private route: ActivatedRoute,

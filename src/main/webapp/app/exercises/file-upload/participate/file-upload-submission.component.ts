@@ -27,6 +27,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -56,6 +57,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
 
     private submissionConfirmationText: string;
     private examMode = false;
+
+    // Icons
+    farListAlt = faListAlt;
 
     constructor(
         private route: ActivatedRoute,

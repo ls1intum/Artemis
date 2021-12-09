@@ -42,14 +42,14 @@
                 <b jhiTranslate="artemisApp.courseOverview.menu.discussion">Discussion</b>
             </div>
             <button class="btn btn-primary btn-md ms-1" (click)="loadCourse(true)" [disabled]="refreshingCourse">
-                <fa-icon [icon]="'sync'" [spin]="refreshingCourse"></fa-icon>
+                <fa-icon [icon]="faSync" [spin]="refreshingCourse"></fa-icon>
                 <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
             </button>
         </div>
         <div class="course-body-container">
             <router-outlet></router-outlet>
             <div class="refresh-overlay" [class.active]="refreshingCourse">
-                <fa-icon size="lg" [icon]="'circle-notch'" [spin]="true"></fa-icon>
+                <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
             </div>
         </div>
     </div>

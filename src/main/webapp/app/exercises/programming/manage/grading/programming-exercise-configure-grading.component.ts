@@ -23,6 +23,7 @@ import {
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Describes the editableField
@@ -89,6 +90,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     submissionPolicy?: SubmissionPolicy;
     hadPolicyBefore: boolean;
+
+    // Icons
+    faQuestionCircle = faQuestionCircle;
+    faSquare = faSquare;
 
     /**
      * Returns the value of testcases
@@ -617,9 +622,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     iconForSortPropField(table: 'testCases' | 'codeAnalysis', prop: string) {
         const propSort = this.tableSorts[table].find((e) => e.prop === prop);
         if (!propSort) {
-            return 'sort';
+            return faSort;
         }
-        return propSort.dir === 'asc' ? 'sort-up' : 'sort-down';
+        return propSort.dir === 'asc' ? faSortUp : faSortDown;
     }
 
     /**

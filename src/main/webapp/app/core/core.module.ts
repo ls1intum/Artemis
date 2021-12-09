@@ -8,10 +8,7 @@ import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.inter
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { NgbDateAdapter, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
 import { NgxWebstorageModule, SessionStorageService } from 'ngx-webstorage';
-import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
-import { fas } from '@fortawesome/free-solid-svg-icons';
 import locale from '@angular/common/locales/en';
-import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
 import { MissingTranslationHandler, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { RepositoryInterceptor } from 'app/exercises/shared/result/repository.service';
@@ -102,10 +99,8 @@ import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
     ],
 })
 export class ArtemisCoreModule {
-    constructor(iconLibrary: FaIconLibrary, dpConfig: NgbDatepickerConfig, translateService: TranslateService, sessionStorageService: SessionStorageService) {
+    constructor(dpConfig: NgbDatepickerConfig, translateService: TranslateService, sessionStorageService: SessionStorageService) {
         registerLocaleData(locale);
-        iconLibrary.addIconPacks(fas);
-        iconLibrary.addIcons(...fontAwesomeIcons);
         dpConfig.minDate = { year: dayjs().subtract(100, 'year').year(), month: 1, day: 1 };
         translateService.setDefaultLang('en');
         const langKey = sessionStorageService.retrieve('locale') ?? 'en';
