@@ -16,7 +16,7 @@
             </div>
 
             <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary ms-2 button-resize">
-                <fa-icon [icon]="'save'"></fa-icon>
+                <fa-icon [icon]="faSave"></fa-icon>
                 <span *ngIf="isNewSubmission" jhiTranslate="artemisApp.modelingExercise.createNewExampleSubmission" id="new-modeling-example-submission"
                     >Create new example submission</span
                 >
@@ -25,18 +25,18 @@
         </div>
 
         <button *ngIf="assessmentMode" (click)="saveExampleAssessment()" class="btn btn-primary button-resize">
-            <fa-icon [icon]="'save'"></fa-icon>
+            <fa-icon [icon]="faSave"></fa-icon>
             <span jhiTranslate="artemisApp.modelingExercise.saveExampleAssessment">Save example assessment</span>
         </button>
 
         <div class="mt-2 mb-3" *ngIf="exampleSubmission && !isNewSubmission">
             <button class="btn btn-secondary button-resize" *ngIf="!assessmentMode" (click)="showAssessment()">
-                <fa-icon [icon]="'chalkboard-teacher'"></fa-icon>
+                <fa-icon [icon]="faChalkboardTeacher"></fa-icon>
                 <span jhiTranslate="artemisApp.modelingExercise.showExampleAssessment" id="show-modeling-example-assessment">Show assessment</span>
             </button>
 
             <button class="btn btn-secondary button-resize" *ngIf="assessmentMode" (click)="showSubmission()">
-                <fa-icon [icon]="'code-branch'"></fa-icon>
+                <fa-icon [icon]="faCodeBranch"></fa-icon>
                 <span jhiTranslate="artemisApp.modelingExercise.showExampleSubmission">Show submission</span>
             </button>
         </div>
@@ -48,7 +48,7 @@
             <div *ngFor="let legendElement of legend.slice(0, 3)" class="pe-5" style="display: inline-block">
                 <span>{{ legendElement.text | artemisTranslate }}</span>
                 <fa-layers>
-                    <fa-icon style="color: #e9ecef" [icon]="'circle'" size="2x"></fa-icon>
+                    <fa-icon style="color: #e9ecef" [icon]="faCircle" size="2x"></fa-icon>
                     <fa-icon [icon]="legendElement.icon" [styles]="{ width: '29px', color: legendElement.color, 'font-size': legendElement.size }" transform="shrink-6"></fa-icon>
                 </fa-layers>
             </div>
@@ -57,20 +57,20 @@
             <div *ngIf="toComplete" class="pe-5" style="display: inline-block">
                 <span>{{ legend[3].text | artemisTranslate }}</span>
                 <fa-layers>
-                    <fa-icon style="color: #e9ecef" [icon]="'circle'" size="2x"></fa-icon>
+                    <fa-icon style="color: #e9ecef" [icon]="faCircle" size="2x"></fa-icon>
                     <fa-icon
                         [icon]="legend[3].icon"
                         [styles]="{ color: '#ffc800', width: '29px', 'margin-top': '-9px', 'font-size': legend[3].size }"
                         transform="shrink-6"
                     ></fa-icon>
-                    <fa-icon [icon]="'exclamation'" size="2x" [styles]="{ width: '29px', 'margin-top': '-8px' }" transform="shrink-10"></fa-icon>
+                    <fa-icon [icon]="faExclamation" size="2x" [styles]="{ width: '29px', 'margin-top': '-8px' }" transform="shrink-10"></fa-icon>
                 </fa-layers>
             </div>
         </div>
 
         <div class="col-3 text-end mb-2" *ngIf="readOnly">
             <button (click)="readAndUnderstood()" class="btn btn-success">
-                <fa-icon [icon]="'save'"></fa-icon>
+                <fa-icon [icon]="faSave"></fa-icon>
                 <span jhiTranslate="artemisApp.exampleSubmission.readAndUnderstood">I have viewed and understood the example</span>
             </button>
         </div>
@@ -126,7 +126,7 @@
                     <sup>
                         <small>
                             <fa-icon
-                                [icon]="'info-circle'"
+                                [icon]="faInfoCircle"
                                 title="{{ 'artemisApp.exampleSubmission.assessmentExplanationInfo' | artemisTranslate }}"
                                 style="color: #ffc107"
                             ></fa-icon>

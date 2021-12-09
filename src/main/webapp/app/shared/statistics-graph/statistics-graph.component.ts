@@ -6,6 +6,7 @@ import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/qui
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
+import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-statistics-graph',
@@ -42,6 +43,10 @@ export class StatisticsGraphComponent implements OnChanges {
 
     // Left arrow -> decrease, right arrow -> increase
     private currentPeriod = 0;
+
+    // Icons
+    faArrowLeft = faArrowLeft;
+    faArrowRight = faArrowRight;
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 

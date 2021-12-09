@@ -5,6 +5,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { faBook, faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-tutor-participation-graph',
@@ -39,6 +40,10 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     routerLink: string;
 
     shouldShowManualAssessments = true;
+
+    // Icons
+    faBook = faBook;
+    faChalkboardTeacher = faChalkboardTeacher;
 
     constructor(private router: Router) {}
 

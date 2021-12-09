@@ -24,14 +24,14 @@
                             <div class="row mx-0 align-items-baseline">
                                 <span class="col upload-subtitle">{{ 'artemisApp.markdownEditor.fileUpload' | artemisTranslate }}</span>
                                 <a class="col-auto" href="http://demo.showdownjs.com">
-                                    <fa-icon [icon]="'question-circle'" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate"></fa-icon>
+                                    <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate"></fa-icon>
                                 </a>
                             </div>
                         </label>
                         <jhi-alert *ngIf="shouldDisplayAlert"></jhi-alert>
                     </ng-container>
                     <!-- Required for resizing; don't remove empty span -->
-                    <fa-icon *ngIf="enableResize" [icon]="'grip-lines'" class="rg-bottom text-lightgrey"><span></span></fa-icon>
+                    <fa-icon *ngIf="enableResize" [icon]="faGripLines" class="rg-bottom text-lightgrey"><span></span></fa-icon>
                 </div>
             </ng-template>
         </ng-container>
