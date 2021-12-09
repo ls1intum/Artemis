@@ -28,12 +28,12 @@
                     <fa-icon
                         *ngIf="showButtonToHideCurrentlyDisplayedNotifications; else showButtonToDisplayAllNotifications"
                         class="ng-fa-icon"
-                        [icon]="'archive'"
+                        [icon]="faArchive"
                         [ngbTooltip]="'artemisApp.notification.hideAllCurrentlyDisplayedNotifications' | artemisTranslate"
                     >
                     </fa-icon>
                     <ng-template #showButtonToDisplayAllNotifications>
-                        <fa-icon class="ng-fa-icon" [icon]="'eye'" [ngbTooltip]="'artemisApp.notification.showAllSavedNotifications' | artemisTranslate"> </fa-icon>
+                        <fa-icon class="ng-fa-icon" [icon]="faEye" [ngbTooltip]="'artemisApp.notification.showAllSavedNotifications' | artemisTranslate"> </fa-icon>
                     </ng-template>
                 </button>
                 <small class="text-muted">
