@@ -1,8 +1,8 @@
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { FaIconComponent, FaIconLibrary } from '@fortawesome/angular-fontawesome';
-import { fas, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 
@@ -11,7 +11,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
         <table>
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition($event)">
-                    <th jhiSortBy="name">ID<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="name">ID<fa-icon [icon]="faSort"></fa-icon></th>
                 </tr>
             </thead>
         </table>
@@ -21,11 +21,7 @@ class TestSortByDirectiveComponent {
     predicate?: string;
     ascending?: boolean;
     transition = jest.fn();
-
-    constructor(library: FaIconLibrary) {
-        library.addIconPacks(fas);
-        library.addIcons(faSort, faSortDown, faSortUp);
-    }
+    faSort = faSort;
 }
 
 describe('Directive: SortByDirective', () => {
@@ -53,7 +49,7 @@ describe('Directive: SortByDirective', () => {
         // THEN
         expect(sortByDirective.jhiSortBy).toEqual('name');
         expect(component.predicate).toEqual('_score');
-        expect(sortByDirective.iconComponent?.icon).toEqual('sort');
+        expect(sortByDirective.iconComponent?.icon).toEqual(faSort);
         expect(component.transition).toHaveBeenCalledTimes(0);
     });
 
@@ -68,7 +64,7 @@ describe('Directive: SortByDirective', () => {
         // THEN
         expect(sortByDirective.jhiSortBy).toEqual('name');
         expect(component.predicate).toEqual('id');
-        expect(sortByDirective.iconComponent?.icon).toEqual('sort');
+        expect(sortByDirective.iconComponent?.icon).toEqual(faSort);
         expect(component.transition).toHaveBeenCalledTimes(0);
     });
 
@@ -85,7 +81,7 @@ describe('Directive: SortByDirective', () => {
         expect(sortByDirective.jhiSortBy).toEqual('name');
         expect(component.predicate).toEqual('name');
         expect(component.ascending).toEqual(true);
-        expect(sortByDirective.iconComponent?.icon).toEqual(faSortUp.iconName);
+        expect(sortByDirective.iconComponent?.icon).toEqual(faSortUp);
         expect(component.transition).toHaveBeenCalledTimes(0);
     });
 
@@ -104,7 +100,7 @@ describe('Directive: SortByDirective', () => {
         expect(sortByDirective.jhiSortBy).toEqual('name');
         expect(component.predicate).toEqual('name');
         expect(component.ascending).toEqual(true);
-        expect(sortByDirective.iconComponent?.icon).toEqual(faSortUp.iconName);
+        expect(sortByDirective.iconComponent?.icon).toEqual(faSortUp);
         expect(component.transition).toHaveBeenCalledTimes(1);
     });
 
@@ -122,7 +118,7 @@ describe('Directive: SortByDirective', () => {
         // THEN
         expect(component.predicate).toEqual('name');
         expect(component.ascending).toEqual(false);
-        expect(sortByDirective.iconComponent?.icon).toEqual(faSortDown.iconName);
+        expect(sortByDirective.iconComponent?.icon).toEqual(faSortDown);
         expect(component.transition).toHaveBeenCalledTimes(1);
     });
 
@@ -145,7 +141,7 @@ describe('Directive: SortByDirective', () => {
         // THEN
         expect(component.predicate).toEqual('name');
         expect(component.ascending).toEqual(true);
-        expect(sortByDirective.iconComponent?.icon).toEqual(faSortUp.iconName);
+        expect(sortByDirective.iconComponent?.icon).toEqual(faSortUp);
         expect(component.transition).toHaveBeenCalledTimes(2);
     });
 });

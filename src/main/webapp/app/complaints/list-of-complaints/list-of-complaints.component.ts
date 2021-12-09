@@ -13,6 +13,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-complaint-list',
@@ -36,6 +37,9 @@ export class ListOfComplaintsComponent implements OnInit {
     showAddressedComplaints = false;
 
     loading = true;
+    // Icons
+    faSort = faSort;
+    faFolderOpen = faFolderOpen;
 
     constructor(
         private complaintService: ComplaintService,

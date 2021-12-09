@@ -10,6 +10,7 @@ import { ProgrammingExerciseParticipationType } from 'app/entities/programming-e
 import { findLatestResult } from 'app/shared/util/utils';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',
@@ -27,6 +28,9 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, 
 
     latestResult?: Result;
     resultSubscription: Subscription;
+
+    // Icons
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(private participationWebsocketService: ParticipationWebsocketService) {}
 

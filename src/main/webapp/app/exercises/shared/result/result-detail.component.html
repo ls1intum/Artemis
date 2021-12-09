@@ -7,7 +7,7 @@
     <div *ngIf="messageKey" class="mb-3"><h6 [innerHTML]="messageKey | artemisTranslate"></h6></div>
     <!-- Loading state -->
     <div *ngIf="isLoading; else feedbackContainer" class="text-muted d-flex justify-content-center" id="result-detail-spinner">
-        <fa-icon [spin]="true" size="lg" [icon]="'circle-notch'"></fa-icon>
+        <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch"></fa-icon>
     </div>
     <!-- Feedbacks container -->
     <ng-template #feedbackContainer>

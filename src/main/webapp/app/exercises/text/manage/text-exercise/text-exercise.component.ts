@@ -14,6 +14,7 @@ import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exer
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-text-exercise',
@@ -22,6 +23,10 @@ import { EventManager } from 'app/core/util/event-manager.service';
 export class TextExerciseComponent extends ExerciseComponent {
     @Input() textExercises: TextExercise[];
     filteredTextExercises: TextExercise[];
+
+    // Icons
+    faSort = faSort;
+    faPlus = faPlus;
 
     constructor(
         public exerciseService: ExerciseService,

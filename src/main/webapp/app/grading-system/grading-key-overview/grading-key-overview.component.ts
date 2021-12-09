@@ -6,6 +6,7 @@ import { GradeType } from 'app/entities/grading-scale.model';
 import { round } from 'app/shared/util/utils';
 import { CourseScoreCalculationService, REACHABLE_POINTS } from 'app/overview/course-score-calculation.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-grade-key-overview',
@@ -13,6 +14,10 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
     styleUrls: ['./grading-key-overview.scss'],
 })
 export class GradingKeyOverviewComponent implements OnInit {
+    // Icons
+    faChevronLeft = faChevronLeft;
+    faPrint = faPrint;
+
     constructor(
         private route: ActivatedRoute,
         private router: Router,

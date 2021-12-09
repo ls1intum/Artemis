@@ -146,8 +146,8 @@
         <div class="d-flex flex-wrap flex-lg-nowrap">
             <ng-container *ngIf="!result?.completionDate">
                 <button class="btn m-1 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">
-                    <fa-icon *ngIf="saveBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
-                    <fa-icon [icon]="'save'"></fa-icon>
+                    <fa-icon *ngIf="saveBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                    <fa-icon [icon]="faSave"></fa-icon>
                     <span jhiTranslate="entity.action.save">Save</span>
                 </button>
                 <button
@@ -156,7 +156,7 @@
                     (click)="submit.emit(); sendSubmitAssessmentEventToAnalytics()"
                     [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy"
                 >
-                    <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+                    <fa-icon *ngIf="submitBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
                     <span jhiTranslate="entity.action.submit">Submit</span>
                 </button>
                 <button
@@ -165,12 +165,12 @@
                     (click)="cancel.emit()"
                     [disabled]="!(isAtLeastInstructor || isAssessor) || saveBusy || submitBusy || cancelBusy"
                 >
-                    <fa-icon *ngIf="cancelBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+                    <fa-icon *ngIf="cancelBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
                     <span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
             </ng-container>
             <button class="btn m-1 btn-danger" *ngIf="result?.completionDate && canOverride" (click)="submit.emit()" [disabled]="!assessmentsAreValid || submitBusy">
-                <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+                <fa-icon *ngIf="submitBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
             </button>
             <button
@@ -180,7 +180,7 @@
                 [disabled]="nextSubmissionBusy || submitBusy"
                 (click)="nextSubmission.emit(); sendAssessNextEventToAnalytics()"
             >
-                <fa-icon *ngIf="nextSubmissionBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+                <fa-icon *ngIf="nextSubmissionBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="artemisApp.assessment.button.nextSubmission">Next Submission</span>
             </button>
             <button
@@ -189,7 +189,7 @@
                 *ngIf="result?.completionDate && isAtLeastInstructor && (exercise!.type === ExerciseType.MODELING || exercise!.type === ExerciseType.TEXT)"
                 (click)="importExampleSubmission.emit()"
             >
-                <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true"></fa-icon>
+                <fa-icon *ngIf="submitBusy" [icon]="faSpinner" [spin]="true"></fa-icon>
                 <span jhiTranslate="artemisApp.assessment.button.importExampleSubmission">Import as Example Submission</span>
             </button>
 

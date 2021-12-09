@@ -48,7 +48,7 @@ export class SortByDirective<T> implements AfterContentInit, OnDestroy {
             if (this.sort.predicate === this.jhiSortBy) {
                 icon = this.sort.ascending ? this.sortAscIcon : this.sortDescIcon;
             }
-            this.iconComponent.icon = icon.iconName;
+            this.iconComponent.icon = icon;
             this.iconComponent.render();
         }
     }

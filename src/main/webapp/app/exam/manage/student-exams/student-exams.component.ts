@@ -18,6 +18,7 @@ import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -39,6 +40,9 @@ export class StudentExamsComponent implements OnInit {
     isExamOver = false;
     longestWorkingTime?: number;
     isAdmin = false;
+
+    // Icons
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private route: ActivatedRoute,
