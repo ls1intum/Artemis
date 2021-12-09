@@ -131,7 +131,8 @@ management:
     endpoint:
         jhimetrics:
             enabled: true
-        info:
+    info:
+        env:
             enabled: true
 
 sentry:
