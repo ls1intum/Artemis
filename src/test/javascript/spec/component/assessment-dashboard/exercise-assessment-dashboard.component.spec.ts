@@ -1,4 +1,3 @@
-import * as ace from 'brace';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -57,7 +56,7 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { PieChartModule } from '@swimlane/ngx-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -70,8 +69,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
-    // needed to make sure ace is defined
-    ace.acequire('ace/ext/modelist.js');
     let comp: ExerciseAssessmentDashboardComponent;
     let fixture: ComponentFixture<ExerciseAssessmentDashboardComponent>;
 
@@ -184,7 +181,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let navigateSpy: jest.SpyInstance;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, exerciseId: modelingExercise.id! }) } } as any as ActivatedRoute;
 
-    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(NgxChartsModule)];
+    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(PieChartModule)];
 
     const declarations = [
         ExerciseAssessmentDashboardComponent,
@@ -225,10 +222,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockProvider(GuidedTourService),
         MockProvider(ArtemisDatePipe),
         MockProvider(SortService),
-        MockProvider(TextSubmissionService),
-        MockProvider(ModelingSubmissionService),
-        MockProvider(FileUploadSubmissionService),
-        MockProvider(ProgrammingSubmissionService),
     ];
 
     beforeEach(() => {
@@ -298,10 +291,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
-    });
-
-    it('should initialize', () => {
-        fixture.detectChanges();
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
