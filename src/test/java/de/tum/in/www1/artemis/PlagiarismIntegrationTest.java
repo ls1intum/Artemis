@@ -29,6 +29,10 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     private TextExerciseRepository textExerciseRepository;
 
+    private static final String INSTRUCTOR_STATEMENT_A = "instructor Statement A";
+
+    private static final String INSTRUCTOR_STATEMENT_B = "instructor Statement B";
+
     @BeforeEach
     public void initTestCase() {
         database.addUsers(3, 1, 1, 1);
@@ -39,22 +43,27 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.resetDatabase();
     }
 
-    private static final String INSTRUCTOR_STATEMENT_A = "instructor Statement A";
-
-    private static final String INSTRUCTOR_STATEMENT_B = "instructor Statement B";
-
+    /**
+     * Checks the method updatePlagiarismComparisonFinalStatus as student
+     */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void updatePlagiarismComparisonFinalStatus_student() throws Exception {
         request.put("/api/plagiarism-comparisons/1/student1/final-status", new PlagiarismComparisonStatusDTO(), HttpStatus.FORBIDDEN);
     }
 
+    /**
+     * Checks the method updatePlagiarismComparisonFinalStatus as editor
+     */
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     public void updatePlagiarismComparisonFinalStatus_editor() throws Exception {
         request.put("/api/plagiarism-comparisons/1/student1/final-status", new PlagiarismComparisonStatusDTO(), HttpStatus.FORBIDDEN);
     }
 
+    /**
+     * Checks the method updatePlagiarismComparisonFinalStatus as instructor
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updatePlagiarismComparisonFinalStatusForStudentA() throws Exception {
@@ -77,6 +86,9 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(updatedPlagiarismComparison.getStatusA()).as("should update status for studentA").isEqualTo(PlagiarismStatus.CONFIRMED);
     }
 
+    /**
+     * Checks the method updatePlagiarismComparisonFinalStatus for second (B) user
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updatePlagiarismComparisonFinalStatusForStudentB() throws Exception {
@@ -102,6 +114,9 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(updatedPlagiarismComparison.getStatusB()).as("should update status for studentB").isEqualTo(PlagiarismStatus.CONFIRMED);
     }
 
+    /**
+     * Checks the method updatePlagiarismComparisonFinalStatus for unknown student
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updatePlagiarismComparisonFinalStatusForUnknownStudent() throws Exception {
@@ -123,18 +138,27 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         request.put("/api/plagiarism-comparisons/" + plagiarismComparison.getId() + "/student42/final-status", new PlagiarismComparisonStatusDTO(), HttpStatus.NOT_FOUND);
     }
 
+    /**
+     * Checks the method getPlagiarismCasesForCourse as student
+     */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getPlagiarismCasesForCourse_student() throws Exception {
         request.getList("/api/courses/" + 1L + "/plagiarism-cases", HttpStatus.FORBIDDEN, PlagiarismCaseDTO.class);
     }
 
+    /**
+     * Checks the method getPlagiarismCasesForCourse as tutor
+     */
     @Test
     @WithMockUser(username = "tutor1", roles = "TUTOR")
     public void getPlagiarismCasesForCourse_tutor() throws Exception {
         request.getList("/api/courses/" + 1L + "/plagiarism-cases", HttpStatus.FORBIDDEN, PlagiarismCaseDTO.class);
     }
 
+    /**
+     * Checks the method getPlagiarismCasesForCourse as instructor
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getPlagiarismCasesForCourse_instructor() throws Exception {
@@ -155,6 +179,9 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(cases.get(0).getComparisons().size()).isEqualTo(2);
     }
 
+    /**
+     * Checks the method updatePlagiarismComparisonStudentStatement for student A
+     */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void saveStudentStatementForStudentA() throws Exception {
@@ -172,6 +199,9 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(comparison.getStudentStatementA()).as("should update student statement").isEqualTo("test statement");
     }
 
+    /**
+     * Checks the method updatePlagiarismComparisonStudentStatement for student B
+     */
     @Test
     @WithMockUser(username = "student2", roles = "USER")
     public void saveStudentStatementForStudentB() throws Exception {
@@ -189,6 +219,9 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(comparison.getStudentStatementB()).as("should update student statement").isEqualTo("test statement");
     }
 
+    /**
+     * Checks the method updatePlagiarismComparisonStudentStatement for unknown student
+     */
     @Test
     @WithMockUser(username = "student3", roles = "USER")
     public void saveStudentStatementForUnknownStudent() throws Exception {
@@ -208,6 +241,9 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         request.put("/api/plagiarism-comparisons/" + plagiarismComparison.getId() + "/student-statement", statement, HttpStatus.FORBIDDEN);
     }
 
+    /**
+     * Checks the method updatePlagiarismComparisonInstructorStatement for student A
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveInstructorStatementForStudentA() throws Exception {
@@ -228,6 +264,9 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(comparison.getInstructorStatementA()).as("should update instructor statement").isEqualTo("test statement");
     }
 
+    /**
+     * Checks the method updatePlagiarismComparisonInstructorStatement for student B
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveInstructorStatementForStudentB() throws Exception {
@@ -251,6 +290,9 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(comparison.getInstructorStatementB()).as("should update instructor statement").isEqualTo("test statement");
     }
 
+    /**
+     * Checks the method updatePlagiarismComparisonInstructorStatement for unknown student
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveInstructorStatementForUnknownStudent() throws Exception {

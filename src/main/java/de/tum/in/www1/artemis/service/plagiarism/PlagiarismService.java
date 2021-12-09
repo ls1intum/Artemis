@@ -6,6 +6,9 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
@@ -80,5 +83,24 @@ public class PlagiarismService {
             throw new AccessForbiddenException("This plagiarism comparison is not related to the requesting user.");
         }
         return comparison;
+    }
+
+    /**
+     * Anonymizes the submission for the student view.
+     * A student should not see sensitive information
+     *
+     * @param submission that has to be anonymized.
+     * @param userLogin of the student asking to see his plagiarism comparison.
+     * @return the anoymized submission for the given student
+     */
+    public Submission anonymizeSubmissionForStudentView(Submission submission, String userLogin) {
+        User student = ((StudentParticipation) submission.getParticipation()).getStudent().orElseThrow();
+        if (!student.getLogin().equals(userLogin)) {
+            throw new AccessForbiddenException("This plagiarism comparison is not related to the requesting user.");
+        }
+        submission.setParticipation(null);
+        submission.setResults(null);
+        submission.setSubmissionDate(null);
+        return submission;
     }
 }
