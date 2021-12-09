@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
@@ -39,8 +39,9 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
         quizStatisticUtil: QuizStatisticUtil,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         private artemisMarkdown: ArtemisMarkdownService,
+        protected changeDetector: ChangeDetectorRef,
     ) {
-        super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService);
+        super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService, changeDetector);
     }
 
     /**

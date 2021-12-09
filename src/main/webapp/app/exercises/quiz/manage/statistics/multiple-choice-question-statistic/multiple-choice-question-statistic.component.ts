@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -38,8 +38,9 @@ export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticC
         jhiWebsocketService: JhiWebsocketService,
         private quizStatisticUtil: QuizStatisticUtil,
         private artemisMarkdown: ArtemisMarkdownService,
+        protected changeDetector: ChangeDetectorRef,
     ) {
-        super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService);
+        super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService, changeDetector);
     }
 
     /**

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs';
@@ -67,8 +67,9 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
         private quizExerciseService: QuizExerciseService,
         private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
+        protected changeDetector: ChangeDetectorRef,
     ) {
-        super();
+        super(changeDetector);
     }
 
     ngOnInit() {

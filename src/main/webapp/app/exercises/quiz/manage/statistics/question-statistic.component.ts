@@ -9,7 +9,7 @@ import { Subscription } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
 import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/quiz-statistics.directive';
 
@@ -52,8 +52,9 @@ export abstract class QuestionStatisticComponent extends QuizStatisticsDirective
         protected translateService: TranslateService,
         protected quizExerciseService: QuizExerciseService,
         protected jhiWebsocketService: JhiWebsocketService,
+        protected changeDetector: ChangeDetectorRef,
     ) {
-        super();
+        super(changeDetector);
     }
 
     ngOnInit() {

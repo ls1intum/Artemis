@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
@@ -18,21 +18,6 @@ import { faSync } from '@fortawesome/free-solid-svg-icons';
 export interface DataSet {
     data: number[];
     backgroundColor: string[];
-}
-
-export function calculateHeightOfChartData(data: number[]) {
-    const max = Math.max(...data);
-    // we provide 300 as buffer at the top to display labels
-    const height = Math.ceil((max + 1) / 10) * 10;
-    if (height < 10) {
-        return height + 3;
-    } else if (height < 1000) {
-        // add 25%, round to the next 10
-        return Math.ceil(height * 0.125) * 10;
-    } else {
-        // add 25%, round to the next 100
-        return Math.ceil(height * 0.0125) * 100;
-    }
 }
 
 @Component({
@@ -63,8 +48,9 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
         private quizExerciseService: QuizExerciseService,
         private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
+        protected changeDetector: ChangeDetectorRef,
     ) {
-        super();
+        super(changeDetector);
     }
 
     loadDataInDiagram(): void {
@@ -175,7 +161,6 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
         const lastLabel = this.translateService.instant('showStatistic.quizStatistic.average');
         this.label.push(lastLabel);
         this.chartLabels = this.label;
-        this.setData(this.quizExercise.quizPointStatistic!);
 
         // load data into chart
         this.updateChart();
@@ -187,18 +172,7 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
      *  2. change the bar-Data
      */
     switchRated() {
-        if (this.rated) {
-            // load unrated Data
-            this.data = this.unratedData;
-            this.participants = this.quizExercise.quizPointStatistic!.participantsUnrated!;
-            this.rated = false;
-        } else {
-            // load rated Data
-            this.data = this.ratedData;
-            this.participants = this.quizExercise.quizPointStatistic!.participantsRated!;
-            this.rated = true;
-        }
-
+        this.rated = !this.rated;
         this.updateChart();
     }
 
@@ -206,6 +180,7 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
      * updates the chart by setting the data set, re-calculating the height and calling update on the chart view child
      */
     updateChart() {
+        this.setData(this.quizExercise.quizPointStatistic!);
         this.pushDataToNgxEntry();
         this.ngxColor.domain = this.backgroundColor;
         this.xAxisLabel = this.translateService.instant('showStatistic.quizStatistic.xAxes');

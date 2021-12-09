@@ -15,6 +15,8 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { QuizStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { MockProvider } from 'ng-mocks';
+import { ChangeDetectorRef } from '@angular/core';
 
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
@@ -45,6 +47,7 @@ describe('QuizExercise Statistic Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
+                MockProvider(ChangeDetectorRef),
             ],
         })
             .overrideTemplate(QuizStatisticComponent, '')

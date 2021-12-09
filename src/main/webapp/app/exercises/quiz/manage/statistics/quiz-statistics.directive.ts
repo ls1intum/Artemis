@@ -1,6 +1,5 @@
-import { Directive } from '@angular/core';
+import { ChangeDetectorRef, Directive } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { calculateHeightOfChartData } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { round } from 'app/shared/util/utils';
 import { NgxDataEntry } from 'app/entities/course.model';
 import { QuizStatistic } from 'app/entities/quiz/quiz-statistic.model';
@@ -26,6 +25,8 @@ export abstract class QuizStatisticsDirective {
     maxScale: number;
     chartLabels: string[] = [];
     totalParticipants = 0;
+
+    constructor(protected changeDetector: ChangeDetectorRef) {}
 
     /**
      * Depending on if the rated or unrated results should be displayed,
@@ -56,8 +57,9 @@ export abstract class QuizStatisticsDirective {
         this.data.forEach((score, index) => {
             this.ngxData.push({ name: this.chartLabels[index], value: score });
         });
-        this.maxScale = calculateHeightOfChartData(this.data);
+        this.maxScale = this.calculateHeightOfChartData(this.data);
         this.ngxData = [...this.ngxData];
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -73,6 +75,27 @@ export abstract class QuizStatisticsDirective {
             return absoluteValue + ' (0%)';
         } else {
             return absoluteValue + ' (' + round((absoluteValue / this.participants) * 100, 1) + '%)';
+        }
+    }
+
+    /**
+     * Calculates the maximum value on the y axis on a chart depending of the data to display
+     * @param data the array of data that is to display by the chart
+     * @returns height of the chart
+     * @private
+     */
+    private calculateHeightOfChartData(data: number[]): number {
+        const max = Math.max(...data);
+        // we provide 300 as buffer at the top to display labels
+        const height = Math.ceil((max + 1) / 10) * 10;
+        if (height < 10) {
+            return height + 3;
+        } else if (height < 1000) {
+            // add 25%, round to the next 10
+            return Math.ceil(height * 0.125) * 10;
+        } else {
+            // add 25%, round to the next 100
+            return Math.ceil(height * 0.0125) * 100;
         }
     }
 }
