@@ -31,6 +31,7 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     providers: [FileUploadAssessmentService],
@@ -73,6 +74,9 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     highlightDifferences = false;
 
     private cancelConfirmationText: string;
+
+    // Icons
+    farListAlt = faListAlt;
 
     constructor(
         private changeDetectorRef: ChangeDetectorRef,

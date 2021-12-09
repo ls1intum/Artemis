@@ -77,26 +77,29 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
             throw new IllegalArgumentException();
         }
-
-        ProgrammingExercise programmingExercise = programmingParticipation.getProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);
+        // Error case 2: The programming exercise cannot be found.
+        if (programmingExercise == null) {
+            throw new IllegalArgumentException();
+        }
         boolean lockRepositoryPolicyEnforced = false;
 
         if (programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
             lockRepositoryPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, participation);
         }
-        // Error case 2: The user does not have permissions to push into the repository.
+        // Error case 3: The user does not have permissions to push into the repository.
         boolean hasPermissions = participationService.canAccessParticipation(programmingParticipation);
         if (!hasPermissions) {
             throw new IllegalAccessException();
         }
-        // Error case 3: The user's participation repository is locked.
+        // Error case 4: The user's participation repository is locked.
         if (repositoryAction == RepositoryActionType.WRITE && (programmingParticipation.isLocked() || lockRepositoryPolicyEnforced)) {
             throw new IllegalAccessException();
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise);
-        // Error case 4: The student can reset the repository only before and a tutor/instructor only after the due date has passed
+        // Error case 5: The student can reset the repository only before and a tutor/instructor only after the due date has passed
         if (repositoryAction == RepositoryActionType.RESET) {
             boolean isOwner = true; // true for Solution- and TemplateProgrammingExerciseParticipation
             if (participation instanceof StudentParticipation) {
@@ -120,7 +123,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
                 }
             }
         }
-        // Error case 5: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
+        // Error case 6: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
         // This must be a student participation as hasPermissions would have been false and an error already thrown
         boolean isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
         if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false)) {

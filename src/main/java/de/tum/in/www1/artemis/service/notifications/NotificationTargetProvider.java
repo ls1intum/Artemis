@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.notifications;
 
-import org.springframework.stereotype.Service;
-
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -10,8 +8,7 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.metis.Post;
 
-@Service
-public class NotificationTargetService {
+public class NotificationTargetProvider {
 
     // shared constants
     private static final String MESSAGE_TEXT = "message";

@@ -5,6 +5,7 @@ import { TaskArray } from 'app/exercises/programming/shared/instructions-render/
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
+import { faCheck, faQuestion, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-step-wizard',
@@ -19,6 +20,11 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     @Input() showTestDetails?: boolean;
 
     steps: Array<{ done: TestCaseState; title: string; tests: string[] }>;
+
+    // Icons
+    faTimes = faTimes;
+    faCheck = faCheck;
+    faQuestion = faQuestion;
 
     constructor(private modalService: NgbModal, private instructionService: ProgrammingExerciseInstructionService) {}
 

@@ -2,7 +2,7 @@ import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage
 import { MODELING_EDITOR_CANVAS } from '../exercises/modeling/ModelingEditor';
 import { CypressExerciseType } from '../../requests/CourseManagementRequests';
 import { BASE_API, PUT } from '../../constants';
-// TODO: find or create better selectors for this
+
 const ASSESSMENT_CONTAINER = '#modeling-assessment-container';
 
 /**
@@ -10,7 +10,7 @@ const ASSESSMENT_CONTAINER = '#modeling-assessment-container';
  */
 export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessmentPage {
     openAssessmentForComponent(componentNumber: number) {
-        cy.get('.apollon-row').getSettled(`${MODELING_EDITOR_CANVAS} >>> :nth-child(${componentNumber})`).children().eq(0).dblclick('top', { force: true });
+        cy.get('#apollon-assessment-row').getSettled(`${MODELING_EDITOR_CANVAS} >>> :nth-child(${componentNumber})`).children().eq(0).dblclick('top', { force: true });
     }
 
     assessComponent(points: number, feedback: string) {

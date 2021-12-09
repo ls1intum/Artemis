@@ -7,6 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TranslateService } from '@ngx-translate/core';
+import { faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
@@ -56,6 +57,10 @@ export class AssessmentHeaderComponent {
     readonly ExerciseType = ExerciseType;
     readonly ComplaintType = ComplaintType;
     readonly AssessmentType = AssessmentType;
+
+    // Icons
+    faSpinner = faSpinner;
+    faSave = faSave;
 
     @Input() set highlightDifferences(highlightDifferences: boolean) {
         this._highlightDifferences = highlightDifferences;

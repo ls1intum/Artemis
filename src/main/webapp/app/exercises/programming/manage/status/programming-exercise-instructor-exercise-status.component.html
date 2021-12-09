@@ -1,7 +1,7 @@
-<fa-icon *ngIf="issues.length; else noIssues" [icon]="'exclamation-triangle'" size="2x" class="text-warning" placement="bottom" [ngbTooltip]="tooltipContent"></fa-icon>
+<fa-icon *ngIf="issues.length; else noIssues" [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom" [ngbTooltip]="tooltipContent"></fa-icon>
 
 <ng-template #noIssues>
-    <fa-icon [icon]="'check-circle'" size="2x" class="text-success" jhiTranslate="artemisApp.programmingExercise.status.exerciseHasNoIssues"></fa-icon>
+    <fa-icon [icon]="faCheckCircle" size="2x" class="text-success" jhiTranslate="artemisApp.programmingExercise.status.exerciseHasNoIssues"></fa-icon>
 </ng-template>
 
 <ng-template #tooltipContent>
