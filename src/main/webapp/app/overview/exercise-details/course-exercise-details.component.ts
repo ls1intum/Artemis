@@ -47,6 +47,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { UMLModel } from '@ls1intum/apollon';
 import { SafeHtml } from '@angular/platform-browser';
+import { faBook, faExternalLinkAlt, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -102,6 +103,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public inProductionEnvironment: boolean;
     public noVersionControlAndContinuousIntegrationServerAvailable = false;
     public wasSubmissionSimulated = false;
+
+    // Icons
+    faBook = faBook;
+    faEye = faEye;
+    faWrench = faWrench;
+    faTable = faTable;
+    faListAlt = faListAlt;
+    faSignal = faSignal;
+    faExternalLinkAlt = faExternalLinkAlt;
+    faFileSignature = faFileSignature;
 
     constructor(
         private exerciseService: ExerciseService,

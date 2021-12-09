@@ -12,6 +12,7 @@ import { DiscussionSectionComponent } from 'app/overview/discussion-section/disc
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-lecture-details',
@@ -28,6 +29,9 @@ export class CourseLectureDetailsComponent implements OnInit {
     hasPdfLectureUnit: boolean;
 
     readonly LectureUnitType = LectureUnitType;
+
+    // Icons
+    faSpinner = faSpinner;
 
     constructor(private alertService: AlertService, private lectureService: LectureService, private activatedRoute: ActivatedRoute, private fileService: FileService) {}
 

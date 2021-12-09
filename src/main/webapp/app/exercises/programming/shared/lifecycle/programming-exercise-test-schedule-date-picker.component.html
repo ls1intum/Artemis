@@ -13,7 +13,7 @@
         [class.btn-lifecycle--deactivated]="!selectedDate"
         [class.btn-lifecycle--disabled]="readOnly"
     >
-        <fa-icon class="icon-calendar-plus" [icon]="'calendar-plus'" size="2x"></fa-icon>
+        <fa-icon class="icon-calendar-plus" [icon]="faCalendarPlus" size="2x"></fa-icon>
     </button>
     <button
         *ngIf="!selectedDate && !readOnly"
@@ -23,14 +23,14 @@
         [class.btn-lifecycle--deactivated]="!selectedDate"
         [class.btn-lifecycle--disabled]="readOnly"
     >
-        <fa-icon class="icon-calendar-plus" [icon]="'calendar-plus'" size="2x"></fa-icon>
+        <fa-icon class="icon-calendar-plus" [icon]="faCalendarPlus" size="2x"></fa-icon>
     </button>
     <button *ngIf="selectedDate && readOnly" (click)="!readOnly && resetDate()" type="button" class="btn btn-light btn-lifecycle btn-lifecycle--disabled">
-        <fa-icon class="icon-static" [icon]="'calendar-check'" size="2x"></fa-icon>
+        <fa-icon class="icon-static" [icon]="faCalendarCheck" size="2x"></fa-icon>
     </button>
     <button *ngIf="selectedDate && !readOnly" (click)="!readOnly && resetDate()" type="button" class="btn btn-light btn-lifecycle calendar-event-toggle">
-        <fa-icon class="icon-static" [icon]="'calendar-check'" size="2x"></fa-icon>
-        <fa-icon class="icon-remove" [icon]="'calendar-minus'" size="2x"></fa-icon>
+        <fa-icon class="icon-static" [icon]="faCalendarCheck" size="2x"></fa-icon>
+        <fa-icon class="icon-remove" [icon]="faCalendarMinus" size="2x"></fa-icon>
     </button>
     <div *ngIf="selectedDate">
         {{ selectedDate | artemisDate: 'long-date' }}<br />

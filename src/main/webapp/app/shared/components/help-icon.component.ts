@@ -1,10 +1,14 @@
 import { Component, Input } from '@angular/core';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-help-icon',
-    template: ` <fa-icon [icon]="'question-circle'" class="text-secondary" [placement]="placement" ngbTooltip="{{ text | artemisTranslate }}"></fa-icon> `,
+    template: ` <fa-icon [icon]="faQuestionCircle" class="text-secondary" [placement]="placement" ngbTooltip="{{ text | artemisTranslate }}"></fa-icon> `,
 })
 export class HelpIconComponent {
     @Input() placement: string;
     @Input() text: string;
+
+    // Icons
+    faQuestionCircle = faQuestionCircle;
 }

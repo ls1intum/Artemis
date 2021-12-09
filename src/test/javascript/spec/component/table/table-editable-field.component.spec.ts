@@ -19,6 +19,7 @@ describe('TableEditableFieldComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisTableModule],
+            declarations: [TableEditableFieldComponent],
         })
             .compileComponents()
             .then(() => {
@@ -28,17 +29,20 @@ describe('TableEditableFieldComponent', () => {
             });
     });
 
-    it('should render value as provided', () => {
+    it('should render value as provided', fakeAsync(() => {
         const value = 'test';
 
         comp.value = value;
         fixture.detectChanges();
+        fixture.whenStable().then(() => {
+            expect(comp.inputValue).to.equal(value);
 
-        const tableInput = debugElement.query(By.css(tableInputValue));
+            const tableInput = debugElement.query(By.css(tableInputValue));
 
-        expect(tableInput).to.exist;
-        expect(tableInput.nativeElement.value).to.equal(value);
-    });
+            expect(tableInput).to.exist;
+            expect(tableInput.nativeElement.value).to.equal(value);
+        });
+    }));
 
     it('should show input and fire update event on enter', fakeAsync(() => {
         const value = 'test';
@@ -47,12 +51,13 @@ describe('TableEditableFieldComponent', () => {
         comp.value = value;
         comp.onValueUpdate = fakeUpdateValue;
         fixture.detectChanges();
+        fixture.whenStable().then(() => {
+            const tableInput = debugElement.query(By.css(tableInputValue));
+            expect(tableInput).to.exist;
+            expect(tableInput.nativeElement.value).to.equal(value);
 
-        const tableInput = debugElement.query(By.css(tableInputValue));
-        expect(tableInput).to.exist;
-        expect(tableInput.nativeElement.value).to.equal(value);
-
-        tableInput.nativeElement.dispatchEvent(new Event('blur'));
-        expect(fakeUpdateValue.mock.calls.length).to.equal(1);
+            tableInput.nativeElement.dispatchEvent(new Event('blur'));
+            expect(fakeUpdateValue.mock.calls.length).to.equal(1);
+        });
     }));
 });

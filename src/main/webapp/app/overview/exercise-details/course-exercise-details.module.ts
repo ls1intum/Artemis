@@ -23,6 +23,7 @@ import { isOrion } from 'app/shared/orion/orion';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
 const routes: Routes = [
     {
@@ -64,6 +65,7 @@ const routes: Routes = [
         RouterModule.forChild(routes),
         ArtemisModelingEditorModule,
         ArtemisMarkdownModule,
+        SubmissionResultStatusModule,
     ],
     declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],

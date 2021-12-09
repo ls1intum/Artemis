@@ -236,7 +236,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         database.addExampleSubmission(exampleSubmission);
         request.delete("/api/exercises/" + exampleSubmission.getExercise().getId() + "/example-submissions/" + exampleSubmission.getId() + "/example-text-assessment/feedback",
                 HttpStatus.NO_CONTENT);
-        assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult().getFeedbacks()).isEmpty();
+        assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult()).isNull();
         assertThat(textBlockRepository.findAllWithEagerClusterBySubmissionId(exampleSubmission.getId())).isEmpty();
     }
 
@@ -630,10 +630,9 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         final var exampleSubmission = ModelFactory.generateExampleSubmission(textSubmission, textExercise, true);
         database.addExampleSubmission(exampleSubmission);
 
-        Result result = request.get("/api/exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/example-result", expectedStatus, Result.class);
+        Result result = request.getNullable("/api/exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/example-result", expectedStatus, Result.class);
 
-        if (expectedStatus == HttpStatus.OK) {
-            assertThat(result).as("result found").isNotNull();
+        if (expectedStatus == HttpStatus.OK && result != null) {
             assertThat(result.getSubmission().getId()).as("result for correct submission").isEqualTo(textSubmission.getId());
         }
 
@@ -671,9 +670,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getExampleResultForNonExampleSubmissionAsTutor() throws Exception {
         final var result = getExampleResultForTutor(HttpStatus.OK, false);
-        assertThat(result.getFeedbacks()).isEmpty();
-        assertThat(result.getScore()).isNull();
-        assertThat(result.getResultString()).isNull();
+        assertThat(result).isNull();
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
