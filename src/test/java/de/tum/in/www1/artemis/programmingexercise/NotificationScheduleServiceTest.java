@@ -1,15 +1,21 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
 
 public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -20,40 +26,57 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
     @Autowired
     private ExerciseRepository exerciseRepository;
 
-    private static final long DELAY_IN_SECONDS = 2;
+    @Autowired
+    private NotificationRepository notificationRepository;
 
-    private static final long TIME_MULTIPLICITY_TO_REDUCE_TEST_FLAKINESS = 2;
+    private Exercise exercise;
+
+    private static final long DELAY_IN_SECONDS = 1;
+
+    @BeforeEach
+    public void init() {
+        database.addCourseWithFileUploadExercise();
+        exercise = exerciseRepository.findAll().get(0);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
+    }
 
     @Test
-    void shouldCreateNotificationAtReleaseDate() throws Exception {
-        database.addCourseWithFileUploadExercise();
-        Exercise exercise = exerciseRepository.findAll().get(0);
+    @Timeout(5)
+    void shouldCreateNotificationAtReleaseDate() {
         ZonedDateTime exerciseReleaseDate = ZonedDateTime.now().plusSeconds(DELAY_IN_SECONDS);
         exercise.setReleaseDate(exerciseReleaseDate);
         exerciseRepository.save(exercise);
 
+        assertThat(notificationRepository.count()).isEqualTo(0);
+
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
 
-        Thread.sleep(DELAY_IN_SECONDS * TIME_MULTIPLICITY_TO_REDUCE_TEST_FLAKINESS * 1000);
+        await().until(() -> notificationRepository.count() > 0);
 
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(exercise);
     }
 
     @Test
-    void shouldCreateNotificationAtAssessmentDueDate() throws Exception {
+    @Timeout(5)
+    void shouldCreateNotificationAtAssessmentDueDate() {
         database.addUsers(1, 1, 1, 1);
-        database.addCourseWithFileUploadExercise();
-        Exercise exercise = exerciseRepository.findAll().get(0);
         exercise.setAssessmentDueDate(ZonedDateTime.now().plusSeconds(DELAY_IN_SECONDS));
         exerciseRepository.save(exercise);
+
         TextSubmission textSubmission = new TextSubmission();
         textSubmission.text("Text");
         textSubmission.submitted(true);
         database.addSubmission(exercise, textSubmission, "student1");
 
+        assertThat(notificationRepository.count()).isEqualTo(0);
+
         instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(textSubmission.getId());
 
-        Thread.sleep(DELAY_IN_SECONDS * TIME_MULTIPLICITY_TO_REDUCE_TEST_FLAKINESS * 1000);
+        await().until(() -> notificationRepository.count() > 0);
 
         verify(singleUserNotificationService, times(1)).notifyUserAboutAssessedExerciseSubmission(exercise, database.getUserByLogin("student1"));
     }
