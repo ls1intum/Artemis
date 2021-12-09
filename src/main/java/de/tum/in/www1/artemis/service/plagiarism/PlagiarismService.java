@@ -7,12 +7,11 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.repository.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -29,9 +28,13 @@ public class PlagiarismService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
-    public PlagiarismService(ExerciseRepository exerciseRepository, PlagiarismResultRepository plagiarismResultRepository) {
+    private final PlagiarismComparisonRepository plagiarismComparisonRepository;
+
+    public PlagiarismService(ExerciseRepository exerciseRepository, PlagiarismResultRepository plagiarismResultRepository,
+            PlagiarismComparisonRepository plagiarismComparisonRepository) {
         this.exerciseRepository = exerciseRepository;
         this.plagiarismResultRepository = plagiarismResultRepository;
+        this.plagiarismComparisonRepository = plagiarismComparisonRepository;
     }
 
     /**
@@ -87,16 +90,25 @@ public class PlagiarismService {
 
     /**
      * Anonymizes the submission for the student view.
-     * A student should not see sensitive information
+     * A student should not see sensitive information but be able to retrieve both answers from both students for the comparison
      *
      * @param submission that has to be anonymized.
      * @param userLogin of the student asking to see his plagiarism comparison.
      * @return the anoymized submission for the given student
      */
     public Submission anonymizeSubmissionForStudentView(Submission submission, String userLogin) {
-        User student = ((StudentParticipation) submission.getParticipation()).getStudent().orElseThrow();
-        if (!student.getLogin().equals(userLogin)) {
-            throw new AccessForbiddenException("This plagiarism comparison is not related to the requesting user.");
+        var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submission.getId(), submission.getId());
+
+        // disallow requests from users who are not notified about this case:
+        boolean isUserNotifiedByInstructor = false;
+        if (comparisonOptional.isPresent()) {
+            var comparisons = comparisonOptional.get();
+            isUserNotifiedByInstructor = comparisons.stream()
+                    .anyMatch(comparison -> (comparison.getInstructorStatementA() != null && (comparison.getSubmissionA().getStudentLogin().equals(userLogin)))
+                            || (comparison.getInstructorStatementB() != null && (comparison.getSubmissionB().getStudentLogin().equals(userLogin))));
+        }
+        if (!isUserNotifiedByInstructor) {
+            throw new AccessForbiddenException("This plagiarism submission is not related to the requesting user or the user has not been notified yet.");
         }
         submission.setParticipation(null);
         submission.setResults(null);
