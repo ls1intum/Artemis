@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, OnChanges } from '@angular/core';
 import { roundScorePercentSpecifiedByCourseSettings, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-score-display',
@@ -15,6 +16,9 @@ export class ScoreDisplayComponent implements OnInit, OnChanges {
     bonusPoints?: number;
     maxPointsWithBonus?: number;
     maxPercentage?: number;
+
+    // Icons
+    faQuestionCircle = faQuestionCircle;
 
     constructor() {}
 

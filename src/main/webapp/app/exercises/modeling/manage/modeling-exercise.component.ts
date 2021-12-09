@@ -14,6 +14,8 @@ import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/m
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faBook, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -22,6 +24,15 @@ import { EventManager } from 'app/core/util/event-manager.service';
 export class ModelingExerciseComponent extends ExerciseComponent {
     @Input() modelingExercises: ModelingExercise[];
     filteredModelingExercises: ModelingExercise[];
+    // Icons
+    faPlus = faPlus;
+    faSort = faSort;
+    faTable = faTable;
+    farListAlt = faListAlt;
+    faBook = faBook;
+    faUsers = faUsers;
+    faWrench = faWrench;
+    faTimes = faTimes;
 
     constructor(
         public exerciseService: ExerciseService,
@@ -94,6 +105,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
 
     sortRows() {
         this.sortService.sortByProperty(this.modelingExercises, this.predicate, this.reverse);
+        this.applyFilter();
     }
 
     /**

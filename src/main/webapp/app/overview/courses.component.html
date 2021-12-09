@@ -5,7 +5,7 @@
     <div class="col-12 ps-4 pe-4 mb-5">
         <div class="row justify-content-between align-items-center exam-container ps-3 pe-3" (click)="openExam()">
             <div class="mb-4 mt-4 d-flex" style="width: unset">
-                <fa-icon [icon]="'pen-alt'" size="2x"></fa-icon>
+                <fa-icon [icon]="faPenAlt" size="2x"></fa-icon>
                 <h4 class="ms-2 fw-medium">{{ nextRelevantExam.title }}</h4>
             </div>
             <div class="text-end mb-4 mt-4" style="width: unset">
@@ -30,14 +30,16 @@
 </div>
 <div class="row mb-3" *ngIf="nextRelevantExercise && nextRelevantCourse">
     <div class="col-12 ps-4 pe-4">
-        <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="nextRelevantCourse" [extendedLink]="true"></jhi-course-exercise-row>
+        <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="nextRelevantCourse"></jhi-course-exercise-row>
     </div>
 </div>
 <div class="row mb-3 justify-content-between">
     <div class="col-sm-8">
         <h3 class="fw-medium" jhiTranslate="artemisApp.studentDashboard.title">Your current courses</h3>
     </div>
-    <jhi-course-registration-selector [courses]="courses" (courseRegistered)="loadAndFilterCourses()" class="col-sm-auto d-flex"></jhi-course-registration-selector>
+    <div class="col-sm-auto d-flex">
+        <a class="btn btn-primary" [routerLink]="['/courses/register']">{{ 'artemisApp.studentDashboard.register.signUp' | artemisTranslate }}</a>
+    </div>
 </div>
 <div class="row">
     <jhi-overview-course-card *ngFor="let course of courses" class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-2" [course]="course" [hasGuidedTour]="course === courseForGuidedTour">

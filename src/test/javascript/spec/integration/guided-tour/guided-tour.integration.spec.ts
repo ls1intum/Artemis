@@ -32,7 +32,7 @@ import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
-import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
+import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
@@ -42,6 +42,7 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { NgbCollapse, NgbDropdown, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { PieChartModule } from '@swimlane/ngx-charts';
 
 describe('Guided tour integration', () => {
     const user = { id: 1 } as User;
@@ -67,6 +68,7 @@ describe('Guided tour integration', () => {
                         component: MockComponent(CoursesComponent),
                     },
                 ]),
+                MockModule(PieChartModule),
             ],
             declarations: [
                 CourseCardComponent,
@@ -76,7 +78,7 @@ describe('Guided tour integration', () => {
                 NotificationSidebarComponent,
                 MockHasAnyAuthorityDirective,
                 MockComponent(FaIconComponent),
-                MockComponent(CourseRegistrationSelectorComponent),
+                MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(LoadingNotificationComponent),
                 MockComponent(CoursesComponent),

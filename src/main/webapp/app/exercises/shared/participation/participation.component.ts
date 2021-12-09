@@ -22,6 +22,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
+import { faCircleNotch, faEraser, faFilePowerpoint, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 enum FilterProp {
     ALL = 'all',
@@ -63,6 +64,12 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     isLoading: boolean;
 
+    // Icons
+    faTimes = faTimes;
+    faCircleNotch = faCircleNotch;
+    faEraser = faEraser;
+    faFilePowerpoint = faFilePowerpoint;
+
     constructor(
         private route: ActivatedRoute,
         private participationService: ParticipationService,
@@ -82,7 +89,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * Initialize component by calling loadAll and registerChangeInParticipation
      */
     ngOnInit() {
-        this.loadAll();
+        this.paramSub = this.route.params.subscribe((params) => this.loadExercise(params['exerciseId']));
         this.registerChangeInParticipations();
     }
 
@@ -93,41 +100,50 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise);
         this.eventManager.destroy(this.eventSubscriber);
         this.dialogErrorSource.unsubscribe();
+        if (this.paramSub) {
+            this.paramSub.unsubscribe();
+        }
     }
 
-    loadAll() {
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.isLoading = true;
-            this.hasLoadedPendingSubmissions = false;
-            this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
-                this.exercise = exerciseResponse.body!;
-                this.participationService.findAllParticipationsByExercise(params['exerciseId'], true).subscribe((participationsResponse) => {
-                    this.participations = participationsResponse.body!;
-                    if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                        const programmingExercise = this.exercise as ProgrammingExercise;
-                        if (programmingExercise.projectKey) {
-                            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                                setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, (this.exercise as ProgrammingExercise).projectKey);
-                            });
-                        }
-                    }
-                    this.isLoading = false;
-                });
-                if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                    this.programmingSubmissionService
-                        .getSubmissionStateOfExercise(this.exercise.id!)
-                        .pipe(
-                            tap((exerciseSubmissionState: ExerciseSubmissionState) => {
-                                this.exerciseSubmissionState = exerciseSubmissionState;
-                            }),
-                        )
-                        .subscribe(() => (this.hasLoadedPendingSubmissions = true));
-                }
-                this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
-                this.presentationScoreEnabled = this.checkPresentationScoreConfig();
-                this.isAdmin = this.accountService.isAdmin();
-            });
+    private loadExercise(exerciseId: number) {
+        this.isLoading = true;
+        this.hasLoadedPendingSubmissions = false;
+        this.exerciseService.find(exerciseId).subscribe((exerciseResponse) => {
+            this.exercise = exerciseResponse.body!;
+            this.loadParticipations(exerciseId);
+            if (this.exercise.type === ExerciseType.PROGRAMMING) {
+                this.loadSubmissions(exerciseId);
+            }
+            this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
+            this.presentationScoreEnabled = this.checkPresentationScoreConfig();
+            this.isAdmin = this.accountService.isAdmin();
         });
+    }
+
+    private loadParticipations(exerciseId: number) {
+        this.participationService.findAllParticipationsByExercise(exerciseId, true).subscribe((participationsResponse) => {
+            this.participations = participationsResponse.body!;
+            if (this.exercise.type === ExerciseType.PROGRAMMING) {
+                const programmingExercise = this.exercise as ProgrammingExercise;
+                if (programmingExercise.projectKey) {
+                    this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                        setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, (this.exercise as ProgrammingExercise).projectKey);
+                    });
+                }
+            }
+            this.isLoading = false;
+        });
+    }
+
+    private loadSubmissions(exerciseId: number) {
+        this.programmingSubmissionService
+            .getSubmissionStateOfExercise(exerciseId)
+            .pipe(
+                tap((exerciseSubmissionState: ExerciseSubmissionState) => {
+                    this.exerciseSubmissionState = exerciseSubmissionState;
+                }),
+            )
+            .subscribe(() => (this.hasLoadedPendingSubmissions = true));
     }
 
     formatDate(date: dayjs.Dayjs | Date | undefined) {
@@ -169,7 +185,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     registerChangeInParticipations() {
-        this.eventSubscriber = this.eventManager.subscribe('participationListModification', () => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('participationListModification', () => this.loadExercise(this.exercise.id!));
     }
 
     checkPresentationScoreConfig(): boolean {
@@ -184,12 +200,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             return;
         }
         participation.presentationScore = 1;
-        this.participationService.update(this.exercise.id!, participation).subscribe(
-            () => {},
-            () => {
-                this.alertService.error('artemisApp.participation.addPresentation.error');
-            },
-        );
+        this.participationService.update(this.exercise.id!, participation).subscribe({
+            error: () => this.alertService.error('artemisApp.participation.addPresentation.error'),
+        });
     }
 
     removePresentation(participation: StudentParticipation) {
@@ -197,12 +210,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             return;
         }
         participation.presentationScore = 0;
-        this.participationService.update(this.exercise.id!, participation).subscribe(
-            () => {},
-            () => {
-                this.alertService.error('artemisApp.participation.removePresentation.error');
-            },
-        );
+        this.participationService.update(this.exercise.id!, participation).subscribe({
+            error: () => this.alertService.error('artemisApp.participation.removePresentation.error'),
+        });
     }
 
     /**
@@ -213,16 +223,16 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     deleteParticipation(participationId: number, event: { [key: string]: boolean }) {
         const deleteBuildPlan = event.deleteBuildPlan ? event.deleteBuildPlan : false;
         const deleteRepository = event.deleteRepository ? event.deleteRepository : false;
-        this.participationService.delete(participationId, { deleteBuildPlan, deleteRepository }).subscribe(
-            () => {
+        this.participationService.delete(participationId, { deleteBuildPlan, deleteRepository }).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'participationListModification',
                     content: 'Deleted an participation',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     /**
@@ -230,16 +240,16 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * @param programmingExerciseParticipation the id of the participation that we want to delete
      */
     cleanupProgrammingExerciseParticipation(programmingExerciseParticipation: StudentParticipation) {
-        this.participationService.cleanupBuildPlan(programmingExerciseParticipation).subscribe(
-            () => {
+        this.participationService.cleanupBuildPlan(programmingExerciseParticipation).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'participationListModification',
                     content: 'Cleanup the build plan of an participation',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     /**

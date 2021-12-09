@@ -164,7 +164,6 @@ public abstract class Exercise extends DomainObject {
     private Set<Post> posts = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
@@ -1091,4 +1090,5 @@ public abstract class Exercise extends DomainObject {
         return previousDate.isBefore(laterDate);
     }
 
+    public abstract ExerciseType getExerciseType();
 }

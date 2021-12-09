@@ -20,6 +20,8 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/browser';
+import { faCircleNotch, faExclamationCircle, faFile } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 
 /**
  * Enumeration object representing the possible options that
@@ -112,6 +114,12 @@ export class ResultComponent implements OnInit, OnChanges {
 
     resultTooltip: string;
 
+    // Icons
+    faCircleNotch = faCircleNotch;
+    faFile = faFile;
+    farCircle = faCircle;
+    faExclamationCircle = faExclamationCircle;
+
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
         private participationService: ParticipationService,
@@ -158,12 +166,14 @@ export class ResultComponent implements OnInit, OnChanges {
         } else if (this.participation) {
             this.exercise = this.exercise || getExercise(this.participation);
             this.participation.exercise = this.exercise;
-        } else {
+        } else if (!this.result?.exampleResult) {
+            // result of example submission does not have participation
             captureException(new Error('The result component did not get a participation or result as parameter and can therefore not display the score'));
             return;
         }
 
-        this.submission = this.result!.submission;
+        // Note: it can still happen here that this.result is undefined, e.g. when this.participation.results.length == 0
+        this.submission = this.result?.submission;
         this.evaluate();
     }
 
@@ -437,27 +447,27 @@ export class ResultComponent implements OnInit, OnChanges {
 
         // Build failure so return times icon.
         if (this.isBuildFailedAndResultIsAutomatic(result)) {
-            return ['far', 'times-circle'];
+            return faTimesCircle;
         }
 
         if (this.resultIsPreliminary(result)) {
-            return ['far', 'question-circle'];
+            return faQuestionCircle;
         }
 
         if (this.onlyShowSuccessfulCompileStatus) {
-            return ['far', 'check-circle'];
+            return faCheckCircle;
         }
 
         if (result.score == undefined) {
             if (result.successful) {
-                return ['far', 'check-circle'];
+                return faCheckCircle;
             }
-            return ['far', 'times-circle'];
+            return faTimesCircle;
         }
         if (result.score > 80) {
-            return ['far', 'check-circle'];
+            return faCheckCircle;
         }
-        return ['far', 'times-circle'];
+        return faTimesCircle;
     }
 
     /**

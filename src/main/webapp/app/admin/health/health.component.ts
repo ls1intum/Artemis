@@ -5,6 +5,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HealthService } from './health.service';
 import { HealthModalComponent } from './health-modal.component';
 import { Health, HealthDetails, HealthStatus } from 'app/admin/health/health.model';
+import { faEye, faSync } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-health',
@@ -12,6 +13,10 @@ import { Health, HealthDetails, HealthStatus } from 'app/admin/health/health.mod
 })
 export class HealthComponent implements OnInit {
     health?: Health;
+
+    // Icons
+    faSync = faSync;
+    faEye = faEye;
 
     constructor(private modalService: NgbModal, private healthService: HealthService) {}
 

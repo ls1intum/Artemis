@@ -2,8 +2,9 @@
     "artemisApp": {
         "exampleSubmission": {
             "home": {
-                "title": "Example Submissions Board",
-                "editor": "Example Submission Editor"
+                "title": "Example Submissions",
+                "editor": "Example Submission Editor",
+                "assessmentTraining": "This is an Assessment Training"
             },
             "legend": {
                 "title": "Legend",
@@ -17,7 +18,8 @@
                 "INCORRECT_SCORE": "Incorrect score",
                 "UNNECESSARY_FEEDBACK": "Unneccessary feedback",
                 "MISSING_GRADING_INSTRUCTION": "Missing assessment instruction",
-                "INCORRECT_GRADING_INSTRUCTION": "Incorrect assessment instruction"
+                "INCORRECT_GRADING_INSTRUCTION": "Incorrect assessment instruction",
+                "EMPTY_NEGATIVE_FEEDBACK": "Feedback is required for negative score"
             },
             "submissionValidation": {
                 "missing": "Not enough feedback provided. The instructor provided more feedback.",
@@ -29,7 +31,10 @@
             "readSuccessfully": "You have successfully read and understood this example submission",
             "createNew": "Create new",
             "pageHeader": "Example Text Submission for Exercise",
-            "usedForTutorial": "Tutors need to assess this submission",
+            "usedForTutorial": "Use in Assessment Training",
+            "assessmentTraining": "Assessment Training",
+            "readAndConfirm": "Read and confirm",
+            "assessCorrectly": "Assess correctly",
             "createNewSubmission": "Create new example submission",
             "editExampleSubmission": "Edit example submission",
             "updateExampleSubmission": "Update example submission",
@@ -44,14 +49,19 @@
             "submitAssessment": "Submit Assessment",
             "readAndUnderstood": "I have read and understood the example",
             "exampleSubmission": "Example Submission",
-            "exampleSubmissions": "Example Submissions",
+            "exampleSubmissions": "Example Submissions for Assessment Training",
             "assessmentInstruction": "Double-click on a model element to view and edit the element's assessment.",
             "deleted": "Example submission deleted successfully",
             "assessmentExplanation": "Explanation",
             "assessmentExplanationInfo": "Additional explanation for this example assessment",
             "importExampleSubmission": "Import Example Submission",
             "importExampleSubmissionLabel": "Import an Example Submission",
-            "searchSubmission": "Search for Submission"
+            "searchSubmission": "Search for Submission",
+            "submissionSize": "Submission Size",
+            "textSubmissionSizeHint": "This number shows the number of words in the text.",
+            "modelingSubmissionSizeHint": "This number shows the number of elements used in the model.",
+            "exampleAssessmentCreated": "Example Assessment Created",
+            "exampleAssessmentWarning": "You need to complete the assessment to use this submission in the assessment training."
         },
         "tutorParticipation": {
             "deleted": "The tutor participation was deleted successfully"

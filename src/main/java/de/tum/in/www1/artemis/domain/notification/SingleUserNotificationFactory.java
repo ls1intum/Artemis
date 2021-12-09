@@ -1,15 +1,17 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.service.notifications.NotificationTargetService;
+import de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider;
 
 public class SingleUserNotificationFactory {
 
-    private static NotificationTargetService targetService = new NotificationTargetService();
+    private static final NotificationTargetProvider targetProvider = new NotificationTargetProvider();
 
     private static final String POST_NOTIFICATION_TEXT = "Your post got replied.";
 
@@ -27,19 +29,19 @@ public class SingleUserNotificationFactory {
         SingleUserNotification notification;
         switch (notificationType) {
             case NEW_REPLY_FOR_EXERCISE_POST -> {
-                title = NotificationTitleTypeConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE;
+                title = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
-                notification.setTarget(targetService.getExercisePostTarget(post, course));
+                notification.setTarget(targetProvider.getExercisePostTarget(post, course));
             }
             case NEW_REPLY_FOR_LECTURE_POST -> {
-                title = NotificationTitleTypeConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE;
+                title = NEW_REPLY_FOR_LECTURE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
-                notification.setTarget(targetService.getLecturePostTarget(post, course));
+                notification.setTarget(targetProvider.getLecturePostTarget(post, course));
             }
             case NEW_REPLY_FOR_COURSE_POST -> {
-                title = NotificationTitleTypeConstants.NEW_REPLY_FOR_COURSE_POST_TITLE;
+                title = NEW_REPLY_FOR_COURSE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
-                notification.setTarget(targetService.getCoursePostTarget(post, course));
+                notification.setTarget(targetProvider.getCoursePostTarget(post, course));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
@@ -60,10 +62,10 @@ public class SingleUserNotificationFactory {
         SingleUserNotification notification;
         switch (notificationType) {
             case FILE_SUBMISSION_SUCCESSFUL -> {
-                title = NotificationTitleTypeConstants.FILE_SUBMISSION_SUCCESSFUL_TITLE;
+                title = FILE_SUBMISSION_SUCCESSFUL_TITLE;
                 notificationText = "Your file for the exercise \"" + exercise.getTitle() + "\" was successfully submitted.";
                 notification = new SingleUserNotification(recipient, title, notificationText);
-                notification.setTarget(targetService.getExerciseTarget(exercise, title));
+                notification.setTarget(targetProvider.getExerciseTarget(exercise, title));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }

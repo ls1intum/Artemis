@@ -23,6 +23,8 @@ export class AssessmentInstructionsComponent {
     sampleSolutionModel?: UMLModel;
     sampleSolutionDiagramType?: UMLDiagramType;
     criteria: GradingCriterion[];
+
+    @Input() isAssessmentTraining = false;
     @Input() readOnly: boolean;
     // For programming exercises we hand over the participation or use the template participation
     @Input() programmingParticipation?: ProgrammingExerciseStudentParticipation;

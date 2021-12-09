@@ -1,7 +1,7 @@
 <ng-container>
     <button
         jhi-exercise-action-button
-        buttonIcon="download"
+        [buttonIcon]="faDownload"
         class="ms-2 clone-repository"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [buttonLabel]="'artemisApp.exerciseActions.cloneRepository' | artemisTranslate"

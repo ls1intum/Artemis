@@ -186,11 +186,13 @@ public class TextAssessmentResource extends AssessmentResource {
         // 1. Delete Text blocks
         textBlockService.deleteForSubmission((TextSubmission) submission);
 
-        // 2. Delete Feedbacks
+        // 2. Delete feedback and example assessment
         final var latestResult = submission.getLatestResult();
         if (latestResult != null) {
             latestResult.getFeedbacks().clear();
-            resultRepository.save(latestResult);
+            resultRepository.delete(latestResult);
+            submission.setResults(List.of());
+            submissionRepository.save(submission);
         }
 
         return ResponseEntity.noContent().build();
@@ -437,10 +439,6 @@ public class TextAssessmentResource extends AssessmentResource {
                 final List<Feedback> assessments = feedbackRepository.findByResult(result);
                 result.setFeedbacks(assessments);
             }
-        }
-        if (result == null) {
-            result = new Result();
-            result.setSubmission(textSubmission);
         }
 
         return ResponseEntity.ok().body(result);

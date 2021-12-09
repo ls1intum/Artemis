@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { faSync } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-text-exercise-tutor-effort-statistics',
@@ -78,6 +79,9 @@ export class TutorEffortStatisticsComponent implements OnInit {
             ],
         },
     };
+
+    // Icons
+    faSync = faSync;
 
     constructor(private textExerciseService: TextExerciseService, private textAssessmentService: TextAssessmentService, private route: ActivatedRoute) {}
 

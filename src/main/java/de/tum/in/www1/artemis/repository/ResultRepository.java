@@ -16,7 +16,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
+import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -533,8 +535,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
         // Exam results and manual results of programming exercises and example submissions are always to rated
-        if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise
-                || (result.getSubmission().isExampleSubmission() != null && result.getSubmission().isExampleSubmission())) {
+        if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise || Boolean.TRUE.equals(result.isExampleResult())) {
             result.setRated(true);
         }
         else {
@@ -590,6 +591,49 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             }
         }
         return totalPoints;
+    }
+
+    /**
+     * Calculates the sum of points of all feedbacks. Additionally, computes the sum of points of feedbacks belonging to the same {@link GradingCriterion}.
+     *
+     * Points are rounded as defined by the course settings.
+     *
+     * @param result for which the points should be summed up.
+     * @param course with the exercise the result belongs to.
+     * @return the result together with the total points and the points per criterion.
+     */
+    default ResultWithPointsPerGradingCriterionDTO calculatePointsPerGradingCriterion(final Result result, final Course course) {
+        final Map<Long, Double> pointsPerCriterion = new HashMap<>();
+        final Map<Long, Integer> gradingInstructionsUseCount = new HashMap<>();
+
+        for (final Feedback feedback : result.getFeedbacks()) {
+            final double feedbackPoints;
+            final Long criterionId;
+
+            if (feedback.getGradingInstruction() != null) {
+                feedbackPoints = feedback.computeTotalScore(0, gradingInstructionsUseCount);
+                criterionId = feedback.getGradingInstruction().getGradingCriterion().getId();
+            }
+            else {
+                feedbackPoints = feedback.getCredits() != null ? feedback.getCredits() : 0;
+                criterionId = null;
+            }
+
+            pointsPerCriterion.compute(criterionId, (key, oldPoints) -> (oldPoints == null) ? feedbackPoints : oldPoints + feedbackPoints);
+        }
+
+        final double totalPoints = RoundingUtil.roundScoreSpecifiedByCourseSettings(pointsPerCriterion.values().stream().mapToDouble(points -> points).sum(), course);
+
+        // points for feedbacks without criterion were only needed for totalPoints calculation
+        pointsPerCriterion.remove(null);
+
+        // round the point sums per criterion once at the end
+        pointsPerCriterion.entrySet().forEach(entry -> {
+            Double rounded = RoundingUtil.roundScoreSpecifiedByCourseSettings(entry.getValue(), course);
+            entry.setValue(rounded);
+        });
+
+        return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints, pointsPerCriterion);
     }
 
     /**
