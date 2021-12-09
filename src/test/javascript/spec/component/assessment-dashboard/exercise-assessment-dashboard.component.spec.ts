@@ -361,7 +361,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should calculateStatus DRAFT', () => {
-        expect(modelingSubmission.latestResult).toBeUndefined();
+        expect(modelingSubmission.latestResult).toBe(undefined);
         expect(comp.calculateSubmissionStatusIsDraft(modelingSubmission)).toBe(true);
     });
 
