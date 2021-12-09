@@ -9,6 +9,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { faAngleDown, faAngleRight, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -41,6 +42,13 @@ export class ExamParticipationSummaryComponent implements OnInit {
     testRunConduction = false;
 
     examWithOnlyIdAndStudentReviewPeriod: Exam;
+
+    // Icons
+    faFolderOpen = faFolderOpen;
+    faInfoCircle = faInfoCircle;
+    faPrint = faPrint;
+    faAngleRight = faAngleRight;
+    faAngleDown = faAngleDown;
 
     constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService, private courseManagementService: CourseManagementService) {}
 
