@@ -6,7 +6,6 @@ import { Course } from 'app/entities/course.model';
 import { ScaleType, Color } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
-
 @Component({
     selector: 'jhi-course-detail-doughnut-chart',
     templateUrl: './course-detail-doughnut-chart.component.html',
