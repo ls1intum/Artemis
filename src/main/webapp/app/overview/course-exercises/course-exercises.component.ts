@@ -222,7 +222,11 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     private getSortingAttributeFromExercise(): (exercise: Exercise) => dayjs.Dayjs | undefined {
-        return this.sortingAttribute === this.DUE_DATE ? (exercise) => exercise.dueDate : (exercise) => exercise.releaseDate;
+        if (this.sortingAttribute === this.DUE_DATE) {
+            return (exercise) => getExerciseDueDate(exercise, exercise.studentParticipations?.[0]);
+        } else {
+            return (exercise) => exercise.releaseDate;
+        }
     }
 
     private loadOrderAndAttributeForSorting() {
