@@ -30,6 +30,7 @@ import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ParticipationType } from 'app/entities/participation/participation.model';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
@@ -118,7 +119,11 @@ describe('CourseExercisesComponent', () => {
     it('should react to changes', () => {
         jest.spyOn(exerciseService, 'getNextExerciseForHours').mockReturnValue(exercise);
         component.ngOnChanges();
-        expect(component.nextRelevantExercise).toEqual(exercise);
+        const expectedExercise = {
+            exercise,
+            dueDate: exercise.dueDate,
+        };
+        expect(component.nextRelevantExercise).toEqual(expectedExercise);
     });
 
     it('should reorder all exercises', () => {
@@ -311,5 +316,51 @@ describe('CourseExercisesComponent', () => {
         // ToDo: check that exercise is shown
         expect(component.activeFilters).toEqual(new Set().add(ExerciseFilter.OVERDUE));
         expect(component.exerciseCountMap.get('modeling')).toBe(1);
+    });
+
+    it('should sort upcoming exercises by ascending individual due dates', () => {
+        const exerciseRegularDueDate = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
+        exerciseRegularDueDate.releaseDate = dayjs().add(10, 'days');
+        const dueDate1 = dayjs().add(11, 'days');
+        exerciseRegularDueDate.dueDate = dueDate1;
+        const participationRegularDueDate = new StudentParticipation(ParticipationType.STUDENT);
+        exerciseRegularDueDate.studentParticipations = [participationRegularDueDate];
+
+        const exerciseIndividualDueDate = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
+        exerciseIndividualDueDate.releaseDate = dayjs().add(5, 'days');
+        // regular due date before the due date of the other exercise
+        exerciseIndividualDueDate.dueDate = dayjs().add(7, 'days');
+        const participationIndividualDueDate = new StudentParticipation(ParticipationType.STUDENT);
+        // individual due date later than the due date of the other exercise
+        const dueDate2 = dayjs().add(20, 'days');
+        participationIndividualDueDate.individualDueDate = dueDate2;
+        exerciseIndividualDueDate.studentParticipations = [participationIndividualDueDate];
+
+        const checkUpcomingExercises = () => {
+            const expectedUpcomingExercises = [
+                { exercise: exerciseRegularDueDate, dueDate: dueDate1 },
+                { exercise: exerciseIndividualDueDate, dueDate: dueDate2 },
+            ];
+            expect(component.upcomingExercises).toEqual(expectedUpcomingExercises);
+        };
+
+        component.course!.exercises! = [exerciseIndividualDueDate, exerciseRegularDueDate];
+
+        // the sidebar should always be sorted by ascending due date
+        component.sortingOrder = ExerciseSortingOrder.DESC;
+        component.setSortingAttribute(SortingAttribute.DUE_DATE);
+        checkUpcomingExercises();
+
+        component.sortingOrder = ExerciseSortingOrder.ASC;
+        component.setSortingAttribute(SortingAttribute.DUE_DATE);
+        checkUpcomingExercises();
+
+        component.sortingOrder = ExerciseSortingOrder.DESC;
+        component.setSortingAttribute(SortingAttribute.RELEASE_DATE);
+        checkUpcomingExercises();
+
+        component.sortingOrder = ExerciseSortingOrder.ASC;
+        component.setSortingAttribute(SortingAttribute.RELEASE_DATE);
+        checkUpcomingExercises();
     });
 });
