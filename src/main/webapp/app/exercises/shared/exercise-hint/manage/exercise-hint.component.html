@@ -2,7 +2,7 @@
     <h2 id="page-heading">
         <span jhiTranslate="artemisApp.exerciseHint.home.title">Exercise Hints</span>
         <a id="jh-create-entity" class="btn btn-primary float-end jh-create-entity create-exercise-hint" routerLink="new">
-            <fa-icon [icon]="'plus'"></fa-icon>
+            <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.exerciseHint.home.createLabel"> Create new Exercise Hint </span>
         </a>
     </h2>
@@ -35,11 +35,11 @@
                     <td class="text-end">
                         <div class="btn-group">
                             <a [routerLink]="[exerciseHint.id]" class="btn btn-info btn-sm me-1">
-                                <fa-icon [icon]="'eye'"></fa-icon>
+                                <fa-icon [icon]="faEye"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                             </a>
                             <a [routerLink]="[exerciseHint.id, 'edit']" class="btn btn-warning btn-sm me-1">
-                                <fa-icon [icon]="'wrench'"></fa-icon>
+                                <fa-icon [icon]="faWrench"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </a>
                             <button
@@ -49,7 +49,7 @@
                                 (delete)="deleteExerciseHint(exerciseHint.id!)"
                                 [dialogError]="dialogError$"
                             >
-                                <fa-icon [icon]="'times'"></fa-icon>
+                                <fa-icon [icon]="faTimes"></fa-icon>
                             </button>
                         </div>
                     </td>

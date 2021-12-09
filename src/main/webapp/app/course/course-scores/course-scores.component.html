@@ -7,13 +7,13 @@
             >{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }} released exercises, {{ students.length }} students with results</small
         >
         <button *ngIf="exportReady" class="btn btn-primary btn-sm float-end" (click)="exportResults()">
-            <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon>
+            <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
             <span jhiTranslate="instructorDashboard.exportCSV">&nbsp;Export Results as CSV</span>
         </button>
     </h4>
     <jhi-alert></jhi-alert>
     <span *ngIf="!exportReady" style="color: grey"
-        ><fa-icon [icon]="'spinner'" [spin]="true"></fa-icon>&nbsp;<span jhitranslate="instructorDashboard.loadingStudents">Loading the results of all students...</span></span
+        ><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span jhitranslate="instructorDashboard.loadingStudents">Loading the results of all students...</span></span
     >
     <div class="table-responsive" *ngIf="exportReady">
         <table class="table table-striped">
@@ -21,27 +21,27 @@
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                     <th jhiSortBy="user.name">
                         <span jhiTranslate="instructorDashboard.name">Name</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="user.login">
                         <span jhiTranslate="instructorDashboard.username">Username</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="numberOfParticipatedExercises">
                         <span jhiTranslate="instructorDashboard.participated">Participated in Exercises (%)</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="numberOfSuccessfulExercises">
                         <span jhiTranslate="instructorDashboard.successful">Successful Exercises (%)</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
                         <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0" jhiSortBy="sumPointsPerExerciseType.{{ exerciseType }}">
                             <span jhiTranslate="instructorDashboard.{{ exerciseType }}Points"></span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                     </ng-container>
-                    <th jhiSortBy="overallPoints"><span jhiTranslate="instructorDashboard.overallScore">Overall Points (%)</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="overallPoints"><span jhiTranslate="instructorDashboard.overallScore">Overall Points (%)</span> <fa-icon [icon]="faSort"></fa-icon></th>
                     <th *ngIf="gradingScaleExists" jhiSortBy="overallPoints">
                         <span>
                             {{
@@ -50,7 +50,7 @@
                                     : ('artemisApp.courseScoreCalculation.gradingSystemGrade' | artemisTranslate)
                             }}
                         </span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                 </tr>
                 <tr>

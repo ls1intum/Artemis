@@ -16,6 +16,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.utils';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { map } from 'rxjs/operators';
+import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     templateUrl: './programming-exercise-submissions.component.html',
@@ -36,6 +37,12 @@ export class ProgrammingExerciseSubmissionsComponent implements OnInit {
     newManualResultAllowed: boolean;
     automaticType = AssessmentType.AUTOMATIC;
     private cancelConfirmationText: string;
+
+    // Icons
+    faSort = faSort;
+    faBan = faBan;
+    faEdit = faEdit;
+    faFolderOpen = faFolderOpen;
 
     constructor(
         private route: ActivatedRoute,

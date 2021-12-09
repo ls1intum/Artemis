@@ -5,7 +5,7 @@
             <h3>{{ complaintType === ComplaintType.COMPLAINT ? ('artemisApp.complaint.title' | artemisTranslate) : ('artemisApp.moreFeedback.title' | artemisTranslate) }}</h3>
             <p *ngIf="complaintType !== ComplaintType.COMPLAINT">
                 {{ 'artemisApp.moreFeedback.' + (exercise.teamMode ? 'descriptionTeam' : 'description') | artemisTranslate }}
-                <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.moreFeedback.info' | artemisTranslate }}" class="info-icon"></fa-icon>
+                <fa-icon [icon]="faInfoCircle" title="{{ 'artemisApp.moreFeedback.info' | artemisTranslate }}" class="info-icon"></fa-icon>
             </p>
         </div>
     </div>

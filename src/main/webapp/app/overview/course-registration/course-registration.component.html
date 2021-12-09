@@ -1,6 +1,6 @@
 <div>
     <div class="col-12 col-sm-auto alert alert-success" *ngIf="addedSuccessful && userIsAllowedToRegister">
-        <fa-icon [icon]="'check-circle'"></fa-icon>
+        <fa-icon [icon]="faCheckCircle"></fa-icon>
         {{ 'artemisApp.studentDashboard.register.registerSuccessful' | artemisTranslate }}
     </div>
     <div class="col-12 col-sm-auto" *ngIf="coursesToSelect.length > 0 && userIsAllowedToRegister">
