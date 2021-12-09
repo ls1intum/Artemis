@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
@@ -25,6 +25,7 @@ export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificati
 export class NotificationSidebarComponent implements OnInit {
     // HTML template related
     showSidebar = false;
+    showButtonToHideCurrentlyDisplayedNotifications = true;
     loading = false;
 
     // notification logic related
@@ -54,6 +55,7 @@ export class NotificationSidebarComponent implements OnInit {
         private accountService: AccountService,
         private userSettingsService: UserSettingsService,
         private notificationSettingsService: NotificationSettingsService,
+        private changeDetector: ChangeDetectorRef,
     ) {}
 
     /**
@@ -107,6 +109,16 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     // notification logic related methods
+
+    /**
+     * Starts the process to show or hide all notifications in the sidebar
+     */
+    toggleNotificationDisplay(): void {
+        this.showButtonToHideCurrentlyDisplayedNotifications = !this.showButtonToHideCurrentlyDisplayedNotifications;
+        this.userService.updateNotificationVisibility(this.showButtonToHideCurrentlyDisplayedNotifications).subscribe(() => {
+            this.resetNotificationsInSidebar();
+        });
+    }
 
     /**
      * Update the user's lastNotificationRead setting. As this method will be executed when the user opens the sidebar, the
@@ -196,19 +208,34 @@ export class NotificationSidebarComponent implements OnInit {
         } else {
             this.recentNotificationCount = this.notifications.length;
         }
+
+        if (!this.notifications || this.notifications.length === 0) {
+            // if no notifications are currently loaded show the button to display all saved/archived ones
+            this.showButtonToHideCurrentlyDisplayedNotifications = false;
+        } else {
+            // some notifications are currently loaded, thus show the button to hide currently displayed ones
+            this.showButtonToHideCurrentlyDisplayedNotifications = true;
+        }
+        this.changeDetector.detectChanges();
     }
 
     /**
      * Clears all currently loaded notifications and settings, afterwards fetches updated once
      * E.g. is used to update the view after the user changed the notification settings
      */
-    private resetNotificationSidebars(): void {
+    private resetNotificationSidebarsWithSettings(): void {
         // reset notification settings
         this.notificationSettings = [];
         this.notificationTitleActivationMap = new Map<string, boolean>();
         this.loadNotificationSettings();
+        this.resetNotificationsInSidebar();
+    }
 
-        // reset notifications
+    /**
+     * Clears all currently loaded notifications, afterwards fetches updated once
+     * E.g. is used to update the view after the user toggles the button to show/hide all notifications
+     */
+    private resetNotificationsInSidebar(): void {
         this.notifications = [];
         this.sortedNotifications = [];
         this.recentNotificationCount = 0;
@@ -242,7 +269,7 @@ export class NotificationSidebarComponent implements OnInit {
     private listenForNotificationSettingsChanges(): void {
         this.subscriptionToNotificationSettingsChanges = this.userSettingsService.userSettingsChangeEvent.subscribe((changeMessage) => {
             if (changeMessage === reloadNotificationSideBarMessage) {
-                this.resetNotificationSidebars();
+                this.resetNotificationSidebarsWithSettings();
             }
         });
     }
