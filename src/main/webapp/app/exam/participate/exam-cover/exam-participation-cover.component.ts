@@ -143,6 +143,9 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
                     this.onExamStarted.emit(studentExam);
                 } else {
                     this.waitingForExamStart = true;
+                    if (this.interval) {
+                        clearInterval(this.interval);
+                    }
                     this.interval = window.setInterval(() => {
                         this.updateDisplayedTimes(studentExam);
                     }, UI_RELOAD_TIME);
