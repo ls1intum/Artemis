@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain.notification;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+import static de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider.*;
 
 import java.util.List;
 
@@ -128,7 +129,7 @@ public class GroupNotificationFactory {
                 notification.setPriority(HIGH);
             }
             else if (exercise instanceof ProgrammingExercise) {
-                notification.setTarget(targetProvider.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
+                notification.setTarget(targetProvider.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, EXERCISE_UPDATED_TEXT));
             }
         }
         // Exercises for courses (not for exams)
@@ -136,7 +137,7 @@ public class GroupNotificationFactory {
             notification.setTarget(targetProvider.getExerciseReleasedTarget(exercise));
         }
         else if (notificationType == DUPLICATE_TEST_CASE) {
-            notification.setTarget(targetProvider.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "duplicateTestCase"));
+            notification.setTarget(targetProvider.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, DUPLICATE_TEST_CASE_TEXT));
         }
         else {
             notification.setTarget(targetProvider.getExerciseUpdatedTarget(exercise));
@@ -246,7 +247,7 @@ public class GroupNotificationFactory {
         }
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
-        notification.setTarget(targetProvider.getCourseTarget(course, "courseArchiveUpdated"));
+        notification.setTarget(targetProvider.getCourseTarget(course, COURSE_ARCHIVE_UPDATED_TEXT));
         return notification;
     }
 

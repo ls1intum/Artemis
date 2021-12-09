@@ -57,6 +57,8 @@ public class NotificationTargetProvider {
 
     public static final String EXAM_ARCHIVE_UPDATED_TEXT = "examArchiveUpdated";
 
+    public static final String DUPLICATE_TEST_CASE_TEXT = "duplicateTestCase";
+
     // EXERCISE related targets
 
     /**
