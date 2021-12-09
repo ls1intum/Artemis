@@ -43,7 +43,7 @@
                 [routerLink]="getAssessmentLink(exercise, submission, result.id)"
                 class="btn btn-primary btn-sm mb-1"
             >
-                <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
+                <fa-icon [fixedWidth]="true" [icon]="faFolderOpen"></fa-icon>
                 <span jhiTranslate="artemisApp.studentExamDetail.openLatestAssessment"></span>
             </a>
         </div>
@@ -51,13 +51,13 @@
         <div *ngIf="submission && result === undefined && exercise.type != ExerciseType.PROGRAMMING">
             <!-- in case of new result-->
             <a [class.disabled]="busy" [queryParams]="{ testRun: this.isTestRun }" [routerLink]="getAssessmentLink(exercise, submission)" class="btn btn-primary btn-sm mb-1">
-                <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
+                <fa-icon [fixedWidth]="true" [icon]="faFolderOpen"></fa-icon>
                 {{ 'artemisApp.assessment.dashboard.actions.assess' | artemisTranslate }}
             </a>
         </div>
         <div *ngIf="exercise.type === ExerciseType.PROGRAMMING">
             <a [class.disabled]="busy" [routerLink]="getAssessmentLink(exercise)" class="btn btn-primary btn-sm mb-1">
-                <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
+                <fa-icon [fixedWidth]="true" [icon]="faFolderOpen"></fa-icon>
                 {{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}
             </a>
         </div>

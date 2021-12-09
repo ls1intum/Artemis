@@ -4,7 +4,7 @@
             <h3 class="col-md-8 d-flex">{{ 'artemisApp.course.averageScore' | artemisTranslate }}</h3>
             <fa-icon
                 *ngIf="exerciseAverageScores.length > 10 && currentPeriod > 0"
-                [icon]="'arrow-left'"
+                [icon]="faArrowLeft"
                 size="3x"
                 class="col-md-4 d-flex justify-content-end align-items-center"
                 role="button"
@@ -26,7 +26,7 @@
     </div>
     <fa-icon
         *ngIf="exerciseAverageScores.length > 10 && exerciseAverageScores[10 + currentPeriod] != null"
-        [icon]="'arrow-right'"
+        [icon]="faArrowRight"
         size="3x"
         class="col-md-1 d-flex justify-content-start align-items-center"
         role="button"

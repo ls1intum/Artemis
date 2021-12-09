@@ -35,6 +35,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -91,6 +92,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private get assessments(): Feedback[] {
         return [...this.referencedFeedback, ...this.unreferencedFeedback];
     }
+
+    // Icons
+    farListAlt = faListAlt;
 
     constructor(
         private activatedRoute: ActivatedRoute,

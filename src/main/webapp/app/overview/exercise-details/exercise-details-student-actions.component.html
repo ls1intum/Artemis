@@ -4,7 +4,7 @@
     <div class="btn-group me-2">
         <button
             jhi-exercise-action-button
-            buttonIcon="redo"
+            [buttonIcon]="faRedo"
             [buttonLabel]="'artemisApp.exerciseActions.practice' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
@@ -14,7 +14,7 @@
         ></button>
         <button
             jhi-exercise-action-button
-            buttonIcon="play-circle"
+            [buttonIcon]="faPlayCircle"
             [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
@@ -24,7 +24,7 @@
         ></button>
         <button
             jhi-exercise-action-button
-            buttonIcon="play-circle"
+            [buttonIcon]="faPlayCircle"
             [buttonLabel]="'artemisApp.exerciseActions.startQuiz' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
@@ -35,7 +35,7 @@
         ></button>
         <button
             jhi-exercise-action-button
-            buttonIcon="play-circle"
+            [buttonIcon]="faPlayCircle"
             [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | artemisTranslate"
             *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_ACTIVE"
             [buttonLoading]="!!exercise.loading"
@@ -50,7 +50,7 @@
     <div class="btn-group" *ngIf="!actionsOnly">
         <button
             jhi-exercise-action-button
-            buttonIcon="eye"
+            [buttonIcon]="faEye"
             [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
             [outlined]="true"
             [buttonLoading]="!!exercise.loading"
@@ -60,7 +60,7 @@
         ></button>
         <button
             jhi-exercise-action-button
-            buttonIcon="eye"
+            [buttonIcon]="faEye"
             [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
             [outlined]="true"
             [buttonLoading]="!!exercise.loading"
@@ -71,7 +71,7 @@
         <button
             jhi-exercise-action-button
             *ngIf="!!exercise.isAtLeastTutor"
-            buttonIcon="signal"
+            [buttonIcon]="faSignal"
             [buttonLabel]="'artemisApp.exerciseActions.statistics' | artemisTranslate"
             [outlined]="true"
             [buttonLoading]="!!exercise.loading"
@@ -89,7 +89,7 @@
     <div class="btn-group me-2">
         <button
             jhi-exercise-action-button
-            buttonIcon="users"
+            [buttonIcon]="faUsers"
             [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
             *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
@@ -98,7 +98,8 @@
         ></button>
         <button
             jhi-exercise-action-button
-            buttonIcon="play-circle"
+            id="start-modeling-exercise-action"
+            [buttonIcon]="faPlayCircle"
             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
@@ -108,7 +109,8 @@
         ></button>
         <button
             jhi-exercise-action-button
-            buttonIcon="folder-open"
+            id="open-modeling-editor-action"
+            [buttonIcon]="faFolderOpen"
             [buttonLabel]="'artemisApp.exerciseActions.openModelingEditor' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
@@ -123,7 +125,7 @@
         <div class="btn-group">
             <button
                 jhi-exercise-action-button
-                buttonIcon="folder-open"
+                [buttonIcon]="faFolderOpen"
                 [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
                 [outlined]="true"
                 [buttonLoading]="!!exercise.loading"
@@ -139,7 +141,7 @@
             <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
             <button
                 jhi-exercise-action-button
-                buttonIcon="folder-open"
+                [buttonIcon]="faFolderOpen"
                 [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
                 [outlined]="true"
                 [buttonLoading]="!!exercise.loading"
@@ -167,7 +169,7 @@
         <button
             class="view-team"
             jhi-exercise-action-button
-            buttonIcon="users"
+            [buttonIcon]="faUsers"
             [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
             *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
@@ -177,7 +179,7 @@
         <button
             class="start-exercise"
             jhi-exercise-action-button
-            buttonIcon="play-circle"
+            [buttonIcon]="faPlayCircle"
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
@@ -192,7 +194,7 @@
             <ng-container *jhiExtensionPoint="overrideCloneOnlineEditorButton; context: { exercise: exercise }">
                 <button
                     jhi-exercise-action-button
-                    buttonIcon="folder-open"
+                    [buttonIcon]="faFolderOpen"
                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                     [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
                     [buttonLoading]="!!exercise.loading"
@@ -214,7 +216,7 @@
         <!-- NOTE: we use the same logic 'isStartExerciseAvailable' in ngIf as above because start and resume are not always possible -->
         <button
             jhi-exercise-action-button
-            buttonIcon="play-circle"
+            [buttonIcon]="faPlayCircle"
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [buttonLabel]="'artemisApp.exerciseActions.resumeExercise' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
@@ -234,7 +236,7 @@
     <div class="btn-group me-2">
         <button
             jhi-exercise-action-button
-            buttonIcon="users"
+            [buttonIcon]="faUsers"
             [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
             *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
@@ -244,7 +246,7 @@
         <button
             class="start-exercise"
             jhi-exercise-action-button
-            buttonIcon="play-circle"
+            [buttonIcon]="faPlayCircle"
             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
@@ -254,7 +256,7 @@
         ></button>
         <button
             jhi-exercise-action-button
-            buttonIcon="folder-open"
+            [buttonIcon]="faFolderOpen"
             [buttonLabel]="'artemisApp.exerciseActions.openTextEditor' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
@@ -268,7 +270,7 @@
     <div class="btn-group" *ngIf="!actionsOnly">
         <button
             jhi-exercise-action-button
-            buttonIcon="folder-open"
+            [buttonIcon]="faFolderOpen"
             [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
             [outlined]="true"
             [buttonLoading]="!!exercise.loading"
@@ -285,7 +287,7 @@
         <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
         <button
             jhi-exercise-action-button
-            buttonIcon="folder-open"
+            [buttonIcon]="faFolderOpen"
             [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
             [outlined]="true"
             [buttonLoading]="!!exercise.loading"
@@ -311,7 +313,7 @@
     <div class="btn-group">
         <button
             jhi-exercise-action-button
-            buttonIcon="users"
+            [buttonIcon]="faUsers"
             [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
             *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
@@ -320,7 +322,7 @@
         ></button>
         <button
             jhi-exercise-action-button
-            buttonIcon="play-circle"
+            [buttonIcon]="faPlayCircle"
             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
             *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
@@ -330,7 +332,7 @@
         ></button>
         <button
             jhi-exercise-action-button
-            buttonIcon="folder-open"
+            [buttonIcon]="faFolderOpen"
             [buttonLabel]="'artemisApp.exerciseActions.uploadFile' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
@@ -344,7 +346,7 @@
     <div class="btn-group" *ngIf="!actionsOnly">
         <button
             jhi-exercise-action-button
-            buttonIcon="folder-open"
+            [buttonIcon]="faFolderOpen"
             [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
             [outlined]="true"
             [buttonLoading]="!!exercise.loading"
@@ -360,7 +362,7 @@
         ></button>
         <button
             jhi-exercise-action-button
-            buttonIcon="folder-open"
+            [buttonIcon]="faFolderOpen"
             [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
             [outlined]="true"
             [buttonLoading]="!!exercise.loading"

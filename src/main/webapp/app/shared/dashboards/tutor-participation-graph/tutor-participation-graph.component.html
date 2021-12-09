@@ -2,7 +2,7 @@
     <ul>
         <li class="not_participated" [ngClass]="calculateClasses(NOT_PARTICIPATED)">0</li>
         <li [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)" (click)="navigate()" [ngbTooltip]="'artemisApp.assessmentDashboard.readGradingInstructions' | artemisTranslate">
-            <fa-icon [icon]="'book'"></fa-icon>
+            <fa-icon [icon]="faBook"></fa-icon>
         </li>
         <li
             *ngIf="exercise.type !== ExerciseType.PROGRAMMING"
@@ -10,7 +10,7 @@
             (click)="navigate()"
             [ngbTooltip]="'artemisApp.assessmentDashboard.trainOnExampleSubmissions' | artemisTranslate"
         >
-            <fa-icon [icon]="'chalkboard-teacher'"></fa-icon>
+            <fa-icon [icon]="faChalkboardTeacher"></fa-icon>
         </li>
         <ng-container *ngIf="shouldShowManualAssessments">
             <li
