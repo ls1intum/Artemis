@@ -1,7 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
-import { calculateHeightOfChartData } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
@@ -16,6 +14,7 @@ import { blueColor } from 'app/exercises/quiz/manage/statistics/question-statist
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { round } from 'app/shared/util/utils';
 import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/quiz-statistics.directive';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -30,26 +29,15 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
     private sub: Subscription;
 
     labels: string[] = [];
-    // data: number[] = [];
 
     label: string[] = [];
-    // ratedData: number[] = [];
-    // unratedData: number[] = [];
     backgroundColor: string[] = [];
 
     maxScore: number;
-    // rated = true;
-    // participants: number;
     websocketChannelForData: string;
     quizExerciseChannel: string;
 
     // variables for ngx-charts
-    /*ngxData: any[] = []; // data presented by the chart
-    maxScale: number;
-    xAxisLabel: string;
-    yAxisLabel: string;
-    color: any;
-    totalParticipants: number;*/
     legend = false;
     showXAxisLabel = true;
     showYAxisLabel = true;
@@ -236,9 +224,7 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
             this.backgroundColor.push(blueColor);
         });
 
-        // this.labels = this.label;
         this.chartLabels = this.label;
-        // this.color = { domain: this.backgroundColor };
         this.ngxColor.domain = this.backgroundColor;
 
         // load data into the chart
@@ -250,26 +236,7 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
      * load the rated or unrated data into the diagram
      */
     loadDataInDiagram() {
-        /*if (this.rated) {
-            this.participants = this.quizPointStatistic.participantsRated!;
-            this.data = this.ratedData;
-        } else {
-            // load the unrated data
-            this.participants = this.quizPointStatistic.participantsUnrated!;
-            this.data = this.unratedData;
-        }*/
         this.setData(this.quizPointStatistic);
-        // this reset is necessary in order to switch between rated and unrated results
-        /*this.ngxData = [];
-        this.totalParticipants = 0;
-
-        this.data.forEach((data) => (this.totalParticipants += data));
-
-        this.labels.forEach((label, index) => {
-            this.ngxData.push({ name: label, value: this.data[index] });
-        });
-        // recalculate the height of the chart because rated/unrated might have changed or new results might have appeared
-        this.maxScale = calculateHeightOfChartData(this.data);*/
         this.pushDataToNgxEntry();
 
         // add Axes-labels based on selected language
@@ -314,12 +281,4 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
             return 0;
         });
     }
-    /*formatDataLabel(value: any) {
-        const relativeValue = (value / this.totalParticipants) * 100;
-        if (isNaN(relativeValue)) {
-            return value + ' (0%)';
-        } else {
-            return value + ' (' + round((value / this.totalParticipants) * 100, 1) + '%)';
-        }
-    }*/
 }
