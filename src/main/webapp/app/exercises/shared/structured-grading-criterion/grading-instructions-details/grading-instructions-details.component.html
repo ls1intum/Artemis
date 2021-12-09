@@ -30,7 +30,7 @@
                     <div class="col-md-3 text-end">
                         <div class="col-md-auto input-group-btn d-flex-end">
                             <span class="btn btn-md btn-danger" (click)="deleteGradingCriterion(criterion)">
-                                <fa-icon [icon]="'trash'"></fa-icon>
+                                <fa-icon [icon]="faTrash"></fa-icon>
                                 <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
                             </span>
                         </div>
@@ -114,7 +114,7 @@
                                 </td>
                                 <td>
                                     <span class="instruction-delete-button col-2" id="delete-instruction-row" (click)="deleteInstruction(instruction, criterion)">
-                                        <fa-icon [icon]="'trash'" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"></fa-icon>
+                                        <fa-icon [icon]="faTrash" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"></fa-icon>
                                     </span>
                                 </td>
                             </tr>
@@ -122,13 +122,13 @@
                     </table>
                 </div>
                 <span class="re-evaluate-button mb-3" id="add-instruction-button" (click)="addNewInstruction(criterion)">
-                    <fa-icon [icon]="'plus'" ngbTooltip="{{ 'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate }}"></fa-icon>
+                    <fa-icon [icon]="faPlus" ngbTooltip="{{ 'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate }}"></fa-icon>
                 </span>
             </div>
             <div class="row mt-4">
                 <div class="col-12 col-sm-6 col-xl-3 mb-1">
                     <button id="add-criterion-button" class="btn btn-block btn-success" (click)="addNewGradingCriterion()">
-                        <fa-icon [icon]="'plus'"></fa-icon>
+                        <fa-icon [icon]="faPlus"></fa-icon>
                         <span jhiTranslate="artemisApp.exercise.addAssessmentCriterion"></span>
                     </button>
                 </div>
@@ -188,11 +188,11 @@
                                 id="reset-criteria-button"
                                 (click)="resetCriterionTitle(criteria)"
                             >
-                                <fa-icon [icon]="'undo'" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentCriterionTitle' | artemisTranslate }}"></fa-icon>
+                                <fa-icon [icon]="faUndo" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentCriterionTitle' | artemisTranslate }}"></fa-icon>
                             </span>
                             <div class="col-md-auto input-group-btn d-flex align-items-center">
                                 <span class="btn btn-block btn-danger" id="delete-criteria-button" (click)="deleteGradingCriterion(criteria)">
-                                    <fa-icon [icon]="'trash'"></fa-icon>
+                                    <fa-icon [icon]="faTrash"></fa-icon>
                                     <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
                                 </span>
                             </div>
@@ -220,13 +220,13 @@
                             ></jhi-markdown-editor>
                             <div class="form-group text-center col-md-4" style="display: block">
                                 <span class="re-evaluate-button" id="reset-button" (click)="resetInstruction(instruction, criteria)">
-                                    <fa-icon [icon]="'undo'" size="2x" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentInstruction' | artemisTranslate }}"></fa-icon>
+                                    <fa-icon [icon]="faUndo" size="2x" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentInstruction' | artemisTranslate }}"></fa-icon>
                                 </span>
                                 <span class="re-evaluate-button" id="delete-button" (click)="deleteInstruction(instruction, criteria)">
-                                    <fa-icon [icon]="'trash'" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"></fa-icon>
+                                    <fa-icon [icon]="faTrash" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"></fa-icon>
                                 </span>
                                 <span class="re-evaluate-button" id="add-button" (click)="addInstruction(criteria)">
-                                    <fa-icon [icon]="'plus'" size="2x" ngbTooltip="{{ 'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate }}"></fa-icon>
+                                    <fa-icon [icon]="faPlus" size="2x" ngbTooltip="{{ 'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate }}"></fa-icon>
                                 </span>
                             </div>
                         </div>
@@ -237,7 +237,7 @@
         <div class="row mt-2">
             <div class="col-12 col-sm-6 col-xl-3 mb-1">
                 <button id="add-criteria-button" class="btn btn-block btn-success" (click)="addGradingCriterion()">
-                    <fa-icon [icon]="'plus'"></fa-icon>
+                    <fa-icon [icon]="faPlus"></fa-icon>
                     <span jhiTranslate="artemisApp.exercise.addAssessmentCriterion"></span>
                 </button>
             </div>

@@ -1,8 +1,9 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faLink } from '@fortawesome/free-solid-svg-icons';
 import { Command } from './command';
 
 export class LinkCommand extends Command {
-    buttonIcon = 'link' as IconProp;
+    buttonIcon = faLink as IconProp;
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.link';
 
     /**

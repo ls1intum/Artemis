@@ -4,6 +4,7 @@ import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ResizeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
+import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-grid',
@@ -39,6 +40,10 @@ export class CodeEditorGridComponent implements AfterViewInit {
     interactResizableBottom: Interactable;
     resizableMinHeightBottom = 300;
     resizableMaxHeightBottom = 600;
+
+    // Icons
+    faGripLines = faGripLines;
+    faGripLinesVertical = faGripLinesVertical;
 
     constructor() {}
 

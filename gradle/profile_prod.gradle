@@ -1,7 +1,3 @@
-dependencies {
-    testImplementation "com.h2database:h2"
-}
-
 def profiles = 'prod'
 if (project.hasProperty('no-liquibase')) {
     profiles += ',no-liquibase'
