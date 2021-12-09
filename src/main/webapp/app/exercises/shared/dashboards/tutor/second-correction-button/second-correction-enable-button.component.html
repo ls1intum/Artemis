@@ -1,12 +1,12 @@
 <div class="btn-group">
     <!-- Enable second correction with this button -->
     <button *ngIf="!secondCorrectionEnabled" (click)="triggerSecondCorrectionButton()" class="btn btn-success float-end btn-sm">
-        <fa-icon [icon]="'toggle-on'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOn' | artemisTranslate }}
-        <fa-icon *ngIf="toggelingSecondCorrectionButton" [icon]="'spinner'" [spin]="true"></fa-icon>
+        <fa-icon [icon]="faToggleOn" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOn' | artemisTranslate }}
+        <fa-icon *ngIf="toggelingSecondCorrectionButton" [icon]="faSpinner" [spin]="true"></fa-icon>
     </button>
     <!-- Disable second correction with this button -->
     <button *ngIf="secondCorrectionEnabled" (click)="triggerSecondCorrectionButton()" class="btn btn-danger float-end btn-sm">
-        <fa-icon [icon]="'toggle-off'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOff' | artemisTranslate }}
-        <fa-icon *ngIf="toggelingSecondCorrectionButton" [icon]="'spinner'" [spin]="true"></fa-icon>
+        <fa-icon [icon]="faToggleOff" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOff' | artemisTranslate }}
+        <fa-icon *ngIf="toggelingSecondCorrectionButton" [icon]="faSpinner" [spin]="true"></fa-icon>
     </button>
 </div>

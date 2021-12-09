@@ -1,4 +1,6 @@
 import { AfterViewInit, Component, Input } from '@angular/core';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import interact from 'interactjs';
 
@@ -12,6 +14,12 @@ export class CollapsableAssessmentInstructionsComponent implements AfterViewInit
     @Input() exercise: Exercise;
     @Input() collapsed = false;
     @Input() readOnly: boolean;
+
+    // Icons
+    faChevronRight = faChevronRight;
+    faChevronLeft = faChevronLeft;
+    faGripLinesVertical = faGripLinesVertical;
+    farListAlt = faListAlt;
 
     /**
      * Configures interact to make instructions expandable

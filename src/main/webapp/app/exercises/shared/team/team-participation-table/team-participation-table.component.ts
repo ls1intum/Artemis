@@ -17,6 +17,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Participation } from 'app/entities/participation/participation.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { faFlag, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 
@@ -50,6 +51,10 @@ export class TeamParticipationTableComponent implements OnInit {
 
     exercises: ExerciseForTeam[];
     isLoading: boolean;
+
+    // Icons
+    faFolderOpen = faFolderOpen;
+    faFlag = faFlag;
 
     constructor(
         private teamService: TeamService,

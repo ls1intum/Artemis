@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -15,6 +16,11 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
     @Input() readOnly: boolean;
 
     readonly assessmentType = AssessmentType;
+
+    // Icons
+    faCogs = faCogs;
+    faUserCheck = faUserCheck;
+    faUserSlash = faUserSlash;
 
     constructor(private translator: TranslateService) {}
 
