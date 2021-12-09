@@ -71,7 +71,7 @@
             <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise && isVisibleToStudents(nextRelevantExercise)">
                 <h3 class="text-primary">
                     <span *ngIf="nextRelevantExercise.dueDate; else noDueDate">
-                        {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | artemisTranslate: { date: nextRelevantExercise.dueDate | artemisDate } }}
+                        {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | artemisTranslate: { date: nextRelevantExerciseDueDate | artemisDate } }}
                     </span>
                     <ng-template #noDueDate>
                         {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeaderWithoutDueDate' | artemisTranslate }}

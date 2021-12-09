@@ -16,8 +16,9 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
+import { User } from 'app/core/user/user.model';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -52,6 +53,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     private paramSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
+    private currentUser?: User;
     public course?: Course;
     public weeklyIndexKeys: string[];
     public weeklyExercisesGrouped: object;
@@ -67,8 +69,10 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     activeFilters: Set<ExerciseFilter>;
     numberOfExercises: number;
     exerciseForGuidedTour?: Exercise;
-    nextRelevantExercise?: Exercise;
     sortingAttribute: SortingAttribute;
+
+    nextRelevantExercise?: Exercise;
+    nextRelevantExerciseDueDate?: dayjs.Dayjs;
 
     // Icons
     faPlayCircle = faPlayCircle;
@@ -121,7 +125,11 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
         });
 
         this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
-        this.nextRelevantExercise = this.exerciseService.getNextExerciseForHours(this.course?.exercises);
+
+        this.accountService.identity().then((user) => {
+            this.currentUser = user;
+            this.updateNextRelevantExercise();
+        });
     }
 
     setSortingAttribute(attribute: SortingAttribute) {
@@ -131,7 +139,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges() {
-        this.nextRelevantExercise = this.exerciseService.getNextExerciseForHours(this.course?.exercises);
+        this.updateNextRelevantExercise();
     }
 
     ngOnDestroy(): void {
@@ -147,6 +155,13 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
 
     private calcNumberOfExercises() {
         this.numberOfExercises = sum(Array.from(this.exerciseCountMap.values()));
+    }
+
+    private updateNextRelevantExercise() {
+        this.nextRelevantExercise = this.exerciseService.getNextExerciseForHours(this.course?.exercises, 12, this.currentUser);
+        if (this.nextRelevantExercise) {
+            this.nextRelevantExerciseDueDate = getExerciseDueDate(this.nextRelevantExercise, this.nextRelevantExercise?.studentParticipations?.[0]);
+        }
     }
 
     /**
