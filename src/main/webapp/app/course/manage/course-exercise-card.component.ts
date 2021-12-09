@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-exercise-card',
@@ -8,4 +9,8 @@ import { Component, Input } from '@angular/core';
 export class CourseExerciseCardComponent {
     @Input() headingJhiTranslate: string;
     isCollapsed = false;
+
+    // Icons
+    faAngleRight = faAngleRight;
+    faAngleDown = faAngleDown;
 }

@@ -27,6 +27,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { Course } from 'app/entities/course.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
+import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -53,6 +54,10 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     latestResult: Result | undefined;
     hasTutorAssessment = false;
     isIllegalSubmission = false;
+
+    // Icons
+    faCircleNotch = faCircleNotch;
+    faTimesCircle = faTimesCircle;
 
     constructor(
         private resultService: ResultService,

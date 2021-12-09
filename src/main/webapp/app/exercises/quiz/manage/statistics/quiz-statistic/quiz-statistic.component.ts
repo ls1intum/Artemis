@@ -12,6 +12,7 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { Authority } from 'app/shared/constants/authority.constants';
 import { BaseChartDirective, Color } from 'ng2-charts';
 import { round } from 'app/shared/util/utils';
+import { faSync } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * this interface is adapted from chart.js
@@ -174,6 +175,9 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
 
     // options for chart.js style
     options: ChartOptions;
+
+    // Icons
+    faSync = faSync;
 
     constructor(
         private route: ActivatedRoute,

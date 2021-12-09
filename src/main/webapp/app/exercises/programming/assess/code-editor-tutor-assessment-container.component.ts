@@ -40,6 +40,7 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -103,6 +104,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     @Output() onFeedbackLoaded = new EventEmitter();
     // function override, if set will be executed instead of going to the next submission page
     @Input() overrideNextSubmission?: (submissionId: number) => {} = undefined;
+
+    // Icons
+    faTimesCircle = faTimesCircle;
 
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,

@@ -41,8 +41,8 @@
                 "minlength": "The name must be at least 3 characters long."
             },
             "teamName": {
-                "missingTeamName": "Team name must be provided for each student.",
-                "pattern": "The team name must start with a letter."
+                "missingTeamName": "No team name is assigned to the student {{ studentName }} in entry {{ entryNr }}.",
+                "pattern": "The team name {{ teamName }} in entry {{ entryNr }} does not start with a letter."
             },
             "shortName": {
                 "label": "Short Name",
@@ -62,7 +62,10 @@
                 "all": "All teams",
                 "own": "Own teams"
             },
-            "missingUserNameOrId": "Students must have either a username or registration number.",
+            "invalidFileType": "Invalid file type for team import: {{ fileType }}",
+            "invalidCsvHeader": "The CSV file must have the following header: {{ expectedHeader }}",
+            "invalidCsvLine": "Line {{ line }} is not in the proper format",
+            "missingUserNameOrId": "The student in entry {{ entryNr }} has neither a username nor a registration number.",
             "noStudentsAddedYet": "No students added yet.",
             "addStudentToTeam": "Add a student to the team (by searching for login or name)",
             "studentSearch": {
@@ -104,7 +107,7 @@
                 "buttonLabel": "Import teams",
                 "dialogTitle": "Import teams into:",
                 "introTextExercise": "This dialog can be used to import teams from another exercise of this course into this exercise.",
-                "introTextFile": "This dialog can be used to import teams from a file into this exercise.",
+                "introTextFile": "This dialog can be used to import teams from a .json or .csv file into this exercise.",
                 "error": "Could not import teams. Please try again.",
                 "fromAnExercise": "From an exercise",
                 "fromAFile": "From a file"
