@@ -149,6 +149,7 @@ public class NotificationScheduleService {
      * @param submission that should trigger a notification when the assessment due date (of the respective exercise) is over
      */
     public void updateSchedulingForAssessedExercisesSubmissions(Submission submission) {
+        checkSecurityUtils();
         StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
