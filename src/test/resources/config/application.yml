@@ -131,6 +131,9 @@ management:
     endpoint:
         jhimetrics:
             enabled: true
+    info:
+        env:
+            enabled: true
 
 sentry:
     dsn: https://not-activated@sentry.io/0000000
