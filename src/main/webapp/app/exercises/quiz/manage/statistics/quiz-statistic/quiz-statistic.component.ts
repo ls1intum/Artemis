@@ -79,6 +79,7 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
                 }
             });
         });
+        this.changeDetector.detectChanges();
     }
 
     ngOnDestroy() {
@@ -180,10 +181,10 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
      * updates the chart by setting the data set, re-calculating the height and calling update on the chart view child
      */
     updateChart() {
-        this.setData(this.quizExercise.quizPointStatistic!);
-        this.pushDataToNgxEntry();
         this.ngxColor.domain = this.backgroundColor;
         this.xAxisLabel = this.translateService.instant('showStatistic.quizStatistic.xAxes');
         this.yAxisLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
+        this.setData(this.quizExercise.quizPointStatistic!);
+        this.pushDataToNgxEntry();
     }
 }

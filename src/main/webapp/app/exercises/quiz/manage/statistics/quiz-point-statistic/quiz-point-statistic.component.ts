@@ -110,6 +110,7 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
         this.interval = setInterval(() => {
             this.updateDisplayedTimes();
         }, UI_RELOAD_TIME);
+        this.changeDetector.detectChanges();
     }
 
     /**
