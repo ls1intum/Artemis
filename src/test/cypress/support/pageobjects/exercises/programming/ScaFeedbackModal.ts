@@ -5,7 +5,7 @@ export class ScaFeedbackModal {
     private readonly feedbackSelector = '#feedback-message';
 
     shouldShowPointChart() {
-        cy.get('#chart').should('be.visible');
+        cy.get('#feedback-chart').should('be.visible');
     }
 
     shouldShowFeedback(numberOfPassedTests: number, points: string) {
