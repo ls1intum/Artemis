@@ -212,12 +212,12 @@ describe('Exam assessment', () => {
         cy.contains('You have the lock for this assessment').should('be.visible');
     }
 
-    function prepareExam(examEnd: dayjs.Dayjs, resultDate = examEnd.add(1, 'seconds')) {
+    function prepareExam(end: dayjs.Dayjs, resultDate = end.add(1, 'seconds')) {
         cy.login(admin);
         const examContent = new CypressExamBuilder(course)
             .visibleDate(dayjs().subtract(1, 'day'))
             .startDate(dayjs())
-            .endDate(examEnd)
+            .endDate(end)
             .publishResultsDate(resultDate)
             .gracePeriod(0)
             .build();

@@ -23,7 +23,6 @@ import './utils';
 import 'cypress-file-upload';
 // Imports cy.waitUntil https://github.com/NoriSte/cypress-wait-until
 import 'cypress-wait-until';
-import { readyException } from 'cypress/types/jquery';
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
