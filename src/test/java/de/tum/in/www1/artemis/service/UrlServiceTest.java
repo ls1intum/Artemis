@@ -90,5 +90,11 @@ public class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         var studentParticipation2 = new ProgrammingExerciseStudentParticipation();
         studentParticipation2.setRepositoryUrl(repositoryUrl4.toString());
         assertThat(studentParticipation2.getUserIndependentRepositoryUrl()).isEqualTo("https://artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-turdiu");
+
+        assertThat(new ProgrammingExerciseStudentParticipation().getUserIndependentRepositoryUrl()).isNull();
+
+        var studentParticipation3 = new ProgrammingExerciseStudentParticipation();
+        studentParticipation3.setRepositoryUrl("htps/abc.luka@bitbucket");
+        assertThat(studentParticipation3.getUserIndependentRepositoryUrl()).isNull();
     }
 }
