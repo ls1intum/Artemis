@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
 
 public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -47,6 +48,7 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
     @Test
     @Timeout(5)
     void shouldCreateNotificationAtReleaseDate() {
+        SecurityUtils.setAuthorizationObject();
         ZonedDateTime exerciseReleaseDate = ZonedDateTime.now().plusSeconds(DELAY_IN_SECONDS);
         exercise.setReleaseDate(exerciseReleaseDate);
         exerciseRepository.save(exercise);
@@ -63,6 +65,7 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
     @Test
     @Timeout(5)
     void shouldCreateNotificationAtAssessmentDueDate() {
+        SecurityUtils.setAuthorizationObject();
         database.addUsers(1, 1, 1, 1);
         exercise.setAssessmentDueDate(ZonedDateTime.now().plusSeconds(DELAY_IN_SECONDS));
         exerciseRepository.save(exercise);
