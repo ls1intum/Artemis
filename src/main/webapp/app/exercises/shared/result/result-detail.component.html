@@ -23,7 +23,7 @@
                 <span class="result-score-chart-title">
                     <span jhiTranslate="artemisApp.result.score">Score</span>: {{ roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise!)) }}%
                 </span>
-                <div #containerRef class="chart-space">
+                <div id="feedback-chart" #containerRef class="chart-space">
                     <ngx-charts-bar-horizontal-stacked
                         [view]="[containerRef.offsetWidth, 80]"
                         [results]="ngxData"
