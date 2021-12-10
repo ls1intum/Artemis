@@ -22,11 +22,9 @@ public class SyntaxTreeLink extends UMLElement {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof SyntaxTreeLink)) {
+        if (!(reference instanceof SyntaxTreeLink referenceLink)) {
             return 0;
         }
-
-        SyntaxTreeLink referenceLink = (SyntaxTreeLink) reference;
 
         double similarity = 0;
 
