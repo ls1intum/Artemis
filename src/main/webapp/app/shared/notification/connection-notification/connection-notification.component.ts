@@ -4,6 +4,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { ConnectionNotification, ConnectionNotificationType } from 'app/shared/notification/connection-notification/connection-notification.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faCheckCircle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-connection-notification',
@@ -79,9 +80,9 @@ export class ConnectionNotificationComponent implements OnInit, OnDestroy {
     updateAlert(): void {
         if (this.notification) {
             if (this.notification.type === ConnectionNotificationType.DISCONNECTED) {
-                this.alert = { class: 'alert-danger', icon: 'times-circle', text: 'artemisApp.connectionAlert.disconnected' };
+                this.alert = { class: 'alert-danger', icon: faTimesCircle, text: 'artemisApp.connectionAlert.disconnected' };
             } else if (this.notification.type === ConnectionNotificationType.RECONNECTED) {
-                this.alert = { class: 'alert-success', icon: 'check-circle', text: 'artemisApp.connectionAlert.reconnected' };
+                this.alert = { class: 'alert-success', icon: faCheckCircle, text: 'artemisApp.connectionAlert.reconnected' };
             } else if (this.notification.type === ConnectionNotificationType.CONNECTED) {
                 this.alert = undefined;
             }

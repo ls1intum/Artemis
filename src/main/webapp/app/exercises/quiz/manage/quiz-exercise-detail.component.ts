@@ -41,6 +41,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
+import { faExclamationCircle, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -106,6 +107,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     /** Route params **/
     examId?: number;
     courseId?: number;
+
+    // Icons
+    faPlus = faPlus;
+    faExclamationCircle = faExclamationCircle;
 
     constructor(
         private route: ActivatedRoute,

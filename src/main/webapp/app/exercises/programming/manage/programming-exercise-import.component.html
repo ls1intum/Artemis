@@ -13,19 +13,19 @@
                 <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()" class="flex-row">
                     <th jhiSortBy="{{ column.ID }}" class="col-1">
                         <span>#</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="{{ column.TITLE }}" class="col-3">
                         <span jhiTranslate="artemisApp.exercise.import.table.title">Title</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="{{ column.PROGRAMMING_LANGUAGE }}" class="col-3">
                         <span jhiTranslate="artemisApp.exercise.import.table.language">Programming Language</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="{{ column.COURSE_TITLE }}" class="col-3">
                         <span jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-1"></th>
                 </tr>

@@ -50,13 +50,13 @@
 
                     <div class="col-md-12 text-center">
                         <button (click)="switchSolution()" type="button" class="btn btn-primary">
-                            <fa-icon *ngIf="showSolution" [icon]="'check-circle'"></fa-icon>&nbsp; <fa-icon *ngIf="!showSolution" [icon]="'times-circle'"></fa-icon>&nbsp;
+                            <fa-icon *ngIf="showSolution" [icon]="faCheckCircle"></fa-icon>&nbsp; <fa-icon *ngIf="!showSolution" [icon]="faTimesCircle"></fa-icon>&nbsp;
                             <span *ngIf="showSolution" jhiTranslate="showStatistic.dragAndDropQuestionStatistic.hideSampleSolution"></span>
                             <span *ngIf="!showSolution" jhiTranslate="showStatistic.dragAndDropQuestionStatistic.showSampleSolution"></span>
                         </button>
 
                         <button (click)="switchRated()" type="button" class="btn btn-primary">
-                            <fa-icon [icon]="'sync'"></fa-icon>&nbsp;
+                            <fa-icon [icon]="faSync"></fa-icon>&nbsp;
                             <span *ngIf="rated" jhiTranslate="showStatistic.switchToUnrated"></span>
                             <span *ngIf="!rated" jhiTranslate="showStatistic.switchToRated"></span>
                         </button>

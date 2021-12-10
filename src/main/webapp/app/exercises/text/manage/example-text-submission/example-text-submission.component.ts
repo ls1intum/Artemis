@@ -26,6 +26,8 @@ import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } 
 import { filter, switchMap, tap } from 'rxjs/operators';
 import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { Observable, of } from 'rxjs';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
@@ -55,6 +57,11 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     SubmissionButtonStates = SubmissionButtonStates;
     AssessButtonStates = AssessButtonStates;
     UIStates = UIStates;
+
+    // Icons
+    faSave = faSave;
+    faEdit = faEdit;
+    farListAlt = faListAlt;
 
     constructor(
         alertService: AlertService,

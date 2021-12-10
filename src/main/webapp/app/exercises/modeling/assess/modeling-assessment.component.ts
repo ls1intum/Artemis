@@ -9,6 +9,7 @@ import $ from 'jquery';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -59,6 +60,10 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
 
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
     @Output() selectionChanged = new EventEmitter<Selection>();
+
+    // Icons
+    faGripLinesVertical = faGripLinesVertical;
+    faGripLines = faGripLines;
 
     constructor(private alertService: AlertService, private renderer: Renderer2, private artemisTranslatePipe: ArtemisTranslatePipe) {}
 

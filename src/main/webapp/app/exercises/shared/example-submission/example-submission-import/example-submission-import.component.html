@@ -25,7 +25,7 @@
                         </th>
                         <th jhiSortBy="{{ column.STUDENT_NAME }}">
                             <span jhiTranslate="artemisApp.exercise.studentName">Student Name</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                         <th>
                             <span jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission Date</span>
@@ -37,14 +37,14 @@
                             <span jhiTranslate="artemisApp.exampleSubmission.submissionSize"></span>
                             <fa-icon
                                 *ngIf="exercise && exercise.type === exerciseType.TEXT"
-                                [icon]="'question-circle'"
+                                [icon]="faQuestionCircle"
                                 class="text-secondary ps-1"
                                 [ngbTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
                                 container="body"
                             ></fa-icon>
                             <fa-icon
                                 *ngIf="exercise && exercise.type === exerciseType.MODELING"
-                                [icon]="'question-circle'"
+                                [icon]="faQuestionCircle"
                                 class="text-secondary ps-1"
                                 [ngbTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
                                 container="body"

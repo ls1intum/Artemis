@@ -214,7 +214,7 @@
             "resubmitSingle": "Neues Ergebnis für Teilnahme erzeugen",
             "resubmitConfirmManualResultOverride": "Das letzte Ergebnis ist ein manuelles Ergebnis, das heißt es wurde von Tutor:innen bewertet. Falls du einen neuen Build für diese Abgabe auslöst, wird anstelle des manuellen Ergebnissen das neu generierte, automatische Ergebnis primär für die Studierenden angezeigt.",
             "resubmitAllConfirmAfterDeadline": "Die Einreichungsfrist ist verstrichen, möglicherweise haben Tutor:innen manche Teilnahmen manuell bewertet. Neu erzeugte automatische Ergebnisse würden diese manuellen Ergebnisse als aktuelles Ergebnis ersetzen.",
-            "resubmitUnsuccessful": "Die letzte Abgabe konnte nicht erneut bewertet werden. Bitte kontaktiere eine/n Tutor:in.",
+            "resubmitUnsuccessful": "Die letzte Abgabe konnte nicht erneut bewertet werden. Bitte wende dich an entsprechende Tutor:innen.",
             "resubmitAll": "Alle erneut ausführen",
             "resubmitAllTooltip": "Führe die letzte Abgabe aller Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet.",
             "resubmitAllDialog": "ACHTUNG: Die erneute Abgabe aller Teilnahmen ist eine sehr aufwändige Operation. Diese Aktion wird für jede Teilnahme dieser Übung einen CI Build starten. Das bedeutet, dass alle Ergebnisse der Studierenden anhand ihres letzten Commits neu berechnet und mit dem neu erzeugten Ergebnis überschreiben werden!",
