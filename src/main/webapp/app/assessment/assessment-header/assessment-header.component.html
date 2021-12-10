@@ -178,7 +178,7 @@
                 *ngIf="result?.completionDate && isAtLeastInstructor && (exercise!.type === ExerciseType.MODELING || exercise!.type === ExerciseType.TEXT)"
                 (click)="onUseAsExampleSolutionClicked()"
             >
-                <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true"></fa-icon>
+                <fa-icon *ngIf="submitBusy" [icon]="faSpinner" [spin]="true"></fa-icon>
                 <span jhiTranslate="artemisApp.assessment.button.useAsExampleSubmission">Use as Example Submission</span>
             </button>
             <button
@@ -190,15 +190,6 @@
             >
                 <fa-icon *ngIf="nextSubmissionBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="artemisApp.assessment.button.nextSubmission">Next Submission</span>
-            </button>
-            <button
-                class="btn m-1 btn-primary"
-                id="importExampleSubmission"
-                *ngIf="result?.completionDate && isAtLeastInstructor && (exercise!.type === ExerciseType.MODELING || exercise!.type === ExerciseType.TEXT)"
-                (click)="importExampleSubmission.emit()"
-            >
-                <fa-icon *ngIf="submitBusy" [icon]="faSpinner" [spin]="true"></fa-icon>
-                <span jhiTranslate="artemisApp.assessment.button.importExampleSubmission">Import as Example Submission</span>
             </button>
             <a [routerLink]="exerciseDashboardLink" class="btn m-1 btn-info">
                 <span jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
