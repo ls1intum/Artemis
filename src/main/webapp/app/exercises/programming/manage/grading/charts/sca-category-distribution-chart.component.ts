@@ -4,6 +4,14 @@ import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app
 import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
+import { getColor, xAxisFormatting } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.utils';
+
+enum ScaChartBarTitle {
+    PENALTY = 'Penalty',
+    ISSUES = 'Issues',
+    DEDUCTIONS_EN = 'Deductions',
+    DEDUCTIONS_DE = 'Punkte',
+}
 
 @Component({
     selector: 'jhi-sca-category-distribution-chart',
@@ -27,8 +35,10 @@ import { TranslateService } from '@ngx-translate/core';
                         <b>{{ model.name }}</b>
                         <br />
                         <div [ngSwitch]="model.series">
-                            <div *ngSwitchCase="'Penalty'">
-                                <span>{{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}</span>
+                            <div *ngSwitchCase="scaChartBarTitle.PENALTY">
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
+                                </span>
                                 <br />
                                 <span>
                                     {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.issues.toFixed(2) } }}
@@ -38,28 +48,32 @@ import { TranslateService } from '@ngx-translate/core';
                                     {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
                                 </span>
                             </div>
-                            <div *ngSwitchCase="'Issues'">
+                            <div *ngSwitchCase="scaChartBarTitle.ISSUES">
                                 <span>
                                     {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.penalty.toFixed(2) } }}
                                 </span>
                                 <br />
-                                <span>{{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}</span>
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
+                                </span>
                                 <br />
                                 <span>
                                     {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
                                 </span>
                             </div>
-                            <div *ngSwitchDefault>
-                                <span>
-                                    {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.penalty.toFixed(2) } }}
-                                </span>
-                                <br />
-                                <span>{{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.issues.toFixed(2) } }}</span>
-                                <br />
-                                <span>
-                                    {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
-                                </span>
-                            </div>
+                        </div>
+                        <div *ngIf="[scaChartBarTitle.DEDUCTIONS_EN, scaChartBarTitle.DEDUCTIONS_DE].includes(model.series)">
+                            <span>
+                                {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.penalty.toFixed(2) } }}
+                            </span>
+                            <br />
+                            <span>
+                                {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.issues.toFixed(2) } }}
+                            </span>
+                            <br />
+                            <span>
+                                {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
+                            </span>
                         </div>
                     </ng-template>
                 </ngx-charts-bar-horizontal-normalized>
@@ -74,6 +88,8 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
 
     @Output() categoryColorsChange = new EventEmitter<{}>();
 
+    readonly scaChartBarTitle = ScaChartBarTitle;
+
     // ngx
     ngxData: any[] = [];
     ngxColors = {
@@ -82,6 +98,8 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
         group: ScaleType.Ordinal,
         domain: [],
     } as Color;
+
+    readonly xAxisFormatting = xAxisFormatting;
 
     constructor(private translateService: TranslateService) {}
 
@@ -129,7 +147,7 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
             const penaltyScore = totalPenalty > 0 ? (Math.min(element.category.penalty, element.category.maxPenalty) / totalPenalty) * 100 : 0;
             const issuesScore = totalIssues > 0 ? (element.issues / totalIssues) * 100 : 0;
             const penaltyPoints = totalPenaltyPoints > 0 ? (element.penaltyPoints / totalPenaltyPoints) * 100 : 0;
-            const color = this.getColor(index / this.categories.length, 50);
+            const color = getColor(index / this.categories.length, 50);
 
             penalty.series.push({ name: element.category.name, value: penaltyScore, issues: issuesScore, points: penaltyPoints });
             issue.series.push({ name: element.category.name, value: issuesScore, penalty: penaltyScore, points: penaltyPoints });
@@ -144,24 +162,5 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
         this.ngxData = [...this.ngxData];
 
         this.categoryColorsChange.emit(categoryColors);
-    }
-
-    /**
-     * Dynamically generates a color based on the input
-     * @param i factor that is modifying the first coordinate of the color
-     * @param l percentage defining the last part of the color
-     * @returns color in hsl format
-     */
-    getColor(i: number, l: number): string {
-        return `hsl(${(i * 360 * 3) % 360}, 55%, ${l}%)`;
-    }
-
-    /**
-     * Appends a percentage sign to every tick on the x axis
-     * @param tick the default tick label as string
-     * @returns tick label string that is extended by an percentage sign
-     */
-    xAxisFormatting(tick: string): string {
-        return tick + '%';
     }
 }

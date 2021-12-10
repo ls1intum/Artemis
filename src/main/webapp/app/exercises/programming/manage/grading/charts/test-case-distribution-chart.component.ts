@@ -4,6 +4,14 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { getColor, xAxisFormatting } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.utils';
+
+enum TestCaseBarTitle {
+    WEIGHT_EN = 'Weight',
+    WEIGHT_DE = 'Gewichtung',
+    WEIGHT_AND_BONUS_EN = 'Weight & Bonus',
+    WEIGHT_AND_BONUS_DE = 'Gewichtung & Bonus',
+}
 
 @Component({
     selector: 'jhi-test-case-distribution-chart',
@@ -26,7 +34,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
                     <ng-template #tooltipTemplate let-model="model">
                         <b>{{ model.name }}</b>
                         <br />
-                        <div *ngIf="['Weight', 'Gewichtung'].includes(model.series)">
+                        <div *ngIf="[testCaseBarTitle.WEIGHT_EN, testCaseBarTitle.WEIGHT_DE].includes(model.series)">
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip'
@@ -41,7 +49,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
                                 }}
                             </span>
                         </div>
-                        <div *ngIf="['Weight & Bonus', 'Gewichtung & Bonus'].includes(model.series)">
+                        <div *ngIf="[testCaseBarTitle.WEIGHT_AND_BONUS_EN, testCaseBarTitle.WEIGHT_AND_BONUS_DE].includes(model.series)">
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip'
@@ -93,6 +101,8 @@ export class TestCaseDistributionChartComponent implements OnChanges {
 
     @Output() testCaseColorsChange = new EventEmitter<{}>();
 
+    readonly testCaseBarTitle = TestCaseBarTitle;
+
     // ngx
     ngxWeightData: any[] = [
         { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weight'), series: [] as any[] },
@@ -106,6 +116,8 @@ export class TestCaseDistributionChartComponent implements OnChanges {
         group: ScaleType.Ordinal,
         domain: [],
     } as Color;
+
+    readonly xAxisFormatting = xAxisFormatting;
 
     constructor(private translateService: TranslateService) {}
 
@@ -161,12 +173,12 @@ export class TestCaseDistributionChartComponent implements OnChanges {
                 const element = testCaseScores[i];
 
                 const label = element.label;
-                const color = this.getColor(+i / this.testCases.length, 50);
+                const color = getColor(i / this.testCases.length, 50);
 
-                weight.series.push({ name: element.label, value: element.relWeight, bonus: element.relScore });
-                weightAndBonus.series.push({ name: element.label, value: element.relScore, weight: element.relWeight });
+                weight.series.push({ name: label, value: element.relWeight, bonus: element.relScore });
+                weightAndBonus.series.push({ name: label, value: element.relScore, weight: element.relWeight });
 
-                points.series.push({ name: element.label, value: element.relPoints });
+                points.series.push({ name: label, value: element.relPoints });
 
                 testCaseColors[label] = color;
                 this.ngxColors.domain.push(color);
@@ -192,24 +204,5 @@ export class TestCaseDistributionChartComponent implements OnChanges {
 
         this.ngxWeightData = [...this.ngxWeightData];
         this.ngxPointsData = [...this.ngxPointsData];
-    }
-
-    /**
-     * Dynamically generates a color based on the input
-     * @param i factor that is modifying the first coordinate of the color
-     * @param l percentage defining the last part of the color
-     * @returns color in hsl format
-     */
-    getColor(i: number, l: number): string {
-        return `hsl(${(i * 360 * 3) % 360}, 55%, ${l}%)`;
-    }
-
-    /**
-     * Appends a percentage sign to every tick on the x axis
-     * @param tick the default tick label as string
-     * @returns tick label string that is extended by an percentage sign
-     */
-    xAxisFormatting(tick: string): string {
-        return tick + '%';
     }
 }
