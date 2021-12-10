@@ -50,7 +50,7 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
         private jhiWebsocketService: JhiWebsocketService,
         protected changeDetector: ChangeDetectorRef,
     ) {
-        super(changeDetector);
+        super();
     }
 
     loadDataInDiagram(): void {
@@ -162,6 +162,7 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
         const lastLabel = this.translateService.instant('showStatistic.quizStatistic.average');
         this.label.push(lastLabel);
         this.chartLabels = this.label;
+        this.ngxColor.domain = this.backgroundColor;
 
         // load data into chart
         this.updateChart();
@@ -181,10 +182,9 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
      * updates the chart by setting the data set, re-calculating the height and calling update on the chart view child
      */
     updateChart() {
-        this.ngxColor.domain = this.backgroundColor;
         this.xAxisLabel = this.translateService.instant('showStatistic.quizStatistic.xAxes');
         this.yAxisLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
         this.setData(this.quizExercise.quizPointStatistic!);
-        this.pushDataToNgxEntry();
+        this.pushDataToNgxEntry(this.changeDetector);
     }
 }

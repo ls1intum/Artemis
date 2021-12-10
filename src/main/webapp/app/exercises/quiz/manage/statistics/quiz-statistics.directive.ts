@@ -26,7 +26,7 @@ export abstract class QuizStatisticsDirective {
     chartLabels: string[] = [];
     totalParticipants = 0;
 
-    constructor(protected changeDetector: ChangeDetectorRef) {}
+    constructor() {}
 
     /**
      * Depending on if the rated or unrated results should be displayed,
@@ -52,14 +52,14 @@ export abstract class QuizStatisticsDirective {
      * in order to ensure a shapely display.
      * @protected
      */
-    protected pushDataToNgxEntry(): void {
+    protected pushDataToNgxEntry(changeDetector: ChangeDetectorRef): void {
         this.ngxData = [];
         this.data.forEach((score, index) => {
             this.ngxData.push({ name: this.chartLabels[index], value: score });
         });
         this.maxScale = this.calculateHeightOfChartData(this.data);
         this.ngxData = [...this.ngxData];
-        this.changeDetector.detectChanges();
+        changeDetector.detectChanges();
     }
 
     /**

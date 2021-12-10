@@ -69,7 +69,7 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
         private jhiWebsocketService: JhiWebsocketService,
         protected changeDetector: ChangeDetectorRef,
     ) {
-        super(changeDetector);
+        super();
     }
 
     ngOnInit() {
@@ -243,7 +243,7 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
      */
     loadDataInDiagram() {
         this.setData(this.quizPointStatistic);
-        this.pushDataToNgxEntry();
+        this.pushDataToNgxEntry(this.changeDetector);
 
         // add Axes-labels based on selected language
         this.xAxisLabel = this.translateService.instant('showStatistic.quizPointStatistic.xAxes');
