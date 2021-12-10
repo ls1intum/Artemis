@@ -520,7 +520,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllProgrammingSubmissionsAsInstructorAllSubmissionsReturned() throws Exception {
-        final var submissions = new LinkedList<ProgrammingSubmission>();
+        final var submissions = new ArrayList<ProgrammingSubmission>();
         for (int i = 1; i < 4; i++) {
             final var submission = ModelFactory.generateProgrammingSubmission(true);
             submissions.add(submission);

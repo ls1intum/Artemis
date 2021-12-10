@@ -244,7 +244,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a pending submission exists or null if not.
      */
     public Map<Long, Optional<ProgrammingSubmission>> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
-        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExerciseId);
+        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseId(programmingExerciseId);
+        // TODO: find the latest pending submission directly using Java (the submissions are available now) and not with additional db queries
         return participations.stream().collect(Collectors.toMap(Participation::getId, p -> findLatestPendingSubmissionForParticipation(p.getId())));
     }
 
@@ -286,7 +287,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         // Let the instructor know that a build run was triggered.
         notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
-        List<ProgrammingExerciseStudentParticipation> participations = new LinkedList<>(programmingExerciseStudentParticipationRepository.findByExerciseId(exerciseId));
+        List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>(
+                programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseId(exerciseId));
 
         triggerBuildForParticipations(participations);
 
@@ -418,8 +420,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Trigger a CI build for each submission & notify each user on a new programming submission.
-     * Instead of triggering all builds at the same time, we execute the builds in batches to not overload the CIS system.
+     * Trigger a CI build for each submission & notify each user of the participation
+     * Note: Instead of triggering all builds at the same time, we execute the builds in batches to not overload the CIS system (this has to be handled in the invoking method)
      *
      * Note: This call "resumes the exercise", i.e. re-creates the build plan if the build plan was already cleaned before
      *
@@ -428,24 +430,24 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public void triggerBuild(ProgrammingExerciseStudentParticipation participation) {
         try {
             if (participation.getBuildPlanId() == null || !participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
-                // in this case, we first have to resume the exercise: this includes that we again setup the build plan properly before we trigger it
+                // in this case, we first have to resume the exercise: this includes that we again set up the build plan properly before we trigger it
                 participationService.resumeProgrammingExercise(participation);
                 // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             }
             continuousIntegrationService.get().triggerBuild(participation);
-            // TODO: notify the participations page that a build was triggered for the participation, there is no need to notify the student, because he would not assume an
-            // animation
+            // TODO: this is a workaround, in the future we should use the participation to notify the client and avoid using the submission
+            Optional<ProgrammingSubmission> submission = participation.findLatestSubmission();
+            submission.ifPresent(this::notifyUserAboutSubmission);
         }
         catch (Exception e) {
             log.error("Trigger build failed for {} with the exception {}", participation.getBuildPlanId(), e.getMessage());
             BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), participation.getId());
-            // TODO: notify the participations page that a build could not be triggered for the participation, there is no need to notify the student, because he would not assume
-            // an animation
+            notifyUserAboutSubmissionError(participation, error);
         }
     }
 
     /**
-     * Sends a websocket message to the user about the new submission and triggers a build on the CI system.
+     * Triggers a build on the CI system and sends a websocket message to the user about the new submission and
      * Will send an error object in the case that the communication with the CI failed.
      *
      * Note: This call "resumes the exercise", i.e. re-creates the build plan if the build plan was already cleaned before
@@ -592,12 +594,16 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     private void notifyUserAboutSubmissionError(ProgrammingSubmission submission, BuildTriggerWebsocketError error) {
-        if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
+        notifyUserAboutSubmissionError(submission.getParticipation(), error);
+    }
+
+    private void notifyUserAboutSubmissionError(Participation participation, BuildTriggerWebsocketError error) {
+        if (participation instanceof StudentParticipation studentParticipation) {
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, error));
         }
 
-        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-            messagingTemplate.convertAndSend(getExerciseTopicForTAAndAbove(submission.getParticipation().getExercise().getId()), error);
+        if (participation != null && participation.getExercise() != null) {
+            messagingTemplate.convertAndSend(getExerciseTopicForTAAndAbove(participation.getExercise().getId()), error);
         }
     }
 

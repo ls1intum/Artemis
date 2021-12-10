@@ -4,7 +4,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -72,7 +71,7 @@ public class JenkinsBuildLogParseUtils {
      * @return a list of BuildLogEntries
      */
     public static List<BuildLogEntry> parseLogsLegacy(Element logHtml) {
-        final var buildLog = new LinkedList<BuildLogEntry>();
+        final var buildLog = new ArrayList<BuildLogEntry>();
         final var iterator = logHtml.childNodes().iterator();
         while (iterator.hasNext()) {
             final var node = iterator.next();

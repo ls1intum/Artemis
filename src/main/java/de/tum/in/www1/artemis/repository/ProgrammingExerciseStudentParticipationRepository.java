@@ -70,7 +70,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
-    List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseId(Long exerciseId);
 
     /**
      * Will return the participations matching the provided participation ids, but only if they belong to the given exercise.
