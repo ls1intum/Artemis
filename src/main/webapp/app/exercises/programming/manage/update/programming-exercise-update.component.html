@@ -543,7 +543,7 @@
                     </div>
                 </ng-template>
                 <span *ngIf="getInvalidReasons().length > 0" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right">
-                    <fa-icon [icon]="'exclamation-circle'"></fa-icon>
+                    <fa-icon [icon]="faExclamationCircle"></fa-icon>
                     <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
                     <span>({{ getInvalidReasons().length }})</span>
                 </span>
