@@ -152,7 +152,7 @@ public class ProgrammingPlagiarismDetectionService {
     /**
      * Checks for plagiarism and returns a JPlag result
      * @param programmingExercise the programming exercise to check
-     * @param similarityThreshold the similartiy threshold
+     * @param similarityThreshold the similarity threshold
      * @param minimumScore the minimum score
      * @return the JPlag result or null if there are not enough participations
      * @throws ExitException in case JPlag fails
@@ -161,10 +161,10 @@ public class ProgrammingPlagiarismDetectionService {
         long programmingExerciseId = programmingExercise.getId();
 
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
-        log.info("Download repositories for JPlag for programming exexericse {} to compare {} participations", programmingExerciseId, numberOfParticipations);
+        log.info("Download repositories for JPlag for programming exercise {} to compare {} participations", programmingExerciseId, numberOfParticipations);
 
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        List<ProgrammingExerciseParticipation> participations = studentParticipationsForComparison(programmingExercise, minimumScore);
+        List<ProgrammingExerciseParticipation> participations = filterStudentParticipationsForComparison(programmingExercise, minimumScore);
 
         if (participations.size() < 2) {
             return null;
@@ -313,20 +313,26 @@ public class ProgrammingPlagiarismDetectionService {
 
     /**
      * Find all studentParticipations of the given exercise for plagiarism comparison.
+     * Filter out participations without submissions (i.e. empty submissions)
      *
-     * @param programmingExercise ProgrammingExercise to fetcch the participations for
+     * @param programmingExercise ProgrammingExercise to fetch the participations for
      * @param minimumScore        consider only submissions whose score is greater or equal to this value
      * @return List containing the latest text submission for every participation
      */
-    public List<ProgrammingExerciseParticipation> studentParticipationsForComparison(ProgrammingExercise programmingExercise, int minimumScore) {
+    public List<ProgrammingExerciseParticipation> filterStudentParticipationsForComparison(ProgrammingExercise programmingExercise, int minimumScore) {
+        // TODO: when no minimum score is specified, filtering participations with empty submissions could be done directly in the database to improve performance
         var studentParticipations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(programmingExercise.getId());
 
         return studentParticipations.parallelStream().filter(participation -> participation instanceof ProgrammingExerciseParticipation)
                 .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUrl() != null)
                 .filter(participation -> {
                     Submission submission = ((StudentParticipation) participation).findLatestSubmission().orElse(null);
-                    return minimumScore == 0 || submission != null && submission.getLatestResult() != null && submission.getLatestResult().getScore() != null
-                            && submission.getLatestResult().getScore() >= minimumScore;
+                    // filter empty submissions
+                    if (submission == null) {
+                        return false;
+                    }
+                    return minimumScore == 0
+                            || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore;
                 }).collect(Collectors.toList());
     }
 
