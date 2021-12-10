@@ -48,7 +48,7 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
         private quizExerciseService: QuizExerciseService,
         private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
-        protected changeDetector: ChangeDetectorRef,
+        private changeDetector: ChangeDetectorRef,
     ) {
         super();
     }

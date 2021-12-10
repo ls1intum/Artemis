@@ -176,8 +176,8 @@ export abstract class QuestionStatisticComponent extends QuizStatisticsDirective
 
         // add Text for last label based on the language
         const lastLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
-        this.solutionLabels[length] = lastLabel; // lastLabel.split(' ');
-        this.labels[length] = lastLabel; // lastLabel.split(' ');
+        this.solutionLabels[length] = lastLabel;
+        this.labels[length] = lastLabel;
         this.chartLabels = this.labels;
     }
 
