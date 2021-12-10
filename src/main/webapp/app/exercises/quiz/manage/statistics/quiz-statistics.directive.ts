@@ -26,8 +26,6 @@ export abstract class QuizStatisticsDirective {
     chartLabels: string[] = [];
     totalParticipants = 0;
 
-    constructor() {}
-
     /**
      * Depending on if the rated or unrated results should be displayed,
      * The amount of participants as well as the corresponding scores are set
