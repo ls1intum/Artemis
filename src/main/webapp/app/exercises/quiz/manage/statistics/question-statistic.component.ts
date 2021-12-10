@@ -121,16 +121,6 @@ export abstract class QuestionStatisticComponent extends QuizStatisticsDirective
 
     /**
      * switch between showing and hiding the solution in the chart
-     *  1. change the amount of participants
-     *  2. change the bar-data
-     */
-    switchRated() {
-        this.rated = !this.rated;
-        this.loadDataInDiagram();
-    }
-
-    /**
-     * switch between showing and hiding the solution in the chart
      *  1. change the BackgroundColor of the bars
      *  2. change the bar-Labels
      */

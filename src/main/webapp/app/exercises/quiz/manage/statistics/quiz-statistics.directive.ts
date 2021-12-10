@@ -38,10 +38,12 @@ export abstract class QuizStatisticsDirective {
         if (this.rated) {
             this.participants = statistic.participantsRated!;
             // if rated is true use the rated Data and add the rated CorrectCounter
+            this.data = [];
             this.data = [...this.ratedData];
         } else {
             this.participants = statistic.participantsUnrated!;
             // if rated is false use the unrated Data and add the unrated CorrectCounter
+            this.data = [];
             this.data = [...this.unratedData];
         }
     }
@@ -60,6 +62,16 @@ export abstract class QuizStatisticsDirective {
         this.maxScale = this.calculateHeightOfChartData(this.data);
         this.ngxData = [...this.ngxData];
         changeDetector.detectChanges();
+    }
+
+    /**
+     * switch between showing and hiding the solution in the chart
+     *  1. change the amount of  participants
+     *  2. change the bar-Data
+     */
+    switchRated() {
+        this.rated = !this.rated;
+        this.loadDataInDiagram();
     }
 
     /**
@@ -98,4 +110,10 @@ export abstract class QuizStatisticsDirective {
             return Math.ceil(height * 0.0125) * 100;
         }
     }
+
+    /**
+     * check if the rated or unrated
+     * load the rated or unrated data into the diagram
+     */
+    abstract loadDataInDiagram(): void;
 }

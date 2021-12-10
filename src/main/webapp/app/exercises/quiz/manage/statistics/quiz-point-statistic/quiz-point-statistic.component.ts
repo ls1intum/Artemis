@@ -241,7 +241,7 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
      * check if the rated or unrated
      * load the rated or unrated data into the diagram
      */
-    loadDataInDiagram() {
+    loadDataInDiagram(): void {
         this.setData(this.quizPointStatistic);
         this.pushDataToNgxEntry(this.changeDetector);
 
@@ -259,16 +259,6 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
         this.quizExerciseService.recalculate(this.quizExercise.id!).subscribe((res) => {
             this.loadQuizSuccess(res.body!);
         });
-    }
-
-    /**
-     * switch between showing and hiding the solution in the chart
-     *  1. change the amount of  participants
-     *  2. change the bar-Data
-     */
-    switchRated() {
-        this.rated = !this.rated;
-        this.loadDataInDiagram();
     }
 
     /**

@@ -53,10 +53,6 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
         super();
     }
 
-    loadDataInDiagram(): void {
-        throw new Error('Method not implemented.');
-    }
-
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
@@ -165,26 +161,16 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
         this.ngxColor.domain = this.backgroundColor;
 
         // load data into chart
-        this.updateChart();
-    }
-
-    /**
-     * switch between showing and hiding the solution in the chart
-     *  1. change the amount of  participants
-     *  2. change the bar-Data
-     */
-    switchRated() {
-        this.rated = !this.rated;
-        this.updateChart();
+        this.loadDataInDiagram();
     }
 
     /**
      * updates the chart by setting the data set, re-calculating the height and calling update on the chart view child
      */
-    updateChart() {
-        this.xAxisLabel = this.translateService.instant('showStatistic.quizStatistic.xAxes');
-        this.yAxisLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
+    loadDataInDiagram(): void {
         this.setData(this.quizExercise.quizPointStatistic!);
         this.pushDataToNgxEntry(this.changeDetector);
+        this.xAxisLabel = this.translateService.instant('showStatistic.quizStatistic.xAxes');
+        this.yAxisLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
     }
 }
