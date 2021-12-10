@@ -75,9 +75,8 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     activeFilters: Set<ExerciseFilter>;
     numberOfExercises: number;
     exerciseForGuidedTour?: Exercise;
-    sortingAttribute: SortingAttribute;
-
     nextRelevantExercise?: ExerciseWithDueDate;
+    sortingAttribute: SortingAttribute;
 
     // Icons
     faPlayCircle = faPlayCircle;
