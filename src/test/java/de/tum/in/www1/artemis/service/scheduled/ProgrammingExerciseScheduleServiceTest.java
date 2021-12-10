@@ -230,7 +230,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         Thread.sleep(delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
 
         verifyLockStudentRepositoryOperation(true);
-        verify(programmingSubmissionService, Mockito.times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+        verify(programmingSubmissionService, times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
     @Test
