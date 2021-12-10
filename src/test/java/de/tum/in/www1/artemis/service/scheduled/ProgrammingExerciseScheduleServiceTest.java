@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -294,7 +293,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         Thread.sleep(dueDateDelayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
 
         verifyLockStudentRepositoryOperation(true);
-        verify(programmingSubmissionService, Mockito.times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+        verify(programmingSubmissionService, times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
         // has AFTER_DUE_DATE tests, but also buildAfterDueDate => do not update results, but use the results created on additional build run
         verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }
@@ -323,7 +322,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         verifyLockStudentRepositoryOperation(true);
         if (hasBuildAndTestAfterDueDate) {
-            verify(programmingSubmissionService, Mockito.times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+            verify(programmingSubmissionService, times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
         }
         else {
             verify(programmingSubmissionService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
