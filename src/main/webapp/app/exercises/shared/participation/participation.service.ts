@@ -9,7 +9,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
@@ -29,39 +28,33 @@ export class ParticipationService {
         const copy = this.convertDateFromClient(participation);
         return this.http
             .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     find(participationId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/${participationId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     findWithLatestResult(participationId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/${participationId}/withLatestResult`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     /*
      * Finds one participation for the currently logged in user for the given exercise in the given course
      */
     findParticipation(exerciseId: number): Observable<EntityResponseType | null> {
-        return this.http
-            .get<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participation`, { observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => {
-                    if (res == undefined) {
-                        return null;
-                    }
-                    return this.convertDateFromServer(res);
-                }),
-            )
-            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)));
+        return this.http.get<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participation`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => {
+                if (res == undefined) {
+                    return null;
+                }
+                return this.convertDateFromServer(res);
+            }),
+        );
     }
 
     findAllParticipationsByExercise(exerciseId: number, withLatestResult = false): Observable<EntityArrayResponseType> {
@@ -71,8 +64,7 @@ export class ParticipationService {
                 params: options,
                 observe: 'response',
             })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
-            .pipe(map((res: EntityArrayResponseType) => this.adjustRepositoryUrlArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
     delete(participationId: number, req?: any): Observable<HttpResponse<any>> {
@@ -153,24 +145,6 @@ export class ParticipationService {
             });
         }
         return convertedParticipations;
-    }
-
-    protected adjustRepositoryUrlFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body?.type === ParticipationType.PROGRAMMING) {
-            addUserIndependentRepositoryUrl(res.body);
-        }
-        return res;
-    }
-
-    protected adjustRepositoryUrlArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((participation: StudentParticipation) => {
-                if (participation.type === ParticipationType.PROGRAMMING) {
-                    addUserIndependentRepositoryUrl(participation);
-                }
-            });
-        }
-        return res;
     }
 
     public mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation | undefined {

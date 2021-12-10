@@ -17,12 +17,10 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { reconnectSubmissions, Submission } from 'app/entities/submission.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
-import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
-import { ParticipationType } from 'app/entities/participation/participation.model';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 
@@ -257,7 +255,7 @@ export class CourseManagementService {
 
     /**
      * finds all courses for the overview using a GET request
-     * @param req a dictionary which is send as request option along the REST call
+     * @param req a dictionary which is sent as request option along the REST call
      */
     getCourseOverview(req?: any): Observable<HttpResponse<Course[]>> {
         const options = createRequestOption(req);
@@ -280,7 +278,7 @@ export class CourseManagementService {
     }
 
     /**
-     * returns the exercise details of the courses for the courses management dashboard
+     * returns the exercise details of the courses for the courses' management dashboard
      * @param onlyActive - if true, only active courses will be considered in the result
      */
     getExercisesForManagementOverview(onlyActive: boolean): Observable<HttpResponse<Course[]>> {
@@ -292,7 +290,7 @@ export class CourseManagementService {
     }
 
     /**
-     * returns the stats of the courses for the courses management dashboard
+     * returns the stats of the courses for the courses' management dashboard
      * @param onlyActive - if true, only active courses will be considered in the result
      */
     getStatsForManagementOverview(onlyActive: boolean): Observable<HttpResponse<CourseManagementOverviewStatisticsDto[]>> {
@@ -310,7 +308,7 @@ export class CourseManagementService {
     }
 
     /**
-     * returns all the users in the the given group of the course corresponding to the given unique identifier
+     * returns all the users in the given group of the course corresponding to the given unique identifier
      * @param courseId - the id of the course
      * @param courseGroup - the course group we want to get users from
      */
@@ -349,18 +347,7 @@ export class CourseManagementService {
     findAllLockedSubmissionsOfCourse(courseId: number): Observable<HttpResponse<Submission[]>> {
         return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/lockedSubmissions`, { observe: 'response' }).pipe(
             filter((res) => !!res.body),
-            tap((res) =>
-                res.body!.forEach((submission: Submission) => {
-                    // reconnect some associations
-                    const latestResult = getLatestSubmissionResult(submission);
-                    if (latestResult) {
-                        latestResult.submission = submission;
-                        latestResult.participation = submission.participation;
-                        submission.participation!.results = [latestResult!];
-                        setLatestSubmissionResult(submission, latestResult);
-                    }
-                }),
-            ),
+            tap((res) => reconnectSubmissions(res.body!)),
         );
     }
 
@@ -375,9 +362,10 @@ export class CourseManagementService {
     }
 
     /**
-     * Add users to the registered users for an course.
+     * Add users to the registered users for a course.
      * @param courseId The course id.
      * @param studentDtos Student DTOs of users to add to the course.
+     * @param courseGroup the course group into which the user should be added
      * @return studentDtos of users that were not found in the system.
      */
     addUsersToGroupInCourse(courseId: number, studentDtos: StudentDTO[], courseGroup: String): Observable<HttpResponse<StudentDTO[]>> {
@@ -395,7 +383,7 @@ export class CourseManagementService {
     }
 
     /**
-     * Gets the cached courses. If there none the courses for the current user will be fetched.
+     * Gets the cached courses. If there are none, the courses for the current user will be fetched.
      * @returns {BehaviorSubject<Course[] | undefined>}
      */
     getCoursesForNotifications(): BehaviorSubject<Course[] | undefined> {
@@ -645,9 +633,6 @@ export class CourseExerciseService {
     startExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
         return this.http.post<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/participations`, {}).pipe(
             map((participation: StudentParticipation) => {
-                if (participation.type === ParticipationType.PROGRAMMING) {
-                    addUserIndependentRepositoryUrl(participation);
-                }
                 return this.handleParticipation(participation);
             }),
         );
@@ -661,9 +646,6 @@ export class CourseExerciseService {
     resumeProgrammingExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
         return this.http.put<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/resume-programming-participation`, {}).pipe(
             map((participation: StudentParticipation) => {
-                if (participation.type === ParticipationType.PROGRAMMING) {
-                    addUserIndependentRepositoryUrl(participation);
-                }
                 return this.handleParticipation(participation);
             }),
         );
