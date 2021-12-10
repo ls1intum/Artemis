@@ -1,4 +1,4 @@
-<div (drop)="updateAssessmentOnDrop($event)" (dragover)="$event.preventDefault()" class="card mb-3">
+<div (drop)="updateAssessmentOnDrop($event)" (dragover)="$event.preventDefault()" class="card mb-3" id="assessment-detail">
     <div class="card-header" [class.color-cyan]="assessment.type == FeedbackType_AUTOMATIC">
         <jhi-grading-instruction-link-icon *ngIf="assessment.gradingInstruction!" [assessment]="assessment"></jhi-grading-instruction-link-icon>
         <fa-icon [icon]="faTrashAlt" class="float-end" (click)="delete()" *ngIf="!readOnly"></fa-icon>
@@ -11,6 +11,7 @@
         <div class="form-group row">
             <label class="col-4 assessment-label" jhiTranslate="artemisApp.exercise.score"></label>
             <input
+                id="feedback-points"
                 class="col form-control"
                 type="number"
                 step="0.5"
@@ -38,6 +39,7 @@
                     <span>{{ assessment.gradingInstruction!.feedback }}</span>
                 </div>
                 <textarea
+                    id="feedback-textarea"
                     class="form-control"
                     rows="2"
                     [(ngModel)]="assessment.detailText"

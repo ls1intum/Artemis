@@ -11,17 +11,6 @@
                 <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
             </h1>
         </div>
-        <canvas
-            baseChart
-            id="doughnut"
-            height="200"
-            width="200"
-            [legend]="false"
-            [datasets]="doughnutChartData"
-            [options]="totalScoreOptions"
-            [colors]="doughnutChartColors"
-            [labels]="doughnutChartLabels"
-            [chartType]="doughnutChartType"
-        ></canvas>
+        <ngx-charts-pie-chart [view]="[200, 200]" [results]="ngxData" [scheme]="ngxColor" [doughnut]="true" [tooltipText]="bindFormatting"> </ngx-charts-pie-chart>
     </div>
 </div>

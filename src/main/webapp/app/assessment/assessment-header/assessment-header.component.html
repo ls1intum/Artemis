@@ -151,6 +151,7 @@
                     <span jhiTranslate="entity.action.save">Save</span>
                 </button>
                 <button
+                    id="submit"
                     class="btn m-1 btn-success"
                     (click)="submit.emit(); sendSubmitAssessmentEventToAnalytics()"
                     [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy"
