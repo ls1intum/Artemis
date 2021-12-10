@@ -1,18 +1,18 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { faLink, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-grading-instruction-link-icon',
     templateUrl: './grading-instruction-link-icon.component.html',
 })
 export class GradingInstructionLinkIconComponent implements OnInit {
-    @Input() linkIcon = <IconProp>'link';
+    @Input() linkIcon = faLink;
     @Input() assessment: Feedback;
     instruction: GradingInstruction | undefined;
-    confirmIcon = <IconProp>'trash';
+    confirmIcon = faTrash;
     showConfirm = false;
 
     constructor(private artemisTranslatePipe: ArtemisTranslatePipe) {}

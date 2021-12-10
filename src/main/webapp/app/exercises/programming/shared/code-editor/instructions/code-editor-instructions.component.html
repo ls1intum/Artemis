@@ -6,19 +6,19 @@
     <div class="card-header d-flex justify-content-left text-white bg-primary" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title">
             <span *ngIf="!collapsed">
-                <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                <fa-icon [icon]="farListAlt"></fa-icon>
                 <span *ngIf="!isAssessmentMode" class="ms-2" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
                 <span *ngIf="isAssessmentMode" class="ms-2" jhiTranslate="artemisApp.exercise.instructions">Instructions</span>
             </span>
             <span class="collapsed-instructions-card" *ngIf="collapsed">
-                <fa-icon class="top-icon" [icon]="'chevron-left'"></fa-icon>
-                <fa-icon [icon]="['far', 'list-alt']" class="fa-rotate-90" id="panel-symbol"></fa-icon>
+                <fa-icon class="top-icon" [icon]="faChevronLeft"></fa-icon>
+                <fa-icon [icon]="farListAlt" class="fa-rotate-90" id="panel-symbol"></fa-icon>
                 <span *ngIf="!isAssessmentMode" class="header" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
                 <span *ngIf="isAssessmentMode" class="header" jhiTranslate="artemisApp.exercise.instructions">Instructions</span>
-                <fa-icon class="bottom-icon" [icon]="'chevron-left'"></fa-icon>
+                <fa-icon class="bottom-icon" [icon]="faChevronLeft"></fa-icon>
             </span>
         </h3>
-        <fa-icon *ngIf="!collapsed" class="ms-auto clickable" [icon]="'chevron-right'"></fa-icon>
+        <fa-icon *ngIf="!collapsed" class="ms-auto clickable" [icon]="faChevronRight"></fa-icon>
     </div>
     <ng-content *ngIf="!collapsed"></ng-content>
     <!-- Required for resizing; don't remove empty span -->

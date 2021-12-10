@@ -38,7 +38,7 @@
                     <label class="label-narrow" jhiTranslate="artemisApp.team.sourceExercise.label">Source exercise</label>
                     <jhi-help-icon placement="auto" text="artemisApp.team.sourceExercise.tooltip" class="me-1"></jhi-help-icon>
                 </div>
-                <fa-icon class="loading-spinner" [icon]="'spinner'" [spin]="true" *ngIf="searchingExercises"></fa-icon>
+                <fa-icon class="loading-spinner" [icon]="faSpinner" [spin]="true" *ngIf="searchingExercises"></fa-icon>
                 <span *ngIf="searchingExercisesNoResultsForQuery === ''" class="error-message text-danger">
                     <span jhiTranslate="artemisApp.team.exerciseSearch.noResults">There are no other team-based exercises in this course.</span>
                 </span>
@@ -67,7 +67,7 @@
                     <label class="label-narrow" jhiTranslate="artemisApp.team.sourceTeams.label">Source teams</label>
                     <jhi-help-icon placement="auto" text="artemisApp.team.sourceTeams.tooltip" class="me-1"></jhi-help-icon>
                 </div>
-                <fa-icon class="loading-spinner" [icon]="'spinner'" [spin]="true" *ngIf="loadingSourceTeams"></fa-icon>
+                <fa-icon class="loading-spinner" [icon]="faSpinner" [spin]="true" *ngIf="loadingSourceTeams"></fa-icon>
                 <span *ngIf="loadingSourceTeamsFailed" class="error-message text-danger" jhiTranslate="artemisApp.team.loadSourceTeams.failed">
                     Loading teams failed. Please try again.
                 </span>
@@ -234,12 +234,12 @@
         </div>
         <div class="flex-grow-1 d-flex justify-content-end">
             <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
-                <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
             <button *ngIf="importStrategy !== ImportStrategy.PURGE_EXISTING" type="submit" class="btn btn-warning" [disabled]="editForm.invalid || isSubmitDisabled">
-                <fa-icon [icon]="'upload'" class="me-2"></fa-icon>
+                <fa-icon [icon]="faUpload" class="me-2"></fa-icon>
                 <span jhiTranslate="entity.action.to-import">Import</span>
-                <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="'circle-notch'"></fa-icon>
+                <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch"></fa-icon>
             </button>
             <button
                 *ngIf="importStrategy === ImportStrategy.PURGE_EXISTING"
@@ -254,10 +254,10 @@
                 (delete)="purgeAndImportTeams()"
                 [dialogError]="dialogError$"
             >
-                <fa-icon [icon]="'upload'" class="me-1"></fa-icon>
+                <fa-icon [icon]="faUpload" class="me-1"></fa-icon>
                 <span jhiTranslate="entity.action.purge">Purge</span> +
                 <span jhiTranslate="entity.action.to-import">Import</span>
-                <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="'circle-notch'"></fa-icon>
+                <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch"></fa-icon>
             </button>
         </div>
     </div>

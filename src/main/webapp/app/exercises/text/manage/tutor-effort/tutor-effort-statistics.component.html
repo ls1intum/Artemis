@@ -1,7 +1,7 @@
 <div>
     <h4 jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title"></h4>
     <button *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']" class="btn btn-primary btn-sm mb-2" (click)="loadTutorEfforts()">
-        <fa-icon [icon]="'sync'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'showStatistic.recalculateStatistics' | artemisTranslate }}
+        <fa-icon [icon]="faSync" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'showStatistic.recalculateStatistics' | artemisTranslate }}
     </button>
     <div *ngIf="tutorEfforts && tutorEfforts.length > 0">
         <table class="table">

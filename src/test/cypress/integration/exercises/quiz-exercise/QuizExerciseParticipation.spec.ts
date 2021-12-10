@@ -21,18 +21,13 @@ const courseOverview = artemis.pageobjects.courseOverview;
 let course: any;
 let quizExercise: any;
 
-describe('Quiz Exercise Management', () => {
+describe('Quiz Exercise Participation', () => {
     before('Set up course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = response.body;
             courseManagementRequest.addStudentToCourse(course.id, student.username);
         });
-    });
-
-    afterEach('Delete Quiz', () => {
-        cy.login(admin);
-        courseManagementRequest.deleteQuizExercise(quizExercise.id);
     });
 
     after('Delete Course', () => {
@@ -56,7 +51,7 @@ describe('Quiz Exercise Management', () => {
         it('Student can see a visible quiz', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
-            courseOverview.startExercise(quizExercise.title, CypressExerciseType.QUIZ);
+            courseOverview.openRunningExercise(quizExercise.id);
             cy.get('.quiz-waiting-for-start-overlay > span').should('contain.text', 'This page will refresh automatically, when the quiz starts.');
         });
 
@@ -64,7 +59,7 @@ describe('Quiz Exercise Management', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             courseManagementRequest.startQuizNow(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
-            courseOverview.startExercise(quizExercise.title, CypressExerciseType.QUIZ);
+            courseOverview.startExercise(quizExercise.id, CypressExerciseType.QUIZ);
             multipleChoiceQuiz.tickAnswerOption(0);
             multipleChoiceQuiz.tickAnswerOption(2);
             multipleChoiceQuiz.submit();
@@ -83,7 +78,7 @@ describe('Quiz Exercise Management', () => {
 
         it('Student can participate in SA quiz', () => {
             cy.login(student, '/courses/' + course.id);
-            courseOverview.startExercise(quizExercise.title, CypressExerciseType.QUIZ);
+            courseOverview.startExercise(quizExercise.id, CypressExerciseType.QUIZ);
             shortAnswerQuiz.typeAnswer(0, 'give');
             shortAnswerQuiz.typeAnswer(1, 'let');
             shortAnswerQuiz.typeAnswer(2, 'run');
@@ -110,7 +105,7 @@ describe('Quiz Exercise Management', () => {
 
         it('Student can participate in DnD Quiz', () => {
             cy.login(student, '/courses/' + course.id);
-            courseOverview.startExercise(quizExercise.title, CypressExerciseType.QUIZ);
+            courseOverview.startExercise(quizExercise.id, CypressExerciseType.QUIZ);
             dragAndDropQuiz.dragItemIntoDragArea();
             dragAndDropQuiz.submit();
         });

@@ -15,7 +15,7 @@
         (click)="toggleFullscreen()"
         [ngbTooltip]="'artemisApp.modelingEditor.fullscreen.tooltip' | artemisTranslate"
     >
-        <fa-icon [icon]="'compress'" *ngSwitchCase="'compact'"></fa-icon>
+        <fa-icon [icon]="faCompress" *ngSwitchCase="'compact'"></fa-icon>
         <span *ngSwitchCase="'extended'"
             ><ng-container *ngIf="!isFullScreen(); else exitButtonText"> {{ 'artemisApp.modelingEditor.fullscreen.enterButtonText' | artemisTranslate }}</ng-container>
             <ng-template #exitButtonText>{{ 'artemisApp.modelingEditor.fullscreen.exitButtonText' | artemisTranslate }}</ng-template>

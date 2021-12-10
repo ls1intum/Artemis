@@ -13,14 +13,16 @@ import { isOrion } from 'app/shared/orion/orion';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
     NEEDS_WORK = 'NEEDS_WORK',
     UNRELEASED = 'UNRELEASED',
+    OPTIONAL = 'OPTIONAL',
 }
 
 export enum ExerciseSortingOrder {
@@ -66,6 +68,14 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     exerciseForGuidedTour?: Exercise;
     nextRelevantExercise?: Exercise;
     sortingAttribute: SortingAttribute;
+
+    // Icons
+    faPlayCircle = faPlayCircle;
+    faFilter = faFilter;
+    faAngleUp = faAngleUp;
+    faAngleDown = faAngleDown;
+    faSortNumericUp = faSortNumericUp;
+    faSortNumericDown = faSortNumericDown;
 
     constructor(
         private courseService: CourseManagementService,
@@ -181,11 +191,13 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
         const needsWorkFilterActive = this.activeFilters.has(ExerciseFilter.NEEDS_WORK);
         const overdueFilterActive = this.activeFilters.has(ExerciseFilter.OVERDUE);
         const unreleasedFilterActive = this.activeFilters.has(ExerciseFilter.UNRELEASED);
+        const optionalFilterActive = this.activeFilters.has(ExerciseFilter.OPTIONAL);
         const filtered = this.course?.exercises?.filter(
             (exercise) =>
                 (!needsWorkFilterActive || this.needsWork(exercise)) &&
                 (!exercise.dueDate || !overdueFilterActive || exercise.dueDate.isAfter(dayjs(new Date()))) &&
                 (!exercise.releaseDate || !unreleasedFilterActive || (exercise as QuizExercise)?.visibleToStudents) &&
+                (!optionalFilterActive || exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED) &&
                 (!isOrion || exercise.type === ExerciseType.PROGRAMMING),
         );
         this.groupExercises(filtered);

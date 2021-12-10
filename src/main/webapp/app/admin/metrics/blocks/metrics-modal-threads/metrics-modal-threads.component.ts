@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Thread, ThreadState } from '../../metrics.model';
 
@@ -29,6 +30,9 @@ export class MetricsModalThreadsComponent implements OnInit {
     threadDumpRunnable = 0;
     threadDumpTimedWaiting = 0;
     threadDumpWaiting = 0;
+
+    // Icons
+    faCheck = faCheck;
 
     constructor(private activeModal: NgbActiveModal) {}
 

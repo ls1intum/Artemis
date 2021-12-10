@@ -5,7 +5,7 @@
             <a ngbNavLink class="btn-sm text-dark" *ngIf="showEditButton">{{ 'entity.action.edit' | artemisTranslate }}</a>
             <ng-template ngbNavContent>
                 <div class="height-100 border-0 markdown-editor d-flex flex-column">
-                    <ace-editor
+                    <jhi-ace-editor
                         #aceEditor
                         [mode]="aceEditorOptions.mode"
                         [autoUpdateContent]="aceEditorOptions.autoUpdateContent"
@@ -16,7 +16,7 @@
                         (dragover)="enableFileUpload ? $event.preventDefault() : ''"
                         (drop)="enableFileUpload ? onFileDrop($event) : ''"
                         (paste)="enableFileUpload ? onFilePaste($event) : ''"
-                    ></ace-editor>
+                    ></jhi-ace-editor>
                     <!-- manual input for file upload -->
                     <ng-container *ngIf="enableFileUpload">
                         <input id="file-upload" class="markdown-editor__file-input" type="file" accept="image/*" [multiple]="true" (change)="onFileUpload($event)" />
@@ -24,14 +24,14 @@
                             <div class="row mx-0 align-items-baseline">
                                 <span class="col upload-subtitle">{{ 'artemisApp.markdownEditor.fileUpload' | artemisTranslate }}</span>
                                 <a class="col-auto" href="http://demo.showdownjs.com">
-                                    <fa-icon [icon]="'question-circle'" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate"></fa-icon>
+                                    <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate"></fa-icon>
                                 </a>
                             </div>
                         </label>
                         <jhi-alert *ngIf="shouldDisplayAlert"></jhi-alert>
                     </ng-container>
                     <!-- Required for resizing; don't remove empty span -->
-                    <fa-icon *ngIf="enableResize" [icon]="'grip-lines'" class="rg-bottom text-lightgrey"><span></span></fa-icon>
+                    <fa-icon *ngIf="enableResize" [icon]="faGripLines" class="rg-bottom text-lightgrey"><span></span></fa-icon>
                 </div>
             </ng-template>
         </ng-container>
