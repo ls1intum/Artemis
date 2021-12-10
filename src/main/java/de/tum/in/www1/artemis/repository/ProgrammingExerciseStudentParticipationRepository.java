@@ -80,8 +80,13 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
      * @param participationIds the participations to retrieve.
      * @return filtered list of participations.
      */
-    @Query("select participation from ProgrammingExerciseStudentParticipation participation where participation.exercise.id = :#{#exerciseId} and participation.id in :#{#participationIds}")
-    List<ProgrammingExerciseStudentParticipation> findByExerciseIdAndParticipationIds(@Param("exerciseId") Long exerciseId,
+    @Query("""
+            select participation from ProgrammingExerciseStudentParticipation participation
+            left join fetch participation.submissions
+            where participation.exercise.id = :#{#exerciseId}
+                and participation.id in :#{#participationIds}
+            """)
+    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndParticipationIds(@Param("exerciseId") Long exerciseId,
             @Param("participationIds") Collection<Long> participationIds);
 
     @EntityGraph(type = LOAD, attributePaths = "student")

@@ -275,7 +275,7 @@ public class ProgrammingSubmissionResource {
 
         log.info("Trigger (failed) instructor build for participations {} in exercise {} with id {}", participationIds, programmingExercise.getTitle(),
                 programmingExercise.getId());
-        var participations = programmingExerciseStudentParticipationRepository.findByExerciseIdAndParticipationIds(exerciseId, participationIds);
+        var participations = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndParticipationIds(exerciseId, participationIds);
         programmingSubmissionService.triggerBuildForParticipations(participations);
 
         return ResponseEntity.ok().build();

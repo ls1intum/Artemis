@@ -278,12 +278,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public void triggerInstructorBuildForExercise(Long exerciseId) throws EntityNotFoundException {
         // Async can't access the authentication object. We need to do any security checks before this point.
         SecurityUtils.setAuthorizationObject();
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId);
-        if (optionalProgrammingExercise.isEmpty()) {
-            throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
-        }
-        var programmingExercise = optionalProgrammingExercise.get();
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         // Let the instructor know that a build run was triggered.
         notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
@@ -293,7 +288,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         triggerBuildForParticipations(participations);
 
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
-        setTestCasesChanged(programmingExercise.getId(), false);
+        setTestCasesChanged(programmingExercise, false);
         // Let the instructor know that the build run is finished.
         notifyInstructorAboutCompletedExerciseBuildRun(programmingExercise);
     }
@@ -428,21 +423,24 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param participation the participation for which we create a new submission and new result
      */
     public void triggerBuild(ProgrammingExerciseStudentParticipation participation) {
-        try {
-            if (participation.getBuildPlanId() == null || !participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
-                // in this case, we first have to resume the exercise: this includes that we again set up the build plan properly before we trigger it
-                participationService.resumeProgrammingExercise(participation);
-                // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
+        Optional<ProgrammingSubmission> submission = participation.findLatestSubmission();
+        // we only need to trigger the build if the student actually already made a submission, otherwise this is not needed
+        if (submission.isPresent()) {
+            try {
+                if (participation.getBuildPlanId() == null || !participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
+                    // in this case, we first have to resume the exercise: this includes that we again set up the build plan properly before we trigger it
+                    participationService.resumeProgrammingExercise(participation);
+                    // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
+                }
+                continuousIntegrationService.get().triggerBuild(participation);
+                // TODO: this is a workaround, in the future we should use the participation to notify the client and avoid using the submission
+                this.notifyUserAboutSubmission(submission.get());
             }
-            continuousIntegrationService.get().triggerBuild(participation);
-            // TODO: this is a workaround, in the future we should use the participation to notify the client and avoid using the submission
-            Optional<ProgrammingSubmission> submission = participation.findLatestSubmission();
-            submission.ifPresent(this::notifyUserAboutSubmission);
-        }
-        catch (Exception e) {
-            log.error("Trigger build failed for {} with the exception {}", participation.getBuildPlanId(), e.getMessage());
-            BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), participation.getId());
-            notifyUserAboutSubmissionError(participation, error);
+            catch (Exception e) {
+                log.error("Trigger build failed for {} with the exception {}", participation.getBuildPlanId(), e.getMessage());
+                BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), participation.getId());
+                notifyUserAboutSubmissionError(participation, error);
+            }
         }
     }
 
@@ -530,21 +528,27 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * If testCasesChanged = true, this marks the programming exercise as dirty, meaning that its test cases were changed and the student submissions should be be built & tested.
-     * This method also sends out a notification to the client if testCasesChanged = true.
-     * In case the testCaseChanged value is the same for the programming exercise or the programming exercise is not released or has no results, the method will return immediately.
+     * see the description below
      *
-     * @param programmingExerciseId id of a ProgrammingExercise.
+     * @param programmingExerciseId  id of a ProgrammingExercise.
      * @param testCasesChanged      set to true to mark the programming exercise as dirty.
      * @throws EntityNotFoundException if the programming exercise does not exist.
      */
     public void setTestCasesChanged(long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
-        if (optionalProgrammingExercise.isEmpty()) {
-            throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " not found.");
-        }
-        var programmingExercise = optionalProgrammingExercise.get();
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
+        setTestCasesChanged(programmingExercise, testCasesChanged);
+    }
+
+    /**
+     * If testCasesChanged = true, this marks the programming exercise as dirty, meaning that its test cases were changed and the student submissions should be be built & tested.
+     * This method also sends out a notification to the client if testCasesChanged = true.
+     * In case the testCaseChanged value is the same for the programming exercise or the programming exercise is not released or has no results, the method will return immediately.
+     *
+     * @param programmingExercise   a ProgrammingExercise.
+     * @param testCasesChanged      set to true to mark the programming exercise as dirty.
+     * @throws EntityNotFoundException if the programming exercise does not exist.
+     */
+    public void setTestCasesChanged(ProgrammingExercise programmingExercise, boolean testCasesChanged) throws EntityNotFoundException {
 
         // If the flag testCasesChanged has not changed, we can stop the execution
         // Also, if the programming exercise has no results yet, there is no point in setting test cases changed to *true*.
@@ -558,7 +562,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         programmingExercise.setTestCasesChanged(testCasesChanged);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         // Send a websocket message about the new state to the client.
-        websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(programmingExerciseId), testCasesChanged);
+        websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(updatedProgrammingExercise.getId()), testCasesChanged);
         // Send a notification to the client to inform the instructor about the test case update.
         if (testCasesChanged) {
             groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
