@@ -203,7 +203,7 @@ describe('QuizExercise Statistic Component', () => {
 
         it('should use values of quizExercise and rated data', () => {
             // setup
-            const updateChartSpy = jest.spyOn(comp, 'updateChart');
+            const updateChartSpy = jest.spyOn(comp, 'loadDataInDiagram');
             comp.rated = true;
             comp.maxScore = 1;
 
@@ -233,7 +233,7 @@ describe('QuizExercise Statistic Component', () => {
 
         it('should use defaults if no quizQuestions are not set', () => {
             // setup
-            const updateChartSpy = jest.spyOn(comp, 'updateChart');
+            const updateChartSpy = jest.spyOn(comp, 'loadDataInDiagram');
             quizExercise.quizQuestions = [];
             comp.rated = true;
             comp.maxScore = 1;
