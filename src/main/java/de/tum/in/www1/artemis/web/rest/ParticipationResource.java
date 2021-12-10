@@ -1,15 +1,14 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,9 +37,10 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /**
  * REST controller for managing Participation.
@@ -133,19 +133,16 @@ public class ParticipationResource {
         // if the user is a student and the exercise has a release date, they cannot start the exercise before the release date
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(now())) {
             if (authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
-                return forbidden();
+                throw new AccessForbiddenException("Students cannot start an exercise before the release date");
             }
         }
 
-        // users cannot start the programming exercises if test run after due date or semi automatic grading is active and the due date has passed
         // Also don't allow participations if the feature is disabled
         if (exercise instanceof ProgrammingExercise) {
             // fetch additional objects needed for the startExercise method below
             var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-            if (!featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES) || (programmingExercise.getDueDate() != null
-                    && now().isAfter(programmingExercise.getDueDate()) && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                            || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC || programmingExercise.getAllowComplaintsForAutomaticAssessments()))) {
-                return forbidden();
+            if (!featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES) || isNotAllowedToStartProgrammingExercise(programmingExercise)) {
+                throw new AccessForbiddenException("Not allowed");
             }
             exercise = programmingExercise;
         }
@@ -182,11 +179,8 @@ public class ParticipationResource {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
-        // users cannot resume the programming exercises if test run after due date or semi automatic grading is active and the due date has passed
-        if ((programmingExercise.getDueDate() != null && ZonedDateTime.now().isAfter(programmingExercise.getDueDate())
-                && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC
-                        || programmingExercise.getAllowComplaintsForAutomaticAssessments()))) {
-            return forbidden();
+        if (isNotAllowedToStartProgrammingExercise(programmingExercise)) {
+            throw new AccessForbiddenException("Not allowed");
         }
 
         participation = participationService.resumeProgrammingExercise(participation);
@@ -195,6 +189,13 @@ public class ParticipationResource {
         addLatestResultToParticipation(participation);
         participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.ok().body(participation);
+    }
+
+    private boolean isNotAllowedToStartProgrammingExercise(ProgrammingExercise programmingExercise) {
+        // users cannot start/resume the programming exercises if test run after due date or semi-automatic grading is active and the due date has passed
+        return programmingExercise.getDueDate() != null && now().isAfter(programmingExercise.getDueDate())
+                && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC
+                        || programmingExercise.getAllowComplaintsForAutomaticAssessments());
     }
 
     /**
@@ -231,7 +232,7 @@ public class ParticipationResource {
             throw new BadRequestAlertException("The participation needs to be connected to an exercise", ENTITY_NAME, "exerciseidmissing");
         }
         if (participation.getExercise().getId() != exerciseId) {
-            return conflict();
+            throw new ConflictException();
         }
         var originalParticipation = studentParticipationRepository.findByIdElseThrow(participation.getId());
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -280,7 +281,10 @@ public class ParticipationResource {
         else {
             participations = studentParticipationRepository.findByExerciseId(exerciseId);
         }
-        participations = participations.stream().filter(participation -> participation.getParticipant() != null).collect(Collectors.toList());
+        participations = participations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
+            // remove unnecessary data to reduce response size
+            participation.setExercise(null);
+        }).collect(Collectors.toList());
 
         Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
@@ -382,7 +386,7 @@ public class ParticipationResource {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
-        return Optional.ofNullable(participation).map(result -> new ResponseEntity<>(result, HttpStatus.OK)).orElse(ResponseUtil.notFound());
+        return new ResponseEntity<>(participation, HttpStatus.OK);
     }
 
     /**
@@ -484,29 +488,21 @@ public class ParticipationResource {
      * @param participationId the participationId of the participation to delete
      * @param deleteBuildPlan True, if the build plan should also get deleted
      * @param deleteRepository True, if the repository should also get deleted
-     * @param principal The identity of the user accessing this resource
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/participations/{participationId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
-            @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
+            @RequestParam(defaultValue = "false") boolean deleteRepository) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)) {
-            return forbidden();
+            throw new AccessForbiddenException("Not allowed");
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
 
-        String name = participation.getParticipantName();
-        var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
-                + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
-        auditEventRepository.add(auditEvent);
-        log.info(logMessage);
-        participationService.delete(participationId, deleteBuildPlan, deleteRepository);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
+        return deleteParticipation(participation, deleteBuildPlan, deleteRepository, user);
     }
 
     /**
@@ -516,17 +512,16 @@ public class ParticipationResource {
      * @param participationId the participationId of the participation to delete
      * @param deleteBuildPlan True, if the build plan should also get deleted
      * @param deleteRepository True, if the repository should also get deleted
-     * @param principal The identity of the user accessing this resource
      * @return the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
      */
     @DeleteMapping("/guided-tour/participations/{participationId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteParticipationForGuidedTour(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
-            @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
+            @RequestParam(defaultValue = "false") boolean deleteRepository) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
 
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)) {
-            return forbidden();
+            throw new AccessForbiddenException("Not allowed");
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -535,20 +530,33 @@ public class ParticipationResource {
         if (participation.isOwnedBy(user)) {
             checkAccessPermissionAtLeastStudent(participation, user);
             if (!guidedTourConfiguration.isExerciseForTutorial(participation.getExercise())) {
-                return forbidden();
+                throw new AccessForbiddenException("Not allowed");
             }
         }
         else {
-            return forbidden();
+            throw new AccessForbiddenException("Not allowed");
         }
 
+        return deleteParticipation(participation, deleteBuildPlan, deleteRepository, user);
+    }
+
+    /**
+     * delete the participation, potentially including build plan and repository and log the event in the database audit
+     * @param participation the participation to be deleted
+     * @param deleteBuildPlan whether the build plan should be deleted as well, only relevant for programming exercises
+     * @param deleteRepository whether the repository should be deleted as well, only relevant for programming exercises
+     * @param user the currently logged-in user who initiated the delete operation
+     * @return the response to the client
+     */
+    @NotNull
+    private ResponseEntity<Void> deleteParticipation(StudentParticipation participation, boolean deleteBuildPlan, boolean deleteRepository, User user) {
         String name = participation.getParticipantName();
-        var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
-                + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
+        var logMessage = "Delete Participation " + participation.getId() + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
+                + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + user.getLogin();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
         auditEventRepository.add(auditEvent);
         log.info(logMessage);
-        participationService.delete(participationId, deleteBuildPlan, deleteRepository);
+        participationService.delete(participation.getId(), deleteBuildPlan, deleteRepository);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
     }
 

@@ -1,10 +1,14 @@
 package de.tum.in.www1.artemis.domain.participation;
 
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
@@ -26,6 +30,26 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
     void setProgrammingExercise(ProgrammingExercise programmingExercise);
 
     Set<Result> getResults();
+
+    /**
+     * This method is used to automatically create a user independent URL when serializing subclasses into json
+     * @return a user independent url without the username
+     */
+    @Nullable
+    @JsonInclude
+    default String getUserIndependentRepositoryUrl() {
+        if (getRepositoryUrl() == null) {
+            return null;
+        }
+        try {
+            URL repoUrl = new URL(getRepositoryUrl());
+            // Note: the following line reconstructs the URL without using the authority, it removes ’username@' before the host
+            return new URL(repoUrl.getProtocol(), repoUrl.getHost(), repoUrl.getPort(), repoUrl.getFile()).toString();
+        }
+        catch (MalformedURLException e) {
+            return null;
+        }
+    }
 
     /**
      * @return the repository url of the programming exercise participation wrapped in an object
