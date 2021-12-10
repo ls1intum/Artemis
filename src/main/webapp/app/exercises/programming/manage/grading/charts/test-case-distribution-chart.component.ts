@@ -155,7 +155,7 @@ export class TestCaseDistributionChartComponent implements OnChanges {
             };
         });
 
-        if (this.ngxWeightData[0].length !== testCaseScores.length) {
+        if (this.ngxWeightData[0].series.length !== testCaseScores.length) {
             const testCaseColors = {};
 
             this.ngxWeightData = [];
@@ -175,10 +175,10 @@ export class TestCaseDistributionChartComponent implements OnChanges {
                 const label = element.label;
                 const color = getColor(i / this.testCases.length, 50);
 
-                weight.series.push({ name: label, value: element.relWeight, bonus: element.relScore });
-                weightAndBonus.series.push({ name: label, value: element.relScore, weight: element.relWeight });
+                weight.series.push({ name: label, value: Math.max(element.relWeight, 0), bonus: Math.max(element.relScore, 0) });
+                weightAndBonus.series.push({ name: label, value: Math.max(element.relScore, 0), weight: Math.max(element.relScore, 0) });
 
-                points.series.push({ name: label, value: element.relPoints });
+                points.series.push({ name: label, value: Math.max(element.relPoints, 0) });
 
                 testCaseColors[label] = color;
                 this.ngxColors.domain.push(color);
@@ -195,10 +195,11 @@ export class TestCaseDistributionChartComponent implements OnChanges {
             // update values in-place
             for (let i = 0; i < testCaseScores.length; i++) {
                 const element = testCaseScores[i];
-
-                this.ngxWeightData[0].series[i].value = element.relWeight;
-                this.ngxWeightData[1].series[i].value = element.relScore;
-                this.ngxPointsData[0].series[i].value = element.relPoints;
+                this.ngxWeightData[0].series[i].value = Math.max(element.relWeight, 0);
+                this.ngxWeightData[0].series[i].bonus = Math.max(element.relScore, 0);
+                this.ngxWeightData[1].series[i].value = Math.max(element.relScore, 0);
+                this.ngxWeightData[1].series[i].weight = Math.max(element.relWeight, 0);
+                this.ngxPointsData[0].series[i].value = Math.max(element.relPoints, 0);
             }
         }
 
