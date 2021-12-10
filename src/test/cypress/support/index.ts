@@ -41,3 +41,14 @@ Cypress.on('window:before:load', (win) => {
     });
 });
 /*eslint-enable */
+
+// We have to disable all service workers because the test will fail with a security exception and translations will also not be resolved properly otherwise.
+before(() => {
+    if (window.navigator && navigator.serviceWorker) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+            registrations.forEach((registration) => {
+                registration.unregister();
+            });
+        });
+    }
+});
