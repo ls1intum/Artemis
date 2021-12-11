@@ -127,7 +127,7 @@ describe('Exam assessment', () => {
                 modelingAssessment.clickNextAssessment();
                 modelingAssessment.assessComponent(-1, 'Wrong');
                 // Wait for the editor to save the changes
-                cy.wait(500);
+                cy.wait(1500);
                 examAssessment.submitModelingAssessment().then((assessmentResponse) => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
