@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -102,7 +101,7 @@ public class PlagiarismResource {
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
-        ArrayList<PlagiarismCaseDTO> foundPlagiarismCasesForCourse = this.plagiarismService.collectAllPlagiarismCasesForCourse(courseId);
+        List<PlagiarismCaseDTO> foundPlagiarismCasesForCourse = this.plagiarismService.collectAllPlagiarismCasesForCourse(courseId);
         return ResponseEntity.ok(foundPlagiarismCasesForCourse);
     }
 

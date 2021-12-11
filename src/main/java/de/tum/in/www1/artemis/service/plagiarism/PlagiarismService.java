@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -43,7 +44,7 @@ public class PlagiarismService {
      * @param courseId of the course
      * @return the collected plagiarism cases
      */
-    public ArrayList<PlagiarismCaseDTO> collectAllPlagiarismCasesForCourse(Long courseId) {
+    public List<PlagiarismCaseDTO> collectAllPlagiarismCasesForCourse(Long courseId) {
         // TODO why do we do this so strangely (this is working legacy code)? Refactor in a follow up
         var collectedPlagiarismCases = new ArrayList<PlagiarismCaseDTO>();
         var exerciseIDs = exerciseRepository.findAllIdsByCourseId(courseId);
