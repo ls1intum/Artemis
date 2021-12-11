@@ -61,7 +61,7 @@ public class FeatureToggleService {
      * @param features A map of features (feature -> shouldBeActivated)
      */
     public void updateFeatureToggles(final Map<Feature, Boolean> features) {
-        features.forEach(this.features::put);
+        this.features.putAll(features);
         sendUpdate();
     }
 
@@ -86,7 +86,7 @@ public class FeatureToggleService {
      * @return A list of enabled features
      */
     public List<Feature> enabledFeatures() {
-        return features.entrySet().stream().filter(e -> Boolean.TRUE.equals(e.getValue())).map(Map.Entry::getKey).collect(Collectors.toList());
+        return features.entrySet().stream().filter(feature -> Boolean.TRUE.equals(feature.getValue())).map(Map.Entry::getKey).collect(Collectors.toList());
     }
 
     /**
@@ -95,6 +95,6 @@ public class FeatureToggleService {
      * @return A list of disabled features
      */
     public List<Feature> disabledFeatures() {
-        return features.entrySet().stream().filter(e -> Boolean.FALSE.equals(e.getValue())).map(Map.Entry::getKey).collect(Collectors.toList());
+        return features.entrySet().stream().filter(feature -> Boolean.FALSE.equals(feature.getValue())).map(Map.Entry::getKey).collect(Collectors.toList());
     }
 }

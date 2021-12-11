@@ -101,7 +101,7 @@ describe('Programming exercise assessment', () => {
     function makeProgrammingSubmissionAsStudent() {
         cy.login(student);
         courseManagement
-            .startExerciseParticipation(course.id, exercise.id)
+            .startExerciseParticipation(exercise.id)
             .its('body.id')
             .then((participationId) => {
                 courseManagement.makeProgrammingExerciseSubmission(participationId);

@@ -28,6 +28,10 @@ public class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     private final VcsRepositoryUrl repositoryUrl4 = new VcsRepositoryUrl("https://turdiu@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-turdiu");
 
+    /**
+     * empty constructor for exception handling
+     * @throws MalformedURLException exception in case the above URLs would be malformed
+     */
     public UrlServiceTest() throws MalformedURLException {
     }
 

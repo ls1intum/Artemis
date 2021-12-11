@@ -50,7 +50,6 @@ import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
@@ -75,6 +74,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

@@ -72,7 +72,7 @@ describe('Participation Service', () => {
         const returnedFromService = { ...elemDefault, initializationDate: currentDate.toDate() };
         returnedFromService.id = 123;
         service
-            .findParticipation(123)
+            .findParticipationForCurrentUser(123)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
 
@@ -83,7 +83,7 @@ describe('Participation Service', () => {
 
     it('should find no participation for the exercise', fakeAsync(() => {
         service
-            .findParticipation(123)
+            .findParticipationForCurrentUser(123)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toBeUndefined());
         httpMock.expectOne({ method: 'GET' });

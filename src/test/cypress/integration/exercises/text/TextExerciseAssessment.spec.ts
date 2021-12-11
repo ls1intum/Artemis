@@ -101,7 +101,7 @@ describe('Text exercise assessment', () => {
 
     function makeTextSubmissionAsStudent() {
         cy.login(student);
-        courseManagement.startExerciseParticipation(course.id, exercise.id);
+        courseManagement.startExerciseParticipation(exercise.id);
         cy.fixture('loremIpsum.txt').then((submission) => {
             courseManagement.makeTextExerciseSubmission(exercise.id, submission);
         });

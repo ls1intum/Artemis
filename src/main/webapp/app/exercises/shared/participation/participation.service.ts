@@ -44,17 +44,12 @@ export class ParticipationService {
     }
 
     /*
-     * Finds one participation for the currently logged in user for the given exercise in the given course
+     * Finds one participation for the currently logged-in user for the given exercise in the given course
      */
-    findParticipation(exerciseId: number): Observable<EntityResponseType | null> {
-        return this.http.get<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participation`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => {
-                if (res == undefined) {
-                    return null;
-                }
-                return this.convertDateFromServer(res);
-            }),
-        );
+    findParticipationForCurrentUser(exerciseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participation`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     findAllParticipationsByExercise(exerciseId: number, withLatestResult = false): Observable<EntityArrayResponseType> {
