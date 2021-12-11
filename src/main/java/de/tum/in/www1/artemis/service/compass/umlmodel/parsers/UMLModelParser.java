@@ -3,7 +3,8 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.parsers;
 import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.EnumUtils;
 
@@ -13,14 +14,6 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activity.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.communication.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.petrinet.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.usecase.*;
 
 public class UMLModelParser {
 
