@@ -19,6 +19,19 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
     category: UserSettingsCategory.NOTIFICATION_SETTINGS,
     groups: [
         {
+            key: 'weeklySummary',
+            restrictionLevels: [Authority.USER],
+            settings: [
+                {
+                    key: 'weeklySummaryBase',
+                    descriptionKey: 'weeklySummaryBaseDescription',
+                    settingId: SettingId.NOTIFICATION__WEEKLY_SUMMARY_WEEKLY_SUMMARY_BASIC,
+                    emailSupport: true,
+                    webappSupport: false,
+                },
+            ],
+        },
+        {
             key: 'courseWideDiscussionNotifications',
             restrictionLevels: [Authority.USER],
             settings: [

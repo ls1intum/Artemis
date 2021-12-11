@@ -18,6 +18,7 @@
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen"
             },
             "settingGroupNames": {
+                "weeklySummary": "Wöchentliche Zusammenfassung",
                 "exerciseNotifications": "Aufgabenbenachrichtigungen",
                 "lectureNotifications": "Vorlesungsbenachrichtigungen",
                 "courseWideDiscussionNotifications": "Kursdiskussionsbenachrichtigungen",
@@ -25,6 +26,7 @@
                 "instructorNotifications": "Benachrichtigungen für Lehrende"
             },
             "settingNames": {
+                "weeklySummaryBasic": "Einfache wöchentliche Zusammenfassung",
                 "exerciseReleased": "Neue Aufgabe veröffentlicht",
                 "exerciseOpenForPractice": "Aufgabe zum Üben freigegeben",
                 "newExercisePost": "Neue Beiträge für Aufgaben",
