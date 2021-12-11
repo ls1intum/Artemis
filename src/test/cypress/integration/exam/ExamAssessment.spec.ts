@@ -10,6 +10,7 @@ import { makeSubmissionAndVerifyResults } from '../../support/pageobjects/exerci
 const courseManagementRequests = artemis.requests.courseManagement;
 
 // page objects
+const assessmentDashboard = artemis.pageobjects.assessment.course;
 const examStartEnd = artemis.pageobjects.examStartEnd;
 const modelingEditor = artemis.pageobjects.modelingExercise.editor;
 const modelingAssessment = artemis.pageobjects.modelingExercise.assessmentEditor;
@@ -19,7 +20,6 @@ const examNavigation = artemis.pageobjects.examNavigationBar;
 const textEditor = artemis.pageobjects.textExercise.editor;
 const exerciseAssessment = artemis.pageobjects.assessment.exercise;
 const multipleChoice = artemis.pageobjects.quizExercise.multipleChoice;
-const studentExamManagement = artemis.pageobjects.studentExamManagement;
 
 // Common primitives
 const admin = artemis.users.getAdmin();
@@ -192,8 +192,8 @@ describe('Exam assessment', () => {
             if (dayjs().isBefore(examEnd)) {
                 cy.wait(examEnd.diff(dayjs(), 'ms'));
             }
-            cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/student-exams`);
-            studentExamManagement.clickEvaluateQuizzes().its('response.statusCode').should('eq', 200);
+            cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
+            assessmentDashboard.clickEvaluateQuizzes().its('response.statusCode').should('eq', 200);
             if (dayjs().isBefore(resultDate)) {
                 cy.wait(examEnd.diff(dayjs(), 'ms'));
             }

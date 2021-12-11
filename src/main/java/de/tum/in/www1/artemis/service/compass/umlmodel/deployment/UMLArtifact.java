@@ -19,13 +19,12 @@ public class UMLArtifact extends UMLElement {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLArtifact)) {
+        if (!(reference instanceof UMLArtifact referenceArtifact)) {
             return 0;
         }
 
         double similarity = 0;
 
-        UMLArtifact referenceArtifact = (UMLArtifact) reference;
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceArtifact.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
 
         if (SimilarityUtils.parentsSimilarOrEqual(getParentElement(), referenceArtifact.getParentElement())) {
