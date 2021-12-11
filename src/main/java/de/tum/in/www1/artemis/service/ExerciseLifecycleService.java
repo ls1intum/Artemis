@@ -28,8 +28,8 @@ public class ExerciseLifecycleService {
 
     /**
      * Allow to schedule a {@code Runnable} task in the lifecycle of an exercise. ({@code ExerciseLifecycle}) Tasks are performed in a background thread managed by a
-     * {@code TaskScheduler}. See {@code TaskSchedulingConfiguration}. <b>Important:</b> Scheduled tasks are not persisted accross application restarts. Therefore, schedule your
-     * events from both your application logic (e.g. exercise modification) and on application startup. You can use the {@code PostConstruct} Annotation to call one service method
+     * {@code TaskScheduler}. See {@code TaskSchedulingConfiguration}. <b>Important:</b> Scheduled tasks are not persisted across application restarts. Therefore, schedule your
+     * events from both your application logic (e.g. exercise modification) and on application startup. You can use the {@code PostConstruct} annotation to call one service method
      * on startup.
      *
      * @param exercise  Exercise

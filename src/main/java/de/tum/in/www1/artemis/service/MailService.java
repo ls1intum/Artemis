@@ -4,6 +4,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
@@ -235,5 +236,10 @@ public class MailService {
     @Async
     public void sendNotificationEmailForMultipleUsers(GroupNotification notification, List<User> users, Object notificationSubject) {
         users.forEach(user -> sendNotificationEmail(notification, user, notificationSubject));
+    }
+
+    /// Weekly Summary Email
+    public void sendWeeklySummaryEmail(User user, Set<Exercise> exercises) {
+
     }
 }
