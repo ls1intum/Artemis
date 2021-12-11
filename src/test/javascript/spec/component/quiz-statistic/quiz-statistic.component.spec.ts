@@ -118,11 +118,9 @@ describe('QuizExercise Statistic Component', () => {
     });
 
     describe('loadQuizSuccess', function () {
-        let calculateMaxScoreSpy: jest.SpyInstance;
         let loadDataSpy: jest.SpyInstance;
 
         beforeEach(() => {
-            calculateMaxScoreSpy = jest.spyOn(comp, 'calculateMaxScore').mockReturnValue(32);
             loadDataSpy = jest.spyOn(comp, 'loadData');
             quizExercise.quizQuestions = [
                 { quizQuestionStatistic: quizQuestionStatOne, points: 5 },
@@ -133,7 +131,6 @@ describe('QuizExercise Statistic Component', () => {
         });
 
         afterEach(() => {
-            calculateMaxScoreSpy.mockClear();
             loadDataSpy.mockClear();
         });
 
@@ -146,8 +143,7 @@ describe('QuizExercise Statistic Component', () => {
 
             // check
             expect(comp.quizExercise).toBe(quizExercise);
-            expect(calculateMaxScoreSpy).toHaveBeenCalled();
-            expect(comp.maxScore).toEqual(32);
+            expect(comp.maxScore).toEqual(11);
             expect(loadDataSpy).toHaveBeenCalled();
         });
 
@@ -169,12 +165,14 @@ describe('QuizExercise Statistic Component', () => {
             // setup
             quizExercise.quizQuestions = [{ points: 1 }, { points: 2 }];
             comp.quizExercise = quizExercise;
+            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            jest.spyOn(comp, 'loadData').mockImplementation();
 
             // call
-            const result = comp.calculateMaxScore();
+            comp.loadQuizSuccess(quizExercise);
 
             // check
-            expect(result).toBe(3);
+            expect(comp.maxScore).toBe(3);
         });
 
         it('should return MaxScore be using quizExercise.maxScore', () => {
@@ -182,12 +180,14 @@ describe('QuizExercise Statistic Component', () => {
             quizExercise.quizQuestions = undefined;
             quizExercise.maxPoints = 42;
             comp.quizExercise = quizExercise;
+            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            jest.spyOn(comp, 'loadData').mockImplementation();
 
             // call
-            const result = comp.calculateMaxScore();
+            comp.loadQuizSuccess(quizExercise);
 
             // check
-            expect(result).toBe(42);
+            expect(comp.maxScore).toBe(42);
         });
     });
 

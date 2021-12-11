@@ -203,7 +203,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
     it('should calculate the MaxScore if no quiz questions are contained', () => {
         // setup
-        quizExercise.quizQuestions = [];
+        quizExercise.quizQuestions = undefined;
         quizExercise.maxPoints = 42;
         comp.quizExercise = quizExercise;
         accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
