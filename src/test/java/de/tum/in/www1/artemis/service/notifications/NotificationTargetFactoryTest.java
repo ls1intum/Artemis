@@ -1,53 +1,38 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.FILE_SUBMISSION_SUCCESSFUL_TITLE;
-import static de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider.*;
+import static de.tum.in.www1.artemis.service.notifications.NotificationTargetFactory.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 
-public class NotificationTargetProviderTest {
+public class NotificationTargetFactoryTest {
 
-    @Autowired
-    private static NotificationTargetProvider notificationTargetProvider;
-
-    @Mock
     private static Post post;
 
     private static final Long POST_ID = 101L;
 
-    @Mock
     private static Course course;
 
     private static final Long COURSE_ID = 42L;
 
-    @Mock
     private static Lecture lecture;
 
     private static final Long LECTURE_ID = 27L;
 
-    @Mock
     private static Exercise exercise;
 
     private static final Long EXERCISE_ID = 13L;
 
-    @Mock
     private static ProgrammingExercise programmingExercise;
 
-    @Mock
     private static Notification notification;
 
     private NotificationTarget notificationTransientTarget;
@@ -87,10 +72,9 @@ public class NotificationTargetProviderTest {
      * Auxiliary method to mock, extract and check the notificationTarget
      */
     private void mockExtractAndAssertNotificationTarget(String expectedURL) {
-        when(notification.getTarget()).thenReturn(notificationTransientTarget.toJsonString());
-        when(notification.getTargetTransient()).thenReturn(notificationTransientTarget);
-        resultingURL = notificationTargetProvider.extractNotificationUrl(notification, BASE_URL);
-        assertThat(resultingURL).isEqualTo(expectedURL);
+        notification.setTransientAndStringTarget(notificationTransientTarget);
+        resultingURL = extractNotificationUrl(notification, BASE_URL);
+        assertThat(resultingURL).as("Resulting URL should be equal to expected URL").isEqualTo(expectedURL);
     }
 
     /**
@@ -100,28 +84,26 @@ public class NotificationTargetProviderTest {
     public static void setUp() {
         prepareOriginalTransientTargetWithProblemStatement();
 
-        notificationTargetProvider = new NotificationTargetProvider();
+        course = new Course();
+        course.setId(COURSE_ID);
 
-        course = mock(Course.class);
-        when(course.getId()).thenReturn(COURSE_ID);
+        post = new Post();
+        post.setId(POST_ID);
+        post.setCourse(course);
 
-        post = mock(Post.class);
-        when(post.getId()).thenReturn(POST_ID);
-        when(post.getCourse()).thenReturn(course);
+        lecture = new Lecture();
+        lecture.setId(LECTURE_ID);
+        lecture.setCourse(course);
 
-        lecture = mock(Lecture.class);
-        when(lecture.getId()).thenReturn(LECTURE_ID);
-        when(lecture.getCourse()).thenReturn(course);
+        exercise = new TextExercise();
+        exercise.setId(EXERCISE_ID);
+        exercise.setCourse(course);
 
-        exercise = mock(Exercise.class);
-        when(exercise.getId()).thenReturn(EXERCISE_ID);
-        when(exercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
+        programmingExercise = new ProgrammingExercise();
+        programmingExercise.setId(EXERCISE_ID);
+        programmingExercise.setCourse(course);
 
-        programmingExercise = mock(ProgrammingExercise.class);
-        when(programmingExercise.getId()).thenReturn(EXERCISE_ID);
-        when(programmingExercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
-
-        notification = mock(Notification.class);
+        notification = new GroupNotification();
     }
 
     /**
@@ -135,51 +117,41 @@ public class NotificationTargetProviderTest {
         originalTransientTargetWithProblemStatement.setExamId(EXAM_ID);
     }
 
-    /**
-     * Tests the method getTargetWithoutProblemStatement() if it correctly extracts the target without the problem statement
-     */
-    @Test
-    public void getTargetWithoutProblemStatement() {
-        String resultingTarget = originalTransientTargetWithProblemStatement.toJsonString();
-        assertThat(!resultingTarget.equals(originalTransientTargetWithProblemStatement.toString())).as("resulting target differs from original one");
-        assertThat(!resultingTarget.contains("\"" + PROBLEM_STATEMENT_TEXT + "\":")).as("problem statement was successfully removed from target");
-    }
-
     /// extractNotificationUrl test (very important for e.g. MailService and Emails to contain valid Links)
 
     @Test
     public void extractNotificationUrl_Posts_Announcement() { // e.g. used for announcementPostEmail.html
-        resultingURL = notificationTargetProvider.extractNotificationUrl(post, BASE_URL);
-        assertThat(resultingURL).isEqualTo(EXPECTED_POST_URL);
+        resultingURL = extractNotificationUrl(post, BASE_URL);
+        assertThat(resultingURL).as("Resulting Post URL should be equal to expected one").isEqualTo(EXPECTED_POST_URL);
     }
 
     @Test
     public void extractNotificationUrl_NotificationType_AttachmentChanged() { // e.g. used for attachmentChangedEmail.html
-        notificationTransientTarget = notificationTargetProvider.getAttachmentUpdatedTarget(lecture);
+        notificationTransientTarget = createAttachmentUpdatedTarget(lecture);
         mockExtractAndAssertNotificationTarget(EXPECTED_ATTACHMENT_CHANGED_URL);
     }
 
     @Test
     public void extractNotificationUrl_NotificationType_DuplicateTestCases() { // e.g. used for duplicateTestCasesEmail.html
-        notificationTransientTarget = notificationTargetProvider.getExamProgrammingExerciseOrTestCaseTarget(programmingExercise, DUPLICATE_TEST_CASE_TEXT);
+        notificationTransientTarget = createExamProgrammingExerciseOrTestCaseTarget(programmingExercise, DUPLICATE_TEST_CASE_TEXT);
         mockExtractAndAssertNotificationTarget(EXPECTED_DUPLICATE_TEST_CASES_URL);
     }
 
     @Test
     public void extractNotificationUrl_NotificationType_ExerciseOpenForPractice() { // e.g. used for exerciseOpenForPracticeEmail.html
-        notificationTransientTarget = notificationTargetProvider.getExerciseUpdatedTarget(exercise);
+        notificationTransientTarget = createExerciseUpdatedTarget(exercise);
         mockExtractAndAssertNotificationTarget(EXPECTED_EXERCISE_URL);
     }
 
     @Test
     public void extractNotificationUrl_NotificationType_ExerciseReleased() { // e.g. used for exerciseReleasedEmail.html
-        notificationTransientTarget = notificationTargetProvider.getExerciseReleasedTarget(exercise);
+        notificationTransientTarget = createExerciseReleasedTarget(exercise);
         mockExtractAndAssertNotificationTarget(EXPECTED_EXERCISE_URL);
     }
 
     @Test
     public void extractNotificationUrl_NotificationType_FileSubmissionSuccessful() { // e.g. used for fileSubmissionSuccessfulEmail.html
-        notificationTransientTarget = notificationTargetProvider.getExerciseTarget(exercise, FILE_SUBMISSION_SUCCESSFUL_TITLE);
+        notificationTransientTarget = createExerciseTarget(exercise, FILE_SUBMISSION_SUCCESSFUL_TITLE);
         mockExtractAndAssertNotificationTarget(EXPECTED_EXERCISE_URL);
     }
 }

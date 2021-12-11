@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.notifications;
 
-import org.springframework.stereotype.Service;
-
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -10,8 +8,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 
-@Service
-public class NotificationTargetProvider {
+public class NotificationTargetFactory {
 
     // shared constants
 
@@ -20,8 +17,6 @@ public class NotificationTargetProvider {
     public static final String PROGRAMMING_EXERCISES_TEXT = "programming-exercises";
 
     public static final String COURSE_MANAGEMENT_TEXT = "course-management";
-
-    public static final String PROBLEM_STATEMENT_TEXT = "problemStatement";
 
     public static final String EXERCISES_TEXT = "exercises";
 
@@ -44,21 +39,21 @@ public class NotificationTargetProvider {
     // EXERCISE related targets
 
     /**
-     * Get the needed target for "ExerciseReleased" notifications
+     * Create the needed target for "ExerciseReleased" notifications
      * @param exercise that was released
      * @return the final target property
      */
-    public NotificationTarget getExerciseReleasedTarget(Exercise exercise) {
-        return getExerciseTarget(exercise, EXERCISE_RELEASED_TEXT);
+    public static NotificationTarget createExerciseReleasedTarget(Exercise exercise) {
+        return createExerciseTarget(exercise, EXERCISE_RELEASED_TEXT);
     }
 
     /**
-     * Get the needed target for "ExerciseUpdated" notifications
+     * Create the needed target for "ExerciseUpdated" notifications
      * @param exercise that was updated
      * @return the final target property
      */
-    public NotificationTarget getExerciseUpdatedTarget(Exercise exercise) {
-        return getExerciseTarget(exercise, EXERCISE_UPDATED_TEXT);
+    public static NotificationTarget createExerciseUpdatedTarget(Exercise exercise) {
+        return createExerciseTarget(exercise, EXERCISE_UPDATED_TEXT);
     }
 
     /**
@@ -68,7 +63,7 @@ public class NotificationTargetProvider {
      * @param message             to use for the notification
      * @return the final NotificationTarget for this case
      */
-    public NotificationTarget getExamProgrammingExerciseOrTestCaseTarget(ProgrammingExercise programmingExercise, String message) {
+    public static NotificationTarget createExamProgrammingExerciseOrTestCaseTarget(ProgrammingExercise programmingExercise, String message) {
         NotificationTarget target = new NotificationTarget(PROGRAMMING_EXERCISES_TEXT, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId(),
                 COURSE_MANAGEMENT_TEXT);
         target.setIdentifier(programmingExercise.getId());
@@ -82,7 +77,7 @@ public class NotificationTargetProvider {
      * @param exercise for which to create the notification
      * @return the final NotificationTarget for this case
      */
-    public NotificationTarget getExamExerciseTargetWithExerciseUpdate(Exercise exercise) {
+    public static NotificationTarget createExamExerciseTargetWithExerciseUpdate(Exercise exercise) {
         NotificationTarget target = new NotificationTarget(EXAMS_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId(), COURSES_TEXT);
         target.setProblemStatement(exercise.getProblemStatement());
         target.setExerciseId(exercise.getId());
@@ -97,7 +92,7 @@ public class NotificationTargetProvider {
      * @param message to use for the notification
      * @return the final NotificationTarget for this case
      */
-    public NotificationTarget getExerciseTarget(Exercise exercise, String message) {
+    public static NotificationTarget createExerciseTarget(Exercise exercise, String message) {
         return new NotificationTarget(message, exercise.getId(), EXERCISES_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId(), COURSES_TEXT);
     }
 
@@ -110,17 +105,17 @@ public class NotificationTargetProvider {
      * @param message to use for the notification
      * @return the final NotificationTarget for this case
      */
-    public NotificationTarget getLectureTarget(Lecture lecture, String message) {
+    public static NotificationTarget createLectureTarget(Lecture lecture, String message) {
         return new NotificationTarget(message, lecture.getId(), LECTURES_TEXT, lecture.getCourse().getId(), COURSES_TEXT);
     }
 
     /**
-     * Get the needed target for "AttachmentUpdated" notifications
+     * Create the needed target for "AttachmentUpdated" notifications
      * @param lecture where an attachment was updated
      * @return the final NotificationTarget
      */
-    public NotificationTarget getAttachmentUpdatedTarget(Lecture lecture) {
-        return getLectureTarget(lecture, ATTACHMENT_UPDATED_TEXT);
+    public static NotificationTarget createAttachmentUpdatedTarget(Lecture lecture) {
+        return createLectureTarget(lecture, ATTACHMENT_UPDATED_TEXT);
     }
 
     // COURSE related targets
@@ -132,7 +127,7 @@ public class NotificationTargetProvider {
      * @param message to use for the notification
      * @return the final NotificationTarget for this case
      */
-    public NotificationTarget getCourseTarget(Course course, String message) {
+    public static NotificationTarget createCourseTarget(Course course, String message) {
         return new NotificationTarget(message, course.getId(), COURSES_TEXT, course.getId(), COURSES_TEXT);
     }
 
@@ -145,7 +140,7 @@ public class NotificationTargetProvider {
      * @param course the post belongs to
      * @return the final NotificationTarget
      */
-    public NotificationTarget getLecturePostTarget(Post post, Course course) {
+    public static NotificationTarget createLecturePostTarget(Post post, Course course) {
         NotificationTarget target = new NotificationTarget(post.getId(), course.getId());
         target.setLectureId(post.getLecture().getId());
         return target;
@@ -158,7 +153,7 @@ public class NotificationTargetProvider {
      * @param course the post belongs to
      * @return the final NotificationTarget
      */
-    public NotificationTarget getExercisePostTarget(Post post, Course course) {
+    public static NotificationTarget createExercisePostTarget(Post post, Course course) {
         NotificationTarget target = new NotificationTarget(post.getId(), course.getId());
         target.setExerciseId(post.getExercise().getId());
         return target;
@@ -171,7 +166,7 @@ public class NotificationTargetProvider {
      * @param course the post belongs to
      * @return the final NotificationTarget
      */
-    public NotificationTarget getCoursePostTarget(Post post, Course course) {
+    public static NotificationTarget createCoursePostTarget(Post post, Course course) {
         return new NotificationTarget(post.getId(), course.getId());
     }
 
@@ -184,7 +179,7 @@ public class NotificationTargetProvider {
      * @param baseUrl the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
      * @return viable URL to the notification related page
      */
-    public String extractNotificationUrl(Notification notification, String baseUrl) {
+    public static String extractNotificationUrl(Notification notification, String baseUrl) {
         NotificationTarget target = notification.getTargetTransient();
         return baseUrl + "/" + target.getMainPage() + "/" + target.getCourseId() + "/" + target.getEntity() + "/" + target.getIdentifier();
     }
@@ -196,7 +191,7 @@ public class NotificationTargetProvider {
      * @param baseUrl the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
      * @return viable URL to the notification related page
      */
-    public String extractNotificationUrl(Post post, String baseUrl) {
+    public static String extractNotificationUrl(Post post, String baseUrl) {
         // e.g. http://localhost:8080/courses/1/discussion?searchText=%2382 for announcement post
         return baseUrl + "/courses/" + post.getCourse().getId() + "/discussion?searchText=%23" + post.getId();
     }

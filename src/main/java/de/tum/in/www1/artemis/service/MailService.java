@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.service.notifications.NotificationTargetFactory.extractNotificationUrl;
+
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -26,7 +28,6 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
-import de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -58,8 +59,6 @@ public class MailService {
 
     // notification related variables
 
-    private final NotificationTargetProvider notificationTargetProvider;
-
     private static final String NOTIFICATION = "notification";
 
     private static final String NOTIFICATION_SUBJECT = "notificationSubject";
@@ -77,13 +76,12 @@ public class MailService {
     private static final String TIME_SERVICE = "timeService";
 
     public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine,
-            TimeService timeService, NotificationTargetProvider notificationTargetProvider) {
+            TimeService timeService) {
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
         this.messageSource = messageSource;
         this.templateEngine = templateEngine;
         this.timeService = timeService;
-        this.notificationTargetProvider = notificationTargetProvider;
     }
 
     /**
@@ -168,7 +166,7 @@ public class MailService {
      */
     private String setPostContextAndSubject(Context context, Object notificationSubject, Locale locale) {
         // posts use a different mechanism for the url
-        context.setVariable(NOTIFICATION_URL, notificationTargetProvider.extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
+        context.setVariable(NOTIFICATION_URL, extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
 
         // For Announcement Posts
         String newAnnouncementString = locale.toString().equals("en") ? newAnnouncementEN : newAnnouncementDE;
@@ -205,11 +203,11 @@ public class MailService {
 
         if (notificationSubject instanceof Post) {
             // posts use a different mechanism for the url
-            context.setVariable(NOTIFICATION_URL, notificationTargetProvider.extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
+            context.setVariable(NOTIFICATION_URL, extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
             subject = setPostContextAndSubject(context, notificationSubject, locale);
         }
         else {
-            context.setVariable(NOTIFICATION_URL, notificationTargetProvider.extractNotificationUrl(notification, artemisServerUrl.toString()));
+            context.setVariable(NOTIFICATION_URL, extractNotificationUrl(notification, artemisServerUrl.toString()));
         }
         context.setVariable(BASE_URL, artemisServerUrl);
 

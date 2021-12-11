@@ -3,51 +3,39 @@ package de.tum.in.www1.artemis.domain.notification;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
+import static de.tum.in.www1.artemis.service.notifications.NotificationTargetFactory.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider;
 
 public class SingleUserNotificationFactoryTest {
 
-    @Autowired
-    private static SingleUserNotificationFactory singleUserNotificationFactory;
-
-    @Autowired
-    private static NotificationTargetProvider notificationTargetProvider;
-
-    @Mock
-    private User user;
-
-    @Mock
     private static Lecture lecture;
 
     private static final Long LECTURE_ID = 0L;
 
-    @Mock
     private static Course course;
 
-    private static final Long COURSE_ID = 1L;
+    private static final Long COURSE_ID = 12L;
 
-    @Mock
     private static Exercise exercise;
 
     private static final Long EXERCISE_ID = 42L;
 
-    @Mock
+    private static final String EXERCISE_TITLE = "exercise title";
+
+    private static final String PROBLEM_STATEMENT = "problem statement";
+
     private static Post post;
 
-    @Mock
     private static AnswerPost answerPost;
 
     private static final String POST_NOTIFICATION_TEXT = "Your post got replied.";
@@ -64,33 +52,32 @@ public class SingleUserNotificationFactoryTest {
 
     private NotificationType notificationType;
 
+    private User user = null;
+
     /**
      * sets up all needed mocks and their wanted behavior once for all test cases.
      */
     @BeforeAll
     public static void setUp() {
-        notificationTargetProvider = new NotificationTargetProvider();
+        course = new Course();
+        course.setId(COURSE_ID);
 
-        course = mock(Course.class);
-        when(course.getId()).thenReturn(COURSE_ID);
+        lecture = new Lecture();
+        lecture.setId(LECTURE_ID);
+        lecture.setCourse(course);
 
-        lecture = mock(Lecture.class);
-        when(lecture.getId()).thenReturn(LECTURE_ID);
-        when(lecture.getCourse()).thenReturn(course);
+        exercise = new TextExercise();
+        exercise.setId(EXERCISE_ID);
+        exercise.setTitle(EXERCISE_TITLE);
+        exercise.setCourse(course);
+        exercise.setProblemStatement(PROBLEM_STATEMENT);
 
-        exercise = mock(Exercise.class);
-        when(exercise.getId()).thenReturn(EXERCISE_ID);
-        when(exercise.getTitle()).thenReturn("exercise title");
-        when(exercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
-        when(exercise.getProblemStatement()).thenReturn("problem statement");
+        post = new Post();
+        post.setExercise(exercise);
+        post.setLecture(lecture);
 
-        post = mock(Post.class);
-        when(post.getExercise()).thenReturn(exercise);
-        when(post.getLecture()).thenReturn(lecture);
-
-        answerPost = mock(AnswerPost.class);
-        when(answerPost.getPost()).thenReturn(post);
-
+        answerPost = new AnswerPost();
+        answerPost.setPost(post);
     }
 
     /// Test for Notifications based on Posts
@@ -99,7 +86,7 @@ public class SingleUserNotificationFactoryTest {
      * Calls the real createNotification method of the singleUserNotificationFactory and tests if the result is correct for Post notifications.
      */
     private void createAndCheckPostNotification() {
-        createdNotification = singleUserNotificationFactory.createNotification(post, notificationType, course);
+        createdNotification = createNotification(post, notificationType, course);
         checkNotification();
     }
 
@@ -107,7 +94,7 @@ public class SingleUserNotificationFactoryTest {
      * Calls the real createNotification method of the singleUserNotificationFactory and tests if the result is correct for Exercise notifications.
      */
     private void createAndCheckExerciseNotification() {
-        createdNotification = singleUserNotificationFactory.createNotification(exercise, notificationType, user);
+        createdNotification = createNotification(exercise, notificationType, user);
         checkNotification();
     }
 
@@ -115,11 +102,11 @@ public class SingleUserNotificationFactoryTest {
      * Tests if the resulting notification is correct.
      */
     private void checkNotification() {
-        assertThat(createdNotification.getTitle()).isEqualTo(expectedTitle);
-        assertThat(createdNotification.getText()).isEqualTo(expectedText);
-        assertThat(createdNotification.getTarget()).isEqualTo(expectedTransientTarget.toJsonString());
-        assertThat(createdNotification.getPriority()).isEqualTo(expectedPriority);
-        assertThat(createdNotification.getAuthor()).isEqualTo(user);
+        assertThat(createdNotification.getTitle()).as("Created notification title should be equal to the expected one").isEqualTo(expectedTitle);
+        assertThat(createdNotification.getText()).as("Created notification text should be equal to the expected one").isEqualTo(expectedText);
+        assertThat(createdNotification.getTarget()).as("Created notification target should be equal to the expected one").isEqualTo(expectedTransientTarget.toJsonString());
+        assertThat(createdNotification.getPriority()).as("Created notification priority should be equal to the expected one").isEqualTo(expectedPriority);
+        assertThat(createdNotification.getAuthor()).as("Created notification author should be equal to the expected one").isEqualTo(user);
     }
 
     /**
@@ -132,7 +119,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
         expectedPriority = MEDIUM;
-        expectedTransientTarget = notificationTargetProvider.getExercisePostTarget(post, course);
+        expectedTransientTarget = createExercisePostTarget(post, course);
         createAndCheckPostNotification();
     }
 
@@ -146,7 +133,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
         expectedPriority = MEDIUM;
-        expectedTransientTarget = notificationTargetProvider.getLecturePostTarget(post, course);
+        expectedTransientTarget = createLecturePostTarget(post, course);
         createAndCheckPostNotification();
     }
 
@@ -160,7 +147,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
         expectedPriority = MEDIUM;
-        expectedTransientTarget = notificationTargetProvider.getCoursePostTarget(post, course);
+        expectedTransientTarget = createCoursePostTarget(post, course);
         createAndCheckPostNotification();
     }
 
@@ -176,7 +163,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = FILE_SUBMISSION_SUCCESSFUL_TITLE;
         expectedText = "Your file for the exercise \"" + exercise.getTitle() + "\" was successfully submitted.";
         expectedPriority = MEDIUM;
-        expectedTransientTarget = notificationTargetProvider.getExerciseTarget(exercise, FILE_SUBMISSION_SUCCESSFUL_TITLE);
+        expectedTransientTarget = createExerciseTarget(exercise, FILE_SUBMISSION_SUCCESSFUL_TITLE);
         createAndCheckExerciseNotification();
     }
 }

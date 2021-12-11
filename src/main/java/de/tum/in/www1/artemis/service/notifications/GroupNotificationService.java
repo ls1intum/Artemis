@@ -229,7 +229,7 @@ public class GroupNotificationService {
 
     /**
      * Notify all groups but tutors about an exercise update.
-     * Tutors will only work on the exercise during the assesment therefore it is not urgent to inform them about changes beforehand.
+     * Tutors will only work on the exercise during the assessment therefore it is not urgent to inform them about changes beforehand.
      * Students, instructors, and editors should be notified about changed as quickly as possible.
      *
      * @param exercise         that has been updated

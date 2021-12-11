@@ -13,7 +13,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -48,9 +47,6 @@ public class MailServiceTest {
     @Mock
     private static TimeService timeService;
 
-    @Mock
-    private static NotificationTargetProvider notificationTargetProvider;
-
     private static User student1;
 
     private static final String EMAIL_ADDRESS_A = "benige8246@omibrown.com";
@@ -84,7 +80,7 @@ public class MailServiceTest {
         jHipsterProperties = mock(JHipsterProperties.class);
         when(jHipsterProperties.getMail()).thenReturn(mail);
 
-        mailService = new MailService(jHipsterProperties, javaMailSender, messageSource, templateEngine, timeService, notificationTargetProvider);
+        mailService = new MailService(jHipsterProperties, javaMailSender, messageSource, templateEngine, timeService);
     }
 
     /**
