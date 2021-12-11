@@ -95,7 +95,7 @@ describe('Exam assessment', () => {
 
     describe('Exam exercise assessment', () => {
         beforeEach('Generate new exam name', () => {
-            examEnd = dayjs().add(30, 'seconds');
+            examEnd = dayjs().add(45, 'seconds');
             prepareExam(examEnd);
         });
 
@@ -169,8 +169,8 @@ describe('Exam assessment', () => {
         let resultDate: Dayjs;
 
         beforeEach('Generate new exam name', () => {
-            examEnd = dayjs().add(15, 'seconds');
-            resultDate = examEnd.add(17, 'seconds');
+            examEnd = dayjs().add(25, 'seconds');
+            resultDate = examEnd.add(5, 'seconds');
             prepareExam(examEnd, resultDate);
         });
 
