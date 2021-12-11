@@ -10,7 +10,7 @@ public class UMLUseCase extends UMLElement {
 
     public static final String UML_USE_CASE_TYPE = "UseCase";
 
-    private String name;
+    private final String name;
 
     public UMLUseCase(String name, String jsonElementID) {
         super(jsonElementID);
@@ -34,13 +34,11 @@ public class UMLUseCase extends UMLElement {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLUseCase)) {
+        if (!(reference instanceof UMLUseCase referenceUseCase)) {
             return 0;
         }
 
         double similarity = 0;
-
-        UMLUseCase referenceUseCase = (UMLUseCase) reference;
 
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceUseCase.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
 
@@ -59,11 +57,9 @@ public class UMLUseCase extends UMLElement {
      */
     @Override
     public double overallSimilarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLUseCase)) {
+        if (!(reference instanceof UMLUseCase referenceObject)) {
             return 0;
         }
-
-        UMLUseCase referenceObject = (UMLUseCase) reference;
 
         double similarity = similarity(referenceObject);
 

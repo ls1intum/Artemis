@@ -13,15 +13,15 @@
                 <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()" class="flex-row">
                     <th jhiSortBy="{{ column.ID }}" class="col-1">
                         <span>#</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="{{ column.TITLE }}" class="col-4">
                         <span jhiTranslate="artemisApp.exercise.import.table.title">Title</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="{{ column.COURSE_TITLE }}" class="col-4">
                         <span jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-2">
                         <span jhiTranslate="artemisApp.exercise.import.table.examQuestion">Exam Question</span>
@@ -42,7 +42,7 @@
                     </td>
                     <td class="col-2">
                         <div style="text-align: center; vertical-align: middle">
-                            <fa-icon *ngIf="exercise.exerciseGroup" [icon]="'check'"></fa-icon>
+                            <fa-icon *ngIf="exercise.exerciseGroup" [icon]="faCheck"></fa-icon>
                         </div>
                     </td>
                     <td class="col-1">

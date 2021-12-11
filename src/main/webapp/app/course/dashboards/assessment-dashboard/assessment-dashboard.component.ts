@@ -22,6 +22,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
+import { faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-courses',
@@ -69,6 +70,9 @@ export class AssessmentDashboardComponent implements OnInit {
     toggelingSecondCorrectionButton = false;
 
     tutorIssues: TutorIssue[] = [];
+
+    // Icons
+    faSort = faSort;
 
     constructor(
         private courseService: CourseManagementService,

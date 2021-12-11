@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { faVideo } from '@fortawesome/free-solid-svg-icons';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import urlParser from 'js-video-url-parser';
@@ -21,6 +22,9 @@ export class VideoUnitComponent implements OnInit {
         // TUM-Live. Example: 'https://live.rbg.tum.de/w/test/26?video_only=1'
         RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'),
     ];
+
+    // Icons
+    faVideo = faVideo;
 
     constructor(private safeResourceUrlPipe: SafeResourceUrlPipe) {}
 

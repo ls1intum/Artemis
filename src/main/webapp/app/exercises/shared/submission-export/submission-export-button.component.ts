@@ -3,6 +3,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { SubmissionExportDialogComponent } from './submission-export-dialog.component';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-submission-export',
@@ -12,7 +13,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
             [btnType]="ButtonType.INFO"
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
-            [icon]="'download'"
+            [icon]="faDownload"
             [title]="'instructorDashboard.exportSubmissions.title'"
             (onClick)="openSubmissionExportDialog($event)"
         ></jhi-button>
@@ -24,6 +25,9 @@ export class SubmissionExportButtonComponent {
 
     @Input() exerciseId: number;
     @Input() exerciseType: ExerciseType;
+
+    // Icons
+    faDownload = faDownload;
 
     constructor(private modalService: NgbModal) {}
 

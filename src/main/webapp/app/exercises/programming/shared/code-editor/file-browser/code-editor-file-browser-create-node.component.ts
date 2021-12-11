@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
@@ -9,6 +10,9 @@ import { FileType } from 'app/exercises/programming/shared/code-editor/model/cod
 })
 export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
     FileType = FileType;
+    // Icons
+    faFile = faFile;
+    faFolder = faFolder;
 
     @ViewChild('creatingInput', { static: false }) creatingInput: ElementRef;
 

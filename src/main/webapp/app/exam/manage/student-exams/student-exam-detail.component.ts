@@ -14,6 +14,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -39,6 +40,9 @@ export class StudentExamDetailComponent implements OnInit {
     grade?: string;
     isBonus = false;
     passed = false;
+
+    // Icons
+    faSave = faSave;
 
     constructor(
         private route: ActivatedRoute,

@@ -277,6 +277,51 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetAllNotificationsForCurrentUser_hideUntilDeactivated() throws Exception {
+        ZonedDateTime timeNow = ZonedDateTime.now();
+
+        User student1 = users.get(0);
+        // i.e. the show all notifications regardless of their creation/notification date
+        student1.setHideNotificationsUntil(null);
+        users.set(0, student1);
+        userRepository.save(student1);
+
+        GroupNotification futureNotification = ModelFactory.generateGroupNotification(timeNow.plusHours(1), course1, GroupNotificationType.STUDENT);
+        notificationRepository.save(futureNotification);
+
+        GroupNotification pastNotification = ModelFactory.generateGroupNotification(timeNow.minusHours(1), course1, GroupNotificationType.STUDENT);
+        notificationRepository.save(pastNotification);
+
+        List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+
+        assertThat(notifications).as("Future notification is returned").contains(futureNotification);
+        assertThat(notifications).as("Past notification is returned").contains(pastNotification);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetAllNotificationsForCurrentUser_hideUntilActivated() throws Exception {
+        ZonedDateTime timeNow = ZonedDateTime.now();
+
+        User student1 = users.get(0);
+        student1.setHideNotificationsUntil(timeNow);
+        users.set(0, student1);
+        userRepository.save(student1);
+
+        GroupNotification futureNotification = ModelFactory.generateGroupNotification(timeNow.plusHours(1), course1, GroupNotificationType.STUDENT);
+        notificationRepository.save(futureNotification);
+
+        GroupNotification pastNotification = ModelFactory.generateGroupNotification(timeNow.minusHours(1), course1, GroupNotificationType.STUDENT);
+        notificationRepository.save(pastNotification);
+
+        List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+
+        assertThat(notifications).as("Future notification is returned because it is after the hideUntil property").contains(futureNotification);
+        assertThat(notifications).as("Past notification is not returned because it is prior to the hideUntil property").doesNotContain(pastNotification);
+    }
+
+    @Test
     @WithMockUser(roles = "INSTRUCTOR")
     public void testDeleteNotification_asInstructor() throws Exception {
         GroupNotificationType type = GroupNotificationType.INSTRUCTOR;

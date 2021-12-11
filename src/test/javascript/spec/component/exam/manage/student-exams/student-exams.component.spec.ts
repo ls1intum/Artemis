@@ -241,62 +241,6 @@ describe('StudentExamsComponent', () => {
         expect(studentExamsComponent.isLoading).toEqual(false);
     });
 
-    it('should not show assess unsubmitted student exam modeling and text participations', () => {
-        // user is not an instructor
-        studentExamsComponentFixture.detectChanges();
-        const assessButton = studentExamsComponentFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
-        expect(assessButton).toBeNull();
-    });
-
-    it('should disable show assess unsubmitted student exam modeling and text participations', () => {
-        course.isAtLeastInstructor = true;
-
-        // exam is not over
-        studentExamsComponentFixture.detectChanges();
-        const assessButton = studentExamsComponentFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
-        expect(assessButton).toBeTruthy();
-        expect(assessButton.nativeElement.disabled).toEqual(true);
-    });
-
-    it('should automatically assess modeling and text exercises of unsubmitted student exams', () => {
-        studentExamOne!.workingTime = 10;
-        exam.startDate = dayjs().subtract(200, 'seconds');
-        exam.endDate = dayjs().subtract(100, 'seconds');
-        exam.gracePeriod = 0;
-        course.isAtLeastInstructor = true;
-
-        studentExamsComponentFixture.detectChanges();
-        expect(studentExamsComponent.isLoading).toEqual(false);
-        expect(studentExamsComponent.isExamOver).toEqual(true);
-        expect(course).toBeTruthy();
-        const assessSpy = jest.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations');
-        const assessButton = studentExamsComponentFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
-        expect(assessButton).toBeTruthy();
-        assessButton.nativeElement.click();
-        expect(assessSpy).toBeCalled();
-    });
-
-    it('should correctly catch HTTPError when assessing unsubmitted exams', () => {
-        const alertService = TestBed.inject(AlertService);
-        const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        studentExamOne!.workingTime = 10;
-        exam.startDate = dayjs().subtract(200, 'seconds');
-        exam.endDate = dayjs().subtract(100, 'seconds');
-        exam.gracePeriod = 0;
-        course.isAtLeastInstructor = true;
-
-        studentExamsComponentFixture.detectChanges();
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
-        expect(studentExamsComponent.isLoading).toEqual(false);
-        expect(studentExamsComponent.isExamOver).toEqual(true);
-        expect(course).toBeTruthy();
-        jest.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations').mockReturnValue(throwError(httpError));
-        const assessButton = studentExamsComponentFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
-        expect(assessButton).toBeTruthy();
-        assessButton.nativeElement.click();
-        expect(alertServiceSpy).toBeCalled();
-    });
-
     it('should generate student exams if there are none', () => {
         course.isAtLeastInstructor = true;
         exam.startDate = dayjs().add(120, 'seconds');
@@ -553,50 +497,6 @@ describe('StudentExamsComponent', () => {
         expect(lockAllRepositoriesButton).toBeTruthy();
         expect(lockAllRepositoriesButton.nativeElement.disabled).toEqual(false);
         lockAllRepositoriesButton.nativeElement.click();
-        expect(alertServiceSpy).toBeCalled();
-    });
-
-    it('should evaluate Quiz exercises', () => {
-        course.isAtLeastInstructor = true;
-        exam.startDate = dayjs().subtract(200, 'seconds');
-        exam.endDate = dayjs().subtract(100, 'seconds');
-
-        studentExamsComponentFixture.detectChanges();
-        expect(studentExamsComponent.isLoading).toEqual(false);
-        expect(studentExamsComponent.isExamOver).toEqual(true);
-        expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
-        expect(course).toBeTruthy();
-        const evaluateQuizExercises = jest.spyOn(examManagementService, 'evaluateQuizExercises');
-        const evaluateQuizExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#evaluateQuizExercisesButton'));
-
-        expect(evaluateQuizExercisesButton).toBeTruthy();
-        expect(evaluateQuizExercisesButton.nativeElement.disabled).toEqual(false);
-
-        evaluateQuizExercisesButton.nativeElement.click();
-        expect(evaluateQuizExercises).toBeCalled();
-    });
-
-    it('should correctly catch HTTPError when evaluating quiz exercises', () => {
-        course.isAtLeastInstructor = true;
-        exam.startDate = dayjs().subtract(200, 'seconds');
-        exam.endDate = dayjs().subtract(100, 'seconds');
-        const alertService = TestBed.inject(AlertService);
-
-        studentExamsComponentFixture.detectChanges();
-        expect(studentExamsComponent.isLoading).toEqual(false);
-        expect(studentExamsComponent.isExamOver).toEqual(true);
-        expect(studentExamsComponent.course.isAtLeastInstructor).toEqual(true);
-        expect(course).toBeTruthy();
-
-        const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        jest.spyOn(examManagementService, 'evaluateQuizExercises').mockReturnValue(throwError(httpError));
-        studentExamsComponentFixture.detectChanges();
-
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
-        const evaluateQuizExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#evaluateQuizExercisesButton'));
-        expect(evaluateQuizExercisesButton).toBeTruthy();
-        expect(evaluateQuizExercisesButton.nativeElement.disabled).toEqual(false);
-        evaluateQuizExercisesButton.nativeElement.click();
         expect(alertServiceSpy).toBeCalled();
     });
 });
