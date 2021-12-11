@@ -12,7 +12,7 @@ public class UMLPackage extends UMLContainerElement implements Serializable {
 
     public static final String UML_PACKAGE_TYPE = "Package";
 
-    private String name;
+    private final String name;
 
     public UMLPackage(String name, List<UMLElement> elements, String jsonElementID) {
         super(jsonElementID, elements);
