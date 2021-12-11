@@ -54,7 +54,7 @@ export abstract class QuestionStatisticComponent extends QuizStatisticsDirective
         protected jhiWebsocketService: JhiWebsocketService,
         protected changeDetector: ChangeDetectorRef,
     ) {
-        super();
+        super(translateService);
     }
 
     ngOnInit() {
@@ -206,7 +206,6 @@ export abstract class QuestionStatisticComponent extends QuizStatisticsDirective
         }
 
         this.pushDataToNgxEntry(this.changeDetector);
-        this.xAxisLabel = this.translateService.instant('showStatistic.questionStatistic.xAxes');
-        this.yAxisLabel = this.translateService.instant('showStatistic.questionStatistic.yAxes');
+        this.setAxisLabels('showStatistic.questionStatistic.xAxes', 'showStatistic.questionStatistic.yAxes');
     }
 }

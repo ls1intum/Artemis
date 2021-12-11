@@ -1,19 +1,19 @@
-import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 /**
  * calculate the maximal  possible Score for the quiz
- * @param quizQuestions array of questions contained by the quiz
+ * @param quizExercise the exercise the score should be computed
  * @return (int): sum over the Scores of all questions
  */
-export function calculateMaxScore(quizQuestions?: QuizQuestion[]) {
+export function calculateMaxScore(quizExercise: QuizExercise) {
     let result = 0;
 
-    if (quizQuestions) {
-        quizQuestions.forEach(function (question) {
+    if (quizExercise.quizQuestions) {
+        quizExercise.quizQuestions.forEach(function (question) {
             result = result + question.points!;
         });
     } else {
-        result = this.quizExercise.maxPoints!;
+        result = quizExercise.maxPoints!;
     }
     return result;
 }

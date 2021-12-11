@@ -191,7 +191,7 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
         this.quizExercise.adjustedDueDate = dayjs().add(this.quizExercise.remainingTime!, 'seconds');
         this.waitingForQuizStart = !this.quizExercise.started;
         this.quizPointStatistic = this.quizExercise.quizPointStatistic!;
-        this.maxScore = calculateMaxScore(this.quizExercise.quizQuestions);
+        this.maxScore = calculateMaxScore(this.quizExercise);
 
         this.loadData();
     }

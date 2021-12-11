@@ -95,7 +95,7 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;
-        this.maxScore = calculateMaxScore(this.quizExercise.quizQuestions);
+        this.maxScore = calculateMaxScore(this.quizExercise);
         this.loadData();
     }
 

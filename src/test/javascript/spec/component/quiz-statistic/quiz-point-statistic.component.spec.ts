@@ -201,16 +201,20 @@ describe('QuizExercise Point Statistic Component', () => {
         });
     });
 
-    it('should calculate the MaxScore', () => {
+    it('should calculate the MaxScore if no quiz questions are contained', () => {
         // setup
-        quizExercise.quizQuestions = [{ points: 1 }, { points: 2 }];
+        quizExercise.quizQuestions = [];
+        quizExercise.maxPoints = 42;
         comp.quizExercise = quizExercise;
+        accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+
+        jest.spyOn(comp, 'loadData').mockImplementation();
 
         // call
-        const result = comp.calculateMaxScore();
+        comp.loadQuizSuccess(quizExercise);
 
         // check
-        expect(result).toBe(3);
+        expect(comp.maxScore).toBe(42);
     });
 
     describe('loadData', function () {
