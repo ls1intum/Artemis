@@ -14,7 +14,6 @@ import java.util.TreeMap;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -137,7 +136,7 @@ public class MigrationIntegrityTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     public void testNoExecutionOnTestEnvironment() throws IOException, NoSuchAlgorithmException {
-        Mockito.reset(environmentMock);
+        reset(environmentMock);
         when(environmentMock.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))).thenReturn(true);
 
         registrySpyMock.execute(applicationReadyEventMock);
@@ -214,7 +213,6 @@ public class MigrationIntegrityTest extends AbstractSpringIntegrationBambooBitbu
         changelog.put(0, TestChangeEntry20211214_231800.class);
         changelog.put(1, TestChangeEntry20211215_231800.class);
         doAnswer(invocation -> changelog).when(registrySpyMock).getMigrationEntryMap();
-        System.out.println(changelog);
 
         registrySpyMock.execute(applicationReadyEventMock);
 

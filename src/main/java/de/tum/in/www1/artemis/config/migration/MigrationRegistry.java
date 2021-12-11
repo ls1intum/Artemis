@@ -42,7 +42,7 @@ public class MigrationRegistry {
     // Using SortedMap to allow sorting. I'm using a map because with a list entries could accidentally be switched.
     private final SortedMap<Integer, Class<? extends MigrationEntry>> migrationEntryMap = new TreeMap<>();
 
-    private TreeMap<Integer, MigrationEntry> instantiatedMigrationEntryMap;
+    private SortedMap<Integer, MigrationEntry> instantiatedMigrationEntryMap;
 
     private final AutowireCapableBeanFactory beanFactory;
 
