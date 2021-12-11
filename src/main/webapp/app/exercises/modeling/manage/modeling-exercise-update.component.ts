@@ -41,7 +41,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
     modelingExercise: ModelingExercise;
     backupExercise: ModelingExercise;
-    exampleSolution: UMLModel;
+    sampleSolution: UMLModel;
     isSaving: boolean;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -94,7 +94,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
             this.modelingExercise = modelingExercise;
 
             if (this.modelingExercise.sampleSolutionModel != undefined) {
-                this.exampleSolution = JSON.parse(this.modelingExercise.sampleSolutionModel);
+                this.sampleSolution = JSON.parse(this.modelingExercise.sampleSolutionModel);
             }
 
             this.backupExercise = cloneDeep(this.modelingExercise);

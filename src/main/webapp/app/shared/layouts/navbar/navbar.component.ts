@@ -216,7 +216,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         quiz_point_statistic: 'artemisApp.quizExercise.statistics',
         import: 'artemisApp.exercise.import.table.doImport',
         plagiarism: 'artemisApp.plagiarism.plagiarism-detection',
-        example_solution: 'artemisApp.modelingExercise.exampleSolution',
+        example_solution: 'artemisApp.modelingExercise.sampleSolution',
         example_submissions: 'artemisApp.exampleSubmission.home.title',
         example_submission_editor: 'artemisApp.exampleSubmission.home.editor',
         text_feedback_conflict: 'artemisApp.textAssessment.title',

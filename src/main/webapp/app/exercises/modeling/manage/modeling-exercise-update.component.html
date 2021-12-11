@@ -175,12 +175,12 @@
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="modelingExercise"></jhi-grading-instructions-details>
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolution">Example Solution</label>
-            <jhi-modeling-editor [diagramType]="modelingExercise.diagramType" [umlModel]="exampleSolution" [withExplanation]="false"></jhi-modeling-editor>
+            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.sampleSolution">Sample Solution</label>
+            <jhi-modeling-editor [diagramType]="modelingExercise.diagramType" [umlModel]="sampleSolution" [withExplanation]="false"></jhi-modeling-editor>
         </div>
-        <div *ngIf="!isImport" class="form-group" name="exampleSolutionExplanation" id="field_exampleSolutionExplanation">
-            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolutionExplanation" for="field_exampleSolutionExplanation">
-                Example Solution Explanation
+        <div *ngIf="!isImport" class="form-group" id="field_sampleSolutionExplanation">
+            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.sampleSolutionExplanation" for="field_sampleSolutionExplanation">
+                Sample Solution Explanation
             </label>
             <jhi-markdown-editor
                 class="markdown-editor background-editor-color"

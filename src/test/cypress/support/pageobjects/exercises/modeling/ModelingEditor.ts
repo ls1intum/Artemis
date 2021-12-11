@@ -8,7 +8,7 @@ export const MODELING_EDITOR_CANVAS = '#modeling-editor-canvas';
  * */
 export class ModelingEditor {
     /**
-     * Adds a Modeling Component to the Example Solution
+     * Adds a Modeling Component to the Sample Solution
      * */
     addComponentToModel(componentNumber: number, scrollBehavior: scrollBehaviorOptions = 'center') {
         cy.get('#modeling-editor-sidebar').children().eq(componentNumber).drag(`${MODELING_EDITOR_CANVAS}`, { scrollBehavior, timeout: 1000 });
