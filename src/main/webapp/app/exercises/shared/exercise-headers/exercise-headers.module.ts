@@ -3,12 +3,12 @@ import { HeaderExercisePageWithDetailsComponent } from './header-exercise-page-w
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { DifficultyBadgeComponent } from './difficulty-badge.component';
-import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisResultModule, ArtemisSharedComponentModule],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, SubmissionResultStatusModule],
     declarations: [HeaderExercisePageWithDetailsComponent, HeaderParticipationPageComponent, DifficultyBadgeComponent, IncludedInScoreBadgeComponent],
     exports: [HeaderExercisePageWithDetailsComponent, HeaderParticipationPageComponent, DifficultyBadgeComponent, IncludedInScoreBadgeComponent],
 })

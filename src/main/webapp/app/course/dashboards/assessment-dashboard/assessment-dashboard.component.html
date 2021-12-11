@@ -23,6 +23,7 @@
                 <span class="me-2"> {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }} : {{ exam?.publishResultsDate | artemisDate }} </span>
             </h4>
         </div>
+        <jhi-exam-assessment-buttons class="w-25 float-right"></jhi-exam-assessment-buttons>
     </div>
 </div>
 
@@ -61,7 +62,6 @@
             </jhi-assessment-dashboard-information>
         </div>
     </div>
-
     <div class="container-fluid table-responsive">
         <h4 jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></h4>
         <div *ngIf="!isTestRun" class="guided-tour-form-check col-6 align-baseline">
@@ -141,6 +141,7 @@
                         <ng-container *ngIf="!exercise.teamMode; else teamsLink">
                             <ng-container>
                                 <a
+                                    id="open-exercise-dashboard"
                                     [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
                                     class="btn btn-info btn-sm me-1"
                                     [class.guided-tour]="exercise === exerciseForGuidedTour"

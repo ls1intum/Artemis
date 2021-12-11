@@ -12,6 +12,7 @@ import { AssessmentDashboardInformationComponent } from 'app/course/dashboards/a
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { ExamAssessmentButtonsComponent } from './exam-assessment-buttons/exam-assessment-buttons.component';
 
 const ENTITY_STATES = [...assessmentDashboardRoute];
 
@@ -28,6 +29,6 @@ const ENTITY_STATES = [...assessmentDashboardRoute];
         ArtemisExerciseAssessmentDashboardModule,
         ArtemisSharedComponentModule,
     ],
-    declarations: [AssessmentDashboardComponent, AssessmentDashboardInformationComponent],
+    declarations: [AssessmentDashboardComponent, AssessmentDashboardInformationComponent, ExamAssessmentButtonsComponent],
 })
 export class ArtemisAssessmentDashboardModule {}
