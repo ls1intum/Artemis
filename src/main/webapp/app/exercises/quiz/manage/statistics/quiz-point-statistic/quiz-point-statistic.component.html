@@ -7,18 +7,18 @@
         </button>
 
         <div #containerRef class="text-center">
-            <p class="text-start" style="font-size: large">
+            <p class="text-start" class="chart-title-text">
                 <span jhiTranslate="showStatistic.quizPointStatistic.maxScore"></span><span>{{ maxScore }}</span>
             </p>
             <div class="row">
                 <div class="col-md-7 text-start">
-                    <p style="font-size: large">
+                    <p class="chart-title-text">
                         <span *ngIf="rated" jhiTranslate="showStatistic.quizPointStatistic.titleRated"></span>
                         <span *ngIf="!rated" jhiTranslate="showStatistic.quizPointStatistic.titleUnrated"></span>
                     </p>
                 </div>
                 <div class="col-md-5 text-end">
-                    <p style="font-size: large">
+                    <p class="chart-title-text">
                         <span>{{ participants }} </span><span jhiTranslate="showStatistic.participants"></span>
                     </p>
                 </div>

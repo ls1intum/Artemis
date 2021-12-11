@@ -6,10 +6,10 @@
                 <div class="col-md-4 text-start">
                     <h4 jhiTranslate="showStatistic.quizQuestions">Quiz questions</h4>
                     <ol *ngIf="quizExercise.quizQuestions">
-                        <li style="font-size: 15px" *ngFor="let question of quizExercise.quizQuestions">
+                        <li class="question-title" *ngFor="let question of quizExercise.quizQuestions">
                             <p>
                                 <span
-                                    >{{ question.title }}&nbsp; <span style="color: red" *ngIf="question.invalid" jhiTranslate="showStatistic.invalid"></span> &nbsp;({{
+                                    >{{ question.title }}&nbsp; <span class="invalid-question" *ngIf="question.invalid" jhiTranslate="showStatistic.invalid"></span> &nbsp;({{
                                         question.points
                                     }}P)</span
                                 >
@@ -21,13 +21,13 @@
                     <p>&nbsp;</p>
                     <div class="row">
                         <div class="col-md-7 text-start">
-                            <p id="text" style="font-size: large">
+                            <p id="text" class="chart-title-text">
                                 <span *ngIf="rated" jhiTranslate="showStatistic.quizStatistic.titleRated"></span>
                                 <span *ngIf="!rated" jhiTranslate="showStatistic.quizStatistic.titleUnrated"></span>
                             </p>
                         </div>
                         <div class="col-md-5 text-end">
-                            <p style="font-size: large">
+                            <p class="chart-title-text">
                                 <span>{{ participants }} </span><span jhiTranslate="showStatistic.participants"></span>
                             </p>
                         </div>
