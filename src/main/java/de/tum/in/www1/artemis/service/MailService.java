@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.service.notifications.NotificationTargetFactory.extractNotificationUrl;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.extractNotificationUrl;
 
 import java.net.URL;
 import java.nio.charset.StandardCharsets;

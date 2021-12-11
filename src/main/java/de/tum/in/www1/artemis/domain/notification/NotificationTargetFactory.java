@@ -1,12 +1,10 @@
-package de.tum.in.www1.artemis.service.notifications;
+package de.tum.in.www1.artemis.domain.notification;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 
 public class NotificationTargetFactory {
 

@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.service.notifications.NotificationTargetFactory.createExerciseUpdatedTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExerciseUpdatedTarget;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
