@@ -11,6 +11,7 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { Authority } from 'app/shared/constants/authority.constants';
 import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/quiz-statistics.directive';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
 
 /**
  * this interface is adapted from chart.js
@@ -44,13 +45,13 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
         private route: ActivatedRoute,
         private router: Router,
         private accountService: AccountService,
-        private translateService: TranslateService,
+        protected translateService: TranslateService,
         private quizExerciseService: QuizExerciseService,
         private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
         private changeDetector: ChangeDetectorRef,
     ) {
-        super();
+        super(translateService);
     }
 
     ngOnInit() {
@@ -94,26 +95,8 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;
-        this.maxScore = this.calculateMaxScore();
+        this.maxScore = calculateMaxScore(this.quizExercise.quizQuestions);
         this.loadData();
-    }
-
-    /**
-     * calculate the maximal  possible Score for the quiz
-     *
-     * @return (int): sum over the Scores of all questions
-     */
-    calculateMaxScore() {
-        let result = 0;
-
-        if (this.quizExercise.quizQuestions) {
-            this.quizExercise.quizQuestions.forEach(function (question) {
-                result = result + question.points!;
-            });
-        } else {
-            result = this.quizExercise.maxPoints!;
-        }
-        return result;
     }
 
     /**
@@ -170,7 +153,7 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
     loadDataInDiagram(): void {
         this.setData(this.quizExercise.quizPointStatistic!);
         this.pushDataToNgxEntry(this.changeDetector);
-        this.xAxisLabel = this.translateService.instant('showStatistic.quizStatistic.xAxes');
-        this.yAxisLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
+
+        this.setAxisLabels('showStatistic.quizStatistic.xAxes', 'showStatistic.quizStatistic.yAxes');
     }
 }

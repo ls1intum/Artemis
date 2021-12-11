@@ -16,6 +16,7 @@ import { round } from 'app/shared/util/utils';
 import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/quiz-statistics.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -63,13 +64,13 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
         private route: ActivatedRoute,
         private router: Router,
         private accountService: AccountService,
-        private translateService: TranslateService,
+        protected translateService: TranslateService,
         private quizExerciseService: QuizExerciseService,
         private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
         protected changeDetector: ChangeDetectorRef,
     ) {
-        super();
+        super(translateService);
     }
 
     ngOnInit() {
@@ -158,10 +159,6 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
     }
 
-    getParticipants() {
-        return this.participants;
-    }
-
     /**
      * load the new quizPointStatistic from the server if the Websocket has been notified
      *
@@ -194,23 +191,9 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
         this.quizExercise.adjustedDueDate = dayjs().add(this.quizExercise.remainingTime!, 'seconds');
         this.waitingForQuizStart = !this.quizExercise.started;
         this.quizPointStatistic = this.quizExercise.quizPointStatistic!;
-        this.maxScore = this.calculateMaxScore();
+        this.maxScore = calculateMaxScore(this.quizExercise.quizQuestions);
 
         this.loadData();
-    }
-
-    /**
-     * calculate the maximal  possible Score for the quiz
-     *
-     * @return (number): sum over the Scores of all questions
-     */
-    calculateMaxScore() {
-        let result = 0;
-
-        this.quizExercise.quizQuestions!.forEach((question) => {
-            result = result + question.points!;
-        });
-        return result;
     }
 
     /**
@@ -246,8 +229,7 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
         this.pushDataToNgxEntry(this.changeDetector);
 
         // add Axes-labels based on selected language
-        this.xAxisLabel = this.translateService.instant('showStatistic.quizPointStatistic.xAxes');
-        this.yAxisLabel = this.translateService.instant('showStatistic.quizPointStatistic.yAxes');
+        this.setAxisLabels('showStatistic.quizPointStatistic.xAxes', 'showStatistic.quizPointStatistic.yAxes');
     }
 
     /**

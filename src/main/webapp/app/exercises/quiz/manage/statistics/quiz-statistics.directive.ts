@@ -3,6 +3,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { round } from 'app/shared/util/utils';
 import { NgxDataEntry } from 'app/entities/course.model';
 import { QuizStatistic } from 'app/entities/quiz/quiz-statistic.model';
+import { TranslateService } from '@ngx-translate/core';
 
 @Directive()
 export abstract class QuizStatisticsDirective {
@@ -25,6 +26,8 @@ export abstract class QuizStatisticsDirective {
     maxScale: number;
     chartLabels: string[] = [];
     totalParticipants = 0;
+
+    constructor(protected translateService: TranslateService) {}
 
     /**
      * Depending on if the rated or unrated results should be displayed,
@@ -107,6 +110,16 @@ export abstract class QuizStatisticsDirective {
             // add 25%, round to the next 100
             return Math.ceil(height * 0.0125) * 100;
         }
+    }
+
+    /**
+     * Sets the axis labels given the translation paths
+     * @param xAxisLabel translation path for x axis label
+     * @param yAxisLabel translation path for y axis label
+     */
+    setAxisLabels(xAxisLabel: string, yAxisLabel: string): void {
+        this.xAxisLabel = this.translateService.instant(xAxisLabel);
+        this.yAxisLabel = this.translateService.instant(yAxisLabel);
     }
 
     /**
