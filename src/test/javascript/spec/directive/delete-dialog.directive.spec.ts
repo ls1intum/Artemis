@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, discardPeriodicTasks, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
 import * as chai from 'chai';
@@ -68,7 +68,7 @@ describe('DeleteDialogDirective', () => {
         // Check that delete text span was added to the DOM.
         const deleteTextSpan = debugElement.query(By.css('.d-none.d-md-inline'));
         expect(deleteTextSpan).to.exist;
-        expect(deleteTextSpan.properties['textContent']).to.exist;
+        expect(deleteTextSpan.nativeElement.textContent).to.exist;
 
         const directiveEl = debugElement.query(By.directive(DeleteButtonDirective));
         expect(directiveEl).to.be.not.null;
@@ -87,6 +87,7 @@ describe('DeleteDialogDirective', () => {
         directiveEl.nativeElement.click();
         fixture.detectChanges();
         expect(deleteDialogSpy.callCount).to.equal(1);
+        discardPeriodicTasks();
     }));
 
     it('action type cleanup should change button title', fakeAsync(() => {

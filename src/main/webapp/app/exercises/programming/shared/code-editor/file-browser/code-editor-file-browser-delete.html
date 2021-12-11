@@ -11,10 +11,10 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="closeModal()">
-            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" class="btn btn-danger" [disabled]="!deleteForm.valid">
-            <fa-icon [icon]="'trash-alt'"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.editor.fileBrowser.delete">Delete file</span>
+            <fa-icon id="delete-file" [icon]="faTrashAlt"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.editor.fileBrowser.delete">Delete file</span>
         </button>
     </div>
 </form>

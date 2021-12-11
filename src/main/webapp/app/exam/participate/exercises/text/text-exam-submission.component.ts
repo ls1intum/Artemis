@@ -9,6 +9,7 @@ import { StringCountService } from 'app/exercises/text/participate/string-count.
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -28,6 +29,9 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     // answer represents the view state
     answer: string;
     private textEditorInput = new Subject<string>();
+
+    // Icons
+    farListAlt = faListAlt;
 
     constructor(
         private textService: TextEditorService,

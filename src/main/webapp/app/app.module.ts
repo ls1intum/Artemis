@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { ServiceWorkerModule } from '@angular/service-worker';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ArtemisSystemNotificationModule } from 'app/shared/notification/system-notification/system-notification.module';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
@@ -30,6 +31,8 @@ import { UserSettingsModule } from 'app/shared/user-settings/user-settings.modul
     imports: [
         BrowserModule,
         BrowserAnimationsModule,
+        // This enables service worker (PWA)
+        ServiceWorkerModule.register('ngsw-worker.js', { enabled: true }),
         ArtemisSharedModule,
         ArtemisCoreModule,
         ArtemisHomeModule,

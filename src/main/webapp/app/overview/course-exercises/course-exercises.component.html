@@ -10,7 +10,7 @@
                             ngbDropdownToggle
                             id="filter-dropdown-button"
                         >
-                            <fa-icon icon="filter"></fa-icon>
+                            <fa-icon [icon]="faFilter"></fa-icon>
                             <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size } }}</span>
                         </button>
                         <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
@@ -42,7 +42,7 @@
                     </div>
                     <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
                         <button id="flip" (click)="flipOrder()" class="btn btn-primary">
-                            <fa-icon [icon]="sortingOrder === ASC ? 'sort-numeric-up' : 'sort-numeric-down'"></fa-icon>
+                            <fa-icon [icon]="sortingOrder === ASC ? faSortNumericUp : faSortNumericDown"></fa-icon>
                             <span class="d-none d-md-inline ms-1">{{
                                 'artemisApp.courseOverview.exerciseList.' + (sortingOrder === ASC ? 'oldFirst' : 'newFirst') | artemisTranslate
                             }}</span>
@@ -79,6 +79,7 @@
                 </h3>
                 <jhi-course-exercise-row
                     class="pb-1"
+                    id="next-course-exercise-row"
                     [exercise]="nextRelevantExercise"
                     [course]="course"
                     [hasGuidedTour]="nextRelevantExercise === exerciseForGuidedTour"
@@ -91,7 +92,7 @@
                     [ngClass]="{ 'text-primary': weeklyExercisesGrouped[weekKey] ? weeklyExercisesGrouped[weekKey].isCurrentWeek : false }"
                     (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed"
                 >
-                    <fa-icon class="pe-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
+                    <fa-icon class="pe-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? faAngleDown : faAngleUp"></fa-icon>
                     <span *ngIf="weeklyExercisesGrouped[weekKey].start && weeklyExercisesGrouped[weekKey].end">
                         <strong>{{ weeklyExercisesGrouped[weekKey].start | artemisDate: 'long-date' }}</strong> -
                         <strong>{{ weeklyExercisesGrouped[weekKey].end | artemisDate: 'long-date' }}</strong>
@@ -152,7 +153,7 @@
                     <div class="col-5">{{ exercise.dueDate | artemisDate }}</div>
                     <div class="col-5">{{ exercise.title }}</div>
                     <div class="col-2 icon">
-                        <fa-icon [icon]="'play-circle'"></fa-icon>
+                        <fa-icon [icon]="faPlayCircle"></fa-icon>
                     </div>
                 </div>
                 <div class="row mb-1 align-items-center" *ngIf="upcomingExercises.length === 0">
