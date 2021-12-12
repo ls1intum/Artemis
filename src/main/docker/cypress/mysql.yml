@@ -1,4 +1,4 @@
-version: '2'
+version: '2.1'
 services:
     artemis-mysql:
         image: mysql:8.0.27
@@ -13,6 +13,10 @@ services:
         command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
         networks:
             - artemis
+        healthcheck:
+            test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+            timeout: 20s
+            retries: 10
 
 networks:
     artemis:
