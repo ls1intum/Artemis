@@ -20,7 +20,8 @@ services:
         networks:
             - artemis
         depends_on:
-            - artemis-mysql
+            artemis-mysql:
+                condition: service_healthy
     artemis-mysql:
         extends:
             file: mysql.yml
