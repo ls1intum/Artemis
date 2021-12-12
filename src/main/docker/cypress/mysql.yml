@@ -15,8 +15,9 @@ services:
             - artemis
         healthcheck:
             test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-            timeout: 20s
-            retries: 10
+            interval: 1s
+            timeout: 3s
+            retries: 30
 
 networks:
     artemis:

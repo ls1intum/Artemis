@@ -1,5 +1,10 @@
 version: '2.1'
 services:
+    artemis-mysql:
+        extends:
+            file: mysql.yml
+            service: artemis-mysql
+
     artemis-app:
         image: ghcr.io/ls1intum/artemis
         build:
@@ -22,10 +27,25 @@ services:
         depends_on:
             artemis-mysql:
                 condition: service_healthy
-    artemis-mysql:
-        extends:
-            file: mysql.yml
-            service: artemis-mysql
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:8080"]
+            interval: 1s
+            timeout: 3s
+            retries: 30
+    
+    e2e:
+        image: cypress
+        build: src/test/cypress
+        container_name: cypress
+        depends_on:
+            artemis-app:
+                condition: service_healthy
+        environment:
+            - CYPRESS_baseUrl=http://artemis-app
+        command: npm run cypress:run
+        volumes:
+            - src/test/cypress:/app/cypress
+            - src/test/cypress/cypress.json:/app/cypress.json
 
 networks:
     artemis:
