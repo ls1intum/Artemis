@@ -35,7 +35,6 @@ services:
 
     artemis-cypress:
         image: cypress/browsers:node16.5.0-chrome94-ff93
-        build: ../../../test/cypress
         depends_on:
             artemis-app:
                 condition: service_healthy
