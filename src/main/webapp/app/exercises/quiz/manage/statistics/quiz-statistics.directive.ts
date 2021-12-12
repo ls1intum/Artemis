@@ -70,7 +70,7 @@ export abstract class QuizStatisticsDirective {
      *  1. change the amount of  participants
      *  2. change the bar-Data
      */
-    switchRated() {
+    switchRated(): void {
         this.rated = !this.rated;
         this.loadDataInDiagram();
     }
