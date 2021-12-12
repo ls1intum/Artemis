@@ -14,7 +14,7 @@ services:
             SPRING_DATASOURCE_URL: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
             SPRING_DATASOURCE_USERNAME: root
             SPRING_DATASOURCE_PASSWORD: 
-            JHIPSTER_SLEEP: 30 # gives time for other services to boot before the application
+            JHIPSTER_SLEEP: 60 # gives time for other services to boot before the application
         ports:
             - 8080:8080
         networks:
