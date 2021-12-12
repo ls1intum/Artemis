@@ -29,9 +29,9 @@ services:
                 condition: service_healthy
         healthcheck:
             test: ["CMD", "curl", "-f", "http://localhost:8080"]
-            interval: 1s
-            timeout: 3s
-            retries: 30
+            interval: 5s
+            timeout: 5s
+            retries: 60
 
     artemis-cypress:
         image: cypress/browsers:node16.5.0-chrome94-ff93
