@@ -23,7 +23,7 @@ services:
             - artemis-mysql
     artemis-mysql:
         extends:
-            file: mysql.yml
+            file: ../mysql.yml
             service: artemis-mysql
 
 networks:
