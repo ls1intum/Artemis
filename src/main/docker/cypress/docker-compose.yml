@@ -35,7 +35,7 @@ services:
 
     artemis-cypress:
         image: cypress/browsers:node16.5.0-chrome94-ff93
-        build: ../../test/cypress
+        build: ../../../test/cypress
         depends_on:
             artemis-app:
                 condition: service_healthy
@@ -43,7 +43,7 @@ services:
             - CYPRESS_baseUrl=http://artemis-app
         command: cd /app/cypress; npm ci; npm run cypress:run
         volumes:
-            - ../../test/cypress:/app/cypress
+            - ../../../test/cypress:/app/cypress
 
 networks:
     artemis:
