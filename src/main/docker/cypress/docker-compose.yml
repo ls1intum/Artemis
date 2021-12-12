@@ -33,19 +33,10 @@ services:
             timeout: 3s
             retries: 30
     
-    e2e:
-        image: cypress
-        build: src/test/cypress
-        container_name: cypress
-        depends_on:
-            artemis-app:
-                condition: service_healthy
-        environment:
-            - CYPRESS_baseUrl=http://artemis-app
-        command: npm run cypress:run
-        volumes:
-            - src/test/cypress:/app/cypress
-            - src/test/cypress/cypress.json:/app/cypress.json
+    artemis-cypress:
+        extends:
+            file: cypress.yml
+            service: artemis-cypress
 
 networks:
     artemis:
