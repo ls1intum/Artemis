@@ -32,11 +32,18 @@ services:
             interval: 1s
             timeout: 3s
             retries: 30
-    
+
     artemis-cypress:
-        extends:
-            file: cypress.yml
-            service: artemis-cypress
+        image: cypress/browsers:node16.5.0-chrome94-ff93
+        build: src/test/cypress
+        depends_on:
+            artemis-app:
+                condition: service_healthy
+        environment:
+            - CYPRESS_baseUrl=http://artemis-app
+        command: cd /app/cypress; npm ci; npm run cypress:run
+        volumes:
+            - src/test/cypress:/app/cypress
 
 networks:
     artemis:
