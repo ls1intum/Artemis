@@ -6,13 +6,14 @@ import { BaseChartDirective, Label } from 'ng2-charts';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { PlagiarismAndTutorEffortDirective } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 
 @Component({
     selector: 'jhi-text-exercise-tutor-effort-statistics',
     templateUrl: './tutor-effort-statistics.component.html',
     styleUrls: ['./tutor-effort-statistics.component.scss'],
 })
-export class TutorEffortStatisticsComponent implements OnInit {
+export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDirective implements OnInit {
     tutorEfforts: TutorEffort[] = [];
     numberOfSubmissions: number;
     totalTimeSpent: number;
@@ -34,6 +35,7 @@ export class TutorEffortStatisticsComponent implements OnInit {
      * The labels of the chart are fixed and represent the 13 intervals we group the tutors into.
      */
     chartLabels: Label[] = ['0-10', '10-20', '20-30', '30-40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100-110', '110-120', '120+'];
+    ngxChartLabels: string[] = ['0-10', '10-20', '20-30', '30-40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100-110', '110-120', '120+'];
 
     /**
      * The type of the chart.
@@ -83,9 +85,12 @@ export class TutorEffortStatisticsComponent implements OnInit {
     // Icons
     faSync = faSync;
 
-    constructor(private textExerciseService: TextExerciseService, private textAssessmentService: TextAssessmentService, private route: ActivatedRoute) {}
+    constructor(private textExerciseService: TextExerciseService, private textAssessmentService: TextAssessmentService, private route: ActivatedRoute) {
+        super();
+    }
 
     ngOnInit(): void {
+        this.ngxChartLabels = ['0-10', '10-20', '20-30', '30-40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100-110', '110-120', '120+'];
         this.route.params.subscribe((params) => {
             this.currentExerciseId = Number(params['exerciseId']);
             this.currentCourseId = Number(params['courseId']);
@@ -117,6 +122,10 @@ export class TutorEffortStatisticsComponent implements OnInit {
         this.averageTimeSpent = avgTemp ? Math.round((avgTemp + Number.EPSILON) * 100) / 100 : 0;
         this.distributeEffortToSets();
         this.chartDataSets[0].data = this.effortDistribution;
+        this.effortDistribution.forEach((effort, index) => {
+            this.ngxData.push({ name: this.ngxChartLabels[index], value: effort });
+        });
+        this.ngxData = [...this.ngxData];
     }
 
     loadNumberOfTutorsInvolved() {

@@ -2,35 +2,34 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { PlagiarismAndTutorEffortDirective } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
+export const ngxColor = {
+    name: 'similarity distribution',
+    selectable: true,
+    group: ScaleType.Ordinal,
+    domain: ['#87cefa'], // color: light blue
+} as Color;
 
 @Component({
     selector: 'jhi-plagiarism-run-details',
     styleUrls: ['./plagiarism-run-details.component.scss'],
     templateUrl: './plagiarism-run-details.component.html',
 })
-export class PlagiarismRunDetailsComponent implements OnChanges {
+export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirective implements OnChanges {
     /**
      * Result of the automated plagiarism detection
      */
     @Input() plagiarismResult: TextPlagiarismResult | ModelingPlagiarismResult;
 
-    /**
-     * The labels of the chart are fixed and represent the 10 intervals we group the similarities into.
-     */
-    ngxChartLabels: string[] = ['0%-10%', '10%-20%', '20%-30%', '30%-40%', '40%-50%', '50%-60%', '60%-70%', '70%-80%', '80%-90%', '90%-100%'];
+    readonly ngxColor = ngxColor;
 
-    /**
-     * The similarity distribution is visualized in a bar chart.
-     */
-
-    ngxColor = {
-        name: 'similarity distribution',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: ['#87cefa'], // color: light blue
-    } as Color;
-    ngxData: any[] = [];
-    yAxisTicks: number[] = [];
+    constructor() {
+        super();
+        /**
+         * The labels of the chart are fixed and represent the 10 intervals we group the similarities into.
+         */
+        this.ngxChartLabels = ['0%-10%', '10%-20%', '20%-30%', '30%-40%', '40%-50%', '50%-60%', '60%-70%', '70%-80%', '80%-90%', '90%-100%'];
+    }
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.plagiarismResult) {
@@ -53,14 +52,5 @@ export class PlagiarismRunDetailsComponent implements OnChanges {
         });
 
         this.ngxData = [...this.ngxData];
-    }
-
-    /**
-     * Formats the labels on the y axis in order to display only integer values
-     * @param tick the default y axis tick
-     * @returns modified y axis tick
-     */
-    yAxisTickFormatting(tick: string): string {
-        return parseFloat(tick).toFixed(0);
     }
 }
