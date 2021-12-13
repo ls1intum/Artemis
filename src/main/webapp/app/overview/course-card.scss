@@ -63,6 +63,7 @@
         justify-content: center;
         align-items: center;
         flex-direction: column;
+        cursor: pointer;
 
         .chart-container {
             display: flex;
@@ -77,13 +78,6 @@
         .points {
             display: block;
             max-width: 11ch;
-        }
-
-        canvas {
-            cursor: pointer;
-            z-index: 1;
-            width: 150px;
-            height: 150px;
         }
 
         .no-statistics {
