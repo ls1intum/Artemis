@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// hello123456
 int main(void) {
     int x = 6;
     int y = 10;
