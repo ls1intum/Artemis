@@ -3,7 +3,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 export class MockCourseExerciseService {
-    startExercise = (_: number) => of({} as StudentParticipation);
+    startExercise = () => of({} as StudentParticipation);
 
-    findAllProgrammingExercisesForCourse = (_: number) => of([{ id: 456 } as ProgrammingExercise]);
+    findAllProgrammingExercisesForCourse = () => of([{ id: 456 } as ProgrammingExercise]);
 }
