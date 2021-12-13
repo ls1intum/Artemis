@@ -13,7 +13,6 @@ import { filter, map } from 'rxjs/operators';
 export class ExamChecklistComponent implements OnChanges {
     @Input() exam: Exam;
     @Input() getExamRoutesByIdentifier: any;
-    @Input() isAtLeastInstructor = false;
 
     examChecklist: ExamChecklist;
     isLoading = false;

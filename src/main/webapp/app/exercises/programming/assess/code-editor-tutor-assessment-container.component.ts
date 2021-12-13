@@ -39,7 +39,6 @@ import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
-import { Authority } from 'app/shared/constants/authority.constants';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -84,7 +83,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     exerciseDashboardLink: string[];
     loadingInitialSubmission = true;
     highlightDifferences = false;
-    isAtLeastInstructor = false;
 
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
@@ -136,7 +134,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.isTestRun = queryParams.get('testRun') === 'true';
             this.correctionRound = Number(queryParams.get('correction-round'));
         });
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
@@ -472,7 +469,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     readOnly() {
         return !isAllowedToModifyFeedback(
-            this.isAtLeastInstructor,
+            this.exercise.isAtLeastInstructor ?? false,
             this.isTestRun,
             this.isAssessor,
             this.hasAssessmentDueDatePassed,
@@ -502,9 +499,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.isAssessor = this.manualResult.assessor.id === this.userId;
         } else {
             this.isAssessor = true;
-        }
-        if (this.exercise) {
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(getCourseFromExercise(this.exercise));
         }
     }
 
