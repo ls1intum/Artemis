@@ -347,7 +347,7 @@ public class ProgrammingExerciseTestService {
         }
         // Exclude ProjectType FACT as SCA is not supported
         if (language == ProgrammingLanguage.C) {
-            exercise.setProjectType(ProjectType.ARTEMIS_C);
+            exercise.setProjectType(ProjectType.GCC);
         }
         else {
             exercise.setProjectType(programmingLanguageFeature.getProjectTypes().size() > 0 ? programmingLanguageFeature.getProjectTypes().get(0) : null);

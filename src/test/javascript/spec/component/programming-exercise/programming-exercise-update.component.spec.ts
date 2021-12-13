@@ -302,12 +302,12 @@ describe('ProgrammingExercise Management Update Component', () => {
             fixture.detectChanges();
             tick();
             comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
-            comp.onProjectTypeChange(ProjectType.ARTEMIS_C);
+            comp.onProjectTypeChange(ProjectType.GCC);
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
-            expect(comp.selectedProjectType).toEqual(ProjectType.ARTEMIS_C);
+            expect(comp.selectedProjectType).toEqual(ProjectType.GCC);
             expect(comp.staticCodeAnalysisAllowed).toBe(true);
         }));
 
@@ -461,7 +461,7 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 plagiarismCheckSupported: true,
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
-                projectTypes: [ProjectType.FACT, ProjectType.ARTEMIS_C],
+                projectTypes: [ProjectType.FACT, ProjectType.GCC],
             } as ProgrammingLanguageFeature;
         default:
             throw new Error();
