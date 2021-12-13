@@ -83,4 +83,9 @@
 ::ng-deep .legend-labels {
     background-color: transparent !important;
     text-align: center !important;
+    font-weight: bolder;
+}
+
+::ng-deep .legend-label {
+    color: #212529 !important;
 }
