@@ -153,7 +153,6 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
     loadDataInDiagram(): void {
         this.setData(this.quizExercise.quizPointStatistic!);
         this.pushDataToNgxEntry(this.changeDetector);
-
         this.setAxisLabels('showStatistic.quizStatistic.xAxes', 'showStatistic.quizStatistic.yAxes');
     }
 }
