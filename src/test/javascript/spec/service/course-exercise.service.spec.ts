@@ -101,12 +101,12 @@ describe('Course Management Service', () => {
     });
 
     const expectDateConversionToBeDone = (exerciseToCheck: Exercise, withoutAssessmentDueDate?: boolean) => {
-        expect(dayjs.isDayjs(exerciseToCheck.releaseDate)).toBeTrue();
+        expect(dayjs.isDayjs(exerciseToCheck.releaseDate)).toBe(true);
         expect(exerciseToCheck.releaseDate?.toISOString()).toEqual(releaseDateString);
-        expect(dayjs.isDayjs(exerciseToCheck.dueDate)).toBeTrue();
+        expect(dayjs.isDayjs(exerciseToCheck.dueDate)).toBe(true);
         expect(exerciseToCheck.dueDate?.toISOString()).toEqual(dueDateString);
         if (!withoutAssessmentDueDate) {
-            expect(dayjs.isDayjs(exerciseToCheck.assessmentDueDate)).toBeTrue();
+            expect(dayjs.isDayjs(exerciseToCheck.assessmentDueDate)).toBe(true);
             expect(exerciseToCheck.assessmentDueDate?.toISOString()).toEqual(assessmentDueDateString);
         }
     };

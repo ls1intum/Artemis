@@ -164,12 +164,12 @@ describe('QuizParticipationComponent', () => {
 
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
             expect(component.quizExercise).toEqual(quizExercise);
-            expect(component.waitingForQuizStart).toBeFalse();
+            expect(component.waitingForQuizStart).toBe(false);
             expect(component.totalScore).toEqual(6);
             expect(component.dragAndDropMappings.get(question1.id!)).toEqual([]);
             expect(component.selectedAnswerOptions.get(question2.id!)).toEqual([]);
             expect(component.shortAnswerSubmittedTexts.get(question3.id!)).toEqual([]);
-            expect(component.submission).not.toBeNull();
+            expect(component.submission).not.toBe(null);
         });
 
         it('should update in intervals', fakeAsync(() => {
@@ -194,7 +194,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             const refreshButton = fixture.debugElement.nativeElement.querySelector('#refresh-quiz button');
-            expect(refreshButton).not.toBeNull();
+            expect(refreshButton).not.toBe(null);
 
             refreshButton.click();
             fixture.detectChanges();
@@ -207,7 +207,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).not.toBeNull;
+            expect(submitButton).not.toBe(null);
 
             submitButton.click();
             fixture.detectChanges();
@@ -218,28 +218,28 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
-            expect(component.isSubmitting).toBeFalse();
+            expect(component.isSubmitting).toBe(false);
         });
 
         it('should return true if student didnt interact with any question', () => {
             component.quizExercise = { ...quizExercise, quizQuestions: undefined };
-            expect(component.areAllQuestionsAnswered()).toBeTrue();
+            expect(component.areAllQuestionsAnswered()).toBe(true);
 
             component.quizExercise = quizExercise;
             component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
             component.selectedAnswerOptions.set(2, []);
-            expect(component.areAllQuestionsAnswered()).toBeFalse();
+            expect(component.areAllQuestionsAnswered()).toBe(false);
 
             component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
             component.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
             component.dragAndDropMappings.set(1, []);
-            expect(component.areAllQuestionsAnswered()).toBeFalse();
+            expect(component.areAllQuestionsAnswered()).toBe(false);
 
             component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
             component.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
             component.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
             component.shortAnswerSubmittedTexts.set(3, []);
-            expect(component.areAllQuestionsAnswered()).toBeFalse();
+            expect(component.areAllQuestionsAnswered()).toBe(false);
         });
 
         it('should show warning on submit', () => {
@@ -250,7 +250,7 @@ describe('QuizParticipationComponent', () => {
             component.remainingTimeSeconds = 200;
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).not.toBeNull;
+            expect(submitButton).not.toBe(null);
 
             submitButton.click();
             fixture.detectChanges();
@@ -262,7 +262,7 @@ describe('QuizParticipationComponent', () => {
 
             expect(confirmSpy).toHaveBeenCalled();
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
-            expect(component.isSubmitting).toBeFalse();
+            expect(component.isSubmitting).toBe(false);
         });
 
         it('should show results after ending', () => {
@@ -277,7 +277,7 @@ describe('QuizParticipationComponent', () => {
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
             expect(component.questionScores[question2.id!]).toEqual(answer.scoreInPoints);
             expect(component.userScore).toEqual(quizSubmission.scoreInPoints);
-            expect(component.showingResult).toBeTrue();
+            expect(component.showingResult).toBe(true);
         });
 
         it('should update on selection changes', () => {
@@ -298,11 +298,11 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             component.onSubmitError({ message: 'error' } as any);
-            expect(component.isSubmitting).toBeFalse();
+            expect(component.isSubmitting).toBe(false);
 
             component.onSaveError('error');
-            expect(component.isSubmitting).toBeFalse();
-            expect(component.unsavedChanges).toBeTrue();
+            expect(component.isSubmitting).toBe(false);
+            expect(component.unsavedChanges).toBe(true);
 
             expect(alertSpy).toHaveBeenCalled();
         });
@@ -334,7 +334,7 @@ describe('QuizParticipationComponent', () => {
             component.updateParticipationFromServer(participation);
 
             expect(component.submission.id).toEqual(submission.id);
-            expect(component.quizExercise.ended).toBeTrue();
+            expect(component.quizExercise.ended).toBe(true);
         });
     });
 
@@ -403,7 +403,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).not.toBeNull;
+            expect(submitButton).not.toBe(null);
 
             submitButton.click();
             fixture.detectChanges();
@@ -483,7 +483,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).not.toBeNull;
+            expect(submitButton).not.toBe(null);
 
             submitButton.click();
             fixture.detectChanges();
@@ -547,7 +547,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             expect(resultForSolutionServiceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
-            expect(component.showingResult).toBeTrue();
+            expect(component.showingResult).toBe(true);
             expect(component.totalScore).toEqual(6);
         });
 
