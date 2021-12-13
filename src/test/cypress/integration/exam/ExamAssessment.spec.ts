@@ -130,7 +130,7 @@ describe('Exam assessment', () => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                cy.contains('1 of 10 points').should('be.visible');
+                cy.contains('2 of 10 points').should('be.visible');
             });
         });
 
