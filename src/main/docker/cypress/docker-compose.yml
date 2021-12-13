@@ -27,22 +27,26 @@ services:
         depends_on:
             artemis-mysql:
                 condition: service_healthy
-        healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:8080"]
-            interval: 5s
-            timeout: 5s
-            retries: 60
+        # The container does not contain curl...
+        #healthcheck:
+        #    test: ["CMD", "curl", "-f", "http://artemis-app:8080"]
+        #    interval: 5s
+        #    timeout: 5s
+        #    retries: 40
 
     artemis-cypress:
         image: cypress/browsers:node16.5.0-chrome94-ff93
         depends_on:
-            artemis-app:
-                condition: service_healthy
+            - artemis-app
+            - artemis-mysql
         environment:
-            - CYPRESS_baseUrl=http://artemis-app
-        command: cd /app/cypress; npm ci; npm run cypress:run
+            - CYPRESS_baseUrl=http://artemis-app:8080
+        # Give Artemis 120 seconds to start
+        command: sh -c "sleep 120 && cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci &&npm run cypress:run"
         volumes:
-            - ../../../test/cypress:/app/cypress
+            - ../../../../:/app/artemis
+        networks:
+            - artemis
 
 networks:
     artemis:
