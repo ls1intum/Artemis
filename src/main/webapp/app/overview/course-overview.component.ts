@@ -1,8 +1,8 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, EmbeddedViewRef, OnDestroy, OnInit, QueryList, TemplateRef, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseExerciseService, CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
@@ -18,12 +18,21 @@ import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
+export interface BarControlConfiguration {
+    subject?: Subject<TemplateRef<any>>;
+    useIndentation: boolean;
+}
+
+export interface BarControlConfigurationProvider {
+    controlConfiguration: BarControlConfiguration;
+}
+
 @Component({
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
     styleUrls: ['course-overview.scss'],
 })
-export class CourseOverviewComponent implements OnInit, OnDestroy {
+export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     CachingStrategy = CachingStrategy;
     private courseId: number;
     private subscription: Subscription;
@@ -34,6 +43,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
     public longTextShown: boolean;
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
+
+    private controlComponent?: EmbeddedViewRef<any>;
+    private controlsSubscription?: Subscription;
+    private vcSubscription?: Subscription;
+    private controls?: TemplateRef<any>;
+    public controlConfiguration?: BarControlConfiguration;
+    @ViewChild('controlsViewContainer', { read: ViewContainerRef }) controlsViewContainer: ViewContainerRef;
+    @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
 
     // Icons
     faSync = faSync;
@@ -64,6 +81,39 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
         this.subscribeForQuizChanges();
     }
 
+    ngAfterViewInit() {
+        if (this.controlsViewContainer) {
+            this.tryRenderControls();
+        } else {
+            this.vcSubscription = this.controlsViewContainerAsList.changes.subscribe(() => this.tryRenderControls());
+        }
+    }
+
+    onActivate(componentRef: any) {
+        if (componentRef.controlConfiguration) {
+            this.controlConfiguration = componentRef.controlConfiguration as BarControlConfiguration;
+
+            this.controlsSubscription =
+                this.controlConfiguration.subject?.subscribe((controls: TemplateRef<any>) => {
+                    this.controls = controls;
+                    this.tryRenderControls();
+                }) || undefined;
+        }
+    }
+
+    onDeactivate() {
+        this.controlComponent?.destroy();
+        this.controls = undefined;
+        this.controlConfiguration = undefined;
+    }
+
+    tryRenderControls() {
+        if (this.controlConfiguration && this.controls && this.controlsViewContainer) {
+            this.controlComponent?.destroy();
+            this.controlComponent = this.controlsViewContainer.createEmbeddedView(this.controls);
+        }
+    }
+
     loadCourse(refresh = false) {
         this.refreshingCourse = refresh;
         this.courseService.findOneForDashboard(this.courseId).subscribe(
@@ -88,6 +138,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
         if (this.quizExercisesChannel) {
             this.jhiWebsocketService.unsubscribe(this.quizExercisesChannel);
         }
+        this.controlsSubscription?.unsubscribe();
+        this.vcSubscription?.unsubscribe();
     }
 
     subscribeForQuizChanges() {

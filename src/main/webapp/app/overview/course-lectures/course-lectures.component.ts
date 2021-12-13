@@ -1,21 +1,22 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { faAngleDown, faAngleUp, faSortAmountDown, faSortAmountUp } from '@fortawesome/free-solid-svg-icons';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
 
 @Component({
     selector: 'jhi-course-lectures',
     templateUrl: './course-lectures.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseLecturesComponent implements OnInit, OnDestroy {
+export class CourseLecturesComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
     public readonly DUE_DATE_ASC = 1;
     public readonly DUE_DATE_DESC = -1;
     private courseId: number;
@@ -33,6 +34,12 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     faSortAmountDown = faSortAmountDown;
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
+
+    @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
+    public readonly controlConfiguration: BarControlConfiguration = {
+        subject: new Subject<TemplateRef<any>>(),
+        useIndentation: true,
+    };
 
     constructor(
         private courseService: CourseManagementService,
@@ -61,6 +68,12 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.groupLectures(this.DUE_DATE_DESC);
         });
+    }
+
+    ngAfterViewInit(): void {
+        if (this.controls) {
+            this.controlConfiguration.subject!.next(this.controls);
+        }
     }
 
     ngOnDestroy(): void {
