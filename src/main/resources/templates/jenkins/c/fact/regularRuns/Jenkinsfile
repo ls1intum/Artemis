@@ -73,9 +73,7 @@ pipeline {
                         sed -i 's/<skipped/<error/g' test-reports/tests-results.xml
                         sed -i 's/<\/skipped>/<\/error>/g' test-reports/tests-results.xml
                     fi
-                    if [ "$(ls -A results)" ]; then
-                        rm -rf results
-                    fi
+                    rm -rf results
                     mv test-reports results
                     '''
                 sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
