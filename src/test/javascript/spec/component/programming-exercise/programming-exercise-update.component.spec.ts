@@ -581,7 +581,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             comp.programmingExercise.submissionPolicy.exceedingPenalty = 0;
             expect(comp.getInvalidReasons()).toContainEqual({
-                translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.min',
+                translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.pattern',
                 translateValues: {},
             });
         });
