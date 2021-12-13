@@ -1,3 +1,6 @@
+import { COURSE_BASE } from '../../requests/CourseManagementRequests';
+import { POST } from '../../constants';
+
 /**
  * A class which encapsulates UI selectors and actions for the course assessment dashboard page.
  */
@@ -20,5 +23,11 @@ export class CourseAssessmentDashboardPage {
 
     checkShowFinishedExercises() {
         cy.get('#field_showFinishedExercise').check();
+    }
+
+    clickEvaluateQuizzes() {
+        cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/evaluate-quiz-exercises').as('evaluateQuizzes');
+        cy.get('#evaluateQuizExercisesButton').click();
+        return cy.wait('@evaluateQuizzes');
     }
 }
