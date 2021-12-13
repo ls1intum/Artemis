@@ -88,7 +88,7 @@
             </div>
             <hr />
             <!-- Exam Checklist -->
-            <div *ngIf="exam.course.isAtLeastInstructor && exam">
+            <div *ngIf="exam?.course?.isAtLeastInstructor">
                 <jhi-exam-checklist [getExamRoutesByIdentifier]="getExamRoutesByIdentifier" [exam]="exam"></jhi-exam-checklist>
             </div>
 
