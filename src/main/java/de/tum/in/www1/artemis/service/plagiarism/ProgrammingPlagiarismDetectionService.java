@@ -18,9 +18,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import de.jplag.ExitException;
 import de.jplag.JPlag;
 import de.jplag.JPlagResult;
+import de.jplag.exceptions.BasecodeException;
+import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
 import de.jplag.options.LanguageOption;
 import de.jplag.reporting.Report;
@@ -92,7 +93,7 @@ public class ProgrammingPlagiarismDetectionService {
      * @param programmingExerciseId the id of the programming exercises which should be checked
      * @param similarityThreshold   ignore comparisons whose similarity is below this threshold (%)
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
-     * @return                      the text plagiarism result container with up to 500 comparisons with the highest similarity values
+     * @return the text plagiarism result container with up to 500 comparisons with the highest similarity values
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException   is thrown for file handling errors
      */
@@ -134,7 +135,7 @@ public class ProgrammingPlagiarismDetectionService {
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
      * @return a zip file that can be returned to the client
      * @throws ExitException is thrown if JPlag exits unexpectedly
-     * @throws IOException is created the zip failed
+     * @throws IOException   is created the zip failed
      */
     public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore) throws ExitException, IOException {
         long start = System.nanoTime();
@@ -151,9 +152,10 @@ public class ProgrammingPlagiarismDetectionService {
 
     /**
      * Checks for plagiarism and returns a JPlag result
+     *
      * @param programmingExercise the programming exercise to check
      * @param similarityThreshold the similarity threshold
-     * @param minimumScore the minimum score
+     * @param minimumScore        the minimum score
      * @return the JPlag result or null if there are not enough participations
      * @throws ExitException in case JPlag fails
      */
@@ -191,7 +193,17 @@ public class ProgrammingPlagiarismDetectionService {
         plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of("Running JPlag..."));
 
         JPlag jplag = new JPlag(options);
-        JPlagResult result = jplag.run();
+        JPlagResult result = null;
+        try {
+            result = jplag.run();
+        }
+        catch (BasecodeException e) {
+            // Handling small or invalid base codes
+            log.error(e.getMessage(), e);
+            log.info("Retrying JPlag Plagiarism Check without BaseCode");
+            options.setBaseCodeSubmissionName(null);
+            result = jplag.run();
+        }
 
         cleanupResourcesAsync(programmingExercise, repositories, targetPath);
         return result;
@@ -212,11 +224,11 @@ public class ProgrammingPlagiarismDetectionService {
     /**
      * Generates a JPlag report and zips it.
      *
-     * @param jPlagResult The JPlag result
+     * @param jPlagResult         The JPlag result
      * @param programmingExercise the programming exercise
      * @return the zip file
      * @throws ExitException if JPlag fails
-     * @throws IOException if the zip file cannot be created
+     * @throws IOException   if the zip file cannot be created
      */
     public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) throws ExitException, IOException {
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
@@ -245,8 +257,8 @@ public class ProgrammingPlagiarismDetectionService {
      * Zips a JPlag report.
      *
      * @param programmingExercise the programming exercise
-     * @param targetPath the path where the zip file will be created
-     * @param outputFolderPath the path of the Jplag report
+     * @param targetPath          the path where the zip file will be created
+     * @param outputFolderPath    the path of the Jplag report
      * @return the zip file
      * @throws IOException if the zip file cannot be created
      */

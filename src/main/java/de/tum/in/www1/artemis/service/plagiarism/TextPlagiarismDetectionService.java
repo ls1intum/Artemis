@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
-import de.jplag.ExitException;
 import de.jplag.JPlag;
 import de.jplag.JPlagResult;
+import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
 import de.jplag.options.LanguageOption;
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
