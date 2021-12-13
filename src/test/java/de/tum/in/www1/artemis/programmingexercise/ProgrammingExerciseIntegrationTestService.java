@@ -186,7 +186,7 @@ public class ProgrammingExerciseIntegrationTestService {
         var testjsonFilePath = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
         gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath);
         // create two empty commits
-        localGit.commit().setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
+        localGit.commit().setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
         localGit.push().call();
 
         // we use the temp repository as remote origin for all repositories that are created during the
@@ -1507,8 +1507,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private void prepareTwoRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, InterruptedException, GitAPIException {
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        database.addSubmission(programmingExercise, new ProgrammingSubmission(), "student1");
+        database.addSubmission(programmingExercise, new ProgrammingSubmission(), "student2");
 
         var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos").toString();
         var projectKey = programmingExercise.getProjectKey();
