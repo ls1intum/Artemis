@@ -30,7 +30,7 @@ public class SyntaxTreeParser {
     protected static SyntaxTree buildSyntaxTreeFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
         List<SyntaxTreeLink> syntaxTreeLinkList = new ArrayList<>();
         Map<String, SyntaxTreeTerminal> terminalMap = new HashMap<>();
-        Map<String, SyntaxTreeNonterminal> nonterminalMap = new HashMap<>();
+        Map<String, SyntaxTreeNonterminal> nonTerminalMap = new HashMap<>();
         Map<String, UMLElement> allElementsMap = new HashMap<>();
 
         // loop over all JSON elements and create the UML objects
@@ -45,9 +45,9 @@ public class SyntaxTreeParser {
                     allElementsMap.put(terminal.getJSONElementID(), terminal);
                 }
                 case SyntaxTreeNonterminal.SYNTAX_TREE_NONTERMINAL_TYPE -> {
-                    SyntaxTreeNonterminal nonterminal = parseNonterminal(jsonObject);
-                    nonterminalMap.put(nonterminal.getJSONElementID(), nonterminal);
-                    allElementsMap.put(nonterminal.getJSONElementID(), nonterminal);
+                    SyntaxTreeNonterminal nonTerminal = parseNonTerminal(jsonObject);
+                    nonTerminalMap.put(nonTerminal.getJSONElementID(), nonTerminal);
+                    allElementsMap.put(nonTerminal.getJSONElementID(), nonTerminal);
                 }
                 default -> {
                     // ignore unknown elements
@@ -61,7 +61,7 @@ public class SyntaxTreeParser {
             syntaxTreeLink.ifPresent(syntaxTreeLinkList::add);
         }
 
-        return new SyntaxTree(modelSubmissionId, List.copyOf(nonterminalMap.values()), List.copyOf(terminalMap.values()), syntaxTreeLinkList);
+        return new SyntaxTree(modelSubmissionId, List.copyOf(nonTerminalMap.values()), List.copyOf(terminalMap.values()), syntaxTreeLinkList);
     }
 
     /**
@@ -76,12 +76,12 @@ public class SyntaxTreeParser {
     }
 
     /**
-     * Parses the given JSON representation of a UML nonterminal to a SyntaxTreeNonterminal Java object.
+     * Parses the given JSON representation of a UML nonTerminal to a SyntaxTreeNonTerminal Java object.
      *
-     * @param componentJson the JSON object containing the nonterminal
-     * @return the SyntaxTreeNonterminal object parsed from the JSON object
+     * @param componentJson the JSON object containing the nonTerminal
+     * @return the SyntaxTreeNonTerminal object parsed from the JSON object
      */
-    private static SyntaxTreeNonterminal parseNonterminal(JsonObject componentJson) {
+    private static SyntaxTreeNonterminal parseNonTerminal(JsonObject componentJson) {
         String name = componentJson.get(ELEMENT_NAME).getAsString();
         return new SyntaxTreeNonterminal(name, componentJson.get(ELEMENT_ID).getAsString());
     }
