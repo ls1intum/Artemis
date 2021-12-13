@@ -123,9 +123,10 @@ public class PlagiarismResource {
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User affectedUser = userRepository.getUserByLoginElseThrow(studentLogin);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         String instructorStatement = statement.statement;
 
-        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, affectedUser)) {
+        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("Only instructors responsible for this course can access this plagiarism case.");
         }
 
@@ -158,7 +159,7 @@ public class PlagiarismResource {
     public ResponseEntity<PlagiarismCaseDTO> getPlagiarismComparisonForStudent(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId) {
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUser();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("Only students registered for this course can access this plagiarism comparison.");
@@ -188,7 +189,7 @@ public class PlagiarismResource {
             @PathVariable("comparisonId") long comparisonId, @RequestBody PlagiarismStatementDTO statement) {
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUser();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         String studentLogin = user.getLogin();
         String studentStatement = statement.statement;
 
@@ -226,10 +227,11 @@ public class PlagiarismResource {
 
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User affectedUser = userRepository.getUserByLoginElseThrow(studentLogin);
+        User affectedUser = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         PlagiarismStatus finalStatus = statusDTO.getStatus();
 
-        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, affectedUser)) {
+        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("Only instructors responsible for this course can access this plagiarism comparison.");
         }
 
