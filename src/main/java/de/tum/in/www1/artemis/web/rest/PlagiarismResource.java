@@ -10,7 +10,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
@@ -110,23 +109,24 @@ public class PlagiarismResource {
      * This process will send a notification to the respective student.
      * I.e. the instructor sets a personal message to one of the accused students.
      *
+     * @param courseId the id of the course
      * @param comparisonId the id of the PlagiarismComparison
      * @param studentLogin of one of accused students
      * @param statement of the instructor directed to one of the accused students
      * @return the instructor statement (convention)
      */
-    @PutMapping("plagiarism-comparisons/{comparisonId}/{studentLogin}/instructor-statement")
+    @PutMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/instructor-statement/{studentLogin}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<PlagiarismStatementDTO> updatePlagiarismComparisonInstructorStatement(@PathVariable("comparisonId") long comparisonId,
-            @PathVariable("studentLogin") String studentLogin, @RequestBody PlagiarismStatementDTO statement) {
+    public ResponseEntity<PlagiarismStatementDTO> updatePlagiarismComparisonInstructorStatement(@PathVariable("courseId") long courseId,
+            @PathVariable("comparisonId") long comparisonId, @PathVariable("studentLogin") String studentLogin, @RequestBody PlagiarismStatementDTO statement) {
 
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         User affectedUser = userRepository.getUserByLoginElseThrow(studentLogin);
-        Exercise affectedExercise = comparison.getPlagiarismResult().getExercise();
         String instructorStatement = statement.statement;
 
-        if (!authenticationCheckService.isAtLeastInstructorForExercise(affectedExercise)) {
-            throw new AccessForbiddenException("Only instructors responsible for this exercise can access this plagiarism case.");
+        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, affectedUser)) {
+            throw new AccessForbiddenException("Only instructors responsible for this course can access this plagiarism case.");
         }
 
         if (comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
@@ -148,22 +148,28 @@ public class PlagiarismResource {
      * Retrieves the plagiarismComparison specified by its Id. The submissions are anonymized for the student.
      * StudentIds are replaced with "Your Submission" and "Other Submission" based on the requesting user.
      *
+     * @param courseId the id of the course
      * @param comparisonId the id of the PlagiarismComparison
      * @return the PlagiarismComparison
      * @throws AccessForbiddenException if the requesting user is not affected by the plagiarism case.
      */
-    @GetMapping("plagiarism-comparisons/{comparisonId}")
+    @GetMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<PlagiarismCaseDTO> getPlagiarismComparisonForStudent(@PathVariable("comparisonId") Long comparisonId) {
+    public ResponseEntity<PlagiarismCaseDTO> getPlagiarismComparisonForStudent(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId) {
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUser();
+
+        if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
+            throw new AccessForbiddenException("Only students registered for this course can access this plagiarism comparison.");
+        }
 
         // check if current user is part of the comparison or not
         if (!(comparison.getSubmissionA().getStudentLogin().equals(user.getLogin()) || comparison.getSubmissionB().getStudentLogin().equals(user.getLogin()))) {
             throw new AccessForbiddenException("User tried updating plagiarism case they're not affected by.");
         }
 
-        PlagiarismComparison anonymizedComparisonForStudentView = this.plagiarismService.anonymizeComparisonForStudentView(comparison, user.getLogin());
+        PlagiarismComparison<?> anonymizedComparisonForStudentView = this.plagiarismService.anonymizeComparisonForStudentView(comparison, user.getLogin());
         return ResponseEntity.ok(new PlagiarismCaseDTO(anonymizedComparisonForStudentView.getPlagiarismResult().getExercise(), Set.of(anonymizedComparisonForStudentView)));
     }
 
@@ -171,18 +177,24 @@ public class PlagiarismResource {
      * Updates a student statement on a plagiarismComparison.
      * I.e. one of the students that is accused of plagiarising updates/sets the respective/individual response/defence
      *
+     * @param courseId the id of the course
      * @param comparisonId of the comparison
      * @param statement the students statement
      * @return the student statement
      */
-    @PutMapping("plagiarism-comparisons/{comparisonId}/student-statement")
+    @PutMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/student-statement")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<PlagiarismStatementDTO> updatePlagiarismComparisonStudentStatement(@PathVariable("comparisonId") long comparisonId,
-            @RequestBody PlagiarismStatementDTO statement) {
+    public ResponseEntity<PlagiarismStatementDTO> updatePlagiarismComparisonStudentStatement(@PathVariable("courseId") long courseId,
+            @PathVariable("comparisonId") long comparisonId, @RequestBody PlagiarismStatementDTO statement) {
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUser();
         String studentLogin = user.getLogin();
         String studentStatement = statement.statement;
+
+        if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
+            throw new AccessForbiddenException("Only students registered for this course can access this plagiarism comparison.");
+        }
 
         if (comparison.getInstructorStatementA() != null && comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
             plagiarismComparisonRepository.updatePlagiarismComparisonStudentStatementA(comparison.getId(), studentStatement);
@@ -201,23 +213,24 @@ public class PlagiarismResource {
      * This process will send a notification to the respective student.
      * I.e. an instructor sends his final verdict/decision
      *
+     * @param courseId the id of the course
      * @param comparisonId of the comparison
      * @param studentLogin of the student
      * @param statusDTO is the final status of this plagiarism comparison concerning one of both students
      * @return the final (updated) status of this plagiarism comparison concerning one of both students
      */
-    @PutMapping("plagiarism-comparisons/{comparisonId}/{studentLogin}/final-status")
+    @PutMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/final-status/{studentLogin}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<PlagiarismComparisonStatusDTO> updatePlagiarismComparisonFinalStatus(@PathVariable("comparisonId") long comparisonId,
-            @PathVariable("studentLogin") String studentLogin, @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
+    public ResponseEntity<PlagiarismComparisonStatusDTO> updatePlagiarismComparisonFinalStatus(@PathVariable("courseId") long courseId,
+            @PathVariable("comparisonId") long comparisonId, @PathVariable("studentLogin") String studentLogin, @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
 
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         User affectedUser = userRepository.getUserByLoginElseThrow(studentLogin);
-        Exercise affectedExercise = comparison.getPlagiarismResult().getExercise();
         PlagiarismStatus finalStatus = statusDTO.getStatus();
 
-        if (!authenticationCheckService.isAtLeastInstructorForExercise(affectedExercise)) {
-            throw new AccessForbiddenException("Only instructors responsible for this exercise can access this plagiarism case.");
+        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, affectedUser)) {
+            throw new AccessForbiddenException("Only instructors responsible for this course can access this plagiarism comparison.");
         }
 
         if (comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {

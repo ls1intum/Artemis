@@ -4,7 +4,7 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
 import { PlagiarismCasesReviewComponent } from 'app/course/plagiarism-cases/plagiarism-cases-review.component';
 import { PlagiarismSplitViewComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/plagiarism-split-view.component';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { PlagiarismCasesService, StatementEntityResponseType } from 'app/course/plagiarism-cases/plagiarism-cases.service';
 import { NgModel } from '@angular/forms';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
@@ -69,7 +69,7 @@ describe('Plagiarism Cases Review Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [TranslatePipeMock, PlagiarismCasesReviewComponent, MockRouterLinkDirective, MockDirective(NgModel), MockComponent(PlagiarismSplitViewComponent)],
-            providers: [{ provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ plagiarismComparisonId: 1 }) } } }],
+            providers: [{ provide: ActivatedRoute, useValue: { params: of({ courseId: 1, plagiarismComparisonId: 1 }) } }],
         })
             .compileComponents()
             .then(() => {
@@ -93,7 +93,7 @@ describe('Plagiarism Cases Review Component', () => {
         tick();
 
         expect(comp.comparisonId).toBe(1);
-        expect(getPlagiarismComparisonForStudentStub).toHaveBeenCalledWith(1);
+        expect(getPlagiarismComparisonForStudentStub).toHaveBeenCalledWith(1, 1);
         expect(comp.exercise).toEqual(textExercise);
         expect(comp.isStudentA).toBe(true);
         expect(comp.instructorStatement).toEqual(instructorStatementA);
@@ -107,7 +107,7 @@ describe('Plagiarism Cases Review Component', () => {
         tick();
 
         expect(comp.comparisonId).toBe(1);
-        expect(getPlagiarismComparisonForStudentStub).toHaveBeenCalledWith(1);
+        expect(getPlagiarismComparisonForStudentStub).toHaveBeenCalledWith(1, 1);
         expect(comp.exercise).toEqual(textExercise);
         expect(comp.isStudentA).toBe(false);
         expect(comp.instructorStatement).toEqual(instructorStatementB);
@@ -149,12 +149,13 @@ describe('Plagiarism Cases Review Component', () => {
         comp.comparison = plagiarismComparisonA;
         comp.comparisonId = 1;
         comp.studentStatement = 'statement test';
+        comp.courseId = 1;
 
         comp.saveStudentStatement();
         tick();
 
         expect(comp.comparison.studentStatementA).toEqual('statement test');
-        expect(sendStatementStub).toHaveBeenCalledWith(1, 'statement test');
+        expect(sendStatementStub).toHaveBeenCalledWith(1, 1, 'statement test');
     }));
 
     it('should save statement for student B', fakeAsync(() => {
@@ -162,12 +163,13 @@ describe('Plagiarism Cases Review Component', () => {
         comp.comparison = plagiarismComparisonB;
         comp.comparisonId = 2;
         comp.studentStatement = 'statement test';
+        comp.courseId = 1;
 
         comp.saveStudentStatement();
         tick();
 
         expect(comp.comparison.studentStatementB).toEqual('statement test');
-        expect(sendStatementStub).toHaveBeenCalledWith(2, 'statement test');
+        expect(sendStatementStub).toHaveBeenCalledWith(1, 2, 'statement test');
     }));
 
     it('should be confirmed for student A', () => {

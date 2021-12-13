@@ -11,6 +11,7 @@ import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/Plagiari
     styles: [':host ::ng-deep .gutter{background: none!important;}'],
 })
 export class PlagiarismCasesListComponent {
+    @Input() courseId: number;
     @Input() plagiarismCase: PlagiarismCase;
     @Input() hideFinished: boolean;
     instructorStatement = '';
@@ -83,7 +84,7 @@ export class PlagiarismCasesListComponent {
         }
 
         this.plagiarismCasesService
-            .saveInstructorStatement(this.plagiarismCase.comparisons[i].id, studentLogin, this.instructorStatement)
+            .saveInstructorStatement(this.courseId, this.plagiarismCase.comparisons[i].id, studentLogin, this.instructorStatement)
             .subscribe((resp: StatementEntityResponseType) => {
                 if (student === 'A') {
                     this.plagiarismCase.comparisons[i].instructorStatementA = resp.body!;
@@ -100,12 +101,14 @@ export class PlagiarismCasesListComponent {
      * @param studentLogin
      */
     updateStatus(confirm: boolean, comparisonIndex: number, studentLogin: string) {
-        this.plagiarismCasesService.updatePlagiarismComparisonFinalStatus(this.plagiarismCase.comparisons[comparisonIndex].id, confirm, studentLogin).subscribe(() => {
-            if (this.plagiarismCase.comparisons[comparisonIndex].submissionA.studentLogin === studentLogin) {
-                this.plagiarismCase.comparisons[comparisonIndex].statusA = confirm ? PlagiarismStatus.CONFIRMED : PlagiarismStatus.DENIED;
-            } else {
-                this.plagiarismCase.comparisons[comparisonIndex].statusB = confirm ? PlagiarismStatus.CONFIRMED : PlagiarismStatus.DENIED;
-            }
-        });
+        this.plagiarismCasesService
+            .updatePlagiarismComparisonFinalStatus(this.courseId, this.plagiarismCase.comparisons[comparisonIndex].id, confirm, studentLogin)
+            .subscribe(() => {
+                if (this.plagiarismCase.comparisons[comparisonIndex].submissionA.studentLogin === studentLogin) {
+                    this.plagiarismCase.comparisons[comparisonIndex].statusA = confirm ? PlagiarismStatus.CONFIRMED : PlagiarismStatus.DENIED;
+                } else {
+                    this.plagiarismCase.comparisons[comparisonIndex].statusB = confirm ? PlagiarismStatus.CONFIRMED : PlagiarismStatus.DENIED;
+                }
+            });
     }
 }

@@ -11,7 +11,6 @@ export type StatementEntityResponseType = HttpResponse<string>;
 @Injectable({ providedIn: 'root' })
 export class PlagiarismCasesService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
-    private resourceUrlStudent = SERVER_API_URL + 'api/plagiarism-comparisons';
 
     constructor(private http: HttpClient) {}
 
@@ -26,33 +25,41 @@ export class PlagiarismCasesService {
     /**
      * Get the plagiarism comparison with the given id
      * Anonymizes the submission of the other student
+     * @param { number } courseId
      * @param { number } plagiarismComparisonId
      */
-    public getPlagiarismComparisonForStudent(plagiarismComparisonId: number): Observable<EntityResponseType> {
-        return this.http.get<PlagiarismCase>(`${this.resourceUrlStudent}/${plagiarismComparisonId}`, { observe: 'response' });
+    public getPlagiarismComparisonForStudent(courseId: number, plagiarismComparisonId: number): Observable<EntityResponseType> {
+        return this.http.get<PlagiarismCase>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}`, { observe: 'response' });
     }
 
     /**
      * Update the instructorStatement for student with the given studentLogin of the plagiarism comparison with given id
+     * @param { number } courseId
      * @param { number } plagiarismComparisonId
      * @param { string } studentLogin
      * @param { string } statement
      */
-    public saveInstructorStatement(plagiarismComparisonId: number, studentLogin: string, statement: string): Observable<StatementEntityResponseType> {
-        return this.http.put<string>(`${this.resourceUrlStudent}/${plagiarismComparisonId}/${studentLogin}/instructor-statement`, { statement }, { observe: 'response' });
+    public saveInstructorStatement(courseId: number, plagiarismComparisonId: number, studentLogin: string, statement: string): Observable<StatementEntityResponseType> {
+        return this.http.put<string>(
+            `${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/instructor-statement/${studentLogin}`,
+            { statement },
+            { observe: 'response' },
+        );
     }
 
     /**
      * Update the studentStatement of the plagiarism comparison with given id
+     * @param { number } courseId
      * @param { number } plagiarismComparisonId
      * @param { string } statement
      */
-    public saveStudentStatement(plagiarismComparisonId: number, statement: string): Observable<StatementEntityResponseType> {
-        return this.http.put<string>(`${this.resourceUrlStudent}/${plagiarismComparisonId}/student-statement`, { statement }, { observe: 'response' });
+    public saveStudentStatement(courseId: number, plagiarismComparisonId: number, statement: string): Observable<StatementEntityResponseType> {
+        return this.http.put<string>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/student-statement`, { statement }, { observe: 'response' });
     }
 
     /**
      * Update the status of the plagiarism comparison with given id
+     * @param { number } courseId
      * @param { number } plagiarismComparisonId
      * @param { PlagiarismStatus } status
      */
@@ -62,13 +69,14 @@ export class PlagiarismCasesService {
 
     /**
      * Update the status for student with the given studentLogin of the plagiarism comparison with given id
+     * @param { number } courseId
      * @param { number } plagiarismComparisonId
      * @param { boolean } confirm
      * @param { string } studentLogin
      */
-    public updatePlagiarismComparisonFinalStatus(plagiarismComparisonId: number, confirm: boolean, studentLogin: string): Observable<HttpResponse<void>> {
+    public updatePlagiarismComparisonFinalStatus(courseId: number, plagiarismComparisonId: number, confirm: boolean, studentLogin: string): Observable<HttpResponse<void>> {
         return this.http.put<void>(
-            `${this.resourceUrlStudent}/${plagiarismComparisonId}/${studentLogin}/final-status`,
+            `${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/final-status/${studentLogin}`,
             {
                 status: confirm ? PlagiarismStatus.CONFIRMED : PlagiarismStatus.DENIED,
             },

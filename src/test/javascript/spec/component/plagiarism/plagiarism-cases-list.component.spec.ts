@@ -123,57 +123,63 @@ describe('Plagiarism Cases List Component', () => {
         comp.plagiarismCase = plagiarismCase;
         comp.instructorStatement = 'instructor statement text a';
         saveInstructorStatementStub.mockReturnValue(of({ body: instructorStatementA }));
+        comp.courseId = 1;
 
         comp.saveInstructorStatement('A', 0);
 
         expect(comp.plagiarismCase.comparisons[0].instructorStatementA).toEqual(instructorStatementA);
-        expect(saveInstructorStatementStub).toHaveBeenCalledWith(plagiarismComparison.id, studentLoginA, 'instructor statement text a');
+        expect(saveInstructorStatementStub).toHaveBeenCalledWith(1, plagiarismComparison.id, studentLoginA, 'instructor statement text a');
     });
 
     it('should save instructor statement for student b', () => {
         comp.plagiarismCase = plagiarismCase;
         comp.instructorStatement = 'instructor statement text b';
         saveInstructorStatementStub.mockReturnValue(of({ body: instructorStatementB }));
+        comp.courseId = 1;
 
         comp.saveInstructorStatement('B', 0);
 
         expect(comp.plagiarismCase.comparisons[0].instructorStatementB).toEqual(instructorStatementB);
-        expect(saveInstructorStatementStub).toHaveBeenCalledWith(plagiarismComparison.id, studentLoginB, 'instructor statement text b');
+        expect(saveInstructorStatementStub).toHaveBeenCalledWith(1, plagiarismComparison.id, studentLoginB, 'instructor statement text b');
     });
 
     it('should update status to confirmed for student a', () => {
         comp.plagiarismCase = plagiarismCase;
+        comp.courseId = 1;
 
         comp.updateStatus(true, 0, studentLoginA);
 
         expect(comp.plagiarismCase.comparisons[0].statusA).toEqual(PlagiarismStatus.CONFIRMED);
-        expect(updatePlagiarismComparisonFinalStatusStub).toHaveBeenCalledWith(plagiarismComparison.id, true, studentLoginA);
+        expect(updatePlagiarismComparisonFinalStatusStub).toHaveBeenCalledWith(1, plagiarismComparison.id, true, studentLoginA);
     });
 
     it('should update status to denied for student a', () => {
         comp.plagiarismCase = plagiarismCase;
+        comp.courseId = 1;
 
         comp.updateStatus(false, 0, studentLoginA);
 
         expect(comp.plagiarismCase.comparisons[0].statusA).toEqual(PlagiarismStatus.DENIED);
-        expect(updatePlagiarismComparisonFinalStatusStub).toHaveBeenCalledWith(plagiarismComparison.id, false, studentLoginA);
+        expect(updatePlagiarismComparisonFinalStatusStub).toHaveBeenCalledWith(1, plagiarismComparison.id, false, studentLoginA);
     });
 
     it('should update status to confirmed for student b', () => {
         comp.plagiarismCase = plagiarismCase;
+        comp.courseId = 1;
 
         comp.updateStatus(true, 0, studentLoginB);
 
         expect(comp.plagiarismCase.comparisons[0].statusB).toEqual(PlagiarismStatus.CONFIRMED);
-        expect(updatePlagiarismComparisonFinalStatusStub).toHaveBeenCalledWith(plagiarismComparison.id, true, studentLoginB);
+        expect(updatePlagiarismComparisonFinalStatusStub).toHaveBeenCalledWith(1, plagiarismComparison.id, true, studentLoginB);
     });
 
     it('should update status to denied for student b', () => {
         comp.plagiarismCase = plagiarismCase;
+        comp.courseId = 1;
 
         comp.updateStatus(false, 0, studentLoginB);
 
         expect(comp.plagiarismCase.comparisons[0].statusB).toEqual(PlagiarismStatus.DENIED);
-        expect(updatePlagiarismComparisonFinalStatusStub).toHaveBeenCalledWith(plagiarismComparison.id, false, studentLoginB);
+        expect(updatePlagiarismComparisonFinalStatusStub).toHaveBeenCalledWith(1, plagiarismComparison.id, false, studentLoginB);
     });
 });

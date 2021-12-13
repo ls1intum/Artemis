@@ -49,7 +49,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void updatePlagiarismComparisonFinalStatus_student() throws Exception {
-        request.put("/api/plagiarism-comparisons/1/student1/final-status", new PlagiarismComparisonStatusDTO(), HttpStatus.FORBIDDEN);
+        request.put("/api/courses/1/plagiarism-comparisons/1/final-status/student1", new PlagiarismComparisonStatusDTO(), HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -58,7 +58,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     public void updatePlagiarismComparisonFinalStatus_editor() throws Exception {
-        request.put("/api/plagiarism-comparisons/1/student1/final-status", new PlagiarismComparisonStatusDTO(), HttpStatus.FORBIDDEN);
+        request.put("/api/courses/1/plagiarism-comparisons/1/final-status/student1", new PlagiarismComparisonStatusDTO(), HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -81,7 +81,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         var plagiarismComparisonStatus = new PlagiarismComparisonStatusDTO();
         plagiarismComparisonStatus.setStatus(PlagiarismStatus.CONFIRMED);
 
-        request.put("/api/plagiarism-comparisons/" + plagiarismComparison.getId() + "/student1/final-status", plagiarismComparisonStatus, HttpStatus.OK);
+        request.put("/api/plagiarism-comparisons/" + plagiarismComparison.getId() + "/final-status/student1", plagiarismComparisonStatus, HttpStatus.OK);
         var updatedPlagiarismComparison = plagiarismComparisonRepository.findByIdElseThrow(plagiarismComparison.getId());
         assertThat(updatedPlagiarismComparison.getStatusA()).as("should update status for studentA").isEqualTo(PlagiarismStatus.CONFIRMED);
     }
@@ -109,7 +109,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         var plagiarismComparisonStatus = new PlagiarismComparisonStatusDTO();
         plagiarismComparisonStatus.setStatus(PlagiarismStatus.CONFIRMED);
 
-        request.put("/api/plagiarism-comparisons/" + plagiarismComparison.getId() + "/student2/final-status", plagiarismComparisonStatus, HttpStatus.OK);
+        request.put("/api/plagiarism-comparisons/" + plagiarismComparison.getId() + "/final-status/student2", plagiarismComparisonStatus, HttpStatus.OK);
         var updatedPlagiarismComparison = plagiarismComparisonRepository.findByIdElseThrow(plagiarismComparison.getId());
         assertThat(updatedPlagiarismComparison.getStatusB()).as("should update status for studentB").isEqualTo(PlagiarismStatus.CONFIRMED);
     }
@@ -135,7 +135,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         plagiarismComparison.setSubmissionB(submissionB);
         plagiarismComparisonRepository.save(plagiarismComparison);
 
-        request.put("/api/plagiarism-comparisons/" + plagiarismComparison.getId() + "/student42/final-status", new PlagiarismComparisonStatusDTO(), HttpStatus.NOT_FOUND);
+        request.put("/api/plagiarism-comparisons/" + plagiarismComparison.getId() + "/final-status/student42", new PlagiarismComparisonStatusDTO(), HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -259,7 +259,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         var statement = new PlagiarismResource.PlagiarismStatementDTO();
         statement.statement = "test statement";
 
-        request.put("/api/plagiarism-comparisons/" + plagiarismComparison.getId() + "/student1/instructor-statement", statement, HttpStatus.OK);
+        request.put("/api/plagiarism-comparisons/" + plagiarismComparison.getId() + "/instructor-statement/student1", statement, HttpStatus.OK);
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(plagiarismComparison.getId());
         assertThat(comparison.getInstructorStatementA()).as("should update instructor statement").isEqualTo("test statement");
     }
@@ -285,7 +285,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         var statement = new PlagiarismResource.PlagiarismStatementDTO();
         statement.statement = "test statement";
 
-        request.put("/api/plagiarism-comparisons/" + plagiarismComparison.getId() + "/student2/instructor-statement", statement, HttpStatus.OK);
+        request.put("/api/plagiarism-comparisons/" + plagiarismComparison.getId() + "/instructor-statement/student2", statement, HttpStatus.OK);
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(plagiarismComparison.getId());
         assertThat(comparison.getInstructorStatementB()).as("should update instructor statement").isEqualTo("test statement");
     }
@@ -309,7 +309,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         plagiarismComparison.setSubmissionB(submissionB);
         plagiarismComparisonRepository.save(plagiarismComparison);
 
-        request.put("/api/plagiarism-comparisons/" + plagiarismComparison.getId() + "/student42/instructor-statement", new PlagiarismResource.PlagiarismStatementDTO(),
+        request.put("/api/plagiarism-comparisons/" + plagiarismComparison.getId() + "/instructor-statement/student42", new PlagiarismResource.PlagiarismStatementDTO(),
                 HttpStatus.NOT_FOUND);
     }
 }

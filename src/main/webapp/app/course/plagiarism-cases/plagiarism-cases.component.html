@@ -6,7 +6,7 @@
         <p class="col text-center m-0">{{ 'artemisApp.plagiarism.cases.notificationsSent' | artemisTranslate }}</p>
         <p class="col text-center m-0">{{ 'artemisApp.plagiarism.cases.responsesAssessed' | artemisTranslate }}</p>
     </div>
-    <div class="bg-light row">
+    <div class="row">
         <div class="col">
             <jhi-progress-bar
                 [denominator]="numberOfCases()"
@@ -36,11 +36,12 @@
         <div class="card mb-2">
             <div class="card-header">
                 <h5 class="mb-0">
+                    <fa-icon *ngIf="plagiarismCase.exercise.type" [icon]="getIcon(plagiarismCase.exercise.type)"></fa-icon>
                     {{ plagiarismCase.exercise.title }}
                 </h5>
             </div>
             <div class="card-body">
-                <jhi-plagiarism-cases-list [plagiarismCase]="plagiarismCase" [hideFinished]="hideFinished"></jhi-plagiarism-cases-list>
+                <jhi-plagiarism-cases-list [courseId]="courseId" [plagiarismCase]="plagiarismCase" [hideFinished]="hideFinished"></jhi-plagiarism-cases-list>
             </div>
         </div>
     </div>

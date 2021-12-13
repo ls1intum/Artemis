@@ -64,7 +64,7 @@ describe('Plagiarism Cases Service', () => {
 
     it('should save instructor statement', fakeAsync(() => {
         const returnedFromService = 'statement';
-        service.saveInstructorStatement(1, studentLoginA, 'statement').pipe(take(1)).subscribe();
+        service.saveInstructorStatement(1, 1, studentLoginA, 'statement').pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
@@ -73,7 +73,7 @@ describe('Plagiarism Cases Service', () => {
 
     it('should get plagiarism comparison for student', fakeAsync(() => {
         const returnedFromService = Object.assign({}, plagiarismCase);
-        service.getPlagiarismComparisonForStudent(1).pipe(take(1)).subscribe();
+        service.getPlagiarismComparisonForStudent(1, 1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -82,7 +82,7 @@ describe('Plagiarism Cases Service', () => {
 
     it('should save student statement', fakeAsync(() => {
         const returnedFromService = 'statement';
-        service.saveStudentStatement(1, 'statement').pipe(take(1)).subscribe();
+        service.saveStudentStatement(1, 1, 'statement').pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
@@ -100,7 +100,7 @@ describe('Plagiarism Cases Service', () => {
 
     it('should update plagiarism comparison final status', fakeAsync(() => {
         const returnedFromService = {};
-        service.updatePlagiarismComparisonFinalStatus(1, true, studentLoginA).pipe(take(1)).subscribe();
+        service.updatePlagiarismComparisonFinalStatus(1, 1, true, studentLoginA).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);

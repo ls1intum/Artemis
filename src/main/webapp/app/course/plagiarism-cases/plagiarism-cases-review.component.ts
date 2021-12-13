@@ -20,6 +20,7 @@ export class PlagiarismCasesReviewComponent implements OnInit {
     loading = true;
     exercise: Exercise;
     comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+    courseId: number;
     comparisonId: number;
     isStudentA: boolean;
     /**
@@ -32,21 +33,24 @@ export class PlagiarismCasesReviewComponent implements OnInit {
     constructor(private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {}
 
     ngOnInit(): void {
-        this.comparisonId = Number(this.route.snapshot.paramMap.get('plagiarismComparisonId'));
-        this.plagiarismCasesService.getPlagiarismComparisonForStudent(this.comparisonId).subscribe((resp: HttpResponse<PlagiarismCase>) => {
-            this.exercise = resp.body!.exercise;
-            // this should always contain exactly one comparison
-            this.comparison = resp.body!.comparisons[0];
-            if (this.comparison.instructorStatementA) {
-                this.isStudentA = true;
-                this.instructorStatement = this.comparison.instructorStatementA;
-                this.studentStatement = this.comparison.studentStatementA ? this.comparison.studentStatementA : '';
-            } else if (this.comparison.instructorStatementB) {
-                this.isStudentA = false;
-                this.instructorStatement = this.comparison.instructorStatementB;
-                this.studentStatement = this.comparison.studentStatementB ? this.comparison.studentStatementB : '';
-            }
-            this.loading = false;
+        this.route.params.subscribe((params) => {
+            this.courseId = Number(params['courseId']);
+            this.comparisonId = Number(params['plagiarismComparisonId']);
+            this.plagiarismCasesService.getPlagiarismComparisonForStudent(this.courseId, this.comparisonId).subscribe((resp: HttpResponse<PlagiarismCase>) => {
+                this.exercise = resp.body!.exercise;
+                // this should always contain exactly one comparison
+                this.comparison = resp.body!.comparisons[0];
+                if (this.comparison.instructorStatementA) {
+                    this.isStudentA = true;
+                    this.instructorStatement = this.comparison.instructorStatementA;
+                    this.studentStatement = this.comparison.studentStatementA ? this.comparison.studentStatementA : '';
+                } else if (this.comparison.instructorStatementB) {
+                    this.isStudentA = false;
+                    this.instructorStatement = this.comparison.instructorStatementB;
+                    this.studentStatement = this.comparison.studentStatementB ? this.comparison.studentStatementB : '';
+                }
+                this.loading = false;
+            });
         });
     }
 
@@ -61,7 +65,7 @@ export class PlagiarismCasesReviewComponent implements OnInit {
             this.comparison.studentStatementB = this.studentStatement;
         }
         this.plagiarismCasesService
-            .saveStudentStatement(this.comparisonId, this.studentStatement)
+            .saveStudentStatement(this.courseId, this.comparisonId, this.studentStatement)
             .toPromise()
             .catch(() => {
                 this.comparison.studentStatementA = undefined;

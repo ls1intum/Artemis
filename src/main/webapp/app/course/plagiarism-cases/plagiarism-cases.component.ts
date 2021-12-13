@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { downloadFile } from 'app/shared/util/download.util';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { HttpResponse } from '@angular/common/http';
+import { getIcon } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-plagiarism-cases',
@@ -12,6 +13,7 @@ import { HttpResponse } from '@angular/common/http';
     styles: [],
 })
 export class PlagiarismCasesComponent implements OnInit {
+    getIcon = getIcon;
     confirmedPlagiarismCases: PlagiarismCase[] | undefined;
     courseId: number;
     hideFinished = false;
