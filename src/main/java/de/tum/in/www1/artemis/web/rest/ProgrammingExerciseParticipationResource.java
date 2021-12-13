@@ -77,7 +77,7 @@ public class ProgrammingExerciseParticipationResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
             // hide details that should not be shown to the students
             participation.getExercise().filterSensitiveInformation();
-            participation.getResults().forEach(result -> filterResult(participation, result));
+            participation.getResults().forEach(result -> filterSensitiveInformationInResult(participation, result));
         }
         return ResponseEntity.ok(participation);
     }
@@ -100,7 +100,7 @@ public class ProgrammingExerciseParticipationResource {
 
         Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
         if (result.isPresent() && !authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
-            filterResult(participation, result.get());
+            filterSensitiveInformationInResult(participation, result.get());
         }
 
         return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
@@ -111,7 +111,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param participation the result belongs to.
      * @param result the sensitive information of which should be removed.
      */
-    private void filterResult(final Participation participation, final Result result) {
+    private void filterSensitiveInformationInResult(final Participation participation, final Result result) {
         // The test cases marked as after_due_date should only be shown after all
         // students can no longer submit so that no unfair advantage is possible.
         // This applies only to automatic results. For manual ones the instructors
