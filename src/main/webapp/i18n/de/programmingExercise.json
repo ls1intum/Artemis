@@ -332,8 +332,8 @@
                     "penaltyInputFieldTitle": "Punktabzug je Überschreitung des Abgabelimits",
                     "exceedingLimitDescription": "Der Punktabzug von dem Gesamtergebnis für jede Abgabe, die das Abgabelimit überschreitet. Jede Punktzahl größer 0 kann eingetragen werden.",
                     "penaltyInputFieldValidationWarning": {
-                        "min": "Der Punktabzug muss größer 0 sein!",
-                        "required": "Der Punktabzug muss gesetzt sein!"
+                        "pattern": "Der Punktabzug muss eine Nummer größer als 0 sein.",
+                        "required": "Der Punktabzug muss gesetzt sein."
                     },
                     "penaltyInfoLabel": "Punktabzug je Überschreitung",
                     "triggerAllInformation": "Wird der Punktabzug je Überschreitung des Abgabelimits oder das Abgabelimit selbst angepasst, muss nach dem Speichern der Abgaberichtlinie die 'Erneut Bewerten' Funktionalität genutzt werden, um die Ergebnisse der Teilnehmenden zu aktualisieren."

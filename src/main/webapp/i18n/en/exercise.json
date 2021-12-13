@@ -188,8 +188,8 @@
                 },
                 "bonusPoints": {
                     "undefined": "There has to be a value for the bonus points set!",
-                    "customMin": "The number of points must be at least 0!",
-                    "customMax": "The number of points may not exceed 9999!"
+                    "customMin": "The number of bonus points must be at least 0!",
+                    "customMax": "The number of bonus points may not exceed 9999!"
                 },
                 "maxPenalty": {
                     "pattern": "The maximum penalty must be between 0 and 100 percent!"
