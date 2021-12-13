@@ -202,6 +202,7 @@ public class ProgrammingPlagiarismDetectionService {
             log.error(e.getMessage(), e);
             log.info("Retrying JPlag Plagiarism Check without BaseCode");
             options.setBaseCodeSubmissionName(null);
+            jplag = new JPlag(options);
             result = jplag.run();
         }
 
