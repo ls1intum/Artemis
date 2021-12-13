@@ -7,11 +7,11 @@
     <div class="apollon-row" id="apollon-assessment-row">
         <div #editorContainer class="apollon-container"></div>
         <div *ngIf="resizeOptions && resizeOptions.horizontalResize" class="draggable-right">
-            <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
+            <fa-icon [icon]="faGripLinesVertical"></fa-icon>
         </div>
     </div>
     <div *ngIf="resizeOptions && resizeOptions.verticalResize" class="draggable-bottom">
-        <fa-icon [icon]="'grip-lines'"></fa-icon>
+        <fa-icon [icon]="faGripLines"></fa-icon>
     </div>
     <jhi-modeling-explanation-editor *ngIf="explanation" [explanation]="explanation" [readOnly]="true"></jhi-modeling-explanation-editor>
 </div>

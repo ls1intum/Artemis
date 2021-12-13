@@ -21,6 +21,7 @@ import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiar
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from '../shared/actions/programming-exercise-instructor-repo-download.component';
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
 import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../shared/actions/programming-exercise-instructor-exercise-download.component';
+import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
 @NgModule({
     imports: [
@@ -41,6 +42,7 @@ import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../share
         AssessmentInstructionsModule,
         OrionModule,
         ArtemisProgrammingExerciseLifecycleModule,
+        SubmissionResultStatusModule,
     ],
     declarations: [
         ProgrammingExerciseDetailComponent,

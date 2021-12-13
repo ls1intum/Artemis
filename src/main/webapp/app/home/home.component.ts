@@ -16,6 +16,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { PASSWORD_MIN_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-home',
@@ -53,6 +54,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     profileInfo: ProfileInfo | undefined = undefined;
     showResetPasswordLink = false;
+
+    // Icons
+    faCircleNotch = faCircleNotch;
 
     constructor(
         private router: Router,

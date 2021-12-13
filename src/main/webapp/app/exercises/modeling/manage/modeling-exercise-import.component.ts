@@ -6,6 +6,7 @@ import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pag
 import { SortService } from 'app/shared/service/sort.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExercisePagingService } from 'app/exercises/modeling/manage/modeling-exercise-paging.service';
+import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 
 export enum TableColumn {
     ID = 'ID',
@@ -33,6 +34,10 @@ export class ModelingExerciseImportComponent implements OnInit {
         sortingOrder: SortingOrder.DESCENDING,
         sortedColumn: TableColumn.ID,
     };
+
+    // Icons
+    faSort = faSort;
+    faCheck = faCheck;
 
     constructor(private pagingService: ModelingExercisePagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
 
