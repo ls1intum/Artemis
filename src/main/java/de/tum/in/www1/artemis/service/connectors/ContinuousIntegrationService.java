@@ -298,9 +298,7 @@ public interface ContinuousIntegrationService {
         return switch (language) {
             case JAVA, KOTLIN, EMPTY -> "ls1tum/artemis-maven-template:java17-2";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
-            case C -> (projectType.isPresent() && projectType.get().equals(ProjectType.FACT))
-                    ? "sharing-codeability.uibk.ac.at:5051/codeability/test-frameworks/fact/fact_artemis:latest"
-                    : "ls1tum/artemis-c-docker:latest";
+            case C -> (projectType.isPresent() && projectType.get().equals(ProjectType.FACT)) ? "sharingcodeability/fact:latest" : "ls1tum/artemis-c-docker:latest";
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";
             case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
             case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
