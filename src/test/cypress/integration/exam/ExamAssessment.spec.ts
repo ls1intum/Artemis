@@ -119,11 +119,9 @@ describe('Exam assessment', () => {
                 cy.login(tutor, '/course-management/' + course.id + '/exams');
                 cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
                 startAssessing();
-                modelingAssessment.addNewFeedback(2, 'Good');
+                modelingAssessment.addNewFeedback(5, 'Good');
                 modelingAssessment.openAssessmentForComponent(1);
                 modelingAssessment.assessComponent(-1, 'Wrong');
-                modelingAssessment.clickNextAssessment();
-                modelingAssessment.assessComponent(1, 'Good');
                 modelingAssessment.clickNextAssessment();
                 modelingAssessment.assessComponent(0, 'Neutral');
                 modelingAssessment.clickNextAssessment();
@@ -131,7 +129,7 @@ describe('Exam assessment', () => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                cy.contains('2 of 10 points').should('be.visible');
+                cy.contains('4 of 10 points').should('be.visible');
             });
         });
 
