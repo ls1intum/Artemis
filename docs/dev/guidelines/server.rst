@@ -76,7 +76,7 @@ Avoid code duplication. If we cannot reuse a method elsewhere, then the method i
 * Think about lazy vs. eager fetching when modeling the data types.
 * Only if it is inevitable, use nested queries. You should try use as few tables as possible.
 * Simple datatypes: immediately think about whether ``null`` should be supported as additional state or not. In most cases it is preferable to avoid ``null``.
-* Use ``Timestamp`` instead of ``Datetime``.
+* Use ``Datetime`` instead of ``Timestamp``. ``Datetime`` occupies more storage space compared to ``Timestamp``, however it covers a greater date range that justifies its use in the long run.
 
 8. Comments
 ===========
