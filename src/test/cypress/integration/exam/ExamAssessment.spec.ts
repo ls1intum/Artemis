@@ -123,9 +123,10 @@ describe('Exam assessment', () => {
                 modelingAssessment.openAssessmentForComponent(1);
                 modelingAssessment.assessComponent(-1, 'Wrong');
                 modelingAssessment.clickNextAssessment();
+                modelingAssessment.assessComponent(1, 'Good');
+                modelingAssessment.clickNextAssessment();
                 modelingAssessment.assessComponent(0, 'Neutral');
                 modelingAssessment.clickNextAssessment();
-                modelingAssessment.assessComponent(1, 'Good');
                 examAssessment.submitModelingAssessment().then((assessmentResponse) => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
