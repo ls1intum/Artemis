@@ -56,6 +56,43 @@ describe('Exam assessment', () => {
         courseManagementRequests.deleteCourse(course.id);
     });
 
+    // For some reason the typing of cypress gets slower the longer the test runs, so we test the programming exercise first
+    describe('Exam programming exercise assessment', () => {
+        const examDuration = 155000;
+
+        before('Prepare exam', () => {
+            examEnd = dayjs().add(examDuration, 'milliseconds');
+            prepareExam(examEnd);
+        });
+
+        beforeEach('Create exam, exercise and submission', () => {
+            courseManagementRequests
+                .createProgrammingExercise({ exerciseGroup }, undefined, undefined, undefined, undefined, undefined, undefined, undefined, CypressAssessmentType.SEMI_AUTOMATIC)
+                .then((progRespone) => {
+                    const programmingExercise = progRespone.body;
+                    courseManagementRequests.generateMissingIndividualExams(exam);
+                    courseManagementRequests.prepareExerciseStartForExam(exam);
+                    cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                    examStartEnd.startExam();
+                    cy.contains(programmingExercise.title).should('be.visible').click();
+                    makeSubmissionAndVerifyResults(editorPage, programmingExercise.packageName, partiallySuccessful, () => {
+                        examNavigation.handInEarly();
+                        examStartEnd.finishExam();
+                    });
+                });
+        });
+
+        it('Assess a programming exercise submission (MANUAL)', () => {
+            cy.login(tutor, '/course-management/' + course.id + '/exams');
+            cy.contains('Assessment Dashboard', { timeout: examDuration }).click();
+            startAssessing();
+            examAssessment.addNewFeedback(2, 'Good job');
+            examAssessment.submit();
+            cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+            cy.get('.question-options').contains('6.6 of 10 points').should('be.visible');
+        });
+    });
+
     describe('Exam exercise assessment', () => {
         beforeEach('Generate new exam name', () => {
             examEnd = dayjs().add(45, 'seconds');
@@ -166,42 +203,6 @@ describe('Exam assessment', () => {
             // Sometimes the feedback fails to load properly on the first load...
             cy.reloadUntilFound(`jhi-result:contains(${score})`);
             cy.get('jhi-result').contains(score).should('be.visible');
-        });
-    });
-
-    describe('Exam programming exercise assessment', () => {
-        const examDuration = 155000;
-
-        before('Prepare exam', () => {
-            examEnd = dayjs().add(examDuration, 'milliseconds');
-            prepareExam(examEnd);
-        });
-
-        beforeEach('Create exam, exercise and submission', () => {
-            courseManagementRequests
-                .createProgrammingExercise({ exerciseGroup }, undefined, undefined, undefined, undefined, undefined, undefined, undefined, CypressAssessmentType.SEMI_AUTOMATIC)
-                .then((progRespone) => {
-                    const programmingExercise = progRespone.body;
-                    courseManagementRequests.generateMissingIndividualExams(exam);
-                    courseManagementRequests.prepareExerciseStartForExam(exam);
-                    cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                    examStartEnd.startExam();
-                    cy.contains(programmingExercise.title).should('be.visible').click();
-                    makeSubmissionAndVerifyResults(editorPage, programmingExercise.packageName, partiallySuccessful, () => {
-                        examNavigation.handInEarly();
-                        examStartEnd.finishExam();
-                    });
-                });
-        });
-
-        it('Assess a programming exercise submission (MANUAL)', () => {
-            cy.login(tutor, '/course-management/' + course.id + '/exams');
-            cy.contains('Assessment Dashboard', { timeout: examDuration }).click();
-            startAssessing();
-            examAssessment.addNewFeedback(2, 'Good job');
-            examAssessment.submit();
-            cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-            cy.get('.question-options').contains('6.6 of 10 points').should('be.visible');
         });
     });
 
