@@ -29,6 +29,7 @@
 
     <div class="card-body">
         <div class="chart-container" *ngIf="exerciseCount > 0 && (totalReachableScore > 0 || totalAbsoluteScore > 0); else noStatistic">
+            <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
             <div class="chart-text">
                 <h2 class="text-center">{{ totalRelativeScore }}%</h2>
                 <h5 class="text-center points">{{ totalAbsoluteScore }} / {{ totalReachableScore }} Pts</h5>
