@@ -1,3 +1,5 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
 .feedback-item {
     border-radius: 4px;
     border-style: solid;
@@ -87,5 +89,5 @@
 }
 
 ::ng-deep .legend-label {
-    color: #212529 !important;
+    color: $artemis-dark !important;
 }
