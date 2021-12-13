@@ -730,7 +730,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 });
             } else if (exceedingPenalty <= 0) {
                 result.push({
-                    translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.min',
+                    translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.pattern',
                     translateValues: {},
                 });
             }

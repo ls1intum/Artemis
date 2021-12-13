@@ -333,8 +333,8 @@
                     "penaltyInputFieldTitle": "Exceeding Submission Limit Penalty",
                     "exceedingLimitDescription": "The amount of points that is deducted from the result score for each submission exceeding the submission limit. Enter any amount of points greater than 0.",
                     "penaltyInputFieldValidationWarning": {
-                        "min": "The penalty must be greater than 0!",
-                        "required": "The penalty must be set!"
+                        "pattern": "The penalty must be a number greater than 0.",
+                        "required": "The penalty must be set."
                     },
                     "penaltyInfoLabel": "Exceeding Penalty",
                     "triggerAllInformation": "If the exceeding submission limit penalty or the submission limit is updated, the 'Re-evaluate' functionality must be used to update the participants' results."

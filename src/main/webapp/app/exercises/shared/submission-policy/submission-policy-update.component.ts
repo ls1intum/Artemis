@@ -100,6 +100,9 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
     submissionLimitControl: FormControl;
     exceedingPenaltyControl: FormControl;
 
+    // penalty can be any (point) number greater than 0
+    exceedingPenaltyPattern = RegExp('^0*[1-9][0-9]*(\\.[0-9]+)?|0+\\.[0-9]*[1-9][0-9]*$');
+
     ngOnInit(): void {
         this.onSubmissionPolicyTypeChanged(this.programmingExercise.submissionPolicy?.type ?? SubmissionPolicyType.NONE);
         this.form = new FormGroup({
@@ -108,7 +111,7 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
                 Validators.required,
             ]),
             exceedingPenalty: new FormControl({ value: this.programmingExercise.submissionPolicy?.exceedingPenalty, disabled: !this.editable }, [
-                Validators.min(0.000000000000000000000001),
+                Validators.pattern(this.exceedingPenaltyPattern),
                 Validators.required,
             ]),
         });
