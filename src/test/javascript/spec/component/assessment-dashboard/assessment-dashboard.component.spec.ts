@@ -42,6 +42,7 @@ import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
 
 describe('AssessmentDashboardInformationComponent', () => {
     let comp: AssessmentDashboardComponent;
@@ -139,6 +140,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                 MockComponent(NotReleasedTagComponent),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockDirective(MockHasAnyAuthorityDirective),
+                MockComponent(ExamAssessmentButtonsComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },

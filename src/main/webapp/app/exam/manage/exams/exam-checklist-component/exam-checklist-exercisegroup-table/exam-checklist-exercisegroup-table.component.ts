@@ -2,6 +2,7 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseGroupVariantColumn } from 'app/entities/exercise-group-variant-column.model';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-checklist-exercisegroup-table',
@@ -12,6 +13,9 @@ export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
     exerciseGroupVariantColumns: ExerciseGroupVariantColumn[] = [];
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
+
+    // Icons
+    faExclamationTriangle = faExclamationTriangle;
 
     ngOnChanges() {
         if (this.exerciseGroups) {

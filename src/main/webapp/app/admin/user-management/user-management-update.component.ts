@@ -9,6 +9,7 @@ import { OrganizationSelectorComponent } from 'app/shared/organization-selector/
 import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
+import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -24,6 +25,11 @@ export class UserManagementUpdateComponent implements OnInit {
     languages: string[];
     authorities: string[];
     isSaving: boolean;
+
+    // Icons
+    faTimes = faTimes;
+    faBan = faBan;
+    faSave = faSave;
 
     constructor(
         private languageHelper: JhiLanguageHelper,

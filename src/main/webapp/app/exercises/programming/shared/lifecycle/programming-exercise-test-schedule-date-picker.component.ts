@@ -2,6 +2,7 @@ import { Component, ElementRef, EventEmitter, forwardRef, Input, Output, ViewChi
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import dayjs from 'dayjs';
 import { isDate } from 'app/shared/util/utils';
+import { faCalendarCheck, faCalendarMinus, faCalendarPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-test-schedule-date-picker',
@@ -25,6 +26,11 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
     @Input() tooltipText: string;
     @Input() readOnly: boolean;
     @Output() onDateReset = new EventEmitter();
+
+    // Icons
+    faCalendarMinus = faCalendarMinus;
+    faCalendarCheck = faCalendarCheck;
+    faCalendarPlus = faCalendarPlus;
 
     _onChange: any = () => {};
 

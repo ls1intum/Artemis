@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course, NgxDataEntry } from 'app/entities/course.model';
 import { ScaleType, Color } from '@swimlane/ngx-charts';
 
@@ -24,6 +25,9 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
     doughnutChartTitle: string;
     stats: number[];
     titleLink: string[] | undefined;
+
+    // Icons
+    faSpinner = faSpinner;
 
     constructor(private router: Router) {}
 

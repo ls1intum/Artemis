@@ -15,6 +15,7 @@ import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',
@@ -42,6 +43,9 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     remainingTimeText = '?';
     remainingTimeSeconds = 0;
     interval: any;
+
+    // Icons
+    farListAlt = faListAlt;
 
     constructor(
         private route: ActivatedRoute,

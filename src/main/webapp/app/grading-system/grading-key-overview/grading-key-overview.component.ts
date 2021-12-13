@@ -4,8 +4,9 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradeStep } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { round } from 'app/shared/util/utils';
-import { CourseScoreCalculationService, REACHABLE_POINTS } from 'app/overview/course-score-calculation.service';
+import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-grade-key-overview',
@@ -13,6 +14,10 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
     styleUrls: ['./grading-key-overview.scss'],
 })
 export class GradingKeyOverviewComponent implements OnInit {
+    // Icons
+    faChevronLeft = faChevronLeft;
+    faPrint = faPrint;
+
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -47,7 +52,7 @@ export class GradingKeyOverviewComponent implements OnInit {
                         if (!this.isExam) {
                             // calculate course max points based on exercises
                             const course = this.courseCalculationService.getCourse(this.courseId!);
-                            const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!, course!).get(REACHABLE_POINTS);
+                            const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!, course!).get(ScoreType.REACHABLE_POINTS);
                             this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints!);
                         } else {
                             // for exams the max points filed should equal the total max points (otherwise exams can't be started)
