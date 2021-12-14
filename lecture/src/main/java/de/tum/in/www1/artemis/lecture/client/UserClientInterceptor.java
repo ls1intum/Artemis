@@ -7,7 +7,7 @@ import feign.RequestInterceptor;
 import feign.RequestTemplate;
 
 @Component
-public class UserFeignClientInterceptor implements RequestInterceptor {
+public class UserClientInterceptor implements RequestInterceptor {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
 

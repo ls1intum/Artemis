@@ -82,7 +82,7 @@ public class TokenProvider {
      * @return boolean indicating if token is valid
      */
     public boolean validateTokenForAuthority(String authToken) {
-        return validateJwsToken(authToken);
+        return validateJwtToken(authToken);
     }
 
     /**
@@ -91,7 +91,7 @@ public class TokenProvider {
      * @param authToken JWT Authorization Token
      * @return boolean indicating if token is valid
      */
-    private boolean validateJwsToken(String authToken) {
+    private boolean validateJwtToken(String authToken) {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken);
             return true;
