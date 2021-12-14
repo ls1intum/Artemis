@@ -111,7 +111,7 @@ describe('Plagiarism Cases Review Component', () => {
         expect(comp.exercise).toEqual(textExercise);
         expect(comp.isStudentA).toBe(false);
         expect(comp.instructorStatement).toBe(instructorStatementB);
-        expect(comp.studentStatement).toEqual(studentStatementB);
+        expect(comp.studentStatement).toBe(studentStatementB);
     }));
 
     it('should be able to save statement for student A', () => {
