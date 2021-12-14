@@ -238,6 +238,7 @@
                 <div
                     *ngIf="!showResult"
                     class="drag-items"
+                    id="drag-items"
                     [ngClass]="dropAllowed ? 'drop-allowed' : ''"
                     (onDropSuccess)="onDragDrop(undefined, $event)"
                     (onDragEnter)="preventDefault($event)"
