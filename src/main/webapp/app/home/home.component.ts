@@ -189,7 +189,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             const redirect = this.stateStorageService.getUrl();
             if (redirect && redirect !== '') {
                 this.stateStorageService.storeUrl('');
-                this.router.navigate([redirect]);
+                this.router.navigateByUrl(redirect);
             } else {
                 // TODO: Remove redirect after summer 2021 term. New deep links should no longer use /#.
                 const url = this.router.url.startsWith('/#') ? this.router.url.substr(2) : 'courses';
