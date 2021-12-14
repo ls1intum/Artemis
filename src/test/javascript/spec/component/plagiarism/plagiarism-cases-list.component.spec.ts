@@ -139,7 +139,7 @@ describe('Plagiarism Cases List Component', () => {
 
         comp.saveInstructorStatement('B', 0);
 
-        expect(comp.plagiarismCase.comparisons[0].instructorStatementB).toEqual(instructorStatementB);
+        expect(comp.plagiarismCase.comparisons[0].instructorStatementB).toBe(instructorStatementB);
         expect(saveInstructorStatementStub).toHaveBeenCalledWith(1, plagiarismComparison.id, studentLoginB, 'instructor statement text b');
     });
 
