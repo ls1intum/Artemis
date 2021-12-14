@@ -103,9 +103,10 @@ public class MigrationService {
     }
 
     public SortedMap<Integer, MigrationEntry> instantiateEntryMap(SortedMap<Integer, Class<? extends MigrationEntry>> entryClassMap) {
-        return entryClassMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry ->
-        // We have to manually autowire the components here
-        (MigrationEntry) beanFactory.autowire(entry.getValue(), AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR, true), (prev, next) -> next, TreeMap::new));
+        return entryClassMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+            // We have to manually autowire the components here
+            return (MigrationEntry) beanFactory.autowire(entry.getValue(), AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR, true);
+        }, (prev, next) -> next, TreeMap::new));
     }
 
     /**
