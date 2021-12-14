@@ -76,6 +76,8 @@ export class Feedback implements BaseEntity {
 
     public copiedFeedbackId?: number; // helper attribute, only calculated locally on the client
 
+    public isSubsequent?: boolean; // helper attribute to find feedback which is not included in the total score on the client
+
     constructor() {
         this.credits = 0;
     }
@@ -202,4 +204,26 @@ export const buildFeedbackTextForReview = (feedback: Feedback): string => {
         return feedback.text;
     }
     return feedbackText;
+};
+
+export const checkSubsequentFeedbackInAssessment = (assessment: Feedback[]) => {
+    const gradingInstructions = {}; // { instructionId: noOfEncounters }
+    for (const feedback of assessment) {
+        if (feedback.gradingInstruction && feedback.gradingInstruction.credits !== 0) {
+            if (gradingInstructions[feedback.gradingInstruction!.id!]) {
+                // We Encountered this grading instruction before
+                const maxCount = feedback.gradingInstruction!.usageCount;
+                const encounters = gradingInstructions[feedback.gradingInstruction!.id!];
+                if (maxCount && maxCount > 0) {
+                    gradingInstructions[feedback.gradingInstruction!.id!] = encounters + 1;
+                    if (encounters >= maxCount) {
+                        feedback.isSubsequent = true;
+                    }
+                }
+            } else {
+                // First time encountering the grading instruction
+                gradingInstructions[feedback.gradingInstruction!.id!] = 1;
+            }
+        }
+    }
 };
