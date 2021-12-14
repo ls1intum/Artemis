@@ -22,6 +22,7 @@ import org.springframework.core.env.Profiles;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
+import de.tum.in.www1.artemis.config.migration.MigrationIntegrityException;
 import de.tum.in.www1.artemis.config.migration.MigrationRegistry;
 import de.tum.in.www1.artemis.config.migration.MigrationService;
 import de.tum.in.www1.artemis.domain.MigrationChangelog;
@@ -45,8 +46,6 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
 
     private ConfigurableEnvironment environmentMock;
 
-    private SecurityManager oldSecurityManager = null;
-
     @BeforeEach
     public void setUp() throws NoSuchAlgorithmException {
         applicationReadyEventMock = mock(ApplicationReadyEvent.class);
@@ -55,14 +54,11 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
         when(applicationReadyEventMock.getApplicationContext()).thenReturn(configurableApplicationContextMock);
         when(configurableApplicationContextMock.getEnvironment()).thenReturn(environmentMock);
         when(environmentMock.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))).thenReturn(false);
-        this.oldSecurityManager = System.getSecurityManager();
-        System.setSecurityManager(new NoExitSecurityManager());
     }
 
     @AfterEach
     public void teardown() {
         database.resetDatabase();
-        System.setSecurityManager(oldSecurityManager);
     }
 
     @Test
@@ -122,7 +118,7 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    public void testNoExecutionOnTestEnvironment() throws IOException, NoSuchAlgorithmException {
+    public void testNoExecutionOnTestEnvironment() throws IOException, NoSuchAlgorithmException, MigrationIntegrityException {
         reset(environmentMock);
         when(environmentMock.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))).thenReturn(true);
 
@@ -133,21 +129,19 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     public void testStopApplicationOnFailedIntegrityCheck() {
-        assertThatThrownBy(() -> migrationService.execute(applicationReadyEventMock, createInvalidChangelog())).isInstanceOf(ExitException.class)
-                .hasFieldOrPropertyWithValue("status", 1);
-
+        assertThatThrownBy(() -> migrationService.execute(applicationReadyEventMock, createInvalidChangelog())).isInstanceOf(MigrationIntegrityException.class);
         assertThat(migrationChangeRepository.findAll()).hasSize(0);
     }
 
     @Test
-    public void testExecutionSucceedsForEmptyMap() {
+    public void testExecutionSucceedsForEmptyMap() throws MigrationIntegrityException {
         migrationService.execute(applicationReadyEventMock, new TreeMap<>());
 
         assertThat(migrationChangeRepository.findAll()).hasSize(0);
     }
 
     @Test
-    public void testExecutionSucceedsForRegularMap() {
+    public void testExecutionSucceedsForRegularMap() throws MigrationIntegrityException {
         migrationService.execute(applicationReadyEventMock, createValidChangelog());
 
         List<MigrationChangelog> changelogs = migrationChangeRepository.findAll();
@@ -158,7 +152,7 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    public void testExecutionOnMultipleStarts() {
+    public void testExecutionOnMultipleStarts() throws MigrationIntegrityException {
         migrationService.execute(applicationReadyEventMock, createValidChangelog());
 
         List<MigrationChangelog> changelogs = migrationChangeRepository.findAll();
@@ -177,7 +171,7 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    public void testSplitExecution() throws IOException, NoSuchAlgorithmException {
+    public void testSplitExecution() throws MigrationIntegrityException {
         SortedMap<Integer, Class<? extends MigrationEntry>> changelog = new TreeMap<>();
         changelog.put(0, TestChangeEntry20211214_231800.class);
         changelog.put(1, TestChangeEntry20211215_231800.class);

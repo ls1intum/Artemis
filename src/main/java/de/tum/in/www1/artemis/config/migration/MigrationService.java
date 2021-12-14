@@ -54,7 +54,7 @@ public class MigrationService {
      * @param event         Specifies when this method gets called and provides the event with all application data
      * @param entryClassMap The changelog to be executed
      */
-    public void execute(ApplicationReadyEvent event, SortedMap<Integer, Class<? extends MigrationEntry>> entryClassMap) {
+    public void execute(ApplicationReadyEvent event, SortedMap<Integer, Class<? extends MigrationEntry>> entryClassMap) throws MigrationIntegrityException {
         if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return;
         }
@@ -65,8 +65,7 @@ public class MigrationService {
 
         if (!checkIntegrity(entryMap)) {
             log.error("{} corrupted. Aborting startup.", getClass().getSimpleName());
-            event.getApplicationContext().close();
-            System.exit(1);
+            throw new MigrationIntegrityException();
         }
         else {
             log.info("Integrity check passed.");

@@ -31,7 +31,7 @@ public class MigrationRegistry {
      * @param event Specifies when this method gets called and provides the event with all application data
      */
     @EventListener
-    public void execute(ApplicationReadyEvent event) throws IOException, NoSuchAlgorithmException {
+    public void execute(ApplicationReadyEvent event) throws IOException, NoSuchAlgorithmException, MigrationIntegrityException {
         migrationService.execute(event, this.migrationEntryMap);
     }
 
