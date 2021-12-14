@@ -1,12 +1,12 @@
 import { BASE_API, POST } from '../../../constants';
 
 export class MultipleChoiceQuiz {
-    getQuizBody() {
-        return cy.get('#question0');
+    getQuizBody(quizQuestionId: string) {
+        return cy.get('#question' + quizQuestionId);
     }
 
-    tickAnswerOption(optionNumber: number) {
-        this.getQuizBody()
+    tickAnswerOption(optionNumber: number, quizQuestionId = '0') {
+        this.getQuizBody(quizQuestionId)
             .get('#answer-option-' + optionNumber)
             .find('#mc-answer-selection-' + optionNumber)
             .first()
