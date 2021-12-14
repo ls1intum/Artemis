@@ -128,7 +128,7 @@ describe('Plagiarism Inspector Component', () => {
     it('should get the minimumSize tootip', () => {
         comp.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
 
-        expect(comp.getMinimumSizeTooltip()).toEqual('artemisApp.plagiarism.minimumSizeTooltip');
+        expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltip');
     });
 
     it('should get the minimumSize tootip for modeling', () => {
