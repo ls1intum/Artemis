@@ -23,7 +23,7 @@ import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getLatestSubmissionResult, getFirstResultWithComplaint } from 'app/entities/submission.model';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
-import { Feedback } from 'app/entities/feedback.model';
+import { checkSubsequentFeedbackInAssessment, Feedback } from 'app/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
@@ -203,7 +203,11 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * Check whether or not a result exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] | undefined {
-        return this.result ? getUnreferencedFeedback(this.result.feedbacks) : undefined;
+        if (this.result?.feedbacks) {
+            checkSubsequentFeedbackInAssessment(this.result.feedbacks);
+            return getUnreferencedFeedback(this.result.feedbacks);
+        }
+        return undefined;
     }
 
     private setSubmittedFile() {
