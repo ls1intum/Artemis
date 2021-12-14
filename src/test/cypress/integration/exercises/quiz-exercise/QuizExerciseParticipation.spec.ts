@@ -51,7 +51,7 @@ describe('Quiz Exercise Participation', () => {
         it('Student can see a visible quiz', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
-            courseOverview.openRunningExercise(quizExercise.title, CypressExerciseType.QUIZ);
+            courseOverview.openRunningExercise(quizExercise.id);
         });
 
         it('Student can participate in MC quiz', () => {
