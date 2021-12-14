@@ -96,7 +96,7 @@ describe('Plagiarism Cases Review Component', () => {
         expect(getPlagiarismComparisonForStudentStub).toHaveBeenCalledWith(1, 1);
         expect(comp.exercise).toEqual(textExercise);
         expect(comp.isStudentA).toBe(true);
-        expect(comp.instructorStatement).toEqual(instructorStatementA);
+        expect(comp.instructorStatement).toBe(instructorStatementA);
         expect(comp.studentStatement).toEqual(studentStatementA);
     }));
 
