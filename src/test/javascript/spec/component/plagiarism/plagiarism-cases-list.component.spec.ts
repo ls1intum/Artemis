@@ -127,7 +127,7 @@ describe('Plagiarism Cases List Component', () => {
 
         comp.saveInstructorStatement('A', 0);
 
-        expect(comp.plagiarismCase.comparisons[0].instructorStatementA).toEqual(instructorStatementA);
+        expect(comp.plagiarismCase.comparisons[0].instructorStatementA).toBe(instructorStatementA);
         expect(saveInstructorStatementStub).toHaveBeenCalledWith(1, plagiarismComparison.id, studentLoginA, 'instructor statement text a');
     });
 
