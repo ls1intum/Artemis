@@ -3,7 +3,7 @@
 <changeSet id="20211208041300" author="julian-christl">
     <!-- create new entity programming exercise test case -->
     <createTable tableName="migration_changelog">
-        <column name="id" type="bigint" autoIncrement="${autoIncrement}">
+        <column name="id" type="bigint" autoIncrement="true">
             <constraints primaryKey="true" nullable="false"/>
         </column>
         <column name="author" type="varchar(255)">
