@@ -16,11 +16,12 @@
             <table class="table" style="margin: 1px">
                 <tbody>
                     <tr>
-                        <td width="4%" [innerHTML]="setScore(instruction.credits)"></td>
+                        <td [innerHTML]="setScore(instruction.credits)" style="width: 4%"></td>
                         <td [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
                         <td [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown" [ngbTooltip]="setTooltip(instruction)"></td>
-                        <td width="4%" style="position: relative; white-space: nowrap">
-                            <span>{{ instruction.usageCount }}</span>
+                        <td style="width: 4%; position: relative; white-space: nowrap">
+                            <span *ngIf="instruction!.usageCount && instruction!.usageCount !== 0; else usageCountInfinity">{{ instruction.usageCount }}</span>
+                            <ng-template #usageCountInfinity>&#8734;</ng-template>
                             <jhi-help-icon placement="top" text="artemisApp.exercise.usageCountHint"></jhi-help-icon>
                         </td>
                     </tr>
