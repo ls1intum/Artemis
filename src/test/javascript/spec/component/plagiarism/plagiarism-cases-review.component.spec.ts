@@ -97,7 +97,7 @@ describe('Plagiarism Cases Review Component', () => {
         expect(comp.exercise).toEqual(textExercise);
         expect(comp.isStudentA).toBe(true);
         expect(comp.instructorStatement).toBe(instructorStatementA);
-        expect(comp.studentStatement).toEqual(studentStatementA);
+        expect(comp.studentStatement).toBe(studentStatementA);
     }));
 
     it('should initialize for student B', fakeAsync(() => {
