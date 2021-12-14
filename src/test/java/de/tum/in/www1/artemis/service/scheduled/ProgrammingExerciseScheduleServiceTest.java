@@ -18,7 +18,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -58,9 +57,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @Autowired
     private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
-    @SpyBean
-    private ScheduleService scheduleService;
-
     private ProgrammingExercise programmingExercise;
 
     // When the scheduler is invoked, there is a small delay until the runnable is called.
@@ -90,7 +86,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         }
 
         database.resetDatabase();
-        reset(scheduleService);
         bambooRequestMockProvider.reset();
         bitbucketRequestMockProvider.reset();
     }
