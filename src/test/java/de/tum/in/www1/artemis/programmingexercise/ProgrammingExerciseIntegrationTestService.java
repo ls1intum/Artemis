@@ -1507,8 +1507,12 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private void prepareTwoRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, InterruptedException, GitAPIException {
-        database.addSubmission(programmingExercise, new ProgrammingSubmission(), "student1");
-        database.addSubmission(programmingExercise, new ProgrammingSubmission(), "student2");
+        var participationStudent1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        var participationStudent2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        var submissionStudent1 = database.createProgrammingSubmission(participationStudent1, false);
+        var submissionStudent2 = database.createProgrammingSubmission(participationStudent2, false);
+        database.addResultToSubmission(submissionStudent1, AssessmentType.AUTOMATIC, null);
+        database.addResultToSubmission(submissionStudent2, AssessmentType.AUTOMATIC, null);
 
         var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos").toString();
         var projectKey = programmingExercise.getProjectKey();
