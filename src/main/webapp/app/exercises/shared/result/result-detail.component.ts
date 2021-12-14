@@ -4,7 +4,13 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
-import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
+import {
+    Feedback,
+    FeedbackType,
+    STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
+    SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
+    checkSubsequentFeedbackInAssessment,
+} from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { getExercise } from 'app/entities/participation/participation.model';
@@ -25,13 +31,14 @@ import { round, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/util
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 export enum FeedbackItemType {
     Issue,
     Test,
     Feedback,
     Policy,
+    Subsequent,
 }
 
 export class FeedbackItem {
@@ -59,6 +66,7 @@ export class ResultDetailComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
     readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
+    readonly FeedbackItemType = FeedbackItemType;
 
     @Input() result: Result;
     // Specify the feedback.text values that should be shown, all other values will not be visible.
@@ -102,6 +110,7 @@ export class ResultDetailComponent implements OnInit {
 
     // Icons
     faCircleNotch = faCircleNotch;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -141,6 +150,7 @@ export class ResultDetailComponent implements OnInit {
                     if (feedbacks && feedbacks.length) {
                         this.result.feedbacks = feedbacks!;
                         const filteredFeedback = this.filterFeedback(feedbacks);
+                        checkSubsequentFeedbackInAssessment(filteredFeedback);
                         this.feedbackList = this.createFeedbackItems(filteredFeedback);
                         this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
                         if (this.showScoreChart) {
@@ -274,7 +284,7 @@ export class ResultDetailComponent implements OnInit {
                     };
                 } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
                     return {
-                        type: FeedbackItemType.Feedback,
+                        type: feedback.isSubsequent ? FeedbackItemType.Subsequent : FeedbackItemType.Feedback,
                         category: this.showTestDetails ? 'Tutor' : 'Feedback',
                         title: feedback.text,
                         text: feedback.detailText ? feedback.gradingInstruction.feedback + '\n' + feedback.detailText : feedback.gradingInstruction.feedback,
@@ -382,6 +392,8 @@ export class ResultDetailComponent implements OnInit {
             return 'alert-warning';
         } else if (feedback.type === FeedbackItemType.Test) {
             return feedback.positive ? 'alert-success' : 'alert-danger';
+        } else if (feedback.type === FeedbackItemType.Subsequent) {
+            return 'alert-secondary';
         } else {
             if (feedback.credits === 0) {
                 return 'alert-warning';

@@ -53,6 +53,12 @@
                     <span id="feedback-points" class="feedback-points" *ngIf="feedback.credits"
                         >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, getCourseFromExercise(exercise!)) }}P</span
                     >
+                    <fa-icon
+                        *ngIf="feedback.type === FeedbackItemType.Subsequent"
+                        class="float-end"
+                        [icon]="faExclamationTriangle"
+                        [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
+                    ></fa-icon>
                     <span class="feedback-title" *ngIf="feedback.title">{{ feedback.title }}</span>
                     <jhi-feedback-collapse id="feedback-text" *ngIf="feedback.text" [text]="feedback.text!" [previewText]="feedback.previewText"></jhi-feedback-collapse>
                     <p *ngElse>No feedback available!</p>
