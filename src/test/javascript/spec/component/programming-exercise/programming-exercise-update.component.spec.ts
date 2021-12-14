@@ -21,7 +21,7 @@ import {
     ProgrammingLanguageFeature,
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -48,6 +48,8 @@ import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exe
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import '@angular/localize/init';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -63,7 +65,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
+            imports: [ArtemisTestModule, NgxDatatableModule, OwlDateTimeModule],
             declarations: [
                 ProgrammingExerciseUpdateComponent,
                 // The following directives need to be imported raw because the SCA tests heavily rely on the UI interaction with the native inputs.
@@ -106,15 +108,17 @@ describe('ProgrammingExercise Management Update Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
-        }).compileComponents();
-
-        fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
-        comp = fixture.componentInstance;
-        debugElement = fixture.debugElement;
-        programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
-        courseService = debugElement.injector.get(CourseManagementService);
-        exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
-        programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
+                comp = fixture.componentInstance;
+                debugElement = fixture.debugElement;
+                programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
+                courseService = debugElement.injector.get(CourseManagementService);
+                exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
+                programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
+            });
     });
 
     describe('save', () => {

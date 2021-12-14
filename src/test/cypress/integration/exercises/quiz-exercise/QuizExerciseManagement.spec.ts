@@ -32,7 +32,7 @@ describe('Quiz Exercise Management', () => {
     describe('Quiz Exercise Creation', () => {
         beforeEach(() => {
             cy.login(admin, '/course-management/');
-            courseManagement.openExercisesOfCourse(course.title, course.shortName);
+            courseManagement.openExercisesOfCourse(course.shortName);
             cy.get('#create-quiz-button').click();
             quizCreation.setTitle('Cypress Quiz Exercise ' + generateUUID());
         });
@@ -65,7 +65,7 @@ describe('Quiz Exercise Management', () => {
 
         it('Deletes a Quiz Exercise', () => {
             cy.login(admin, '/course-management/');
-            courseManagement.openExercisesOfCourse(course.title, course.shortName);
+            courseManagement.openExercisesOfCourse(course.shortName);
             cy.get('#delete-quiz-' + quizExercise.id).click();
             cy.get('#confirm-name-delete-dialog').type(quizExercise.title);
             cy.intercept(DELETE, '/api/quiz-exercises/*').as('deleteQuizQuery');

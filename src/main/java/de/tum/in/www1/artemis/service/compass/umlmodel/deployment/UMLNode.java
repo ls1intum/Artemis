@@ -23,12 +23,11 @@ public class UMLNode extends UMLContainerElement {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLNode)) {
+        if (!(reference instanceof UMLNode referenceNode)) {
             return 0;
         }
         double similarity = 0;
 
-        UMLNode referenceNode = (UMLNode) reference;
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceNode.getName()) * CompassConfiguration.NODE_NAME_WEIGHT;
         similarity += NameSimilarity.levenshteinSimilarity(stereotype, referenceNode.getStereotype()) * CompassConfiguration.NODE_STEREOTYPE_WEIGHT;
 

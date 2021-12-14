@@ -27,6 +27,7 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { faCheckDouble, faFileUpload, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -73,16 +74,16 @@ describe('StudentExamDetailTableRowComponent', () => {
 
     it('should return the right icon based on exercise type', () => {
         exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, new ExerciseGroup());
-        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).to.equal('project-diagram');
+        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).to.equal(faProjectDiagram);
 
         exercise = new ProgrammingExercise(course, new ExerciseGroup());
-        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).to.equal('keyboard');
+        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).to.equal(faKeyboard);
 
         exercise = new QuizExercise(course, new ExerciseGroup());
-        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).to.equal('check-double');
+        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).to.equal(faCheckDouble);
 
         exercise = new FileUploadExercise(course, new ExerciseGroup());
-        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).to.equal('file-upload');
+        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).to.equal(faFileUpload);
     });
 
     it('should route to programming submission dashboard', () => {

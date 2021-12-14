@@ -4,6 +4,7 @@ import { DeleteFileChange, FileType } from 'app/exercises/programming/shared/cod
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 import { captureException } from '@sentry/browser';
+import { faBan, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 
 // Modal -> Delete repository file
 @Component({
@@ -17,6 +18,10 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     @Input() fileType: FileType;
 
     isLoading: boolean;
+
+    // Icons
+    faBan = faBan;
+    faTrashAlt = faTrashAlt;
 
     constructor(public activeModal: NgbActiveModal, private repositoryFileService: CodeEditorRepositoryFileService) {}
 

@@ -40,7 +40,7 @@ describe('Modeling Exercise Assessment Spec', () => {
         courseAssessmentDashboard.clickExerciseDashboardButton();
         exerciseAssessmentDashboard.clickHaveReadInstructionsButton();
         exerciseAssessmentDashboard.clickStartNewAssessment();
-        cy.get('#assessmentLockedCurrentUser').should('contain.text', 'You have the lock for this assessment');
+        cy.get('#assessmentLockedCurrentUser').should('be.visible');
         assessmentEditor.addNewFeedback(1, 'Thanks, good job.');
         assessmentEditor.openAssessmentForComponent(1);
         assessmentEditor.assessComponent(-1, 'False');
@@ -76,10 +76,9 @@ describe('Modeling Exercise Assessment Spec', () => {
 
         it('Instructor can see complaint and reject it', () => {
             cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
-            courseAssessmentDashboard.openComplaints(course.id);
+            courseAssessmentDashboard.openComplaints();
             courseAssessmentDashboard.showTheComplaint();
             assessmentEditor.rejectComplaint('You are wrong.');
-            cy.get('.alerts').should('contain.text', 'Response to complaint has been submitted');
         });
     });
 
