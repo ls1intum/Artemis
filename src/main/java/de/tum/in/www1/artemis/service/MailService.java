@@ -240,6 +240,6 @@ public class MailService {
 
     /// Weekly Summary Email
     public void sendWeeklySummaryEmail(User user, Set<Exercise> exercises) {
-
+        String hello = "hi"; // TODO remove
     }
 }

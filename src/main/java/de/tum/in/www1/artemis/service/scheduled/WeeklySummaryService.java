@@ -10,6 +10,7 @@ import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.TaskScheduler;
@@ -25,7 +26,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.MailService;
-import tech.jhipster.config.JHipsterConstants;
+import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
 
 @Service
 @Profile("scheduling")
@@ -45,16 +46,19 @@ public class WeeklySummaryService {
 
     private final TaskScheduler scheduler;
 
+    private final NotificationSettingsService notificationSettingsService;
+
     private ZonedDateTime oneWeekAgo;
 
     public WeeklySummaryService(Environment environment, MailService mailService, UserRepository userRepository, NotificationSettingRepository notificationSettingRepository,
-            CourseService courseService, TaskScheduler scheduler) {
+            CourseService courseService, @Qualifier("taskScheduler") TaskScheduler scheduler, NotificationSettingsService notificationSettingsService) {
         this.environment = environment;
         this.mailService = mailService;
         this.userRepository = userRepository;
         this.notificationSettingRepository = notificationSettingRepository;
         this.courseService = courseService;
         this.scheduler = scheduler;
+        this.notificationSettingsService = notificationSettingsService;
     }
 
     /**
@@ -64,17 +68,16 @@ public class WeeklySummaryService {
     public void scheduleWeeklySummariesOnStartUp() {
         try {
             Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
-            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                // only execute this on production server, i.e. when the prod profile is active
-                // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
-                return;
-            }
-            SecurityUtils.setAuthorizationObject();
+            /*
+             * TODO uncomment after testing! if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) { // only execute this on production server, i.e. when the
+             * prod profile is active // NOTE: if you want to test this locally, please comment it out, but do not commit the changes return; }
+             * SecurityUtils.setAuthorizationObject();
+             */
 
-            // i.e. next Friday
-            LocalDateTime nextWeeklySummaryDate = ZonedDateTime.now().toLocalDateTime().with(DayOfWeek.FRIDAY);
+            // i.e. next Friday at 17:00
+            LocalDateTime nextWeeklySummaryDate = ZonedDateTime.now().toLocalDateTime().with(DayOfWeek.FRIDAY).withHour(17).withMinute(0);
             // For local testing :
-            // nextWeeklySummaryDate = ZonedDateTime.now().plusMinutes(5);
+            nextWeeklySummaryDate = ZonedDateTime.now().toLocalDateTime(); // TODO comment in
 
             ZoneOffset zoneOffset = ZonedDateTime.now().getZone().getRules().getOffset(Instant.now());
 
@@ -98,10 +101,10 @@ public class WeeklySummaryService {
             checkSecurityUtils();
             oneWeekAgo = ZonedDateTime.now().minusWeeks(1);
             // find all Artemis users // Could be improved by getting only still active users
-            Set<User> allUsers = userRepository.getAll();
+            Set<User> allUsers = new HashSet<>(userRepository.findAll());
             // filter out users that do not want to receive weekly summaries
             Set<User> filteredUsers = allUsers.stream().filter(this::checkIfWeeklySummaryIsAllowedByNotificationSettingsForGivenUser).collect(Collectors.toSet());
-            if (!allUsers.isEmpty()) {
+            if (!filteredUsers.isEmpty()) {
                 filteredUsers.forEach(this::prepareWeeklySummaryForUser);
             }
         };
@@ -123,6 +126,7 @@ public class WeeklySummaryService {
      */
     private boolean checkIfWeeklySummaryIsAllowedByNotificationSettingsForGivenUser(User user) {
         Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(user.getId());
+        notificationSettings = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(notificationSettings);
         NotificationSetting weeklySummarySetting = notificationSettings.stream().filter(setting -> setting.getSettingId().equals(NOTIFICATION__WEEKLY_SUMMARY_WEEKLY_SUMMARY_BASIC))
                 .findFirst().orElse(null);
         if (weeklySummarySetting == null)

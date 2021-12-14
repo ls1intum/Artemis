@@ -31,8 +31,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     String USERS_CACHE = "users";
 
-    Set<User> getAll();
-
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByActivationKey(String activationKey);
 
