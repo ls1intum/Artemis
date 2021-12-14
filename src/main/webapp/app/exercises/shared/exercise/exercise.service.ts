@@ -423,27 +423,26 @@ export class ExerciseService {
     /**
      * This method bundles recurring conversion steps for Exercise EntityResponses.
      * @param exerciseRes
-     * @private
      */
-    private processExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
+    public processExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
         this.convertDateFromServer(exerciseRes);
         this.convertExerciseCategoriesFromServer(exerciseRes);
         this.setAccessRightsExerciseEntityResponseType(exerciseRes);
         return exerciseRes;
     }
 
-    private setAccessRightsExerciseEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
+    public setAccessRightsExerciseEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((exercise: Exercise) => {
-                this.accountService.setAccessRightsForExercise(exercise);
+                this.accountService.setAccessRightsForExerciseAndReferencedCourse(exercise);
             });
         }
         return res;
     }
 
-    private setAccessRightsExerciseEntityResponseType(res: EntityResponseType): EntityResponseType {
+    public setAccessRightsExerciseEntityResponseType(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.accountService.setAccessRightsForExercise(res.body as Exercise);
+            this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body as Exercise);
         }
         return res;
     }
