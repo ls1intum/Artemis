@@ -95,7 +95,7 @@ describe('Exam assessment', () => {
 
     describe('Exam exercise assessment', () => {
         beforeEach('Generate new exam name', () => {
-            examEnd = dayjs().add(30, 'seconds');
+            examEnd = dayjs().add(45, 'seconds');
             prepareExam(examEnd);
         });
 
@@ -119,18 +119,17 @@ describe('Exam assessment', () => {
                 cy.login(tutor, '/course-management/' + course.id + '/exams');
                 cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
                 startAssessing();
-                modelingAssessment.addNewFeedback(2, 'Noice');
+                modelingAssessment.addNewFeedback(5, 'Good');
                 modelingAssessment.openAssessmentForComponent(1);
-                modelingAssessment.assessComponent(1, 'Good');
+                modelingAssessment.assessComponent(-1, 'Wrong');
                 modelingAssessment.clickNextAssessment();
                 modelingAssessment.assessComponent(0, 'Neutral');
                 modelingAssessment.clickNextAssessment();
-                modelingAssessment.assessComponent(-1, 'Wrong');
                 examAssessment.submitModelingAssessment().then((assessmentResponse) => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                cy.contains('2 of 10 points').should('be.visible');
+                cy.contains('4 of 10 points').should('be.visible');
             });
         });
 
@@ -169,8 +168,8 @@ describe('Exam assessment', () => {
         let resultDate: Dayjs;
 
         beforeEach('Generate new exam name', () => {
-            examEnd = dayjs().add(15, 'seconds');
-            resultDate = examEnd.add(17, 'seconds');
+            examEnd = dayjs().add(25, 'seconds');
+            resultDate = examEnd.add(5, 'seconds');
             prepareExam(examEnd, resultDate);
         });
 

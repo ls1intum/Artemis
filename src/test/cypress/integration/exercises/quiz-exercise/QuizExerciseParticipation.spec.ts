@@ -49,12 +49,14 @@ describe('Quiz Exercise Participation', () => {
         });
 
         it('Student can see a visible quiz', () => {
+            cy.login(admin);
             courseManagementRequest.setQuizVisible(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
             courseOverview.openRunningExercise(quizExercise.id);
         });
 
         it('Student can participate in MC quiz', () => {
+            cy.login(admin);
             courseManagementRequest.setQuizVisible(quizExercise.id);
             courseManagementRequest.startQuizNow(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
