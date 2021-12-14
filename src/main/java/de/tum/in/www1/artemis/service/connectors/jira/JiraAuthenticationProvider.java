@@ -30,6 +30,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.UserType;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -151,7 +152,8 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             else {
                 // the user does not exist yet, we have to create it in the Artemis database
                 // Note: we use an empty password, so that we don't store the credentials of Jira users in the Artemis DB (Spring enforces a non null password)
-                user = userCreationService.createInternalUser(username, "", null, jiraUserDTO.getDisplayName(), "", jiraUserDTO.getEmailAddress(), null, null, "en");
+                user = userCreationService.createInternalUser(username, "", null, jiraUserDTO.getDisplayName(), "", jiraUserDTO.getEmailAddress(), null, null, "en", UserType.LDAP,
+                        false);
                 // load additional details if the ldap service is available and the user follows the allowed username pattern (if specified)
                 ldapUserService.ifPresent(service -> service.loadUserDetailsFromLdap(user));
             }

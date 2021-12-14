@@ -13,6 +13,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.UserType;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -50,7 +51,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         final var optionalUser = userRepository.findOneByLogin(authentication.getName().toLowerCase());
         final User user;
         if (optionalUser.isEmpty()) {
-            user = userCreationService.createInternalUser(authentication.getName(), password, null, firstName, lastName, email, null, null, "en");
+            user = userCreationService.createInternalUser(authentication.getName(), password, null, firstName, lastName, email, null, null, "en", UserType.INTERNAL, false);
         }
         else {
             user = optionalUser.get();

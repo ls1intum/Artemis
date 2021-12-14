@@ -146,10 +146,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
 
         this.route.queryParams.subscribe((queryParams) => {
-            if (queryParams['welcome'] === '') {
+            if (queryParams['welcome'] !== undefined) {
                 setTimeout(() => {
                     this.showWelcomeAlert = true;
                 }, 500);
+            }
+            if (queryParams['initialize'] !== undefined) {
             }
         });
 

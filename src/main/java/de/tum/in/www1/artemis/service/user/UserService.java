@@ -21,6 +21,7 @@ import org.springframework.util.StringUtils;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.UserType;
 import de.tum.in.www1.artemis.exception.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
@@ -352,7 +353,7 @@ public class UserService {
 
                 // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
                 User user = userCreationService.createInternalUser(ldapUser.getUsername(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
-                        registrationNumber, null, "en");
+                        registrationNumber, null, "en", UserType.LDAP, false);
                 if (useExternalUserManagement) {
                     artemisAuthenticationProvider.createUserInExternalUserManagement(user);
                 }

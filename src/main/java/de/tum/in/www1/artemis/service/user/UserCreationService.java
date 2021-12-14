@@ -23,7 +23,11 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.UserType;
+import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.OrganizationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
@@ -91,10 +95,12 @@ public class UserCreationService {
      * @param registrationNumber the matriculation number of the student*
      * @param imageUrl           user image url
      * @param langKey            user language
+     * @param userType           user type
+     * @param initialize         true if the user should be initialized on the first visit
      * @return newly created user
      */
     public User createInternalUser(String login, @Nullable String password, @Nullable Set<String> groups, String firstName, String lastName, String email,
-            String registrationNumber, String imageUrl, String langKey) {
+            String registrationNumber, String imageUrl, String langKey, @NotNull UserType userType, boolean initialize) {
         User newUser = new User();
 
         // Set random password for null passwords
@@ -118,6 +124,8 @@ public class UserCreationService {
         newUser.setActivated(false);
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
+        newUser.setUserType(userType);
+        newUser.setInitialize(initialize);
 
         final var authority = authorityRepository.findById(STUDENT.getAuthority()).get();
         // needs to be mutable --> new HashSet<>(Set.of(...))
@@ -266,6 +274,22 @@ public class UserCreationService {
         clearUserCaches(user);
         log.debug("Save user {}", user);
         return userRepository.save(user);
+    }
+
+    public String setRandomPasswordAndReturn(User user) {
+        String newPassword = RandomUtil.generatePassword();
+        user.setPassword(passwordService.decryptPassword(user));
+        userRepository.save(user);
+
+        optionalCIUserManagementService.ifPresent(service -> {
+            service.updateUser(user);
+        });
+
+        optionalVcsUserManagementService.ifPresent(service -> {
+            service.updateVcsUser(user.getLogin(), user, new HashSet<>(), new HashSet<>(), true);
+        });
+
+        return newPassword;
     }
 
     // TODO: this is duplicated code, we should move it into e.g. a CacheService
