@@ -79,11 +79,16 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     @AfterEach
-    void tearDown() {
+    void tearDown() throws InterruptedException {
         // not yet finished scheduled futures may otherwise affect following tests
         for (final var lifecycle : ExerciseLifecycle.values()) {
             scheduleService.cancelScheduledTaskForLifecycle(programmingExercise.getId(), lifecycle);
         }
+
+        // Some futures might already run while all tasks are cancelled. Waiting
+        // a bit makes sure the mocks are not called by the futures after the
+        // reset. Otherwise the following test might fail.
+        Thread.sleep(1000);
 
         database.resetDatabase();
         bambooRequestMockProvider.reset();
@@ -350,7 +355,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, delayMS / 2, null);
-        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
+        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 3 * delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
