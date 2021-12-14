@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
+@Deprecated // Moved to user management microservice. To be removed.
 public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired

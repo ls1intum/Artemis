@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import tech.jhipster.security.RandomUtil;
 
+@Deprecated // Moved to user management microservice. To be removed.
 @Service
 public class UserCreationService {
 

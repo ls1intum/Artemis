@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 /**
  * Tests {@link AccountResource}. Several Tests rely on overwriting AccountResource.registrationEnabled and other attributes with reflections. Any changes to the internal structure will cause these tests to fail.
  */
+@Deprecated // Moved to user management microservice. To be removed.
 public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
