@@ -187,7 +187,11 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             // previousState was set in the authExpiredInterceptor before being redirected to login modal.
             // since login is successful, go to stored previousState and clear previousState
             const redirect = this.stateStorageService.getUrl();
-            if (redirect && redirect !== '') {
+            if (redirect && redirect.endsWith('/saml2/authenticate')) {
+                // Special handling for SAML2 Login workflow
+                this.stateStorageService.storeUrl('');
+                this.router.navigate([redirect]);
+            } else if (redirect && redirect !== '') {
                 this.stateStorageService.storeUrl('');
                 this.router.navigateByUrl(redirect);
             } else {

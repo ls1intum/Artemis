@@ -4,7 +4,6 @@ import { LoginService } from 'app/core/login/login.service';
 import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-saml2-login',
@@ -19,7 +18,7 @@ export class Saml2LoginComponent implements OnInit {
     @Input()
     saml2Profile: Saml2Config;
 
-    constructor(private loginService: LoginService, private eventManager: EventManager, private alertService: AlertService, private router: Router) {}
+    constructor(private loginService: LoginService, private eventManager: EventManager, private alertService: AlertService) {}
 
     ngOnInit(): void {
         // If SAML2 flow was started, retry login.
@@ -44,7 +43,7 @@ export class Saml2LoginComponent implements OnInit {
                     // (re)set cookie
                     document.cookie = 'SAML2flow=true; max-age=120; SameSite=Lax;';
                     // arbitrary by SAML2 HTTP Filter Chain secured URL
-                    this.router.navigate(['/saml2/authenticate']);
+                    window.location.replace('/saml2/authenticate');
                 } else if (error.status === 403) {
                     // for example if user was disabled
                     let message = 'Forbidden';
