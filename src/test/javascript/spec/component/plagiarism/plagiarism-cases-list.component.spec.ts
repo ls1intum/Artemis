@@ -149,7 +149,7 @@ describe('Plagiarism Cases List Component', () => {
 
         comp.updateStatus(true, 0, studentLoginA);
 
-        expect(comp.plagiarismCase.comparisons[0].statusA).toEqual(PlagiarismStatus.CONFIRMED);
+        expect(comp.plagiarismCase.comparisons[0].statusA).toBe(PlagiarismStatus.CONFIRMED);
         expect(updatePlagiarismComparisonFinalStatusStub).toHaveBeenCalledWith(1, plagiarismComparison.id, true, studentLoginA);
     });
 
