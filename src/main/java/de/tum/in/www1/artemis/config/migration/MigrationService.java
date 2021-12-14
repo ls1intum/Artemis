@@ -48,10 +48,10 @@ public class MigrationService {
     }
 
     /**
-     *  First checks the integrity of the passed changelog, then executes not yet executed entries.
-     *  After each execution it marks the entry as executed. All entries of one startup run get the same hash assigned.
+     * First checks the integrity of the passed changelog, then executes not yet executed entries.
+     * After each execution it marks the entry as executed. All entries of one startup run get the same hash assigned.
      *
-     * @param event Specifies when this method gets called and provides the event with all application data
+     * @param event         Specifies when this method gets called and provides the event with all application data
      * @param entryClassMap The changelog to be executed
      */
     public void execute(ApplicationReadyEvent event, SortedMap<Integer, Class<? extends MigrationEntry>> entryClassMap) {
@@ -64,7 +64,7 @@ public class MigrationService {
         SortedMap<Integer, MigrationEntry> entryMap = instantiateEntryMap(entryClassMap);
 
         if (!checkIntegrity(entryMap)) {
-            log.error(getClass().getSimpleName() + " corrupted. Aborting startup.");
+            log.error("{} corrupted. Aborting startup.", getClass().getSimpleName());
             event.getApplicationContext().close();
             System.exit(1);
         }
@@ -82,7 +82,7 @@ public class MigrationService {
             String startupHash = toMD5(ZonedDateTime.now().toString());
             for (Map.Entry<Integer, MigrationEntry> integerClassEntry : migrationEntryMap.entrySet()) {
                 MigrationEntry entry = integerClassEntry.getValue();
-                log.debug("Executing entry " + entry.date());
+                log.debug("Executing entry {}", entry.date());
                 entry.execute();
                 MigrationChangelog newChangelog = new MigrationChangelog();
                 newChangelog.setAuthor(entry.author());
@@ -94,7 +94,7 @@ public class MigrationService {
                 migrationChangeRepository.save(newChangelog);
                 log.debug("Done");
             }
-            log.info("Executed " + migrationEntryMap.size() + " migration entries");
+            log.info("Executed {} migration entries", migrationEntryMap.size());
         }
         else {
             log.info("No migration entries executed");
@@ -124,8 +124,8 @@ public class MigrationService {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         if (!brokenInstances.isEmpty()) {
             passed = false;
-            log.error(getClass().getSimpleName() + " corrupted. Migration entries not properly set up.");
-            brokenInstances.forEach((key, value) -> log.error("Entry " + value.getClass().getSimpleName() + " has not all information methods defined."));
+            log.error("{} corrupted. Migration entries not properly set up.", getClass().getSimpleName());
+            brokenInstances.forEach((key, value) -> log.error("Entry {} has not all information methods defined.", value.getClass().getSimpleName()));
             log.info("Please refer to the documentation on how to set up migration entries.");
         }
         List<MigrationEntry> entryList = entryMap.values().stream().toList();
@@ -141,8 +141,8 @@ public class MigrationService {
             for (int i = startIndex; i < entryList.size(); i++) {
                 MigrationEntry entry = entryList.get(i);
                 if (!StringUtils.isEmpty(entry.date()) && baseEntry.date().compareTo(entry.date()) >= 0) {
-                    log.error(getClass().getSimpleName() + " corrupted. Invalid date order detected. " + entry.date() + " (" + entry.getClass().getSimpleName()
-                            + ") should come before " + baseEntry.date() + " (" + baseEntry.getClass().getSimpleName() + ")");
+                    log.error("{} corrupted. Invalid date order detected. {} ({}) should come before {} ({})", getClass().getSimpleName(), entry.date(),
+                            entry.getClass().getSimpleName(), baseEntry.date(), baseEntry.getClass().getSimpleName());
                     passed = false;
                 }
                 baseEntry = entry;
