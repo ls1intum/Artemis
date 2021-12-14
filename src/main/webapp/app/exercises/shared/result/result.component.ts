@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { initializedResultWithScore } from 'app/exercises/shared/result/result-utils';
+import { initializedResultWithScore } from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
@@ -12,7 +12,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { getExercise, Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
-import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/overview/participation-utils';
+import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/overview/participation.utils';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { Result } from 'app/entities/result.model';
@@ -163,7 +163,8 @@ export class ResultComponent implements OnInit, OnChanges {
             return;
         }
 
-        this.submission = this.result!.submission;
+        // Note: it can still happen here that this.result is undefined, e.g. when this.participation.results.length == 0
+        this.submission = this.result?.submission;
         this.evaluate();
     }
 

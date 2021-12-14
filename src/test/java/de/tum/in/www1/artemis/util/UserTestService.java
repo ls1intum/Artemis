@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
  * 1) Bamboo + Bitbucket
  * 2) Jenkins + Gitlab
  */
+@Deprecated // Moved to user management microservice. To be removed.
 @Service
 public class UserTestService {
 

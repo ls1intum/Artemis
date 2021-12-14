@@ -308,7 +308,7 @@ export class MetisService implements OnDestroy {
      */
     isPostResolved(post: Post): boolean {
         if (post.answers && post.answers.length > 0) {
-            return post.answers!.filter((answer: AnswerPost) => answer.resolvesPost === true).length > 0;
+            return !!post.answers.find((answerPosts: AnswerPost) => answerPosts.resolvesPost);
         } else {
             return false;
         }

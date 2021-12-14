@@ -1,11 +1,10 @@
 import { artemis } from '../../support/ArtemisTesting';
-import { COURSE_BASE, CypressAssessmentType, CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
+import { CypressAssessmentType, CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import dayjs, { Dayjs } from 'dayjs';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
 import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import { makeSubmissionAndVerifyResults } from '../../support/pageobjects/exercises/programming/OnlineEditorPage';
-import { POST } from '../../support/constants';
 
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -20,6 +19,7 @@ const examNavigation = artemis.pageobjects.examNavigationBar;
 const textEditor = artemis.pageobjects.textExercise.editor;
 const exerciseAssessment = artemis.pageobjects.assessment.exercise;
 const multipleChoice = artemis.pageobjects.quizExercise.multipleChoice;
+const studentExamManagement = artemis.pageobjects.studentExamManagement;
 
 // Common primitives
 const admin = artemis.users.getAdmin();
@@ -88,9 +88,9 @@ describe('Exam assessment', () => {
                 modelingAssessment.addNewFeedback(2, 'Noice');
                 modelingAssessment.openAssessmentForComponent(1);
                 modelingAssessment.assessComponent(1, 'Good');
-                modelingAssessment.openAssessmentForComponent(2);
+                modelingAssessment.clickNextAssessment();
                 modelingAssessment.assessComponent(0, 'Neutral');
-                modelingAssessment.openAssessmentForComponent(3);
+                modelingAssessment.clickNextAssessment();
                 modelingAssessment.assessComponent(-1, 'Wrong');
                 examAssessment.submitModelingAssessment().then((assessmentResponse) => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
@@ -136,7 +136,7 @@ describe('Exam assessment', () => {
 
         beforeEach('Generate new exam name', () => {
             examEnd = dayjs().add(15, 'seconds');
-            resultDate = examEnd.add(10, 'seconds');
+            resultDate = examEnd.add(17, 'seconds');
             prepareExam(examEnd, resultDate);
         });
 
@@ -159,13 +159,15 @@ describe('Exam assessment', () => {
                 cy.wait(examEnd.diff(dayjs(), 'ms'));
             }
             cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/student-exams`);
-            cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/evaluate-quiz-exercises').as('evaluateQuizzes');
-            cy.contains('Evaluate quizzes').click();
+            studentExamManagement.clickEvaluateQuizzes().its('response.statusCode').should('eq', 200);
             if (dayjs().isBefore(resultDate)) {
                 cy.wait(examEnd.diff(dayjs(), 'ms'));
             }
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-            cy.get('jhi-result').contains('5 of 10 points').should('be.visible');
+            const score = '5 of 10 points';
+            // Sometimes the feedback fails to load properly on the first load...
+            cy.reloadUntilFound(`jhi-result:contains(${score})`);
+            cy.get('jhi-result').contains(score).should('be.visible');
         });
     });
 

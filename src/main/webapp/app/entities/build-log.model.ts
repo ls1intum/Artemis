@@ -1,4 +1,4 @@
-import { safeUnescape } from 'app/shared/util/security-util';
+import { safeUnescape } from 'app/shared/util/security.util';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 

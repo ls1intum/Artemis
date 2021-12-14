@@ -2,9 +2,15 @@ import { EventEmitter, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { SplitPaneHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
-import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgModel } from '@angular/forms';
+import { PlagiarismDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-details/plagiarism-details.component';
+import { PlagiarismRunDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
+import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
+import { MockPipe, MockDirective, MockComponent } from 'ng-mocks';
 
 describe('Plagiarism Split Pane Header Component', () => {
     let comp: SplitPaneHeaderComponent;
@@ -14,16 +20,27 @@ describe('Plagiarism Split Pane Header Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
+            imports: [ArtemisTestModule],
+            declarations: [
+                SplitPaneHeaderComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(NgbTooltip),
+                MockDirective(NgModel),
+                MockComponent(PlagiarismDetailsComponent),
+                MockComponent(PlagiarismRunDetailsComponent),
+                MockComponent(PlagiarismSidebarComponent),
+            ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(SplitPaneHeaderComponent);
+                comp = fixture.componentInstance;
 
-        fixture = TestBed.createComponent(SplitPaneHeaderComponent);
-        comp = fixture.componentInstance;
-
-        comp.files = [];
-        comp.studentLogin = 'ts10abc';
-        comp.selectFile = new EventEmitter<string>();
+                comp.files = [];
+                comp.studentLogin = 'ts10abc';
+                comp.selectFile = new EventEmitter<string>();
+            });
     });
 
     it('resets the active file index on change', () => {
@@ -44,6 +61,7 @@ describe('Plagiarism Split Pane Header Component', () => {
             files: { currentValue: files } as SimpleChange,
         });
 
+        expect(comp.selectFile.emit).toHaveBeenCalledTimes(1);
         expect(comp.selectFile.emit).toHaveBeenCalledWith(files[0]);
     });
 
@@ -67,8 +85,9 @@ describe('Plagiarism Split Pane Header Component', () => {
 
         comp.handleFileSelect(files[idx], idx);
 
-        expect(comp.activeFileIndex).toEqual(idx);
+        expect(comp.activeFileIndex).toBe(idx);
         expect(comp.showFiles).toBe(false);
+        expect(comp.selectFile.emit).toHaveBeenCalledTimes(1);
         expect(comp.selectFile.emit).toHaveBeenCalledWith(files[idx]);
     });
 

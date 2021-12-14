@@ -45,7 +45,7 @@
                     </th>
                     <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th class="d-md-table-cell" jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th class="d-md-table-cell" jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="includedInOverallScore">
                         <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
@@ -56,7 +56,7 @@
                         <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th class="d-md-table-cell">
-                        <span jhiTranslate="artemisApp.programmingExercise.participationMode">Participation Mode</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="artemisApp.programmingExercise.participationMode">Participation Mode</span>
                     </th>
                     <th class="d-md-table-cell" jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
@@ -199,7 +199,7 @@
                                     <span class="d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
                                 </a>
                                 <a
-                                    *ngIf="programmingExercise.isAtLeastTutor"
+                                    *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'scores']"
                                     class="btn btn-info btn-sm me-1 mb-1"
                                     style="display: flex; justify-content: center; align-items: center"
@@ -211,7 +211,7 @@
                                 </a>
                                 <a
                                     *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
-                                    [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'teams']"
+                                    [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'teams']"
                                     class="btn btn-primary btn-sm me-1 mb-1"
                                 >
                                     <fa-icon [icon]="'users'"></fa-icon>
