@@ -139,12 +139,13 @@ public class MigrationService {
             }
             // Go through the list of registered entries and make sure that every date is smaller than the date of it's successor.
             for (int i = startIndex; i < entryList.size(); i++) {
-                if (!StringUtils.isEmpty(entryList.get(i).date()) && baseEntry.date().compareTo(entryList.get(i).date()) >= 0) {
-                    log.error(getClass().getSimpleName() + " corrupted. Invalid date order detected. " + entryList.get(i).date() + " ("
-                            + entryList.get(i).getClass().getSimpleName() + ") should come before " + baseEntry.date() + " (" + baseEntry.getClass().getSimpleName() + ")");
+                MigrationEntry entry = entryList.get(i);
+                if (!StringUtils.isEmpty(entry.date()) && baseEntry.date().compareTo(entry.date()) >= 0) {
+                    log.error(getClass().getSimpleName() + " corrupted. Invalid date order detected. " + entry.date() + " (" + entry.getClass().getSimpleName()
+                            + ") should come before " + baseEntry.date() + " (" + baseEntry.getClass().getSimpleName() + ")");
                     passed = false;
                 }
-                baseEntry = entryList.get(i);
+                baseEntry = entry;
             }
         }
         log.info("Ending migration integrity check.");
