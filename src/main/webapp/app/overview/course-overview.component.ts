@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EmbeddedViewRef, OnDestroy, OnInit, QueryList, TemplateRef, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy, OnInit, QueryList, TemplateRef, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseExerciseService, CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -72,6 +72,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private jhiWebsocketService: JhiWebsocketService,
         private serverDateService: ArtemisServerDateService,
         private alertService: AlertService,
+        private changeDetectorRef: ChangeDetectorRef,
     ) {}
 
     async ngOnInit() {
@@ -104,13 +105,16 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     onSubRouteActivate(componentRef: any) {
         if (componentRef.controlConfiguration) {
-            this.controlConfiguration = componentRef.controlConfiguration as BarControlConfiguration;
+            const provider = componentRef as BarControlConfigurationProvider;
+            this.controlConfiguration = provider.controlConfiguration as BarControlConfiguration;
 
-            // Listen for changes to the control configuration; this will also work for the initial config
+            // Listen for changes to the control configuration; works for initial config as well
             this.controlsSubscription =
                 this.controlConfiguration.subject?.subscribe((controls: TemplateRef<any>) => {
                     this.controls = controls;
                     this.tryRenderControls();
+                    // Since we might be pulling data upwards during a render cycle, we need to re-run change detection
+                    this.changeDetectorRef.detectChanges();
                 }) || undefined;
         }
     }
@@ -120,10 +124,16 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      * Called by the router outlet as soon as the currently mounted component is removed
      */
     onSubRouteDeactivate() {
-        this.controlsEmbeddedView?.destroy();
+        this.removeCurrentControlsView();
         this.controls = undefined;
         this.controlConfiguration = undefined;
         this.controlsSubscription?.unsubscribe();
+        this.changeDetectorRef.detectChanges();
+    }
+
+    private removeCurrentControlsView() {
+        this.controlsEmbeddedView?.detach();
+        this.controlsEmbeddedView?.destroy();
     }
 
     /**
@@ -132,8 +142,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     tryRenderControls() {
         if (this.controlConfiguration && this.controls && this.controlsViewContainer) {
-            this.controlsEmbeddedView?.destroy();
+            this.removeCurrentControlsView();
             this.controlsEmbeddedView = this.controlsViewContainer.createEmbeddedView(this.controls);
+            this.controlsEmbeddedView.detectChanges();
         }
     }
 

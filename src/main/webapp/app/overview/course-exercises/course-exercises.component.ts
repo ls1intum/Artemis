@@ -150,9 +150,9 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     }
 
     ngOnDestroy(): void {
-        this.translateSubscription.unsubscribe();
-        this.courseUpdatesSubscription.unsubscribe();
-        this.paramSubscription.unsubscribe();
+        this.translateSubscription?.unsubscribe();
+        this.courseUpdatesSubscription?.unsubscribe();
+        this.paramSubscription?.unsubscribe();
     }
 
     private onCourseLoad() {
