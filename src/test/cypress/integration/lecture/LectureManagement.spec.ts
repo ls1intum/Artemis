@@ -41,7 +41,7 @@ describe('Lecture management', () => {
     it('creates a lecture', () => {
         const lectureTitle = 'exam' + generateUUID();
         cy.login(instructor, '/course-management/' + course.id);
-        cy.contains('Lectures').click();
+        cy.get('#lectures').click();
         lectureManagement.clickCreateLecture();
         lectureCreation.setTitle(lectureTitle);
         cy.fixture('loremIpsum.txt').then((text) => {

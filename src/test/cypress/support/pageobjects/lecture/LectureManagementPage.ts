@@ -3,7 +3,7 @@ import day from 'dayjs';
 
 export class LectureManagementPage {
     clickCreateLecture() {
-        cy.get('.create-lecture').click();
+        cy.get('#jh-create-entity').click();
     }
 
     deleteLecture(lectureTitle: string) {
