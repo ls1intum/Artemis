@@ -6,6 +6,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { SubmissionType } from 'app/entities/submission.model';
+import { faRedo } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-student-trigger-build-button',
@@ -13,6 +14,9 @@ import { SubmissionType } from 'app/entities/submission.model';
 })
 export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     @Input() triggerLastGraded = false;
+
+    // Icons
+    faRedo = faRedo;
 
     constructor(submissionService: ProgrammingSubmissionService, alertService: AlertService, participationWebsocketService: ParticipationWebsocketService) {
         super(submissionService, participationWebsocketService, alertService);

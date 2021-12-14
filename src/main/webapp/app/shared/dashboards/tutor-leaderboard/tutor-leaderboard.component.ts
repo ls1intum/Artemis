@@ -5,6 +5,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam.model';
+import { faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-tutor-leaderboard',
@@ -21,6 +22,10 @@ export class TutorLeaderboardComponent implements OnInit {
     isExamMode = false;
     sortPredicate = 'points';
     reverseOrder = false;
+
+    // Icons
+    faSort = faSort;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(private accountService: AccountService, private sortService: SortService) {}
 

@@ -5,6 +5,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { matchesRegexFully } from 'app/utils/regex.util';
 import { HttpResponse } from '@angular/common/http';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-registration-selector',
@@ -16,6 +17,9 @@ export class CourseRegistrationComponent implements OnInit {
     public userIsAllowedToRegister = false;
     addedSuccessful = false;
     loading = false;
+
+    // Icons
+    faCheckCircle = faCheckCircle;
 
     constructor(private accountService: AccountService, private courseService: CourseManagementService, private profileService: ProfileService) {}
 

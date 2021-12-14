@@ -1,5 +1,5 @@
 <div *ngIf="allowDrop" class="alert alert-info">
-    <fa-icon [icon]="'info-circle'"></fa-icon>
+    <fa-icon [icon]="faInfoCircle"></fa-icon>
     <span>{{ 'artemisApp.exercise.dragDropInstruction' | artemisTranslate }}</span>
 </div>
 <div *ngFor="let criterion of criteria; let criterionIndex = index">

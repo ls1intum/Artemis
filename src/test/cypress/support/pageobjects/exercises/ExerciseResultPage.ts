@@ -7,7 +7,7 @@ export class ExerciseResultPage {
     }
 
     shouldShowExerciseTitle(title: string) {
-        cy.get('jhi-header-exercise-page-with-details').contains(title).should('be.visible');
+        cy.get('#exercise-header').contains(title).should('be.visible');
     }
 
     shouldShowScore(percentage: number) {
@@ -18,7 +18,7 @@ export class ExerciseResultPage {
         cy.contains('View submission').click();
     }
 
-    clickOpenCodeEditor() {
-        cy.contains('Open code editor').click();
+    clickOpenCodeEditor(exerciseId: string) {
+        cy.get('#open-exercise-' + exerciseId).click();
     }
 }

@@ -27,6 +27,8 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { fromPairs, pickBy } from 'lodash-es';
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
+import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
+import { faCircleNotch, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };
 
@@ -92,6 +94,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     fileFeedbackPerLine: { [line: number]: Feedback } = {};
     editorSession: any;
     markerIds: number[] = [];
+
+    // Icons
+    farFileAlt = faFileAlt;
+    faPlusSquare = faPlusSquare;
+    faCircleNotch = faCircleNotch;
 
     constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
 
