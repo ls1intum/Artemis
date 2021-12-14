@@ -154,7 +154,7 @@ describe('Plagiarism Cases Review Component', () => {
         comp.saveStudentStatement();
         tick();
 
-        expect(comp.comparison.studentStatementA).toEqual('statement test');
+        expect(comp.comparison.studentStatementA).toBe('statement test');
         expect(sendStatementStub).toHaveBeenCalledWith(1, 1, 'statement test');
     }));
 
