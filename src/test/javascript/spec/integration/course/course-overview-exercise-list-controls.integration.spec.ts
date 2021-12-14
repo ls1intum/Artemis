@@ -83,7 +83,6 @@ describe('CourseOverviewExerciseListControls', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
-        jest.useRealTimers();
     });
 
     it('should show the current amount of filters in the filter button and change background color', () => {
