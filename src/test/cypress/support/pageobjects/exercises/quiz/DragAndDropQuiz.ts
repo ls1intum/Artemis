@@ -2,7 +2,7 @@ import { POST, EXERCISE_BASE } from '../../../constants';
 
 export class DragAndDropQuiz {
     dragItemIntoDragArea() {
-        cy.get('.drag-items').children().eq(0).drag('.drop-location');
+        cy.get('#drag-items').find('#drag-item-0').drag('.drop-location');
     }
 
     submit() {

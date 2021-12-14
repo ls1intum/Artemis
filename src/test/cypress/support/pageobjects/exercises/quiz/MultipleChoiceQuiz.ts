@@ -2,7 +2,7 @@ import { BASE_API, POST } from '../../../constants';
 
 export class MultipleChoiceQuiz {
     getQuizBody() {
-        return cy.get('.mc-question');
+        return cy.get('#question0');
     }
 
     tickAnswerOption(optionNumber: number) {

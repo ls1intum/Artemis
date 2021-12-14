@@ -231,13 +231,13 @@
         <div *ngIf="question.dragItems && question.dragItems.length" class="dnd-instructions">
             <span jhiTranslate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
         </div>
-        <div class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
-            <div class="drag-item" *ngFor="let dragItem of question.dragItems" dnd-draggable [dragEnabled]="true" [dragData]="dragItem">
+        <div class="drag-items" id="drag-items" *ngIf="question.dragItems && question.dragItems.length">
+            <div class="drag-item" id="drag-item-{{ i }}" *ngFor="let dragItem of question.dragItems; let i = index" dnd-draggable [dragEnabled]="true" [dragData]="dragItem">
                 <div *ngIf="dragItem.pictureFilePath">
                     <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
                 </div>
                 <div *ngIf="!dragItem.pictureFilePath">
-                    <textarea [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
+                    <textarea id="drag-item-{{ i }}-text" [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
                 </div>
                 <div class="delete-button" title="Delete" (click)="deleteDragItem(dragItem)" *ngIf="!reEvaluationInProgress">
                     <fa-icon [icon]="faTrash" size="lg"></fa-icon>

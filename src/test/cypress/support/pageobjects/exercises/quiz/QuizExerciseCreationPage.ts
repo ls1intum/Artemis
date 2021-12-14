@@ -30,7 +30,7 @@ export class QuizExerciseCreationPage {
             cy.get('.click-layer').trigger('mousedown', { x: 50, y: 50 }).trigger('mousemove', { x: 500, y: 300 }).trigger('mouseup');
         });
         this.createDragAndDropItem('Rick Astley');
-        cy.get('.drag-item').drag('.drop-location');
+        cy.get('#drag-item-0').drag('.drop-location');
         cy.fixture('quiz_exercise_fixtures/dragAndDropQuiz.txt').then((fileContent) => {
             cy.get('.ace_text-input').focus().clear().type(fileContent);
         });
@@ -38,7 +38,7 @@ export class QuizExerciseCreationPage {
 
     createDragAndDropItem(text: string) {
         cy.get('#add-text-drag-item').click();
-        cy.get('.drag-item').find('textarea').clear().type(text);
+        cy.get('#drag-item-0').find('#drag-item-0-text').clear().type(text);
     }
 
     uploadDragAndDropBackground() {
@@ -53,7 +53,7 @@ export class QuizExerciseCreationPage {
      */
     saveQuiz() {
         cy.intercept(POST, BASE_API + 'quiz-exercises').as('createQuizExercise');
-        cy.contains('Save').click();
+        cy.get('#quiz-save').click();
         return cy.wait('@createQuizExercise');
     }
 }
