@@ -179,7 +179,7 @@ describe('Plagiarism Cases List Component', () => {
 
         comp.updateStatus(false, 0, studentLoginB);
 
-        expect(comp.plagiarismCase.comparisons[0].statusB).toEqual(PlagiarismStatus.DENIED);
+        expect(comp.plagiarismCase.comparisons[0].statusB).toBe(PlagiarismStatus.DENIED);
         expect(updatePlagiarismComparisonFinalStatusStub).toHaveBeenCalledWith(1, plagiarismComparison.id, false, studentLoginB);
     });
 });
