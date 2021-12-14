@@ -78,7 +78,9 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     faSortNumericUp = faSortNumericUp;
     faSortNumericDown = faSortNumericDown;
 
+    // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
+    // Provides the control configuration to be read and used by "CourseOverviewComponent"
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
         useIndentation: true,
@@ -131,6 +133,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     }
 
     ngAfterViewInit(): void {
+        // Send our controls template to parent so it will be rendered in the top bar
         if (this.controls) {
             this.controlConfiguration.subject!.next(this.controls);
         }

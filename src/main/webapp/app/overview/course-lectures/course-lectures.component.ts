@@ -35,7 +35,9 @@ export class CourseLecturesComponent implements OnInit, OnDestroy, AfterViewInit
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
 
+    // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
+    // Provides the control configuration to be read and used by "CourseOverviewComponent"
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
         useIndentation: true,
@@ -71,6 +73,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     ngAfterViewInit(): void {
+        // Send our controls template to parent so it will be rendered in the top bar
         if (this.controls) {
             this.controlConfiguration.subject!.next(this.controls);
         }

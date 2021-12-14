@@ -157,7 +157,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     faQuestionCircle = faQuestionCircle;
     faClipboard = faClipboard;
 
+    // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
+    // Provides the control configuration to be read and used by "CourseOverviewComponent"
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
         useIndentation: false,
@@ -217,6 +219,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     ngAfterViewInit() {
+        // Send our controls template to parent so it will be rendered in the top bar
         if (this.controls) {
             this.controlConfiguration.subject!.next(this.controls);
         }

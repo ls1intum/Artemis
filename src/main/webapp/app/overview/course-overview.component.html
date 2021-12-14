@@ -54,7 +54,7 @@
             </div>
         </div>
         <div class="course-body-container">
-            <router-outlet (activate)="onActivate($event)" (deactivate)="onDeactivate()"></router-outlet>
+            <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()"></router-outlet>
             <div class="refresh-overlay" [class.active]="refreshingCourse">
                 <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
             </div>

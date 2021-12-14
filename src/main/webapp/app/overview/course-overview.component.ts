@@ -44,12 +44,19 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
 
-    private controlComponent?: EmbeddedViewRef<any>;
+    // Rendered embedded view for controls in the bar so we can destroy it if needed
+    private controlsEmbeddedView?: EmbeddedViewRef<any>;
+    // Subscription to listen to changes on the control configuration
     private controlsSubscription?: Subscription;
+    // Subscription to listen for the ng-container for controls to be mounted
     private vcSubscription?: Subscription;
+    // The current controls template from the sub-route component to render
     private controls?: TemplateRef<any>;
+    // The current controls configuration from the sub-route component
     public controlConfiguration?: BarControlConfiguration;
+    // ng-container mount point extracted from our own template so we can render sth in it
     @ViewChild('controlsViewContainer', { read: ViewContainerRef }) controlsViewContainer: ViewContainerRef;
+    // Using a list query to be able to listen for changes (late mount); need both as this only returns native nodes
     @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
 
     // Icons
@@ -82,6 +89,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     ngAfterViewInit() {
+        // Check if controls mount point is available, if not, wait for it
         if (this.controlsViewContainer) {
             this.tryRenderControls();
         } else {
@@ -89,10 +97,16 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
-    onActivate(componentRef: any) {
+    /**
+     * Accepts a component reference of the subcomponent rendered based on the current route.
+     * If it provides a controlsConfiguration, we try to render the controls component
+     * @param componentRef the sub route component that has been mounted into the router outlet
+     */
+    onSubRouteActivate(componentRef: any) {
         if (componentRef.controlConfiguration) {
             this.controlConfiguration = componentRef.controlConfiguration as BarControlConfiguration;
 
+            // Listen for changes to the control configuration; this will also work for the initial config
             this.controlsSubscription =
                 this.controlConfiguration.subject?.subscribe((controls: TemplateRef<any>) => {
                     this.controls = controls;
@@ -101,16 +115,25 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
-    onDeactivate() {
-        this.controlComponent?.destroy();
+    /**
+     * Removes the controls component from the DOM and cancels the listener for controls changes.
+     * Called by the router outlet as soon as the currently mounted component is removed
+     */
+    onSubRouteDeactivate() {
+        this.controlsEmbeddedView?.destroy();
         this.controls = undefined;
         this.controlConfiguration = undefined;
+        this.controlsSubscription?.unsubscribe();
     }
 
+    /**
+     * Mounts the controls as specified by the currently mounted sub-route component to the ng-container in the top bar
+     * if all required data is available.
+     */
     tryRenderControls() {
         if (this.controlConfiguration && this.controls && this.controlsViewContainer) {
-            this.controlComponent?.destroy();
-            this.controlComponent = this.controlsViewContainer.createEmbeddedView(this.controls);
+            this.controlsEmbeddedView?.destroy();
+            this.controlsEmbeddedView = this.controlsViewContainer.createEmbeddedView(this.controls);
         }
     }
 
