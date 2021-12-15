@@ -30,9 +30,6 @@ public abstract class ExerciseHint extends DomainObject {
     @Column(name = "title")
     private String title;
 
-    @Column(name = "content")
-    private String content;
-
     @ManyToOne
     @JsonIgnoreProperties("exerciseHints")
     private Exercise exercise;
@@ -50,19 +47,6 @@ public abstract class ExerciseHint extends DomainObject {
         this.title = title;
     }
 
-    public String getContent() {
-        return content;
-    }
-
-    public ExerciseHint content(String content) {
-        this.content = content;
-        return this;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
     public Exercise getExercise() {
         return exercise;
     }
@@ -76,8 +60,5 @@ public abstract class ExerciseHint extends DomainObject {
         this.exercise = exercise;
     }
 
-    @Override
-    public String toString() {
-        return "ExerciseHint{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", content='" + getContent() + "'" + "}";
-    }
+    public abstract String toString();
 }

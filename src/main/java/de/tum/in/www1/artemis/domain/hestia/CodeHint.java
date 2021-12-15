@@ -52,4 +52,9 @@ public class CodeHint extends ExerciseHint {
     public void setProgrammingExerciseTask(ProgrammingExerciseTask programmingExerciseTask) {
         this.task = programmingExerciseTask;
     }
+
+    @Override
+    public String toString() {
+        return "CodeHint{" + "id=" + getId() + ", title='" + getTitle() + "}";
+    }
 }
