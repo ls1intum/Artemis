@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import tech.jhipster.web.util.HeaderUtil;
 
 /**
- * REST controller for managing {@link ExerciseHint}.
+ * REST controller for managing {@link de.tum.in.www1.artemis.domain.hestia.ExerciseHint}.
  */
 @RestController
 @RequestMapping("/api")
