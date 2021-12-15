@@ -101,6 +101,10 @@ public class ProgrammingExercise extends Exercise {
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
+    private Set<ProgrammingExerciseTask> tasks = new HashSet<>();
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("exercise")
     private Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -530,6 +534,19 @@ public class ProgrammingExercise extends Exercise {
 
     public void setTestCases(Set<ProgrammingExerciseTestCase> testCases) {
         this.testCases = testCases;
+    }
+
+    public Set<ProgrammingExerciseTask> getTasks() {
+        return tasks;
+    }
+
+    public ProgrammingExercise tasks(Set<ProgrammingExerciseTask> tasks) {
+        this.tasks = tasks;
+        return this;
+    }
+
+    public void setTasks(Set<ProgrammingExerciseTask> tasks) {
+        this.tasks = tasks;
     }
 
     public Set<StaticCodeAnalysisCategory> getStaticCodeAnalysisCategories() {
