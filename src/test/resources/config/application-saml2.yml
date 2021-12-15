@@ -6,8 +6,8 @@
 
 # The authentication process can be initiated by navigating to {baseUrl}/saml2/authenticate/{registrationId} for a certain IdP
 # The Assertion Consumer Service URL (Callback URL, Recipient URL, Destination URL) is {baseUrl}/login/saml2/sso/{registrationId}
-# this URL must be registerd in the IdP.
-# Spring Security autogenerates a simple login page at {baseUrl}/login
+# this URL must be registered in the IdP.
+# Spring Security automatically generates a simple login page at {baseUrl}/login
 
 # Proxy Environment
 # Forward /login and /saml2 to the Artemis Server.
