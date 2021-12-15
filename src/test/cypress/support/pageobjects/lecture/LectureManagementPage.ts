@@ -16,7 +16,7 @@ export class LectureManagementPage {
     }
 
     getLectureRow(lectureTitle: string) {
-        return this.getLectureSelector(lectureTitle).parent();
+        return this.getLectureSelector(lectureTitle).parents();
     }
 
     getLectureSelector(lectureTitle: string) {
@@ -50,12 +50,12 @@ export class LectureManagementPage {
     addExerciseUnit(exerciseId: number) {
         this.openCreateUnit(UnitType.EXERCISE);
         cy.contains(exerciseId).click();
-        return this.submitUnit();
+        return this.submitUnit('#createButton');
     }
 
-    submitUnit() {
+    submitUnit(buttonId = '#submitButton') {
         cy.intercept(POST, BASE_API + 'lectures/*/*').as('createUnit');
-        cy.get('#submitButton').click();
+        cy.get(buttonId).click();
         return cy.wait('@createUnit');
     }
 }
