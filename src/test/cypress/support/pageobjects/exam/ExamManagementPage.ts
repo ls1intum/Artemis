@@ -44,7 +44,7 @@ export class ExamManagementPage {
      * @returns the element
      */
     getExamSelector(examTitle: string) {
-        return cy.get('jhi-exam-management').contains(examTitle);
+        return cy.get('#exams-table').contains(examTitle);
     }
 }
 
@@ -64,21 +64,21 @@ export class ExamRow {
     /**
      * Opens the exercise groups page.
      */
-    openExerciseGroups() {
-        this.root.contains('Exercise Groups').click();
+    openExerciseGroups(examId: string) {
+        this.root.find(`#exercises-button-${examId}-groups`).click();
     }
 
     /**
      * Opens the student registration page.
      */
-    openStudentRegistration() {
-        this.root.contains('Students').click();
+    openStudentRegistration(examId: string) {
+        this.root.contains(`#student-button-${examId}`).click();
     }
 
     /**
      * Opens the student exams page.
      */
-    openStudenExams() {
-        this.root.contains('Student Exams').click();
+    openStudenExams(examId: string) {
+        this.root.contains(`#student-exams-${examId}`).click();
     }
 }

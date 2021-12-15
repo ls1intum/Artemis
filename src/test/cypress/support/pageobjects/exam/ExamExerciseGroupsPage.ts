@@ -3,7 +3,7 @@
  */
 export class ExamExerciseGroupsPage {
     clickCreateNewExerciseGroup() {
-        cy.get('[jhitranslate="artemisApp.examManagement.exerciseGroup.create"]').click();
+        cy.get('#create-new-group').click();
     }
 
     shouldShowNumberOfExerciseGroups(numberOfGroups: number) {
@@ -11,11 +11,11 @@ export class ExamExerciseGroupsPage {
     }
 
     clickAddExerciseGroup() {
-        cy.get('[jhitranslate="artemisApp.examManagement.exerciseGroup.create"]').click();
+        cy.get('#create-new-group').click();
     }
 
     clickAddTextExercise() {
-        cy.contains('Add Text Exercise').click();
+        cy.get('#add-text-exercise').click();
     }
 
     visitPageViaUrl(courseId: number, examId: number) {
@@ -23,6 +23,6 @@ export class ExamExerciseGroupsPage {
     }
 
     shouldContainExerciseWithTitle(exerciseTitle: string) {
-        cy.get('.table').contains(exerciseTitle).scrollIntoView().should('be.visible');
+        cy.get('#exercises').contains(exerciseTitle).scrollIntoView().should('be.visible');
     }
 }
