@@ -48,7 +48,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     @Column(name = "test_case_type")
     private ProgrammingExerciseTestCaseType testCaseType;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "testCases", fetch = FetchType.LAZY)
     private Set<ProgrammingExerciseTask> tasks = new HashSet<>();
 
     @OneToMany(mappedBy = "testCase", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)

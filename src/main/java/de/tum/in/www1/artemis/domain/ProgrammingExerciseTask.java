@@ -29,7 +29,7 @@ public class ProgrammingExerciseTask extends DomainObject {
     @JsonIgnoreProperties("programmingExerciseTask")
     private Set<CodeHint> codeHints;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "tasks", fetch = FetchType.LAZY)
     private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
