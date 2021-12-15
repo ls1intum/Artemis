@@ -61,7 +61,9 @@ describe('Text exercise assessment', () => {
         textAssessment.getCharacterCountElement().should('contain.text', 591).and('be.visible');
         textAssessment.provideFeedbackOnTextSection(1, tutorTextFeedbackPoints, tutorTextFeedback);
         textAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
-        textAssessment.submit().its('response.statusCode').should('eq', 200);
+        textAssessment.submit().then((request: any) => {
+            expect(request.response.statusCode).to.equal(200);
+        });
     });
 
     describe('Feedback', () => {
