@@ -82,7 +82,7 @@ describe('Lecture management', () => {
         it('Adds a exercise unit to the lecture', () => {
             courseManagementRequests.createModelingExercise({ course }).then((model) => {
                 const exercise = model.body;
-                lectureManagement.openUnitsPage(lecture.title);
+                lectureManagement.openUnitsPage(0);
                 lectureManagement.addExerciseUnit(exercise.id);
                 cy.contains(exercise.title);
             });
