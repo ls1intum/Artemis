@@ -7,16 +7,16 @@ export class LectureManagementPage {
     }
 
     deleteLecture(lectureTitle: string) {
-        this.getLectureRow(lectureTitle).find('.btn-danger').click();
-        cy.get('.modal-footer').find('.btn-danger').should('be.disabled');
-        cy.get('.modal-body').find('input').type(lectureTitle);
+        this.getLectureRow(lectureTitle).find('#delete-lecture').click();
+        cy.get('#delete').should('be.disabled');
+        cy.get('#confirm-exercise-name').type(lectureTitle);
         cy.intercept(DELETE, `${BASE_API}lectures/*`).as('deleteLecture');
-        cy.get('.modal-footer').find('.btn-danger').click();
+        cy.get('#delete').click();
         return cy.wait('@deleteLecture');
     }
 
     getLectureRow(lectureTitle: string) {
-        return this.getLectureSelector(lectureTitle).parents('tr');
+        return this.getLectureSelector(lectureTitle).parent();
     }
 
     getLectureSelector(lectureTitle: string) {
@@ -24,11 +24,11 @@ export class LectureManagementPage {
     }
 
     getLectureContainer() {
-        return cy.get('.markdown-preview');
+        return cy.get('#lecture-preview');
     }
 
     openUnitsPage(lectureTitle: string) {
-        this.getLectureRow(lectureTitle).find('[jhitranslate="entity.action.units"]').click();
+        this.getLectureRow(lectureTitle).find('#units').click();
     }
 
     openCreateUnit(type: UnitType) {
@@ -36,13 +36,13 @@ export class LectureManagementPage {
     }
 
     getUnitCreationCard() {
-        return cy.get('.creation-card');
+        return cy.get('#unit-creation');
     }
 
     addTextUnit(name: string, text: string, releaseDate = day()) {
         this.openCreateUnit(UnitType.TEXT);
         cy.get('#name').type(name);
-        cy.get('[name="datePicker"]').type(releaseDate.toString());
+        cy.get('#release-date').find('#date-input-field').type(releaseDate.toString());
         cy.get('.ace_content').type(text, { parseSpecialCharSequences: false });
         return this.submitUnit();
     }
@@ -55,7 +55,7 @@ export class LectureManagementPage {
 
     submitUnit() {
         cy.intercept(POST, BASE_API + 'lectures/*/*').as('createUnit');
-        cy.get('.btn-primary').click();
+        cy.get('#submitButton').click();
         return cy.wait('@createUnit');
     }
 }

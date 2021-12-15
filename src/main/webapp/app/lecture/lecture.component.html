@@ -21,7 +21,7 @@
                     <th></th>
                 </tr>
             </thead>
-            <tbody class="markdown-preview">
+            <tbody class="markdown-preview" id="lecture-preview">
                 <tr *ngFor="let lecture of lectures; trackBy: trackId">
                     <td>
                         <a [routerLink]="[lecture.id]">{{ lecture.id }}</a>
@@ -44,7 +44,7 @@
                                     <fa-icon [icon]="faFile"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.attachments">Attachment</span>
                                 </a>
-                                <a *ngIf="lecture.isAtLeastEditor" [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm">
+                                <a *ngIf="lecture.isAtLeastEditor" [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm" id="units">
                                     <fa-icon [icon]="faPuzzlePiece"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.units">Units</span>
                                 </a>
@@ -58,6 +58,7 @@
                                 <button
                                     class="mt-1"
                                     jhiDeleteButton
+                                    id="delete-lecture"
                                     *ngIf="lecture.isAtLeastInstructor"
                                     [entityTitle]="lecture.title || ''"
                                     deleteQuestion="artemisApp.lecture.delete.question"
