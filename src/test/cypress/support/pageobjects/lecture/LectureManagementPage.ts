@@ -6,8 +6,8 @@ export class LectureManagementPage {
         cy.get('#jh-create-entity').click();
     }
 
-    deleteLecture(lectureTitle: string) {
-        this.getLectureRow(lectureTitle).find('#delete-lecture').click();
+    deleteLecture(lectureTitle: string, lectureIndex: number) {
+        this.getLectureRow(lectureIndex).find('#delete-lecture').click();
         cy.get('#delete').should('be.disabled');
         cy.get('#confirm-exercise-name').type(lectureTitle);
         cy.intercept(DELETE, `${BASE_API}lectures/*`).as('deleteLecture');
@@ -15,8 +15,8 @@ export class LectureManagementPage {
         return cy.wait('@deleteLecture');
     }
 
-    getLectureRow(lectureTitle: string) {
-        return this.getLectureSelector(lectureTitle).parents();
+    getLectureRow(lectureIndex: number) {
+        return cy.get('#lecture-row-' + lectureIndex);
     }
 
     getLectureSelector(lectureTitle: string) {
@@ -27,8 +27,8 @@ export class LectureManagementPage {
         return cy.get('#lecture-preview');
     }
 
-    openUnitsPage(lectureTitle: string) {
-        this.getLectureRow(lectureTitle).find('#units').click();
+    openUnitsPage(lectureIndex: number) {
+        this.getLectureRow(lectureIndex).find('#units').click();
     }
 
     openCreateUnit(type: UnitType) {

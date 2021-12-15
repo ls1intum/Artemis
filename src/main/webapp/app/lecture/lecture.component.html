@@ -22,7 +22,7 @@
                 </tr>
             </thead>
             <tbody class="markdown-preview" id="lecture-preview">
-                <tr *ngFor="let lecture of lectures; trackBy: trackId">
+                <tr *ngFor="let lecture of lectures; trackBy: trackId; let i = index" id="lecture-row-{{ i }}">
                     <td>
                         <a [routerLink]="[lecture.id]">{{ lecture.id }}</a>
                     </td>

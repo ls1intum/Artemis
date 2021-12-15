@@ -64,7 +64,7 @@ describe('Lecture management', () => {
         });
 
         it('Deletes an existing lecture', () => {
-            lectureManagement.deleteLecture(lecture.title).then((resp) => {
+            lectureManagement.deleteLecture(lecture.title, 0).then((resp) => {
                 expect(resp.response!.statusCode).to.eq(200);
                 lectureManagement.getLectureContainer().children().should('have.length', 0);
                 lecture = null;
@@ -72,7 +72,7 @@ describe('Lecture management', () => {
         });
 
         it('Adds a text unit to the lecture', () => {
-            lectureManagement.openUnitsPage(lecture.title);
+            lectureManagement.openUnitsPage(0);
             cy.fixture('loremIpsum.txt').then((text) => {
                 lectureManagement.addTextUnit('Text unit', text);
             });
