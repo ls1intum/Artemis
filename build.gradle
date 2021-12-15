@@ -28,7 +28,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.4.0"
+version = "5.4.1"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=16
@@ -164,7 +164,7 @@ dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
     implementation "org.gitlab4j:gitlab4j-api:4.19.0"
 
-    implementation files("libs/jplag-3.0.0.jar")
+    implementation "de.jplag:jplag:3.0.0"
 
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
