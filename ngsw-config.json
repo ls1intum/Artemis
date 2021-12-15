@@ -19,8 +19,12 @@
     }
   ],
   "navigationUrls": [
+    "/**",
     "!/**/*.*",
     "!/api/**",
-    "!/saml2/**"
+    "!/management/**",
+    "!/saml2/**",
+    "!/time",
+    "!/websocket/**"
   ]
 }
