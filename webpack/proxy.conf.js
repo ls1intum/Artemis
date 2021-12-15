@@ -12,6 +12,7 @@ function setupProxy({ tls }) {
         '/auth',
         '/health',
         '/time',
+        '/saml2'
       ],
       target: `http${tls ? 's' : ''}://localhost:8080`,
       secure: false,

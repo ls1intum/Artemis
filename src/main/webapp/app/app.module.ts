@@ -32,7 +32,7 @@ import { UserSettingsModule } from 'app/shared/user-settings/user-settings.modul
         BrowserModule,
         BrowserAnimationsModule,
         // This enables service worker (PWA)
-        ServiceWorkerModule.register('ngsw-worker.js', { enabled: true }),
+        // ServiceWorkerModule.register('ngsw-worker.js', { enabled: true }),
         ArtemisSharedModule,
         ArtemisCoreModule,
         ArtemisHomeModule,
