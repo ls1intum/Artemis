@@ -9,7 +9,6 @@ export class MultipleChoiceQuiz {
         this.getQuizBody(quizQuestionId)
             .get('#answer-option-' + optionNumber)
             .find('#mc-answer-selection-' + optionNumber)
-            .first()
             .click();
     }
 
