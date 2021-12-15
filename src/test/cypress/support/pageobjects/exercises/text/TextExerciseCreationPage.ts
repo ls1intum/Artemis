@@ -14,15 +14,15 @@ export class TextExerciseCreationPage {
     }
 
     setReleaseDate(date: Dayjs) {
-        this.typeDate(date, 'releaseDate');
+        this.typeDate(date, '#release-date');
     }
 
     setDueDate(date: Dayjs) {
-        this.typeDate(date, 'dueDate');
+        this.typeDate(date, '#due-date');
     }
 
     setAssessmentDueDate(date: Dayjs) {
-        this.typeDate(date, 'assessmentDueDate');
+        this.typeDate(date, '#assessment-due-date');
     }
 
     typeMaxPoints(maxPoints: number) {
@@ -55,8 +55,8 @@ export class TextExerciseCreationPage {
         cy.get('[jhitranslate="artemisApp.modelingExercise.createExampleSubmission"]').click();
     }
 
-    private typeDate(date: Dayjs, identifier: string) {
-        cy.get(`[name="${identifier}"]`).find('input').clear().type(dayjsToString(date), { force: true });
+    private typeDate(date: Dayjs, inputSelector: string) {
+        cy.get(inputSelector).find('#date-input-field').clear().type(dayjsToString(date), { force: true });
     }
 
     private typeText(selector: string, text: string) {

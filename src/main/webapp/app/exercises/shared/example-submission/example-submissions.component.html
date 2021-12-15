@@ -9,7 +9,7 @@
             <a *ngIf="exercise.course.isAtLeastEditor" class="btn btn-primary me-1 mb-1" [routerLink]="getLinkToExampleSubmission('new')">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
-                <span class="d-none d-xl-inline" jhiTranslate="artemisApp.modelingExercise.createExampleSubmission" id="modeling-example-submission"></span>
+                <span class="d-none d-xl-inline" jhiTranslate="artemisApp.modelingExercise.createExampleSubmission" id="create-example-submission"></span>
             </a>
             <a *ngIf="exercise.course.isAtLeastEditor" class="btn btn-primary me-1 mb-1" (click)="openImportModal()">
                 <fa-icon [icon]="faPlus"></fa-icon>
