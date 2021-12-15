@@ -12,8 +12,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ExerciseHint;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import tech.jhipster.web.util.HeaderUtil;
 
 /**
- * REST controller for managing {@link de.tum.in.www1.artemis.domain.ExerciseHint}.
+ * REST controller for managing {@link ExerciseHint}.
  */
 @RestController
 @RequestMapping("/api")

@@ -13,7 +13,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ExerciseHint;
+import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
+import de.tum.in.www1.artemis.domain.hestia.TextHint;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -41,7 +42,7 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
     default void copyExerciseHints(final Exercise template, final Exercise target) {
         final Map<Long, Long> hintIdMapping = new HashMap<>();
         target.setExerciseHints(template.getExerciseHints().stream().map(hint -> {
-            final var copiedHint = new ExerciseHint();
+            final var copiedHint = new TextHint();
             copiedHint.setExercise(target);
             copiedHint.setContent(hint.getContent());
             copiedHint.setTitle(hint.getTitle());

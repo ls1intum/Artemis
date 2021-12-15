@@ -43,6 +43,8 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
+import de.tum.in.www1.artemis.domain.hestia.TextHint;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
@@ -2957,9 +2959,9 @@ public class DatabaseUtilService {
     }
 
     public void addHintsToExercise(Exercise exercise) {
-        ExerciseHint exerciseHint1 = new ExerciseHint().exercise(exercise).title("title 1").content("content 1");
-        ExerciseHint exerciseHint2 = new ExerciseHint().exercise(exercise).title("title 2").content("content 2");
-        ExerciseHint exerciseHint3 = new ExerciseHint().exercise(exercise).title("title 3").content("content 3");
+        ExerciseHint exerciseHint1 = new TextHint().exercise(exercise).title("title 1").content("content 1");
+        ExerciseHint exerciseHint2 = new TextHint().exercise(exercise).title("title 2").content("content 2");
+        ExerciseHint exerciseHint3 = new TextHint().exercise(exercise).title("title 3").content("content 3");
         Set<ExerciseHint> hints = new HashSet<>();
         hints.add(exerciseHint1);
         hints.add(exerciseHint2);

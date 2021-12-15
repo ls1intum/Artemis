@@ -5,21 +5,17 @@ import java.util.Set;
 
 import javax.persistence.*;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.domain.ExerciseHint;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTask;
 
 /**
  * A CodeHint.
  */
 @Entity
-@Table(name = "code_hint")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@DiscriminatorValue("C")
+@SecondaryTable(name = "code_hint")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CodeHint extends ExerciseHint {
 

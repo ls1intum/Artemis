@@ -13,7 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ExerciseHint;
+import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
+import de.tum.in.www1.artemis.domain.hestia.TextHint;
 import de.tum.in.www1.artemis.repository.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
@@ -91,21 +92,21 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void createHintAsAStudentShouldReturnForbidden() throws Exception {
-        ExerciseHint exerciseHint = new ExerciseHint().title("title 4").content("content 4").exercise(exercise);
+        ExerciseHint exerciseHint = new TextHint().title("title 4").content("content 4").exercise(exercise);
         request.post("/api/exercise-hints/", exerciseHint, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void createHintAsTutorForbidden() throws Exception {
-        ExerciseHint exerciseHint = new ExerciseHint().title("title 4").content("content 4").exercise(exercise);
+        ExerciseHint exerciseHint = new TextHint().title("title 4").content("content 4").exercise(exercise);
         request.post("/api/exercise-hints/", exerciseHint, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     public void createHintAsEditor() throws Exception {
-        ExerciseHint exerciseHint = new ExerciseHint().title("title 4").content("content 4").exercise(exercise);
+        ExerciseHint exerciseHint = new TextHint().title("title 4").content("content 4").exercise(exercise);
         request.post("/api/exercise-hints/", exerciseHint, HttpStatus.CREATED);
 
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
@@ -115,7 +116,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createHintAsInstructor() throws Exception {
-        ExerciseHint exerciseHint = new ExerciseHint().title("title 4").content("content 4").exercise(exercise);
+        ExerciseHint exerciseHint = new TextHint().title("title 4").content("content 4").exercise(exercise);
         request.post("/api/exercise-hints/", exerciseHint, HttpStatus.CREATED);
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
         assertThat(exerciseHints).hasSize(4);
@@ -176,7 +177,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteHintAsInstructor() throws Exception {
-        ExerciseHint exerciseHint = new ExerciseHint().title("title 4").content("content 4").exercise(exercise);
+        ExerciseHint exerciseHint = new TextHint().title("title 4").content("content 4").exercise(exercise);
         request.delete("/api/exercise-hints/" + 0L, HttpStatus.NOT_FOUND);
         request.post("/api/exercise-hints", exerciseHint, HttpStatus.CREATED);
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
@@ -205,7 +206,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     private void testGetHintTitle() throws Exception {
-        final var hint = new ExerciseHint().title("Test Hint").exercise(exercise);
+        final var hint = new TextHint().title("Test Hint").exercise(exercise);
         exerciseHintRepository.save(hint);
 
         final var title = request.get("/api/exercise-hints/" + hint.getId() + "/title", HttpStatus.OK, String.class);
