@@ -20,7 +20,7 @@
             <p class="bold-text" th:text="#{email.weekly.summary.new.exercises.information}">All newly released exercises that are still open:</p>
             <ul>
                 <tr th:each="exercise: ${weeklySummaryNewExercises}">
-                        <li>
+                    <li>
                             <p class="bold-text" th:text="${exercise.getTitle()}"/>
                             <ul>
                             <!-- TODO Replace with toReadableString when other PR is merged -->
@@ -40,7 +40,7 @@
                             </th:block>
                         </ul>
                         </li>
-                    </tr>
+                </tr>
             </ul>
         </th:block>
     </div>

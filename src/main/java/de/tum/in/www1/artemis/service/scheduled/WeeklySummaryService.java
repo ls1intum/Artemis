@@ -81,6 +81,8 @@ public class WeeklySummaryService {
             ZoneOffset zoneOffset = ZonedDateTime.now().getZone().getRules().getOffset(Instant.now());
 
             scheduler.scheduleAtFixedRate(scheduleWeeklySummaries(), nextWeeklySummaryDate.toInstant(zoneOffset), Duration.ofDays(7));
+            // For local testing
+            // scheduler.scheduleAtFixedRate(scheduleWeeklySummaries(), nextWeeklySummaryDate.toInstant(zoneOffset), Duration.ofMinutes(3));
 
             log.info("Scheduled weekly summaries on start up.");
         }
@@ -128,8 +130,9 @@ public class WeeklySummaryService {
         notificationSettings = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(notificationSettings);
         NotificationSetting weeklySummarySetting = notificationSettings.stream()
                 .filter(setting -> setting.getSettingId().equals(NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY)).findFirst().orElse(null);
-        if (weeklySummarySetting == null)
+        if (weeklySummarySetting == null) {
             return false;
+        }
         return weeklySummarySetting.isEmail();
     }
 
