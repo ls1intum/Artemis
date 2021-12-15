@@ -231,7 +231,7 @@
         <div *ngIf="question.dragItems && question.dragItems.length" class="dnd-instructions">
             <span jhiTranslate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
         </div>
-        <div class="drag-items" id="drag-items" *ngIf="question.dragItems && question.dragItems.length">
+        <div class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
             <div class="drag-item" id="drag-item-{{ i }}" *ngFor="let dragItem of question.dragItems; let i = index" dnd-draggable [dragEnabled]="true" [dragData]="dragItem">
                 <div *ngIf="dragItem.pictureFilePath">
                     <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
