@@ -530,7 +530,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         if (programmingExercise.isEmpty()) {
             throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
         }
-        List<ProgrammingExerciseStudentParticipation> failedOperations = new LinkedList<>();
+        List<ProgrammingExerciseStudentParticipation> failedOperations = new ArrayList<>();
 
         // TODO: we should think about executing those operations again in batches to avoid issues on the vcs server, however those operations are typically executed
         // synchronously so this might not be an issue
