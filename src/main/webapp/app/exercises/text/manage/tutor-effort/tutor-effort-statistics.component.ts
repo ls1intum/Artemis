@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismAndTutorEffortDirective } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-text-exercise-tutor-effort-statistics',
@@ -24,10 +25,18 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     // Distance value representing step difference between chartLabel entries, i.e:. 1-10, 10-20
     bucketSize = 10;
 
+    xAxisLabel = this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.minutes');
+    yAxisLabel = this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.tutors');
+
     // Icons
     faSync = faSync;
 
-    constructor(private textExerciseService: TextExerciseService, private textAssessmentService: TextAssessmentService, private route: ActivatedRoute) {
+    constructor(
+        private textExerciseService: TextExerciseService,
+        private textAssessmentService: TextAssessmentService,
+        private route: ActivatedRoute,
+        private translateService: TranslateService,
+    ) {
         super();
     }
 

@@ -20,13 +20,16 @@
             <tr>
                 <td colspan="3">
                     <div #containerRef class="col-9 justify-content-center">
-                        <canvas baseChart [datasets]="chartDataSets" [labels]="chartLabels" [chartType]="chartType" [options]="chartOptions" [legend]="false"></canvas>
                         <ngx-charts-bar-vertical
                             [view]="[containerRef.offsetWidth, 400]"
                             [scheme]="ngxColor"
                             [results]="ngxData"
                             [xAxis]="true"
                             [yAxis]="true"
+                            [showXAxisLabel]="true"
+                            [showYAxisLabel]="true"
+                            [xAxisLabel]="xAxisLabel"
+                            [yAxisLabel]="yAxisLabel"
                             [yAxisTicks]="yAxisTicks"
                             [yAxisTickFormatting]="yAxisTickFormatting"
                         >
