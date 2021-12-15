@@ -101,8 +101,8 @@ public class LtiResource {
         log.debug("Request header X-Forwarded-For: {}", request.getHeader("X-Forwarded-For"));
 
         if (!request.getRequestURL().toString().startsWith("https")) {
-            log.error("The request url {} does not start with 'https'. Verification of the request will most probably fail." + "Please double check your loadbalancer (e.g. nginx) "
-                    + "configuration and your Spring configuration (e.g. application.yml) with respect to proxy_set_header " + "X-Forwarded-Proto and forward-headers-strategy: "
+            log.error("The request url {} does not start with 'https'. Verification of the request will most probably fail. Please double check your loadbalancer (e.g. nginx) "
+                    + "configuration and your Spring configuration (e.g. application.yml) with respect to proxy_set_header X-Forwarded-Proto and forward-headers-strategy: "
                     + "native", request.getRequestURL().toString());
         }
 
