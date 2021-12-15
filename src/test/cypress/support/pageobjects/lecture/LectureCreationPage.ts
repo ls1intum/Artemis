@@ -17,10 +17,10 @@ export class LectureCreationPage {
     }
 
     setStartDate(date: Dayjs) {
-        cy.get('#start-date').children().eq(2).type(date.toString());
+        cy.get('#start-date').find('#date-input-field').type(date.toString());
     }
 
     setEndDate(date: Dayjs) {
-        cy.get('#end-date').children().eq(2).type(date.toString());
+        cy.get('#end-date').find('#date-input-field').type(date.toString());
     }
 }
