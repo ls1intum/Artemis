@@ -19,10 +19,11 @@
     }
   ],
   "navigationUrls": [
-    "/**",
     "!/**/*.*",
     "!/api/**",
+    "!/login/**",
     "!/management/**",
+    "!/public/**",
     "!/saml2/**",
     "!/time",
     "!/websocket/**"
