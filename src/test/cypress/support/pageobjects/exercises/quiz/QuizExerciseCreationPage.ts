@@ -38,7 +38,7 @@ export class QuizExerciseCreationPage {
 
     createDragAndDropItem(text: string) {
         cy.get('#add-text-drag-item').click();
-        cy.get('#drag-item-0').find('#drag-item-0-text').clear().type(text);
+        cy.get('#drag-item-0-text').clear().type(text);
     }
 
     uploadDragAndDropBackground() {
