@@ -13,6 +13,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 interface ContextFilterOption {
     courseId?: number;
@@ -56,6 +57,14 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
 
     private postsSubscription: Subscription;
     private paramSubscription: Subscription;
+
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faFilter = faFilter;
+    faSearch = faSearch;
+    faLongArrowAltUp = faLongArrowAltUp;
+    faLongArrowAltDown = faLongArrowAltDown;
 
     constructor(
         protected metisService: MetisService,

@@ -9,7 +9,7 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     readonly feedbackEditorSelector = 'jhi-textblock-feedback-editor';
 
     getInstructionsRootElement() {
-        return cy.get('[jhitranslate="artemisApp.textAssessment.instructions"]').parents('.card');
+        return cy.get('#instructions-card');
     }
 
     provideFeedbackOnTextSection(section: string, points: number, feedback: string) {

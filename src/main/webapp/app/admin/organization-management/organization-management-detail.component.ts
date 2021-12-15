@@ -12,6 +12,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { iconsAsHTML } from 'app/utils/icons.utils';
 import { UserService } from 'app/core/user/user.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
 
 const cssClasses = {
     alreadyMember: 'already-member',
@@ -38,6 +39,9 @@ export class OrganizationManagementDetailComponent implements OnInit {
     searchNoResults = false;
     isTransitioning = false;
     rowClass: string | undefined = undefined;
+
+    // Icons
+    faUserSlash = faUserSlash;
 
     constructor(private organizationService: OrganizationManagementService, private userService: UserService, private alertService: AlertService, private route: ActivatedRoute) {}
 

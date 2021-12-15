@@ -4,6 +4,7 @@ import { Rating } from 'app/entities/rating.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-rating-list',
@@ -17,6 +18,10 @@ export class RatingListComponent implements OnInit {
 
     ratingsSortingPredicate = 'id';
     ratingsReverseOrder = false;
+
+    // Icons
+    faSort = faSort;
+    faFolderOpen = faFolderOpen;
 
     constructor(private ratingService: RatingService, private route: ActivatedRoute, private sortService: SortService, private router: Router) {}
 

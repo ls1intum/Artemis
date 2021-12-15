@@ -14,8 +14,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.validation.constraints.NotNull;
+
 import org.eclipse.jgit.lib.ObjectId;
-import org.jetbrains.annotations.NotNull;
 import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -494,7 +495,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // Now for both student's submission a result should have been created and assigned to the submission.
         List<Result> results = resultRepository.findAll();
         submissions = submissionRepository.findAll();
-        participations = new LinkedList<>();
+        participations = new ArrayList<>();
         participations.add(solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get());
         // After a push to the test repository, only the solution and template repository are built.
         assertThat(results).hasSize(1);

@@ -37,7 +37,7 @@ Course Info Bar
     }
 }
 
-.exercise-controls {
+.course-overview-controls {
     @media (max-width: 600px) {
         margin-top: -40px;
     }
@@ -134,6 +134,7 @@ Course Info Bar
         display: flex;
         align-items: center;
         justify-content: center;
+        margin-bottom: 20px;
 
         .chart-text {
             position: absolute;
@@ -154,7 +155,7 @@ Course Info Bar
     }
 }
 
-.exercise-controls {
+.course-overview-controls {
     position: absolute;
     top: -64px;
     right: -14px;

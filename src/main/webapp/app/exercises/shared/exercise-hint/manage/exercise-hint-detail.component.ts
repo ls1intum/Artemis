@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-hint-detail',
@@ -15,6 +16,9 @@ export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
     exerciseId: number;
 
     paramSub: Subscription;
+
+    // Icons
+    faWrench = faWrench;
 
     constructor(protected route: ActivatedRoute) {}
 

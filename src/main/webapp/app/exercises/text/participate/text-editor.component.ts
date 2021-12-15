@@ -29,6 +29,7 @@ import { getUnreferencedFeedback } from 'app/exercises/shared/result/result.util
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -60,6 +61,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     // indicates, that it is an exam exercise and the publishResults date is in the past
     isAfterPublishDate: boolean;
     isOwnerOfParticipation: boolean;
+
+    // Icon
+    farListAlt = faListAlt;
 
     constructor(
         private route: ActivatedRoute,
