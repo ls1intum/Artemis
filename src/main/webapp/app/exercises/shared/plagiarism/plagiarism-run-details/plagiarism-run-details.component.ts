@@ -1,14 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { PlagiarismAndTutorEffortDirective } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
-export const ngxColor = {
-    name: 'similarity distribution',
-    selectable: true,
-    group: ScaleType.Ordinal,
-    domain: ['#87cefa'], // color: light blue
-} as Color;
 
 @Component({
     selector: 'jhi-plagiarism-run-details',
@@ -20,8 +13,6 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
      * Result of the automated plagiarism detection
      */
     @Input() plagiarismResult: TextPlagiarismResult | ModelingPlagiarismResult;
-
-    readonly ngxColor = ngxColor;
 
     constructor() {
         super();

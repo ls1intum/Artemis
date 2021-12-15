@@ -7,7 +7,6 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TutorEffortStatisticsComponent } from 'app/exercises/text/manage/tutor-effort/tutor-effort-statistics.component';
 import { ArtemisTestModule } from '../../test.module';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { ChartsModule } from 'ng2-charts';
 import { TutorEffort } from 'app/entities/tutor-effort.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
@@ -46,7 +45,7 @@ describe('TutorEffortStatisticsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ChartsModule, ArtemisTestModule, HttpClientTestingModule, MockModule(BarChartModule)],
+            imports: [ArtemisTestModule, HttpClientTestingModule, MockModule(BarChartModule)],
             declarations: [TutorEffortStatisticsComponent, MockPipe(ArtemisTranslatePipe), MockDirective(MockHasAnyAuthorityDirective)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

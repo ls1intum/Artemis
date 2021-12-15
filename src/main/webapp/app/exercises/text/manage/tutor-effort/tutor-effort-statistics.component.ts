@@ -1,9 +1,7 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { TutorEffort } from 'app/entities/tutor-effort.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { ActivatedRoute } from '@angular/router';
-import { BaseChartDirective, Label } from 'ng2-charts';
-import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismAndTutorEffortDirective } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
@@ -23,64 +21,8 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     numberOfTutorsInvolvedInCourse: number;
     effortDistribution: number[];
 
-    /**
-     * Directive to manage the canvas element that renders the chart.
-     */
-    @ViewChild(BaseChartDirective) chart: BaseChartDirective;
-
     // Distance value representing step difference between chartLabel entries, i.e:. 1-10, 10-20
     bucketSize = 10;
-
-    /**
-     * The labels of the chart are fixed and represent the 13 intervals we group the tutors into.
-     */
-    chartLabels: Label[] = ['0-10', '10-20', '20-30', '30-40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100-110', '110-120', '120+'];
-    ngxChartLabels: string[] = ['0-10', '10-20', '20-30', '30-40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100-110', '110-120', '120+'];
-
-    /**
-     * The type of the chart.
-     */
-    chartType: ChartType = 'bar';
-
-    /**
-     * Array of datasets to plot.
-     */
-    chartDataSets: ChartDataSets[] = [
-        {
-            backgroundColor: 'lightskyblue',
-            data: [],
-            hoverBackgroundColor: 'dodgerblue',
-        },
-    ];
-
-    chartOptions: ChartOptions = {
-        title: {
-            display: true,
-            text: 'Tutor Effort Distribution',
-        },
-        scales: {
-            xAxes: [
-                {
-                    scaleLabel: {
-                        display: true,
-                        labelString: 'Minutes',
-                    },
-                },
-            ],
-            yAxes: [
-                {
-                    scaleLabel: {
-                        display: true,
-                        labelString: 'Tutors',
-                    },
-                    ticks: {
-                        beginAtZero: true,
-                        stepSize: 1,
-                    },
-                },
-            ],
-        },
-    };
 
     // Icons
     faSync = faSync;
@@ -121,7 +63,6 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
         const avgTemp = this.totalTimeSpent === 0 ? 0 : this.numberOfSubmissions / this.totalTimeSpent;
         this.averageTimeSpent = avgTemp ? Math.round((avgTemp + Number.EPSILON) * 100) / 100 : 0;
         this.distributeEffortToSets();
-        this.chartDataSets[0].data = this.effortDistribution;
         this.effortDistribution.forEach((effort, index) => {
             this.ngxData.push({ name: this.ngxChartLabels[index], value: effort });
         });
@@ -142,9 +83,9 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      * and so on. chartlabels is divided in steps of length 10, which is why division/10 and floor function is used.
      */
     distributeEffortToSets() {
-        this.effortDistribution = new Array<number>(this.chartLabels.length).fill(0);
+        this.effortDistribution = new Array<number>(this.ngxChartLabels.length).fill(0);
         this.tutorEfforts.forEach((effort) => {
-            const BUCKET_LAST_INDEX = this.chartLabels.length - 1;
+            const BUCKET_LAST_INDEX = this.ngxChartLabels.length - 1;
             const BUCKET_POSITION = effort.totalTimeSpentMinutes / this.bucketSize;
             // the element will either be distributed in one of first 12 elements (chartLabels.length)
             // or the last element if the time passed is larger than 120 (i.e.: chartLabels[12] = 120+)
