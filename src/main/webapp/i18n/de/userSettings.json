@@ -26,7 +26,7 @@
                 "instructorNotifications": "Benachrichtigungen für Lehrende"
             },
             "settingNames": {
-                "weeklySummaryBasic": "Einfache wöchentliche Zusammenfassung",
+                "basicWeeklySummary": "Einfache wöchentliche Zusammenfassung",
                 "exerciseReleased": "Neue Aufgabe veröffentlicht",
                 "exerciseOpenForPractice": "Aufgabe zum Üben freigegeben",
                 "newExercisePost": "Neue Beiträge für Aufgaben",
@@ -42,6 +42,7 @@
                 "programmingTestCasesChanged": "Veränderte Testfälle bei Programmieraufgaben"
             },
             "settingDescriptions": {
+                "basicWeeklySummaryDescription": "Erhalte jeden Freitag eine einfache wöchentliche Zusammenfassung (bsp. welche neuen Aufgaben diese Woche veröffentlicht wurden und noch bearbeitbar sind)",
                 "exerciseCreatedOrStartedDescription": "Erhalte eine Mitteilung wenn eine neue Aufgabe veröffentlicht wurde",
                 "exerciseOpenForPracticeDescription": "Erhalte eine Mitteilung, wenn eine Aufgabe zum Üben freigeschalten wurde (z.B. ein Quiz)",
                 "newExercisePostDescription": "Erhalte eine Mitteilung, wenn ein neuer Beitrag zu einer Aufgabe erstellt wurde",

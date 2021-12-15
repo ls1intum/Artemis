@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__WEEKLY_SUMMARY_WEEKLY_SUMMARY_BASIC;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY;
 
 import java.time.*;
 import java.util.*;
@@ -101,7 +101,7 @@ public class WeeklySummaryService {
             checkSecurityUtils();
             oneWeekAgo = ZonedDateTime.now().minusWeeks(1);
             // find all Artemis users // Could be improved by getting only still active users
-            Set<User> allUsers = new HashSet<>(userRepository.findAll());
+            Set<User> allUsers = new HashSet<>(userRepository.findAllWithGroupsAndAuthorities());
             // filter out users that do not want to receive weekly summaries
             Set<User> filteredUsers = allUsers.stream().filter(this::checkIfWeeklySummaryIsAllowedByNotificationSettingsForGivenUser).collect(Collectors.toSet());
             if (!filteredUsers.isEmpty()) {
@@ -127,8 +127,8 @@ public class WeeklySummaryService {
     private boolean checkIfWeeklySummaryIsAllowedByNotificationSettingsForGivenUser(User user) {
         Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(user.getId());
         notificationSettings = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(notificationSettings);
-        NotificationSetting weeklySummarySetting = notificationSettings.stream().filter(setting -> setting.getSettingId().equals(NOTIFICATION__WEEKLY_SUMMARY_WEEKLY_SUMMARY_BASIC))
-                .findFirst().orElse(null);
+        NotificationSetting weeklySummarySetting = notificationSettings.stream()
+                .filter(setting -> setting.getSettingId().equals(NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY)).findFirst().orElse(null);
         if (weeklySummarySetting == null)
             return false;
         return weeklySummarySetting.isEmail();
@@ -140,6 +140,8 @@ public class WeeklySummaryService {
      * @param user for whom the weekly summary email should be prepared
      */
     private void prepareWeeklySummaryForUser(User user) {
+        checkSecurityUtils();
+
         // Get all courses with exercises, lectures and exams (filtered for given user)
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
 
@@ -159,7 +161,20 @@ public class WeeklySummaryService {
     private Set<Exercise> getAllExercisesOfThisWeek(List<Course> courses) {
         Set<Exercise> newExercisesOfThisWeek = new HashSet<>();
         courses.forEach(course -> newExercisesOfThisWeek
-                .addAll(course.getExercises().stream().filter(exercise -> exercise.getReleaseDate().isAfter(oneWeekAgo) && !exercise.isEnded()).collect(Collectors.toSet())));
+                .addAll(course.getExercises().stream().filter(exercise -> shouldExerciseBePartOfWeeklySummary(exercise)).collect(Collectors.toSet())));
         return newExercisesOfThisWeek;
+    }
+
+    /**
+     * Checks if an exercise should be part of the weekly summary
+     * Exercise should have been released, not yet ended, and the release should have been in the last 7 days
+     *
+     * @param exercise that should be checked
+     * @return true if the exercise should be part of the weekly summary else false
+     */
+    private boolean shouldExerciseBePartOfWeeklySummary(Exercise exercise) {
+        if (exercise == null || exercise.getReleaseDate() == null)
+            return false;
+        return exercise.isReleased() && exercise.getReleaseDate().isAfter(oneWeekAgo) && !exercise.isEnded();
     }
 }

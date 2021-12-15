@@ -23,9 +23,9 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
             restrictionLevels: [Authority.USER],
             settings: [
                 {
-                    key: 'weeklySummaryBase',
-                    descriptionKey: 'weeklySummaryBaseDescription',
-                    settingId: SettingId.NOTIFICATION__WEEKLY_SUMMARY_WEEKLY_SUMMARY_BASIC,
+                    key: 'basicWeeklySummary',
+                    descriptionKey: 'basicWeeklySummaryDescription',
+                    settingId: SettingId.NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY,
                     emailSupport: true,
                     webappSupport: false,
                 },

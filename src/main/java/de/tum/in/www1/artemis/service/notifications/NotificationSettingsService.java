@@ -23,7 +23,7 @@ public class NotificationSettingsService {
     // notification settings settingIds analogous to client side
 
     // weekly summary
-    public final static String NOTIFICATION__WEEKLY_SUMMARY_WEEKLY_SUMMARY_BASIC = "notification.weekly-summary.weekly-summary-basic";
+    public final static String NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY = "notification.weekly-summary.basic-weekly-summary";
 
     // course wide discussion notification setting group
     public final static String NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST = "notification.course-wide-discussion.new-course-post";
@@ -60,7 +60,7 @@ public class NotificationSettingsService {
     // this has to match the properties in the notification settings structure file on the client that hides the related UI elements
     public final static Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>(Arrays.asList(
             // weekly summary
-            new NotificationSetting(false, true, NOTIFICATION__WEEKLY_SUMMARY_WEEKLY_SUMMARY_BASIC),
+            new NotificationSetting(false, true, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY),
             // course wide discussion notification setting group
             new NotificationSetting(true, false, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST),
             new NotificationSetting(true, false, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST),
