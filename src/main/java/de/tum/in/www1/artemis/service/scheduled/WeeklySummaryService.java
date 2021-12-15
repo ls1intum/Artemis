@@ -17,16 +17,14 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.NotificationSetting;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
+import tech.jhipster.config.JHipsterConstants;
 
 @Service
 @Profile("scheduling")
@@ -68,16 +66,17 @@ public class WeeklySummaryService {
     public void scheduleWeeklySummariesOnStartUp() {
         try {
             Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
-            /*
-             * TODO uncomment after testing! if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) { // only execute this on production server, i.e. when the
-             * prod profile is active // NOTE: if you want to test this locally, please comment it out, but do not commit the changes return; }
-             * SecurityUtils.setAuthorizationObject();
-             */
+            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+                // only execute this on production server, i.e. when the prod profile is active
+                // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+                return;
+            }
+            SecurityUtils.setAuthorizationObject();
 
             // i.e. next Friday at 17:00
             LocalDateTime nextWeeklySummaryDate = ZonedDateTime.now().toLocalDateTime().with(DayOfWeek.FRIDAY).withHour(17).withMinute(0);
             // For local testing :
-            nextWeeklySummaryDate = ZonedDateTime.now().toLocalDateTime(); // TODO comment in
+            // nextWeeklySummaryDate = ZonedDateTime.now().toLocalDateTime();
 
             ZoneOffset zoneOffset = ZonedDateTime.now().getZone().getRules().getOffset(Instant.now());
 

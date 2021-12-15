@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.programmingexercise;
+package de.tum.in.www1.artemis.service.notifications;
 
 import static org.mockito.Mockito.*;
 

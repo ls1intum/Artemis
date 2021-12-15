@@ -75,6 +75,10 @@ public class MailService {
     // time related variables
     private static final String TIME_SERVICE = "timeService";
 
+    // weekly summary related variables
+
+    private static final String WEEKLY_SUMMARY_NEW_EXERCISES = "weeklySummaryNewExercises";
+
     public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine,
             TimeService timeService) {
         this.jHipsterProperties = jHipsterProperties;
@@ -239,7 +243,30 @@ public class MailService {
     }
 
     /// Weekly Summary Email
+
+    /**
+     * Sends an email based on a weekly summary
+     *
+     * @param user who is the recipient
+     * @param exercises that will be used in the weekly summary
+     */
+    @Async
     public void sendWeeklySummaryEmail(User user, Set<Exercise> exercises) {
-        String hello = "hi"; // TODO remove
+        log.debug("Sending weekly summary email to '{}'", user.getEmail());
+
+        Locale locale = Locale.forLanguageTag(user.getLangKey());
+
+        Context context = new Context(locale);
+        context.setVariable(USER, user);
+        context.setVariable(WEEKLY_SUMMARY_NEW_EXERCISES, exercises);
+
+        context.setVariable(TIME_SERVICE, this.timeService);
+        String subject = "Weekly Summary";
+
+        context.setVariable(BASE_URL, artemisServerUrl);
+
+        String content = templateEngine.process("mail/weeklySummary", context);
+
+        sendEmail(user, subject, content, false, true);
     }
 }
