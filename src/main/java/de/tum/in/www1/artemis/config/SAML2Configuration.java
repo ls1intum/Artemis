@@ -6,8 +6,8 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
@@ -63,7 +63,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
      */
     @Bean
     RelyingPartyRegistrationRepository relyingPartyRegistrationRepository() {
-        final List<RelyingPartyRegistration> relyingPartyRegistrations = new LinkedList<>();
+        final List<RelyingPartyRegistration> relyingPartyRegistrations = new ArrayList<>();
         // @formatter:off
         for (SAML2Properties.RelyingPartyProperties config : properties.getIdentityProviders()) {
             relyingPartyRegistrations.add(RelyingPartyRegistrations
