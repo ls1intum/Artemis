@@ -177,6 +177,7 @@
                     [ngClass]="{ disabled: !question.backgroundFilePath }"
                 >
                     <div
+                        id="drop-location"
                         class="drop-location"
                         *ngFor="let dropLocation of question.dropLocations"
                         [ngClass]="dropAllowed ? 'drop-allowed' : ''"

@@ -1,8 +1,8 @@
 import { POST, EXERCISE_BASE } from '../../../constants';
 
 export class DragAndDropQuiz {
-    dragItemIntoDragArea() {
-        cy.get('#drag-items').children().eq(0).drag('.drop-location');
+    dragItemIntoDragArea(itemIndex: number) {
+        cy.get('#drag-item-' + itemIndex).drag('#drop-location');
     }
 
     submit() {
