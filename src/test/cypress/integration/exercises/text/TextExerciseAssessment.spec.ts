@@ -51,16 +51,15 @@ describe('Text exercise assessment', () => {
         courseAssessment.checkShowFinishedExercises();
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
-        cy.contains('There are no complaints at the moment').should('be.visible');
-        cy.contains('There are no requests at the moment.').should('be.visible');
         exerciseAssessment.clickStartNewAssessment();
         textAssessment.getInstructionsRootElement().contains(exercise.title).should('be.visible');
         textAssessment.getInstructionsRootElement().contains(exercise.problemStatement).should('be.visible');
         textAssessment.getInstructionsRootElement().contains(exercise.sampleSolution).should('be.visible');
         textAssessment.getInstructionsRootElement().contains(exercise.gradingInstructions).should('be.visible');
-        cy.contains('Number of words: 100').should('be.visible');
-        cy.contains('Number of characters: 591').should('be.visible');
-        textAssessment.provideFeedbackOnTextSection('sed diam voluptua', tutorTextFeedbackPoints, tutorTextFeedback);
+        // Assert the correct word and character count without relying on translations
+        textAssessment.getWordCountElement().should('contain.text', 100).and('be.visible');
+        textAssessment.getCharacterCountElement().should('contain.text', 591).and('be.visible');
+        textAssessment.provideFeedbackOnTextSection(1, tutorTextFeedbackPoints, tutorTextFeedback);
         textAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
         textAssessment.submit().its('response.statusCode').should('eq', 200);
     });
