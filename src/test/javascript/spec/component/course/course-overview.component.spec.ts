@@ -180,8 +180,8 @@ describe('CourseOverviewComponent', () => {
 
         component.showLongDescription();
 
-        expect(component.courseDescription).toEqual('');
-        expect(component.longTextShown).toEqual(true);
+        expect(component.courseDescription).toBe('');
+        expect(component.longTextShown).toBe(true);
     });
 
     it('should set short Description', () => {
@@ -195,8 +195,8 @@ describe('CourseOverviewComponent', () => {
 
         component.showShortDescription();
 
-        expect(component.courseDescription).toEqual('description of course 1...');
-        expect(component.longTextShown).toEqual(false);
+        expect(component.courseDescription).toBe('description of course 1...');
+        expect(component.longTextShown).toBe(false);
     });
 
     it('should have visible exams', () => {
@@ -209,7 +209,7 @@ describe('CourseOverviewComponent', () => {
 
         const bool = component.hasVisibleExams();
 
-        expect(bool).toEqual(true);
+        expect(bool).toBe(true);
     });
 
     it('should not have visible exams', () => {
@@ -222,7 +222,7 @@ describe('CourseOverviewComponent', () => {
 
         const bool = component.hasVisibleExams();
 
-        expect(bool).toEqual(false);
+        expect(bool).toBe(false);
     });
 
     it('should subscribeToTeamAssignmentUpdates', () => {
@@ -249,9 +249,9 @@ describe('CourseOverviewComponent', () => {
         component.ngOnInit();
         component.adjustCourseDescription();
 
-        expect(component.enableShowMore).toEqual(false);
+        expect(component.enableShowMore).toBe(false);
         expect(showLongDescriptionStub).toHaveBeenCalled();
-        expect(localStorage.getItem('isDescriptionReadshortName1')).toEqual('true');
+        expect(localStorage.getItem('isDescriptionReadshortName1')).toBe('true');
     });
     it('should subscribeForQuizChanges', () => {
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
