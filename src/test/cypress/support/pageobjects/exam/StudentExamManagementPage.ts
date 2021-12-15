@@ -10,12 +10,6 @@ export class StudentExamManagementPage {
         return cy.wait('@generateStudentExams');
     }
 
-    clickEvaluateQuizzes() {
-        cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/evaluate-quiz-exercises').as('evaluateQuizzes');
-        cy.get('#evaluateQuizExercisesButton').click();
-        return cy.wait('@evaluateQuizzes');
-    }
-
     clickRegisterCourseStudents() {
         cy.intercept(POST, COURSE_BASE + '*/exams/*/register-course-students').as('registerCourseStudents');
         cy.get('[jhitranslate="artemisApp.examManagement.examStudents.registerAllFromCourse"]').click();
