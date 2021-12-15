@@ -43,7 +43,7 @@ export class Saml2LoginComponent implements OnInit {
                     // (re)set cookie
                     document.cookie = 'SAML2flow=true; max-age=120; SameSite=Lax;';
                     // arbitrary by SAML2 HTTP Filter Chain secured URL
-                    window.location.replace('/saml2/authenticate');
+                    window.location.href = '/saml2/authenticate';
                 } else if (error.status === 403) {
                     // for example if user was disabled
                     let message = 'Forbidden';
