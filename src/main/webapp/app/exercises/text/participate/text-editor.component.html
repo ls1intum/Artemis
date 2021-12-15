@@ -31,10 +31,10 @@
 
         <div class="grid-area-main">
             <div>
-                <span class="badge bg-primary mb-2">
+                <span class="badge bg-primary mb-2" id="word-count">
                     {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
                 </span>
-                <span class="badge bg-primary mb-2">
+                <span class="badge bg-primary mb-2" id="character-count">
                     {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
                 </span>
             </div>
@@ -95,7 +95,7 @@
     <!--endregion-->
     <!--region Right Panel-->
     <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
-    <span right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
+    <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
     <p right-body class="markdown-preview mb-3" *ngIf="textExercise!.problemStatement">
         <span [innerHTML]="textExercise!.problemStatement! | htmlForMarkdown"></span>
     </p>

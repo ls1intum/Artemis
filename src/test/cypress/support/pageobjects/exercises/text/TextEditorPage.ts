@@ -23,11 +23,11 @@ export class TextEditorPage {
     }
 
     shouldShowExerciseTitleInHeader(exerciseTitle: string) {
-        cy.get('jhi-header-participation-page').contains(exerciseTitle).should('be.visible');
+        cy.get('#participation-header').contains(exerciseTitle).should('be.visible');
     }
 
     shouldShowProblemStatement() {
-        cy.get('[jhitranslate="artemisApp.exercise.problemStatement"]').should('be.visible');
+        cy.get('#problem-statement').should('be.visible');
     }
 
     getHeaderElement() {
@@ -35,18 +35,10 @@ export class TextEditorPage {
     }
 
     shouldShowNumberOfWords(numberOfWords: number) {
-        cy.get('.badge').contains(`Number of words: ${numberOfWords}`).should('be.visible');
+        cy.get('#word-count').contains(numberOfWords).should('be.visible');
     }
 
     shouldShowNumberOfCharacters(numberOfWords: number) {
-        cy.get('.badge').contains(`Number of characters: ${numberOfWords}`).should('be.visible');
-    }
-
-    shouldShowAlert() {
-        cy.get('.alert-success').should('be.visible');
-    }
-
-    shouldShowNoGradedResultAvailable() {
-        cy.get('[jhitranslate="artemisApp.result.noResult"]').should('be.visible');
+        cy.get('#character-count').contains(numberOfWords).should('be.visible');
     }
 }
