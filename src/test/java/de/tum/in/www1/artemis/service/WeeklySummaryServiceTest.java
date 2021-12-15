@@ -145,6 +145,8 @@ public class WeeklySummaryServiceTest {
     public void testIfScheduleWeeklySummariesCorrectlyFiltersOutUsers() {
         weeklySummaryService.scheduleWeeklySummariesOnStartUp();
 
+        // TODO currently this can not be tested, due to the long (7 days long) waiting -> could be tested if the methods would be public or if there was a boolean flag to change
+        // the times for testing
         verify(courseService, times(1)).findAllActiveWithExercisesAndLecturesAndExamsForUser(userWithActivatedWeeklySummaries);
         verify(courseService, times(0)).findAllActiveWithExercisesAndLecturesAndExamsForUser(userWithDeactivatedWeeklySummaries);
     }
