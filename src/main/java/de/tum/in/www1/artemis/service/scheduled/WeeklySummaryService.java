@@ -175,8 +175,9 @@ public class WeeklySummaryService {
      * @return true if the exercise should be part of the weekly summary else false
      */
     private boolean shouldExerciseBePartOfWeeklySummary(Exercise exercise) {
-        if (exercise == null || exercise.getReleaseDate() == null)
+        if (exercise == null || exercise.getReleaseDate() == null) {
             return false;
+        }
         return exercise.isReleased() && exercise.getReleaseDate().isAfter(oneWeekAgo) && !exercise.isEnded();
     }
 }
