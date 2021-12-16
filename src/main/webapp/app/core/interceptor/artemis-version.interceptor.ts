@@ -55,7 +55,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
     /**
      * Tells the service worker to check for updates and display an update alert if an update is available.
      * This is either exactly when
-     * - this method is called from an intercept http request that identified a version mismatch, or
+     * - this method is called from an intercepted http request that identified a version mismatch, or
      * - if the service worker detects an update, or
      * - if any of these conditions were ever true since the app loaded (aka last reload)
      *
