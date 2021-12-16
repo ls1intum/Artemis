@@ -21,7 +21,7 @@ public class TextHint extends ExerciseHint {
         return content;
     }
 
-    public ExerciseHint content(String content) {
+    public TextHint content(String content) {
         this.content = content;
         return this;
     }
