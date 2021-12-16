@@ -199,7 +199,7 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(getExamWithInterestingExercisesForAssessmentDashboardStub).toHaveBeenCalledTimes(1);
         expect(getStatsForExamAssessmentDashboardStub).toHaveBeenCalledTimes(1);
         expect(comp.exam).toEqual(exam);
-        expect(comp.showFinishedExercises).toBe(true);
+        expect(comp.hideFinishedExercises).toBe(false);
         expect(comp.allExercises).toHaveLength(4);
         expect(comp.currentlyShownExercises).toHaveLength(4);
     }));
@@ -256,14 +256,6 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(comp.currentlyShownExercises).toEqual([programmingExercise, modelingExercise]);
         comp.triggerOptionalExercises();
         expect(comp.currentlyShownExercises).toEqual([programmingExercise, textExercise, modelingExercise]);
-    });
-
-    it('should toggle showing finished exercises', () => {
-        const updateExercisesSpy = jest.spyOn(comp, 'updateExercises');
-        comp.showFinishedExercises = false;
-        comp.triggerFinishedExercises();
-        expect(comp.showFinishedExercises).toBe(true);
-        expect(updateExercisesSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should sort rows', () => {

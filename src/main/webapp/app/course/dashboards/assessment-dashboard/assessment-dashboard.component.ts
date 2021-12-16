@@ -50,7 +50,7 @@ export class AssessmentDashboardComponent implements OnInit {
     ratings = new AssessmentDashboardInformationEntry(0, 0);
 
     totalAssessmentPercentage = 0;
-    showFinishedExercises = false;
+    hideFinishedExercises = true;
     hideOptional = false;
 
     stats = new StatsForDashboard();
@@ -93,7 +93,6 @@ export class AssessmentDashboardComponent implements OnInit {
         this.isExamMode = !!this.examId;
         if (this.isExamMode) {
             this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
-            this.showFinishedExercises = this.isTestRun;
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
         this.loadAll();
@@ -106,7 +105,7 @@ export class AssessmentDashboardComponent implements OnInit {
      */
     loadAll() {
         if (this.isExamMode) {
-            this.showFinishedExercises = true;
+            this.hideFinishedExercises = false;
             this.examManagementService.getExamWithInterestingExercisesForAssessmentDashboard(this.courseId, this.examId, this.isTestRun).subscribe((res: HttpResponse<Exam>) => {
                 this.exam = res.body!;
                 this.course = Course.from(this.exam.course!);
@@ -331,7 +330,7 @@ export class AssessmentDashboardComponent implements OnInit {
      * Toggle the option to show finished exercises.
      */
     triggerFinishedExercises() {
-        this.showFinishedExercises = !this.showFinishedExercises;
+        this.hideFinishedExercises = !this.hideFinishedExercises;
         this.updateExercises();
     }
 
@@ -347,7 +346,7 @@ export class AssessmentDashboardComponent implements OnInit {
      * update the exercise array based on the option show finished exercises
      */
     updateExercises() {
-        this.currentlyShownExercises = this.showFinishedExercises ? this.allExercises : this.getUnfinishedExercises(this.allExercises);
+        this.currentlyShownExercises = this.hideFinishedExercises ? this.getUnfinishedExercises(this.allExercises) : this.allExercises;
         if (this.hideOptional) {
             this.currentlyShownExercises = this.currentlyShownExercises.filter((exercise) => exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED);
         }
