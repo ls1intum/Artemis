@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { tap, throttleTime } from 'rxjs/operators';
@@ -10,9 +10,11 @@ import { CheckForUpdateService } from 'app/core/update/check-for-update.service'
 export class ArtemisVersionInterceptor implements HttpInterceptor {
     private triggerUpdateService = new Subject<void>();
 
-    constructor(private checkForUpdateService: CheckForUpdateService, private serverDateService: ArtemisServerDateService) {
+    constructor(injector: Injector, private serverDateService: ArtemisServerDateService) {
         // only trigger update service every 10s
         this.triggerUpdateService.pipe(throttleTime(10000)).subscribe(() => {
+            // Workaround: Random cyclic dependency on token HTTP_INTERCEPTOR
+            const checkForUpdateService = injector.get(CheckForUpdateService);
             checkForUpdateService.checkForUpdates();
         });
     }
