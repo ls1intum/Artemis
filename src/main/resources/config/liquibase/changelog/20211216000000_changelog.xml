@@ -1,0 +1,57 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <property name="autoIncrement" value="true"/>
+
+    <changeSet author="timor-morrien" id="20211216000000-1">
+        <createTable tableName="programming_exercise_task">
+            <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="exercise_id" type="BIGINT"/>
+            <column name="task_name" type="VARCHAR(255)"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="programming_exercise_task"
+                                 baseColumnNames="exercise_id"
+                                 constraintName="fk_programming_exercise_task_exercise_id"
+                                 referencedTableName="exercise"
+                                 referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet author="timor-morrien" id="20211216000000-2">
+        <createTable tableName="programming_exercise_task_test_case">
+            <column name="task_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="test_case_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="programming_exercise_task_test_case"
+                                 baseColumnNames="task_id"
+                                 constraintName="fk_programming_exercise_task_test_case_task_id"
+                                 deferrable="false"
+                                 initiallyDeferred="false"
+                                 referencedTableName="programming_exercise_task"
+                                 referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="programming_exercise_task_test_case"
+                                 baseColumnNames="test_case_id"
+                                 constraintName="fk_programming_exercise_task_test_case_test_case_id"
+                                 deferrable="false"
+                                 initiallyDeferred="false"
+                                 referencedTableName="programming_exercise_test_case"
+                                 referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet author="timor-morrien" id="20211216000000-3">
+        <addColumn tableName="exercise_hint">
+            <column name="task_id" type="BIGINT"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="exercise_hint"
+                                 baseColumnNames="task_id"
+                                 constraintName="fk_exercise_hint_task_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="programming_exercise_task"/>
+    </changeSet>
+</databaseChangeLog>

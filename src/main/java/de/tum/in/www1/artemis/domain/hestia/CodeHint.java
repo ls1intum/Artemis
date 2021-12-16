@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTask;
  */
 @Entity
 @DiscriminatorValue("C")
-@SecondaryTable(name = "code_hint")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CodeHint extends ExerciseHint {
 
