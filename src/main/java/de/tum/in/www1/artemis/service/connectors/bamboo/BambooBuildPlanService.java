@@ -258,8 +258,6 @@ public class BambooBuildPlanService {
                     // add a requirement to be able to run the Xcode build tasks using fastlane
                     var requirement = new Requirement("system.builder.fastlane.fastlane");
                     defaultJob.requirements(requirement);
-                    // add a final task for the execution of static code analysis
-                    defaultJob.finalTasks();
                 }
                 return defaultStage.jobs(defaultJob);
             }
