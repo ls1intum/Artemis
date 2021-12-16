@@ -1,39 +1,26 @@
 import { ApplicationRef, Injectable } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
-import { concat, interval, Observable, Subject } from 'rxjs';
-import { first, tap, throttleTime } from 'rxjs/operators';
+import { concat, interval, Observable } from 'rxjs';
+import { first, tap } from 'rxjs/operators';
 import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { SwUpdate } from '@angular/service-worker';
-import { AlertService } from 'app/core/util/alert.service';
+import { Alert, AlertService } from 'app/core/util/alert.service';
 
 @Injectable()
 export class ArtemisVersionInterceptor implements HttpInterceptor {
-    private showAlert = new Subject<void>();
+    private alert: Alert;
 
     constructor(private appRef: ApplicationRef, private updates: SwUpdate, private serverDateService: ArtemisServerDateService, private alertService: AlertService) {
         // Allow the app to stabilize first, before starting
         // polling for updates with `interval()`.
         const appIsStable = appRef.isStable.pipe(first((isStable) => isStable === true));
-        const updateInterval = interval(60 * 1000); // every 60s
+        const updateInterval = interval(10 * 1000); // every 60s
         const updateIntervalOnceAppIsStable$ = concat(appIsStable, updateInterval);
 
-        updateIntervalOnceAppIsStable$.subscribe(() => this.checkForUpdates());
-
-        this.showAlert.pipe(throttleTime(30000)).subscribe(() => {
-            // show the outdated alert for 30s so users update by reloading the browser
-            // also see https://angular.io/guide/service-worker-communications#forcing-update-activation
-            console.log('Showing update alert now.');
-            this.alertService.addAlert({
-                type: 'info',
-                message: 'artemisApp.outdatedAlert',
-                timeout: 30000,
-                action: {
-                    label: 'artemisApp.outdatedAction',
-                    callback: () => updates.activateUpdate().then(() => document.location.reload()),
-                },
-            });
-            console.log('Returned');
+        updateIntervalOnceAppIsStable$.subscribe(() => {
+            console.log('Interval triggered.');
+            this.checkForUpdates();
         });
 
         updates.available.subscribe((event) => {
@@ -70,7 +57,20 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
         console.log('Checking for updates now!');
         this.updates.checkForUpdate().then((updateAvailable: boolean) => {
             console.log('Check complete. Result: ' + updateAvailable);
-            this.showAlert.next();
+            console.log('Showing update alert now.');
+
+            this.alert?.close!();
+
+            this.alert = this.alertService.addAlert({
+                type: 'info',
+                message: 'artemisApp.outdatedAlert',
+                timeout: 30000,
+                action: {
+                    label: 'artemisApp.outdatedAction',
+                    callback: () => this.updates.activateUpdate().then(() => document.location.reload()),
+                },
+            });
+            console.log('Returned');
         });
     }
 }

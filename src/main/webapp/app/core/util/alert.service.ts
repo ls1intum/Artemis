@@ -14,7 +14,7 @@ export interface Alert {
     timeout?: number;
     toast?: boolean;
     position?: string;
-    close?: (alerts: Alert[]) => void;
+    close?: () => void;
     action?: { label: string; callback: () => any | void };
     dismissible?: boolean;
 }
@@ -72,7 +72,7 @@ export class AlertService {
         alert.toast = alert.toast ?? this.toast;
         alert.position = alert.position ?? this.position;
         alert.dismissible = alert.dismissible ?? (alert.action ? false : this.dismissible);
-        alert.close = (alertsArray: Alert[]) => this.closeAlert(alert.id!, alertsArray);
+        alert.close = () => this.closeAlert(alert.id!, this.alerts);
 
         if (alert.action) {
             alert.action.label = this.sanitizer.sanitize(SecurityContext.HTML, this.translateService.instant(alert.action.label) ?? '') ?? '';
