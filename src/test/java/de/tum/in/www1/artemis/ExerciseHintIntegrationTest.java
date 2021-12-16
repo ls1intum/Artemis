@@ -92,21 +92,21 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void createHintAsAStudentShouldReturnForbidden() throws Exception {
-        ExerciseHint exerciseHint = new TextHint().title("title 4").content("content 4").exercise(exercise);
+        ExerciseHint exerciseHint = new TextHint().content("content 4").title("title 4").exercise(exercise);
         request.post("/api/exercise-hints/", exerciseHint, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void createHintAsTutorForbidden() throws Exception {
-        ExerciseHint exerciseHint = new TextHint().title("title 4").content("content 4").exercise(exercise);
+        ExerciseHint exerciseHint = new TextHint().content("content 4").title("title 4").exercise(exercise);
         request.post("/api/exercise-hints/", exerciseHint, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     public void createHintAsEditor() throws Exception {
-        ExerciseHint exerciseHint = new TextHint().title("title 4").content("content 4").exercise(exercise);
+        ExerciseHint exerciseHint = new TextHint().content("content 4").title("title 4").exercise(exercise);
         request.post("/api/exercise-hints/", exerciseHint, HttpStatus.CREATED);
 
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
@@ -116,7 +116,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createHintAsInstructor() throws Exception {
-        ExerciseHint exerciseHint = new TextHint().title("title 4").content("content 4").exercise(exercise);
+        ExerciseHint exerciseHint = new TextHint().content("content 4").title("title 4").exercise(exercise);
         request.post("/api/exercise-hints/", exerciseHint, HttpStatus.CREATED);
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
         assertThat(exerciseHints).hasSize(4);

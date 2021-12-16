@@ -2959,9 +2959,9 @@ public class DatabaseUtilService {
     }
 
     public void addHintsToExercise(Exercise exercise) {
-        ExerciseHint exerciseHint1 = new TextHint().exercise(exercise).title("title 1").content("content 1");
-        ExerciseHint exerciseHint2 = new TextHint().exercise(exercise).title("title 2").content("content 2");
-        ExerciseHint exerciseHint3 = new TextHint().exercise(exercise).title("title 3").content("content 3");
+        ExerciseHint exerciseHint1 = new TextHint().content("content 1").exercise(exercise).title("title 1");
+        ExerciseHint exerciseHint2 = new TextHint().content("content 2").exercise(exercise).title("title 2");
+        ExerciseHint exerciseHint3 = new TextHint().content("content 3").exercise(exercise).title("title 3");
         Set<ExerciseHint> hints = new HashSet<>();
         hints.add(exerciseHint1);
         hints.add(exerciseHint2);
