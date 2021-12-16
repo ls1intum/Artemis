@@ -19,6 +19,7 @@
             "moreFeedbackRequests": "More Feedback Requests",
             "totalMoreFeedbackRequests": "Total More Feedback Requests",
             "showFinishedExercises": "Show finished exercises",
+            "hideOptional": "hideOptional",
             "exercise": "Exercise",
             "exerciseType": "Exercise type",
             "yourStatus": "Your status",
