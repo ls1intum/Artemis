@@ -6,9 +6,9 @@
             (close)="close(alert)"
             [dismissible]="alert.dismissible"
         >
-            <div class="d-flex">
+            <div class="d-flex align-items-center">
                 <pre class="flex-grow-1" [innerHTML]="getAlertMessage(alert)"></pre>
-                <button *ngIf="alert.action" type="button" class="btn text-light" (click)="alert.action.callback()">{{ alert.action.label }}</button>
+                <button *ngIf="alert.action" type="button" class="btn btn-primary" (click)="alert.action.callback()">{{ alert.action.label }}</button>
             </div>
         </ngb-alert>
     </div>

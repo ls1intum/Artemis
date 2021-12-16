@@ -71,7 +71,7 @@ export class AlertService {
         alert.timeout = alert.timeout ?? this.timeout;
         alert.toast = alert.toast ?? this.toast;
         alert.position = alert.position ?? this.position;
-        alert.dismissible = alert.dismissible ?? this.dismissible;
+        alert.dismissible = alert.dismissible ?? (alert.action ? false : this.dismissible);
         alert.close = (alertsArray: Alert[]) => this.closeAlert(alert.id!, alertsArray);
 
         if (alert.action) {
