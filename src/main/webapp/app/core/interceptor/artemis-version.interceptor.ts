@@ -71,10 +71,11 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
                 // Close previous alert to avoid duplicates
                 this.alert?.close!();
 
-                // Show fresh alert without timeout and store it for later rerun of this method
+                // Show fresh alert with long timeout and store it for later rerun of this method
                 this.alert = this.alertService.addAlert({
                     type: 'info',
                     message: 'artemisApp.outdatedAlert',
+                    timeout: 10000000000,
                     action: {
                         label: 'artemisApp.outdatedAction',
                         callback: () =>
