@@ -238,7 +238,6 @@ describe('CodeEditorContainerIntegration', () => {
 
         // build output
         expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
-        // Using toIncludeSameMembers() as toEqual() compares two array types and fails the expect statement
         expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toEqual(extractedBuildLogErrors);
         expect(container.buildOutput.isBuilding).toBe(false);
 
@@ -316,7 +315,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // build output
         expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
-        expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toIncludeSameMembers(extractedBuildLogErrors);
+        expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toEqual(extractedBuildLogErrors);
         expect(container.buildOutput.isBuilding).toBe(false);
 
         // instructions
