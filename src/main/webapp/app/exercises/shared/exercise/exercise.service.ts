@@ -137,11 +137,9 @@ export class ExerciseService {
     }
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {
-        return this.http.get<Exercise[]>(`${this.resourceUrl}/upcoming`, { observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => this.convertExerciseCategoryArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => this.setAccessRightsExerciseEntityArrayResponseType(res)),
-        );
+        return this.http
+            .get<Exercise[]>(`${this.resourceUrl}/upcoming`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.processExerciseEntityArrayResponse(res)));
     }
 
     /**
@@ -358,11 +356,9 @@ export class ExerciseService {
      * @param { number } exerciseId - Id of exercise to retrieve
      */
     getForTutors(exerciseId: number): Observable<HttpResponse<Exercise>> {
-        return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-assessment-dashboard`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-            map((res: EntityResponseType) => this.setAccessRightsExerciseEntityResponseType(res)),
-        );
+        return this.http
+            .get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-assessment-dashboard`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
     }
 
     /**

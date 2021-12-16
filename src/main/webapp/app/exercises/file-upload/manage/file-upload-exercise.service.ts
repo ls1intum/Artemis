@@ -62,11 +62,9 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      */
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
-        return this.http.get<FileUploadExercise[]>(this.resourceUrl, { params: options, observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => this.exerciseService.setAccessRightsExerciseEntityArrayResponseType(res)),
-        );
+        return this.http
+            .get<FileUploadExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
     }
 
     /**
