@@ -2,7 +2,6 @@ import { HttpClientModule } from '@angular/common/http';
 import { EventEmitter } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -20,10 +19,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -212,7 +208,6 @@ describe('ExamParticipationCoverComponent', () => {
 
     it('should get start button enabled and end button enabled', () => {
         fixture.detectChanges();
-        console.log(component.interval);
         component.testRun = true;
         expect(component.startButtonEnabled).toBe(false);
 

@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, discardPeriodicTasks, TestBed } from '@angular/core/testing';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../test.module';
 import { By } from '@angular/platform-browser';

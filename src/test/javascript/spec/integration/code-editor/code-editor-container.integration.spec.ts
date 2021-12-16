@@ -221,7 +221,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(checkIfRepositoryIsCleanStub).toHaveBeenCalledTimes(1);
         expect(getRepositoryContentStub).toHaveBeenCalledTimes(1);
         expect(container.fileBrowser.errorFiles).toEqual(extractedErrorFiles);
-        expect(container.fileBrowser.unsavedFiles).toBeArrayOfSize(0);
+        expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
         // ace editor
         expect(container.aceEditor.isLoading).toBe(false);
@@ -238,6 +238,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // build output
         expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
+        // Using toIncludeSameMembers() as toEqual() compares two array types and fails the expect statement
         expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toIncludeSameMembers(extractedBuildLogErrors);
         expect(container.buildOutput.isBuilding).toBe(false);
 
@@ -297,7 +298,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(checkIfRepositoryIsCleanStub).toHaveBeenCalledTimes(1);
         expect(getRepositoryContentStub).not.toHaveBeenCalled();
         expect(container.fileBrowser.errorFiles).toEqual(extractedErrorFiles);
-        expect(container.fileBrowser.unsavedFiles).toBeArrayOfSize(0);
+        expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
         // ace editor
         expect(container.aceEditor.isLoading).toBe(false);
@@ -396,7 +397,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.unsavedFiles).toStrictEqual({});
         expect(container.editorState).toBe(EditorState.CLEAN);
         expect(container.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
-        expect(container.fileBrowser.unsavedFiles).toBeArrayOfSize(0);
+        expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
         expect(container.actions.editorState).toBe(EditorState.CLEAN);
     });
 
@@ -456,7 +457,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         expect(container.buildOutput.isBuilding).toBe(false);
         expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
-        expect(container.fileBrowser.errorFiles).toBeArrayOfSize(0);
+        expect(container.fileBrowser.errorFiles).toHaveLength(0);
     });
 
     it('should first save unsaved files before triggering commit', fakeAsync(() => {
@@ -511,7 +512,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         expect(container.buildOutput.isBuilding).toBe(false);
         expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
-        expect(container.fileBrowser.errorFiles).toBeArrayOfSize(0);
+        expect(container.fileBrowser.errorFiles).toHaveLength(0);
 
         containerFixture.destroy();
         flush();

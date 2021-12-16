@@ -1,4 +1,3 @@
-import { BuildLogEntryArray } from 'app/entities/build-log.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 
 export const buildLogs = [
