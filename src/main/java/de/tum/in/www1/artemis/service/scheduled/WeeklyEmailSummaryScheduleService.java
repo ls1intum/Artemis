@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.EmailSummaryService;
+import tech.jhipster.config.JHipsterConstants;
 
 @Service
 @Profile("scheduling")
@@ -51,17 +52,18 @@ public class WeeklyEmailSummaryScheduleService {
     public void scheduleEmailSummariesOnStartUp() {
         try {
             Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
-            /*
-             * TODO if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) { // only execute this on production server, i.e. when the prod profile is active //
-             * NOTE: if you want to test this locally, please comment it out, but do not commit the changes return; }
-             */
+            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+                // only execute this on production server, i.e. when the prod profile is active
+                // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+                return;
+            }
             SecurityUtils.setAuthorizationObject();
 
             ZoneOffset zoneOffset = ZonedDateTime.now().getZone().getRules().getOffset(Instant.now());
 
-            // scheduler.scheduleAtFixedRate(scheduleEmailSummaries(), nextSummaryDate.toInstant(zoneOffset), scheduleInterval);
+            scheduler.scheduleAtFixedRate(scheduleEmailSummaries(), nextSummaryDate.toInstant(zoneOffset), scheduleInterval);
             // For local testing
-            scheduler.scheduleAtFixedRate(scheduleEmailSummaries(), ZonedDateTime.now().toLocalDateTime().toInstant(zoneOffset), Duration.ofMinutes(3));
+            // scheduler.scheduleAtFixedRate(scheduleEmailSummaries(), ZonedDateTime.now().toLocalDateTime().toInstant(zoneOffset), Duration.ofMinutes(3));
 
             log.info("Scheduled email summaries on start up.");
         }
