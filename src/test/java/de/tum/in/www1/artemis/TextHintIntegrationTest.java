@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.hestia.TextHint;
 import de.tum.in.www1.artemis.repository.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
-public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+public class TextHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ExerciseHintRepository exerciseHintRepository;
@@ -133,13 +133,18 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     private void updateHintForbidden() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
-        String newContent = "new content value!";
-        String contentBefore = exerciseHint.getContent();
-        exerciseHint.setContent(newContent);
-        request.put("/api/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.FORBIDDEN);
+        assertThat(exerciseHint).isInstanceOf(TextHint.class);
+        if (exerciseHint instanceof TextHint textHint) {
+            String newContent = "new content value!";
+            String contentBefore = textHint.getContent();
+            textHint.setContent(newContent);
+            request.put("/api/exercise-hints/" + textHint.getId(), textHint, HttpStatus.FORBIDDEN);
 
-        Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
-        assertThat(hintAfterSave.get().getContent()).isEqualTo(contentBefore);
+            Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(textHint.getId());
+            assertThat(hintAfterSave).isPresent();
+            assertThat(hintAfterSave.get()).isInstanceOf(TextHint.class);
+            assertThat(((TextHint) hintAfterSave.get()).getContent()).isEqualTo(contentBefore);
+        }
     }
 
     @Test
@@ -154,11 +159,16 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
         String newContent = "new content value!";
 
-        exerciseHint.setContent(newContent);
-        request.put("/api/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.OK);
-        request.put("/api/exercise-hints/" + 0L, exerciseHint, HttpStatus.BAD_REQUEST);
-        Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
-        assertThat(hintAfterSave.get().getContent()).isEqualTo(newContent);
+        assertThat(exerciseHint).isInstanceOf(TextHint.class);
+        if (exerciseHint instanceof TextHint textHint) {
+            textHint.setContent(newContent);
+            request.put("/api/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.OK);
+            request.put("/api/exercise-hints/" + 0L, exerciseHint, HttpStatus.BAD_REQUEST);
+            Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
+            assertThat(hintAfterSave).isPresent();
+            assertThat(hintAfterSave.get()).isInstanceOf(TextHint.class);
+            assertThat(((TextHint) hintAfterSave.get()).getContent()).isEqualTo(newContent);
+        }
     }
 
     @Test
@@ -167,17 +177,22 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
         String newContent = "new content value!";
 
-        exerciseHint.setContent(newContent);
-        request.put("/api/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.OK);
+        assertThat(exerciseHint).isInstanceOf(TextHint.class);
+        if (exerciseHint instanceof TextHint textHint) {
+            textHint.setContent(newContent);
+            request.put("/api/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.OK);
 
-        Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
-        assertThat(hintAfterSave.get().getContent()).isEqualTo(newContent);
+            Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
+            assertThat(hintAfterSave).isPresent();
+            assertThat(hintAfterSave.get()).isInstanceOf(TextHint.class);
+            assertThat(((TextHint) hintAfterSave.get()).getContent()).isEqualTo(newContent);
+        }
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteHintAsInstructor() throws Exception {
-        ExerciseHint exerciseHint = new TextHint().title("title 4").content("content 4").exercise(exercise);
+        ExerciseHint exerciseHint = new TextHint().content("content 4").title("title 4").exercise(exercise);
         request.delete("/api/exercise-hints/" + 0L, HttpStatus.NOT_FOUND);
         request.post("/api/exercise-hints", exerciseHint, HttpStatus.CREATED);
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
