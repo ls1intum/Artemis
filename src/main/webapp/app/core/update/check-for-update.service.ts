@@ -30,6 +30,7 @@ export class CheckForUpdateService {
         this.showAlert.pipe(throttleTime(30000)).subscribe(() => {
             // show the outdated alert for 30s so users update by reloading the browser
             // also see https://angular.io/guide/service-worker-communications#forcing-update-activation
+            console.log('Showing update alert now.');
             this.alertService.addAlert({
                 type: 'info',
                 message: 'artemisApp.outdatedAlert',
@@ -44,7 +45,9 @@ export class CheckForUpdateService {
 
     public checkForUpdates() {
         // first update the service worker
+        console.log('Checking for updates now!');
         this.updates.checkForUpdate().then((updateAvailable: boolean) => {
+            console.log('Check complete. Result: ' + updateAvailable);
             if (updateAvailable) {
                 this.showAlert.next();
             }

@@ -14,7 +14,9 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
         // only trigger update service every 10s
         this.triggerUpdateService.pipe(throttleTime(10000)).subscribe(() => {
             // Workaround: Random cyclic dependency on token HTTP_INTERCEPTOR
+            console.log('Update triggered');
             const checkForUpdateService = injector.get(CheckForUpdateService);
+            console.log('Is checkForUpdateService defined: ' + !!checkForUpdateService);
             checkForUpdateService.checkForUpdates();
         });
     }
