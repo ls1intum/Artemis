@@ -17,7 +17,7 @@
                 step="0.5"
                 [(ngModel)]="assessment.credits"
                 (ngModelChange)="emitChanges()"
-                [readOnly]="assessment.gradingInstruction || readOnly"
+                [readOnly]="readOnly"
                 [disabled]="readOnly"
                 [required]="!assessment.gradingInstruction"
             />
