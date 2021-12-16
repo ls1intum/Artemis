@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
@@ -8,7 +8,7 @@ import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-pa
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
@@ -77,6 +77,7 @@ describe('AssessmentDashboardInformationComponent', () => {
         type: ExerciseType.TEXT,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
         secondCorrectionEnabled: false,
+        includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED,
     } as TextExercise;
     const fileUploadExercise = {
         id: 19,
@@ -88,6 +89,7 @@ describe('AssessmentDashboardInformationComponent', () => {
         totalNumberOfAssessments: { inTime: 5, late: 0 },
         numberOfOpenComplaints: 0,
         numberOfOpenMoreFeedbackRequests: 0,
+        includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS,
     } as FileUploadExercise;
 
     const course = { id: 10, exercises: [programmingExercise, modelingExercise, textExercise, modelingExercise] } as Course;
@@ -198,8 +200,8 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(getStatsForExamAssessmentDashboardStub).toHaveBeenCalledTimes(1);
         expect(comp.exam).toEqual(exam);
         expect(comp.showFinishedExercises).toBe(true);
-        expect(comp.unfinishedExercises).toHaveLength(3);
-        expect(comp.finishedExercises).toHaveLength(1);
+        expect(comp.allExercises).toHaveLength(4);
+        expect(comp.currentlyShownExercises).toHaveLength(4);
     }));
 
     it('should init component correctly for course', fakeAsync(() => {
@@ -222,35 +224,38 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(getCourseWithInterestingExercisesForTutorsStub).toHaveBeenCalledTimes(1);
         expect(getStatsForTutorsStub).toHaveBeenCalledTimes(1);
         expect(comp.course).toEqual(Course.from(course));
-        expect(comp.unfinishedExercises).toHaveLength(4);
-        expect(comp.finishedExercises).toHaveLength(0);
+        expect(comp.allExercises).toHaveLength(4);
+        expect(comp.currentlyShownExercises).toHaveLength(4);
     }));
 
     it('should toggle correctionRound for exercises', () => {
-        comp.exercises = exercises;
+        comp.allExercises = exercises;
         const toggleSecondCorrectionStub = jest.spyOn(exerciseService, 'toggleSecondCorrection');
         toggleSecondCorrectionStub.mockReturnValue(of(true));
         comp.toggleSecondCorrection(fileUploadExercise.id!);
-        expect(comp.exercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(true);
+        expect(comp.allExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(true);
         toggleSecondCorrectionStub.mockReturnValue(of(false));
         comp.toggleSecondCorrection(fileUploadExercise.id!);
-        expect(comp.exercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(false);
+        expect(comp.allExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(false);
         expect(comp.toggelingSecondCorrectionButton).toBe(false);
     });
 
-    it('should update exercises with finished exercises', () => {
-        comp.showFinishedExercises = true;
-        comp.unfinishedExercises = [textExercise];
-        comp.finishedExercises = [programmingExercise];
-        comp.updateExercises();
-        expect(comp.exercises).toEqual([textExercise, programmingExercise]);
+    it('should update exercises when finished exercises are filtered', () => {
+        comp.allExercises = [programmingExercise, textExercise, modelingExercise, fileUploadExercise];
+        comp.currentlyShownExercises = [programmingExercise, textExercise, modelingExercise];
+        comp.triggerFinishedExercises(); // should now show all exercises
+        expect(comp.currentlyShownExercises).toEqual([programmingExercise, textExercise, modelingExercise, fileUploadExercise]);
+        comp.triggerFinishedExercises(); // should no longer show fileUploadExercise
+        expect(comp.currentlyShownExercises).toEqual([programmingExercise, textExercise, modelingExercise]);
     });
 
-    it('should update exercises without finished exercises', () => {
-        comp.showFinishedExercises = false;
-        comp.unfinishedExercises = [textExercise];
-        comp.updateExercises();
-        expect(comp.exercises).toEqual([textExercise]);
+    it('should update exercises when optional exercises are filtered', () => {
+        comp.allExercises = [programmingExercise, textExercise, modelingExercise, fileUploadExercise];
+        comp.currentlyShownExercises = [programmingExercise, textExercise, modelingExercise];
+        comp.triggerOptionalExercises();
+        expect(comp.currentlyShownExercises).toEqual([programmingExercise, modelingExercise]);
+        comp.triggerOptionalExercises();
+        expect(comp.currentlyShownExercises).toEqual([programmingExercise, textExercise, modelingExercise]);
     });
 
     it('should toggle showing finished exercises', () => {
@@ -263,7 +268,7 @@ describe('AssessmentDashboardInformationComponent', () => {
 
     it('should sort rows', () => {
         const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
-        comp.exercises = [textExercise];
+        comp.allExercises = [textExercise];
         comp.exercisesSortingPredicate = 'assessmentDueDate';
         comp.exercisesReverseOrder = false;
 
