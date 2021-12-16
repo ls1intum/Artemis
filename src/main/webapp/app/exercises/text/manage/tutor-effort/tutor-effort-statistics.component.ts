@@ -75,6 +75,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
         this.effortDistribution.forEach((effort, index) => {
             this.ngxData.push({ name: this.ngxChartLabels[index], value: effort });
         });
+        this.determineYAxisTicks(this.effortDistribution);
         this.ngxData = [...this.ngxData];
     }
 

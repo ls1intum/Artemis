@@ -24,4 +24,13 @@ export abstract class PlagiarismAndTutorEffortDirective {
     yAxisTickFormatting(tick: string): string {
         return parseFloat(tick).toFixed(0);
     }
+
+    /**
+     * Sets the y axis ticks to the range of discrete integers from 0 up to the maximum value in the data set
+     * @param data the data set that is displayed by the chart
+     */
+    determineYAxisTicks(data: number[]): void {
+        const maxValue = Math.max(...data);
+        this.yAxisTicks = Array.from(Array(maxValue + 1).keys());
+    }
 }
