@@ -34,7 +34,7 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
      * @param data  - the updated data array
      */
     updateChartDataSet(data: number[]) {
-        this.determineYAxisTicks(data);
+        this.determineMaxChartHeight(data);
         let ngxDataEntity;
         data.forEach((value, position) => {
             ngxDataEntity = { name: this.ngxChartLabels[position], value };

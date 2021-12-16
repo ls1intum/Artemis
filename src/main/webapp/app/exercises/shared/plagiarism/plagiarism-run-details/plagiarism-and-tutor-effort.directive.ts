@@ -14,7 +14,7 @@ export abstract class PlagiarismAndTutorEffortDirective {
         group: ScaleType.Ordinal,
         domain: ['#87cefa'], // color: light blue
     } as Color;
-    yAxisTicks: number[];
+    yScaleMax = 5;
 
     /**
      * Formats the labels on the y axis in order to display only integer values
@@ -26,11 +26,10 @@ export abstract class PlagiarismAndTutorEffortDirective {
     }
 
     /**
-     * Sets the y axis ticks to the range of discrete integers from 0 up to the maximum value in the data set
-     * @param data the data set that is displayed by the chart
+     * Determines the upper limit for the y axis
+     * @param data the data that should be displayed
      */
-    determineYAxisTicks(data: number[]): void {
-        const maxValue = Math.max(...data);
-        this.yAxisTicks = Array.from(Array(maxValue + 1).keys());
+    determineMaxChartHeight(data: number[]): void {
+        this.yScaleMax = Math.max(this.yScaleMax, ...data);
     }
 }
