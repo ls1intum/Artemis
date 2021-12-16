@@ -14,7 +14,7 @@ export interface IWebsocketService {
     stompFailureCallback(): void;
 
     /**
-     * Setup the websocket connection.
+     * Set up the websocket connection.
      */
     connect(): void;
 
@@ -132,7 +132,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * Setup the websocket connection.
+     * Set up the websocket connection.
      */
     connect() {
         if ((this.stompClient && this.stompClient.connected) || this.connecting) {
@@ -148,7 +148,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             url += '?access_token=' + authToken;
         }
         // NOTE: only support real websockets transports and disable http poll, http stream and other exotic workarounds.
-        // nowadays all modern browsers support websockets and workarounds are not necessary any more and might only lead to problems
+        // Nowadays, all modern browsers support websockets and workarounds are not necessary anymore and might only lead to problems
         this.socket = new SockJS(url, undefined, { transports: 'websocket' });
         const options = {
             heartbeat: { outgoing: 10000, incoming: 10000 },
@@ -251,7 +251,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                     channel,
                     (data) => {
                         if (this.listenerObservers.has(channel)) {
-                            this.listenerObservers.get(channel)!.next(this.parseJSON(data.body));
+                            this.listenerObservers.get(channel)!.next(JhiWebsocketService.parseJSON(data.body));
                         }
                     },
                     {
@@ -356,7 +356,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         this.disconnect();
     }
 
-    private parseJSON(response: any): any {
+    private static parseJSON(response: string): any {
         try {
             return JSON.parse(response);
         } catch {

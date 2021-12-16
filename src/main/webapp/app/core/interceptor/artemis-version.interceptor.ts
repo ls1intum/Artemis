@@ -3,17 +3,17 @@ import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } fr
 import { Observable, Subject } from 'rxjs';
 import { tap, throttleTime } from 'rxjs/operators';
 import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';
-import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { CheckForUpdateService } from 'app/core/update/check-for-update.service';
 
 @Injectable()
 export class ArtemisVersionInterceptor implements HttpInterceptor {
     private showAlert = new Subject<void>();
 
-    constructor(alertService: AlertService, private serverDateService: ArtemisServerDateService) {
+    constructor(private checkForUpdateService: CheckForUpdateService, private serverDateService: ArtemisServerDateService) {
+        // only show the update banner every 10s
         this.showAlert.pipe(throttleTime(10000)).subscribe(() => {
-            // show the outdated alert for 30s so users update by reloading the browser, only show this every 10s
-            alertService.addAlert({ type: 'info', message: 'artemisApp.outdatedAlert', timeout: 30000 });
+            checkForUpdateService.checkForUpdates();
         });
     }
 
