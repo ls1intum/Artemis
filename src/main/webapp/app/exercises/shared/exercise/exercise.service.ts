@@ -431,6 +431,17 @@ export class ExerciseService {
         return exerciseRes;
     }
 
+    /**
+     * This method bundles recurring conversion steps for Exercise EntityArrayResponses.
+     * @param exerciseResArray
+     */
+    public processExerciseEntityArrayResponse(exerciseResArray: EntityArrayResponseType): EntityArrayResponseType {
+        this.convertDateArrayFromServer(exerciseResArray);
+        this.convertExerciseCategoryArrayFromServer(exerciseResArray);
+        this.setAccessRightsExerciseEntityArrayResponseType(exerciseResArray);
+        return exerciseResArray;
+    }
+
     public setAccessRightsExerciseEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((exercise: Exercise) => {
