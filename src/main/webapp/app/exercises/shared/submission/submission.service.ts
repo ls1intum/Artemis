@@ -10,6 +10,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -24,7 +25,7 @@ export class SubmissionService {
     public resourceUrl = SERVER_API_URL + 'api/submissions';
     public resourceUrlParticipation = SERVER_API_URL + 'api/participations';
 
-    constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService) {}
+    constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService, private accountService: AccountService) {}
 
     /**
      * Delete an existing submission
@@ -158,10 +159,23 @@ export class SubmissionService {
     }
 
     /**
-     * Convert a returned JSON object to TextSubmission.
+     * Convert a returned JSON object to Submission.
      */
     private convertItemFromServer(submission: Submission): Submission {
         return Object.assign({}, submission);
+    }
+
+    public processSubmission(submission: Submission): Submission {
+        setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
+        this.setSubmissionExerciseAccessRights(submission);
+        return submission;
+    }
+
+    public setSubmissionExerciseAccessRights(submission: Submission): Submission {
+        if (submission.participation?.exercise) {
+            this.accountService.setAccessRightsForExerciseAndReferencedCourse(submission.participation.exercise);
+        }
+        return submission;
     }
 
     /**

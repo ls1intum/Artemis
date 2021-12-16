@@ -6,7 +6,7 @@ import { map } from 'rxjs/operators';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { stringifyCircular } from 'app/shared/util/utils';
-import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
@@ -14,7 +14,7 @@ export type EntityResponseType = HttpResponse<ModelingSubmission>;
 export class ModelingSubmissionService {
     public resourceUrl = SERVER_API_URL + 'api';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
 
     /**
      * Create a new modeling submission
@@ -81,7 +81,7 @@ export class ModelingSubmissionService {
         if (lock) {
             params = params.set('lock', 'true');
         }
-        return this.http.get<ModelingSubmission>(url, { params }).pipe(map((res: ModelingSubmission) => ModelingSubmissionService.convertItemFromServer(res)));
+        return this.http.get<ModelingSubmission>(url, { params }).pipe(map((res: ModelingSubmission) => this.processModelingSubmission(res)));
     }
 
     /**
@@ -122,7 +122,7 @@ export class ModelingSubmissionService {
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: ModelingSubmission = ModelingSubmissionService.convertItemFromServer(res.body!);
+        const body: ModelingSubmission = this.processModelingSubmission(res.body!);
         return res.clone({ body });
     }
 
@@ -130,7 +130,7 @@ export class ModelingSubmissionService {
         const jsonResponse: ModelingSubmission[] = res.body!;
         const body: ModelingSubmission[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(ModelingSubmissionService.convertItemFromServer(jsonResponse[i]));
+            body.push(this.processModelingSubmission(jsonResponse[i]));
         }
         return res.clone({ body });
     }
@@ -138,10 +138,9 @@ export class ModelingSubmissionService {
     /**
      * Convert a returned JSON object to ModelingSubmission.
      */
-    private static convertItemFromServer(modelingSubmission: ModelingSubmission): ModelingSubmission {
-        const convertedModelingSubmission = Object.assign({}, modelingSubmission);
-        setLatestSubmissionResult(convertedModelingSubmission, getLatestSubmissionResult(convertedModelingSubmission));
-        return convertedModelingSubmission;
+    private processModelingSubmission(modelingSubmission: ModelingSubmission): ModelingSubmission {
+        this.submissionService.processSubmission(modelingSubmission);
+        return modelingSubmission;
     }
 
     /**
