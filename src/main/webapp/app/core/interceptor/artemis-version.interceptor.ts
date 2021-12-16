@@ -29,7 +29,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
         const updateInterval = interval(60 * 1000); // every 60s
         const updateIntervalOnceAppIsStable$ = concat(appIsStableOrTimeout, updateInterval);
 
-        updateIntervalOnceAppIsStable$.subscribe(() => this.checkForUpdates(false));
+        updateIntervalOnceAppIsStable$.subscribe(() => this.checkForUpdates());
     }
 
     intercept(request: HttpRequest<any>, nextHandler: HttpHandler): Observable<HttpEvent<any>> {
@@ -39,8 +39,8 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
                     const isTranslationStringsRequest = response.url?.includes('/i18n/');
                     const serverVersion = response.headers.get(ARTEMIS_VERSION_HEADER);
                     if (VERSION && serverVersion && VERSION !== serverVersion && !isTranslationStringsRequest) {
-                        // Version mismatch detected. Let SW look for updates, and show banner in any case!
-                        this.checkForUpdates(true);
+                        // Version mismatch detected. Let SW look for updates!
+                        this.checkForUpdates();
                     }
 
                     // only invoke the time call if the call was not already the time call to prevent recursion here
@@ -54,18 +54,18 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
 
     /**
      * Tells the service worker to check for updates and display an update alert if an update is available.
-     * This is either exactly when
-     * - this method is called from an intercepted http request that identified a version mismatch, or
-     * - if the service worker detects an update, or
-     * - if any of these conditions were ever true since the app loaded (aka last reload)
+     * This is either exactly if
+     * - if the service worker detects an update right now, or
+     * - if this conditions was ever true since the app loaded (aka last reload)
      *
-     * @param overrideCheckResult true if the result of the sw update check should be ignored; false otherwise
+     * We need to have this second option because the "checkForUpdate()" call sometimes starts to return false after a while, even though we didn't reload / update yet.
+     *
      * @private
      */
-    private checkForUpdates(overrideCheckResult: boolean) {
+    private checkForUpdates() {
         // first update the service worker
         this.updates.checkForUpdate().then((updateAvailable: boolean) => {
-            if (this.hasSeenOutdatedInThisSession || updateAvailable || overrideCheckResult) {
+            if (this.hasSeenOutdatedInThisSession || updateAvailable) {
                 this.hasSeenOutdatedInThisSession = true;
 
                 // Close previous alert to avoid duplicates
