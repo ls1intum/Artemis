@@ -81,6 +81,7 @@
                 <div class="click-layer">
                     <div *ngIf="!showResult">
                         <div
+                            id="drop-location"
                             class="drop-location"
                             *ngFor="let dropLocation of question.dropLocations"
                             [ngClass]="dropAllowed ? 'drop-allowed' : ''"
@@ -247,9 +248,10 @@
                     dnd-droppable
                 >
                     <jhi-drag-item
+                        id="drag-item-{{ i }}"
                         (dragenter)="drag()"
                         (dragend)="drop()"
-                        *ngFor="let dragItem of getUnassignedDragItems()"
+                        *ngFor="let dragItem of getUnassignedDragItems(); let i = index"
                         [dragItem]="dragItem"
                         [clickDisabled]="clickDisabled"
                         [minWidth]="'160'"

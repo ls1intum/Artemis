@@ -30,7 +30,7 @@ export class QuizExerciseCreationPage {
             cy.get('.click-layer').trigger('mousedown', { x: 50, y: 50 }).trigger('mousemove', { x: 500, y: 300 }).trigger('mouseup');
         });
         this.createDragAndDropItem('Rick Astley');
-        cy.get('#drag-item-0').drag('.drop-location');
+        cy.get('#drag-item-0').drag('#drop-location');
         cy.fixture('quiz_exercise_fixtures/dragAndDropQuiz.txt').then((fileContent) => {
             cy.get('.ace_text-input').focus().clear().type(fileContent);
         });

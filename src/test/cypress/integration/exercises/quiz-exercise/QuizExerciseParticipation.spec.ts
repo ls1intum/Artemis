@@ -107,7 +107,7 @@ describe('Quiz Exercise Participation', () => {
         it('Student can participate in DnD Quiz', () => {
             cy.login(student, '/courses/' + course.id);
             courseOverview.startExercise(quizExercise.id, CypressExerciseType.QUIZ);
-            dragAndDropQuiz.dragItemIntoDragArea();
+            dragAndDropQuiz.dragItemIntoDragArea(0);
             dragAndDropQuiz.submit();
         });
     });
