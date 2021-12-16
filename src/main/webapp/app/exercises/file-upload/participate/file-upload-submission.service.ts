@@ -7,12 +7,13 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { createRequestOption } from 'app/shared/util/request.util';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 export type EntityResponseType = HttpResponse<FileUploadSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadSubmissionService {
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private accountService: AccountService) {}
 
     /**
      * Updates File Upload submission on the server
@@ -21,16 +22,15 @@ export class FileUploadSubmissionService {
      * @param submissionFile the file submitted that will for the exercise
      */
     update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFile: Blob | File): Observable<EntityResponseType> {
-        const copy = FileUploadSubmissionService.convert(fileUploadSubmission);
         const formData = new FormData();
-        const submissionBlob = new Blob([stringifyCircular(copy)], { type: 'application/json' });
+        const submissionBlob = new Blob([stringifyCircular(fileUploadSubmission)], { type: 'application/json' });
         formData.append('file', submissionFile);
         formData.append('submission', submissionBlob);
         return this.http
             .post<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submissions`, formData, {
                 observe: 'response',
             })
-            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.convertFileUploadParticipationResponse(res)));
     }
 
     /**
@@ -48,7 +48,9 @@ export class FileUploadSubmissionService {
         } else {
             params = params.set('correction-round', correctionRound.toString());
         }
-        return this.http.get<FileUploadSubmission>(url, { params, observe: 'response' }).pipe(map((res: HttpResponse<FileUploadSubmission>) => this.convertResponse(res)));
+        return this.http
+            .get<FileUploadSubmission>(url, { params, observe: 'response' })
+            .pipe(map((res: HttpResponse<FileUploadSubmission>) => this.convertFileUploadParticipationResponse(res)));
     }
 
     /**
@@ -72,7 +74,7 @@ export class FileUploadSubmissionService {
                 params,
                 observe: 'response',
             })
-            .pipe(map((res: HttpResponse<FileUploadSubmission[]>) => this.convertArrayResponse(res)));
+            .pipe(map((res: HttpResponse<FileUploadSubmission[]>) => this.convertFileUploadParticipationArrayResponse(res)));
     }
 
     /**
@@ -91,7 +93,7 @@ export class FileUploadSubmissionService {
             params = params.set('lock', 'true');
         }
 
-        return this.http.get<FileUploadSubmission>(url, { params }).pipe(map((res: FileUploadSubmission) => FileUploadSubmissionService.convertItemFromServer(res)));
+        return this.http.get<FileUploadSubmission>(url, { params }).pipe(map((res: FileUploadSubmission) => this.processFileUploadSubmission(res)));
     }
 
     /**
@@ -99,36 +101,49 @@ export class FileUploadSubmissionService {
      * @param participationId the id of the participation
      */
     getDataForFileUploadEditor(participationId: number): Observable<FileUploadSubmission> {
-        return this.http.get<FileUploadSubmission>(`api/participations/${participationId}/file-upload-editor`, { responseType: 'json' });
+        return this.http
+            .get<FileUploadSubmission>(`api/participations/${participationId}/file-upload-editor`, { responseType: 'json' })
+            .pipe(map((res: FileUploadSubmission) => this.processFileUploadSubmission(res)));
     }
 
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: FileUploadSubmission = FileUploadSubmissionService.convertItemFromServer(res.body!);
-        return res.clone({ body });
-    }
-
-    private convertArrayResponse(res: HttpResponse<FileUploadSubmission[]>): HttpResponse<FileUploadSubmission[]> {
-        const jsonResponse: FileUploadSubmission[] = res.body!;
-        const body: FileUploadSubmission[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(FileUploadSubmissionService.convertItemFromServer(jsonResponse[i]));
+    private convertFileUploadParticipationResponse(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            this.processFileUploadSubmission(res.body);
         }
-        return res.clone({ body });
+        return res;
+    }
+
+    private convertFileUploadParticipationArrayResponse(res: HttpResponse<FileUploadSubmission[]>): HttpResponse<FileUploadSubmission[]> {
+        if (res.body) {
+            res.body.forEach((fileUploadSubmission: FileUploadSubmission) => this.processFileUploadSubmission(fileUploadSubmission));
+        }
+        return res;
     }
 
     /**
-     * Convert a returned JSON object to FileUploadSubmission.
+     * Sets the result and the access rights for the submission.
+     *
+     * @param fileUploadSubmission
+     * @return fileUploadSubmission with set result and access rights
+     * @private
      */
-    private static convertItemFromServer(fileUploadSubmission: FileUploadSubmission): FileUploadSubmission {
-        const convertedFileUploadSubmission = Object.assign({}, fileUploadSubmission);
-        setLatestSubmissionResult(convertedFileUploadSubmission, getLatestSubmissionResult(convertedFileUploadSubmission));
-        return convertedFileUploadSubmission;
+    private processFileUploadSubmission(fileUploadSubmission: FileUploadSubmission): FileUploadSubmission {
+        setLatestSubmissionResult(fileUploadSubmission, getLatestSubmissionResult(fileUploadSubmission));
+        this.setFileUploadSubmissionAccessRights(fileUploadSubmission);
+        return fileUploadSubmission;
     }
 
     /**
-     * Convert a FileUploadSubmission to a JSON which can be sent to the server.
+     * Sets the access rights for the exercise that is referenced by the participation of the submission.
+     *
+     * @param fileUploadSubmission
+     * @return fileUploadSubmission with set access rights
+     * @private
      */
-    private static convert(fileUploadSubmission: FileUploadSubmission): FileUploadSubmission {
-        return Object.assign({}, fileUploadSubmission);
+    private setFileUploadSubmissionAccessRights(fileUploadSubmission: FileUploadSubmission): FileUploadSubmission {
+        if (fileUploadSubmission.participation?.exercise) {
+            this.accountService.setAccessRightsForExercise(fileUploadSubmission.participation.exercise);
+        }
+        return fileUploadSubmission;
     }
 }
