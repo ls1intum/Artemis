@@ -1,4 +1,4 @@
-import { ApplicationRef, Injectable, Injector } from '@angular/core';
+import { ApplicationRef, Injectable } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
 import { concat, interval, Observable, Subject } from 'rxjs';
 import { first, tap, throttleTime } from 'rxjs/operators';
@@ -33,6 +33,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
                     callback: () => updates.activateUpdate().then(() => document.location.reload()),
                 },
             });
+            console.log('Returned');
         });
 
         updates.available.subscribe((event) => {
@@ -69,9 +70,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
         console.log('Checking for updates now!');
         this.updates.checkForUpdate().then((updateAvailable: boolean) => {
             console.log('Check complete. Result: ' + updateAvailable);
-            if (updateAvailable) {
-                this.showAlert.next();
-            }
+            this.showAlert.next();
         });
     }
 }
