@@ -262,6 +262,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
                 this.participationsChangedDueDate.clear();
                 this.isSaving = false;
+                this.alertService.success('artemisApp.participation.updateDueDates.success', { count: response.body!.length });
             },
             error: () => {
                 this.alertService.error('artemisApp.participation.updateDueDates.error');

@@ -24,6 +24,7 @@
                 "error": "Die Präsentation konnte nicht entfernt werden. Bitte versuche es nochmal."
             },
             "updateDueDates": {
+                "success": "Die individuellen Abgabefristen wurden für {{ count }} Teilnehmende aktualisiert.",
                 "error": "Die individuellen Abgabefristen konnten nicht aktualisiert werden."
             },
             "detail": {
