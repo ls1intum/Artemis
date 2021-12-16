@@ -15,7 +15,7 @@ export interface Alert {
     toast?: boolean;
     position?: string;
     close?: () => void;
-    action?: { label: string; callback: () => any | void };
+    action?: { label: string; callback: () => void };
     dismissible?: boolean;
 }
 
