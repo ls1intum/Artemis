@@ -72,7 +72,7 @@ export class AlertService {
         alert.toast = alert.toast ?? this.toast;
         alert.position = alert.position ?? this.position;
         alert.dismissible = alert.dismissible ?? (alert.action ? false : this.dismissible);
-        alert.close = () => this.closeAlert(alert.id!, this.alerts);
+        alert.close = () => this.closeAlert(alert.id!, extAlerts ?? this.alerts);
 
         if (alert.action) {
             alert.action.label = this.sanitizer.sanitize(SecurityContext.HTML, this.translateService.instant(alert.action.label) ?? '') ?? '';

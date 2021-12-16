@@ -104,7 +104,7 @@ export class AlertErrorComponent implements OnDestroy {
     }
 
     close(alert: Alert): void {
-        alert.close?.(this.alerts);
+        alert.close?.();
     }
 
     /**
