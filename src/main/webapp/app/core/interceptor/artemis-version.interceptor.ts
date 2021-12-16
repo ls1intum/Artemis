@@ -11,17 +11,13 @@ import { Alert, AlertService } from 'app/core/util/alert.service';
 export class ArtemisVersionInterceptor implements HttpInterceptor {
     // The currently displayed alert
     private alert: Alert;
-    // Set to true if we ever saw an outdated indication since last reload
-    // for some reason, SwUpdate.checkForUpdate returns false after a while even though we didn't actually update yet.
-    // We will show alerts in any case until the next reload, so we store this here.
-    // Note: We can't just display an alert one time, because it may get cleared in several occasions
+    // Indicates whether we ever saw an outdated state since last reload
     private hasSeenOutdatedInThisSession = false;
 
     constructor(private appRef: ApplicationRef, private updates: SwUpdate, private serverDateService: ArtemisServerDateService, private alertService: AlertService) {
-        console.log('UMMMM');
         // Allow the app to stabilize first, before starting
         // polling for updates with `interval()`.
-        const appIsStable = appRef.isStable.pipe(
+        const appIsStableOrTimeout = appRef.isStable.pipe(
             first((isStable) => isStable === true),
             // Sometimes, the application does not become stable apparently.
             // This is a workaround. Using the same timeout as the service worker as well.
@@ -30,23 +26,10 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
             // Ignore error thrown by timeout
             catchError(() => EMPTY),
         );
-        appIsStable.subscribe(() => console.log('Application became stable'));
-        const updateInterval = interval(10 * 1000); // every 60s
-        const updateIntervalOnceAppIsStable$ = concat(appIsStable, updateInterval);
+        const updateInterval = interval(60 * 1000); // every 60s
+        const updateIntervalOnceAppIsStable$ = concat(appIsStableOrTimeout, updateInterval);
 
-        updateIntervalOnceAppIsStable$.subscribe(() => {
-            console.log('Interval triggered.');
-            this.checkForUpdates(false);
-        });
-
-        updates.available.subscribe((event) => {
-            console.log('current version is', event.current);
-            console.log('available version is', event.available);
-        });
-        updates.activated.subscribe((event) => {
-            console.log('old version was', event.previous);
-            console.log('new version is', event.current);
-        });
+        updateIntervalOnceAppIsStable$.subscribe(() => this.checkForUpdates(false));
     }
 
     intercept(request: HttpRequest<any>, nextHandler: HttpHandler): Observable<HttpEvent<any>> {
@@ -56,7 +39,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
                     const isTranslationStringsRequest = response.url?.includes('/i18n/');
                     const serverVersion = response.headers.get(ARTEMIS_VERSION_HEADER);
                     if (VERSION && serverVersion && VERSION !== serverVersion && !isTranslationStringsRequest) {
-                        console.log('Version not equal!');
+                        // Version mismatch detected. Let SW look for updates, and show banner in any case!
                         this.checkForUpdates(true);
                     }
 
@@ -69,29 +52,43 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
         );
     }
 
+    /**
+     * Tells the service worker to check for updates and display an update alert if an update is available.
+     * This is either exactly when
+     * - this method is called from an intercept http request that identified a version mismatch, or
+     * - if the service worker detects an update, or
+     * - if any of these conditions were ever true since the app loaded (aka last reload)
+     *
+     * @param overrideCheckResult true if the result of the sw update check should be ignored; false otherwise
+     * @private
+     */
     private checkForUpdates(overrideCheckResult: boolean) {
         // first update the service worker
-        console.log('Checking for updates now!');
         this.updates.checkForUpdate().then((updateAvailable: boolean) => {
-            console.log('Check complete. Result: ' + updateAvailable);
-
             if (this.hasSeenOutdatedInThisSession || updateAvailable || overrideCheckResult) {
-                console.log('Showing update alert now.');
                 this.hasSeenOutdatedInThisSession = true;
 
                 // Close previous alert to avoid duplicates
                 this.alert?.close!();
 
-                // Show fresh alert without timeout
+                // Show fresh alert without timeout and store it for later rerun of this method
                 this.alert = this.alertService.addAlert({
                     type: 'info',
                     message: 'artemisApp.outdatedAlert',
                     action: {
                         label: 'artemisApp.outdatedAction',
-                        callback: () => this.updates.activateUpdate().then(() => document.location.reload()),
+                        callback: () =>
+                            // Apply the update
+                            this.updates
+                                .activateUpdate()
+                                // Ignore any error. Any error happening here doesn't matter
+                                // If we reach this point, we want to load an update
+                                // so in any case, we should reload
+                                .catch(() => {})
+                                // Reload the page with the new version
+                                .then(() => document.location.reload()),
                     },
                 });
-                console.log('Returned');
             }
         });
     }

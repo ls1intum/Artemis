@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "5.4.1-test-q",
+    "version": "5.4.1",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
