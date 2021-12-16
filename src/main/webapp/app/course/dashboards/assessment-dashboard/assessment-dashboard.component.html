@@ -66,6 +66,7 @@
         <h4 jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></h4>
         <div *ngIf="!isTestRun" class="guided-tour-form-check col-6 align-baseline">
             <input type="checkbox" name="showFinishedExercise" id="field_showFinishedExercise" [ngModel]="showFinishedExercises" (ngModelChange)="triggerFinishedExercises()" />
+            <input type="checkbox" name="hideOptionnal" id="field_hideOptional" [ngModel]="hideOptional" (ngModelChange)="triggerOptionalExercises()" />
             <label class="form-check-label" for="field_showFinishedExercise">
                 {{ 'artemisApp.assessmentDashboard.showFinishedExercises' | artemisTranslate }}
             </label>
@@ -98,7 +99,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let exercise of exercises">
+                <tr *ngFor="let exercise of currentlyShownExercises">
                     <td>
                         <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
                     </td>
