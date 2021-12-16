@@ -15,6 +15,8 @@ export interface Alert {
     toast?: boolean;
     position?: string;
     close?: (alerts: Alert[]) => void;
+    action?: { label: string; callback: () => any | void };
+    dismissible?: boolean;
 }
 
 @Injectable({
@@ -23,6 +25,7 @@ export interface Alert {
 export class AlertService {
     timeout = 8000;
     toast = false;
+    dismissible = true;
     position = 'top right';
 
     // unique id for each alert. Starts from 0.
@@ -68,7 +71,12 @@ export class AlertService {
         alert.timeout = alert.timeout ?? this.timeout;
         alert.toast = alert.toast ?? this.toast;
         alert.position = alert.position ?? this.position;
+        alert.dismissible = alert.dismissible ?? this.dismissible;
         alert.close = (alertsArray: Alert[]) => this.closeAlert(alert.id!, alertsArray);
+
+        if (alert.action) {
+            alert.action.label = this.sanitizer.sanitize(SecurityContext.HTML, this.translateService.instant(alert.action.label) ?? '') ?? '';
+        }
 
         (extAlerts ?? this.alerts).push(alert);
 

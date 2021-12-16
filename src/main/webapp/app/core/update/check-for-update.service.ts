@@ -1,11 +1,13 @@
 import { ApplicationRef, Injectable } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
-import { concat, interval } from 'rxjs';
-import { first } from 'rxjs/operators';
+import { concat, interval, Subject } from 'rxjs';
+import { first, throttleTime } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 
 @Injectable()
 export class CheckForUpdateService {
+    private showAlert = new Subject<void>();
+
     constructor(private appRef: ApplicationRef, private updates: SwUpdate, private alertService: AlertService) {
         // Allow the app to stabilize first, before starting
         // polling for updates with `interval()`.
@@ -24,16 +26,28 @@ export class CheckForUpdateService {
             console.log('old version was', event.previous);
             console.log('new version is', event.current);
         });
+
+        this.showAlert.pipe(throttleTime(30000)).subscribe(() => {
+            // show the outdated alert for 30s so users update by reloading the browser
+            // also see https://angular.io/guide/service-worker-communications#forcing-update-activation
+            this.alertService.addAlert({
+                type: 'info',
+                message: 'artemisApp.outdatedAlert',
+                timeout: 30000,
+                action: {
+                    label: 'artemisApp.outdatedAction',
+                    callback: () => updates.activateUpdate().then(() => document.location.reload()),
+                },
+            });
+        });
     }
 
     public checkForUpdates() {
         // first update the service worker
-        this.updates.checkForUpdate().then(() => {
-            // show the outdated alert for 30s so users update by reloading the browser
-            this.alertService.addAlert({ type: 'info', message: 'artemisApp.outdatedAlert', timeout: 30000 });
-            // TODO: use a custom alert with a button to update, when the user clicks on it, it should invoke the following
-            // updates.activateUpdate().then(() => document.location.reload());
-            // also see https://angular.io/guide/service-worker-communications#forcing-update-activation
+        this.updates.checkForUpdate().then((updateAvailable: boolean) => {
+            if (updateAvailable) {
+                this.showAlert.next();
+            }
         });
     }
 }
