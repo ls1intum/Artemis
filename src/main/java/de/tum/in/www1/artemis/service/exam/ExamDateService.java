@@ -68,8 +68,6 @@ public class ExamDateService {
      */
     public boolean isExerciseWorkingPeriodOver(Exercise exercise) {
         if (!exercise.isExamExercise()) {
-            // ToDo: keep the exception?
-            // should be caught in tests if the function is called with wrong exercises
             throw new IllegalArgumentException("This function should only be used for exam exercises");
         }
         return isExamWithGracePeriodOver(exercise.getExamViaExerciseGroupOrCourseMember());

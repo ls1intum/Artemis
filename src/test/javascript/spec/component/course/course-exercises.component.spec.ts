@@ -302,10 +302,10 @@ describe('CourseExercisesComponent', () => {
 
         // regular due date is in the past, but the individual one in the future
         const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+        newExercise.releaseDate = dayjs('2021-01-10T16:11:00+01:00');
         newExercise.dueDate = dayjs('2021-01-13T16:11:00+01:00');
-        newExercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00');
         const participation = new StudentParticipation();
-        participation.individualDueDate = dayjs().add(3, 'days');
+        participation.individualDueDate = dayjs().add(10, 'days');
         newExercise.studentParticipations = [participation];
 
         component.course!.exercises![1] = newExercise;
@@ -313,9 +313,12 @@ describe('CourseExercisesComponent', () => {
         component.activeFilters.clear();
         component.toggleFilters([ExerciseFilter.OVERDUE]);
 
-        // ToDo: check that exercise is shown
         expect(component.activeFilters).toEqual(new Set().add(ExerciseFilter.OVERDUE));
         expect(component.exerciseCountMap.get('modeling')).toBe(1);
+
+        // the exercise should be grouped into the week with the individual due date
+        const sundayBeforeDueDate = participation.individualDueDate.day(0).format('YYYY-MM-DD');
+        expect(component.weeklyExercisesGrouped[sundayBeforeDueDate].exercises).toEqual([newExercise]);
     });
 
     it('should sort upcoming exercises by ascending individual due dates', () => {
