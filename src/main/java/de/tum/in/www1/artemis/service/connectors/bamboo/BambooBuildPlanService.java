@@ -200,7 +200,7 @@ public class BambooBuildPlanService {
             case C -> {
                 // Default tasks:
                 var tasks = readScriptTasksFromTemplate(programmingLanguage, "", sequentialBuildRuns, false, null, false);
-                tasks.add(0, checkoutTask, false);
+                tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0]));
 
                 // Final tasks:
