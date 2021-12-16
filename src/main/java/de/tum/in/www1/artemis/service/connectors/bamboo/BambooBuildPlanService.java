@@ -199,8 +199,8 @@ public class BambooBuildPlanService {
             }
             case C -> {
                 // Default tasks:
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, "", sequentialBuildRuns, false, null);
-                tasks.add(0, checkoutTask);
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, "", sequentialBuildRuns, false, null, false);
+                tasks.add(0, checkoutTask, false);
                 defaultJob.tasks(tasks.toArray(new Task[0]));
 
                 // Final tasks:
@@ -213,7 +213,7 @@ public class BambooBuildPlanService {
                     Artifact[] artifacts = staticCodeAnalysisTools.stream()
                             .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
                     defaultJob.artifacts(artifacts);
-                    var scaTasks = readScriptTasksFromTemplate(programmingLanguage, "", false, true, null);
+                    var scaTasks = readScriptTasksFromTemplate(programmingLanguage, "", false, true, null, false);
                     defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
                 }
 
@@ -242,7 +242,7 @@ public class BambooBuildPlanService {
                     testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/report.junit");
                     replacements = Map.of("${appName}", packageName);
                 }
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, sequentialBuildRuns, false, replacements);
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, sequentialBuildRuns, false, replacements, isXcodeProject);
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask);
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
@@ -251,13 +251,15 @@ public class BambooBuildPlanService {
                     Artifact[] artifacts = staticCodeAnalysisTools.stream()
                             .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
                     defaultJob.artifacts(artifacts);
-                    var scaTasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, false, true, null);
+                    var scaTasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, false, true, null, isXcodeProject);
                     defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
                 }
                 if (isXcodeProject) {
                     // add a requirement to be able to run the Xcode build tasks using fastlane
                     var requirement = new Requirement("system.builder.fastlane.fastlane");
                     defaultJob.requirements(requirement);
+                    // add a final task for the execution of static code analysis
+                    defaultJob.finalTasks();
                 }
                 return defaultStage.jobs(defaultJob);
             }
@@ -275,7 +277,7 @@ public class BambooBuildPlanService {
     private Stage createDefaultStage(ProgrammingLanguage programmingLanguage, boolean sequentialBuildRuns, VcsCheckoutTask checkoutTask, Stage defaultStage, Job defaultJob,
             String resultDirectories) {
         final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories(resultDirectories);
-        var tasks = readScriptTasksFromTemplate(programmingLanguage, "", sequentialBuildRuns, false, null);
+        var tasks = readScriptTasksFromTemplate(programmingLanguage, "", sequentialBuildRuns, false, null, false);
         tasks.add(0, checkoutTask);
         return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
     }
@@ -360,9 +362,16 @@ public class BambooBuildPlanService {
     }
 
     private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, String subDirectory, final boolean sequentialBuildRuns,
-            final boolean getScaTasks, Map<String, String> replacements) {
-        final var directoryPattern = "templates/bamboo/" + programmingLanguage.name().toLowerCase() + subDirectory
-                + (getScaTasks ? "/staticCodeAnalysisRuns/" : sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
+            final boolean getScaTasks, Map<String, String> replacements, boolean xcode) {
+        var directoryPattern = "";
+        if (xcode) {
+            directoryPattern = "templates/bamboo/" + programmingLanguage.name().toLowerCase() + subDirectory
+                    + (getScaTasks ? "/xcode.staticCodeAnalysisRuns/" : sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
+        }
+        else {
+            directoryPattern = "templates/bamboo/" + programmingLanguage.name().toLowerCase() + subDirectory
+                    + (getScaTasks ? "/staticCodeAnalysisRuns/" : sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
+        }
         try {
             List<Task<?, ?>> tasks = new ArrayList<>();
             final var scriptResources = Arrays.asList(resourceLoaderService.getResources(directoryPattern));
