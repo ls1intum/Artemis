@@ -143,8 +143,8 @@ public class EmailSummaryServiceTest {
                 .thenReturn(deactivatedWeeklySummarySettingsSet);
         when(notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_ID)).thenReturn(activatedWeeklySummarySettingsSet);
 
-        weeklyEmailSummaryService = new EmailSummaryService(mailService, userRepository, notificationSettingRepository, courseService, notificationSettingsService,
-                Duration.ofDays(7));
+        weeklyEmailSummaryService = new EmailSummaryService(mailService, userRepository, notificationSettingRepository, courseService, notificationSettingsService);
+        weeklyEmailSummaryService.setScheduleInterval(Duration.ofDays(7));
     }
 
     /**

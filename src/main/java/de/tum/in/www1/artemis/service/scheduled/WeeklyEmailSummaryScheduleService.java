@@ -31,8 +31,6 @@ public class WeeklyEmailSummaryScheduleService {
 
     private LocalDateTime nextSummaryDate;
 
-    private Duration scheduleInterval;
-
     private final Duration weekly = Duration.ofDays(7);
 
     public WeeklyEmailSummaryScheduleService(Environment environment, @Qualifier("taskScheduler") TaskScheduler scheduler, EmailSummaryService emailSummaryService) {
@@ -41,8 +39,7 @@ public class WeeklyEmailSummaryScheduleService {
         this.emailSummaryService = emailSummaryService;
         // time based variables needed for scheduling
         this.nextSummaryDate = ZonedDateTime.now().toLocalDateTime().with(DayOfWeek.FRIDAY).withHour(17).withMinute(0);
-        this.scheduleInterval = weekly;
-        this.emailSummaryService.setScheduleInterval(scheduleInterval);
+        this.emailSummaryService.setScheduleInterval(weekly);
     }
 
     /**
@@ -61,7 +58,7 @@ public class WeeklyEmailSummaryScheduleService {
 
             ZoneOffset zoneOffset = ZonedDateTime.now().getZone().getRules().getOffset(Instant.now());
 
-            scheduler.scheduleAtFixedRate(scheduleEmailSummaries(), nextSummaryDate.toInstant(zoneOffset), scheduleInterval);
+            scheduler.scheduleAtFixedRate(scheduleEmailSummaries(), nextSummaryDate.toInstant(zoneOffset), weekly);
             // For local testing
             // scheduler.scheduleAtFixedRate(scheduleEmailSummaries(), ZonedDateTime.now().toLocalDateTime().toInstant(zoneOffset), Duration.ofMinutes(3));
 

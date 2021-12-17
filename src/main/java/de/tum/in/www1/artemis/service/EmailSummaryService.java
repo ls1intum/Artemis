@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -39,7 +38,6 @@ public class EmailSummaryService {
 
     private final Duration weekly = Duration.ofDays(7);
 
-    @Autowired
     public EmailSummaryService(MailService mailService, UserRepository userRepository, NotificationSettingRepository notificationSettingRepository, CourseService courseService,
             NotificationSettingsService notificationSettingsService) {
         this.mailService = mailService;
@@ -47,16 +45,6 @@ public class EmailSummaryService {
         this.notificationSettingRepository = notificationSettingRepository;
         this.courseService = courseService;
         this.notificationSettingsService = notificationSettingsService;
-    }
-
-    public EmailSummaryService(MailService mailService, UserRepository userRepository, NotificationSettingRepository notificationSettingRepository, CourseService courseService,
-            NotificationSettingsService notificationSettingsService, Duration scheduleInterval) {
-        this.mailService = mailService;
-        this.userRepository = userRepository;
-        this.notificationSettingRepository = notificationSettingRepository;
-        this.courseService = courseService;
-        this.notificationSettingsService = notificationSettingsService;
-        this.scheduleInterval = scheduleInterval;
     }
 
     /**
