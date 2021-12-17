@@ -1,3 +1,5 @@
+import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+
 export const buildLogs = [
     {
         time: '2019-05-15T10:32:11+02:00',
@@ -30,6 +32,6 @@ export const extractedBuildLogErrors = [
         text: 'cannot find symbol',
         timestamp: 1557909131000,
     },
-];
+] as Array<Annotation>;
 
 export const extractedErrorFiles = ['src/todo/main/BubbleSort.java'];
