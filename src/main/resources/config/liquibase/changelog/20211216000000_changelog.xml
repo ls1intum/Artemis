@@ -47,6 +47,9 @@
     <changeSet author="timor-morrien" id="20211216000000-3">
         <addColumn tableName="exercise_hint">
             <column name="task_id" type="BIGINT"/>
+            <column name="discriminator" type="VARCHAR(31)">
+                <constraints nullable="false"/>
+            </column>
         </addColumn>
         <addForeignKeyConstraint baseTableName="exercise_hint"
                                  baseColumnNames="task_id"
@@ -56,6 +59,10 @@
     </changeSet>
 
     <changeSet author="timor-morrien" id="20211216000000-4">
+        <sql>update exercise_hint set discriminator = 'T', task_id = null;</sql>
+    </changeSet>
+
+    <changeSet author="timor-morrien" id="20211216000000-5">
         <createTable tableName="solution_entry">
             <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
