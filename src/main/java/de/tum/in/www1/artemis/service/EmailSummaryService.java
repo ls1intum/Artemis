@@ -119,7 +119,7 @@ public class EmailSummaryService {
      */
     private Set<Exercise> getAllExercisesForSummary(List<Course> courses) {
         Set<Exercise> newExercises = new HashSet<>();
-        courses.forEach(course -> newExercises.addAll(course.getExercises().stream().filter(exercise -> shouldExerciseBePartOfEmailSummary(exercise)).collect(Collectors.toSet())));
+        courses.forEach(course -> newExercises.addAll(course.getExercises().stream().filter(this::shouldExerciseBePartOfEmailSummary).collect(Collectors.toSet())));
         return newExercises;
     }
 
