@@ -14,7 +14,6 @@ export abstract class PlagiarismAndTutorEffortDirective {
         group: ScaleType.Ordinal,
         domain: ['#87cefa'], // color: light blue
     } as Color;
-    yScaleMax = 5;
 
     /**
      * Formats the labels on the y axis in order to display only integer values
@@ -23,13 +22,5 @@ export abstract class PlagiarismAndTutorEffortDirective {
      */
     yAxisTickFormatting(tick: string): string {
         return parseFloat(tick).toFixed(0);
-    }
-
-    /**
-     * Determines the upper limit for the y axis
-     * @param data the data that should be displayed
-     */
-    determineMaxChartHeight(data: number[]): void {
-        this.yScaleMax = Math.max(this.yScaleMax, ...data);
     }
 }

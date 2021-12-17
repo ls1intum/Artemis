@@ -21,6 +21,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     currentCourseId: number;
     numberOfTutorsInvolvedInCourse: number;
     effortDistribution: number[];
+    yScaleMax = 10;
 
     // Distance value representing step difference between chartLabel entries, i.e:. 1-10, 10-20
     bucketSize = 10;
@@ -102,5 +103,14 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
             const BUCKET_INDEX = Math.min(Math.floor(BUCKET_POSITION), BUCKET_LAST_INDEX);
             this.effortDistribution[BUCKET_INDEX]++;
         });
+    }
+
+    /**
+     * Determines the upper limit for the y axis
+     * @param data the data that should be displayed
+     * @private
+     */
+    private determineMaxChartHeight(data: number[]): void {
+        this.yScaleMax = Math.max(this.yScaleMax, ...data);
     }
 }
