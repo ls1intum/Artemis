@@ -1,8 +1,8 @@
-import { Component, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import { AccountService } from 'app/core/auth/account.service';
@@ -20,6 +20,7 @@ import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shar
 import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -54,7 +55,7 @@ interface ExerciseWithDueDate {
     templateUrl: './course-exercises.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
+export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
     private courseId: number;
     private paramSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
@@ -85,6 +86,14 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     faAngleDown = faAngleDown;
     faSortNumericUp = faSortNumericUp;
     faSortNumericDown = faSortNumericDown;
+
+    // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
+    @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
+    // Provides the control configuration to be read and used by "CourseOverviewComponent"
+    public readonly controlConfiguration: BarControlConfiguration = {
+        subject: new Subject<TemplateRef<any>>(),
+        useIndentation: true,
+    };
 
     constructor(
         private courseService: CourseManagementService,
@@ -136,6 +145,13 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
         });
     }
 
+    ngAfterViewInit(): void {
+        // Send our controls template to parent so it will be rendered in the top bar
+        if (this.controls) {
+            this.controlConfiguration.subject!.next(this.controls);
+        }
+    }
+
     setSortingAttribute(attribute: SortingAttribute) {
         this.sortingAttribute = attribute;
         this.localStorage.store(SortFilterStorageKey.ATTRIBUTE, this.sortingAttribute.toString());
@@ -147,9 +163,9 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.translateSubscription.unsubscribe();
-        this.courseUpdatesSubscription.unsubscribe();
-        this.paramSubscription.unsubscribe();
+        this.translateSubscription?.unsubscribe();
+        this.courseUpdatesSubscription?.unsubscribe();
+        this.paramSubscription?.unsubscribe();
     }
 
     private onCourseLoad() {

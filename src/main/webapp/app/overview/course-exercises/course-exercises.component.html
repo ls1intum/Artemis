@@ -1,73 +1,69 @@
-<div class="row">
-    <div class="col-12 col-lg-8">
-        <div class="mt-3 position-relative" *ngIf="course">
-            <div class="course-overview-controls" *ngIf="course!.exercises && course!.exercises.length > 0">
-                <div class="d-flex align-items-center me-2">
-                    <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
-                        <button
-                            class="btn"
-                            [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }"
-                            ngbDropdownToggle
-                            id="filter-dropdown-button"
+<ng-template #controls>
+    <div class="course-overview-controls" *ngIf="course && course!.exercises && course!.exercises.length > 0">
+        <div class="d-flex align-items-center">
+            <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+                <button class="btn" [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }" ngbDropdownToggle id="filter-dropdown-button">
+                    <fa-icon [icon]="faFilter"></fa-icon>
+                    <span class="d-s-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size } }}</span>
+                </button>
+                <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                    <li *ngIf="course.isAtLeastTutor">
+                        <label>
+                            <input class="ms-2" (change)="toggleFilters([filterType.UNRELEASED])" [checked]="activeFilters.has(filterType.UNRELEASED)" type="checkbox" />
+                            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.unreleased">Hide unreleased</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label>
+                            <input class="ms-2" (change)="toggleFilters([filterType.OVERDUE])" [checked]="activeFilters.has(filterType.OVERDUE)" type="checkbox" />
+                            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.overdue">Hide overdue</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label>
+                            <input class="ms-2" (change)="toggleFilters([filterType.NEEDS_WORK])" [checked]="activeFilters.has(filterType.NEEDS_WORK)" type="checkbox" />
+                            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.fullScore">Hide full score</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label>
+                            <input class="ms-2" (change)="toggleFilters([filterType.OPTIONAL])" [checked]="activeFilters.has(filterType.OPTIONAL)" type="checkbox" />
+                            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.optional">Hide optional</span>
+                        </label>
+                    </li>
+                </ul>
+            </div>
+            <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
+                <button id="flip" (click)="flipOrder()" class="btn btn-primary">
+                    <fa-icon [icon]="sortingOrder === ASC ? faSortNumericUp : faSortNumericDown"></fa-icon>
+                    <span class="ms-1">{{ 'artemisApp.courseOverview.exerciseList.' + (sortingOrder === ASC ? 'oldFirst' : 'newFirst') | artemisTranslate }}</span>
+                </button>
+                <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group">
+                    <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button"></button>
+                    <div class="dropdown-menu" ngbDropdownMenu>
+                        <a
+                            id="dueDateSorting"
+                            (click)="setSortingAttribute(DUE_DATE)"
+                            class="dropdown-item {{ sortingAttribute === DUE_DATE ? 'active' : '' }}"
+                            jhiTranslate="artemisApp.courseOverview.exerciseList.dueDate"
+                            >Due date</a
                         >
-                            <fa-icon [icon]="faFilter"></fa-icon>
-                            <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size } }}</span>
-                        </button>
-                        <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
-                            <li *ngIf="course.isAtLeastTutor">
-                                <label>
-                                    <input class="ms-2" (change)="toggleFilters([filterType.UNRELEASED])" [checked]="activeFilters.has(filterType.UNRELEASED)" type="checkbox" />
-                                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.unreleased">Hide unreleased</span>
-                                </label>
-                            </li>
-                            <li>
-                                <label>
-                                    <input class="ms-2" (change)="toggleFilters([filterType.OVERDUE])" [checked]="activeFilters.has(filterType.OVERDUE)" type="checkbox" />
-                                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.overdue">Hide overdue</span>
-                                </label>
-                            </li>
-                            <li>
-                                <label>
-                                    <input class="ms-2" (change)="toggleFilters([filterType.NEEDS_WORK])" [checked]="activeFilters.has(filterType.NEEDS_WORK)" type="checkbox" />
-                                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.fullScore">Hide full score</span>
-                                </label>
-                            </li>
-                            <li>
-                                <label>
-                                    <input class="ms-2" (change)="toggleFilters([filterType.OPTIONAL])" [checked]="activeFilters.has(filterType.OPTIONAL)" type="checkbox" />
-                                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.optional">Hide optional</span>
-                                </label>
-                            </li>
-                        </ul>
-                    </div>
-                    <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
-                        <button id="flip" (click)="flipOrder()" class="btn btn-primary">
-                            <fa-icon [icon]="sortingOrder === ASC ? faSortNumericUp : faSortNumericDown"></fa-icon>
-                            <span class="d-none d-md-inline ms-1">{{
-                                'artemisApp.courseOverview.exerciseList.' + (sortingOrder === ASC ? 'oldFirst' : 'newFirst') | artemisTranslate
-                            }}</span>
-                        </button>
-                        <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group">
-                            <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button"></button>
-                            <div class="dropdown-menu" ngbDropdownMenu>
-                                <a
-                                    id="dueDateSorting"
-                                    (click)="setSortingAttribute(DUE_DATE)"
-                                    class="dropdown-item {{ sortingAttribute === DUE_DATE ? 'active' : '' }}"
-                                    jhiTranslate="artemisApp.courseOverview.exerciseList.dueDate"
-                                    >Due date</a
-                                >
-                                <a
-                                    (click)="setSortingAttribute(RELEASE_DATE)"
-                                    class="dropdown-item {{ sortingAttribute === RELEASE_DATE ? 'active' : '' }}"
-                                    jhiTranslate="artemisApp.courseOverview.exerciseList.releaseDate"
-                                    >Release date</a
-                                >
-                            </div>
-                        </div>
+                        <a
+                            (click)="setSortingAttribute(RELEASE_DATE)"
+                            class="dropdown-item {{ sortingAttribute === RELEASE_DATE ? 'active' : '' }}"
+                            jhiTranslate="artemisApp.courseOverview.exerciseList.releaseDate"
+                            >Release date</a
+                        >
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</ng-template>
+
+<div class="row">
+    <div class="col-12 col-lg-8">
+        <div class="mt-3 position-relative" *ngIf="course">
             <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise && isVisibleToStudents(nextRelevantExercise.exercise)">
                 <h3 class="text-primary">
                     <span *ngIf="nextRelevantExercise.dueDate; else noDueDate">
