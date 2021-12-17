@@ -40,7 +40,7 @@ export class StatisticsGraphComponent implements OnChanges {
     ngxData: any[] = [];
     readonly ngxColor = ngxColor;
     tooltipTranslation: string;
-    yScaleMax = 3;
+    yScaleMax: number;
     yAxisTickFormatting = yAxisTickFormatting;
 
     // Left arrow -> decrease, right arrow -> increase
@@ -198,6 +198,7 @@ export class StatisticsGraphComponent implements OnChanges {
         });
 
         this.ngxData = [...this.ngxData];
+        this.yScaleMax = 3;
         this.yScaleMax = Math.max(this.yScaleMax, ...this.dataForSpanType);
     }
 }
