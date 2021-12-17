@@ -1,10 +1,8 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
-
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -143,6 +141,9 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
                     this.onExamStarted.emit(studentExam);
                 } else {
                     this.waitingForExamStart = true;
+                    if (this.interval) {
+                        clearInterval(this.interval);
+                    }
                     this.interval = window.setInterval(() => {
                         this.updateDisplayedTimes(studentExam);
                     }, UI_RELOAD_TIME);
