@@ -334,7 +334,7 @@ public class FileResource {
      * @param lectureId            ID of the lecture, the lecture units belongs to
      * @param temporaryAccessToken The access token is required to authenticate the
      *                             user that accesses it
-     * @return The merged PDF file, 403 if the logged in user is not allowed to
+     * @return The merged PDF file, 403 if the logged-in user is not allowed to
      *         access it, or 404 if the files to be merged do not exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/merge-pdf")

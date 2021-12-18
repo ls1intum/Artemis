@@ -209,7 +209,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
         // Set test cases changed to true; after the build run it should be false;
         exercise.setTestCasesChanged(true);
-        programmingExerciseRepository.save(exercise);
+        exercise = programmingExerciseRepository.save(exercise);
         bambooRequestMockProvider.mockTriggerBuild(firstParticipation);
         bambooRequestMockProvider.mockTriggerBuild(secondParticipation);
         bambooRequestMockProvider.mockTriggerBuild(thirdParticipation);
@@ -220,34 +220,15 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         bambooRequestMockProvider.mockTriggerBuild(secondParticipation);
         bambooRequestMockProvider.mockTriggerBuild(thirdParticipation);
 
-        // Perform a call to trigger-instructor-build-all twice. We want to check that the submissions
-        // aren't being re-created.
         String url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
-        request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
 
-        await().until(() -> submissionRepository.count() >= 3);
+        // Note: the participations above have no submissions, so they are not triggered
+        // TODO: write another test with participations with submissions and make sure those are actually triggered
 
-        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
-
-        // Make sure submissions aren't re-created.
-        assertThat(submissions.size()).isEqualTo(3);
-
-        List<ProgrammingExerciseParticipation> participations = new ArrayList<>();
-        for (ProgrammingSubmission submission : submissions) {
-            var optionalSubmission = submissionRepository.findWithEagerResultsById(submission.getId());
-            assertThat(optionalSubmission).isPresent();
-            assertThat(optionalSubmission.get().getLatestResult()).isNull();
-            assertThat(submission.isSubmitted()).isTrue();
-            assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
-            assertThat(submission.getParticipation()).isNotNull();
-
-            // There should be no participation assigned to two submissions.
-            assertThat(participations.stream().noneMatch(p -> p.equals(submission.getParticipation()))).isTrue();
-            participations.add((ProgrammingExerciseParticipation) submission.getParticipation());
-        }
-
-        var optionalUpdatedProgrammingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId());
+        // due to the async function call on the server, we need to wait here until the server has saved the changes
+        await().until(() -> !programmingExerciseRepository.findById(exercise.getId()).get().getTestCasesChanged());
+        var optionalUpdatedProgrammingExercise = programmingExerciseRepository.findById(exercise.getId());
         assertThat(optionalUpdatedProgrammingExercise).isPresent();
         ProgrammingExercise updatedProgrammingExercise = optionalUpdatedProgrammingExercise.get();
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isFalse();
@@ -279,7 +260,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void triggerBuildForParticipationsInstructor() throws Exception {
+    void triggerBuildForParticipationsInstructorEmpty() throws Exception {
         bambooRequestMockProvider.enableMockingOfRequests();
         String login1 = "student1";
         String login2 = "student2";
@@ -307,22 +288,8 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         request.postWithoutLocation(url, participationsToTrigger, HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
-        assertThat(submissions).hasSize(2);
-
-        List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>();
-        for (ProgrammingSubmission submission : submissions) {
-            var optionalSubmission = submissionRepository.findWithEagerResultsById(submission.getId());
-            assertThat(optionalSubmission).isPresent();
-            assertThat(optionalSubmission.get().getLatestResult()).isNull();
-            assertThat(submission.isSubmitted()).isTrue();
-            assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
-            assertThat(submission.getParticipation()).isNotNull();
-            // There should be no submission for the participation that was not sent to the endpoint.
-            assertThat(submission.getParticipation().getId()).isNotEqualTo(participation2.getId());
-            // There should be no participation assigned to two submissions.
-            assertThat(participations.stream().noneMatch(p -> p.equals(submission.getParticipation()))).isTrue();
-            participations.add((ProgrammingExerciseStudentParticipation) submission.getParticipation());
-        }
+        // Note: the participations above have no submissions, so the builds will not be triggered
+        assertThat(submissions).hasSize(0);
     }
 
     @Test
@@ -520,7 +487,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllProgrammingSubmissionsAsInstructorAllSubmissionsReturned() throws Exception {
-        final var submissions = new LinkedList<ProgrammingSubmission>();
+        final var submissions = new ArrayList<ProgrammingSubmission>();
         for (int i = 1; i < 4; i++) {
             final var submission = ModelFactory.generateProgrammingSubmission(true);
             submissions.add(submission);

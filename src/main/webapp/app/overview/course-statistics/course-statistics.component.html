@@ -1,13 +1,14 @@
+<ng-template #controls>
+    <div class="course-overview-controls">
+        <label class="d-flex align-items-center mb-0 me-2">
+            <input type="checkbox" [checked]="currentlyHidingNotIncludedInScoreExercises" (change)="toggleNotIncludedInScoreExercises()" />
+            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.hideNotIncludedInScoreExercises">Hide Optional</span>
+        </label>
+    </div>
+</ng-template>
+
 <div *ngIf="course">
     <div class="row" *ngIf="course.exercises && course.exercises.length > 0 && ngxExerciseGroups.length > 0; else noStatistics">
-        <div class="col-8 mt-3 position-relative">
-            <div class="course-overview-controls">
-                <label class="d-flex align-items-center mb-0 me-2">
-                    <input type="checkbox" [checked]="currentlyHidingNotIncludedInScoreExercises" (change)="toggleNotIncludedInScoreExercises()" />
-                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.hideNotIncludedInScoreExercises">Hide Optional</span>
-                </label>
-            </div>
-        </div>
         <!-- Make sure that the doughnut chart does not move to the right of the screen by occupying the last 4 col spaces-->
         <div class="col-4"></div>
 

@@ -5,7 +5,13 @@
                 "heading": "Einreichungen und Bewertungen der Textaufgabe \"{{exerciseTitle}}\""
             },
             "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutor:innen wieder zur Verfügung.",
-            "notFound": "Wir haben keine neue Programmier Abgabe ohne Bewertung gefunden, bitte gehe zurück."
+            "notFound": "Wir haben keine neue Programmierabgabe ohne Bewertung gefunden, bitte gehe zurück.",
+            "penalty": "Penalty",
+            "issues": "Issues",
+            "deductions": "Punkte",
+            "penaltyTooltip": "Penalty: {{ percentage }}% aller Penalties.",
+            "issuesTooltip": "Issues: {{ percentage }}% aller gefundenen Issues.",
+            "deductionsTooltip": "Punkte: {{ percentage }}% aller abgezogenen Punkte."
         }
     }
 }
