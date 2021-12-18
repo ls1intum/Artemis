@@ -17,6 +17,8 @@ import { DragAndDropQuestionStatisticComponent } from 'app/exercises/quiz/manage
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DragAndDropQuestionStatistic } from 'app/entities/quiz/drag-and-drop-question-statistic.model';
 import { DropLocationCounter } from 'app/entities/quiz/drop-location-counter.model';
+import { MockProvider } from 'ng-mocks';
+import { ChangeDetectorRef } from '@angular/core';
 
 const route = { params: of({ courseId: 2, exerciseId: 42, questionId: 1 }) };
 const dropLocation1 = { posX: 5, invalid: false, tempID: 1 } as DropLocation;
@@ -45,6 +47,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                MockProvider(ChangeDetectorRef),
             ],
         })
             .overrideTemplate(DragAndDropQuestionStatisticComponent, '')

@@ -145,7 +145,6 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-hystrix"
     implementation "org.springframework.retry:spring-retry"
     implementation "org.springframework.cloud:spring-cloud-starter-bootstrap"
-    implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
     implementation "org.springframework.data:spring-data-jpa"
     implementation "io.springfox:springfox-bean-validators:3.0.0"
 
