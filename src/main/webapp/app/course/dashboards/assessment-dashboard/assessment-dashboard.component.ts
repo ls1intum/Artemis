@@ -361,16 +361,16 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.allExercises, this.exercisesSortingPredicate, this.exercisesReverseOrder);
+        this.sortService.sortByProperty(this.currentlyShownExercises, this.exercisesSortingPredicate, this.exercisesReverseOrder);
     }
 
     toggleSecondCorrection(exerciseId: number) {
         this.toggelingSecondCorrectionButton = true;
-        const currentExercise = this.allExercises.find((exercise) => exercise.id === exerciseId)!;
-        const index = this.allExercises.indexOf(currentExercise);
+        const currentExercise = this.currentlyShownExercises.find((exercise) => exercise.id === exerciseId)!;
+        const index = this.currentlyShownExercises.indexOf(currentExercise);
         this.exerciseService.toggleSecondCorrection(exerciseId).subscribe(
             (res: Boolean) => {
-                this.allExercises[index].secondCorrectionEnabled = !this.allExercises[index].secondCorrectionEnabled;
+                this.currentlyShownExercises[index].secondCorrectionEnabled = !this.currentlyShownExercises[index].secondCorrectionEnabled;
                 currentExercise!.secondCorrectionEnabled = res as boolean;
                 this.toggelingSecondCorrectionButton = false;
             },
