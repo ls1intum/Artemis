@@ -229,14 +229,14 @@ describe('AssessmentDashboardInformationComponent', () => {
     }));
 
     it('should toggle correctionRound for exercises', () => {
-        comp.allExercises = exercises;
+        comp.currentlyShownExercises = exercises;
         const toggleSecondCorrectionStub = jest.spyOn(exerciseService, 'toggleSecondCorrection');
         toggleSecondCorrectionStub.mockReturnValue(of(true));
         comp.toggleSecondCorrection(fileUploadExercise.id!);
-        expect(comp.allExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(true);
+        expect(comp.currentlyShownExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(true);
         toggleSecondCorrectionStub.mockReturnValue(of(false));
         comp.toggleSecondCorrection(fileUploadExercise.id!);
-        expect(comp.allExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(false);
+        expect(comp.currentlyShownExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(false);
         expect(comp.toggelingSecondCorrectionButton).toBe(false);
     });
 
@@ -260,7 +260,7 @@ describe('AssessmentDashboardInformationComponent', () => {
 
     it('should sort rows', () => {
         const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
-        comp.allExercises = [textExercise];
+        comp.currentlyShownExercises = [textExercise];
         comp.exercisesSortingPredicate = 'assessmentDueDate';
         comp.exercisesReverseOrder = false;
 
