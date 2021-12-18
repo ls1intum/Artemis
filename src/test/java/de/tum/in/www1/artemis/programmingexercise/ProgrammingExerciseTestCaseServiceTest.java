@@ -134,7 +134,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void shouldResetTestWeights() throws Exception {
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
@@ -158,7 +158,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void shouldUpdateTestWeight() throws Exception {
         // After a test case update, the solution and template repository should be build, so the ContinuousIntegrationService needs to be triggered
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
@@ -194,7 +194,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void shouldAllowTestCaseWeightSumZeroManualAssessment(AssessmentType assessmentType) throws Exception {
         // for non-automatic exercises the update succeeds and triggers an update
         if (assessmentType != AssessmentType.AUTOMATIC) {

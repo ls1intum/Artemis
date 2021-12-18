@@ -136,7 +136,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testRemoveCIDirectoriesFromPath() {
         // 1. Test that paths not containing the Constant.STUDENT_WORKING_DIRECTORY are not shortened
         String pathWithoutWorkingDir = "Path/Without/StudentWorkingDirectory/Constant";
@@ -184,7 +184,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
@@ -200,7 +200,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void shouldReturnTheResultDetailsForAStudentParticipation_studentForbidden() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
@@ -209,7 +209,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation_studentForbidden() throws Exception {
         Result result = database.addResultToParticipation(null, null, solutionParticipation);
         result = database.addSampleFeedbackToResults(result);
@@ -217,7 +217,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void shouldReturnNotFoundForNonExistingResult() throws Exception {
         Result result = database.addResultToParticipation(null, null, solutionParticipation);
         database.addSampleFeedbackToResults(result);
@@ -225,7 +225,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void shouldReturnBadrequestForNonMatchingParticipationId() throws Exception {
         Result result = database.addResultToParticipation(null, null, solutionParticipation);
         database.addSampleFeedbackToResults(result);
@@ -234,7 +234,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("setResultRatedPermutations")
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void setProgrammingExerciseResultRated(boolean shouldBeRated, ZonedDateTime buildAndTestAfterDueDate, SubmissionType submissionType, ZonedDateTime dueDate) {
 
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(submissionType).submitted(true)
@@ -274,7 +274,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetResultsForQuizExercise() throws Exception {
         var now = ZonedDateTime.now();
 
@@ -301,7 +301,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetResultsForModelingExercise() throws Exception {
         var now = ZonedDateTime.now();
         for (int i = 1; i <= 10; i++) {
@@ -324,7 +324,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetResultsForTextExercise() throws Exception {
         var now = ZonedDateTime.now();
         TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course);
@@ -351,7 +351,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetResultsForFileUploadExercise() throws Exception {
         FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
         List<Result> results = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results", HttpStatus.OK, Result.class);
@@ -360,7 +360,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetResultsWithPointsForFileUploadExerciseNoGradingCriteria() throws Exception {
         FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
 
@@ -381,7 +381,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetResultsWithPointsForFileUploadExerciseWithGradingCriteria() throws Exception {
         FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
         addFeedbacksWithGradingCriteriaToExercise(fileUploadExercise);
@@ -499,7 +499,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getResult() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
@@ -509,14 +509,14 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void getResult_asStudent() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         request.get("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN, Result.class);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetResultsForExamExercise() throws Exception {
         setupExamModelingExerciseWithResults();
         List<Result> results = request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
@@ -524,14 +524,14 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "STUDENT")
+    @WithMockUser(username = "student1", roles = "STUDENT")
     public void testGetResultsForExamExercise_asStudent() throws Exception {
         setupExamModelingExerciseWithResults();
         request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.FORBIDDEN, Result.class);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetResultsWithPointsForExamExercise() throws Exception {
         setupExamModelingExerciseWithResults();
         List<Result> results = request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
@@ -551,7 +551,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetResultsWithPointsForExamExercise_asTutor() throws Exception {
         setupExamModelingExerciseWithResults();
         request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.FORBIDDEN, Result.class);
@@ -585,7 +585,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getLatestResultWithFeedbacks() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result.setCompletionDate(ZonedDateTime.now().minusHours(10));
@@ -599,7 +599,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void getLatestResultWithFeedbacks_asStudent() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         database.addSampleFeedbackToResults(result);
@@ -607,7 +607,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void deleteResult() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
@@ -617,7 +617,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void deleteResult_wrongParticipationId() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
@@ -627,7 +627,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void deleteResultStudent() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
@@ -635,7 +635,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createExampleResult() throws Exception {
         var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
         var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
@@ -647,7 +647,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createExampleResult_wrongExerciseId() throws Exception {
         var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
         var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
@@ -660,7 +660,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createExampleResult_notExampleSubmission() throws Exception {
         var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
         var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
@@ -673,7 +673,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createResultForExternalSubmission() throws Exception {
         Result result = new Result().rated(false);
         var createdResult = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
@@ -684,7 +684,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createResultForExternalSubmission_wrongExerciseId() throws Exception {
         Result result = new Result().rated(false);
         long randomId = 2145;
@@ -693,7 +693,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createResultForExternalSubmission_programmingExercise() throws Exception {
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.enableMockingOfRequests(true);
@@ -712,7 +712,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createResultForExternalSubmission_quizExercise() throws Exception {
         var now = ZonedDateTime.now();
         var quizExercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), course);
@@ -723,14 +723,14 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createResultForExternalSubmission_studentNotInTheCourse() throws Exception {
         Result result = new Result().rated(false);
         request.postWithResponseBody(externalResultPath(modelingExercise.getId(), "student11"), result, Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createResultForExternalSubmissionExam() throws Exception {
         Result result = new Result().rated(false);
         request.postWithResponseBody("/api/exercises/" + this.examModelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
@@ -742,7 +742,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createResultForExternalSubmission_dueDateNotPassed() throws Exception {
         modelingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
         modelingExerciseRepository.save(modelingExercise);
@@ -751,7 +751,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createResultForExternalSubmission_resultExists() throws Exception {
         var now = ZonedDateTime.now();
         var modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
@@ -763,7 +763,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAssessmentCountByCorrectionRound() {
         // exercise
         TextExercise textExercise = new TextExercise();
@@ -805,7 +805,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAssessmentCountByCorrectionRoundForProgrammingExercise() {
         // exercise
         Course course = database.createCourse();

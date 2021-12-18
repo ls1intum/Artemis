@@ -95,9 +95,6 @@ public class GitlabRequestMockProvider {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private UrlService urlService;
-
     public GitlabRequestMockProvider(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
@@ -247,7 +244,7 @@ public class GitlabRequestMockProvider {
     }
 
     private void mockAddMemberToRepository(VcsRepositoryUrl repositoryUrl, String login) throws GitLabApiException {
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+        final var repositoryPath = UrlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         mockAddMemberToRepository(repositoryPath, login, false);
     }
 
@@ -270,7 +267,7 @@ public class GitlabRequestMockProvider {
     }
 
     private void mockProtectBranch(String branch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+        final var repositoryPath = UrlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         doReturn(new Branch()).when(repositoryApi).unprotectBranch(repositoryPath, branch);
         doReturn(new ProtectedBranch()).when(protectedBranchesApi).protectBranch(repositoryPath, branch);
     }
@@ -562,7 +559,7 @@ public class GitlabRequestMockProvider {
             return;
         }
 
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+        final var repositoryPath = UrlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         if (isUrlValid) {
             doReturn(new Project()).when(projectApi).getProject(repositoryPath);
         }
@@ -576,7 +573,7 @@ public class GitlabRequestMockProvider {
     public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, Set<de.tum.in.www1.artemis.domain.User> users) throws GitLabApiException {
         for (var user : users) {
             mockGetUserId(user.getLogin(), true, false);
-            final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+            final var repositoryPath = UrlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
             doReturn(new Member()).when(projectApi).updateMember(repositoryPath, 1, GUEST);
         }
     }

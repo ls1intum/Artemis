@@ -125,7 +125,7 @@ public class ProgrammingExerciseService {
     @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
-        final User user = userRepository.getUser();
+        final User exerciseCreator = userRepository.getUser();
 
         createRepositoriesForNewExercise(programmingExercise);
         initParticipations(programmingExercise);
@@ -136,7 +136,7 @@ public class ProgrammingExerciseService {
 
         connectAuxiliaryRepositoriesToExercise(programmingExercise);
 
-        setupExerciseTemplate(programmingExercise, user);
+        setupExerciseTemplate(programmingExercise, exerciseCreator);
 
         // Save programming exercise to prevent transient exception
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -246,12 +246,12 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Setup the exercise template by determining the files needed for the template and copying them.
+     * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming exercise
      *
      * @param programmingExercise the programming exercise that should be set up
-     * @param user                the User that performed the action (used as Git commit author)
+     * @param exerciseCreator     the User that performed the action (used as Git commit author)
      */
-    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user) throws GitAPIException, InterruptedException {
+    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User exerciseCreator) throws GitAPIException, InterruptedException {
 
         // Get URLs for repos
         var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
@@ -320,23 +320,25 @@ public class ProgrammingExerciseService {
         }
 
         try {
-            setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, projectTypeExerciseResources, projectTypeExercisePrefix, "Exercise", programmingExercise, user);
+            setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, projectTypeExerciseResources, projectTypeExercisePrefix, "Exercise", programmingExercise,
+                    exerciseCreator);
             // The template repo can be re-written so we can unprotect the default branch.
             var templateVcsRepositoryUrl = programmingExercise.getVcsTemplateRepositoryUrl();
             String templateVcsRepositoryDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(templateVcsRepositoryUrl);
             versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryDefaultBranch);
 
-            setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix, "Solution", programmingExercise, user);
-            setupTestTemplateAndPush(testRepo, testResources, testPrefix, projectTypeTestResources, projectTypeTestPrefix, "Test", programmingExercise, user);
+            setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix, "Solution", programmingExercise,
+                    exerciseCreator);
+            setupTestTemplateAndPush(testRepo, testResources, testPrefix, projectTypeTestResources, projectTypeTestPrefix, "Test", programmingExercise, exerciseCreator);
 
         }
         catch (Exception ex) {
             // if any exception occurs, try to at least push an empty commit, so that the
             // repositories can be used by the build plans
             log.warn("An exception occurred while setting up the repositories", ex);
-            gitService.commitAndPush(exerciseRepo, "Empty Setup by Artemis", user);
-            gitService.commitAndPush(testRepo, "Empty Setup by Artemis", user);
-            gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis", user);
+            gitService.commitAndPush(exerciseRepo, "Empty Setup by Artemis", exerciseCreator);
+            gitService.commitAndPush(testRepo, "Empty Setup by Artemis", exerciseCreator);
+            gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis", exerciseCreator);
         }
     }
 

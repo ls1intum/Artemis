@@ -74,31 +74,31 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student3")
+    @WithMockUser(username = "student3")
     public void submitFileUploadSubmission() throws Exception {
         submitFile("file.png", false);
     }
 
     @Test
-    @WithMockUser(value = "student3")
+    @WithMockUser(username = "student3")
     public void submitFileUploadSubmissionWithShortName() throws Exception {
         submitFile(".png", false);
     }
 
     @Test
-    @WithMockUser(value = "student3")
+    @WithMockUser(username = "student3")
     public void submitFileUploadSubmissionWithDoubleBackslash() throws Exception {
         submitFile("file\\file.png", false);
     }
 
     @Test
-    @WithMockUser(value = "student3")
+    @WithMockUser(username = "student3")
     public void submitFileUploadSubmissionDifferentFile() throws Exception {
         submitFile("file2.png", true);
     }
 
     @Test
-    @WithMockUser(value = "student3")
+    @WithMockUser(username = "student3")
     public void submitFileUploadSubmissionTwiceSameFile() throws Exception {
         submitFile("file.png", false);
         submitFile("file.png", false);
@@ -140,7 +140,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void submitFileUploadSubmission_wrongExercise() throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
@@ -149,7 +149,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void submitFileUploadSubmission_withoutParticipation() throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
@@ -158,7 +158,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student3")
+    @WithMockUser(username = "student3")
     public void submitFileUploadSubmission_emptyFileContent() throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         var file = new MockMultipartFile("file", "file.png", "application/json", (byte[]) null);
@@ -167,7 +167,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void setSubmittedFileUploadSubmission_incorrectFileType() throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         var file = new MockMultipartFile("file", "file.txt", "application/json", "some data".getBytes());
@@ -188,7 +188,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void cannotSeeStudentDetailsInSubmissionListAsTutor() throws Exception {
         FileUploadSubmission submission1 = database.saveFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, submittedFileUploadSubmission, "student1", "tutor1");
 
@@ -216,7 +216,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getAllSubmissionsOfExerciseAsStudent() throws Exception {
         database.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission, "student1");
 
@@ -236,7 +236,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getSubmissionWithoutAssessmentWithoutSubmission() throws Exception {
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
         assertThat(releasedFileUploadExercise.getNumberOfSubmissions()).as("no submissions").isNull();
@@ -248,7 +248,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getSubmissionWithoutAssessment() throws Exception {
         FileUploadSubmission submission = database.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission, "student1");
         database.addFileUploadSubmission(releasedFileUploadExercise, lateFileUploadSubmission, "student2"); // tests prioritizing in-time submissions over late submissions
@@ -267,7 +267,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getLateSubmissionWithoutAssessment() throws Exception {
 
         database.saveFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, submittedFileUploadSubmission, "student1", "tutor1");
@@ -287,7 +287,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetLateSubmissionWithoutAssessmentLock() throws Exception {
 
         database.saveFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, submittedFileUploadSubmission, "student1", "tutor1");
@@ -307,7 +307,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetSubmissionWithoutAssessmentWithoutSubmissionLock() throws Exception {
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
 
@@ -320,7 +320,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getFileUploadSubmissionWithoutAssessment_asStudent_forbidden() throws Exception {
         database.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission, "student1");
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -329,7 +329,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getFileUploadSubmissionWithoutAssessment_inFuture() throws Exception {
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().plusHours(1));
 
@@ -337,7 +337,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getFileUploadSubmissionWithoutAssessment_wrongExerciseType() throws Exception {
         Course course = database.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
@@ -345,7 +345,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getDataForFileUpload() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
@@ -361,7 +361,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getDataForFileUpload_latestSubmissionOfParticipationNull() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
@@ -378,7 +378,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getDataForFileUpload_withoutFinishedAssessment() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
@@ -393,7 +393,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getDataForFileUpload_wrongStudent() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
@@ -406,7 +406,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getDataForFileUpload_wrongExerciseType() throws Exception {
         Course course = database.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
@@ -417,7 +417,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getDataForFileUpload_wrongParticipationId() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
@@ -429,7 +429,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getDataForFileUpload_afterAssessmentDueDate_showsFeedback() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
@@ -444,7 +444,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void submitExercise_afterDueDate_forbidden() throws Exception {
         participation.setInitializationDate(ZonedDateTime.now().minusDays(2));
         participationRepository.save(participation);
@@ -453,7 +453,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void submitExerciseWithSubmissionId() throws Exception {
         FileUploadSubmission submission = performInitialSubmission(releasedFileUploadExercise.getId(), submittedFileUploadSubmission, validFile.getOriginalFilename());
         submission.getParticipation().setExercise(finishedFileUploadExercise);
@@ -462,7 +462,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void submitExercise_wrongExerciseId() throws Exception {
         FileUploadSubmission submission = performInitialSubmission(releasedFileUploadExercise.getId(), submittedFileUploadSubmission, validFile.getOriginalFilename());
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", validFile,
@@ -470,14 +470,14 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void submitExercise_beforeDueDate_allowed() throws Exception {
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
                 FileUploadSubmission.class, HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void submitExercise_afterDueDate() throws Exception {
         StudentParticipation studentParticipation = database.createAndSaveParticipationForExerciseInTheFuture(releasedFileUploadExercise, "student3");
         submittedFileUploadSubmission.setParticipation(studentParticipation);
@@ -486,7 +486,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void submitExercise_withoutDueDate() throws Exception {
         StudentParticipation studentParticipation = database.createAndSaveParticipationForExerciseInTheFuture(noDueDateFileUploadExercise, "student3");
         submittedFileUploadSubmission.setParticipation(studentParticipation);
@@ -495,14 +495,14 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void submitExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
         request.postWithMultipartFile("/api/exercises/" + finishedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
                 FileUploadSubmission.class, HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void saveExercise_beforeDueDate() throws Exception {
         FileUploadSubmission storedSubmission = request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions",
                 notSubmittedFileUploadSubmission, "submission", validFile, FileUploadSubmission.class, HttpStatus.OK);
@@ -511,7 +511,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void saveExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
         FileUploadSubmission storedSubmission = request.postWithMultipartFile("/api/exercises/" + finishedFileUploadExercise.getId() + "/file-upload-submissions",
                 notSubmittedFileUploadSubmission, "submission", validFile, FileUploadSubmission.class, HttpStatus.OK);
@@ -519,7 +519,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void submitExercise_beforeDueDateSecondSubmission_allowed() throws Exception {
         var file = new MockMultipartFile("file", "ffile.png", "application/json", "some data".getBytes());
         submittedFileUploadSubmission = request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions",
@@ -544,7 +544,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getSubmissionById_asTA() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, "student1");
@@ -556,7 +556,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getSubmissionByID_asTA_withResult() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, "student1");
@@ -571,7 +571,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getSubmissionById_asTA_withResult_wrongResultId() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, "student1");
@@ -587,7 +587,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getSubmissionByID_asTA_withResultAndAssessor() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, fileUploadSubmission, "student1", "tutor1");
@@ -601,7 +601,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void getSubmissionByID_asStudent() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, "student1");

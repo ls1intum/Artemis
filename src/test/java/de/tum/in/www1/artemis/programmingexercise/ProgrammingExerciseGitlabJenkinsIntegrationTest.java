@@ -242,13 +242,13 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_mode_changedToIndividual() throws Exception {
         programmingExerciseTestService.testImportProgrammingExercise_individual_modeChange();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_mode_changedToTeam() throws Exception {
         programmingExerciseTestService.testImportProgrammingExercise_team_modeChange();
     }

@@ -91,7 +91,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden();
     }
@@ -122,7 +122,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testProgrammingExerciseDelete_instructorNotInCourse_forbidden();
     }
@@ -140,7 +140,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     void testGetProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExercise_instructorNotInCourse_forbidden();
     }
@@ -158,7 +158,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     void testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden();
     }
@@ -176,7 +176,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     void testGetProgrammingExercisesForCourse_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExercisesForCourse_instructorNotInCourse_forbidden();
     }
@@ -218,7 +218,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExercise_instructorNotInCourse_forbidden();
     }
@@ -254,13 +254,13 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.updateTimeline_intructorNotInCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     public void updateTimeline_invalidId_notFound() throws Exception {
         programmingExerciseIntegrationTestService.updateTimeline_invalidId_notFound();
     }
@@ -272,7 +272,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     public void updateProblemStatement_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.updateProblemStatement_instructorNotInCourse_forbidden();
     }
@@ -302,7 +302,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_instructorNotInCourse_forbidden();
     }
@@ -490,13 +490,13 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_sourceExerciseIdNegative_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_sourceExerciseIdNegative_badRequest();
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     public void importProgrammingExerciseMaxScoreNullBadRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExerciseMaxScoreNullBadRequest();
     }
@@ -514,7 +514,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_instructorNotInCourse_forbidden();
     }
@@ -581,7 +581,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     public void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden();
     }
@@ -599,7 +599,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     public void generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest();
     }
@@ -731,31 +731,31 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCheckPlagiarism() throws Exception {
         programmingExerciseIntegrationTestService.testCheckPlagiarism();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCheckPlagiarismJplagReport() throws Exception {
         programmingExerciseIntegrationTestService.testCheckPlagiarismJplagReport();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetPlagiarismResult() throws Exception {
         programmingExerciseIntegrationTestService.testGetPlagiarismResult();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetPlagiarismResultWithoutResult() throws Exception {
         programmingExerciseIntegrationTestService.testGetPlagiarismResultWithoutResult();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetPlagiarismResultWithoutExercise() throws Exception {
         programmingExerciseIntegrationTestService.testGetPlagiarismResultWithoutExercise();
     }
@@ -763,109 +763,109 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     // Auxiliary Repository Tests
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testValidateValidAuxiliaryRepository() throws Exception {
         programmingExerciseIntegrationTestService.testValidateValidAuxiliaryRepository();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryIdSetOnRequest() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryIdSetOnRequest();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryWithoutName() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithoutName();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryWithTooLongName() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithTooLongName();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryWithDuplicatedName() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithDuplicatedName();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryWithRestrictedName() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithRestrictedName();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryWithInvalidCheckoutDirectory() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithInvalidCheckoutDirectory();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryWithoutCheckoutDirectory() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithoutCheckoutDirectory();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryWithDuplicatedCheckoutDirectory() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithDuplicatedCheckoutDirectory();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryWithNullCheckoutDirectory() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithNullCheckoutDirectory();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryWithTooLongDescription() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithTooLongDescription();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryWithoutDescription() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithoutDescription();
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
         programmingExerciseIntegrationTestService.testGetAuxiliaryRepositoriesMissingExercise();
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetAuxiliaryRepositoriesOk() throws Exception {
         programmingExerciseIntegrationTestService.testGetAuxiliaryRepositoriesOk();
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "STUDENT")
+    @WithMockUser(username = "student1", roles = "STUDENT")
     public void testGetAuxiliaryRepositoriesForbidden() throws Exception {
         programmingExerciseIntegrationTestService.testGetAuxiliaryRepositoriesForbidden();
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetAuxiliaryRepositoriesEmptyOk() throws Exception {
         programmingExerciseIntegrationTestService.testGetAuxiliaryRepositoriesEmptyOk();
     }
@@ -873,25 +873,25 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     // Tests for recreate build plan endpoint
 
     @Test
-    @WithMockUser(value = "student1", roles = "STUDENT")
+    @WithMockUser(username = "student1", roles = "STUDENT")
     public void testRecreateBuildPlansForbiddenStudent() throws Exception {
         programmingExerciseIntegrationTestService.testRecreateBuildPlansForbidden();
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testRecreateBuildPlansForbiddenTutor() throws Exception {
         programmingExerciseIntegrationTestService.testRecreateBuildPlansForbidden();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testRecreateBuildPlansExerciseNotFound() throws Exception {
         programmingExerciseIntegrationTestService.testRecreateBuildPlansExerciseNotFound();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testRecreateBuildPlansSuccess() throws Exception {
         programmingExerciseIntegrationTestService.testRecreateBuildPlansExerciseSuccess();
     }
@@ -899,43 +899,43 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     // Tests for export auxiliary repository for exercise endpoint
 
     @Test
-    @WithMockUser(value = "student1", roles = "STUDENT")
+    @WithMockUser(username = "student1", roles = "STUDENT")
     public void testExportAuxiliaryRepositoryForbidden() throws Exception {
         programmingExerciseIntegrationTestService.testExportAuxiliaryRepositoryForbidden();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testExportEmptyAuxiliaryRepository() throws Exception {
         programmingExerciseIntegrationTestService.testExportAuxiliaryRepositoryBadRequest();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testExportAuxiliaryRepositoryExerciseNotFound() throws Exception {
         programmingExerciseIntegrationTestService.testExportAuxiliaryRepositoryExerciseNotFound();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testExportAuxiliaryRepositoryRepositoryNotFound() throws Exception {
         programmingExerciseIntegrationTestService.testExportAuxiliaryRepositoryRepositoryNotFound();
     }
 
     @Test
-    @WithMockUser(value = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     public void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
         programmingExerciseIntegrationTestService.testReEvaluateAndUpdateProgrammingExercise_notFound();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
         programmingExerciseIntegrationTestService.testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict();
     }

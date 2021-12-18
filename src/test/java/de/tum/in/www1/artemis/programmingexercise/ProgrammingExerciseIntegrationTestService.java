@@ -34,6 +34,9 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.mockito.Answers;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -82,10 +85,6 @@ public class ProgrammingExerciseIntegrationTestService {
     @Autowired
     // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private FileService fileService;
-
-    @Autowired
-    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
-    private UrlService urlService;
 
     @Autowired
     private GitUtilService gitUtilService;
@@ -1558,7 +1557,8 @@ public class ProgrammingExerciseIntegrationTestService {
         Files.writeString(file2, exampleProgram);
 
         doReturn(jPlagReposDir).when(fileService).getUniquePathString(any());
-        doReturn(null).when(urlService).getRepositorySlugFromRepositoryUrl(any());
+        MockedStatic<UrlService> urlServiceMockedStatic = Mockito.mockStatic(UrlService.class, Mockito.withSettings().defaultAnswer(Answers.CALLS_REAL_METHODS));
+        urlServiceMockedStatic.when(() -> UrlService.getRepositorySlugFromRepositoryUrl(any())).thenReturn(null);
 
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);

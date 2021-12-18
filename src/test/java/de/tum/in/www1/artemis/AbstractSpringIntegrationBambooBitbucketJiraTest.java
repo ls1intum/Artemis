@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.TimeService;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
@@ -233,9 +234,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     private void mockImportRepositories(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported) throws Exception {
         final var projectKey = exerciseToBeImported.getProjectKey();
-        final var templateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
-        final var solutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
-        final var testsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
+        var exerciseRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
+        var solutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
+        var testRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
 
         var nextParticipationId = sourceExercise.getTemplateParticipation().getId() + 1;
         final var artemisSolutionHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
@@ -244,20 +245,20 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
         bitbucketRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
-        bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, templateRepoName);
+        bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, exerciseRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, solutionRepoName);
-        bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, testsRepoName);
+        bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, testRepoName);
         bitbucketRequestMockProvider.mockDefaultBranch("master", exerciseToBeImported.getProjectKey());
         for (AuxiliaryRepository repository : sourceExercise.getAuxiliaryRepositories()) {
             final var auxRepoName = exerciseToBeImported.generateRepositoryName(repository.getName());
             bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, auxRepoName);
         }
-        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, templateRepoName);
-        bitbucketRequestMockProvider.mockAddWebhook(projectKey, templateRepoName, artemisTemplateHookPath);
+        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, exerciseRepoName);
+        bitbucketRequestMockProvider.mockAddWebhook(projectKey, exerciseRepoName, artemisTemplateHookPath);
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, solutionRepoName);
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, solutionRepoName, artemisSolutionHookPath);
-        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, testsRepoName);
-        bitbucketRequestMockProvider.mockAddWebhook(projectKey, testsRepoName, artemisTestsHookPath);
+        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, testRepoName);
+        bitbucketRequestMockProvider.mockAddWebhook(projectKey, testRepoName, artemisTestsHookPath);
     }
 
     private void mockCloneAndEnableAllBuildPlans(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi, boolean shouldPlanEnableFail)
@@ -338,7 +339,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         final var repositoryUrl = participation.getVcsRepositoryUrl();
         final var projectKey = buildPlanId.split("-")[0];
         final var planKey = participation.getBuildPlanId();
-        final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+        final var repoProjectName = UrlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         bambooRequestMockProvider.mockUpdatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */,
                 Optional.empty());
 
@@ -503,7 +504,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws Exception {
-        var repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+        var repositorySlug = UrlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(repositorySlug, projectKey, users);
     }
 

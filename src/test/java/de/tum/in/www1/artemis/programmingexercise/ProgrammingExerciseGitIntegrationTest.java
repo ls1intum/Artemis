@@ -57,14 +57,14 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
 
         // create commits
         // the following 2 lines prepare the generation of the structural test oracle
-        var testjsonFilePath = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
-        gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath);
+        var testJsonFilePath = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
+        gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath);
         localGit.commit().setMessage("add test.json").setAuthor("test", "test@test.com").call();
-        var testjsonFilePath2 = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test2.json");
-        gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath2);
+        var testJsonFilePath2 = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test2.json");
+        gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath2);
         localGit.commit().setMessage("add test2.json").setAuthor("test", "test@test.com").call();
-        var testjsonFilePath3 = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test3.json");
-        gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath3);
+        var testJsonFilePath3 = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test3.json");
+        gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath3);
         localGit.commit().setMessage("add test3.json").setAuthor("test", "test@test.com").call();
 
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
@@ -117,7 +117,7 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
     void testCombineTemplateRepositoryCommits_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         final var path = ProgrammingExerciseResource.Endpoints.ROOT

@@ -29,6 +29,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.RepositoryService;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -84,7 +85,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
                 any());
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", urlService.getProjectKeyFromRepositoryUrl(testRepoUrl));
+        bitbucketRequestMockProvider.mockDefaultBranch("master", UrlService.getProjectKeyFromRepositoryUrl(testRepoUrl));
     }
 
     @AfterEach

@@ -115,6 +115,12 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createAndImportProgrammingExercise() throws Exception {
+        programmingExerciseTestService.createAndImportProgrammingExercise();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_enablePlanFails() throws Exception {
         programmingExerciseTestService.importExercise_enablePlanFails();
     }
@@ -240,13 +246,13 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_mode_changedToIndividual() throws Exception {
         programmingExerciseTestService.testImportProgrammingExercise_individual_modeChange();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_mode_changedToTeam() throws Exception {
         programmingExerciseTestService.testImportProgrammingExercise_team_modeChange();
     }

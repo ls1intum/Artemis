@@ -56,8 +56,6 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final UrlService urlService;
-
     private final ZipFileService zipFileService;
 
     private final GitService gitService;
@@ -72,13 +70,11 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final PlagiarismWebsocketService plagiarismWebsocketService;
 
-    public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, UrlService urlService,
-            ZipFileService zipFileService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
-            PlagiarismResultRepository plagiarismResultRepository, ProgrammingExerciseExportService programmingExerciseExportService,
-            PlagiarismWebsocketService plagiarismWebsocketService) {
+    public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, ZipFileService zipFileService,
+            GitService gitService, StudentParticipationRepository studentParticipationRepository, PlagiarismResultRepository plagiarismResultRepository,
+            ProgrammingExerciseExportService programmingExerciseExportService, PlagiarismWebsocketService plagiarismWebsocketService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
-        this.urlService = urlService;
         this.zipFileService = zipFileService;
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -179,7 +175,7 @@ public class ProgrammingPlagiarismDetectionService {
         final var repoFolder = Paths.get(targetPath, projectKey).toString();
         final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
 
-        final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
+        final var templateRepoName = UrlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
 
         JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
         if (templateRepoName != null) {

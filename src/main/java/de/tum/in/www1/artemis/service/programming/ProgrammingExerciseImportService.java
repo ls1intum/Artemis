@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +24,7 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -160,12 +160,13 @@ public class ProgrammingExerciseImportService {
         // First, create a new project for our imported exercise
         versionControlService.get().createProjectForExercise(newExercise);
         // Copy all repositories
-        final var reposToCopy = List.of(Pair.of(RepositoryType.TEMPLATE, templateExercise.getTemplateRepositoryName()),
-                Pair.of(RepositoryType.SOLUTION, templateExercise.getSolutionRepositoryName()), Pair.of(RepositoryType.TESTS, templateExercise.getTestRepositoryName()));
+        var templateRepoName = UrlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTemplateRepositoryUrl());
+        var testRepoName = UrlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTestRepositoryUrl());
+        var solutionRepoName = UrlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getSolutionRepositoryUrl());
 
-        for (Pair<RepositoryType, String> repo : reposToCopy) {
-            versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName());
-        }
+        versionControlService.get().copyRepository(sourceProjectKey, templateRepoName, targetProjectKey, RepositoryType.TEMPLATE.getName());
+        versionControlService.get().copyRepository(sourceProjectKey, solutionRepoName, targetProjectKey, RepositoryType.SOLUTION.getName());
+        versionControlService.get().copyRepository(sourceProjectKey, testRepoName, targetProjectKey, RepositoryType.TESTS.getName());
 
         List<AuxiliaryRepository> auxiliaryRepositories = templateExercise.getAuxiliaryRepositories();
         for (int i = 0; i < auxiliaryRepositories.size(); i++) {

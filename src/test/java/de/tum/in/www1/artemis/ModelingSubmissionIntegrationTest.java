@@ -122,7 +122,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void createModelingSubmission_badRequest() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         modelingSubmissionRepo.save(submission);
@@ -130,14 +130,14 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student4", roles = "USER")
+    @WithMockUser(username = "student4", roles = "USER")
     public void createModelingSubmission_studentNotInCourse() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void saveAndSubmitModelingSubmission_classDiagram() throws Exception {
         database.createAndSaveParticipationForExercise(classExercise, "student1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, false);
@@ -153,7 +153,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void saveAndSubmitModelingSubmission_activityDiagram() throws Exception {
         database.createAndSaveParticipationForExercise(activityExercise, "student1");
         String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
@@ -171,7 +171,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void saveAndSubmitModelingSubmission_objectDiagram() throws Exception {
         database.createAndSaveParticipationForExercise(objectExercise, "student1");
         String emptyObjectModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-object-diagram.json");
@@ -189,7 +189,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void saveAndSubmitModelingSubmission_useCaseDiagram() throws Exception {
         database.createAndSaveParticipationForExercise(useCaseExercise, "student1");
         String emptyUseCaseModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
@@ -207,7 +207,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void saveAndSubmitModelingSubmission_isTeamMode() throws Exception {
         exerciseRepo.save(useCaseExercise.mode(ExerciseMode.TEAM));
         Team team = new Team();
@@ -256,7 +256,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student2")
+    @WithMockUser(username = "student2")
     public void updateModelSubmission() throws Exception {
         database.createAndSaveParticipationForExercise(classExercise, "student2");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, true);
@@ -280,7 +280,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void injectResultOnSubmissionUpdate() throws Exception {
         User user = database.getUserByLogin("student1");
         database.createAndSaveParticipationForExercise(classExercise, "student1");
@@ -334,7 +334,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getAllSubmissionsOfExerciseAsStudent() throws Exception {
         database.addModelingSubmission(classExercise, submittedSubmission, "student1");
         database.addModelingSubmission(classExercise, unsubmittedSubmission, "student2");
@@ -357,7 +357,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getModelSubmission() throws Exception {
         User user = database.getUserByLogin("tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
@@ -371,7 +371,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getModelSubmissionWithoutResults() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmission(classExercise, submission, "student1");
@@ -382,7 +382,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = "tutor2", roles = "TA")
     public void getModelSubmission_tutorNotInCourse() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmission(classExercise, submission, "student1");
@@ -391,7 +391,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getModelSubmissionAsStudent() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmission(classExercise, submission, "student1");
@@ -400,7 +400,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getModelSubmission_lockLimitReached_success() throws Exception {
         User user = database.getUserByLogin("tutor1");
         createNineLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
@@ -415,7 +415,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getModelSubmission_lockLimitReached_badRequest() throws Exception {
         createTenLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
@@ -425,7 +425,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "TA")
+    @WithMockUser(username = "instructor1", roles = "TA")
     public void getModelingSubmissionWithResultId() throws Exception {
         User user = database.getUserByLogin("tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
@@ -441,7 +441,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getModelingSubmissionWithResultIdAsTutor_badRequest() throws Exception {
         User user = database.getUserByLogin("tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
@@ -453,7 +453,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getModelSubmissionWithoutAssessment() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmission(classExercise, submission, "student1");
@@ -472,7 +472,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getModelSubmissionWithSimilarElements() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         database.addModelingSubmission(classExercise, submission, "student1");
@@ -492,13 +492,13 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getModelSubmissionWithoutAssessment_wrongExerciseType() throws Exception {
         request.get("/api/exercises/" + textExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.BAD_REQUEST, ModelingSubmission.class);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getModelSubmissionWithoutAssessment_lockSubmission() throws Exception {
         User user = database.getUserByLogin("tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
@@ -518,7 +518,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getModelSubmissionWithoutAssessment_noSubmittedSubmission_notFound() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, false);
         database.addModelingSubmission(classExercise, submission, "student1");
@@ -528,7 +528,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getModelSubmissionWithoutAssessment_noSubmissionWithoutAssessment_notFound() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, "student1", "tutor1");
@@ -538,7 +538,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getModelSubmissionWithoutAssessment_dueDateNotOver() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         database.addModelingSubmission(classExercise, submission, "student1");
@@ -547,7 +547,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = "tutor2", roles = "TA")
     public void getModelSubmissionWithoutAssessment_notTutorInCourse() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         database.addModelingSubmission(classExercise, submission, "student1");
@@ -557,7 +557,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getModelSubmissionWithoutAssessment_asStudent_forbidden() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         database.addModelingSubmission(classExercise, submission, "student1");
@@ -567,7 +567,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getModelSubmissionWithoutAssessment_testLockLimit() throws Exception {
         createNineLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
         ModelingSubmission newSubmission = ModelFactory.generateModelingSubmission(validModel, true);
@@ -581,7 +581,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getAllModelingSubmissions() throws Exception {
         createNineLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
         ModelingSubmission newSubmission = ModelFactory.generateModelingSubmission(validModel, true);
@@ -595,7 +595,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getModelSubmissionForModelingEditor() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = (ModelingSubmission) database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
@@ -617,7 +617,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getSubmissionForModelingEditor_badRequest() throws Exception {
         User user = database.getUserByLogin("student1");
         StudentParticipation participation = new StudentParticipation();
@@ -632,7 +632,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void getModelingResult_BeforeExamPublishDate_Forbidden() throws Exception {
         // create exam
         Exam exam = database.addExamWithExerciseGroup(course, true);
@@ -657,7 +657,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getSubmissionForModelingEditor_emptySubmission() throws Exception {
         StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(classExercise, "student1");
         assertThat(studentParticipation.getSubmissions()).isEmpty();
@@ -667,7 +667,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void getSubmissionForModelingEditor_unfinishedAssessment() throws Exception {
         StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(classExercise, "student1");
         database.addModelingSubmissionWithEmptyResult(classExercise, "", "student1");
@@ -678,7 +678,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void submitExercise_afterDueDate_forbidden() throws Exception {
         afterDueDateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
         studentParticipationRepository.saveAndFlush(afterDueDateParticipation);
@@ -686,13 +686,13 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void submitExercise_beforeDueDate_allowed() throws Exception {
         request.postWithoutLocation("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK, null);
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void submitExercise_beforeDueDateSecondSubmission_allowed() throws Exception {
         submittedSubmission.setModel(validModel);
         submittedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, ModelingSubmission.class,
@@ -704,7 +704,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void submitExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
         afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepository.saveAndFlush(afterDueDateParticipation);
@@ -713,7 +713,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void saveExercise_beforeDueDate() throws Exception {
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", unsubmittedSubmission,
                 ModelingSubmission.class, HttpStatus.OK);
@@ -721,7 +721,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
+    @WithMockUser(username = "student3", roles = "USER")
     public void saveExercise_afterDueDateWithParticipationStartAfterDueDate() throws Exception {
         database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
         afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
