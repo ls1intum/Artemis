@@ -3,6 +3,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-assessment-repo-export',
@@ -13,7 +14,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
             [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [icon]="'download'"
+            [icon]="faDownload"
             [title]="singleParticipantMode ? 'instructorDashboard.exportRepos.titleSingle' : 'instructorDashboard.exportRepos.title'"
             (onClick)="openRepoExportDialog($event)"
         ></jhi-button>
@@ -28,6 +29,9 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
     @Input() participationIdList: number[];
     @Input() participantIdentifierList: string; // comma separated
     @Input() singleParticipantMode = false;
+
+    // Icons
+    faDownload = faDownload;
 
     constructor(private modalService: NgbModal) {}
 

@@ -22,6 +22,7 @@ import { hasParticipationChanged } from 'app/overview/participation.utils';
 import { Result } from 'app/entities/result.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { findLatestResult } from 'app/shared/util/utils';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -64,6 +65,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private injectableContentFoundSubscription: Subscription;
     private tasksSubscription: Subscription;
     private generateHtmlSubscription: Subscription;
+
+    // Icons
+    faSpinner = faSpinner;
 
     constructor(
         private translateService: TranslateService,

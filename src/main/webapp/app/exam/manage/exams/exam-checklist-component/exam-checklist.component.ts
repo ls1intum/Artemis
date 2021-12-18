@@ -5,6 +5,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { filter, map } from 'rxjs/operators';
+import { faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -24,6 +25,13 @@ export class ExamChecklistComponent implements OnChanges {
     totalPointsMandatoryOptional = false;
     hasOptionalExercises = false;
     countMandatoryExercises = 0;
+
+    // Icons
+    faEye = faEye;
+    faWrench = faWrench;
+    faUser = faUser;
+    faListAlt = faListAlt;
+    faThList = faThList;
 
     constructor(private accountService: AccountService, private examService: ExamManagementService) {}
 

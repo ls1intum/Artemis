@@ -1,8 +1,8 @@
-import { Component, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import { AccountService } from 'app/core/auth/account.service';
@@ -13,14 +13,17 @@ import { isOrion } from 'app/shared/orion/orion';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
     NEEDS_WORK = 'NEEDS_WORK',
     UNRELEASED = 'UNRELEASED',
+    OPTIONAL = 'OPTIONAL',
 }
 
 export enum ExerciseSortingOrder {
@@ -44,7 +47,7 @@ export enum SortingAttribute {
     templateUrl: './course-exercises.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
+export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
     private courseId: number;
     private paramSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
@@ -66,6 +69,22 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     exerciseForGuidedTour?: Exercise;
     nextRelevantExercise?: Exercise;
     sortingAttribute: SortingAttribute;
+
+    // Icons
+    faPlayCircle = faPlayCircle;
+    faFilter = faFilter;
+    faAngleUp = faAngleUp;
+    faAngleDown = faAngleDown;
+    faSortNumericUp = faSortNumericUp;
+    faSortNumericDown = faSortNumericDown;
+
+    // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
+    @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
+    // Provides the control configuration to be read and used by "CourseOverviewComponent"
+    public readonly controlConfiguration: BarControlConfiguration = {
+        subject: new Subject<TemplateRef<any>>(),
+        useIndentation: true,
+    };
 
     constructor(
         private courseService: CourseManagementService,
@@ -113,6 +132,13 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
         this.nextRelevantExercise = this.exerciseService.getNextExerciseForHours(this.course?.exercises);
     }
 
+    ngAfterViewInit(): void {
+        // Send our controls template to parent so it will be rendered in the top bar
+        if (this.controls) {
+            this.controlConfiguration.subject!.next(this.controls);
+        }
+    }
+
     setSortingAttribute(attribute: SortingAttribute) {
         this.sortingAttribute = attribute;
         this.localStorage.store(SortFilterStorageKey.ATTRIBUTE, this.sortingAttribute.toString());
@@ -124,9 +150,9 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.translateSubscription.unsubscribe();
-        this.courseUpdatesSubscription.unsubscribe();
-        this.paramSubscription.unsubscribe();
+        this.translateSubscription?.unsubscribe();
+        this.courseUpdatesSubscription?.unsubscribe();
+        this.paramSubscription?.unsubscribe();
     }
 
     private onCourseLoad() {
@@ -181,11 +207,13 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
         const needsWorkFilterActive = this.activeFilters.has(ExerciseFilter.NEEDS_WORK);
         const overdueFilterActive = this.activeFilters.has(ExerciseFilter.OVERDUE);
         const unreleasedFilterActive = this.activeFilters.has(ExerciseFilter.UNRELEASED);
+        const optionalFilterActive = this.activeFilters.has(ExerciseFilter.OPTIONAL);
         const filtered = this.course?.exercises?.filter(
             (exercise) =>
                 (!needsWorkFilterActive || this.needsWork(exercise)) &&
                 (!exercise.dueDate || !overdueFilterActive || exercise.dueDate.isAfter(dayjs(new Date()))) &&
                 (!exercise.releaseDate || !unreleasedFilterActive || (exercise as QuizExercise)?.visibleToStudents) &&
+                (!optionalFilterActive || exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED) &&
                 (!isOrion || exercise.type === ExerciseType.PROGRAMMING),
         );
         this.groupExercises(filtered);

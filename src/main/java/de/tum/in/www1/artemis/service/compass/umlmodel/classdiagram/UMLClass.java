@@ -64,10 +64,9 @@ public class UMLClass extends UMLElement implements Serializable {
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (!(reference instanceof UMLClass)) {
+        if (!(reference instanceof UMLClass referenceClass)) {
             return similarity;
         }
-        UMLClass referenceClass = (UMLClass) reference;
 
         // TODO: take the parent element into account
 
@@ -88,11 +87,9 @@ public class UMLClass extends UMLElement implements Serializable {
      */
     @Override
     public double overallSimilarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLClass)) {
+        if (!(reference instanceof UMLClass referenceClass)) {
             return 0;
         }
-
-        UMLClass referenceClass = (UMLClass) reference;
 
         // To ensure symmetry (i.e. A.similarity(B) = B.similarity(A)) we make sure that this class always has less or equally many elements than the reference class.
         if (getElementCount() > referenceClass.getElementCount()) {

@@ -40,12 +40,12 @@
             <div class="container">
                 <div class="row mx-auto mb-1">
                     <button id="{{ 'up-' + i }}" type="button" class="btn btn-primary btn-circle" (click)="moveUp(i)" [disabled]="i === 0">
-                        <fa-icon [icon]="'arrow-up'" [fixedWidth]="true" [size]="'lg'"></fa-icon>
+                        <fa-icon [icon]="faArrowUp" [fixedWidth]="true" [size]="'lg'"></fa-icon>
                     </button>
                 </div>
                 <div class="row mx-auto">
                     <button id="{{ 'down-' + i }}" type="button" class="btn btn-primary btn-circle" (click)="moveDown(i)" [disabled]="i === lectureUnits.length - 1">
-                        <fa-icon [icon]="'arrow-down'" [fixedWidth]="true" [size]="'lg'"></fa-icon>
+                        <fa-icon [icon]="faArrowDown" [fixedWidth]="true" [size]="'lg'"></fa-icon>
                     </button>
                 </div>
             </div>
@@ -62,10 +62,10 @@
                 (delete)="deleteLectureUnit(lectureUnit.id!)"
                 [dialogError]="dialogError$"
             >
-                <fa-icon [icon]="'times'"></fa-icon>
+                <fa-icon [icon]="faTimes"></fa-icon>
             </button>
             <a *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary edit rounded-pill" [routerLink]="editButtonRouterLink(lectureUnit)">
-                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                <fa-icon [icon]="faPencilAlt"></fa-icon>
                 <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
             </a>
         </div>

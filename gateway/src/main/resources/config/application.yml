@@ -134,6 +134,15 @@ spring:
                     uri: lb://LECTURE
                     predicates:
                         - Path=/api/lectures/{segment}/attachment-units/**
+                -   id: usermanagement
+                    uri: lb://usermanagement
+                    predicates:
+                        - Path=/api/users, /api/users/**, /api/users/authorities, /api/guided-tour-settings/**
+                -   id: usermanagement
+                    uri: lb://usermanagement
+                    predicates:
+                        - Path=/api/authenticate
+                        - Method=GET
                 -   id: artemis
                     uri: lb://ARTEMIS
                     predicates:

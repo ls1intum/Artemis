@@ -1,12 +1,12 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Course } from 'app/entities/course.model';
 import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-statistics.component';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
@@ -33,23 +33,17 @@ export class CourseCardComponent implements OnChanges {
     totalReachableScore: number;
     totalAbsoluteScore: number;
 
-    doughnutChartColors: any[] = ['limegreen', 'red'];
-    doughnutChartLabels: string[] = ['Achieved Points', 'Missing Points'];
-    doughnutChartData: CourseStatisticsDataSet[] = [
-        {
-            data: [0, 0],
-            backgroundColor: this.doughnutChartColors,
-        },
+    // ngx
+    ngxDoughnutData: any[] = [
+        { name: 'achievedPointsLabel', value: 0 },
+        { name: 'missingPointsLabel', value: 0 },
     ];
-    totalScoreOptions: object = {
-        animation: false,
-        cutoutPercentage: 75,
-        scaleShowVerticalLines: false,
-        responsive: false,
-        tooltips: {
-            backgroundColor: 'rgba(0, 0, 0, 1)',
-        },
-    };
+    ngxColor = {
+        name: 'vivid',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: ['#32cd32', '#ff0000'], // colors: green, red
+    } as Color;
 
     constructor(
         private router: Router,
@@ -79,7 +73,9 @@ export class CourseCardComponent implements OnChanges {
 
             // Adjust for bonus points, i.e. when the student has achieved more than is reachable
             const scoreNotReached = roundScoreSpecifiedByCourseSettings(Math.max(0, this.totalReachableScore - this.totalAbsoluteScore), this.course);
-            this.doughnutChartData[0].data = [this.totalAbsoluteScore, scoreNotReached];
+            this.ngxDoughnutData[0].value = this.totalAbsoluteScore;
+            this.ngxDoughnutData[1].value = scoreNotReached;
+            this.ngxDoughnutData = [...this.ngxDoughnutData];
         }
 
         if (this.course.lectures) {
@@ -89,5 +85,12 @@ export class CourseCardComponent implements OnChanges {
         if (this.course.exams) {
             this.examCount = this.course.exams.length;
         }
+    }
+
+    /**
+     * Delegates the user to the corresponding course page when clicking on the chart
+     */
+    onSelect(): void {
+        this.router.navigate(['courses', this.course.id]);
     }
 }

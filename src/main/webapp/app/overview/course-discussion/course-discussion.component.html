@@ -10,13 +10,13 @@
                     (keyup.enter)="onSearch()"
                     placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}"
                 />
-                <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="'times'" (onClick)="searchText = ''; onSearch()"></jhi-button>
-                <jhi-button class="ms-1" [icon]="'search'" (onClick)="onSearch()"></jhi-button>
+                <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSearch()"></jhi-button>
+                <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSearch()"></jhi-button>
             </div>
             <!-- new post button -->
             <div class="col-2" *ngIf="createdPost">
                 <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
-                    <fa-icon [icon]="'plus'"></fa-icon>
+                    <fa-icon [icon]="faPlus"></fa-icon>
                     <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
                 </button>
                 <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
@@ -56,7 +56,7 @@
                         </div>
                         <!-- attribute filter -->
                         <div class="col-auto px-0 selection-prefix">
-                            <fa-icon [icon]="'filter'"></fa-icon>
+                            <fa-icon [icon]="faFilter"></fa-icon>
                             <input class="form-check-input" type="checkbox" formControlName="filterToUnresolved" name="filterToUnresolved" (change)="onFilterChange()" />
                             <span class="px-1">{{ 'artemisApp.metis.overview.filterToUnresolved' | artemisTranslate }}</span>
                             <input class="form-check-input" type="checkbox" formControlName="filterToOwn" name="filterToOwn" (change)="onFilterChange()" />
@@ -87,7 +87,7 @@
                         </div>
                         <div class="col-auto p-0 clickable" (click)="onChangeSortDir()">
                             <fa-icon
-                                [icon]="currentSortDirection === SortDirection.ASC ? 'long-arrow-alt-up' : 'long-arrow-alt-down'"
+                                [icon]="currentSortDirection === SortDirection.ASC ? faLongArrowAltUp : faLongArrowAltDown"
                                 [ngbTooltip]="
                                     currentSortDirection === SortDirection.ASC
                                         ? ('artemisApp.metis.overview.sortAscending' | artemisTranslate)

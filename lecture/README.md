@@ -2,7 +2,7 @@ This is a "microservice" application intended to be part of the Artemis architec
 
 ## Environment preparation
 
-This application is configured for Service Discovery and Configuration with the JHipster-Registry. On launch, it will refuse to start if it is not able to connect to the JHipster-Registry at [http://localhost:8761](http://localhost:8761).
+This application is configured for [Service Discovery and Configuration with the JHipster-Registry](https://www.jhipster.tech/documentation-archive/v7.1.0/microservices-architecture/#jhipster-registry). On launch, it will refuse to start if it is not able to connect to the JHipster-Registry at [http://localhost:8761](http://localhost:8761).
 You can start the JHipster Registry using Docker, by running:
 ```bash
 docker-compose -f src/main/docker/app.yml up jhipster-registry
@@ -75,6 +75,3 @@ Then run:
 ```bash
 docker-compose -f src/main/docker/app.yml up -d
 ```
-
-[service discovery and configuration with the jhipster-registry]: https://www.jhipster.tech/documentation-archive/v7.1.0/microservices-architecture/#jhipster-registry
-[openapi-generator]: https://openapi-generator.tech
