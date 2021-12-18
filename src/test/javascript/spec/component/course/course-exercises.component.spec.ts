@@ -13,7 +13,7 @@ import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { CourseExercisesComponent, ExerciseFilter, ExerciseSortingOrder, SortingAttribute } from 'app/overview/course-exercises/course-exercises.component';
+import { CourseExercisesComponent, ExerciseFilter, ExerciseSortingOrder } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
@@ -23,7 +23,6 @@ import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import dayjs from 'dayjs';
-import { By } from '@angular/platform-browser';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
