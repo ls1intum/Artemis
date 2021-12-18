@@ -198,7 +198,6 @@ export class StatisticsGraphComponent implements OnChanges {
         });
 
         this.ngxData = [...this.ngxData];
-        this.yScaleMax = 3;
-        this.yScaleMax = Math.max(this.yScaleMax, ...this.dataForSpanType);
+        this.yScaleMax = Math.max(3, ...this.dataForSpanType);
     }
 }

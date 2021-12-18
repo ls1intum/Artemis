@@ -54,6 +54,7 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
     /**
      * Finds given the distribution bucket the corresponding absolute value
      * @param bucket the distribution bucket to determine the absolute Value for
+     * @returns amount of submissions that achieved a score in the buckets range
      */
     lookUpAbsoluteValue(bucket: string) {
         const index = this.barChartLabels.indexOf(bucket);
