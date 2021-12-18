@@ -27,7 +27,7 @@ plugins {
 group = "de.tum.in.www1.artemis"
 
 allprojects {
-    version = "5.4.1"
+    version = "5.4.2"
     description = "Interactive Learning with Individual Feedback"
 }
 
@@ -127,7 +127,7 @@ dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:${offbytwo_jenkins_client_version}"
     implementation "org.gitlab4j:gitlab4j-api:${gitlab4j_api_version}"
 
-    implementation "de.jplag:jplag:3.0.0"
+    implementation "de.jplag:jplag:${jplag_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:${sourceforge_plantuml_version}"

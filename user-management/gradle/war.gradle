@@ -1,7 +1,7 @@
 apply plugin: "war"
 
 bootWar {
-    mainClassName = "de.tum.in.www1.artemis.usermanagement.UserManagementApp"
+    mainClass = "de.tum.in.www1.artemis.usermanagement.UserManagementApp"
     includes = ["WEB-INF/**", "META-INF/**"]
 }
 
