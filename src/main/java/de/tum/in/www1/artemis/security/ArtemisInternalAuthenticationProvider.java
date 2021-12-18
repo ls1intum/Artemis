@@ -44,6 +44,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         return new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), user.get().getGrantedAuthorities());
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, boolean skipPasswordCheck) {
         final var password = authentication.getCredentials().toString();
@@ -65,26 +66,31 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         return user;
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public void addUserToGroup(User user, String group) {
         // nothing to do, this was already done by the UserService, this method is only needed when external management is active
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public void removeUserFromGroup(User user, String group) {
         // nothing to do, this was already done by the UserService, this method is only needed when external management is active
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public void createUserInExternalUserManagement(User user) {
         // This should not be invoked. As we only use internal management, nothing needs to be done in case it is invoked.
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public Optional<String> getUsernameForEmail(String email) {
         return userRepository.findOneByEmailIgnoreCase(email).flatMap(user -> Optional.of(user.getLogin()));
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public boolean isGroupAvailable(String group) {
         // Not needed since we don't have any externally specified groups. If we only use the Artemis DB (which is the case
@@ -92,12 +98,14 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         return true;
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public void createGroup(String groupName) {
         // Not needed since we don't have any externally specified groups. If we only use the Artemis DB (which is the case
         // for this service), creating a group is not necessary, since groups are just referenced as strings when connected to users.
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public void deleteGroup(String groupName) {
         // nothing to do here, because the user service already takes care about internal groups

@@ -1,14 +1,11 @@
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ComponentFixture, fakeAsync, discardPeriodicTasks, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../test.module';
 import { By } from '@angular/platform-browser';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { FormsModule } from '@angular/forms';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import * as sinon from 'sinon';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
@@ -17,10 +14,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockDirective } from 'ng-mocks';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { MockComponent, MockDirective } from 'ng-mocks';
 
 @Component({
     selector: 'jhi-test-component',
@@ -36,11 +30,19 @@ describe('DeleteDialogDirective', () => {
     let debugElement: DebugElement;
     let deleteDialogService: DeleteDialogService;
     let translateService: TranslateService;
+    let translateSpy: jest.SpyInstance;
 
-    beforeEach(async () => {
-        return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), FormsModule, NgbModule],
-            declarations: [TestComponent, DeleteButtonDirective, DeleteDialogComponent, AlertComponent, TranslatePipeMock, MockDirective(TranslateDirective)],
+    beforeEach(() =>
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, FormsModule, NgbModule],
+            declarations: [
+                TestComponent,
+                DeleteButtonDirective,
+                MockComponent(DeleteDialogComponent),
+                MockComponent(AlertComponent),
+                TranslatePipeMock,
+                MockDirective(TranslateDirective),
+            ],
             providers: [JhiLanguageHelper, AlertService],
         })
             .compileComponents()
@@ -50,58 +52,60 @@ describe('DeleteDialogDirective', () => {
                 debugElement = fixture.debugElement;
                 deleteDialogService = TestBed.inject(DeleteDialogService);
                 translateService = TestBed.inject(TranslateService);
-            });
+                translateSpy = jest.spyOn(translateService, 'instant');
+            }),
+    );
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
-    it('directive should be correctly initialized', fakeAsync(() => {
-        const translateSpy = sinon.spy(translateService, 'instant');
-
+    it('directive should be correctly initialized', () => {
         fixture.detectChanges();
-        expect(translateSpy.callCount).to.be.equal(1);
-        expect(translateSpy.lastCall.lastArg).to.be.equal('entity.action.delete');
+        expect(translateSpy).toHaveBeenCalledTimes(1);
+        expect(translateSpy).toHaveBeenCalledWith('entity.action.delete');
 
         // Check that button was assigned with proper classes and type.
         const deleteButton = debugElement.query(By.css('.btn.btn-danger.btn-sm.me-1'));
-        expect(deleteButton).to.exist;
-        expect(deleteButton.properties['type']).to.be.equal('submit');
+        expect(deleteButton).not.toBe(null);
+        expect(deleteButton.properties['type']).toBe('submit');
 
         // Check that delete text span was added to the DOM.
         const deleteTextSpan = debugElement.query(By.css('.d-none.d-md-inline'));
-        expect(deleteTextSpan).to.exist;
-        expect(deleteTextSpan.properties['textContent']).to.exist;
+        expect(deleteTextSpan).not.toBe(null);
+        expect(deleteTextSpan.nativeElement.textContent).not.toBe(null);
 
         const directiveEl = debugElement.query(By.directive(DeleteButtonDirective));
-        expect(directiveEl).to.be.not.null;
+        expect(directiveEl).not.toBe(null);
         const directiveInstance = directiveEl.injector.get(DeleteButtonDirective);
-        expect(directiveInstance.entityTitle).to.be.equal('title');
-        expect(directiveInstance.deleteQuestion).to.be.equal('question');
-        expect(directiveInstance.deleteConfirmationText).to.be.equal('text');
-    }));
+        expect(directiveInstance.entityTitle).toBe('title');
+        expect(directiveInstance.deleteQuestion).toBe('question');
+        expect(directiveInstance.deleteConfirmationText).toBe('text');
+    });
 
     it('on click should call delete dialog service', fakeAsync(() => {
         // Ignore console errors
         console.error = jest.fn();
         fixture.detectChanges();
-        const deleteDialogSpy = sinon.spy(deleteDialogService, 'openDeleteDialog');
+        const deleteDialogSpy = jest.spyOn(deleteDialogService, 'openDeleteDialog');
         const directiveEl = debugElement.query(By.directive(DeleteButtonDirective));
         directiveEl.nativeElement.click();
         fixture.detectChanges();
-        expect(deleteDialogSpy.callCount).to.equal(1);
+        expect(deleteDialogSpy).toHaveBeenCalledTimes(1);
+        discardPeriodicTasks();
     }));
 
-    it('action type cleanup should change button title', fakeAsync(() => {
-        const translateSpy = sinon.spy(translateService, 'instant');
+    it('action type cleanup should change button title', () => {
         comp.actionType = ActionType.Cleanup;
         fixture.detectChanges();
-        expect(translateSpy.callCount).to.be.equal(1);
-        expect(translateSpy.lastCall.lastArg).to.be.equal('entity.action.cleanup');
-    }));
+        expect(translateSpy).toHaveBeenCalledTimes(1);
+        expect(translateSpy).toHaveBeenCalledWith('entity.action.cleanup');
+    });
 
-    it('action type reset should change button title', fakeAsync(() => {
-        const translateSpy = sinon.spy(translateService, 'instant');
+    it('action type reset should change button title', () => {
         comp.actionType = ActionType.Reset;
         fixture.detectChanges();
-        expect(translateSpy.callCount).to.be.equal(1);
-        expect(translateSpy.lastCall.lastArg).to.be.equal('entity.action.reset');
-    }));
+        expect(translateSpy).toHaveBeenCalledTimes(1);
+        expect(translateSpy).toHaveBeenCalledWith('entity.action.reset');
+    });
 });

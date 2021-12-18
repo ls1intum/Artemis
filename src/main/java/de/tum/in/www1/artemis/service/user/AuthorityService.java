@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 
+@Deprecated // Moved to user management microservice. To be removed
 @Service
 public class AuthorityService {
 

@@ -146,6 +146,7 @@ public abstract class AssessmentResource {
         else {
             result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId());
         }
+        result = resultRepository.submitResult(result, exercise);
         return ResponseEntity.ok(result);
     }
 

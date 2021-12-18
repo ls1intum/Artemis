@@ -1,5 +1,5 @@
 import { Injectable, NgModule, Pipe, PipeTransform } from '@angular/core';
-import { TranslateLoader, TranslateModule, TranslatePipe, TranslateService, LangChangeEvent } from '@ngx-translate/core';
+import { LangChangeEvent, TranslateLoader, TranslateModule, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 
 export const TRANSLATED_STRING = '';
@@ -69,7 +69,7 @@ export class TranslatePipeMock implements PipeTransform {
     public name = 'artemisTranslate';
 
     public transform(query: string, ...args: any[]): any {
-        return query;
+        return query + (args && args.length > 0 ? ': ' + JSON.stringify(args) : '');
     }
 }
 

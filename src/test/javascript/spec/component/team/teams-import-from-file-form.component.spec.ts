@@ -1,19 +1,14 @@
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Team } from 'app/entities/team.model';
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import * as chai from 'chai';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { restore, SinonSpy, SinonStub, spy, stub } from 'sinon';
-import sinonChai from 'sinon-chai';
 import { mockFileStudents, mockFileTeamsConverted } from '../../helpers/mocks/service/mock-team.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { unparse } from 'papaparse';
 
 describe('TeamsImportFromFileFormComponent', () => {
     let comp: TeamsImportFromFileFormComponent;
@@ -29,101 +24,121 @@ describe('TeamsImportFromFileFormComponent', () => {
         comp.loading = false;
     }
 
-    beforeEach(
-        waitForAsync(() => {
-            TestBed.configureTestingModule({
-                imports: [],
-                declarations: [TeamsImportFromFileFormComponent, MockComponent(HelpIconComponent), MockComponent(FaIconComponent)],
-                providers: [MockProvider(TranslateService)],
-            }).compileComponents();
-        }),
-    );
     beforeEach(() => {
-        fixture = TestBed.createComponent(TeamsImportFromFileFormComponent);
-        comp = fixture.componentInstance;
-        debugElement = fixture.debugElement;
-        changeDetector = debugElement.injector.get(ChangeDetectorRef);
+        TestBed.configureTestingModule({
+            imports: [],
+            declarations: [TeamsImportFromFileFormComponent, MockComponent(HelpIconComponent), MockComponent(FaIconComponent)],
+            providers: [MockProvider(TranslateService)],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(TeamsImportFromFileFormComponent);
+                comp = fixture.componentInstance;
+                debugElement = fixture.debugElement;
+                changeDetector = debugElement.injector.get(ChangeDetectorRef);
+            });
     });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     describe('importing file', () => {
         beforeEach(() => {
             resetComponent();
         });
-        afterEach(() => {
-            restore();
-        });
+
         it('should convert and call teamsChanged with converted teams', () => {
-            const setImportStub: SinonSpy = spy(comp, 'setImportFile');
+            const setImportStub = jest.spyOn(comp, 'setImportFile');
             const inputElement = debugElement.query(By.css('input')).nativeElement;
             inputElement.dispatchEvent(new Event('change'));
-            expect(setImportStub).to.have.been.called;
+            expect(setImportStub).toHaveBeenCalledTimes(1);
         });
     });
+
     describe('generateFileReader', () => {
         beforeEach(() => {
             resetComponent();
         });
+
         it('should return file reader when called', () => {
-            expect(comp.generateFileReader()).to.deep.equal(new FileReader());
+            expect(comp.generateFileReader()).toStrictEqual(new FileReader());
         });
     });
 
     describe('onFileLoadImport', () => {
-        let convertTeamsStub: SinonStub;
+        let convertTeamsStub: jest.SpyInstance;
         let teams: Team[];
         let reader: FileReader;
-        let getElementStub: SinonStub;
+        let getElementStub: jest.SpyInstance;
         const element = document.createElement('input');
-        const control = { ...element, value: 'test' };
+        let control = { ...element, value: 'test' };
+
         beforeEach(() => {
             resetComponent();
-            convertTeamsStub = stub(comp, 'convertTeams').returns(mockFileTeamsConverted);
+            convertTeamsStub = jest.spyOn(comp, 'convertTeams').mockReturnValue(mockFileTeamsConverted);
             comp.teamsChanged.subscribe((value: Team[]) => (teams = value));
-            reader = { ...reader, result: JSON.stringify(mockFileStudents), onload: null };
-            comp.importFile = new File([''], 'file.txt', { type: 'text/plain' });
-            comp.importFileName = 'file.txt';
-            getElementStub = stub(document, 'getElementById').returns(control);
+            control = { ...element, value: 'test' };
+            getElementStub = jest.spyOn(document, 'getElementById').mockReturnValue(control);
         });
+
         afterEach(() => {
-            restore();
+            expect(convertTeamsStub).toHaveBeenCalledTimes(1);
+            expect(comp.importedTeams).toEqual(mockFileStudents);
+            expect(comp.sourceTeams).toStrictEqual(mockFileTeamsConverted);
+            expect(teams).toStrictEqual(mockFileTeamsConverted);
+            expect(comp.loading).toBe(false);
+            expect(comp.importFile).toBe(undefined);
+            expect(comp.importFileName).toBe('');
+            expect(getElementStub).toHaveBeenCalledTimes(1);
+            expect(control.value).toBe('');
         });
-        it('should parse file and send converted teams', () => {
-            expect(control.value).to.equal('test');
+
+        it('should parse json file and send converted teams', () => {
+            reader = { ...reader, result: JSON.stringify(mockFileStudents), onload: null };
+            comp.importFile = new File([''], 'file.json', { type: 'application/json' });
+            comp.importFileName = 'file.json';
+            expect(control.value).toBe('test');
             comp.onFileLoadImport(reader);
-            expect(convertTeamsStub).to.have.been.called;
-            expect(comp.importedTeams).to.deep.equal(mockFileStudents);
-            expect(comp.sourceTeams).to.deep.equal(mockFileTeamsConverted);
-            expect(teams).to.deep.equal(mockFileTeamsConverted);
-            expect(comp.loading).to.equal(false);
-            expect(comp.importFile).to.equal(undefined);
-            expect(comp.importFileName).to.equal('');
-            expect(getElementStub).to.have.been.called;
-            expect(control.value).to.equal('');
+        });
+
+        it('should parse csv file and send converted teams', async () => {
+            reader = {
+                ...reader,
+                result: unparse(mockFileStudents, {
+                    columns: ['registrationNumber', 'username', 'firstName', 'lastName', 'teamName'],
+                }),
+            };
+            comp.importFile = new File([''], 'file.csv', { type: 'text/csv' });
+            comp.importFileName = 'file.csv';
+            expect(control.value).toBe('test');
+            await comp.onFileLoadImport(reader);
         });
     });
 
     describe('setImportFile', () => {
-        let changeDetectorDetectChangesStub: SinonStub;
+        let changeDetectorDetectChangesSpy: jest.SpyInstance;
+
         beforeEach(() => {
             resetComponent();
-            changeDetectorDetectChangesStub = stub(changeDetector.constructor.prototype, 'detectChanges');
+            changeDetectorDetectChangesSpy = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
         });
-        afterEach(() => {
-            restore();
-        });
+
         it('should set import file correctly', () => {
             const file = new File(['content'], 'testFileName', { type: 'text/plain' });
             const ev = { target: { files: [file] } };
             comp.setImportFile(ev);
-            expect(comp.importFile).to.deep.equal(file);
-            expect(comp.importFileName).to.equal('testFileName');
-            expect(changeDetectorDetectChangesStub).to.have.been.called;
+            expect(comp.importFile).toStrictEqual(file);
+            expect(comp.importFileName).toBe('testFileName');
+            expect(changeDetectorDetectChangesSpy).toHaveBeenCalledTimes(1);
         });
+
         it('should set import file correctly', () => {
             const ev = { target: { files: [] } };
             comp.setImportFile(ev);
-            expect(comp.importFile).to.equal(undefined);
-            expect(comp.importFileName).to.equal('');
-            expect(changeDetectorDetectChangesStub).to.not.have.been.called;
+            expect(comp.importFile).toBe(undefined);
+            expect(comp.importFileName).toBe('');
+            expect(changeDetectorDetectChangesSpy).not.toHaveBeenCalled();
         });
     });
 
@@ -131,8 +146,9 @@ describe('TeamsImportFromFileFormComponent', () => {
         beforeEach(() => {
             resetComponent();
         });
+
         it('should convert file teams correctly', () => {
-            expect(comp.convertTeams(mockFileStudents)).to.deep.equal(mockFileTeamsConverted);
+            expect(comp.convertTeams(mockFileStudents)).toEqual(mockFileTeamsConverted);
         });
     });
 
@@ -140,14 +156,11 @@ describe('TeamsImportFromFileFormComponent', () => {
         beforeEach(() => {
             resetComponent();
         });
+
         it('should throw error', () => {
             const invalidFileStudents = [...mockFileStudents];
             invalidFileStudents[0].teamName = '1invalidTeamName';
-            try {
-                comp.convertTeams(invalidFileStudents);
-            } catch (e) {
-                expect(e.stack).to.not.be.null;
-            }
+            expect(() => comp.convertTeams(invalidFileStudents)).toThrowError();
         });
     });
 });

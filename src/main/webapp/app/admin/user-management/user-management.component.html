@@ -2,7 +2,7 @@
     <h2>
         <span id="user-management-page-heading" jhiTranslate="userManagement.home.title">Users</span>
         <a class="btn btn-primary float-end jh-create-entity" [routerLink]="['./new']">
-            <fa-icon [icon]="'plus'"></fa-icon> <span jhiTranslate="userManagement.home.createLabel">Create a new User</span>
+            <fa-icon [icon]="faPlus"></fa-icon> <span jhiTranslate="userManagement.home.createLabel">Create a new User</span>
         </a>
     </h2>
     <jhi-alert-error></jhi-alert-error>
@@ -34,17 +34,17 @@
         <table class="table table-striped" aria-describedby="user-management-page-heading">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition()">
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="login"><span jhiTranslate="userManagement.login">Login</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="email"><span jhiTranslate="userManagement.email">Email</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="lastName"><span jhiTranslate="userManagement.name">Name</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="login"><span jhiTranslate="userManagement.login">Login</span> <fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="email"><span jhiTranslate="userManagement.email">Email</span> <fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="lastName"><span jhiTranslate="userManagement.name">Name</span> <fa-icon [icon]="faSort"></fa-icon></th>
                     <th></th>
-                    <th jhiSortBy="langKey"><span jhiTranslate="userManagement.langKey">Lang Key</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="langKey"><span jhiTranslate="userManagement.langKey">Lang Key</span> <fa-icon [icon]="faSort"></fa-icon></th>
                     <th><span jhiTranslate="userManagement.profiles">Profiles</span></th>
                     <th><span>Groups</span></th>
-                    <th jhiSortBy="createdDate"><span jhiTranslate="userManagement.createdDate">Created Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="lastModifiedBy"><span jhiTranslate="userManagement.lastModifiedBy">Last Modified By</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="lastModifiedDate"><span jhiTranslate="userManagement.lastModifiedDate">Last Modified Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="createdDate"><span jhiTranslate="userManagement.createdDate">Created Date</span> <fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="lastModifiedBy"><span jhiTranslate="userManagement.lastModifiedBy">Last Modified By</span> <fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="lastModifiedDate"><span jhiTranslate="userManagement.lastModifiedDate">Last Modified Date</span> <fa-icon [icon]="faSort"></fa-icon></th>
                     <th></th>
                 </tr>
             </thead>
@@ -91,11 +91,11 @@
                     <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <a [routerLink]="['./', user.login]" class="btn btn-info btn-sm">
-                                <fa-icon [icon]="'eye'"></fa-icon>
+                                <fa-icon [icon]="faEye"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                             </a>
                             <a [routerLink]="['./', user.login, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
-                                <fa-icon [icon]="'wrench'"></fa-icon>
+                                <fa-icon [icon]="faWrench"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </a>
                             <button
@@ -106,7 +106,7 @@
                                 [dialogError]="dialogError"
                                 [disabled]="!currentAccount || currentAccount.login === user.login"
                             >
-                                <fa-icon [icon]="'times'"></fa-icon>
+                                <fa-icon [icon]="faTimes"></fa-icon>
                             </button>
                         </div>
                     </td>

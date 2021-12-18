@@ -23,7 +23,7 @@ describe('Static code analysis tests', () => {
 
     it('Configures SCA grading and makes a successful submission with SCA errors', () => {
         configureStaticCodeAnalysisGrading();
-        startParticipationInProgrammingExercise(course.title, exercise.title, users.getStudentOne());
+        startParticipationInProgrammingExercise(course.title, exercise.id, users.getStudentOne());
         makeSuccessfulSubmissionWithScaErrors();
     });
 
@@ -57,6 +57,8 @@ describe('Static code analysis tests', () => {
             editorPage.getResultPanel().contains('13 of 13 passed').click();
             scaFeedback.shouldShowPointChart();
             scaFeedback.shouldShowFeedback(13, '10');
+            // We have to verify those static texts here. If we don't verify those messages the only difference between the SCA and normal programming exercise
+            // tests is the score, which hardly verifies the SCA functionality
             scaFeedback.shouldShowCodeIssue("Variable 'literal1' must be private and have accessor methods.", '5');
             scaFeedback.shouldShowCodeIssue("Avoid unused private fields such as 'LITERAL_TWO'.", '0.5');
             scaFeedback.shouldShowCodeIssue("de.test.BubbleSort.literal1 isn't final but should be", '2.5');

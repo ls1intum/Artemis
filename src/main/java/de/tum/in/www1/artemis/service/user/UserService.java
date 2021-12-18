@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.in.www1.artemis.security.Role.*;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,7 @@ import tech.jhipster.security.RandomUtil;
 /**
  * Service class for managing users.
  */
+@Deprecated // Moved to user management microservice. To be removed.
 @Service
 public class UserService {
 
@@ -635,4 +637,8 @@ public class UserService {
         return Optional.empty();
     }
 
+    @Transactional
+    public void updateUserNotificationVisibility(Long userId, ZonedDateTime hideUntil) {
+        userRepository.updateUserNotificationVisibility(userId, hideUntil);
+    }
 }

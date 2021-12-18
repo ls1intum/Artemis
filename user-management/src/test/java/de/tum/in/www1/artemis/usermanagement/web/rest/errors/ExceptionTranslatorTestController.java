@@ -12,14 +12,23 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/exception-translator-test")
 public class ExceptionTranslatorTestController {
 
+    /**
+     * Test endpoint
+     */
     @PostMapping("/method-argument")
     public void methodArgument(@Valid @RequestBody TestDTO testDTO) {
     }
 
+    /**
+     * Test endpoint
+     */
     @GetMapping("/missing-servlet-request-part")
     public void missingServletRequestPartException(@RequestPart String part) {
     }
 
+    /**
+     * Test endpoint
+     */
     @GetMapping("/missing-servlet-request-parameter")
     public void missingServletRequestParameterException(@RequestParam String param) {
     }

@@ -89,12 +89,14 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
         sendMessageDelayed("programming-exercise-lock-repositories", exerciseId);
     }
 
+    @Deprecated // moved to user management microservice
     @Override
     public void sendRemoveNonActivatedUserSchedule(Long userId) {
         log.info("Sending remove non-activated user {} to broker.", userId);
         sendMessageDelayed("user-management-remove-non-activated-user", userId);
     }
 
+    @Deprecated // moved to user management microservice
     @Override
     public void sendCancelRemoveNonActivatedUserSchedule(Long userId) {
         log.info("Sending cancel removal of non-activated user {} to broker.", userId);

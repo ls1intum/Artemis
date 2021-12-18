@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.service.user.UserService;
 /**
  * Rest controller for managing GuidedTourSetting
  */
+@Deprecated // Moved to user management microservice. To be removed.
 @RestController
 @RequestMapping("/api")
 public class GuidedTourSettingsResource {

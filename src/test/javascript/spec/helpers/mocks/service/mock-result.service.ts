@@ -13,6 +13,7 @@ export class MockResultService implements IResultService {
     getResultsForExerciseWithPointsPerGradingCriterion = (exerciseId: number, req: any) => empty();
     getResultsWithPointsPerGradingCriterion = (exercise: Exercise): Observable<ResultsWithPointsArrayResponseType> => empty();
     update = (result: Result) => of();
+    getResults = (exercise: Exercise) => of();
     getLatestResultWithFeedbacks = (particpationId: number): Observable<HttpResponse<Result>> => of();
     triggerDownloadCSV = (rows: string[], csvFileName: string) => empty();
 }
