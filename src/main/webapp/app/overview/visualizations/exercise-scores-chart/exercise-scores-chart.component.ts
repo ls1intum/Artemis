@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges } from '@angular/core';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -15,18 +15,28 @@ import { round } from 'app/shared/util/utils';
     templateUrl: './exercise-scores-chart.component.html',
     styleUrls: ['./exercise-scores-chart.component.scss'],
 })
-export class ExerciseScoresChartComponent implements AfterViewInit {
+export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     @Input()
+    filteredExerciseIDs: number[];
+
     courseId: number;
     isLoading = false;
-    public exerciseScores: ExerciseScoresDTO[] = [];
+    exerciseScores: ExerciseScoresDTO[] = [];
+    excludedExerciseScores: ExerciseScoresDTO[] = [];
+
+    readonly Math = Math;
 
     // ngx
     ngxData: any[] = [];
     backUpData: any[] = [];
     xAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.xAxis');
     yAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.yAxis');
-    ngxColor = { name: 'Performance in Exercises', selectable: true, group: ScaleType.Ordinal, domain: ['#87ceeb', '#fa8072', '#32cd32'] } as Color; // colors: blue, red, green
+    ngxColor = {
+        name: 'Performance in Exercises',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: ['#87ceeb', '#fa8072', '#32cd32'],
+    } as Color; // colors: blue, red, green
     backUpColor = cloneDeep(this.ngxColor);
     yourScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.yourScoreLabel');
     averageScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.averageScoreLabel');
@@ -50,6 +60,10 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
         });
     }
 
+    ngOnChanges(): void {
+        this.initializeChart();
+    }
+
     private loadDataAndInitializeChart(): void {
         this.isLoading = true;
         this.exerciseScoresChartService
@@ -69,6 +83,9 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     }
 
     private initializeChart(): void {
+        this.exerciseScores = this.exerciseScores.concat(this.excludedExerciseScores);
+        this.excludedExerciseScores = this.exerciseScores.filter((score) => this.filteredExerciseIDs.includes(score.exerciseId!));
+        this.exerciseScores = this.exerciseScores.filter((score) => !this.filteredExerciseIDs.includes(score.exerciseId!));
         // we show all the exercises ordered by their release data
         const sortedExerciseScores = sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
         this.addData(sortedExerciseScores);

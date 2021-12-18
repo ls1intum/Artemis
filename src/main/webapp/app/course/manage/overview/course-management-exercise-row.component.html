@@ -5,10 +5,10 @@
                 <a class="stretched-link" [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id]"></a>
                 <div class="row-flex exercise-details-container">
                     <div class="ms-2 me-1 exercise-details-item" *ngIf="hasLeftoverAssessments">
-                        <fa-icon [icon]="'exclamation-triangle'" class="text-warning" placement="right" [ngbTooltip]="iconTooltip | artemisTranslate" container="body"></fa-icon>
+                        <fa-icon [icon]="faExclamationTriangle" class="text-warning" placement="right" [ngbTooltip]="iconTooltip | artemisTranslate" container="body"></fa-icon>
                     </div>
                     <div class="ms-2 exercise-details-item" *ngIf="details.teamMode">
-                        <fa-icon [icon]="'users'" placement="right" [ngbTooltip]="'artemisApp.exercise.isTeamExercise' | artemisTranslate" container="body"></fa-icon>
+                        <fa-icon [icon]="faUsers" placement="right" [ngbTooltip]="'artemisApp.exercise.isTeamExercise' | artemisTranslate" container="body"></fa-icon>
                     </div>
                     <div class="ms-2 exercise-details-item">
                         <fa-icon [icon]="icon" placement="right" [ngbTooltip]="iconTooltip | artemisTranslate" container="body"></fa-icon>
@@ -31,14 +31,14 @@
                         <div *ngIf="!details.releaseDate">
                             <div class="calender-icon-container">
                                 <div class="calender-icon-circle">
-                                    <fa-icon class="calender-icon" [icon]="'times'"></fa-icon>
+                                    <fa-icon class="calender-icon" [icon]="faTimes"></fa-icon>
                                 </div>
                             </div>
                         </div>
                         <div *ngIf="details.releaseDate" [ngbTooltip]="details.releaseDate | artemisDate">
                             <div class="calender-icon-container">
                                 <div class="calender-icon-circle">
-                                    <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
+                                    <fa-icon class="calender-icon" [icon]="faCalendarAlt"></fa-icon>
                                 </div>
                             </div>
                             <span>{{ details.releaseDate! | artemisTimeAgo }}</span>
@@ -52,14 +52,14 @@
                         <div *ngIf="!details.dueDate">
                             <div class="calender-icon-container">
                                 <div class="calender-icon-circle">
-                                    <fa-icon class="calender-icon" [icon]="'times'"></fa-icon>
+                                    <fa-icon class="calender-icon" [icon]="faTimes"></fa-icon>
                                 </div>
                             </div>
                         </div>
                         <div *ngIf="details.dueDate" [ngbTooltip]="details.dueDate | artemisDate">
                             <div class="calender-icon-container">
                                 <div class="calender-icon-circle">
-                                    <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
+                                    <fa-icon class="calender-icon" [icon]="faCalendarAlt"></fa-icon>
                                 </div>
                             </div>
                             <span>{{ details.dueDate! | artemisTimeAgo }}</span>
@@ -73,14 +73,14 @@
                         <div *ngIf="!details.assessmentDueDate">
                             <div class="calender-icon-container">
                                 <div class="calender-icon-circle">
-                                    <fa-icon class="calender-icon" [icon]="'times'"></fa-icon>
+                                    <fa-icon class="calender-icon" [icon]="faTimes"></fa-icon>
                                 </div>
                             </div>
                         </div>
                         <div *ngIf="details.assessmentDueDate" [ngbTooltip]="details.assessmentDueDate | artemisDate">
                             <div class="calender-icon-container">
                                 <div class="calender-icon-circle">
-                                    <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
+                                    <fa-icon class="calender-icon" [icon]="faCalendarAlt"></fa-icon>
                                 </div>
                             </div>
                             <span>{{ details.assessmentDueDate! | artemisTimeAgo }}</span>
@@ -129,35 +129,35 @@
                     [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id, 'edit']"
                     class="btn btn-warning me-1 mb-1"
                     [ngbTooltip]="'entity.action.edit' | artemisTranslate"
-                    ><fa-icon [icon]="'wrench'"></fa-icon
+                    ><fa-icon [icon]="faWrench"></fa-icon
                 ></a>
                 <a
                     *ngIf="course.isAtLeastInstructor && details.type === exerciseType.QUIZ && rowType === exerciseRowType.PAST"
                     [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id, 're-evaluate']"
                     class="btn btn-warning me-1 mb-1"
                     [ngbTooltip]="'entity.action.re-evaluate' | artemisTranslate"
-                    ><fa-icon [icon]="'wrench'"></fa-icon
+                    ><fa-icon [icon]="faWrench"></fa-icon
                 ></a>
                 <a
-                    *ngIf="course.isAtLeastInstructor"
+                    *ngIf="course.isAtLeastTutor"
                     [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id, 'scores']"
                     class="btn btn-info me-1 mb-1"
                     [ngbTooltip]="'entity.action.scores' | artemisTranslate"
-                    ><fa-icon [icon]="'table'"></fa-icon
+                    ><fa-icon [icon]="faTable"></fa-icon
                 ></a>
                 <a
                     *ngIf="course.isAtLeastInstructor && details.type !== exerciseType.PROGRAMMING && details.type !== exerciseType.QUIZ"
                     [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id, 'submissions']"
                     class="btn btn-success me-1 mb-1"
                     [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.instructorActions.submissions' | artemisTranslate"
-                    ><fa-icon [icon]="'book'"></fa-icon
+                    ><fa-icon [icon]="faBook"></fa-icon
                 ></a>
                 <a
                     *ngIf="course.isAtLeastEditor && details.type === exerciseType.PROGRAMMING"
                     [routerLink]="['/course-management', course.id, 'programming-exercises', details.id, 'grading', 'test-cases']"
                     class="btn btn-info me-1 mb-1"
                     [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.shortTitle' | artemisTranslate"
-                    ><fa-icon class="grading-icon" [icon]="'file-signature'"></fa-icon
+                    ><fa-icon class="grading-icon" [icon]="faFileSignature"></fa-icon
                 ></a>
             </div>
         </div>

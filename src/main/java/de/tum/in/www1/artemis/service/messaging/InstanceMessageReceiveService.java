@@ -180,12 +180,14 @@ public class InstanceMessageReceiveService {
         programmingExerciseScheduleService.lockAllStudentRepositories(programmingExercise).run();
     }
 
+    @Deprecated // moved to user management microservice
     public void processRemoveNonActivatedUser(Long userId) {
         log.info("Received remove non-activated user for user {}", userId);
         User user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
         userScheduleService.scheduleForRemoveNonActivatedUser(user);
     }
 
+    @Deprecated // moved to user management microservice
     public void processCancelRemoveNonActivatedUser(Long userId) {
         log.info("Received cancel removal of non-activated user for user {}", userId);
         User user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);

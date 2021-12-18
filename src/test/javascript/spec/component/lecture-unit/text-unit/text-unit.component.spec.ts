@@ -1,11 +1,10 @@
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -17,7 +16,7 @@ describe('TextUnitFormComponent', () => {
     const sandbox = sinon.createSandbox();
     const exampleName = 'Test';
     const exampleMarkdown = '# Sample Markdown';
-    const exampleHTML = '<h1>Sample Markdown</h1>';
+    const exampleHTML = '<h3 id="samplemarkdown">Sample Markdown</h3>';
     let textUnitComponentFixture: ComponentFixture<TextUnitComponent>;
     let textUnitComponent: TextUnitComponent;
     let textUnit: TextUnit;
@@ -37,11 +36,6 @@ describe('TextUnitFormComponent', () => {
                 MockDirective(NgbTooltip),
                 MockPipe(ArtemisDatePipe),
             ],
-            providers: [
-                MockProvider(ArtemisMarkdownService, {
-                    safeHtmlForMarkdown: () => exampleHTML,
-                }),
-            ],
             schemas: [],
         })
             .compileComponents()
@@ -60,15 +54,16 @@ describe('TextUnitFormComponent', () => {
         expect(textUnitComponent).to.be.ok;
     });
 
-    it('should convert markdown to html and display it', () => {
+    it('should convert markdown to html and display it', fakeAsync(() => {
         textUnitComponent.textUnit = textUnit;
         textUnitComponentFixture.detectChanges();
-
-        expect(textUnitComponent.formattedContent).to.equal(exampleHTML);
-        const markdown = textUnitComponentFixture.debugElement.nativeElement.querySelector('.markdown-preview');
-        expect(markdown).to.be.ok;
-        expect(markdown.innerHTML).to.equal(exampleHTML);
-    });
+        textUnitComponentFixture.whenStable().then(() => {
+            expect((textUnitComponent.formattedContent as any)?.changingThisBreaksApplicationSecurity).to.equal(exampleHTML);
+            const markdown = textUnitComponentFixture.debugElement.nativeElement.querySelector('.markdown-preview');
+            expect(markdown).to.be.ok;
+            expect(markdown.innerHTML).to.equal(exampleHTML);
+        });
+    }));
 
     it('should collapse unit when header clicked', () => {
         textUnitComponent.textUnit = textUnit;
@@ -88,7 +83,7 @@ describe('TextUnitFormComponent', () => {
         handleCollapseSpy.restore();
     });
 
-    it('should display html in a new window when popup button is clicked', () => {
+    it('should display html in a new window when popup button is clicked', fakeAsync(() => {
         const contentOfNewWindow: string[] = [];
         const innerHtmlCopy = window.document.body.innerHTML;
 
@@ -103,14 +98,12 @@ describe('TextUnitFormComponent', () => {
         textUnitComponentFixture.detectChanges();
         const popButton = textUnitComponentFixture.debugElement.nativeElement.querySelector('#popupButton');
         popButton.click();
-        textUnitComponentFixture.whenStable().then(() => {
-            expect(textUnitComponent).to.be.ok;
-            expect(openStub).to.have.been.calledOnce;
-            expect(writeStub).to.have.callCount(4);
-            expect(closeStub).to.have.been.calledOnce;
-            expect(focusStub).to.have.been.calledOnce;
-            expect(window.document.body.innerHTML).to.equal(exampleHTML);
-            window.document.body.innerHTML = innerHtmlCopy;
-        });
-    });
+        expect(textUnitComponent).to.be.ok;
+        expect(openStub).to.have.been.calledOnce;
+        expect(writeStub).to.have.callCount(4);
+        expect(closeStub).to.have.been.calledOnce;
+        expect(focusStub).to.have.been.calledOnce;
+        expect(window.document.body.innerHTML).to.equal(exampleHTML);
+        window.document.body.innerHTML = innerHtmlCopy;
+    }));
 });

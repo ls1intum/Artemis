@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /**
  * View Model object for storing the user's key and password.
  */
+@Deprecated // Moved to user management microservice. To be removed.
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class KeyAndPasswordVM {
 

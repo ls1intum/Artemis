@@ -1,21 +1,21 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.persistence.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.jplag.Submission;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-import jplag.Submission;
 
 @Entity
 @Table(name = "plagiarism_submission")
@@ -71,7 +71,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     public static PlagiarismSubmission<TextSubmissionElement> fromJPlagSubmission(Submission jplagSubmission) {
         PlagiarismSubmission<TextSubmissionElement> submission = new PlagiarismSubmission<>();
 
-        String[] submissionIdAndStudentLogin = jplagSubmission.name.split("[-.]");
+        String[] submissionIdAndStudentLogin = jplagSubmission.getName().split("[-.]");
 
         long submissionId = 0;
         String studentLogin = "unknown";
@@ -88,9 +88,10 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
         }
 
         submission.setStudentLogin(studentLogin);
-        submission.setElements(Arrays.stream(jplagSubmission.tokenList.tokens).filter(Objects::nonNull).map(TextSubmissionElement::fromJPlagToken).collect(Collectors.toList()));
+        submission.setElements(StreamSupport.stream(jplagSubmission.getTokenList().allTokens().spliterator(), false).filter(Objects::nonNull)
+                .map(TextSubmissionElement::fromJPlagToken).collect(Collectors.toList()));
         submission.setSubmissionId(submissionId);
-        submission.setSize(jplagSubmission.tokenList.tokens.length);
+        submission.setSize(jplagSubmission.getNumberOfTokens());
         submission.setScore(null); // TODO
 
         return submission;

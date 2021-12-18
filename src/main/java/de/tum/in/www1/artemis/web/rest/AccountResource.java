@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 /**
  * REST controller for managing the current user's account.
  */
+@Deprecated // Moved to user management microservice. To be removed.
 @RestController
 @RequestMapping("/api")
 public class AccountResource {
