@@ -117,9 +117,6 @@ describe('Exam participation', () => {
         onlineEditor.getResultPanel().contains('100%').should('be.visible');
         onlineEditor.getResultPanel().contains('13 of 13 passed').should('be.visible');
         onlineEditor.getBuildOutput().contains('No build results available').should('be.visible');
-        onlineEditor.getInstructionSymbols().each(($el) => {
-            cy.wrap($el).find('[data-icon="check"]').should('be.visible');
-        });
     }
 
     function makeModelingExerciseSubmission() {

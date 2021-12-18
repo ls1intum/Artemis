@@ -164,15 +164,16 @@ describe('CodeEditorContainerIntegration', () => {
                 commitStub = jest.spyOn(codeEditorRepositoryService, 'commit');
                 getStudentParticipationWithLatestResultStub = jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
                 getLatestPendingSubmissionStub = jest.spyOn(submissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(getLatestPendingSubmissionSubject);
-                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
-                subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
-                getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
-                getLatestPendingSubmissionStub.mockReturnValue(getLatestPendingSubmissionSubject);
             });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
+
+        getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
+        getLatestPendingSubmissionStub.mockReturnValue(getLatestPendingSubmissionSubject);
     });
 
     const cleanInitialize = () => {
@@ -206,13 +207,13 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.commitState).toBe(CommitState.CLEAN);
         expect(container.editorState).toBe(EditorState.CLEAN);
         expect(container.buildOutput.isBuilding).toBe(false);
-        expect(container.unsavedFiles).toBeEmpty;
+        expect(container.unsavedFiles).toStrictEqual({});
 
         // file browser
         expect(checkIfRepositoryIsCleanStub).toHaveBeenCalledTimes(1);
         expect(getRepositoryContentStub).toHaveBeenCalledTimes(1);
         expect(container.fileBrowser.errorFiles).toEqual(extractedErrorFiles);
-        expect(container.fileBrowser.unsavedFiles).toBeEmpty();
+        expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
         // ace editor
         expect(container.aceEditor.isLoading).toBe(false);
@@ -229,11 +230,11 @@ describe('CodeEditorContainerIntegration', () => {
 
         // build output
         expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
-        expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toIncludeSameMembers(extractedBuildLogErrors);
+        expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toEqual(extractedBuildLogErrors);
         expect(container.buildOutput.isBuilding).toBe(false);
 
         // instructions
-        expect(container.instructions).not.toBe(undefined);
+        expect(container.instructions).not.toBe(undefined); // Have to use this as it's a component
 
         // called by build output
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
@@ -253,7 +254,7 @@ describe('CodeEditorContainerIntegration', () => {
         }, 0);
     });
 
-    it('should not load files and render other components correctly if the repository status cannot be retrieved', (done: any) => {
+    it('should not load files and render other components correctly if the repository status cannot be retrieved', (done) => {
         const exercise = { id: 1, problemStatement, course: { id: 2 } };
         const participation = { id: 2, exercise, results: [result] } as StudentParticipation;
         const isCleanSubject = new Subject();
@@ -281,13 +282,13 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
         expect(container.editorState).toBe(EditorState.CLEAN);
         expect(container.buildOutput.isBuilding).toBe(false);
-        expect(container.unsavedFiles).toBeEmpty();
+        expect(container.unsavedFiles).toStrictEqual({});
 
         // file browser
         expect(checkIfRepositoryIsCleanStub).toHaveBeenCalledTimes(1);
         expect(getRepositoryContentStub).not.toHaveBeenCalled();
         expect(container.fileBrowser.errorFiles).toEqual(extractedErrorFiles);
-        expect(container.fileBrowser.unsavedFiles).toBeEmpty();
+        expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
         // ace editor
         expect(container.aceEditor.isLoading).toBe(false);
@@ -305,11 +306,11 @@ describe('CodeEditorContainerIntegration', () => {
 
         // build output
         expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
-        expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toIncludeSameMembers(extractedBuildLogErrors);
+        expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toEqual(extractedBuildLogErrors);
         expect(container.buildOutput.isBuilding).toBe(false);
 
         // instructions
-        expect(container.instructions).not.toBe(undefined);
+        expect(container.instructions).not.toBe(undefined); // Have to use this as it's a component
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
@@ -329,11 +330,11 @@ describe('CodeEditorContainerIntegration', () => {
         loadFile(selectedFile, fileContent);
 
         containerFixture.detectChanges();
-
-        expect(container.selectedFile).toEqual(selectedFile);
-        expect(container.aceEditor.selectedFile).toEqual(selectedFile);
+      
+        expect(container.selectedFile).toBe(selectedFile);
+        expect(container.aceEditor.selectedFile).toBe(selectedFile);
         expect(container.aceEditor.isLoading).toBe(false);
-        expect(Object.keys(container.aceEditor.fileSession)).toContain(selectedFile);
+        expect(container.aceEditor.fileSession).toContainKey(selectedFile);
         expect(getFileStub).toHaveBeenCalledTimes(1);
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
 
@@ -383,10 +384,10 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
 
         // check if saving result updates comps as expected
-        expect(container.unsavedFiles).toBeEmpty();
+        expect(container.unsavedFiles).toStrictEqual({});
         expect(container.editorState).toBe(EditorState.CLEAN);
         expect(container.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
-        expect(container.fileBrowser.unsavedFiles).toBeEmpty();
+        expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
         expect(container.actions.editorState).toBe(EditorState.CLEAN);
     });
 
@@ -405,8 +406,8 @@ describe('CodeEditorContainerIntegration', () => {
 
         container.fileBrowser.onFileDeleted(new DeleteFileChange(FileType.FILE, 'file'));
         containerFixture.detectChanges();
-
-        expect(container.unsavedFiles).toBeEmpty();
+      
+        expect(container.unsavedFiles).toStrictEqual({});
         expect(container.fileBrowser.repositoryFiles).toEqual(expectedFilesAfterDelete);
         expect(container.actions.editorState).toBe(EditorState.CLEAN);
     });
@@ -416,7 +417,8 @@ describe('CodeEditorContainerIntegration', () => {
         const successfulSubmission = { id: 1, buildFailed: false } as ProgrammingSubmission;
         const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
         successfulResult.submission = successfulSubmission;
-        expect(container.unsavedFiles).toBeEmpty();
+        const expectedBuildLog = new BuildLogEntryArray();
+        expect(container.unsavedFiles).toStrictEqual({});
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
         containerFixture.detectChanges();
 
@@ -444,8 +446,8 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
 
         expect(container.buildOutput.isBuilding).toBe(false);
-        expect(container.buildOutput.rawBuildLogs).toEqual(new BuildLogEntryArray());
-        expect(container.fileBrowser.errorFiles).toBeEmpty();
+        expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
+        expect(container.fileBrowser.errorFiles).toHaveLength(0);
     });
 
     it('should first save unsaved files before triggering commit', fakeAsync(() => {
@@ -498,8 +500,8 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
 
         expect(container.buildOutput.isBuilding).toBe(false);
-        expect(container.buildOutput.rawBuildLogs).toEqual(new BuildLogEntryArray());
-        expect(container.fileBrowser.errorFiles).toBeEmpty();
+        expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
+        expect(container.fileBrowser.errorFiles).toHaveLength(0);
 
         containerFixture.destroy();
         flush();
