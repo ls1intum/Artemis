@@ -13,6 +13,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -64,7 +65,7 @@ describe('System Notification Component', () => {
             expect(systemNotificationService.getActiveNotification).to.have.been.calledOnce;
             expect(systemNotificationComponent.notification).to.equal(notification);
             expect(systemNotificationComponent.alertClass).to.equal('alert-warning');
-            expect(systemNotificationComponent.alertIcon).to.equal('exclamation-triangle');
+            expect(systemNotificationComponent.alertIcon).to.equal(faExclamationTriangle);
         }));
 
         it('should get active system notification with system notification type info', fakeAsync(() => {
@@ -76,7 +77,7 @@ describe('System Notification Component', () => {
             expect(systemNotificationService.getActiveNotification).to.have.been.calledOnce;
             expect(systemNotificationComponent.notification).to.equal(notification);
             expect(systemNotificationComponent.alertClass).to.equal('alert-info');
-            expect(systemNotificationComponent.alertIcon).to.equal('info-circle');
+            expect(systemNotificationComponent.alertIcon).to.equal(faInfoCircle);
         }));
     });
 
@@ -118,7 +119,7 @@ describe('System Notification Component', () => {
             expect(jhiWebsocketService.receive).to.have.been.calledOnce;
             expect(systemNotificationComponent.notification).to.equal(notification);
             expect(systemNotificationComponent.alertClass).to.equal('alert-warning');
-            expect(systemNotificationComponent.alertIcon).to.equal('exclamation-triangle');
+            expect(systemNotificationComponent.alertIcon).to.equal(faExclamationTriangle);
         }));
 
         it('should not add notification when non-active notification is received via websocket', fakeAsync(() => {

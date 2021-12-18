@@ -28,31 +28,31 @@
                         <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                             <th jhiSortBy="id">
                                 id
-                                <fa-icon [icon]="'sort'"></fa-icon>
+                                <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="type">
                                 {{ 'artemisApp.exercise.type' | artemisTranslate }}
-                                <fa-icon [icon]="'sort'"></fa-icon>
+                                <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="title">
                                 {{ 'artemisApp.exercise.title' | artemisTranslate }}
-                                <fa-icon [icon]="'sort'"></fa-icon>
+                                <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="shortName">
                                 {{ 'artemisApp.exercise.shortName' | artemisTranslate }}
-                                <fa-icon [icon]="'sort'"></fa-icon>
+                                <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="releaseDate">
                                 {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}
-                                <fa-icon [icon]="'sort'"></fa-icon>
+                                <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="dueDate">
                                 {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}
-                                <fa-icon [icon]="'sort'"></fa-icon>
+                                <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="assessmentDueDate">
                                 {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}
-                                <fa-icon [icon]="'sort'"></fa-icon>
+                                <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                         </tr>
                     </thead>

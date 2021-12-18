@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { faCheckCircle, faCircleNotch, faExclamationTriangle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { CommitState, EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
@@ -14,4 +15,10 @@ export class CodeEditorStatusComponent {
     editorState: EditorState;
     @Input()
     commitState: CommitState;
+
+    // Icons
+    faCircleNotch = faCircleNotch;
+    faExclamationTriangle = faExclamationTriangle;
+    faCheckCircle = faCheckCircle;
+    faTimesCircle = faTimesCircle;
 }

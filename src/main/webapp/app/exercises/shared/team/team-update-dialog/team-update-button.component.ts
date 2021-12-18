@@ -4,6 +4,7 @@ import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update
 import { Team } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { faPencilAlt, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-team-update-button',
@@ -11,7 +12,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
         <jhi-button
             [btnType]="ButtonType.PRIMARY"
             [btnSize]="buttonSize"
-            [icon]="team ? 'pencil-alt' : 'plus'"
+            [icon]="team ? faPencilAlt : faPlus"
             [title]="team ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label'"
             (onClick)="openTeamCreateDialog($event)"
         ></jhi-button>
@@ -26,6 +27,10 @@ export class TeamUpdateButtonComponent {
     @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
 
     @Output() save: EventEmitter<Team> = new EventEmitter();
+
+    // Icons
+    faPencilAlt = faPencilAlt;
+    faPlus = faPlus;
 
     constructor(private modalService: NgbModal) {}
 
