@@ -61,7 +61,7 @@ spotless {
     java {
         target project.fileTree(project.rootDir) {
             include "**/*.java"
-            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/main/java/de/tum/in/www1/artemis/config/SAML2Configuration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**", "**/gateway/**", "**/user-management/**"
+            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/main/java/de/tum/in/www1/artemis/config/SAML2Configuration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**", "**/gateway/**", "**/user-management/**", "**/lecture/**"
         }
         importOrderFile "artemis-spotless.importorder"
         eclipse().configFile "artemis-spotless-style.xml"
@@ -270,6 +270,18 @@ gradle.taskGraph.whenReady { graph ->
         graph.getAllTasks().each { task ->
             def subGatewayTask = (task.path =~ /:gateway.+/)
             if (subGatewayTask) {
+                println "TRACER skipping task ${task.path}"
+                task.enabled = false
+            }
+        }
+    }
+
+    def hasRootLectureTask = tasks.contains(":lecture:")
+
+    if (!hasRootLectureTask) {
+        graph.getAllTasks().each { task ->
+            def subLectureTask = (task.path =~ /:lecture.+/)
+            if (subLectureTask) {
                 println "TRACER skipping task ${task.path}"
                 task.enabled = false
             }

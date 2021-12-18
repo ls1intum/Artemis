@@ -82,6 +82,12 @@ sourceSets {
             include 'de/tum/in/www1/artemis/security/SecurityUtils.*'
             include 'de/tum/in/www1/artemis/security/UserNotActivatedException.*'
             include 'de/tum/in/www1/artemis/security/SpringSecurityAuditorAware.*'
+            include 'de/tum/in/www1/artemis/security/jwt/TokenProvider.*'
+            include 'de/tum/in/www1/artemis/security/jwt/JWTFilter.*'
+            include 'de/tum/in/www1/artemis/security/jwt/JWTConfigurer.*'
+
+            // de.tum.in.www1.artemis.management
+            include 'de/tum/in/www1/artemis/management/SecurityMetersService.*'
 
             // de.tum.in.www1.artemis.config
             include 'de/tum/in/www1/artemis/config/audit/AuditEventConverter.*'
