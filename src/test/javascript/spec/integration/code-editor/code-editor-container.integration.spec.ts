@@ -330,7 +330,6 @@ describe('CodeEditorContainerIntegration', () => {
         loadFile(selectedFile, fileContent);
 
         containerFixture.detectChanges();
-      
         expect(container.selectedFile).toBe(selectedFile);
         expect(container.aceEditor.selectedFile).toBe(selectedFile);
         expect(container.aceEditor.isLoading).toBe(false);
@@ -406,7 +405,6 @@ describe('CodeEditorContainerIntegration', () => {
 
         container.fileBrowser.onFileDeleted(new DeleteFileChange(FileType.FILE, 'file'));
         containerFixture.detectChanges();
-      
         expect(container.unsavedFiles).toStrictEqual({});
         expect(container.fileBrowser.repositoryFiles).toEqual(expectedFilesAfterDelete);
         expect(container.actions.editorState).toBe(EditorState.CLEAN);
@@ -455,9 +453,9 @@ describe('CodeEditorContainerIntegration', () => {
         const successfulSubmission = { id: 1, buildFailed: false } as ProgrammingSubmission;
         const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
         successfulResult.submission = successfulSubmission;
+        const expectedBuildLog = new BuildLogEntryArray();
         const unsavedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
-        const saveFilesSubject = new Subject();
-        saveFilesStub.mockReturnValue(saveFilesSubject);
+        const saveFilesSubject = new Subject();saveFilesStub.mockReturnValue(saveFilesSubject);
         container.unsavedFiles = { [unsavedFile]: 'lorem ipsum' };
         container.editorState = EditorState.UNSAVED_CHANGES;
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
