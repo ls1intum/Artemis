@@ -12,7 +12,7 @@
                 {{ examScoreDTO.title }}
             </h2>
             <button class="ms-auto btn btn-primary btn-sm" (click)="exportToCsv()">
-                <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon>
+                <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
                 <span jhiTranslate="artemisApp.examScores.exportCSV">&nbsp;Export Results as CSV</span>
             </button>
         </div>
@@ -304,10 +304,28 @@
             </tbody>
         </table>
 
-        <div style="display: block">
+        <div #containerRef class="d-block">
             <!-- Histogram -->
-            <canvas baseChart height="400" [datasets]="barChartData" [labels]="barChartLabels" [options]="barChartOptions" [legend]="barChartLegend" [chartType]="barChartType">
-            </canvas>
+            <ngx-charts-bar-vertical
+                [view]="[containerRef.offsetWidth, 400]"
+                [results]="ngxData"
+                [scheme]="ngxColor"
+                [yAxis]="true"
+                [xAxis]="true"
+                [yAxisLabel]="yAxisLabel"
+                [showYAxisLabel]="true"
+                [xAxisLabel]="xAxisLabel"
+                [showXAxisLabel]="true"
+                [yScaleMax]="yScaleMax"
+                [dataLabelFormatting]="dataLabelFormatting"
+                [showDataLabel]="true"
+            >
+                <ng-template #tooltipTemplate let-model="model">
+                    <b>{{ model.name }}</b
+                    ><br />
+                    <span>{{ 'statistics.amountOfStudents' | artemisTranslate }}: {{ model.value }}</span>
+                </ng-template>
+            </ngx-charts-bar-vertical>
         </div>
 
         <!-- Exercise Statistics -->
@@ -410,40 +428,40 @@
                         <th>#</th>
                         <th jhiSortBy="name">
                             <span jhiTranslate="artemisApp.examScores.nameColumn">Name</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                         <th jhiSortBy="login">
                             <span jhiTranslate="artemisApp.examScores.loginColumn">Login</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                         <th jhiSortBy="eMail">
                             <span jhiTranslate="artemisApp.examScores.eMailColumn">E-Mail</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                         <th jhiSortBy="registrationNumber">
                             <span jhiTranslate="artemisApp.examScores.registrationNumberColumn">Matriculation Number</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                         <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
                             <th [jhiSortBy]="'exerciseGroupIdToExerciseResult.' + exerciseGroup.id + '.achievedPoints'">
                                 <span>{{ exerciseGroup.title }}</span>
-                                <fa-icon [icon]="'sort'"></fa-icon>
+                                <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                         </ng-container>
                         <th jhiSortBy="overallPointsAchieved">
                             <span jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Points</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
 
                         <th jhiSortBy="overallScoreAchieved">
                             <span jhiTranslate="artemisApp.examScores.overallScoreColumn">Overall Score (%)</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                         <th *ngIf="gradingScaleExists" jhiSortBy="overallScoreAchieved">
                             <span>{{
                                 isBonus ? ('artemisApp.examScores.overallBonusColumn' | artemisTranslate) : ('artemisApp.examScores.overallGradeColumn' | artemisTranslate)
                             }}</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                         <th *ngIf="gradingScaleExists && !isBonus">{{ 'artemisApp.examScores.passedColumn' | artemisTranslate }}</th>
                     </tr>
@@ -475,10 +493,10 @@
                             {{ studentResult.overallGrade !== null ? studentResult.overallGrade : '-' }}
                         </td>
                         <td *ngIf="gradingScaleExists && !isBonus && studentResult.overallGrade && studentResult.hasPassed" style="text-align: center">
-                            <fa-icon [icon]="'check-circle'" style="color: #28a745; font-size: 1.5em"></fa-icon>
+                            <fa-icon [icon]="faCheckCircle" style="color: #28a745; font-size: 1.5em"></fa-icon>
                         </td>
                         <td *ngIf="gradingScaleExists && !isBonus && studentResult.overallGrade && !studentResult.hasPassed" style="text-align: center">
-                            <fa-icon [icon]="'times'" style="color: #ca2024; font-size: 1.5em"></fa-icon>
+                            <fa-icon [icon]="faTimes" style="color: #ca2024; font-size: 1.5em"></fa-icon>
                         </td>
                     </tr>
                 </tbody>

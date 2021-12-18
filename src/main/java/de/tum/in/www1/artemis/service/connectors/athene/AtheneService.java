@@ -216,7 +216,7 @@ public class AtheneService {
         // Get knowledge of exercise
         TextAssessmentKnowledge textAssessmentKnowledge = textExerciseRepository.findById(exerciseId).get().getKnowledge();
         // Map textBlocks to submissions
-        List<TextBlock> textBlocks = new LinkedList<>();
+        List<TextBlock> textBlocks = new ArrayList<>();
         for (Segment segment : segments) {
             // Convert Protobuf-TextBlock (including the submissionId) to TextBlock Entity
             TextBlock newBlock = new TextBlock();
@@ -250,7 +250,7 @@ public class AtheneService {
      * @return list of TextClusters
      */
     public List<TextCluster> parseTextClusters(List<Cluster> clusters) {
-        List<TextCluster> textClusters = new LinkedList<>();
+        List<TextCluster> textClusters = new ArrayList<>();
         for (Cluster cluster : clusters) {
             TextCluster textCluster = new TextCluster();
             List<TextBlock> blocks = cluster.getSegmentsList().stream().map(s -> new TextBlock().id(s.getId())).collect(toList());

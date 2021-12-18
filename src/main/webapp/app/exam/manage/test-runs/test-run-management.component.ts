@@ -13,6 +13,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
+import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-test-run-management',
@@ -24,11 +25,15 @@ export class TestRunManagementComponent implements OnInit {
     isLoading: boolean;
     isExamStarted: boolean;
     testRuns: StudentExam[] = [];
-    instructor: User;
+    instructor?: User;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     predicate: string;
     ascending: boolean;
+
+    // Icons
+    faSort = faSort;
+    faTimes = faTimes;
 
     constructor(
         private route: ActivatedRoute,
@@ -58,9 +63,9 @@ export class TestRunManagementComponent implements OnInit {
             },
             (error: HttpErrorResponse) => onError(this.alertService, error),
         );
-        this.accountService.fetch().subscribe((res) => {
-            if (res.body != undefined) {
-                this.instructor = res.body;
+        this.accountService.identity().then((user) => {
+            if (user) {
+                this.instructor = user;
             }
         });
     }
@@ -121,7 +126,7 @@ export class TestRunManagementComponent implements OnInit {
     get testRunCanBeAssessed(): boolean {
         if (!!this.testRuns && this.testRuns.length > 0) {
             for (const testRun of this.testRuns) {
-                if (testRun.user?.id === this.instructor.id && testRun.submitted) {
+                if (testRun.user?.id === this.instructor?.id && testRun.submitted) {
                     return true;
                 }
             }

@@ -5,6 +5,6 @@ import { AbstractExerciseFeedback } from '../AbstractExerciseFeedbackPage';
  */
 export class ModelingExerciseFeedbackPage extends AbstractExerciseFeedback {
     shouldShowComponentFeedback(component: number, points: number, feedback: string) {
-        cy.get('.table').children().eq(1).children().eq(component).should('contain.text', feedback).and('contain.text', `${points}`);
+        cy.get('#component-feedback-table').children().eq(1).children().eq(component).should('contain.text', feedback).and('contain.text', `${points}`);
     }
 }

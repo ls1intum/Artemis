@@ -70,21 +70,21 @@
         <h4>
             <span *ngIf="!successful && !failed && !busy" jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.confirmtext"></span>
             <span *ngIf="successful && !busy" style="color: green"
-                ><fa-icon [icon]="'check'"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.succesfully_confirm"></span
+                ><fa-icon [icon]="faCheck"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.succesfully_confirm"></span
             ></span>
-            <span *ngIf="failed && !busy" style="color: red"><fa-icon [icon]="'times'"></fa-icon>&nbsp;<span>Saving Quiz Failed! Please try again later.</span></span>
-            <span *ngIf="busy" style="color: grey"><fa-icon [icon]="'spinner'" [spin]="true"></fa-icon>&nbsp;<span>Please wait, conducting changes!</span></span>
+            <span *ngIf="failed && !busy" style="color: red"><fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span>Saving Quiz Failed! Please try again later.</span></span>
+            <span *ngIf="busy" style="color: grey"><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span>Please wait, conducting changes!</span></span>
         </h4>
         &nbsp;
         <div class="form-group">
             <button [disabled]="busy" *ngIf="!successful" type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
-                <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
             <button [disabled]="busy" *ngIf="!successful && !failed" type="submit" (click)="confirmChange()" class="btn btn-primary">
-                <fa-icon [icon]="'check-circle'"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.confirm"></span>
+                <fa-icon [icon]="faCheckCircle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.confirm"></span>
             </button>
             <button *ngIf="successful && !failed" type="submit" (click)="close()" class="btn btn-primary">
-                <fa-icon [icon]="'check-circle'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.close"></span>
+                <fa-icon [icon]="faCheckCircle"></fa-icon>&nbsp;<span jhiTranslate="entity.action.close"></span>
             </button>
         </div>
     </div>

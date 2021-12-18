@@ -11,6 +11,8 @@
             "by": "by",
             "allLoaded": "No further notifications available.",
             "liveExamExerciseUpdateNotification": "Updated Exam Exercise Problem Statement!",
+            "showAllSavedNotifications": "Show all saved notifications",
+            "hideAllCurrentlyDisplayedNotifications": "Hide all currently displayed notifications",
             "target": {
                 "newAnswer": "View reply",
                 "newQuestion": "View post",

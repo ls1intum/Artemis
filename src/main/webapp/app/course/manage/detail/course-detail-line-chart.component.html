@@ -1,7 +1,7 @@
 <div class="course-detail-parent-container col">
     <h5 class="col-md-12 text-center" style="margin-top: 15px">{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h5>
     <div class="row flex-nowrap" style="display: flex; justify-content: center; align-items: center; flex: 1">
-        <fa-icon [icon]="'arrow-left'" size="2x" class="col-md-1 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
+        <fa-icon [icon]="faArrowLeft" size="2x" class="col-md-1 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
         <div #containerRef class="chart col-md-9 mt-1 justify-content-center h-99">
             <ngx-charts-line-chart
                 [view]="[containerRef.offsetWidth, 450]"
@@ -29,10 +29,10 @@
             </ngx-charts-line-chart>
         </div>
         <h1 *ngIf="loading" style="z-index: 1; display: flex; justify-content: center; align-items: center; position: absolute">
-            <fa-icon [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+            <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
         </h1>
         <fa-icon
-            [icon]="'arrow-right'"
+            [icon]="faArrowRight"
             size="2x"
             class="col-md-1 d-flex justify-content-start align-items-center"
             role="button"

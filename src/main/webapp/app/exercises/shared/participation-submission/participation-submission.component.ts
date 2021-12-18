@@ -27,6 +27,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { HttpErrorResponse } from '@angular/common/http';
 import { createCommitUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -52,6 +53,9 @@ export class ParticipationSubmissionComponent implements OnInit {
     eventSubscriber: Subscription;
     isLoading = true;
     commitHashURLTemplate?: string;
+
+    // Icons
+    faTimes = faTimes;
 
     constructor(
         private route: ActivatedRoute,
