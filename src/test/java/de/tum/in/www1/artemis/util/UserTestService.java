@@ -520,6 +520,21 @@ public class UserTestService {
         assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(1));
     }
 
+    // Test
+    public void updateUserNotificationVisibilityShowAllAsStudentIsSuccessful() throws Exception {
+        request.put("/api/users/notification-visibility", true, HttpStatus.OK);
+        User userInDB = userRepository.findOneByLogin("student1").get();
+        assertThat(userInDB.getHideNotificationsUntil()).isNull();
+    }
+
+    // Test
+    public void updateUserNotificationVisibilityHideUntilAsStudentIsSuccessful() throws Exception {
+        request.put("/api/users/notification-visibility", false, HttpStatus.OK);
+        User userInDB = userRepository.findOneByLogin("student1").get();
+        assertThat(userInDB.getHideNotificationsUntil()).isNotNull();
+        assertThat(userInDB.getHideNotificationsUntil()).isStrictlyBetween(ZonedDateTime.now().minusSeconds(1), ZonedDateTime.now().plusSeconds(1));
+    }
+
     public UserRepository getUserRepository() {
         return userRepository;
     }

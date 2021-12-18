@@ -37,6 +37,7 @@ import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { debounce } from 'lodash-es';
 import { captureException } from '@sentry/browser';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-quiz',
@@ -118,6 +119,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     timeoutJustSaved = debounce(() => {
         this.justSaved = false;
     }, 2000);
+
+    // Icons
+    faSync = faSync;
+    faCircleNotch = faCircleNotch;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,

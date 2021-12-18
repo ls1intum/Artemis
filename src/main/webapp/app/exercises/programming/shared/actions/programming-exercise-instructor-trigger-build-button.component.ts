@@ -7,12 +7,16 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { AlertService } from 'app/core/util/alert.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { faRedo } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-trigger-build-button',
     templateUrl: './programming-exercise-trigger-build-button.component.html',
 })
 export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
+    // Icons
+    faRedo = faRedo;
+
     constructor(
         submissionService: ProgrammingSubmissionService,
         alertService: AlertService,

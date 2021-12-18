@@ -10,6 +10,7 @@ import { makeSubmissionAndVerifyResults } from '../../support/pageobjects/exerci
 const courseManagementRequests = artemis.requests.courseManagement;
 
 // page objects
+const assessmentDashboard = artemis.pageobjects.assessment.course;
 const examStartEnd = artemis.pageobjects.examStartEnd;
 const modelingEditor = artemis.pageobjects.modelingExercise.editor;
 const modelingAssessment = artemis.pageobjects.modelingExercise.assessmentEditor;
@@ -19,7 +20,6 @@ const examNavigation = artemis.pageobjects.examNavigationBar;
 const textEditor = artemis.pageobjects.textExercise.editor;
 const exerciseAssessment = artemis.pageobjects.assessment.exercise;
 const multipleChoice = artemis.pageobjects.quizExercise.multipleChoice;
-const studentExamManagement = artemis.pageobjects.studentExamManagement;
 
 // Common primitives
 const admin = artemis.users.getAdmin();
@@ -56,9 +56,46 @@ describe('Exam assessment', () => {
         courseManagementRequests.deleteCourse(course.id);
     });
 
+    // For some reason the typing of cypress gets slower the longer the test runs, so we test the programming exercise first
+    describe('Exam programming exercise assessment', () => {
+        const examDuration = 155000;
+
+        before('Prepare exam', () => {
+            examEnd = dayjs().add(examDuration, 'milliseconds');
+            prepareExam(examEnd);
+        });
+
+        beforeEach('Create exam, exercise and submission', () => {
+            courseManagementRequests
+                .createProgrammingExercise({ exerciseGroup }, undefined, undefined, undefined, undefined, undefined, undefined, undefined, CypressAssessmentType.SEMI_AUTOMATIC)
+                .then((progRespone) => {
+                    const programmingExercise = progRespone.body;
+                    courseManagementRequests.generateMissingIndividualExams(exam);
+                    courseManagementRequests.prepareExerciseStartForExam(exam);
+                    cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                    examStartEnd.startExam();
+                    cy.contains(programmingExercise.title).should('be.visible').click();
+                    makeSubmissionAndVerifyResults(editorPage, programmingExercise.packageName, partiallySuccessful, () => {
+                        examNavigation.handInEarly();
+                        examStartEnd.finishExam();
+                    });
+                });
+        });
+
+        it('Assess a programming exercise submission (MANUAL)', () => {
+            cy.login(tutor, '/course-management/' + course.id + '/exams');
+            cy.contains('Assessment Dashboard', { timeout: examDuration }).click();
+            startAssessing();
+            examAssessment.addNewFeedback(2, 'Good job');
+            examAssessment.submit();
+            cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+            cy.get('.question-options').contains('6.6 of 10 points').should('be.visible');
+        });
+    });
+
     describe('Exam exercise assessment', () => {
         beforeEach('Generate new exam name', () => {
-            examEnd = dayjs().add(30, 'seconds');
+            examEnd = dayjs().add(45, 'seconds');
             prepareExam(examEnd);
         });
 
@@ -73,9 +110,6 @@ describe('Exam assessment', () => {
                     modelingEditor.addComponentToModel(1);
                     modelingEditor.addComponentToModel(2);
                     modelingEditor.addComponentToModel(3);
-                    modelingEditor.save().then((modelResponse) => {
-                        expect(modelResponse.response?.statusCode).to.equal(200);
-                    });
                     examNavigation.handInEarly();
                     examStartEnd.finishExam();
                 });
@@ -85,18 +119,17 @@ describe('Exam assessment', () => {
                 cy.login(tutor, '/course-management/' + course.id + '/exams');
                 cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
                 startAssessing();
-                modelingAssessment.addNewFeedback(2, 'Noice');
+                modelingAssessment.addNewFeedback(5, 'Good');
                 modelingAssessment.openAssessmentForComponent(1);
-                modelingAssessment.assessComponent(1, 'Good');
+                modelingAssessment.assessComponent(-1, 'Wrong');
                 modelingAssessment.clickNextAssessment();
                 modelingAssessment.assessComponent(0, 'Neutral');
                 modelingAssessment.clickNextAssessment();
-                modelingAssessment.assessComponent(-1, 'Wrong');
                 examAssessment.submitModelingAssessment().then((assessmentResponse) => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                cy.contains('2 of 10 points').should('be.visible');
+                cy.contains('4 of 10 points').should('be.visible');
             });
         });
 
@@ -135,8 +168,8 @@ describe('Exam assessment', () => {
         let resultDate: Dayjs;
 
         beforeEach('Generate new exam name', () => {
-            examEnd = dayjs().add(15, 'seconds');
-            resultDate = examEnd.add(17, 'seconds');
+            examEnd = dayjs().add(25, 'seconds');
+            resultDate = examEnd.add(5, 'seconds');
             prepareExam(examEnd, resultDate);
         });
 
@@ -158,8 +191,8 @@ describe('Exam assessment', () => {
             if (dayjs().isBefore(examEnd)) {
                 cy.wait(examEnd.diff(dayjs(), 'ms'));
             }
-            cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/student-exams`);
-            studentExamManagement.clickEvaluateQuizzes().its('response.statusCode').should('eq', 200);
+            cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
+            assessmentDashboard.clickEvaluateQuizzes().its('response.statusCode').should('eq', 200);
             if (dayjs().isBefore(resultDate)) {
                 cy.wait(examEnd.diff(dayjs(), 'ms'));
             }
@@ -171,64 +204,28 @@ describe('Exam assessment', () => {
         });
     });
 
-    describe('Exam programming exercise assessment', () => {
-        const examDuration = 155000;
+    function startAssessing() {
+        artemis.pageobjects.assessment.course.clickExerciseDashboardButton();
+        exerciseAssessment.clickHaveReadInstructionsButton();
+        exerciseAssessment.clickStartNewAssessment();
+        cy.contains('You have the lock for this assessment').should('be.visible');
+    }
 
-        before('Prepare exam', () => {
-            examEnd = dayjs().add(examDuration, 'milliseconds');
-            prepareExam(examEnd);
+    function prepareExam(end: dayjs.Dayjs, resultDate = end.add(1, 'seconds')) {
+        cy.login(admin);
+        const examContent = new CypressExamBuilder(course)
+            .visibleDate(dayjs().subtract(1, 'day'))
+            .startDate(dayjs())
+            .endDate(end)
+            .publishResultsDate(resultDate)
+            .gracePeriod(0)
+            .build();
+        courseManagementRequests.createExam(examContent).then((examResponse) => {
+            exam = examResponse.body;
+            courseManagementRequests.registerStudentForExam(exam, student);
+            courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
+                exerciseGroup = groupResponse.body;
+            });
         });
-
-        beforeEach('Create exam, exercise and submission', () => {
-            courseManagementRequests
-                .createProgrammingExercise({ exerciseGroup }, undefined, undefined, undefined, undefined, undefined, undefined, undefined, CypressAssessmentType.SEMI_AUTOMATIC)
-                .then((progRespone) => {
-                    const programmingExercise = progRespone.body;
-                    courseManagementRequests.generateMissingIndividualExams(exam);
-                    courseManagementRequests.prepareExerciseStartForExam(exam);
-                    cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                    examStartEnd.startExam();
-                    cy.contains(programmingExercise.title).should('be.visible').click();
-                    makeSubmissionAndVerifyResults(editorPage, programmingExercise.packageName, partiallySuccessful, () => {
-                        examNavigation.handInEarly();
-                        examStartEnd.finishExam();
-                    });
-                });
-        });
-
-        it('Assess a programming exercise submission (MANUAL)', () => {
-            cy.login(tutor, '/course-management/' + course.id + '/exams');
-            cy.contains('Assessment Dashboard', { timeout: examDuration }).click();
-            startAssessing();
-            examAssessment.addNewFeedback(2, 'Good job');
-            examAssessment.submit();
-            cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-            cy.get('.question-options').contains('6.6 of 10 points').should('be.visible');
-        });
-    });
+    }
 });
-
-function startAssessing() {
-    artemis.pageobjects.assessment.course.clickExerciseDashboardButton();
-    exerciseAssessment.clickHaveReadInstructionsButton();
-    exerciseAssessment.clickStartNewAssessment();
-    cy.contains('You have the lock for this assessment').should('be.visible');
-}
-
-function prepareExam(examEnd: dayjs.Dayjs, resultDate = examEnd.add(1, 'seconds')) {
-    cy.login(admin);
-    const examContent = new CypressExamBuilder(course)
-        .visibleDate(dayjs().subtract(1, 'day'))
-        .startDate(dayjs())
-        .endDate(examEnd)
-        .publishResultsDate(resultDate)
-        .gracePeriod(0)
-        .build();
-    courseManagementRequests.createExam(examContent).then((examResponse) => {
-        exam = examResponse.body;
-        courseManagementRequests.registerStudentForExam(exam, student);
-        courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
-            exerciseGroup = groupResponse.body;
-        });
-    });
-}

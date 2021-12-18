@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.User;
 public class Reaction extends DomainObject {
 
     @ManyToOne
+    @JsonIncludeProperties({ "id", "name" })
     private User user;
 
     @CreatedDate

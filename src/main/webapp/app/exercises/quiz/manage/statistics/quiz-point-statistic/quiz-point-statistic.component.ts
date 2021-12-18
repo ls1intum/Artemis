@@ -15,6 +15,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { blueColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { round } from 'app/shared/util/utils';
+import { faSync } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -65,6 +66,9 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
     remainingTimeText = '?';
     remainingTimeSeconds = 0;
     interval: any;
+
+    // Icons
+    faSync = faSync;
 
     constructor(
         private route: ActivatedRoute,
