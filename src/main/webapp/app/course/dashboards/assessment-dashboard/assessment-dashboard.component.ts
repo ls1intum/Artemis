@@ -298,7 +298,7 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * devides exercises into finished and unfinished exercises.
+     * divides exercises into finished and unfinished exercises.
      *
      * @param exercises - the exercises that should get filtered
      * @private
@@ -317,8 +317,8 @@ export class AssessmentDashboardComponent implements OnInit {
     private getUnfinishedExercises(exercises?: Exercise[]) {
         const filteredExercises = exercises?.filter(
             (exercise) =>
-                (exercise.numberOfAssessmentsOfCorrectionRounds?.map((round) => round.inTime === exercise.numberOfSubmissions?.inTime).reduce((acc, current) => acc && current) &&
-                    exercise.totalNumberOfAssessments?.inTime !== exercise.numberOfSubmissions?.inTime) ||
+                exercise.numberOfAssessmentsOfCorrectionRounds?.map((round) => round.inTime !== exercise.numberOfSubmissions?.inTime).reduce((acc, current) => acc || current) ||
+                exercise.totalNumberOfAssessments?.inTime !== exercise.numberOfSubmissions?.inTime ||
                 exercise.numberOfOpenComplaints !== 0 ||
                 exercise.numberOfOpenMoreFeedbackRequests !== 0,
         );
