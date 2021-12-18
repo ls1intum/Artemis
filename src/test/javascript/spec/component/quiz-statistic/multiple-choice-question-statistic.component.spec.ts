@@ -17,6 +17,8 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
 import { AnswerCounter } from 'app/entities/quiz/answer-counter.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
+import { MockProvider } from 'ng-mocks';
+import { ChangeDetectorRef } from '@angular/core';
 
 const route = { params: of({ courseId: 3, exerciseId: 22, questionId: 1 }) };
 const answerOption1 = { id: 5 } as AnswerOption;
@@ -44,6 +46,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                MockProvider(ChangeDetectorRef),
             ],
         })
             .overrideTemplate(MultipleChoiceQuestionStatisticComponent, '')
