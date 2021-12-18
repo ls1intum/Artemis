@@ -38,14 +38,7 @@
                 ></textarea>
             </div>
             <div class="form-group col-3 p-2 m-0">
-                <input
-                    id="feedback-points"
-                    class="form-control px-1"
-                    type="number"
-                    step="0.5"
-                    [(ngModel)]="feedback.credits"
-                    [readOnly]="viewOnly || feedback.gradingInstruction"
-                />
+                <input id="feedback-points" class="form-control px-1" type="number" step="0.5" [(ngModel)]="feedback.credits" [readOnly]="viewOnly" />
             </div>
         </div>
         <div>
