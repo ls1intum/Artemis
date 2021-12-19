@@ -58,6 +58,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.util.*;
@@ -81,6 +82,10 @@ public class ProgrammingExerciseIntegrationTestService {
     @Autowired
     // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private FileService fileService;
+
+    @Autowired
+    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    private UrlService urlService;
 
     @Autowired
     private GitUtilService gitUtilService;
@@ -1553,7 +1558,7 @@ public class ProgrammingExerciseIntegrationTestService {
         Files.writeString(file2, exampleProgram);
 
         doReturn(jPlagReposDir).when(fileService).getUniquePathString(any());
-        mockDelegate.mockGetRepositorySlugFromRepositoryUrl(null, any());
+        doReturn(null).when(urlService).getRepositorySlugFromRepositoryUrl(any());
 
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
