@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
@@ -186,7 +187,7 @@ public class ProgrammingExerciseIntegrationTestService {
         var testjsonFilePath = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
         gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath);
         // create two empty commits
-        localGit.commit().setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
+        localGit.commit().setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
         localGit.push().call();
 
         // we use the temp repository as remote origin for all repositories that are created during the
@@ -1507,8 +1508,12 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private void prepareTwoRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, InterruptedException, GitAPIException {
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        var participationStudent1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        var participationStudent2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        var submissionStudent1 = database.createProgrammingSubmission(participationStudent1, false);
+        var submissionStudent2 = database.createProgrammingSubmission(participationStudent2, false);
+        database.addResultToSubmission(submissionStudent1, AssessmentType.AUTOMATIC, null);
+        database.addResultToSubmission(submissionStudent2, AssessmentType.AUTOMATIC, null);
 
         var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos").toString();
         var projectKey = programmingExercise.getProjectKey();
@@ -1742,15 +1747,15 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private String defaultRecreateBuildPlanEndpoint(Long exerciseId) {
-        return ROOT + RECREATE_BUILD_PLANS.replace("{exerciseId}", "" + exerciseId);
+        return ROOT + RECREATE_BUILD_PLANS.replace("{exerciseId}", exerciseId.toString());
     }
 
     private String defaultGetAuxReposEndpoint(Long exerciseId) {
-        return ROOT + AUXILIARY_REPOSITORY.replace("{exerciseId}", "" + exerciseId);
+        return ROOT + AUXILIARY_REPOSITORY.replace("{exerciseId}", exerciseId.toString());
     }
 
     private String defaultExportInstructorAuxiliaryRepository(Long exerciseId, Long repositoryId) {
-        return ROOT + EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY.replace("{exerciseId}", "" + exerciseId).replace("{repositoryId}", "" + repositoryId);
+        return ROOT + EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY.replace("{exerciseId}", exerciseId.toString()).replace("{repositoryId}", repositoryId.toString());
     }
 
     private void testAuxRepo(AuxiliaryRepositoryBuilder body, HttpStatus expectedStatus) throws Exception {
@@ -1758,7 +1763,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private void testAuxRepo(List<AuxiliaryRepository> body, HttpStatus expectedStatus) throws Exception {
-        String uniqueExerciseTitle = "Title" + System.nanoTime() + "" + new Random().nextInt(100);
+        String uniqueExerciseTitle = String.format("Title%d%d", System.nanoTime(), ThreadLocalRandom.current().nextInt(100));
         programmingExercise.setAuxiliaryRepositories(body);
         programmingExercise.setId(null);
         programmingExercise.setSolutionParticipation(null);
