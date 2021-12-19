@@ -10,7 +10,7 @@ const courseManagementRequests = artemis.requests.courseManagement;
 const examStartEnd = artemis.pageobjects.examStartEnd;
 const textEditor = artemis.pageobjects.textExercise.editor;
 
-describe('Exam management', () => {
+describe('Exam date verification', () => {
     let course: any;
     let examTitle: string;
 
