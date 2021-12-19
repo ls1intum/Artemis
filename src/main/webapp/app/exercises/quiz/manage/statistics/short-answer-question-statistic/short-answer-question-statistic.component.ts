@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
@@ -18,7 +18,7 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
     selector: 'jhi-short-answer-question-statistic',
     templateUrl: './short-answer-question-statistic.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
-    styleUrls: ['./short-answer-question-statistic.component.scss'],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', './short-answer-question-statistic.component.scss'],
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {
     question: ShortAnswerQuestion;
@@ -43,8 +43,9 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
         quizStatisticUtil: QuizStatisticUtil,
         public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private artemisMarkdown: ArtemisMarkdownService,
+        protected changeDetector: ChangeDetectorRef,
     ) {
-        super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService);
+        super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService, changeDetector);
     }
 
     /**
