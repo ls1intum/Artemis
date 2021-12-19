@@ -12,7 +12,7 @@ export class TextEditorPage {
      */
     saveAndContinue() {
         cy.intercept(PUT, BASE_API + 'exercises/*/text-submissions').as('savedSubmission');
-        cy.get('jhi-exam-navigation-bar').find('.btn-primary').click();
+        cy.get('#save').click();
         return cy.wait('@savedSubmission');
     }
 
