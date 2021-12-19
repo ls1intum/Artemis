@@ -65,18 +65,6 @@ public class TutorParticipationService {
     }
 
     /**
-     * Get one tutorParticipations by id.
-     *
-     * @param id the id of the entity
-     * @return the entity
-     */
-    public TutorParticipation findOne(Long id) {
-        log.debug("Request to get TutorParticipation : {}", id);
-        Optional<TutorParticipation> tutorParticipation = tutorParticipationRepository.findById(id);
-        return tutorParticipation.orElse(null);
-    }
-
-    /**
      * Given an exercise and a tutor, it retrieves the participation of the tutor for that exercise. If there isn't any participation in the database, it returns a participation
      * with status NOT_PARTICIPATED
      *

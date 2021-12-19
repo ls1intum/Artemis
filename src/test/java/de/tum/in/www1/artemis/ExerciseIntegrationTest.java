@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -73,7 +74,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetStatsForExerciseAssessmentDashboardTest() throws Exception {
+    public void testGetStatsForExerciseAssessmentDashboardWithSubmissions() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(e -> e instanceof TextExercise).findFirst().get();
@@ -105,8 +106,29 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetStatsForExamExerciseAssessmentDashboard() throws Exception {
+        var user = database.getUserByLogin("student1");
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
+        course = courseRepository.findByIdWithEagerExercisesElseThrow(course.getId());
+        TextExercise textExercise = (TextExercise) exerciseRepository.findAll().stream().filter(e -> e instanceof TextExercise).findFirst().get();
+        StatsForDashboardDTO statsForDashboardDTO = request.get("/api/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
+                StatsForDashboardDTO.class);
+        assertThat(statsForDashboardDTO.getNumberOfSubmissions().inTime()).isEqualTo(0);
+        assertThat(statsForDashboardDTO.getTotalNumberOfAssessments().inTime()).isEqualTo(0);
+        assertThat(statsForDashboardDTO.getNumberOfAutomaticAssistedAssessments().inTime()).isEqualTo(0);
+
+        for (Exercise exercise : course.getExercises()) {
+            StatsForDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+            assertThat(stats.getNumberOfComplaints()).isEqualTo(0);
+            assertThat(stats.getNumberOfMoreFeedbackRequests()).isEqualTo(0);
+        }
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testFilterOutExercisesThatUserShouldNotSee() throws Exception {
+        assertThrows(EntityNotFoundException.class, () -> exerciseService.findOneWithDetailsForStudents(Long.MAX_VALUE, database.getUserByLogin("student1")));
         database.createCoursesWithExercisesAndLectures(false);
         var exercises = exerciseRepository.findAll();
         var student = userRepository.getUserWithGroupsAndAuthorities("student1");
