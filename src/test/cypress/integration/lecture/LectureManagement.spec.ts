@@ -41,7 +41,7 @@ describe('Lecture management', () => {
     it('creates a lecture', () => {
         const lectureTitle = 'exam' + generateUUID();
         cy.login(instructor, '/course-management/' + course.id);
-        cy.contains('Lectures').click();
+        cy.get('#lectures').click();
         lectureManagement.clickCreateLecture();
         lectureCreation.setTitle(lectureTitle);
         cy.fixture('loremIpsum.txt').then((text) => {
@@ -64,7 +64,7 @@ describe('Lecture management', () => {
         });
 
         it('Deletes an existing lecture', () => {
-            lectureManagement.deleteLecture(lecture.title).then((resp) => {
+            lectureManagement.deleteLecture(lecture.title, 0).then((resp) => {
                 expect(resp.response!.statusCode).to.eq(200);
                 lectureManagement.getLectureContainer().children().should('have.length', 0);
                 lecture = null;
@@ -72,7 +72,7 @@ describe('Lecture management', () => {
         });
 
         it('Adds a text unit to the lecture', () => {
-            lectureManagement.openUnitsPage(lecture.title);
+            lectureManagement.openUnitsPage(0);
             cy.fixture('loremIpsum.txt').then((text) => {
                 lectureManagement.addTextUnit('Text unit', text);
             });
@@ -82,7 +82,7 @@ describe('Lecture management', () => {
         it('Adds a exercise unit to the lecture', () => {
             courseManagementRequests.createModelingExercise({ course }).then((model) => {
                 const exercise = model.body;
-                lectureManagement.openUnitsPage(lecture.title);
+                lectureManagement.openUnitsPage(0);
                 lectureManagement.addExerciseUnit(exercise.id);
                 cy.contains(exercise.title);
             });
