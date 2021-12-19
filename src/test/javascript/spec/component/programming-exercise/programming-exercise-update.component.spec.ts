@@ -586,7 +586,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             });
         });
 
-        it('should find no package name related validation error for languages that does not a package name', () => {
+        it('should find no package name related validation error for languages that do not need a package name', () => {
             for (const programmingLanguage of [ProgrammingLanguage.C, ProgrammingLanguage.EMPTY, ProgrammingLanguage.PYTHON]) {
                 comp.programmingExercise.programmingLanguage = programmingLanguage;
                 expect(comp.getInvalidReasons()).not.toContainEqual({
