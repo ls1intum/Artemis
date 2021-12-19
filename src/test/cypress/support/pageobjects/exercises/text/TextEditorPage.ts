@@ -4,7 +4,7 @@ import { BASE_API, PUT } from '../../../constants';
  */
 export class TextEditorPage {
     typeSubmission(submission: string) {
-        cy.get('textarea').type(submission, { parseSpecialCharSequences: false });
+        cy.get('#text-editor').type(submission, { parseSpecialCharSequences: false });
     }
 
     /**
@@ -18,7 +18,7 @@ export class TextEditorPage {
 
     submit() {
         cy.intercept(PUT, BASE_API + 'exercises/*/text-submissions').as('textSubmission');
-        cy.get('.btn-primary').click();
+        cy.get('#submit').click();
         return cy.wait('@textSubmission');
     }
 
@@ -30,15 +30,11 @@ export class TextEditorPage {
         cy.get('#problem-statement').should('be.visible');
     }
 
-    getHeaderElement() {
-        return cy.get('jhi-header-participation-page');
-    }
-
     shouldShowNumberOfWords(numberOfWords: number) {
-        cy.get('#word-count').contains(numberOfWords).should('be.visible');
+        cy.get('#word-count').should('contain.text', numberOfWords).and('be.visible');
     }
 
     shouldShowNumberOfCharacters(numberOfWords: number) {
-        cy.get('#character-count').contains(numberOfWords).should('be.visible');
+        cy.get('#character-count').should('contain.text', numberOfWords).and('be.visible');
     }
 }

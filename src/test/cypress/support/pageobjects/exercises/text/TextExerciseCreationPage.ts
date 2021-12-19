@@ -51,10 +51,6 @@ export class TextExerciseCreationPage {
         return cy.wait('@textExerciseCreation');
     }
 
-    clickCreateExampleSubmission() {
-        cy.get('[jhitranslate="artemisApp.modelingExercise.createExampleSubmission"]').click();
-    }
-
     private typeDate(date: Dayjs, inputSelector: string) {
         cy.get(inputSelector).find('#date-input-field').clear().type(dayjsToString(date), { force: true });
     }
