@@ -226,34 +226,31 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
     }
 
+    public void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepository, LocalRepository solutionRepository, LocalRepository testRepository,
+            LocalRepository auxRepository) throws Exception {
+        var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
+        var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
+        var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
+        setupRepositoryMocks(exercise, exerciseRepository, exerciseRepoName, solutionRepository, solutionRepoName, testRepository, testRepoName, auxRepository);
+    }
+
     /**
      * Mocks the access and interaction with repository mocks on the local file system.
      *
      * @param exercise for which mock repositories should be created
      * @param exerciseRepository represents exercise template code repository
+     * @param exerciseRepoName the name of the exercise repository
      * @param solutionRepository represents exercise solution code repository
+     * @param solutionRepoName the name of the solution repository
      * @param testRepository represents exercise test code repository
+     * @param testRepoName the name of the test repository
      * @param auxRepository represents an arbitrary template code repository
      * @throws Exception in case any repository url is malformed or the GitService fails
      */
-    public void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepository, LocalRepository solutionRepository, LocalRepository testRepository,
-            LocalRepository auxRepository) throws Exception {
+    public void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepository, String exerciseRepoName, LocalRepository solutionRepository,
+            String solutionRepoName, LocalRepository testRepository, String testRepoName, LocalRepository auxRepository) throws Exception {
         final var projectKey = exercise.getProjectKey();
-
-        var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
-        var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
-        var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
         final var auxRepoName = exercise.generateRepositoryName("auxrepo");
-
-        if (exercise.getTemplateParticipation() != null && exercise.getTemplateParticipation().getRepositoryUrl() != null) {
-            exerciseRepoName = UrlService.getRepositorySlugFromRepositoryUrlString(exercise.getTemplateParticipation().getRepositoryUrl()).toLowerCase();
-        }
-        if (exercise.getSolutionParticipation() != null && exercise.getSolutionParticipation().getRepositoryUrl() != null) {
-            solutionRepoName = UrlService.getRepositorySlugFromRepositoryUrlString(exercise.getSolutionParticipation().getRepositoryUrl()).toLowerCase();
-        }
-        if (exercise.getTestRepositoryUrl() != null && !exercise.getTestRepositoryUrl().startsWith("http://some.test.url")) {
-            testRepoName = UrlService.getRepositorySlugFromRepositoryUrlString(exercise.getTestRepositoryUrl()).toLowerCase();
-        }
 
         var exerciseRepoTestUrl = new MockFileRepositoryUrl(exerciseRepository.originRepoFile);
         var testRepoTestUrl = new MockFileRepositoryUrl(testRepository.originRepoFile);
@@ -449,8 +446,12 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setStaticCodeAnalysisEnabled(false);
 
         // TODO: at the moment, it does not work that the copied repositories include the same files as ones that have been created originally
+        // this is probably the case, because the actual copy is not executed due to mocks
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true);
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        var exerciseRepoName = UrlService.getRepositorySlugFromRepositoryUrlString(sourceExercise.getTemplateParticipation().getRepositoryUrl()).toLowerCase();
+        var solutionRepoName = UrlService.getRepositorySlugFromRepositoryUrlString(sourceExercise.getSolutionParticipation().getRepositoryUrl()).toLowerCase();
+        var testRepoName = UrlService.getRepositorySlugFromRepositoryUrlString(sourceExercise.getTestRepositoryUrl()).toLowerCase();
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, exerciseRepoName, sourceSolutionRepo, solutionRepoName, sourceTestRepo, testRepoName, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
         // Create request parameters

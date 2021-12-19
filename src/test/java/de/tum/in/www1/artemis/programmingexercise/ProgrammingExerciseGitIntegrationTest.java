@@ -117,7 +117,7 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     void testCombineTemplateRepositoryCommits_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         final var path = ProgrammingExerciseResource.Endpoints.ROOT

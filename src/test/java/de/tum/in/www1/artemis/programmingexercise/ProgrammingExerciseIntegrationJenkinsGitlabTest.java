@@ -86,7 +86,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden();
     }
@@ -175,7 +175,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testProgrammingExerciseDelete_instructorNotInCourse_forbidden();
     }
@@ -193,7 +193,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     void testGetProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExercise_instructorNotInCourse_forbidden();
     }
@@ -211,7 +211,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     void testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden();
     }
@@ -229,7 +229,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     void testGetProgrammingExercisesForCourse_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExercisesForCourse_instructorNotInCourse_forbidden();
     }
@@ -271,7 +271,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExercise_instructorNotInCourse_forbidden();
     }
@@ -307,13 +307,13 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.updateTimeline_intructorNotInCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void updateTimeline_invalidId_notFound() throws Exception {
         programmingExerciseIntegrationTestService.updateTimeline_invalidId_notFound();
     }
@@ -325,7 +325,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void updateProblemStatement_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.updateProblemStatement_instructorNotInCourse_forbidden();
     }
@@ -383,7 +383,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_instructorNotInCourse_forbidden();
     }
@@ -559,13 +559,13 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_sourceExerciseIdNegative_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_sourceExerciseIdNegative_badRequest();
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void importProgrammingExerciseMaxScoreNullBadRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExerciseMaxScoreNullBadRequest();
     }
@@ -583,7 +583,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_instructorNotInCourse_forbidden();
     }
@@ -650,7 +650,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden();
     }
@@ -668,7 +668,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(username = "instructorOld1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest();
     }

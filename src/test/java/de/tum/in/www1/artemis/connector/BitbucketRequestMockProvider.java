@@ -285,7 +285,7 @@ public class BitbucketRequestMockProvider {
         System.err.println("mockAddWebhook: " + uri);
         final var body = new BitbucketWebHookDTO("Artemis WebHook", url, List.of("repo:refs_changed"));
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                // TODO: fix the body in the import case to make sure it works correctly
+                // TODO: fix the body in the real import case to make sure it works correctly
                 // .andExpect(content().json(mapper.writeValueAsString(body)))
                 .andRespond(withStatus(HttpStatus.OK));
     }

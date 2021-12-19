@@ -34,9 +34,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.mockito.Answers;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -61,7 +58,6 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.util.*;
@@ -1557,8 +1553,7 @@ public class ProgrammingExerciseIntegrationTestService {
         Files.writeString(file2, exampleProgram);
 
         doReturn(jPlagReposDir).when(fileService).getUniquePathString(any());
-        MockedStatic<UrlService> urlServiceMockedStatic = Mockito.mockStatic(UrlService.class, Mockito.withSettings().defaultAnswer(Answers.CALLS_REAL_METHODS));
-        urlServiceMockedStatic.when(() -> UrlService.getRepositorySlugFromRepositoryUrl(any())).thenReturn(null);
+        mockDelegate.mockGetRepositorySlugFromRepositoryUrl(null, any());
 
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
