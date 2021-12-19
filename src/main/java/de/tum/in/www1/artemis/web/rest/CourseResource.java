@@ -1470,7 +1470,7 @@ public class CourseResource {
      *
      * @param courseId      the id of the course
      * @param studentDtos   the list of students (with at least registration number) who should get access to the course
-     * @param courseGroup   the group, the user has to be added to
+     * @param courseGroup   the group, the user has to be added to, either 'students', 'tutors', 'instructors' or 'editors'
      * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     @PostMapping("courses/{courseId}/{courseGroup}")

@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis;
 
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.util.HashSet;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -583,5 +585,18 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetCourseManagementDetailData() throws Exception {
         courseTestService.testGetCourseManagementDetailData();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testAddUsersToCourseGroup() throws Exception {
+        String group = "students";
+        String registrationNumber1 = "1234567";
+        String registrationNumber2 = "2345678";
+        jiraRequestMockProvider.mockAddUserToGroup(group, false);
+        jiraRequestMockProvider.mockAddUserToGroup(group, false);
+        doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber1);
+        doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber2);
+        courseTestService.testAddUsersToCourseGroup(group, registrationNumber1, registrationNumber2);
     }
 }
