@@ -13,7 +13,7 @@ import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { CourseExercisesComponent, ExerciseFilter, ExerciseSortingOrder, SortingAttribute } from 'app/overview/course-exercises/course-exercises.component';
+import { CourseExercisesComponent, ExerciseFilter, ExerciseSortingOrder } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
@@ -23,7 +23,6 @@ import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import dayjs from 'dayjs';
-import { By } from '@angular/platform-browser';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
@@ -106,14 +105,6 @@ describe('CourseExercisesComponent', () => {
         expect(courseCalculationSpy.mock.calls[1][0]).toBe(course.id);
     });
 
-    it('should invoke setSortingAttribute', () => {
-        const sortingButton = fixture.debugElement.query(By.css('#dueDateSorting'));
-        expect(sortingButton).not.toBe(null);
-
-        sortingButton.nativeElement.click();
-        expect(component.sortingAttribute).toBe(SortingAttribute.DUE_DATE);
-    });
-
     it('should react to changes', () => {
         jest.spyOn(exerciseService, 'getNextExerciseForHours').mockReturnValue(exercise);
         component.ngOnChanges();
@@ -140,14 +131,12 @@ describe('CourseExercisesComponent', () => {
         component.activeFilters.clear();
         component.activeFilters.add(ExerciseFilter.NEEDS_WORK);
 
-        const sortingButton = fixture.debugElement.query(By.css('#flip'));
-        expect(sortingButton).not.toBe(null);
-        sortingButton.nativeElement.click();
+        component.flipOrder();
 
         expect(component.sortingOrder).toBe(ExerciseSortingOrder.ASC);
         expect(component.weeklyIndexKeys).toEqual(['2021-01-03', '2021-01-10']);
 
-        sortingButton.nativeElement.click();
+        component.flipOrder();
 
         expect(component.sortingOrder).toBe(ExerciseSortingOrder.DESC);
         expect(component.weeklyIndexKeys).toEqual(['2021-01-10', '2021-01-03']);
@@ -245,28 +234,6 @@ describe('CourseExercisesComponent', () => {
         component.toggleFilters(filters);
 
         expect(component.upcomingExercises.length).toBe(5);
-    });
-
-    it('should show the current amount of filters in the filter button and change background color', () => {
-        const filterDropdown = fixture.debugElement.query(By.css('#filter-dropdown-button'));
-        expect(filterDropdown).not.toBe(null);
-
-        const filterDropdownLabel = filterDropdown.query(By.css('span'));
-        expect(filterDropdownLabel).not.toBe(null);
-
-        // Start: No filters should bet set
-        component.activeFilters.clear();
-        fixture.detectChanges();
-
-        expect(filterDropdown.nativeElement.classList).toContain('btn-secondary');
-        expect(filterDropdownLabel.nativeElement.textContent).toBe('artemisApp.courseOverview.exerciseList.filter: [{"num":0}]');
-
-        // Set a few filters
-        component.toggleFilters([ExerciseFilter.OVERDUE, ExerciseFilter.NEEDS_WORK, ExerciseFilter.OPTIONAL]);
-        fixture.detectChanges();
-
-        expect(filterDropdown.nativeElement.classList).toContain('btn-success');
-        expect(filterDropdownLabel.nativeElement.textContent).toBe('artemisApp.courseOverview.exerciseList.filter: [{"num":3}]');
     });
 
     it('should filter optional exercises', () => {

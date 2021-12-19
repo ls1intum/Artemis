@@ -547,9 +547,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     /**
-     * Invokes exampleSubmissionService when importExampleSubmission is emitted in assessment-layout
+     * Invokes exampleSubmissionService when useAsExampleSubmission is emitted in assessment-layout
      */
-    importStudentSubmissionAsExampleSubmission(): void {
+    useStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.modelingExercise) {
             this.exampleSubmissionService.import(this.submission.id!, this.modelingExercise.id!).subscribe(
                 () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
