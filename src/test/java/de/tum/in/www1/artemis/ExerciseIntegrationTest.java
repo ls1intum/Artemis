@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -42,6 +43,9 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Autowired
     private ResultRepository resultRepository;
+
+    @Autowired
+    private CourseRepository courseRepository;
 
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepo;
@@ -98,6 +102,32 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
             assertThat(stats.getNumberOfComplaints()).isEqualTo(0);
             assertThat(stats.getNumberOfMoreFeedbackRequests()).isEqualTo(0);
         }
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testFilterOutExercisesThatUserShouldNotSee() throws Exception {
+        database.createCoursesWithExercisesAndLectures(false);
+        var exercises = exerciseRepository.findAll();
+        var student = userRepository.getUserWithGroupsAndAuthorities("student1");
+        assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(Set.of(), student)).hasSize(0);
+        exercises.get(0).setReleaseDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercises.get(0));
+        exercises = exerciseRepository.findAll();
+        assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), student)).hasSize(exercises.size() - 1);
+
+        var tutor = userRepository.getUserWithGroupsAndAuthorities("tutor1");
+        assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), tutor)).hasSize(exercises.size());
+
+        Course onlineCourse = exercises.get(0).getCourseViaExerciseGroupOrCourseMember();
+        onlineCourse.setOnlineCourse(true);
+        courseRepository.save(onlineCourse);
+        exercises = exerciseRepository.findAll();
+        assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), student)).hasSize(0);
+
+        database.createCoursesWithExercisesAndLectures(false);
+        var allExercises = new HashSet<>(exerciseRepository.findAll());
+        assertThrows(IllegalArgumentException.class, () -> exerciseService.filterOutExercisesThatUserShouldNotSee(allExercises, student));
     }
 
     @Test
@@ -298,7 +328,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     public void testGetExerciseDetails_assessmentDueDate_passed() throws Exception {
         Course course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(true);
         for (Exercise exercise : course.getExercises()) {
-            // For programming exercises we add an manual result, to check whether this is correctly displayed after the assessment due date
+            // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
                 database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next());
             }
@@ -349,7 +379,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     public void filterForCourseDashboard_assessmentDueDate_passed() {
         Course course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(true);
         for (Exercise exercise : course.getExercises()) {
-            // For programming exercises we add an manual result, to check whether this is correctly displayed after the assessment due date
+            // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
                 Result result = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
                         exercise.getStudentParticipations().iterator().next());
@@ -538,7 +568,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
             }
         }
         // NOTE: for some reason, the cleanup does not work properly in this case.
-        // Therefore we have some additional cleanup code here
+        // Therefore, we have some additional cleanup code here
 
         tutorParticipationRepo.deleteAll();
         exampleSubmissionRepo.deleteAll();

@@ -105,7 +105,7 @@ public class ExerciseService {
      *
      * @param exercises exercises to filter
      * @param user      user
-     * @return subset of the exercises that a user allowed to see
+     * @return subset of the exercises that a user is allowed to access
      */
     public Set<Exercise> filterOutExercisesThatUserShouldNotSee(Set<Exercise> exercises, User user) {
         if (exercises == null || user == null || exercises.isEmpty()) {
@@ -136,7 +136,6 @@ public class ExerciseService {
                 }
             }
             else {
-                // disclaimer: untested syntax, something along those lines should do the job however
                 exercisesUserIsAllowedToSee.addAll(exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet()));
             }
         }
