@@ -4,6 +4,7 @@ import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -44,6 +45,7 @@ import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -786,6 +788,13 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExam_asInstructor() throws Exception {
+        assertThrows(EntityNotFoundException.class, () -> examRepository.findByIdElseThrow(Long.MAX_VALUE));
+        assertThrows(EntityNotFoundException.class, () -> examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(Long.MAX_VALUE));
+        assertThrows(EntityNotFoundException.class, () -> examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(Long.MAX_VALUE));
+        assertThrows(EntityNotFoundException.class, () -> examRepository.findByIdWithRegisteredUsersElseThrow(Long.MAX_VALUE));
+        assertThrows(EntityNotFoundException.class, () -> examRepository.findByIdWithExerciseGroupsElseThrow(Long.MAX_VALUE));
+        assertThat(examRepository.findAllExercisesByExamId(Long.MAX_VALUE)).isEmpty();
+
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, Exam.class);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForEditor(course1.getId(), exam1.getId());
     }

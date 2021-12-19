@@ -537,7 +537,7 @@ public class CourseResource {
 
         List<Course> allCoursesToRegister = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations();
         return allCoursesToRegister.stream().filter(course -> {
-            // further check if course has been assigned to any organization and if yes,
+            // further, check if the course has been assigned to any organization and if yes,
             // check if user is member of at least one of them
             if (course.getOrganizations() != null && course.getOrganizations().size() > 0) {
                 return checkIfUserIsMemberOfCourseOrganizations(user, course);
@@ -545,7 +545,7 @@ public class CourseResource {
             else {
                 return true;
             }
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
     /**
