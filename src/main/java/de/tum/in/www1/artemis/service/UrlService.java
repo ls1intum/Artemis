@@ -3,9 +3,12 @@ package de.tum.in.www1.artemis.service;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.springframework.stereotype.Service;
+
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
+@Service
 public class UrlService {
 
     /**
@@ -15,11 +18,11 @@ public class UrlService {
      * @return The repository slug
      * @throws VersionControlException if the URL is invalid and no repository slug could be extracted
      */
-    public static String getRepositorySlugFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
+    public String getRepositorySlugFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
         return getRepositorySlugFromUrl(repositoryUrl.getURL());
     }
 
-    public static String getRepositorySlugFromRepositoryUrlString(String repositoryUrl) throws VersionControlException {
+    public String getRepositorySlugFromRepositoryUrlString(String repositoryUrl) throws VersionControlException {
         try {
             String slug = getRepositorySlugFromUrl(new URL(repositoryUrl));
             System.out.println(slug);
@@ -44,7 +47,7 @@ public class UrlService {
      * @return The repository slug, i.e. the part of the url that identifies the repository (not the project) without .git in the end
      * @throws VersionControlException if the URL is invalid and no repository slug could be extracted
      */
-    private static String getRepositorySlugFromUrl(URL url) throws VersionControlException {
+    private String getRepositorySlugFromUrl(URL url) throws VersionControlException {
         // split the URL path in components using the separator "/"
         final var pathComponents = url.getFile().split("/");
         if (pathComponents.length < 2) {
@@ -68,7 +71,7 @@ public class UrlService {
      * @throws VersionControlException if the URL is invalid and no project key could be extracted
      * @return <project key>/<repositorySlug>
      */
-    public static String getRepositoryPathFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
+    public String getRepositoryPathFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
         return getRepositoryPathFromUrl(repositoryUrl.getURL());
     }
 
@@ -81,7 +84,7 @@ public class UrlService {
      * @throws VersionControlException if the URL is invalid and no project key could be extracted
      * @return <project key>/<repositorySlug>
      */
-    private static String getRepositoryPathFromUrl(URL url) throws VersionControlException {
+    private String getRepositoryPathFromUrl(URL url) throws VersionControlException {
         // split the URL path in components using the separator "/"
         final var pathComponents = url.getPath().split("/");
         if (pathComponents.length < 2) {
@@ -99,7 +102,7 @@ public class UrlService {
      * @return The project key
      * @throws VersionControlException if the URL is invalid and no project key could be extracted
      */
-    public static String getProjectKeyFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
+    public String getProjectKeyFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
         return getProjectKeyFromUrl(repositoryUrl.getURL());
     }
 
@@ -112,7 +115,7 @@ public class UrlService {
      * @return The project key
      * @throws VersionControlException if the URL is invalid and no project key could be extracted
      */
-    private static String getProjectKeyFromUrl(URL url) throws VersionControlException {
+    private String getProjectKeyFromUrl(URL url) throws VersionControlException {
         // split the URL path in components using the separator "/"
         final var pathComponents = url.getPath().split("/");
         if (pathComponents.length <= 2) {

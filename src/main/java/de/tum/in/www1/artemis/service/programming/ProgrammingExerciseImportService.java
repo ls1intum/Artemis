@@ -62,12 +62,14 @@ public class ProgrammingExerciseImportService {
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
+    private final UrlService urlService;
+
     public ProgrammingExerciseImportService(ExerciseHintRepository exerciseHintRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService,
             UserRepository userRepository, StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            SubmissionPolicyRepository submissionPolicyRepository) {
+            SubmissionPolicyRepository submissionPolicyRepository, UrlService urlService) {
         this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -82,6 +84,7 @@ public class ProgrammingExerciseImportService {
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
+        this.urlService = urlService;
     }
 
     /**
@@ -160,9 +163,9 @@ public class ProgrammingExerciseImportService {
         // First, create a new project for our imported exercise
         versionControlService.get().createProjectForExercise(newExercise);
         // Copy all repositories
-        var templateRepoName = UrlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTemplateRepositoryUrl());
-        var testRepoName = UrlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTestRepositoryUrl());
-        var solutionRepoName = UrlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getSolutionRepositoryUrl());
+        var templateRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTemplateRepositoryUrl());
+        var testRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTestRepositoryUrl());
+        var solutionRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getSolutionRepositoryUrl());
 
         versionControlService.get().copyRepository(sourceProjectKey, templateRepoName, targetProjectKey, RepositoryType.TEMPLATE.getName());
         versionControlService.get().copyRepository(sourceProjectKey, solutionRepoName, targetProjectKey, RepositoryType.SOLUTION.getName());

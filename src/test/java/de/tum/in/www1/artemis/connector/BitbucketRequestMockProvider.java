@@ -11,6 +11,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -52,6 +53,12 @@ public class BitbucketRequestMockProvider {
     @Value("${artemis.lti.user-prefix-u4i:#{null}}")
     private Optional<String> userPrefixU4I;
 
+    @Autowired
+    private PasswordService passwordService;
+
+    @Autowired
+    private UrlService urlService;
+
     private final RestTemplate restTemplate;
 
     private final RestTemplate shortTimeoutRestTemplate;
@@ -62,11 +69,8 @@ public class BitbucketRequestMockProvider {
 
     private MockRestServiceServer mockServerShortTimeout;
 
-    private final PasswordService passwordService;
-
-    public BitbucketRequestMockProvider(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate,
+    public BitbucketRequestMockProvider(@Qualifier("bitbucketRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate) {
-        this.passwordService = passwordService;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
@@ -225,7 +229,7 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockRepositoryUrlIsValid(final VcsRepositoryUrl repositoryUrl, final String projectKey, final boolean isValid) throws URISyntaxException {
-        final var repositoryName = UrlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+        final var repositoryName = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).pathSegment("repos")
                 .pathSegment(repositoryName).build().toUri();
 
@@ -309,7 +313,7 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockDefaultBranch(String defaultBranch, VcsRepositoryUrl repoURL) throws BitbucketException, IOException {
-        String projectKey = UrlService.getProjectKeyFromRepositoryUrl(repoURL);
+        String projectKey = urlService.getProjectKeyFromRepositoryUrl(repoURL);
         mockGetDefaultBranch(defaultBranch, projectKey);
         mockPutDefaultBranch(projectKey);
     }

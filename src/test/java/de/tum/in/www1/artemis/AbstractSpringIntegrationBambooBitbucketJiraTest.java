@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.TimeService;
-import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
@@ -339,7 +338,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         final var repositoryUrl = participation.getVcsRepositoryUrl();
         final var projectKey = buildPlanId.split("-")[0];
         final var planKey = participation.getBuildPlanId();
-        final var repoProjectName = UrlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+        final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         bambooRequestMockProvider.mockUpdatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */,
                 Optional.empty());
 
@@ -504,7 +503,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws Exception {
-        var repositorySlug = UrlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+        var repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(repositorySlug, projectKey, users);
     }
 

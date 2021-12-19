@@ -38,9 +38,12 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     private final GitService gitService;
 
-    public AbstractVersionControlService(ApplicationContext applicationContext, GitService gitService) {
+    protected final UrlService urlService;
+
+    public AbstractVersionControlService(ApplicationContext applicationContext, GitService gitService, UrlService urlService) {
         this.applicationContext = applicationContext;
         this.gitService = gitService;
+        this.urlService = urlService;
     }
 
     /**
@@ -130,6 +133,6 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     @Override
     public String getRepositoryName(VcsRepositoryUrl repositoryUrl) {
-        return UrlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+        return urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
     }
 }

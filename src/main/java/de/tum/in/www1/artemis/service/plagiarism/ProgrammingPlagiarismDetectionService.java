@@ -70,9 +70,11 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final PlagiarismWebsocketService plagiarismWebsocketService;
 
+    private final UrlService urlService;
+
     public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, ZipFileService zipFileService,
             GitService gitService, StudentParticipationRepository studentParticipationRepository, PlagiarismResultRepository plagiarismResultRepository,
-            ProgrammingExerciseExportService programmingExerciseExportService, PlagiarismWebsocketService plagiarismWebsocketService) {
+            ProgrammingExerciseExportService programmingExerciseExportService, PlagiarismWebsocketService plagiarismWebsocketService, UrlService urlService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.zipFileService = zipFileService;
@@ -81,6 +83,7 @@ public class ProgrammingPlagiarismDetectionService {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.plagiarismWebsocketService = plagiarismWebsocketService;
+        this.urlService = urlService;
     }
 
     /**
@@ -175,7 +178,7 @@ public class ProgrammingPlagiarismDetectionService {
         final var repoFolder = Paths.get(targetPath, projectKey).toString();
         final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
 
-        final var templateRepoName = UrlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
+        final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
 
         JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
         if (templateRepoName != null) {

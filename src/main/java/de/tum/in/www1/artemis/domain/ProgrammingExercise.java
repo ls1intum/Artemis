@@ -463,7 +463,7 @@ public class ProgrammingExercise extends Exercise {
             case TEMPLATE -> this.getVcsTemplateRepositoryUrl();
             case SOLUTION -> this.getVcsSolutionRepositoryUrl();
             case TESTS -> this.getVcsTestRepositoryUrl();
-            default -> throw new UnsupportedOperationException("Can retrieve URL for repositorytype " + repositoryType);
+            default -> throw new UnsupportedOperationException("Can retrieve URL for repository type " + repositoryType);
         };
     }
 
@@ -501,10 +501,7 @@ public class ProgrammingExercise extends Exercise {
 
     @JsonProperty("sequentialTestRuns")
     public boolean hasSequentialTestRuns() {
-        if (sequentialTestRuns == null) {
-            return false;
-        }
-        return sequentialTestRuns;
+        return Objects.requireNonNullElse(sequentialTestRuns, false);
     }
 
     public void setSequentialTestRuns(Boolean sequentialTestRuns) {
@@ -529,10 +526,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean getTestCasesChanged() {
-        if (testCasesChanged == null) {
-            return false;
-        }
-        return testCasesChanged;
+        return Objects.requireNonNullElse(testCasesChanged, false);
     }
 
     public void setTestCasesChanged(boolean testCasesChanged) {
@@ -581,7 +575,7 @@ public class ProgrammingExercise extends Exercise {
      */
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        return participation.getResults().stream().filter(result -> checkForAssessedResult(result)).collect(Collectors.toSet());
+        return participation.getResults().stream().filter(this::checkForAssessedResult).collect(Collectors.toSet());
     }
 
     /**
@@ -608,7 +602,7 @@ public class ProgrammingExercise extends Exercise {
      * This checks if the current result has a completion date and if the assessment is over
      *
      * @param result The current result
-     * @return true if the result is manual and the assessment is over or it is an automatic result, false otherwise
+     * @return true if the result is manual and the assessment is over, or it is an automatic result, false otherwise
      */
     private boolean checkForAssessedResult(Result result) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());

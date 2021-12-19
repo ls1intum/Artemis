@@ -64,26 +64,29 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final ObjectMapper mapper;
 
+    private final UrlService urlService;
+
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
-            BuildLogEntryService buildLogService) {
+            BuildLogEntryService buildLogService, UrlService urlService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.gitService = gitService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.mapper = mapper;
+        this.urlService = urlService;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
         var additionalRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan().stream()
-                .map(repo -> new AuxiliaryRepository.AuxRepoNameWithSlug(repo.getName(), UrlService.getRepositorySlugFromRepositoryUrl(repo.getVcsRepositoryUrl())))
+                .map(repo -> new AuxiliaryRepository.AuxRepoNameWithSlug(repo.getName(), urlService.getRepositorySlugFromRepositoryUrl(repo.getVcsRepositoryUrl())))
                 .collect(Collectors.toList());
-        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, UrlService.getRepositorySlugFromRepositoryUrl(sourceCodeRepositoryURL),
-                UrlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), UrlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL), additionalRepositories);
+        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromRepositoryUrl(sourceCodeRepositoryURL),
+                urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL), additionalRepositories);
     }
 
     @Override
@@ -102,7 +105,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         final var repositoryUrl = participation.getVcsRepositoryUrl();
         final var projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
         final var planKey = participation.getBuildPlanId();
-        final var repoProjectName = UrlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+        final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, Optional.empty());
         enablePlan(projectKey, planKey);
     }
