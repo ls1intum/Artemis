@@ -455,7 +455,8 @@ describe('CodeEditorContainerIntegration', () => {
         successfulResult.submission = successfulSubmission;
         const expectedBuildLog = new BuildLogEntryArray();
         const unsavedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
-        const saveFilesSubject = new Subject();saveFilesStub.mockReturnValue(saveFilesSubject);
+        const saveFilesSubject = new Subject();
+        saveFilesStub.mockReturnValue(saveFilesSubject);
         container.unsavedFiles = { [unsavedFile]: 'lorem ipsum' };
         container.editorState = EditorState.UNSAVED_CHANGES;
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
