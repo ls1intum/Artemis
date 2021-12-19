@@ -429,10 +429,11 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createAndImportProgrammingExercise() throws Exception {
+    public void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
         setupRepositoryMocks(exercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         exercise.setProjectType(ProjectType.MAVEN);
+        exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         var sourceExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
