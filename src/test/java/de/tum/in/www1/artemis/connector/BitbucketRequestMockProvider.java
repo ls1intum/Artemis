@@ -160,23 +160,20 @@ public class BitbucketRequestMockProvider {
         final var projectKey = exercise.getProjectKey();
         final var repoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
         for (User user : users) {
-            if (exercise.isCourseExercise()) {
-                // add mock for userExists() check, if the username contains edx_ or u4i_
-                String loginName = user.getLogin();
-                if (userPrefixEdx.isPresent() && loginName.startsWith(userPrefixEdx.get()) || userPrefixU4I.isPresent() && loginName.startsWith(userPrefixU4I.get())) {
-                    if (ltiUserExists) {
-                        mockUserExists(loginName);
-                    }
-                    else {
-                        mockUserDoesNotExist(loginName);
-                        String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
-                        mockCreateUser(loginName, passwordService.decryptPassword(user.getPassword()), user.getEmail(), displayName);
-                        mockAddUserToGroups();
-                    }
+            // add mock for userExists() check, if the username contains edx_ or u4i_
+            String loginName = user.getLogin();
+            if (userPrefixEdx.isPresent() && loginName.startsWith(userPrefixEdx.get()) || userPrefixU4I.isPresent() && loginName.startsWith(userPrefixU4I.get())) {
+                if (ltiUserExists) {
+                    mockUserExists(loginName);
                 }
-                mockGiveWritePermission(exercise, repoName, user.getLogin(), HttpStatus.OK);
+                else {
+                    mockUserDoesNotExist(loginName);
+                    String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
+                    mockCreateUser(loginName, passwordService.decryptPassword(user.getPassword()), user.getEmail(), displayName);
+                    mockAddUserToGroups();
+                }
             }
-            // exam exercises receive write permissions when the exam starts
+            mockGiveWritePermission(exercise, repoName, user.getLogin(), HttpStatus.OK);
         }
         mockProtectBranches(exercise, repoName);
     }
