@@ -143,7 +143,7 @@ describe('Exam assessment', () => {
                 examStartEnd.startExam();
                 cy.contains(exerciseTitle).click();
                 textEditor.typeSubmission(textSubmission.text);
-                textEditor.submit().then((submissionResponse) => {
+                textEditor.saveAndContinue().then((submissionResponse) => {
                     expect(submissionResponse.response?.statusCode).to.equal(200);
                 });
                 examNavigation.handInEarly();
