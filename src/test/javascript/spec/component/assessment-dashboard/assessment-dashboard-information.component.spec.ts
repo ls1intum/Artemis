@@ -1,7 +1,10 @@
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { AssessmentDashboardInformationComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
+import {
+    AssessmentDashboardInformationComponent,
+    AssessmentDashboardInformationEntry,
+} from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { PieChartModule } from '@swimlane/ngx-charts';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -12,6 +15,7 @@ import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 describe('AssessmentDashboardInformationComponent', () => {
     let component: AssessmentDashboardInformationComponent;
     let fixture: ComponentFixture<AssessmentDashboardInformationComponent>;
+    let setupGraphStub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -29,30 +33,75 @@ describe('AssessmentDashboardInformationComponent', () => {
     });
 
     it('should display open and closed assessments correctly', () => {
-        const totalAssessments = {
-            inTime: 150,
-            late: 460,
-        } as DueDateStat;
+        const totalAssessments = new DueDateStat();
+        totalAssessments.inTime = 150;
+        totalAssessments.late = 460;
 
-        const submissions = {
-            inTime: 400,
-            late: 350,
-        } as DueDateStat;
+        const submissions = new DueDateStat();
+        submissions.inTime = 400;
+        submissions.late = 350;
 
         component.totalNumberOfAssessments = totalAssessments;
         component.numberOfSubmissions = submissions;
         const setupSpy = jest.spyOn(component, 'setup');
         const setupLinksSpy = jest.spyOn(component, 'setupLinks');
+        setupGraphStub = jest.spyOn(component, 'setupGraph');
 
-        component.ngOnChanges();
+        component.ngOnInit();
 
         expect(setupSpy).toHaveBeenCalledTimes(1);
         expect(setupLinksSpy).toHaveBeenCalledTimes(1);
+        expect(setupGraphStub).toHaveBeenCalledTimes(1);
 
-        console.log(component.assessments);
-        console.log(component.totalNumberOfAssessments);
-        console.log(component.numberOfSubmissions.total);
+        expect(component.customColors[0].name).toBe('artemisApp.exerciseAssessmentDashboard.openAssessments');
+        expect(component.customColors[1].name).toBe('artemisApp.exerciseAssessmentDashboard.closedAssessments');
         expect(component.assessments[0].value).toBe(140);
         expect(component.assessments[1].value).toBe(610);
+    });
+
+    it('should set up links correctly', () => {
+        component.isExamMode = false;
+        component.examId = 42;
+        component.courseId = 10;
+
+        setupGraphStub = jest.spyOn(component, 'setupGraph').mockImplementation();
+
+        component.ngOnInit();
+
+        expect(component.complaintsLink).toEqual(['/course-management', 10, 'complaints']);
+        expect(component.moreFeedbackRequestsLink).toEqual(['/course-management', 10, 'more-feedback-requests']);
+        expect(component.assessmentLocksLink).toEqual(['/course-management', 10, 'assessment-locks']);
+        expect(component.ratingsLink).toEqual(['/course-management', 10, 'ratings']);
+
+        component.isExamMode = true;
+
+        component.ngOnChanges();
+
+        expect(component.complaintsLink).toEqual(['/course-management', 10, 'exams', 42, 'complaints']);
+        expect(component.moreFeedbackRequestsLink).toEqual(['/course-management', 10, 'exams', 42, 'more-feedback-requests']);
+        expect(component.assessmentLocksLink).toEqual(['/course-management', 10, 'exams', 42, 'assessment-locks']);
+    });
+
+    it('should handle language changes', () => {
+        const translateService = fixture.debugElement.injector.get(TranslateService);
+        setupGraphStub = jest.spyOn(component, 'setupGraph').mockImplementation();
+        component.ngOnInit();
+        translateService.use('de');
+
+        expect(setupGraphStub).toHaveBeenCalledTimes(2);
+    });
+
+    it('should compute the right total/missing ratio', () => {
+        const complaints = new AssessmentDashboardInformationEntry(0, 10, undefined);
+
+        expect(complaints.doneToTotalPercentage).toBe('');
+
+        complaints.done = 2;
+
+        expect(complaints.doneToTotalPercentage).toBe('100%');
+
+        complaints.total = 3;
+
+        expect(complaints.doneToTotalPercentage).toBe('67%');
     });
 });
