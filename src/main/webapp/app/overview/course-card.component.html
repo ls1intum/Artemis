@@ -1,5 +1,10 @@
 <div class="card" [class.guided-tour]="hasGuidedTour">
-    <div class="card-header text-white" [routerLink]="['/courses', course.id!]" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
+    <div
+        id="course-{{ course.id }}-header"
+        class="card-header text-white"
+        [routerLink]="['/courses', course.id!]"
+        [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }"
+    >
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="container">
             <div class="row d-flex">
