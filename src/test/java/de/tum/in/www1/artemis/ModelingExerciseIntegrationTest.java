@@ -22,9 +22,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -38,9 +38,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Autowired
     private ModelingExerciseRepository modelingExerciseRepository;
-
-    @Autowired
-    private DatabaseUtilService databaseUtilService;
 
     @Autowired
     private UserRepository userRepo;
@@ -60,13 +57,16 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Autowired
     private CourseRepository courseRepo;
 
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
+
     private ModelingExercise classExercise;
 
     private List<GradingCriterion> gradingCriteria;
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(1, 1, 0, 1);
+        database.addUsers(2, 1, 0, 1);
         Course course = database.addCourseWithOneModelingExercise();
         classExercise = (ModelingExercise) course.getExercises().iterator().next();
 
@@ -186,7 +186,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
         // Create a new course with different id.
         Long newCourseId = oldCourseId + 1;
-        Course newCourse = databaseUtilService.createCourse(newCourseId);
+        Course newCourse = database.createCourse(newCourseId);
 
         // Assign new course to the modeling exercise.
         createdModelingExercise.setCourse(newCourse);
@@ -251,6 +251,38 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         modelingExerciseRepository.save(modelingExercise);
 
         request.postWithResponseBody("/api/modeling-exercises/", invalidDates.applyTo(modelingExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateModelingExerciseDueDate() throws Exception {
+        final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
+
+        {
+            final ModelingSubmission submission1 = ModelFactory.generateModelingSubmission("model1", true);
+            database.addModelingSubmission(classExercise, submission1, "student1");
+            final ModelingSubmission submission2 = ModelFactory.generateModelingSubmission("model2", false);
+            database.addModelingSubmission(classExercise, submission2, "student2");
+
+            final var participations = studentParticipationRepository.findByExerciseId(classExercise.getId());
+            assertThat(participations).hasSize(2);
+            participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+            participations.get(1).setIndividualDueDate(individualDueDate);
+            studentParticipationRepository.saveAll(participations);
+        }
+
+        classExercise.setDueDate(ZonedDateTime.now().plusHours(12));
+        request.put("/api/modeling-exercises/", classExercise, HttpStatus.OK);
+
+        {
+            final var participations = studentParticipationRepository.findByExerciseId(classExercise.getId());
+            final var withNoIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+            assertThat(withNoIndividualDueDate).hasSize(1);
+
+            final var withIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() != null).toList();
+            assertThat(withIndividualDueDate).hasSize(1);
+            assertThat(withIndividualDueDate.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(individualDueDate);
+        }
     }
 
     @Test

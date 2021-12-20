@@ -100,20 +100,23 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
-     * <ol>
-     * <li>The release date is in the future --> Schedule combine template commits</li>
+     * <ul>
+     * <li>The release date is in the future → Schedule combine template commits</li>
      * <li>The build and test student submissions after deadline date is in the future</li>
      * <li>Manual assessment is enabled and the due date is in the future</li>
-     * </ol>
+     * <li>There are participations in the exercise with individual due dates in the future</li>
+     * </ul>
      *
      * @param now the current time
      * @return List of the exercises that should be scheduled
      */
     @Query("""
             select distinct pe from ProgrammingExercise pe
+            left join pe.studentParticipations participation
             where pe.releaseDate > :#{#now}
                 or pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#now}
                 or (pe.assessmentType <> 'AUTOMATIC' and pe.dueDate > :#{#now})
+                or (participation.individualDueDate is not null and participation.individualDueDate > :#{#now})
             """)
     List<ProgrammingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 

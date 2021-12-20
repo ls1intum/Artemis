@@ -23,6 +23,10 @@
                 "label": "Remove presentation",
                 "error": "Could not remove presentation. Please try again."
             },
+            "updateDueDates": {
+                "success": "Updated the individual due dates for {{ count }} participants.",
+                "error": "The individual due dates could not be updated."
+            },
             "detail": {
                 "title": "Participation"
             },
@@ -30,6 +34,7 @@
             "buildPlanId": "Build Plan Id",
             "initializationState": "Status",
             "initializationDate": "Participation Start Date",
+            "individualDueDate": "Individual Due Date",
             "initializationNotYetStarted": "Not yet started",
             "presentationScore": "Presentation Score",
             "results": "Results",
