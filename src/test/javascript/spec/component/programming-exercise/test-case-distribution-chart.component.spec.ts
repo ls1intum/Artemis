@@ -75,6 +75,7 @@ describe('Test case distribution chart', () => {
         fixture = TestBed.createComponent(TestCaseDistributionChartComponent);
         component = fixture.componentInstance;
     });
+
     it('should handle no test cases appropriately', () => {
         configureProgrammingExercise();
         component.ngOnChanges();
