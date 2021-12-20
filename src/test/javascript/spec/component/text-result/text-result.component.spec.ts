@@ -205,26 +205,26 @@ describe('TextResultComponent', () => {
             } as TextBlock,
         ];
 
-        const feedbacks = [
+        const feedback = [
             {
                 id: 1,
                 detailText: 'feedback1',
                 credits: 1,
                 reference: 'ed462aaf735fe740a260660cbbbfbcc0ee66f98f',
-                gradingInstruction: gradingInstruction,
+                gradingInstruction,
             } as Feedback,
             {
                 id: 2,
                 detailText: 'feedback2',
                 credits: 1,
                 reference: 'ed462aaf735fe740a260660cbcbfbcc0ee66f98a',
-                gradingInstruction: gradingInstruction,
+                gradingInstruction,
             } as Feedback,
         ];
 
         submission.blocks = blocks;
         result.submission = submission;
-        result.feedbacks = feedbacks;
+        result.feedbacks = feedback;
 
         component.result = result;
 

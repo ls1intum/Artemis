@@ -305,14 +305,14 @@ describe('FileUploadSubmissionComponent', () => {
                 id: 1,
                 detailText: 'feedback1',
                 credits: 1,
-                gradingInstruction: gradingInstruction,
+                gradingInstruction,
                 type: FeedbackType.MANUAL_UNREFERENCED,
             } as Feedback,
             {
                 id: 2,
                 detailText: 'feedback2',
                 credits: 1,
-                gradingInstruction: gradingInstruction,
+                gradingInstruction,
                 type: FeedbackType.MANUAL_UNREFERENCED,
             } as Feedback,
         ];
