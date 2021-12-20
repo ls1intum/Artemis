@@ -28,6 +28,7 @@ const packageName = 'de.test';
 describe('Exam participation', () => {
     let course: any;
     let exam: any;
+    let quizExercise: any;
 
     before(() => {
         cy.login(users.getAdmin());
@@ -53,7 +54,9 @@ describe('Exam participation', () => {
                     courseRequests.createModelingExercise({ exerciseGroup: groupResponse.body });
                 });
                 courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
-                    courseRequests.createQuizExercise({ exerciseGroup: groupResponse.body }, [multipleChoiceTemplate]);
+                    courseRequests.createQuizExercise({ exerciseGroup: groupResponse.body }, [multipleChoiceTemplate]).then((quizResponse) => {
+                        quizExercise = quizResponse.body;
+                    });
                 });
                 courseRequests.generateMissingIndividualExams(exam);
                 courseRequests.prepareExerciseStartForExam(exam);
@@ -127,8 +130,8 @@ describe('Exam participation', () => {
     }
 
     function makeQuizExerciseSubmission() {
-        multipleChoiceQuiz.tickAnswerOption(0);
-        multipleChoiceQuiz.tickAnswerOption(2);
+        multipleChoiceQuiz.tickAnswerOption(0, quizExercise.quizQuestions[0].id);
+        multipleChoiceQuiz.tickAnswerOption(2, quizExercise.quizQuestions[0].id);
     }
 
     function handInEarly() {
