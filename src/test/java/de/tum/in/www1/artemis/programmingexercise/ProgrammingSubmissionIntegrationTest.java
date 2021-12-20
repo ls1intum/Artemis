@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -720,6 +722,41 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
         String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
         request.get(url, HttpStatus.FORBIDDEN, String.class);
+    }
+
+    /**
+     * Checks that submissions for a participation with an individual due date are not shown to tutors before this due date has passed.
+     * @param isIndividualDueDateInFuture if the due date is in the future, the submission should not be shown. Otherwise, it should be shown.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetProgrammingSubmissionWithoutAssessmentWithIndividualDueDate(boolean isIndividualDueDateInFuture) throws Exception {
+        // exercise due date in the past
+        exercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.saveAndFlush(exercise);
+
+        final var submission = database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), "student1");
+        if (isIndividualDueDateInFuture) {
+            submission.getParticipation().setIndividualDueDate(ZonedDateTime.now().plusDays(1));
+        }
+        else {
+            submission.getParticipation().setIndividualDueDate(ZonedDateTime.now().minusDays(1));
+        }
+        programmingExerciseStudentParticipationRepository.save((ProgrammingExerciseStudentParticipation) submission.getParticipation());
+        database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
+
+        String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
+
+        if (isIndividualDueDateInFuture) {
+            // the submission should not be returned as the due date is in the future
+            request.get(url, HttpStatus.NOT_FOUND, String.class);
+        }
+        else {
+            ProgrammingSubmission storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
+            assertThat(storedSubmission.getId()).isEqualTo(submission.getId());
+        }
     }
 
     @Test

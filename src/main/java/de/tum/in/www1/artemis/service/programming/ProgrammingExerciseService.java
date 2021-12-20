@@ -54,6 +54,8 @@ public class ProgrammingExerciseService {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final ParticipationRepository participationRepository;
+
     private final ParticipationService participationService;
 
     private final UserRepository userRepository;
@@ -78,8 +80,9 @@ public class ProgrammingExerciseService {
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
-            ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ResourceLoaderService resourceLoaderService,
-            GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+            ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -87,6 +90,7 @@ public class ProgrammingExerciseService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.participationRepository = participationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.userRepository = userRepository;
@@ -380,6 +384,8 @@ public class ProgrammingExerciseService {
 
         final ProgrammingExercise programmingExerciseBeforeUpdate = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
 
         // TODO: in case of an exam exercise, this is not necessary
         scheduleOperations(programmingExercise.getId());
