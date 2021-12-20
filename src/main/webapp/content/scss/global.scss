@@ -316,6 +316,11 @@ Custom alerts for notification
         display: flex;
         justify-content: space-between;
 
+        .close {
+            background: none;
+            border: none;
+        }
+
         pre {
             background: none;
             border: none;
