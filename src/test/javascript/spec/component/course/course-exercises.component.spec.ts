@@ -13,7 +13,7 @@ import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { CourseExercisesComponent, ExerciseFilter, ExerciseSortingOrder } from 'app/overview/course-exercises/course-exercises.component';
+import { CourseExercisesComponent, ExerciseFilter, ExerciseSortingOrder, SortingAttribute } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
