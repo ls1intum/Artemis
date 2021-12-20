@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -77,6 +79,15 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(username = "student3")
     public void submitFileUploadSubmission() throws Exception {
         submitFile("file.png", false);
+    }
+
+    @Test
+    @WithMockUser(username = "student3")
+    public void testRepositoryMethods() {
+        assertThrows(EntityNotFoundException.class, () -> fileUploadSubmissionRepository.findByIdElseThrow(Long.MAX_VALUE));
+        assertThrows(EntityNotFoundException.class,
+                () -> fileUploadSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(Long.MAX_VALUE));
+        assertThrows(EntityNotFoundException.class, () -> fileUploadSubmissionRepository.findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(Long.MAX_VALUE));
     }
 
     @Test

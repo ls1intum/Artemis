@@ -390,6 +390,9 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         courseRepo.addOrganizationToCourse(course1.getId(), organization);
 
         userRepo.addOrganizationToUser(users.get(0).getId(), organization);
+        // invoked remove to make sure it works correctly
+        userRepo.removeOrganizationFromUser(users.get(0).getId(), organization);
+        userRepo.addOrganizationToUser(users.get(0).getId(), organization);
 
         Organization result = request.get("/api/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
         Organization resultWithCoursesAndUsers = request.get("/api/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);

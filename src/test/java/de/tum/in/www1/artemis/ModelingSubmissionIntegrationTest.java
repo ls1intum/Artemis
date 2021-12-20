@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -583,6 +585,10 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getAllModelingSubmissions() throws Exception {
+        assertThrows(EntityNotFoundException.class, () -> modelingSubmissionRepo.findByIdElseThrow(Long.MAX_VALUE));
+        assertThrows(EntityNotFoundException.class, () -> modelingSubmissionRepo.findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(Long.MAX_VALUE));
+        assertThrows(EntityNotFoundException.class, () -> modelingSubmissionRepo.findByIdWithEagerResultAndFeedbackElseThrow(Long.MAX_VALUE));
+
         createNineLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
         ModelingSubmission newSubmission = ModelFactory.generateModelingSubmission(validModel, true);
         database.addModelingSubmission(useCaseExercise, newSubmission, "student1");

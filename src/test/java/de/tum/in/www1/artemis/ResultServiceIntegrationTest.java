@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
@@ -38,6 +39,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -609,6 +611,11 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void deleteResult() throws Exception {
+        assertThrows(EntityNotFoundException.class, () -> resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(Long.MAX_VALUE));
+        assertThrows(EntityNotFoundException.class, () -> resultRepository.findByIdElseThrow(Long.MAX_VALUE));
+        assertThrows(EntityNotFoundException.class, () -> resultRepository.findByIdWithEagerFeedbacksElseThrow(Long.MAX_VALUE));
+        assertThrows(EntityNotFoundException.class, () -> resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(Long.MAX_VALUE));
+
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
         request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK);

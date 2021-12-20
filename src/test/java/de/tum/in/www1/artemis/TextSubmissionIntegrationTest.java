@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -25,6 +26,8 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -82,6 +85,15 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+    }
+
+    @Test
+    @WithMockUser(username = "student3")
+    public void testRepositoryMethods() {
+        assertThrows(EntityNotFoundException.class, () -> submissionRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(Long.MAX_VALUE));
+        assertThrows(EntityNotFoundException.class, () -> submissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(Long.MAX_VALUE));
+        assertThrows(BadRequestAlertException.class, () -> submissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(Long.MAX_VALUE));
+        assertThrows(BadRequestAlertException.class, () -> submissionRepository.findByIdWithEagerParticipationExerciseResultAssessorElseThrow(Long.MAX_VALUE));
     }
 
     @Test

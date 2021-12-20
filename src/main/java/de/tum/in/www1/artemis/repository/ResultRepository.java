@@ -663,18 +663,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return the result
      */
-    default Result findOneElseThrow(long resultId) {
+    default Result findByIdElseThrow(long resultId) {
         return findById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
-    }
-
-    /**
-     * Get a distinct result from the database by its submissionId, else throws an EntityNotFoundException
-     *
-     * @param submissionId the id of the result to load from the database
-     * @return the result, else throws an EntityNotFoundException
-     */
-    default Result findDistinctBySubmissionIdElseThrow(Long submissionId) {
-        return findDistinctBySubmissionId(submissionId).orElseThrow(() -> new EntityNotFoundException("Result with submissionId", submissionId));
     }
 
     /**
@@ -683,8 +673,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return the result with submission and feedback list
      */
-    default Result findOneWithEagerSubmissionAndFeedback(long resultId) {
-        return findWithEagerSubmissionAndFeedbackById(resultId).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + resultId + "\" does not exist"));
+    default Result findByIdWithEagerSubmissionAndFeedbackElseThrow(long resultId) {
+        return findWithEagerSubmissionAndFeedbackById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
     }
 
     /**
@@ -695,7 +685,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return the result with the given id
      */
     default Result findByIdWithEagerFeedbacksElseThrow(long resultId) {
-        return findByIdWithEagerFeedbacks(resultId).orElseThrow(() -> new EntityNotFoundException("Submission", +resultId));
+        return findByIdWithEagerFeedbacks(resultId).orElseThrow(() -> new EntityNotFoundException("Submission", resultId));
     }
 
     /**
@@ -709,7 +699,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         for (ExampleSubmission exampleSubmission : exampleSubmissions) {
             Submission submission = exampleSubmission.getSubmission();
             if (!submission.isEmpty()) {
-                Result result = findOneWithEagerSubmissionAndFeedback(submission.getLatestResult().getId());
+                Result result = findByIdWithEagerSubmissionAndFeedbackElseThrow(submission.getLatestResult().getId());
                 results.add(result);
             }
         }
