@@ -100,7 +100,7 @@ describe('SCA category distribution chart', () => {
         });
     });
 
-    it('should handle negative penalies', () => {
+    it('should handle negative penalties', () => {
         const negativeCategory = {
             id: 5,
             name: 'negative category',
