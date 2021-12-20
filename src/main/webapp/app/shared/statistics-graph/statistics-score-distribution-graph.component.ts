@@ -45,7 +45,6 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
             this.relativeChartData = new Array(10).fill(0);
         }
         this.ngxData = this.relativeChartData.map((data, index) => ({ name: this.barChartLabels[index], value: data }));
-        this.ngxData = [...this.ngxData];
     }
 
     /**

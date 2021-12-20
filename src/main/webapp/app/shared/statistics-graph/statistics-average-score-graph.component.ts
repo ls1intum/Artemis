@@ -49,7 +49,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
         this.ngxData = this.exerciseAverageScores
             .slice(this.currentPeriod, 10 + this.currentPeriod)
             .map((exercise, index) => ({ name: this.barChartLabels[index], value: exercise.averageScore }));
-        this.ngxData = [...this.ngxData];
     }
 
     // handles arrow clicks and updates the exercises which are shown, forward is boolean since it is either forward or backward
