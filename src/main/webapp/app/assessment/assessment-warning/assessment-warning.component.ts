@@ -43,16 +43,14 @@ export class AssessmentWarningComponent implements OnChanges {
     }
 
     private getLatestDueDate(): dayjs.Dayjs | undefined {
-        if (!this.exercise.dueDate) {
-            return undefined;
-        }
-
-        return this.submissions!.map((submission) => submission.participation?.individualDueDate).reduce((latest, next) => {
-            if (next && next.isAfter(latest)) {
-                return next;
-            } else {
-                return latest;
-            }
-        }, this.exercise.dueDate);
+        return this.submissions
+            .map((submission) => submission.participation?.individualDueDate)
+            .reduce((latest, next) => {
+                if (next && next.isAfter(latest)) {
+                    return next;
+                } else {
+                    return latest;
+                }
+            }, this.exercise.dueDate);
     }
 }
