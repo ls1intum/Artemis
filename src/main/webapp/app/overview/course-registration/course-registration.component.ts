@@ -51,8 +51,8 @@ export class CourseRegistrationComponent implements OnInit {
                 this.alertService.success('artemisApp.studentDashboard.register.registerSuccessful');
                 this.coursesToSelect = this.coursesToSelect.filter((course) => course.id !== courseId);
             },
-            () => {
-                this.alertService.error('error');
+            (error: string) => {
+                this.alertService.error(error);
             },
         );
     }
