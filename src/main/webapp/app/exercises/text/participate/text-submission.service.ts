@@ -6,6 +6,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 export type EntityResponseType = HttpResponse<TextSubmission>;
 
@@ -104,6 +105,7 @@ export class TextSubmissionService {
     private static convertItemFromServer(textSubmission: TextSubmission): TextSubmission {
         const convertedTextSubmission = Object.assign({}, textSubmission);
         setLatestSubmissionResult(convertedTextSubmission, getLatestSubmissionResult(convertedTextSubmission));
+        convertedTextSubmission.participation = ParticipationService.convertParticipationDatesFromServer(textSubmission.participation);
         return convertedTextSubmission;
     }
 

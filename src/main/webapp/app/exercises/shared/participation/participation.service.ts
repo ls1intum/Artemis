@@ -7,7 +7,7 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
 
@@ -120,7 +120,7 @@ export class ParticipationService {
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.initializationDate = res.body.initializationDate ? dayjs(res.body.initializationDate) : undefined;
+            ParticipationService.convertParticipationDatesFromServer(res.body);
             res.body.results = this.submissionService.convertResultsDateFromServer(res.body.results);
             res.body.submissions = this.submissionService.convertSubmissionsDateFromServer(res.body.submissions);
             res.body.exercise = this.convertExerciseDateFromServer(res.body.exercise);
@@ -131,35 +131,39 @@ export class ParticipationService {
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((participation: StudentParticipation) => {
-                this.convertParticipationDateFromServer(participation);
+                ParticipationService.convertParticipationDatesFromServer(participation);
             });
         }
         return res;
     }
 
     protected convertExerciseDateFromServer(exercise?: Exercise) {
-        if (exercise != undefined) {
+        if (exercise) {
             exercise.releaseDate = exercise.releaseDate ? dayjs(exercise.releaseDate) : undefined;
             exercise.dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
         }
         return exercise;
     }
 
-    protected convertParticipationDateFromServer(participation?: StudentParticipation) {
-        if (participation != undefined) {
+    /**
+     * Converts the dates that are part of the participation into a usable format.
+     *
+     * Does not convert dates in dependant attributes (e.g. results, submissions)!
+     * @param participation for which the dates should be converted into the dayjs format.
+     */
+    public static convertParticipationDatesFromServer(participation?: Participation) {
+        if (participation) {
             participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
             participation.individualDueDate = participation.individualDueDate ? dayjs(participation.individualDueDate) : undefined;
-            participation.results = this.submissionService.convertResultsDateFromServer(participation.results);
-            participation.submissions = this.submissionService.convertSubmissionsDateFromServer(participation.submissions);
         }
         return participation;
     }
 
     public convertParticipationsDateFromServer(participations?: StudentParticipation[]) {
         const convertedParticipations: StudentParticipation[] = [];
-        if (participations != undefined && participations.length > 0) {
+        if (participations && participations.length > 0) {
             participations.forEach((participation: StudentParticipation) => {
-                convertedParticipations.push(this.convertParticipationDateFromServer(participation)!);
+                convertedParticipations.push(ParticipationService.convertParticipationDatesFromServer(participation)!);
             });
         }
         return convertedParticipations;

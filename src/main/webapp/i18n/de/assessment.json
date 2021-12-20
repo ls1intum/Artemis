@@ -55,6 +55,7 @@
             },
             "dashboard": {
                 "warning": "Achtung: Die Einreichungsfrist ist noch nicht abgelaufen und Studierende dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen.",
+                "warningIndividual": "Achtung: Die Einreichungsfrist ist zwar abgelaufen aber manche Studierende dürfen noch ihre Einreichungen abgeben. Bitte stelle vor Beginn einer Korrektur sicher, dass dieser Studierende nicht mehr abgeben kann.",
                 "empty": "Keine Abgabe für diese Aufgabe!",
                 "loading": "Laden..",
                 "columns": {

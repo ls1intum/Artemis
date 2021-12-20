@@ -12,6 +12,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
 import { map, tap } from 'rxjs/operators';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -132,7 +133,7 @@ export class ResultService implements IResultService {
 
     private convertParticipationDateFromServer(participation: StudentParticipation): StudentParticipation {
         if (participation) {
-            participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
+            ParticipationService.convertParticipationDatesFromServer(participation);
             if (participation.exercise) {
                 participation.exercise = this.exerciseService.convertExerciseDateFromServer(participation.exercise);
             }

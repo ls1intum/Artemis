@@ -26,6 +26,7 @@ describe('TextSubmission Service', () => {
         httpMock = injector.get(HttpTestingController);
 
         elemDefault = new TextSubmission();
+        elemDefault.participation = undefined;
         mockResponse = {
             submissionExerciseType: 'text',
             id: 1,
@@ -111,6 +112,7 @@ describe('TextSubmission Service', () => {
         const exerciseId = 1;
         elemDefault = new TextSubmission();
         elemDefault.latestResult = undefined;
+        elemDefault.participation = undefined;
         const returnedFromService = [elemDefault];
         const expected = returnedFromService;
         service

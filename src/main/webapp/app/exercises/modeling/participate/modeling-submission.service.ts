@@ -7,6 +7,7 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
@@ -141,6 +142,7 @@ export class ModelingSubmissionService {
     private static convertItemFromServer(modelingSubmission: ModelingSubmission): ModelingSubmission {
         const convertedModelingSubmission = Object.assign({}, modelingSubmission);
         setLatestSubmissionResult(convertedModelingSubmission, getLatestSubmissionResult(convertedModelingSubmission));
+        convertedModelingSubmission.participation = ParticipationService.convertParticipationDatesFromServer(modelingSubmission.participation);
         return convertedModelingSubmission;
     }
 
