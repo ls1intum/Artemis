@@ -35,8 +35,7 @@ export class ParticipationService {
         const copies = participations.map((participation) => this.convertDateFromClient(participation));
         return this.http
             .put<StudentParticipation[]>(SERVER_API_URL + `api/exercises/${exerciseId}/participations/update-individual-due-date`, copies, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
-            .pipe(map((res: EntityArrayResponseType) => this.adjustRepositoryUrlArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
     find(participationId: number): Observable<EntityResponseType> {
