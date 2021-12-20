@@ -58,7 +58,7 @@
             "limit": "Limit",
             "usageCountHint": "This number specifies how many times the score of this instruction may be included in the final score.",
             "creditsHint": "This number specifies the score for this instruction.",
-            "gradingScaleHint": "The grading scale defines the lower and upper limit for assessing student performance levels with this grading instruction.",
+            "gradingScaleHint": "The scale describes the performance level for the instruction. Some examples are excellent, good, average, poor.",
             "descriptionHint": "The description of a particular performance level may include additional notes about when to apply this instruction.",
             "feedbackHint": "Feedback is an explanatory text for the students in order to better understand their performance level.",
             "dragDropInstruction": "Drag & Drop the assessment instruction to feedback element",
