@@ -17,7 +17,7 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { FileService } from 'app/shared/http/file.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -111,7 +111,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     this.fileUploadExercise &&
                     !!this.fileUploadExercise.dueDate &&
                     !!this.participation.initializationDate &&
-                    dayjs(this.participation.initializationDate).isAfter(this.fileUploadExercise.dueDate);
+                    dayjs(this.participation.initializationDate).isAfter(getExerciseDueDate(this.fileUploadExercise, this.participation));
 
                 this.acceptedFileExtensions = this.fileUploadExercise
                     .filePattern!.split(',')
@@ -230,7 +230,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return !this.examMode && this.fileUploadExercise && (!this.fileUploadExercise.dueDate || !dayjs(this.fileUploadExercise.dueDate).isBefore(dayjs()));
+        return !this.examMode && this.fileUploadExercise && !hasExerciseDueDatePassed(this.fileUploadExercise, this.participation);
     }
 
     get submitButtonTooltip(): string {
