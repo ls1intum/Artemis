@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
@@ -10,6 +12,8 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 
 @Service
 public class UrlService {
+
+    private final Logger log = LoggerFactory.getLogger(UrlService.class);
 
     /**
      * Gets the repository slug from the given repository URL, see {@link #getRepositorySlugFromUrl}
@@ -22,16 +26,19 @@ public class UrlService {
         return getRepositorySlugFromUrl(repositoryUrl.getURL());
     }
 
+    /**
+     * gets the repository slug from the given repository URL string, see {@link #getRepositorySlugFromUrl}
+     * @param repositoryUrl The repository url as string
+     * @return The repository slug
+     * @throws VersionControlException if the URL is invalid and no repository slug could be extracted
+     */
     public String getRepositorySlugFromRepositoryUrlString(String repositoryUrl) throws VersionControlException {
         try {
-            String slug = getRepositorySlugFromUrl(new URL(repositoryUrl));
-            System.out.println(slug);
-            return slug;
+            return getRepositorySlugFromUrl(new URL(repositoryUrl));
         }
         catch (MalformedURLException e) {
-            e.printStackTrace();
-            // TODO: better handling
-            return null;
+            log.error("Cannot get repository slug from repository url string {}", repositoryUrl, e);
+            throw new VersionControlException("Repository URL is not a git URL! Can't get repository slug for " + repositoryUrl);
         }
     }
 
