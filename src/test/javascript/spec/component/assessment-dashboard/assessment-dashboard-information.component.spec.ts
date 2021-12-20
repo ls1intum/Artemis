@@ -15,7 +15,6 @@ import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 describe('AssessmentDashboardInformationComponent', () => {
     let component: AssessmentDashboardInformationComponent;
     let fixture: ComponentFixture<AssessmentDashboardInformationComponent>;
-    let setupGraphStub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -45,13 +44,13 @@ describe('AssessmentDashboardInformationComponent', () => {
         component.numberOfSubmissions = submissions;
         const setupSpy = jest.spyOn(component, 'setup');
         const setupLinksSpy = jest.spyOn(component, 'setupLinks');
-        setupGraphStub = jest.spyOn(component, 'setupGraph');
+        const setupGraphSpy = jest.spyOn(component, 'setupGraph');
 
         component.ngOnInit();
 
         expect(setupSpy).toHaveBeenCalledTimes(1);
         expect(setupLinksSpy).toHaveBeenCalledTimes(1);
-        expect(setupGraphStub).toHaveBeenCalledTimes(1);
+        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
 
         expect(component.customColors[0].name).toBe('artemisApp.exerciseAssessmentDashboard.openAssessments');
         expect(component.customColors[1].name).toBe('artemisApp.exerciseAssessmentDashboard.closedAssessments');
@@ -64,7 +63,7 @@ describe('AssessmentDashboardInformationComponent', () => {
         component.examId = 42;
         component.courseId = 10;
 
-        setupGraphStub = jest.spyOn(component, 'setupGraph').mockImplementation();
+        jest.spyOn(component, 'setupGraph').mockImplementation();
 
         component.ngOnInit();
 
@@ -84,7 +83,7 @@ describe('AssessmentDashboardInformationComponent', () => {
 
     it('should handle language changes', () => {
         const translateService = fixture.debugElement.injector.get(TranslateService);
-        setupGraphStub = jest.spyOn(component, 'setupGraph').mockImplementation();
+        const setupGraphStub = jest.spyOn(component, 'setupGraph').mockImplementation();
         component.ngOnInit();
         translateService.use('de');
 
