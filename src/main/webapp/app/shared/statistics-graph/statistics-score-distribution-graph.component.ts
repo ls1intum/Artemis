@@ -35,7 +35,6 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
     }
 
     private initializeChart(): void {
-        this.ngxData = [];
         this.barChartLabels = ['[0, 10)', '[10, 20)', '[20, 30)', '[30, 40)', '[40, 50)', '[50, 60)', '[60, 70)', '[70, 80)', '[80, 90)', '[90, 100]'];
         if (this.numberOfExerciseScores && this.numberOfExerciseScores > 0) {
             this.relativeChartData = [];
@@ -45,9 +44,7 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
         } else {
             this.relativeChartData = new Array(10).fill(0);
         }
-        this.relativeChartData.forEach((data, index) => {
-            this.ngxData.push({ name: this.barChartLabels[index], value: data });
-        });
+        this.ngxData = this.relativeChartData.map((data, index) => ({ name: this.barChartLabels[index], value: data }));
         this.ngxData = [...this.ngxData];
     }
 

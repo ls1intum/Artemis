@@ -192,10 +192,7 @@ export class StatisticsGraphComponent implements OnChanges {
      * @private
      */
     private pushToData(): void {
-        this.ngxData = [];
-        this.dataForSpanType.forEach((score, index) => {
-            this.ngxData.push({ name: this.barChartLabels[index], value: score });
-        });
+        this.ngxData = this.dataForSpanType.map((score, index) => ({ name: this.barChartLabels[index], value: score }));
 
         this.ngxData = [...this.ngxData];
         this.yScaleMax = Math.max(3, ...this.dataForSpanType);

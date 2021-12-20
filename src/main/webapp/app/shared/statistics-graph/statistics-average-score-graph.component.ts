@@ -46,11 +46,9 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
 
     private initializeChart(): void {
         this.barChartLabels = this.exerciseAverageScores.slice(this.currentPeriod, 10 + this.currentPeriod).map((exercise) => exercise.exerciseName);
-        const data = this.exerciseAverageScores.slice(this.currentPeriod, 10 + this.currentPeriod).map((exercise) => exercise.averageScore);
-        this.ngxData = [];
-        data.forEach((exerciseScore, index) => {
-            this.ngxData.push({ name: this.barChartLabels[index], value: exerciseScore });
-        });
+        this.ngxData = this.exerciseAverageScores
+            .slice(this.currentPeriod, 10 + this.currentPeriod)
+            .map((exercise, index) => ({ name: this.barChartLabels[index], value: exercise.averageScore }));
         this.ngxData = [...this.ngxData];
     }
 
