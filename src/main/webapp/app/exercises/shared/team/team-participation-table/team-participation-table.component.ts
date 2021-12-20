@@ -49,7 +49,8 @@ export class TeamParticipationTableComponent implements OnInit {
     @Input() isAdmin = false;
     @Input() isTeamOwner = false;
 
-    exercises: ExerciseForTeam[];
+    exercises: ExerciseForTeam[] = [];
+    submissions: Submission[] = [];
     isLoading: boolean;
 
     // Icons
@@ -86,6 +87,7 @@ export class TeamParticipationTableComponent implements OnInit {
                     isAtLeastInstructor: this.accountService.isAtLeastInstructorInCourse(exercise.course!),
                 };
             });
+            this.submissions = this.exercises.filter((exercise) => exercise.submission).map((exercise) => exercise.submission!);
             this.isLoading = false;
         }, this.onError);
     }
@@ -101,6 +103,8 @@ export class TeamParticipationTableComponent implements OnInit {
             exercise.participation = participation;
             exercise.submission = get(exercise, 'participation.submissions[0]', undefined); // only exists for instructor and team tutor
             if (exercise.submission) {
+                exercise.submission.participation = participation;
+
                 setLatestSubmissionResult(exercise.submission, get(exercise, 'participation.results[0]', undefined));
                 // assign this value so that it can be used later on in the view hierarchy (e.g. when updating a result, i.e. overriding an assessment
                 if (exercise.submission.results) {
