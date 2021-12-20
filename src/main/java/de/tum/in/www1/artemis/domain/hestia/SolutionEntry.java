@@ -36,11 +36,11 @@ public class SolutionEntry extends DomainObject {
     private String code;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("solutionEntry")
+    @JsonIgnoreProperties("solutionEntries")
     private CodeHint codeHint;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("solutionEntry")
+    @JsonIgnoreProperties("solutionEntries")
     private ProgrammingExerciseTestCase testCase;
 
     public String getFile() {
