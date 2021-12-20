@@ -641,14 +641,14 @@ public class CourseTestService {
     // Test
     public void testGetCoursesToRegisterAndAccurateTimeZoneEvaluation() throws Exception {
         Course courseActiveRegistrationEnabled = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
-                "tumuser", "tutor", "editor", "instructor");
+                "testuser", "tutor", "editor", "instructor");
         courseActiveRegistrationEnabled.setRegistrationEnabled(true);
         Course courseActiveRegistrationDisabled = ModelFactory.generateCourse(2L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
-                "tumuser", "tutor", "editor", "instructor");
+                "testuser", "tutor", "editor", "instructor");
         courseActiveRegistrationDisabled.setRegistrationEnabled(false);
-        Course courseNotActivePast = ModelFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "tumuser", "tutor",
+        Course courseNotActivePast = ModelFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "testuser", "tutor",
                 "editor", "instructor");
-        Course courseNotActiveFuture = ModelFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "tumuser", "tutor",
+        Course courseNotActiveFuture = ModelFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "testuser", "tutor",
                 "editor", "instructor");
         courseRepo.save(courseActiveRegistrationEnabled);
         courseRepo.save(courseActiveRegistrationDisabled);
