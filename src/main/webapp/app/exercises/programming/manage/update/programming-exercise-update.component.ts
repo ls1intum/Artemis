@@ -27,7 +27,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { faBan, faQuestionCircle, faSave, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationCircle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -677,30 +677,40 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             });
         }
 
-        if (this.programmingExercise.packageName === undefined || this.programmingExercise.packageName === '') {
-            result.push({
-                translateKey: 'artemisApp.exercise.form.packageName.undefined',
-                translateValues: {},
-            });
-        } else {
-            const patternMatchJavaKotlin: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.packageNamePatternForJavaKotlin);
-            const patternMatchSwift: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.appNamePatternForSwift);
-            // window.alert(patternMatchJavaKotlin + ' ; ' + patternMatchSwift);
-            if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)) {
+        // validation on package name has not to be performed for languages Empty, C and Python
+        if (
+            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.C &&
+            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.PYTHON &&
+            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.EMPTY
+        ) {
+            if (this.programmingExercise.packageName === undefined || this.programmingExercise.packageName === '') {
                 result.push({
-                    translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                    translateKey: 'artemisApp.exercise.form.packageName.undefined',
                     translateValues: {},
                 });
-            } else if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN && (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)) {
-                result.push({
-                    translateKey: 'artemisApp.exercise.form.packageName.pattern.KOTLIN',
-                    translateValues: {},
-                });
-            } else if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.SWIFT && (patternMatchSwift === null || patternMatchSwift.length === 0)) {
-                result.push({
-                    translateKey: 'artemisApp.exercise.form.packageName.pattern.SWIFT',
-                    translateValues: {},
-                });
+            } else {
+                const patternMatchJavaKotlin: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.packageNamePatternForJavaKotlin);
+                const patternMatchSwift: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.appNamePatternForSwift);
+                // window.alert(patternMatchJavaKotlin + ' ; ' + patternMatchSwift);
+                if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)) {
+                    result.push({
+                        translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                        translateValues: {},
+                    });
+                } else if (
+                    this.programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN &&
+                    (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)
+                ) {
+                    result.push({
+                        translateKey: 'artemisApp.exercise.form.packageName.pattern.KOTLIN',
+                        translateValues: {},
+                    });
+                } else if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.SWIFT && (patternMatchSwift === null || patternMatchSwift.length === 0)) {
+                    result.push({
+                        translateKey: 'artemisApp.exercise.form.packageName.pattern.SWIFT',
+                        translateValues: {},
+                    });
+                }
             }
         }
 

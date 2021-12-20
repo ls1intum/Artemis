@@ -585,6 +585,16 @@ describe('ProgrammingExercise Management Update Component', () => {
                 translateValues: {},
             });
         });
+
+        it('should find no package name related validation error for languages that do not need a package name', () => {
+            for (const programmingLanguage of [ProgrammingLanguage.C, ProgrammingLanguage.EMPTY, ProgrammingLanguage.PYTHON]) {
+                comp.programmingExercise.programmingLanguage = programmingLanguage;
+                expect(comp.getInvalidReasons()).not.toContainEqual({
+                    translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                    translateValues: {},
+                });
+            }
+        });
     });
 });
 
