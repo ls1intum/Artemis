@@ -63,9 +63,9 @@
                     <span class="next-exercise-title">{{ nextRelevantExercise.title }}</span>
                 </div>
                 <div class="col-3 next-exercise-col text-nowrap">
-                    <div *ngIf="nextRelevantExercise.dueDate">
+                    <div *ngIf="nextExerciseDueDate">
                         <h6>{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}:</h6>
-                        <h6>{{ nextRelevantExercise.dueDate | artemisTimeAgo }}</h6>
+                        <h6>{{ nextExerciseDueDate | artemisTimeAgo }}</h6>
                     </div>
                 </div>
             </div>
