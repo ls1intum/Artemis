@@ -535,8 +535,9 @@ public class CourseResource {
         log.debug("REST request to get all currently active Courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
+        List<Course> allRegisteredCourses = courseService.findAllActiveForUser(user);
         List<Course> allCoursesToRegister = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations();
-        return allCoursesToRegister.stream().filter(course -> {
+        List<Course> registrableCourses = allCoursesToRegister.stream().filter(course -> {
             // further check if course has been assigned to any organization and if yes,
             // check if user is member of at least one of them
             if (course.getOrganizations() != null && course.getOrganizations().size() > 0) {
@@ -546,6 +547,8 @@ public class CourseResource {
                 return true;
             }
         }).collect(Collectors.toList());
+        registrableCourses.removeAll(allRegisteredCourses);
+        return registrableCourses;
     }
 
     /**
