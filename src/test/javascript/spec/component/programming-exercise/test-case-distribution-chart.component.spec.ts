@@ -86,6 +86,7 @@ describe('Test case distribution chart', () => {
         expect(component.ngxWeightData[1].series).toHaveLength(0);
         expect(component.ngxPointsData[0].series).toHaveLength(0);
     });
+
     it('should process the test cases correctly', () => {
         configureComponent([testCase]);
 
