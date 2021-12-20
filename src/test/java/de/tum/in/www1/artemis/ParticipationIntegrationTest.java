@@ -6,8 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -447,6 +446,188 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
         participation = participationRepo.save(participation);
         request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateIndividualDueDateExamExercise() throws Exception {
+        final FileUploadExercise exercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
+        StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, database.getUserByLogin("student1"));
+        participation = participationRepo.save(participation);
+        participation.setIndividualDueDate(ZonedDateTime.now().plusDays(3));
+
+        final var participationsToUpdate = new StudentParticipationList(participation);
+        request.putAndExpectError(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate, HttpStatus.BAD_REQUEST,
+                "examexercise");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateIndividualDueDateQuizExercise() throws Exception {
+        final Course course = database.addCourseWithOneQuizExercise();
+        final QuizExercise exercise = (QuizExercise) course.getExercises().stream().findFirst().get();
+        StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, database.getUserByLogin("student1"));
+        participation = participationRepo.save(participation);
+        participation.setIndividualDueDate(ZonedDateTime.now().plusDays(3));
+
+        final var participationsToUpdate = new StudentParticipationList(participation);
+        request.putAndExpectError(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate, HttpStatus.BAD_REQUEST,
+                "quizexercise");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateIndividualDueDateOk() throws Exception {
+        final var course = database.addCourseWithFileUploadExercise();
+        var exercise = (FileUploadExercise) course.getExercises().stream().findAny().get();
+        exercise.setDueDate(ZonedDateTime.now().plusHours(2));
+        exercise = exerciseRepo.save(exercise);
+
+        var submission = database.addFileUploadSubmission(exercise, ModelFactory.generateFileUploadSubmission(true), "student1");
+        submission.getParticipation().setIndividualDueDate(ZonedDateTime.now().plusDays(1));
+
+        final var participationsToUpdate = new StudentParticipationList((StudentParticipation) submission.getParticipation());
+        final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
+                StudentParticipation.class, HttpStatus.OK);
+
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(submission.getParticipation().getIndividualDueDate());
+
+        verify(programmingExerciseScheduleService, never()).updateScheduling(any());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateIndividualDueDateProgrammingExercise() throws Exception {
+        final var course = database.addCourseWithOneProgrammingExercise();
+        var exercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
+        exercise.setDueDate(ZonedDateTime.now().plusHours(2));
+        exercise = exerciseRepo.save(exercise);
+
+        final var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        participation.setIndividualDueDate(ZonedDateTime.now().plusHours(20));
+
+        // due date before exercise due date ⇒ should be ignored
+        final var participation2 = database.addStudentParticipationForProgrammingExercise(exercise, "student2");
+        participation2.setIndividualDueDate(ZonedDateTime.now().plusHours(1));
+
+        doNothing().when(programmingExerciseParticipationService).unlockStudentRepository(exercise, participation);
+
+        final var participationsToUpdate = new StudentParticipationList(participation, participation2);
+        final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
+                StudentParticipation.class, HttpStatus.OK);
+
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(participation.getIndividualDueDate());
+
+        verify(programmingExerciseScheduleService, times(1)).updateScheduling(exercise);
+        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepository(exercise, participation);
+        verify(programmingExerciseParticipationService, never()).unlockStudentRepository(exercise, participation2);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateIndividualDueDateUnchanged() throws Exception {
+        final var course = database.addCourseWithOneProgrammingExercise();
+        var exercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
+        exercise.setDueDate(ZonedDateTime.now().plusHours(2));
+        exercise = exerciseRepo.save(exercise);
+
+        final var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
+                StudentParticipation.class, HttpStatus.OK);
+
+        assertThat(response).isEmpty();
+        verify(programmingExerciseScheduleService, never()).updateScheduling(exercise);
+        verify(programmingExerciseParticipationService, never()).unlockStudentRepository(exercise, participation);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateIndividualDueDateNoExerciseDueDate() throws Exception {
+        final var course = database.addCourseWithOneProgrammingExercise();
+        var exercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
+        exercise.setDueDate(null);
+        exercise = exerciseRepo.save(exercise);
+
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        participation.setIndividualDueDate(ZonedDateTime.now().plusHours(4));
+
+        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
+                StudentParticipation.class, HttpStatus.OK);
+
+        assertThat(response).isEmpty(); // individual due date should remain null
+        verify(programmingExerciseScheduleService, never()).updateScheduling(exercise);
+        verify(programmingExerciseParticipationService, never()).unlockStudentRepository(exercise, participation);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExerciseIndividualDueDateInFuture() throws Exception {
+        final var course = database.addCourseWithOneProgrammingExercise();
+        var exercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
+        exercise.setDueDate(ZonedDateTime.now().minusHours(4));
+        exercise = exerciseRepo.save(exercise);
+
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        participation.setIndividualDueDate(ZonedDateTime.now().plusHours(6));
+        participation = participationRepo.save(participation);
+
+        participation.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+
+        doNothing().when(programmingExerciseParticipationService).unlockStudentRepository(exercise, participation);
+
+        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
+                StudentParticipation.class, HttpStatus.OK);
+
+        assertThat(response).hasSize(1);
+        verify(programmingExerciseScheduleService, times(1)).updateScheduling(exercise);
+        // make sure the student repo is unlocked as the due date is in the future
+        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepository(exercise, participation);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExerciseIndividualDueDateInPast() throws Exception {
+        final var course = database.addCourseWithOneProgrammingExercise();
+        var exercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
+        exercise.setDueDate(ZonedDateTime.now().minusHours(4));
+        exercise = exerciseRepo.save(exercise);
+
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        participation.setIndividualDueDate(ZonedDateTime.now().plusHours(4));
+        participation = participationRepo.save(participation);
+
+        participation.setIndividualDueDate(ZonedDateTime.now().minusHours(2));
+
+        doNothing().when(programmingExerciseParticipationService).lockStudentRepository(exercise, participation);
+
+        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
+                StudentParticipation.class, HttpStatus.OK);
+
+        assertThat(response).hasSize(1);
+        verify(programmingExerciseScheduleService, times(1)).updateScheduling(exercise);
+        // student repo should be locked as due date is in the past
+        verify(programmingExerciseParticipationService, times(1)).lockStudentRepository(exercise, participation);
+    }
+
+    /**
+     * When using {@code List<StudentParticipation>} directly as body in the unit tests, the deserialization fails as
+     * there no longer is a {@code type} attribute due to type erasure. Therefore, Jackson does not know which subtype
+     * of {@link Participation} is stored in the list.
+     *
+     * Using this wrapper-class avoids this issue.
+     */
+    private static class StudentParticipationList extends ArrayList<StudentParticipation> {
+
+        public StudentParticipationList(StudentParticipation... participations) {
+            super();
+            this.addAll(Arrays.asList(participations));
+        }
     }
 
     @Test

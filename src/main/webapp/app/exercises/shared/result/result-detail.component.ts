@@ -67,9 +67,17 @@ export class ResultDetailComponent implements OnInit {
     @Input() showScoreChart = false;
     @Input() exerciseType: ExerciseType;
     /**
-     * Translate key for a HTML message that is displayed at the top of the result details, if defined.
+     * Translate key for an HTML message that is displayed at the top of the result details, if defined.
      */
     @Input() messageKey?: string = undefined;
+    /**
+     * For programming exercises with individual due dates automatic feedbacks
+     * for tests marked as AFTER_DUE_DATE are hidden until the last student can
+     * no longer submit.
+     * Students should be informed why some feedbacks seem to be missing from
+     * the result.
+     */
+    @Input() showMissingAutomaticFeedbackInformation = false;
 
     isLoading = false;
     loadingFailed = false;

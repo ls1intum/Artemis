@@ -31,11 +31,13 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -89,12 +91,17 @@ public class ParticipationResource {
 
     private final SubmissionRepository submissionRepository;
 
+    private final ExerciseDateService exerciseDateService;
+
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
+            ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -111,6 +118,8 @@ public class ParticipationResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.submissionRepository = submissionRepository;
+        this.exerciseDateService = exerciseDateService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -191,9 +200,8 @@ public class ParticipationResource {
 
     private boolean isNotAllowedToStartProgrammingExercise(ProgrammingExercise programmingExercise) {
         // users cannot start/resume the programming exercises if test run after due date or semi-automatic grading is active and the due date has passed
-        return programmingExercise.getDueDate() != null && now().isAfter(programmingExercise.getDueDate())
-                && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC
-                        || programmingExercise.getAllowComplaintsForAutomaticAssessments());
+        return (exerciseDateService.isAfterDueDate(participation) && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC || programmingExercise.getAllowComplaintsForAutomaticAssessments()));
     }
 
     /**
@@ -250,6 +258,53 @@ public class ParticipationResource {
         Participation updatedParticipation = studentParticipationRepository.saveAndFlush(participation);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getParticipant().getName()))
                 .body(updatedParticipation);
+    }
+
+    /**
+     * PUT /participations/update-individual-due-date : Updates the individual due dates for the given already existing participations.
+     *
+     * If the exercise is a programming exercise, also triggers a scheduling
+     * update for the participations where the individual due date has changed.
+     * @param exerciseId of the exercise the participations belong to.
+     * @param participations for which the individual due date should be updated.
+     * @return all participations where the individual due date actually changed.
+     */
+    @PutMapping("/exercises/{exerciseId}/participations/update-individual-due-date")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<List<StudentParticipation>> updateParticipationDueDates(@PathVariable long exerciseId, @RequestBody List<StudentParticipation> participations) {
+        final boolean anyInvalidExerciseId = participations.stream()
+                .anyMatch(participation -> participation.getExercise() == null || participation.getExercise().getId() == null || exerciseId != participation.getExercise().getId());
+        if (anyInvalidExerciseId) {
+            throw new BadRequestAlertException("The participation needs to be connected to an exercise", ENTITY_NAME, "exerciseidmissing");
+        }
+
+        final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("Cannot set individual due dates for exam exercises", ENTITY_NAME, "examexercise");
+        }
+
+        if (exercise instanceof QuizExercise) {
+            throw new BadRequestAlertException("Cannot set individual due dates for quiz exercises", ENTITY_NAME, "quizexercise");
+        }
+
+        final List<StudentParticipation> changedParticipations = participationService.updateIndividualDueDates(exercise, participations);
+        final List<StudentParticipation> updatedParticipations = studentParticipationRepository.saveAllAndFlush(changedParticipations);
+
+        if (!updatedParticipations.isEmpty() && exercise instanceof ProgrammingExercise programmingExercise) {
+            log.info("Updating scheduling for exercise {} (id {}) due to changed individual due dates.", exercise.getTitle(), exercise.getId());
+            instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
+
+            // when changing the individual due date after the regular due date, the repository might already have been locked
+            updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(
+                    participation -> programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation));
+            // the new due date may be in the past, students should no longer be able to make any changes
+            updatedParticipations.stream().filter(exerciseDateService::isAfterDueDate).forEach(
+                    participation -> programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation));
+        }
+
+        return ResponseEntity.ok().body(updatedParticipations);
     }
 
     /**

@@ -7,7 +7,7 @@
     [nextSubmissionBusy]="nextSubmissionBusy"
     [isTeamMode]="!!exercise?.teamMode"
     [isAssessor]="isAssessor"
-    [isAtLeastInstructor]="exercise?.isAtLeastInstructor || false"
+    [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"
     [result]="result"
     [assessmentsAreValid]="assessmentsAreValid"
@@ -24,7 +24,7 @@
     (nextSubmission)="nextSubmission()"
     [(highlightDifferences)]="highlightDifferences"
     (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
-    (importExampleSubmission)="importStudentSubmissionAsExampleSubmission()"
+    (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
 >
     <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
 </jhi-assessment-layout>
