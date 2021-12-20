@@ -11,6 +11,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -149,20 +150,18 @@ export class SubmissionService {
             .pipe(map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res)));
     }
 
-    private convertArrayResponse(res: HttpResponse<Submission[]>): HttpResponse<Submission[]> {
-        const jsonResponse: Submission[] = res.body!;
-        const body: Submission[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
-        }
-        return res.clone({ body });
-    }
-
     /**
      * Convert a returned JSON object to Submission.
      */
     private convertItemFromServer(submission: Submission): Submission {
         return Object.assign({}, submission);
+    }
+
+    public convertArrayResponse(res: HttpResponse<ModelingSubmission[]>): HttpResponse<ModelingSubmission[]> {
+        if (res.body) {
+            res.body.forEach((submission: ModelingSubmission) => this.processSubmission(submission));
+        }
+        return res;
     }
 
     public processSubmission(submission: Submission): Submission {

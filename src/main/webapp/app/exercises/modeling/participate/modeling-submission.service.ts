@@ -63,7 +63,7 @@ export class ModelingSubmissionService {
                 params,
                 observe: 'response',
             })
-            .pipe(map((res: HttpResponse<ModelingSubmission[]>) => this.convertArrayResponse(res)));
+            .pipe(map((res: HttpResponse<ModelingSubmission[]>) => this.submissionService.convertArrayResponse(res)));
     }
 
     /**
@@ -123,15 +123,6 @@ export class ModelingSubmissionService {
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: ModelingSubmission = this.processModelingSubmission(res.body!);
-        return res.clone({ body });
-    }
-
-    private convertArrayResponse(res: HttpResponse<ModelingSubmission[]>): HttpResponse<ModelingSubmission[]> {
-        const jsonResponse: ModelingSubmission[] = res.body!;
-        const body: ModelingSubmission[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.processModelingSubmission(jsonResponse[i]));
-        }
         return res.clone({ body });
     }
 
