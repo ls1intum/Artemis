@@ -39,13 +39,16 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @Autowired
     private FileUploadExerciseRepository fileUploadExerciseRepository;
 
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
+
     private List<GradingCriterion> gradingCriteria;
 
     private final String creationFilePattern = "png, pdf, jPg      , r, DOCX";
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 1, 0, 1);
+        database.addUsers(2, 1, 0, 1);
     }
 
     @AfterEach
@@ -416,6 +419,41 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
                 HttpStatus.BAD_REQUEST);
         request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExerciseWithExerciseGroup.getId(), fileUploadExerciseWithExerciseGroup, FileUploadExercise.class,
                 HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateModelingExerciseDueDate() throws Exception {
+        FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
+        fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
+
+        final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
+
+        {
+            final FileUploadSubmission submission1 = ModelFactory.generateFileUploadSubmission(true);
+            database.addFileUploadSubmission(fileUploadExercise, submission1, "student1");
+            final FileUploadSubmission submission2 = ModelFactory.generateFileUploadSubmission(true);
+            database.addFileUploadSubmission(fileUploadExercise, submission2, "student2");
+
+            final var participations = studentParticipationRepository.findByExerciseId(fileUploadExercise.getId());
+            assertThat(participations).hasSize(2);
+            participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+            participations.get(1).setIndividualDueDate(individualDueDate);
+            studentParticipationRepository.saveAll(participations);
+        }
+
+        fileUploadExercise.setDueDate(ZonedDateTime.now().plusHours(12));
+        request.put("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise, HttpStatus.OK);
+
+        {
+            final var participations = studentParticipationRepository.findByExerciseId(fileUploadExercise.getId());
+            final var withNoIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+            assertThat(withNoIndividualDueDate).hasSize(1);
+
+            final var withIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() != null).toList();
+            assertThat(withIndividualDueDate).hasSize(1);
+            assertThat(withIndividualDueDate.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(individualDueDate);
+        }
     }
 
     @Test

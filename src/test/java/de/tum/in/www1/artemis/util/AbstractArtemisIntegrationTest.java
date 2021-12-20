@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingServ
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
 
 /**
  * this test should be completely independent of any profiles or configurations (e.g. VCS, CIS)
@@ -76,6 +77,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @SpyBean
     protected UrlService urlService;
 
+    @SpyBean
+    protected ScheduleService scheduleService;
+
     @Autowired
     protected DatabaseUtilService database;
 
@@ -84,7 +88,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     public void resetSpyBeans() {
         Mockito.reset(ltiService, gitService, groupNotificationService, websocketMessagingService, messagingTemplate, programmingSubmissionService, examAccessService,
-                instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, scoreService, urlService);
+                instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scoreService, scheduleService);
     }
 
     @Override

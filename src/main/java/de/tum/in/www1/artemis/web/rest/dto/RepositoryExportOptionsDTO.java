@@ -14,6 +14,8 @@ public class RepositoryExportOptionsDTO {
 
     private boolean filterLateSubmissions;
 
+    private boolean filterLateSubmissionsIndividualDueDate;
+
     private ZonedDateTime filterLateSubmissionsDate;
 
     private boolean addParticipantName;
@@ -40,6 +42,14 @@ public class RepositoryExportOptionsDTO {
 
     public void setFilterLateSubmissions(boolean filterLateSubmissions) {
         this.filterLateSubmissions = filterLateSubmissions;
+    }
+
+    public boolean isFilterLateSubmissionsIndividualDueDate() {
+        return filterLateSubmissionsIndividualDueDate;
+    }
+
+    public void setFilterLateSubmissionsIndividualDueDate(boolean filterLateSubmissionsIndividualDueDate) {
+        this.filterLateSubmissionsIndividualDueDate = filterLateSubmissionsIndividualDueDate;
     }
 
     public ZonedDateTime getFilterLateSubmissionsDate() {

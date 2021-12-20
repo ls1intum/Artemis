@@ -42,6 +42,8 @@ public class ExerciseService {
 
     private final QuizScheduleService quizScheduleService;
 
+    private final ExerciseDateService exerciseDateService;
+
     private final TeamRepository teamRepository;
 
     private final AuditEventRepository auditEventRepository;
@@ -79,7 +81,7 @@ public class ExerciseService {
             LtiOutcomeUrlRepository ltiOutcomeUrlRepository, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
-            GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, RatingService ratingService) {
+            GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -97,6 +99,7 @@ public class ExerciseService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.feedbackRepository = feedbackRepository;
+        this.exerciseDateService = exerciseDateService;
         this.ratingService = ratingService;
     }
 
@@ -558,7 +561,7 @@ public class ExerciseService {
             Exercise exercise) {
         exerciseStatisticsDTO.setNoOfStudentsInCourse(amountOfStudentsInCourse);
 
-        if (amountOfStudentsInCourse != null && amountOfStudentsInCourse != 0 && !exercise.isEnded()) {
+        if (amountOfStudentsInCourse != null && amountOfStudentsInCourse != 0 && exerciseDateService.isBeforeLatestDueDate(exercise)) {
             if (exercise.getMode() == ExerciseMode.TEAM) {
                 Long teamParticipations = exerciseRepository.getTeamParticipationCountById(exercise.getId());
                 var participations = teamParticipations == null ? 0 : Math.toIntExact(teamParticipations);
@@ -661,7 +664,6 @@ public class ExerciseService {
      * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not     *
      */
     public void reEvaluateExercise(Exercise exercise, boolean deleteFeedbackAfterGradingInstructionUpdate) {
-
         List<GradingCriterion> gradingCriteria = exercise.getGradingCriteria();
         // retrieve the feedback associated with the structured grading instructions
         List<Feedback> feedbackToBeUpdated = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
@@ -682,7 +684,7 @@ public class ExerciseService {
 
         List<Feedback> feedbackToBeDeleted = getFeedbackToBeDeletedAfterGradingInstructionUpdate(deleteFeedbackAfterGradingInstructionUpdate, gradingInstructions, exercise);
 
-        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
+        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackAndParticipationByParticipationExerciseId(exercise.getId());
 
         // add example submission results that belong exercise
         if (!exercise.getExampleSubmissions().isEmpty()) {
@@ -702,7 +704,15 @@ public class ExerciseService {
             }
 
             if (!(exercise instanceof ProgrammingExercise)) {
-                resultRepository.submitResult(result, exercise);
+                final Optional<ZonedDateTime> dueDate;
+                if (result.getParticipation() == null) {
+                    // this is only the case for example submissions, due date does not matter then
+                    dueDate = Optional.empty();
+                }
+                else {
+                    dueDate = exerciseDateService.getDueDate(result.getParticipation());
+                }
+                resultRepository.submitResult(result, exercise, dueDate);
             }
             else {
                 result.calculateScoreForProgrammingExercise(exercise.getMaxPoints());

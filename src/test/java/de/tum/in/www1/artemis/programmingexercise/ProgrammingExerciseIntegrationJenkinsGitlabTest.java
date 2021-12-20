@@ -307,6 +307,18 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
+        programmingExerciseIntegrationTestService.updateExerciseDueDateWithIndividualDueDateUpdate();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateExerciseRemoveDueDate() throws Exception {
+        programmingExerciseIntegrationTestService.updateExerciseRemoveDueDate();
+    }
+
+    @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.updateTimeline_intructorNotInCourse_forbidden();

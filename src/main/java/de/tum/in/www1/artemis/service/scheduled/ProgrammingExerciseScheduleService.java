@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
+import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -54,6 +55,10 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final ResultRepository resultRepository;
 
+    private final ParticipationRepository participationRepository;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository;
+
     private final ProgrammingSubmissionService programmingSubmissionService;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
@@ -69,7 +74,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     private final GitService gitService;
 
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ResultRepository resultRepository, Environment env,
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ResultRepository resultRepository, ParticipationRepository participationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository, Environment env,
             ProgrammingSubmissionService programmingSubmissionService, ProgrammingExerciseGradingService programmingExerciseGradingService,
             GroupNotificationService groupNotificationService, ExamDateService examDateService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             StudentExamRepository studentExamRepository, GitService gitService) {
@@ -77,6 +83,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.resultRepository = resultRepository;
+        this.participationRepository = participationRepository;
+        this.programmingExerciseParticipationRepository = programmingExerciseParticipationRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.groupNotificationService = groupNotificationService;
         this.studentExamRepository = studentExamRepository;
@@ -126,15 +134,16 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @Override
     public void updateScheduling(ProgrammingExercise exercise) {
-        if (!needsToBeScheduled(exercise)) {
+        if (needsToBeScheduled(exercise)) {
+            scheduleExercise(exercise);
+        }
+        else {
             // If a programming exercise got changed so that any scheduling becomes unnecessary, we need to cancel all scheduled tasks
             cancelAllScheduledTasks(exercise);
-            return;
         }
-        scheduleExercise(exercise);
     }
 
-    private static boolean needsToBeScheduled(ProgrammingExercise exercise) {
+    private boolean needsToBeScheduled(ProgrammingExercise exercise) {
         // Exam exercises need to be scheduled
         if (exercise.isExamExercise()) {
             return true;
@@ -147,6 +156,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         if (exercise.getAllowComplaintsForAutomaticAssessments()) {
             return true;
         }
+
         ZonedDateTime now = ZonedDateTime.now();
         // Exercises with a release date in the future must be scheduled as well
         if (exercise.getReleaseDate() != null && now.isBefore(exercise.getReleaseDate())) {
@@ -157,7 +167,12 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             return true;
         }
         // Has a regular due date in the future
-        return exercise.getDueDate() != null && now.isBefore(exercise.getDueDate());
+        if (exercise.getDueDate() != null && now.isBefore(exercise.getDueDate())) {
+            return true;
+        }
+
+        // Has an individual due date in the future
+        return participationRepository.findLatestIndividualDueDate(exercise.getId()).map(now::isBefore).orElse(false);
     }
 
     private void cancelAllScheduledTasks(ProgrammingExercise exercise) {
@@ -165,7 +180,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     /**
-     * Cancel all scheduled tasks for a programming exercise.
+     * Cancel all scheduled tasks for a programming exercise and its participations.
      * - Release
      * - Due
      * - Build & Test after due date
@@ -198,17 +213,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             SecurityUtils.setAuthorizationObject();
         }
 
-        ZonedDateTime now = ZonedDateTime.now();
-
-        // For any course exercise that needsToBeScheduled (dueDate and/or manual assessment)
+        final ZonedDateTime now = ZonedDateTime.now();
 
         // For any course exercise with a valid release date
         if (exercise.getReleaseDate() != null && now.isBefore(exercise.getReleaseDate())) {
-            var scheduledRunnable = Set.of(new Tuple<>(exercise.getReleaseDate().minusSeconds(Constants.SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS),
-                    combineTemplateCommitsForExercise(exercise)));
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, scheduledRunnable);
-            log.debug("Scheduled combining template commits before release date for Programming Exercise \"{}\" (#{}) for {}.", exercise.getTitle(), exercise.getId(),
-                    exercise.getReleaseDate());
+            scheduleTemplateCommitCombination(exercise);
         }
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.RELEASE);
@@ -216,23 +225,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         // For any course exercise that needsToBeScheduled (buildAndTestAfterDueDate and/or manual assessment)
         if (exercise.getDueDate() != null && now.isBefore(exercise.getDueDate())) {
-            boolean updateScores;
-            if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null) {
-                // no rebuild date is set but test cases marked with AFTER_DUE_DATE exist: they have to become visible by recalculation of the scores
-                updateScores = programmingExerciseTestCaseRepository.countAfterDueDateByExerciseId(exercise.getId()) > 0;
-            }
-            else {
-                updateScores = false;
-            }
-
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, () -> {
-                lockAllStudentRepositories(exercise).run();
-                if (updateScores) {
-                    updateAllStudentScores(exercise).run();
-                }
-            });
-            log.debug("Scheduled lock student repositories after due date for Programming Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(),
-                    exercise.getDueDate());
+            scheduleDueDateLockAndScoreUpdate(exercise);
         }
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.DUE);
@@ -240,13 +233,115 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         // For exercises with buildAndTestAfterDueDate
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && now.isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
-            log.debug("Scheduled build and test for student submissions after due date for Programming Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(),
-                    exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+            scheduleBuildAndTestAfterDueDate(exercise);
         }
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
         }
+
+        scheduleParticipationTasks(exercise, now);
+    }
+
+    private void scheduleTemplateCommitCombination(ProgrammingExercise exercise) {
+        var scheduledRunnable = Set.of(new Tuple<>(exercise.getReleaseDate().minusSeconds(Constants.SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS),
+                combineTemplateCommitsForExercise(exercise)));
+        scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, scheduledRunnable);
+        log.debug("Scheduled combining template commits before release date for Programming Exercise \"{}\" (#{}) for {}.", exercise.getTitle(), exercise.getId(),
+                exercise.getReleaseDate());
+    }
+
+    private void scheduleDueDateLockAndScoreUpdate(ProgrammingExercise exercise) {
+        // no rebuild date is set but test cases marked with AFTER_DUE_DATE exist: they have to become visible by recalculation of the scores
+        final boolean updateScores = isScoreUpdateAfterDueDateNeeded(exercise);
+
+        scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, () -> {
+            lockStudentRepositoriesRegularDueDate(exercise).run();
+            if (updateScores) {
+                updateStudentScoresRegularDueDate(exercise).run();
+            }
+        });
+
+        log.debug("Scheduled lock student repositories after due date for Programming Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getDueDate());
+    }
+
+    private void scheduleBuildAndTestAfterDueDate(ProgrammingExercise exercise) {
+        scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
+        log.debug("Scheduled build and test for student submissions after due date for Programming Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(),
+                exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+    }
+
+    /**
+     * Schedules all necessary tasks for participations with individual due dates.
+     *
+     * Also removes schedules for individual participations of their individual due date no longer exists.
+     * @param exercise the participations belong to.
+     * @param now the current time.
+     */
+    private void scheduleParticipationTasks(final ProgrammingExercise exercise, final ZonedDateTime now) {
+        final boolean isScoreUpdateNeeded = isScoreUpdateAfterDueDateNeeded(exercise);
+
+        final List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationRepository.findByExerciseId(exercise.getId());
+        for (final var participation : participations) {
+            if (exercise.getDueDate() == null || participation.getIndividualDueDate() == null) {
+                scheduleService.cancelAllScheduledParticipationTasks(exercise.getId(), participation.getId());
+            }
+            else {
+                scheduleParticipationWithIndividualDueDate(now, exercise, participation, isScoreUpdateNeeded);
+            }
+        }
+    }
+
+    private void scheduleParticipationWithIndividualDueDate(final ZonedDateTime now, final ProgrammingExercise exercise,
+            final ProgrammingExerciseStudentParticipation participation, boolean isScoreUpdateNeeded) {
+        final boolean isBeforeDueDate = now.isBefore(participation.getIndividualDueDate());
+        // Update scores on due date
+        if (isBeforeDueDate) {
+            scheduleAfterDueDateForParticipation(participation, isScoreUpdateNeeded);
+        }
+        else {
+            scheduleService.cancelScheduledTaskForParticipationLifecycle(exercise.getId(), participation.getId(), ParticipationLifecycle.DUE);
+        }
+
+        // Build and test after individual due date:
+        // only special scheduling if the individual due date is after the build and test date
+        if (isBeforeDueDate && exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                && participation.getIndividualDueDate().isAfter(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
+            scheduleBuildAndTestAfterDueDateForParticipation(participation);
+        }
+        else {
+            scheduleService.cancelScheduledTaskForParticipationLifecycle(exercise.getId(), participation.getId(), ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
+        }
+    }
+
+    private void scheduleAfterDueDateForParticipation(ProgrammingExerciseStudentParticipation participation, boolean isScoreUpdateNeeded) {
+        scheduleService.scheduleParticipationTask(participation, ParticipationLifecycle.DUE, () -> {
+            lockStudentRepository(participation).run();
+
+            if (isScoreUpdateNeeded) {
+                final List<Result> updatedResult = programmingExerciseGradingService.updateParticipationResults(participation);
+                resultRepository.saveAll(updatedResult);
+            }
+        });
+        log.debug("Scheduled task to lock repository for participation {} at the individual due date.", participation.getId());
+    }
+
+    private void scheduleBuildAndTestAfterDueDateForParticipation(ProgrammingExerciseStudentParticipation participation) {
+        scheduleService.scheduleParticipationTask(participation, ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, () -> {
+            final ProgrammingExercise exercise = participation.getProgrammingExercise();
+            SecurityUtils.setAuthorizationObject();
+            try {
+                log.info("Invoking scheduled task for participation {} in programming exercise with id {}.", participation.getId(), exercise.getId());
+                programmingSubmissionService.triggerBuildForParticipations(List.of(participation));
+            }
+            catch (EntityNotFoundException ex) {
+                log.error("Programming participation with id {} in exercise {} is no longer available in database for use in scheduled task.", participation.getId(),
+                        exercise.getId());
+            }
+        });
+    }
+
+    private boolean isScoreUpdateAfterDueDateNeeded(ProgrammingExercise exercise) {
+        return exercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null && programmingExerciseTestCaseRepository.countAfterDueDateByExerciseId(exercise.getId()) > 0;
     }
 
     private void scheduleExamExercise(ProgrammingExercise exercise) {
@@ -320,12 +415,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     /**
-     * Returns a runnable that, once executed, will (1) lock all student repositories and (2) stash all student changes in the online editor for manual assessments
+     * Returns a runnable that, once executed, will
+     * (1) lock all student repositories and
+     * (2) stash all student changes in the online editor for manual assessments.
      *
      * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
      *
-     * @param exercise The exercise for which the repositories should be locked
-     * @return a Runnable that will lock the repositories once it is executed
+     * @param exercise for which the repositories should be locked.
+     * @return a Runnable that will lock the repositories once it is executed.
      */
     @NotNull
     public Runnable lockAllStudentRepositories(ProgrammingExercise exercise) {
@@ -333,7 +430,23 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     /**
-     * Returns a runnable, that, once executed, will update all results for the given exercise.
+     * Returns a runnable that, once executed, will
+     * (1) lock all student repositories for students for which no individual due date is set and
+     * (2) stash all student changes in the online editor for manual assessments.
+     *
+     * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
+     *
+     * @param exercise for which the repositories should be locked.
+     * @return a Runnable that will lock the repositories once it is executed.
+     */
+    @NotNull
+    public Runnable lockStudentRepositoriesRegularDueDate(ProgrammingExercise exercise) {
+        return lockStudentRepositories(exercise, participation -> participation.getIndividualDueDate() == null);
+    }
+
+    /**
+     * Returns a runnable, that, once executed, will update all results for the given exercise for students for which no
+     * individual due date is set.
      *
      * This might be needed for an exercise that has test cases marked with
      * {@link de.tum.in.www1.artemis.domain.enumeration.Visibility#AFTER_DUE_DATE}.
@@ -344,14 +457,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Updating the student score includes the feedbacks of those test cases into
      * the result without having to trigger a new continuous integration job.
      *
-     * @param exercise the exercise for which the results should be updated
-     * @return a Runnable that will update all results for the given exercise
+     * @param exercise for which the results should be updated.
+     * @return a Runnable that will update all results for the given exercise.
      */
     @NotNull
-    public Runnable updateAllStudentScores(ProgrammingExercise exercise) {
+    public Runnable updateStudentScoresRegularDueDate(final ProgrammingExercise exercise) {
         return () -> {
             SecurityUtils.setAuthorizationObject();
-            final List<Result> updatedResults = programmingExerciseGradingService.updateAllResults(exercise);
+            final List<Result> updatedResults = programmingExerciseGradingService.updateResultsOnlyRegularDueDateParticipations(exercise);
             resultRepository.saveAll(updatedResults);
         };
     }
@@ -408,6 +521,24 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             }
             catch (EntityNotFoundException ex) {
                 log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
+            }
+        };
+    }
+
+    /**
+     * Creates a runnable that will lock the Git repository of the given participation when run.
+     * @param participation of which the Git repository will be locked.
+     * @return a runnable that will lock the Git repository of the participation when run.
+     */
+    @NotNull
+    private Runnable lockStudentRepository(ProgrammingExerciseStudentParticipation participation) {
+        return () -> {
+            SecurityUtils.setAuthorizationObject();
+            try {
+                programmingExerciseParticipationService.lockStudentRepository(participation.getProgrammingExercise(), participation);
+            }
+            catch (EntityNotFoundException ex) {
+                log.error("Participation with id {} is no longer available in the database for a scheduled lock repository task.", participation.getId());
             }
         };
     }
@@ -528,22 +659,18 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-
-            // ignore all participations that don't fulfill the condition
-            if (!condition.test(programmingExerciseStudentParticipation)) {
-                continue;
-            }
-
             try {
-                // this actually invokes the operation
-                operation.accept(programmingExercise, programmingExerciseStudentParticipation);
+                if (condition.test(programmingExerciseStudentParticipation)) {
+                    operation.accept(programmingExercise, programmingExerciseStudentParticipation);
+                }
             }
             catch (Exception e) {
-                log.error(String.format("'%s' failed for programming exercise with id %d for student repository with participation id %d", operationName, programmingExerciseId,
-                        studentParticipation.getId()), e);
+                log.error(String.format("'%s' failed for programming exercise with id %d for student repository with participation id %d", operationName,
+                        programmingExercise.getId(), studentParticipation.getId()), e);
                 failedOperations.add(programmingExerciseStudentParticipation);
             }
         }
+
         return failedOperations;
     }
 }
