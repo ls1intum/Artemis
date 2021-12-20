@@ -62,8 +62,11 @@ describe('AssessmentWarningComponent', function () {
         const submission3 = new ProgrammingSubmission();
         submission3.participation = participation3;
 
+        // a submission without participation should just be ignored and not change the result
+        const submission4 = new ProgrammingSubmission();
+
         component.exercise = exercise;
-        component.submissions = [submission2, submission3, submission1];
+        component.submissions = [submission2, submission4, submission3, submission1];
         component.ngOnChanges();
 
         expect(component.isBeforeExerciseDueDate).toBe(false);
