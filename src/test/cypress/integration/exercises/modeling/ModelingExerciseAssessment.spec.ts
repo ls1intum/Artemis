@@ -36,7 +36,6 @@ describe('Modeling Exercise Assessment Spec', () => {
         cy.login(tutor, '/course-management');
         cy.get(`[href="/course-management/${course.id}/assessment-dashboard"]`).click();
         cy.url().should('contain', `/course-management/${course.id}/assessment-dashboard`);
-        courseAssessmentDashboard.checkShowFinishedExercises();
         courseAssessmentDashboard.clickExerciseDashboardButton();
         exerciseAssessmentDashboard.clickHaveReadInstructionsButton();
         exerciseAssessmentDashboard.clickStartNewAssessment();

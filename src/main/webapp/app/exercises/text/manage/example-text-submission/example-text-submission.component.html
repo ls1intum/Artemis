@@ -24,7 +24,7 @@
 
             <div class="row">
                 <ng-container [ngSwitch]="state.submissionEditButton">
-                    <button *ngSwitchCase="SubmissionButtonStates.NEW" (click)="createNewExampleTextSubmission()" class="btn btn-primary col-auto">
+                    <button id="create-example-submission" *ngSwitchCase="SubmissionButtonStates.NEW" (click)="createNewExampleTextSubmission()" class="btn btn-primary col-auto">
                         <fa-icon [icon]="faSave"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.createNewSubmission' | artemisTranslate }}
                     </button>
@@ -83,6 +83,7 @@
     <!--region Left Panel-->
     <span left-header *ngIf="state.ui === UIStates.SUBMISSION" jhiTranslate="artemisApp.exampleSubmission.exampleSubmission">Example submission</span>
     <textarea
+        id="example-text-submission-input"
         left-body
         *ngIf="state.ui === UIStates.SUBMISSION"
         [(ngModel)]="submission!.text"
@@ -125,7 +126,14 @@
         jhiTranslate="artemisApp.textAssessment.assessmentInstruction"
         *ngIf="state.ui === UIStates.ASSESSMENT"
     ></div>
-    <jhi-assessment-instructions right-body *ngIf="exercise" [exercise]="exercise" [isAssessmentTraining]="toComplete" class="markdown-preview"></jhi-assessment-instructions>
+    <jhi-assessment-instructions
+        id="instructions"
+        right-body
+        *ngIf="exercise"
+        [exercise]="exercise"
+        [isAssessmentTraining]="toComplete"
+        class="markdown-preview"
+    ></jhi-assessment-instructions>
     <!--endregion-->
 </jhi-resizeable-container>
 

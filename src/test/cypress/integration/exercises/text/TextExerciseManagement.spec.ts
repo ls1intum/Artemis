@@ -32,7 +32,7 @@ describe('Text exercise management', () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
         courseManagementPage.openExercisesOfCourse(course.shortName);
-        cy.get('[jhitranslate="artemisApp.textExercise.home.createLabel"]').click();
+        cy.get('#create-text-exercise').click();
 
         // Fill out text exercise form
         const exerciseTitle = 'text exercise' + generateUUID();
@@ -46,7 +46,7 @@ describe('Text exercise management', () => {
         const exampleSolution = 'E = mc^2';
         textCreation.typeProblemStatement(problemStatement);
         textCreation.typeExampleSolution(exampleSolution);
-        cy.get('[jhitranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise"]').should('be.visible');
+        cy.get('#example-submission-message').should('be.visible');
         let exercise: any;
         textCreation.create().then((request: any) => {
             exercise = request.response.body;
@@ -87,8 +87,9 @@ describe('Text exercise management', () => {
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(course.shortName);
             courseManagementExercises.clickDeleteExercise(exercise.id);
+            cy.get('#confirm-exercise-name').type(exercise.title);
             cy.intercept(DELETE, BASE_API + 'text-exercises/*').as('deleteTextExercise');
-            cy.get('[type="text"], [name="confirmExerciseName"]').type(exercise.title).type('{enter}');
+            cy.get('#delete').click();
             cy.wait('@deleteTextExercise');
             cy.contains(exercise.title).should('not.exist');
         });
