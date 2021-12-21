@@ -4,6 +4,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { Result } from 'app/entities/result.model';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 // Modal -> Result details view
 @Component({
@@ -26,9 +27,9 @@ export class ResultHistoryComponent {
      */
     resultIcon(result: Result): IconProp {
         if (result.score && result.score >= MIN_SCORE_GREEN) {
-            return 'check';
+            return faCheck;
         } else {
-            return 'times';
+            return faTimes;
         }
     }
 
