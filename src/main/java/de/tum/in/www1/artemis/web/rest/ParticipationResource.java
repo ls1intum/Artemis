@@ -8,6 +8,8 @@ import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,7 +151,7 @@ public class ParticipationResource {
         if (exercise instanceof ProgrammingExercise) {
             // fetch additional objects needed for the startExercise method below
             var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-            if (!featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES) || isNotAllowedToStartProgrammingExercise(programmingExercise)) {
+            if (!featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES) || isNotAllowedToStartProgrammingExercise(programmingExercise, null)) {
                 throw new AccessForbiddenException("Not allowed");
             }
             exercise = programmingExercise;
@@ -186,7 +188,7 @@ public class ParticipationResource {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
-        if (isNotAllowedToStartProgrammingExercise(programmingExercise)) {
+        if (isNotAllowedToStartProgrammingExercise(programmingExercise, participation)) {
             throw new AccessForbiddenException("Not allowed");
         }
 
@@ -198,9 +200,11 @@ public class ParticipationResource {
         return ResponseEntity.ok().body(participation);
     }
 
-    private boolean isNotAllowedToStartProgrammingExercise(ProgrammingExercise programmingExercise) {
+    private boolean isNotAllowedToStartProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable StudentParticipation participation) {
+        boolean isAfterDueDate = participation != null ? exerciseDateService.isAfterDueDate(participation)
+                : (programmingExercise.getDueDate() != null && now().isAfter(programmingExercise.getDueDate()));
         // users cannot start/resume the programming exercises if test run after due date or semi-automatic grading is active and the due date has passed
-        return (exerciseDateService.isAfterDueDate(participation) && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+        return (isAfterDueDate && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                 || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC || programmingExercise.getAllowComplaintsForAutomaticAssessments()));
     }
 
