@@ -82,7 +82,7 @@ describe('Exam participation', () => {
         cy.login(student, '/');
         courses.openCourse(course.title);
         courseOverview.openExamsTab();
-        courseOverview.openExam(exam.title);
+        courseOverview.openExam(exam.id);
         cy.url().should('contain', `/exams/${exam.id}`);
         examStartEnd.startExam();
     }

@@ -10,6 +10,7 @@ const courseManagementRequests = artemis.requests.courseManagement;
 const examStartEnd = artemis.pageobjects.examStartEnd;
 const textEditor = artemis.pageobjects.textExercise.editor;
 const examNavigationBar = artemis.pageobjects.examNavigationBar;
+const courseOverview = artemis.pageobjects.courseOverview;
 
 describe('Exam date verification', () => {
     let course: any;
@@ -60,9 +61,9 @@ describe('Exam date verification', () => {
                 courseManagementRequests.registerStudentForExam(exam, artemis.users.getStudentOne());
                 cy.login(artemis.users.getStudentOne(), `/courses/${course.id}`);
                 cy.url().should('contain', `${course.id}`);
-                cy.contains('Exams').click();
+                courseOverview.openExamsTab();
                 cy.url().should('contain', '/exams');
-                cy.contains(examTitle).should('exist').click();
+                courseOverview.openExam(exam.id);
                 cy.url().should('contain', `/exams/${exam.id}`);
             });
         });
@@ -88,9 +89,8 @@ describe('Exam date verification', () => {
                         cy.login(student, `/courses/${course.id}/exams`);
                         cy.contains(exam.title).click();
                         cy.url().should('contain', `/exams/${exam.id}`);
-                        cy.contains('Welcome to ' + exam.title).should('be.visible');
+                        cy.contains(exam.title).should('be.visible');
                         examStartEnd.startExam();
-                        cy.contains('Exam Overview').should('exist');
                         cy.contains(textExercise.title).should('be.visible').click();
                         cy.fixture('loremIpsum.txt').then((submission) => {
                             textEditor.typeSubmission(submission);
@@ -121,7 +121,7 @@ describe('Exam date verification', () => {
                         courseManagementRequests.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
                         cy.contains(exam.title).click();
-                        cy.contains('Welcome to ' + exam.title).should('be.visible');
+                        cy.contains(exam.title).should('be.visible');
                         examStartEnd.startExam();
                         cy.contains(textExercise.title).should('be.visible').click();
                         cy.fixture('loremIpsum.txt').then((submissionText) => {
