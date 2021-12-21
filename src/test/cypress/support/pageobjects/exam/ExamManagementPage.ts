@@ -72,13 +72,13 @@ export class ExamRow {
      * Opens the student registration page.
      */
     openStudentRegistration(examId: string) {
-        this.root.contains(`#student-button-${examId}`).click();
+        this.root.find(`#student-button-${examId}`).click();
     }
 
     /**
      * Opens the student exams page.
      */
     openStudenExams(examId: string) {
-        this.root.contains(`#student-exams-${examId}`).click();
+        this.root.find(`#student-exams-${examId}`).click();
     }
 }
