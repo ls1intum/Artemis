@@ -5,6 +5,7 @@ import { BASE_API, POST } from '../../constants';
 export abstract class AbstractExerciseFeedback {
     readonly resultSelector = '#result';
     readonly additionalFeedbackSelector = '#additional-feedback';
+    readonly complainButtonSelector = '#complain';
 
     shouldShowAdditionalFeedback(points: number, feedbackText: string) {
         cy.get(this.additionalFeedbackSelector).contains(`${points} Points: ${feedbackText}`).should('be.visible');
@@ -16,7 +17,8 @@ export abstract class AbstractExerciseFeedback {
     }
 
     complain(complaint: string) {
-        cy.get('#complain').click();
+        cy.reloadUntilFound(this.complainButtonSelector);
+        cy.get(this.complainButtonSelector).click();
         cy.get('#complainTextArea').type(complaint, { parseSpecialCharSequences: false });
         cy.intercept(POST, BASE_API + 'complaints').as('postComplaint');
         cy.get('#submit-complaint').click();
