@@ -48,6 +48,30 @@ services:
         depends_on:
             - artemis-mysql
             - jhipster-registry
+    lecture-app:
+        image: ghcr.io/ls1intum/artemis-lecture-service:${TAG:-latest}
+        build:
+            context: .
+            dockerfile: ./lecture/src/main/docker/Dockerfile
+        volumes:
+            - ./lecture/src/main/resources/config/application-dev.yml:/home/artemis/lecture/application-dev.yml:ro
+            - ./src/main/resources/config/application-artemis.yml:/home/artemis/lecture/application-artemis.yml:ro
+        environment:
+            - _JAVA_OPTIONS=-Xmx512m -Xms256m
+            - SPRING_PROFILES_ACTIVE=dev,artemis
+            - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
+            - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+            - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
+            - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
+            - JHIPSTER_SLEEP=30 # gives time for other services to boot before the application
+            - SPRING_ARTEMIS_HOST=activemq-broker
+        expose:
+            - "8086"
+        networks:
+            - artemis
+        depends_on:
+            - artemis-mysql
+            - jhipster-registry
     gateway-app:
         image: ghcr.io/ls1intum/artemis-gateway:${TAG:-latest}
         build:
