@@ -250,7 +250,7 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming exercise
+     * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming exercise.
      *
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)

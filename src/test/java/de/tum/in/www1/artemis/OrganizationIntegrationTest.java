@@ -222,7 +222,6 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testAddOrganization() throws Exception {
-
         assertThrows(EntityNotFoundException.class, () -> organizationRepo.findByIdElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class, () -> organizationRepo.findByIdWithEagerUsersAndCoursesElseThrow(Long.MAX_VALUE));
 

@@ -90,7 +90,7 @@ public class TutorParticipationService {
      * has to train reviewing some example submissions, and assessing others. If no example submissions are available, because the instructor hasn't created any, then she goes
      * directly to the next step, that allows her to assess students' participations
      *
-     * @param exercise the exercise the tutor is going to participate to
+     * @param exercise the exercise the tutor is going to participate in
      * @param tutor    the tutor who is going to participate in the exercise
      * @return a TutorParticipation for the exercise
      */
@@ -216,7 +216,7 @@ public class TutorParticipationService {
                 return Stream.of(feedbackCorrectionErrorJSON);
             }
             catch (JsonProcessingException e) {
-                log.warn("JsonProcessingException in validateTutorialExampleSubmission: " + e.getMessage());
+                log.warn("JsonProcessingException in validateTutorialExampleSubmission: {}", e.getMessage());
                 return Stream.empty();
             }
         }).collect(Collectors.joining(","));
