@@ -215,7 +215,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<Result> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("tutorId") Long tutorId);
 
     /**
-     * count the number of finsished assessments of an exam with given examId
+     * count the number of finished assessments of an exam with given examId
      *
      * @param examId id of the exam
      * @return a list that contains the count of manual assessments for each studentParticipation of the exam
@@ -339,8 +339,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
         // here we receive a list which contains an entry for each student participation of the exercise.
         // the entry simply is the number of already created and submitted manual results, so the number is either 1 or 2
-        List<Long> countlist = countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(exercise.getId());
-        return convertDatabaseResponseToDueDateStats(countlist, numberOfCorrectionRounds);
+        List<Long> countList = countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(exercise.getId());
+        return convertDatabaseResponseToDueDateStats(countList, numberOfCorrectionRounds);
     }
 
     /**
@@ -349,7 +349,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      *
      * @param exercise  - the exercise we are interested in
      * @param numberOfCorrectionRounds - the correction round we want finished assessments for
-     * @param tutor tutor for which we want to coutnt the
+     * @param tutor tutor for which we want to count the number of locked assessments
      * @return an array of the number of assessments for the exercise for a given correction round
      */
     default DueDateStat[] countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds, User tutor) {
@@ -377,28 +377,28 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default DueDateStat[] countNumberOfFinishedAssessmentsForExamForCorrectionRounds(Long examId, int numberOfCorrectionRounds) {
 
-        // here we receive a list which contains an entry for each studentparticipation of the exam.
+        // here we receive a list which contains an entry for each student participation of the exam.
         // the entry simply is the number of already created and submitted manual results, so the number is either 1 or 2
-        List<Long> countlist = countNumberOfFinishedAssessmentsByExamIdIgnoreTestRuns(examId);
-        return convertDatabaseResponseToDueDateStats(countlist, numberOfCorrectionRounds);
+        List<Long> countList = countNumberOfFinishedAssessmentsByExamIdIgnoreTestRuns(examId);
+        return convertDatabaseResponseToDueDateStats(countList, numberOfCorrectionRounds);
     }
 
     /**
      * Takes the Long List database response and converts it to the according DueDateStats
      *
-     * @param countlist                 - the lists returned from the database
-     * @param numberOfCorrectionRounds  - numbmer of the correction rounds which is set for the given exam
+     * @param countList                 - the lists returned from the database
+     * @param numberOfCorrectionRounds  - number of the correction rounds which is set for the given exam
      * @return an array of DueDateStats which contains a DueDateStat with the number of assessments for each correction round.
      */
-    default DueDateStat[] convertDatabaseResponseToDueDateStats(List<Long> countlist, int numberOfCorrectionRounds) {
+    default DueDateStat[] convertDatabaseResponseToDueDateStats(List<Long> countList, int numberOfCorrectionRounds) {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
 
         // depending on the number of correctionRounds we create 1 or 2 DueDateStats that contain the sum of all participations:
         // with either 1 or more manual results, OR 2 or more manual results
-        correctionRoundsDataStats[0] = new DueDateStat(countlist.stream().filter(x -> x >= 1L).count(), 0L);
+        correctionRoundsDataStats[0] = new DueDateStat(countList.stream().filter(x -> x >= 1L).count(), 0L);
         // so far the number of correctionRounds is limited to 2
         if (numberOfCorrectionRounds == 2) {
-            correctionRoundsDataStats[1] = new DueDateStat(countlist.stream().filter(x -> x >= 2L).count(), 0L);
+            correctionRoundsDataStats[1] = new DueDateStat(countList.stream().filter(x -> x >= 2L).count(), 0L);
         }
         return correctionRoundsDataStats;
     }

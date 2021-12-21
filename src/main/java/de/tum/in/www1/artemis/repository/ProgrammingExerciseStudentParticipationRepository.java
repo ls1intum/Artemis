@@ -42,10 +42,10 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             @Param("dateTime") ZonedDateTime dateTime);
 
     /**
-     * Will return the participation with the provided participationId. The participation will come with all it's manual results, submissions, feedbacks and assessors
+     * Will return the participation with the provided participationId. The participation will come with all its manual results, submissions, feedbacks and assessors
      *
      * @param participationId the participation id
-     * @return a participation with all it's manual results.
+     * @return a participation with all its manual results.
      */
     @Query("""
             select p from ProgrammingExerciseStudentParticipation p

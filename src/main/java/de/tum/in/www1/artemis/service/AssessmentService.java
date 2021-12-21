@@ -115,7 +115,7 @@ public class AssessmentService {
      * @param user the user who initiates a request
      * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
      * @param participation the participation to which the submission and result belongs to
-     * @return true of the the given user can override a potentially existing result
+     * @return true of the given user can override a potentially existing result
      */
     public boolean isAllowedToCreateOrOverrideResult(Result existingResult, Exercise exercise, StudentParticipation participation, User user, boolean isAtLeastInstructor) {
 
