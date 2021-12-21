@@ -25,7 +25,7 @@ import { OrganizationManagementDetailComponent } from './organization-management
 import { OrganizationManagementUpdateComponent } from './organization-management/organization-management-update.component';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { MetricsModule } from 'app/admin/metrics/metrics.module';
-import { Ng2ChartsModule } from 'app/shared/chart/ng2-charts.module';
+import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 
 const ENTITY_STATES = [...adminState];
 
@@ -38,7 +38,7 @@ const ENTITY_STATES = [...adminState];
         NgxDatatableModule,
         ArtemisDataTableModule,
         MetricsModule,
-        Ng2ChartsModule,
+        ArtemisChartsModule,
     ],
     declarations: [
         AuditsComponent,

@@ -36,7 +36,6 @@ import { CourseRegistrationComponent } from 'app/overview/course-registration/co
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { ChartsModule } from 'ng2-charts';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -61,7 +60,6 @@ describe('Guided tour integration', () => {
         TestBed.configureTestingModule({
             imports: [
                 ArtemisTestModule,
-                MockModule(ChartsModule),
                 RouterTestingModule.withRoutes([
                     {
                         path: 'courses',
