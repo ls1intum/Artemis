@@ -14,6 +14,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { hasParticipationChanged } from 'app/overview/participation.utils';
 import { Result } from 'app/entities/result.model';
 import { MissingResultInfo } from 'app/exercises/shared/result/result.component';
+import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged in user.
@@ -125,7 +126,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                         !this.exercise.dueDate ||
                         submission.type === SubmissionType.INSTRUCTOR ||
                         submission.type === SubmissionType.TEST ||
-                        this.exercise.dueDate.isAfter(dayjs(submission.submissionDate!)),
+                        hasExerciseDueDatePassed(this.exercise, this.participation),
                 ),
                 tap(({ submissionState }) => {
                     this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;

@@ -313,6 +313,14 @@ Custom alerts for notification
 .alerts {
     .alert {
         text-overflow: ellipsis;
+        display: flex;
+        justify-content: space-between;
+
+        .close {
+            background: none;
+            border: none;
+            font-size: large;
+        }
 
         pre {
             background: none;
