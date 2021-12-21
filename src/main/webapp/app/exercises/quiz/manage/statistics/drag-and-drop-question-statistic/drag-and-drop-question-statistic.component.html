@@ -57,6 +57,7 @@
                         <div class="click-layer">
                             <div *ngIf="!showSolution">
                                 <div
+                                    id="drop-location"
                                     class="drop-location"
                                     *ngFor="let dropLocation of question.dropLocations; let i = index"
                                     [ngStyle]="{

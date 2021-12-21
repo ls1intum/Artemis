@@ -69,6 +69,9 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
 
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
+
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 1, 0, 1);
@@ -317,6 +320,41 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(updatedTextExercise.getCourseViaExerciseGroupOrCourseMember()).as("course was set for normal exercise").isNotNull();
         assertThat(updatedTextExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
         assertThat(updatedTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("courseId was not updated").isEqualTo(course.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExerciseDueDate() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        final TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
+
+        {
+            final TextSubmission submission1 = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
+            databaseUtilService.saveTextSubmission(textExercise, submission1, "student1");
+            final TextSubmission submission2 = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
+            databaseUtilService.saveTextSubmission(textExercise, submission2, "student2");
+
+            final var participations = studentParticipationRepository.findByExerciseId(textExercise.getId());
+            assertThat(participations).hasSize(2);
+            participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+            participations.get(1).setIndividualDueDate(individualDueDate);
+            studentParticipationRepository.saveAll(participations);
+        }
+
+        textExercise.setDueDate(ZonedDateTime.now().plusHours(12));
+        request.put("/api/text-exercises/", textExercise, HttpStatus.OK);
+
+        {
+            final var participations = studentParticipationRepository.findByExerciseId(textExercise.getId());
+            final var withNoIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+            assertThat(withNoIndividualDueDate).hasSize(1);
+
+            final var withIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() != null).toList();
+            assertThat(withIndividualDueDate).hasSize(1);
+            assertThat(withIndividualDueDate.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(individualDueDate);
+        }
     }
 
     @Test
