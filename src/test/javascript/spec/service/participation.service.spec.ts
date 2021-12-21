@@ -13,12 +13,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { Course } from 'app/entities/course.model';
 
 describe('Participation Service', () => {
     let injector: TestBed;
     let service: ParticipationService;
     let httpMock: HttpTestingController;
-    let elemDefault: Participation;
+    let participationDefault: Participation;
     let currentDate: dayjs.Dayjs;
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -35,7 +37,7 @@ describe('Participation Service', () => {
         httpMock = injector.get(HttpTestingController);
         currentDate = dayjs();
 
-        elemDefault = new StudentParticipation();
+        participationDefault = new StudentParticipation();
     });
 
     it('should find an element', fakeAsync(() => {
@@ -43,12 +45,12 @@ describe('Participation Service', () => {
             {
                 initializationDate: currentDate.toDate(),
             },
-            elemDefault,
+            participationDefault,
         );
         service
             .find(123)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: elemDefault }));
+            .subscribe((resp) => expect(resp).toMatchObject({ body: participationDefault }));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -56,7 +58,7 @@ describe('Participation Service', () => {
     }));
 
     it('should find an element with latest result', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault, initializationDate: currentDate.toDate() };
+        const returnedFromService = { ...participationDefault, initializationDate: currentDate.toDate() };
         returnedFromService.results = [{ id: 1 }];
         service
             .findWithLatestResult(123)
@@ -69,7 +71,7 @@ describe('Participation Service', () => {
     }));
 
     it('should find participation for the exercise', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault, initializationDate: currentDate.toDate() };
+        const returnedFromService = { ...participationDefault, initializationDate: currentDate.toDate() };
         returnedFromService.id = 123;
         service
             .findParticipationForCurrentUser(123)
@@ -102,7 +104,7 @@ describe('Participation Service', () => {
     }));
 
     it('should cleanup build plan', fakeAsync(() => {
-        service.cleanupBuildPlan(elemDefault).subscribe((resp) => expect(resp).toMatchObject(elemDefault));
+        service.cleanupBuildPlan(participationDefault).subscribe((resp) => expect(resp).toMatchObject(participationDefault));
         httpMock.expectOne({ method: 'PUT' });
     }));
 
@@ -185,6 +187,8 @@ describe('Participation Service', () => {
     }));
 
     it('should update a Participation', fakeAsync(() => {
+        const exercise = new TextExercise(new Course(), undefined);
+        exercise.id = 1;
         const returnedFromService = Object.assign(
             {
                 repositoryUrl: 'BBBBBB',
@@ -192,13 +196,15 @@ describe('Participation Service', () => {
                 initializationState: 'BBBBBB',
                 initializationDate: currentDate,
                 presentationScore: 1,
+                exercise,
             },
-            elemDefault,
+            participationDefault,
         );
 
         const expected = Object.assign({}, returnedFromService);
+
         service
-            .update(1, expected)
+            .update(exercise, expected)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'PUT' });
@@ -217,7 +223,7 @@ describe('Participation Service', () => {
                 results: [],
                 submissions: [],
             },
-            elemDefault,
+            participationDefault,
         );
         const expected = Object.assign({}, returnedFromService);
         service

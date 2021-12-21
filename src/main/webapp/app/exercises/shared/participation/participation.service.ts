@@ -24,17 +24,23 @@ export class ParticipationService {
 
     constructor(private http: HttpClient, private submissionService: SubmissionService) {}
 
-    update(exerciseId: number, participation: StudentParticipation): Observable<EntityResponseType> {
+    update(exercise: Exercise, participation: StudentParticipation): Observable<EntityResponseType> {
+        // make sure participation and exercise are connected, because this is expected by the server
+        participation.exercise = exercise;
         const copy = this.convertDateFromClient(participation);
         return this.http
-            .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations`, copy, { observe: 'response' })
+            .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exercise.id}/participations`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    updateIndividualDueDates(exerciseId: number, participations: StudentParticipation[]): Observable<EntityArrayResponseType> {
-        const copies = participations.map((participation) => this.convertDateFromClient(participation));
+    updateIndividualDueDates(exercise: Exercise, participations: StudentParticipation[]): Observable<EntityArrayResponseType> {
+        const copies = participations.map((participation) => {
+            // make sure participation and exercise are connected, because this is expected by the server
+            participation.exercise = exercise;
+            this.convertDateFromClient(participation);
+        });
         return this.http
-            .put<StudentParticipation[]>(SERVER_API_URL + `api/exercises/${exerciseId}/participations/update-individual-due-date`, copies, { observe: 'response' })
+            .put<StudentParticipation[]>(SERVER_API_URL + `api/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
