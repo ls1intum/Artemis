@@ -45,7 +45,7 @@ describe('Exam management', () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
         courseManagement.openExamsOfCourse(course.shortName);
-        examManagement.getExamRow(examTitle).openExerciseGroups(exam.id);
+        examManagement.openExerciseGroups(exam.id);
         exerciseGroups.shouldShowNumberOfExerciseGroups(0);
         exerciseGroups.clickAddExerciseGroup();
         const groupName = 'group 1';
@@ -66,7 +66,7 @@ describe('Exam management', () => {
     it('Registers the course students for the exam', () => {
         // We already verified in the previous test that we can navigate here
         cy.visit(`/course-management/${course.id}/exams`);
-        examManagement.getExamRow(examTitle).openStudentRegistration(exam.id);
+        examManagement.openStudentRegistration(exam.id);
         cy.contains('Registered students: 0').should('be.visible');
         studentExamManagement.clickRegisterCourseStudents().its('response.statusCode').should('eq', 200);
         cy.contains(users.getStudentOne().username).should('be.visible');
@@ -75,7 +75,7 @@ describe('Exam management', () => {
 
     it('Generates student exams', () => {
         cy.visit(`/course-management/${course.id}/exams`);
-        examManagement.getExamRow(examTitle).openStudenExams(exam.id);
+        examManagement.openStudenExams(exam.id);
         cy.contains('0 total').should('be.visible');
         studentExamManagement.clickGenerateStudentExams();
         cy.contains('1 total').should('be.visible');

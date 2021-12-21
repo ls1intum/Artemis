@@ -3,15 +3,6 @@
  */
 export class ExamManagementPage {
     /**
-     * Searches for an exam with the provided title and returns a pageobject for further interactions.
-     * @param examTitle the title of the exam.
-     * @returns the pageobject which represents this exam row
-     */
-    getExamRow(examTitle: string) {
-        return new ExamRow(this.getExamRowRoot(examTitle));
-    }
-
-    /**
      * Searches for an exam with the provided title.
      * @param examTitle the title of the exam.
      * @returns the row element of the found exam
@@ -45,20 +36,6 @@ export class ExamManagementPage {
      */
     getExamSelector(examTitle: string) {
         return cy.get('#exams-table').contains(examTitle);
-    }
-}
-
-/**
- * Pageobject for a table row in the exams table.
- */
-export class ExamRow {
-    readonly root;
-
-    /**
-     * @param root the root <tr> element of the exam
-     */
-    constructor(root: Cypress.Chainable<JQuery<HTMLTableRowElement>>) {
-        this.root = root;
     }
 
     /**
