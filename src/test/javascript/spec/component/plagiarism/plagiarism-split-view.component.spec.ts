@@ -15,6 +15,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ModelingSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
 import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
+import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 
 const collapse = jest.fn();
 const setSizes = jest.fn();
@@ -37,6 +38,8 @@ describe('Plagiarism Split View Component', () => {
     const submissionA = { studentLogin: 'studentA' } as PlagiarismSubmission<TextSubmissionElement>;
     const submissionB = { studentLogin: 'studentB' } as PlagiarismSubmission<TextSubmissionElement>;
 
+    const comparison = { id: 1, submissionA, submissionB, matches: [], similarity: 42, status: PlagiarismStatus.DENIED } as PlagiarismComparison<TextSubmissionElement>;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
@@ -52,6 +55,10 @@ describe('Plagiarism Split View Component', () => {
             submissionB,
         } as PlagiarismComparison<TextSubmissionElement>;
         comp.splitControlSubject = splitControlSubject;
+    });
+
+    afterEach(() => {
+        jest.resetAllMocks();
     });
 
     it('checks type of modeling exercise', () => {
@@ -70,6 +77,18 @@ describe('Plagiarism Split View Component', () => {
 
         expect(comp.isProgrammingOrTextExercise).toEqual(true);
         expect(comp.isModelingExercise).toEqual(false);
+    });
+
+    it('should parse text matches for comparison', () => {
+        jest.spyOn(comp, 'parseTextMatches');
+        comp.ngOnChanges({
+            exercise: { currentValue: textExercise } as SimpleChange,
+            comparison: { currentValue: comparison } as SimpleChange,
+        });
+
+        expect(comp.isProgrammingOrTextExercise).toEqual(true);
+        expect(comp.isModelingExercise).toEqual(false);
+        expect(comp.parseTextMatches).toHaveBeenCalledTimes(1);
     });
 
     // TODO: for some reason this test does not work
@@ -131,7 +150,10 @@ describe('Plagiarism Split View Component', () => {
     it('parses text matches', () => {
         jest.spyOn(comp, 'mapMatchesToElements').mockReturnValue(new Map());
 
-        const matches: PlagiarismMatch[] = [];
+        const matches: PlagiarismMatch[] = [
+            { startA: 0, startB: 0, length: 5 },
+            { startA: 10, startB: 10, length: 20 },
+        ];
         comp.parseTextMatches({ submissionA, submissionB, matches } as PlagiarismComparison<TextSubmissionElement>);
 
         expect(comp.matchesA).toBeDefined();
