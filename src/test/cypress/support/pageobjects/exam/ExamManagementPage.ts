@@ -65,20 +65,20 @@ export class ExamRow {
      * Opens the exercise groups page.
      */
     openExerciseGroups(examId: string) {
-        this.root.find(`#exercises-button-${examId}-groups`).click();
+        cy.get(`#exercises-button-${examId}-groups`).click();
     }
 
     /**
      * Opens the student registration page.
      */
     openStudentRegistration(examId: string) {
-        this.root.find(`#student-button-${examId}`).click();
+        cy.get(`#student-button-${examId}`).click();
     }
 
     /**
      * Opens the student exams page.
      */
     openStudenExams(examId: string) {
-        this.root.find(`#student-exams-${examId}`).click();
+        cy.get(`#student-exams-${examId}`).click();
     }
 }
