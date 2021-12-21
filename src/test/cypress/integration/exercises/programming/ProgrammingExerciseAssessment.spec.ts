@@ -29,12 +29,19 @@ describe('Programming exercise assessment', () => {
     const tutorCodeFeedback = 'The input parameter should be mentioned in javadoc!';
     const tutorCodeFeedbackPoints = -2;
     const complaint = "That feedback wasn't very useful!";
+    let dueDate: dayjs.Dayjs;
+    let assessmentDueDate: dayjs.Dayjs;
 
     before('Creates a programming exercise and makes a student submission', () => {
         createCourseWithProgrammingExercise().then(() => {
             makeProgrammingSubmissionAsStudent();
-            updateExerciseDueDate();
         });
+    });
+
+    it('Assesses the programming exercise submission and verify it', () => {
+        assessSubmission();
+        verifyAssessmentAsStudent();
+        acceptComplaintAsInstructor();
     });
 
     after(() => {
@@ -42,13 +49,6 @@ describe('Programming exercise assessment', () => {
             cy.login(users.getAdmin());
             courseManagement.deleteCourse(course.id);
         }
-    });
-
-    it('Assesses the programming exercise submission and verify it', () => {
-        assessSubmission();
-        updateExerciseAssessmentDueDate();
-        verifyAssessmentAsStudent();
-        acceptComplaintAsInstructor();
     });
 
     function assessSubmission() {
@@ -60,7 +60,14 @@ describe('Programming exercise assessment', () => {
         onlineEditor.openFileWithName('BubbleSort.java');
         programmingAssessment.provideFeedbackOnCodeLine(9, tutorCodeFeedbackPoints, tutorCodeFeedback);
         programmingAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
-        programmingAssessment.submit().its('response.statusCode').should('eq', 200);
+        programmingAssessment.submit().then((request: any) => {
+            expect(request.response.statusCode).to.eq(200);
+            // Wait until the assessment due date is over
+            const now = dayjs();
+            if (now.isBefore(assessmentDueDate)) {
+                cy.wait(assessmentDueDate.diff(now, 'ms'));
+            }
+        });
     }
 
     function verifyAssessmentAsStudent() {
@@ -68,19 +75,19 @@ describe('Programming exercise assessment', () => {
         const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
         const percentage = totalPoints * 10;
         exerciseResult.shouldShowExerciseTitle(exercise.title);
+        programmingFeedback.complain(complaint);
         exerciseResult.clickOpenCodeEditor(exercise.id);
         programmingFeedback.shouldShowRepositoryLockedWarning();
         programmingFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
         programmingFeedback.shouldShowScore(totalPoints, exercise.maxPoints, percentage);
         programmingFeedback.shouldShowCodeFeedback('BubbleSort.java', tutorCodeFeedback, '-2', onlineEditor);
-        // The complaint feature is located on the result screen for programming exercises...
-        cy.go('back');
-        programmingFeedback.complain(complaint);
     }
 
     function acceptComplaintAsInstructor() {
         cy.login(instructor, `/course-management/${course.id}/complaints`);
-        programmingAssessment.acceptComplaint('Makes sense').its('response.statusCode').should('eq', 200);
+        programmingAssessment.acceptComplaint('Makes sense').then((request: any) => {
+            expect(request.response.statusCode).to.equal(200);
+        });
     }
 
     function createCourseWithProgrammingExercise() {
@@ -90,8 +97,10 @@ describe('Programming exercise assessment', () => {
             courseManagement.addStudentToCourse(course.id, student.username);
             courseManagement.addTutorToCourse(course, tutor);
             courseManagement.addInstructorToCourse(course.id, instructor);
+            dueDate = dayjs().add(25, 'seconds');
+            assessmentDueDate = dueDate.add(30, 'seconds');
             courseManagement
-                .createProgrammingExercise({ course }, undefined, undefined, undefined, undefined, undefined, undefined, undefined, CypressAssessmentType.SEMI_AUTOMATIC)
+                .createProgrammingExercise({ course }, undefined, dayjs(), dueDate, undefined, undefined, undefined, assessmentDueDate, CypressAssessmentType.SEMI_AUTOMATIC)
                 .then((programmingResponse) => {
                     exercise = programmingResponse.body;
                 });
@@ -105,16 +114,11 @@ describe('Programming exercise assessment', () => {
             .its('body.id')
             .then((participationId) => {
                 courseManagement.makeProgrammingExerciseSubmission(participationId);
+                // Wait until the due date is in the past
+                const now = dayjs();
+                if (now.isBefore(dueDate)) {
+                    cy.wait(dueDate.diff(now, 'ms'));
+                }
             });
-    }
-
-    function updateExerciseDueDate() {
-        cy.login(admin);
-        courseManagement.updateProgrammingExerciseDueDate(exercise, dayjs().add(5, 'seconds'));
-    }
-
-    function updateExerciseAssessmentDueDate() {
-        cy.login(admin);
-        courseManagement.updateProgrammingExerciseAssessmentDueDate(exercise);
     }
 });

@@ -7,8 +7,7 @@ export abstract class AbstractExerciseFeedback {
     readonly additionalFeedbackSelector = '#additional-feedback';
 
     shouldShowAdditionalFeedback(points: number, feedbackText: string) {
-        cy.reloadUntilFound(this.additionalFeedbackSelector);
-        cy.get(additionalFeedbackSelector).contains(`${points} Points: ${feedbackText}`).should('be.visible');
+        cy.get(this.additionalFeedbackSelector).contains(`${points} Points: ${feedbackText}`).should('be.visible');
     }
 
     shouldShowScore(achievedPoints: number, maxPoints: number, percentage: number) {
