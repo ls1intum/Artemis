@@ -97,7 +97,7 @@ describe('ExampleTextSubmissionComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should fetch example submission with result for existing example submission and switch to edit state', async () => {
+    it('should fetch example submission with result for existing example submission and switch to edit state', fakeAsync(() => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
@@ -106,16 +106,17 @@ describe('ExampleTextSubmissionComponent', () => {
         jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
-        await comp.ngOnInit();
+        comp.ngOnInit();
+        tick();
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
         expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
         expect(comp.state.constructor.name).toEqual('EditState');
-    });
+    }));
 
-    it('should only fetch exercise for new example submission and stay in new state', async () => {
+    it('should only fetch exercise for new example submission and stay in new state', fakeAsync(() => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: 'new' };
@@ -124,37 +125,41 @@ describe('ExampleTextSubmissionComponent', () => {
         jest.spyOn(assessmentsService, 'getExampleResult').mockImplementation();
 
         // WHEN
-        await comp.ngOnInit();
+        comp.ngOnInit();
+        tick();
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
         expect(exampleSubmissionService.get).toHaveBeenCalledTimes(0);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledTimes(0);
         expect(comp.state.constructor.name).toEqual('NewState');
-    });
+    }));
 
-    it('should switch state when starting assessment', async () => {
+    it('should switch state when starting assessment', fakeAsync(() => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
-        await comp.ngOnInit();
+        comp.ngOnInit();
+        tick();
         comp.exercise = exercise;
         comp.exercise!.isAtLeastInstructor = true;
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;
 
         // WHEN
-        await comp.startAssessment();
+        comp.startAssessment();
+        tick();
 
         // THEN
         expect(comp.state.constructor.name).toEqual('NewAssessmentState');
-    });
+    }));
 
-    it('should save assessment', async () => {
+    it('should save assessment', fakeAsync(() => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
-        await comp.ngOnInit();
+        comp.ngOnInit();
+        tick();
         comp.exercise = exercise;
         comp.exercise!.isAtLeastEditor = true;
         comp.exampleSubmission = exampleSubmission;
@@ -186,7 +191,7 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // THEN
         expect(assessmentsService.saveExampleAssessment).toHaveBeenCalledWith(EXERCISE_ID, EXAMPLE_SUBMISSION_ID, [feedback], [textBlock1]);
-    });
+    }));
 
     it('editing submission from assessment state switches state', fakeAsync(() => {
         // GIVEN
@@ -231,7 +236,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.unusedTextBlockRefs).toHaveLength(0);
     }));
 
-    it('it should verify correct tutorial submission', async () => {
+    it('it should verify correct tutorial submission', fakeAsync(() => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
@@ -252,7 +257,8 @@ describe('ExampleTextSubmissionComponent', () => {
         submission.blocks = [textBlock1, textBlock2];
         submission.text = '123456789';
         jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
-        await comp.ngOnInit();
+        comp.ngOnInit();
+        tick();
 
         comp.textBlockRefs[0].initFeedback();
         comp.textBlockRefs[0].feedback!.credits = 2;
@@ -269,7 +275,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
         expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalled();
-    });
+    }));
 
     it('when wrong tutor assessment, upon server response should mark feedback as incorrect', fakeAsync(() => {
         // GIVEN
