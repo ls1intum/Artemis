@@ -16,7 +16,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Participation } from 'app/entities/participation/participation.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faFlag, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
@@ -31,6 +31,7 @@ class ExerciseForTeam extends Exercise {
     team: Team;
     participation?: StudentParticipation;
     submission?: Submission;
+    individualDueDate?: dayjs.Dayjs;
 }
 
 @Component({
@@ -101,6 +102,7 @@ export class TeamParticipationTableComponent implements OnInit {
             exercise.team = exercise.teams![0];
             const participation = get(exercise, 'studentParticipations[0]', undefined);
             exercise.participation = participation;
+            exercise.individualDueDate = getExerciseDueDate(exercise, exercise.participation);
             exercise.submission = get(exercise, 'participation.submissions[0]', undefined); // only exists for instructor and team tutor
             if (exercise.submission) {
                 exercise.submission.participation = participation;
