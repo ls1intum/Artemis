@@ -5,7 +5,7 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
     JAVA_OPTS=""
 
 # Add an artemis user to run our application so that it doesn't need to run as root
-RUN adduser -D -s /bin/sh artemis
+RUN adduser artemis
 WORKDIR /home/artemis
 USER artemis
 
