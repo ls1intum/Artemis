@@ -58,7 +58,9 @@ describe('Exam creation/deletion', () => {
     describe('Exam deletion', () => {
         beforeEach(() => {
             const exam = new CypressExamBuilder(course).title(examTitle).build();
-            courseManagementRequests.createExam(exam);
+            courseManagementRequests.createExam(exam).then((examResponse) => {
+                examId = examResponse.body.id;
+            });
         });
 
         it('Deletes an existing exam', () => {
