@@ -237,9 +237,10 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         var solutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
         var testRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
 
-        var nextParticipationId = sourceExercise.getTemplateParticipation().getId() + 1;
-        final var artemisSolutionHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
-        final var artemisTemplateHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId;
+        // take the latest participationId because we assume that it increases in the database for the participations in the imported exercises
+        var nextParticipationId = Math.max(sourceExercise.getSolutionParticipation().getId(), sourceExercise.getTemplateParticipation().getId()) + 1;
+        final var artemisTemplateHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
+        final var artemisSolutionHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId;
         final var artemisTestsHookPath = artemisServerUrl + TEST_CASE_CHANGED_API_PATH + (sourceExercise.getId() + 1);
 
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);

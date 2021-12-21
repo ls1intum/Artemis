@@ -110,8 +110,9 @@ public class ProgrammingExerciseImportService {
         // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
 
-        programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise);
+        // Note: same order as when creating an exercise
         programmingExerciseParticipationService.setupInitialTemplateParticipation(newExercise);
+        programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise);
         setupTestRepository(newExercise);
         programmingExerciseService.initParticipations(newExercise);
 
@@ -210,7 +211,7 @@ public class ProgrammingExerciseImportService {
         final var solutionParticipation = newExercise.getSolutionParticipation();
         final var targetExerciseProjectKey = newExercise.getProjectKey();
 
-        // Clone all build plans, enable them and setup the initial participations, i.e. setting the correct repo URLs and
+        // Clone all build plans, enable them and set up the initial participations, i.e. setting the correct repo URLs and
         // running the plan for the first time
         cloneAndEnableAllBuildPlans(templateExercise, newExercise);
 
@@ -230,7 +231,7 @@ public class ProgrammingExerciseImportService {
     private void updatePlanRepositoriesInBuildPlans(ProgrammingExercise newExercise, TemplateProgrammingExerciseParticipation templateParticipation,
             SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey, String oldExerciseRepoUrl, String oldSolutionRepoUrl,
             String oldTestRepoUrl, List<AuxiliaryRepository> oldBuildPlanAuxiliaryRepositories) {
-        // update 2 repositories for the template (BASE) build plan --> adapt the triggers so that only the assignment repo (and not the tests repo) will trigger the BASE build
+        // update 2 repositories for the template (BASE) build plan --> adapt the triggers so that only the assignment repo (and not the tests' repo) will trigger the BASE build
         // plan
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
                 newExercise.getTemplateRepositoryUrl(), oldExerciseRepoUrl, Optional.of(List.of(ASSIGNMENT_REPO_NAME)));

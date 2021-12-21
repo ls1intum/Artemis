@@ -283,12 +283,9 @@ public class BitbucketRequestMockProvider {
     public void mockAddWebhook(String projectKey, String repositoryName, String url) throws JsonProcessingException, URISyntaxException {
         final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").pathSegment(projectKey).path("repos").pathSegment(repositoryName)
                 .path("webhooks").build().toUri();
-        System.err.println("mockAddWebhook: " + uri);
         final var body = new BitbucketWebHookDTO("Artemis WebHook", url, List.of("repo:refs_changed"));
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                // TODO: fix the body in the real import case to make sure it works correctly
-                // .andExpect(content().json(mapper.writeValueAsString(body)))
-                .andRespond(withStatus(HttpStatus.OK));
+                .andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockDeleteProject(String projectKey, boolean shouldFail) throws URISyntaxException {

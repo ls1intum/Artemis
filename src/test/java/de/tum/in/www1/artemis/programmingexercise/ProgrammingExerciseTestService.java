@@ -452,7 +452,6 @@ public class ProgrammingExerciseTestService {
 
         // TODO: at the moment, it does not work that the copied repositories include the same files as ones that have been created originally
         // this is probably the case, because the actual copy is not executed due to mocks
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true);
         final var exerciseRepoName = urlService.getRepositorySlugFromRepositoryUrlString(sourceExercise.getTemplateParticipation().getRepositoryUrl()).toLowerCase();
         final var solutionRepoName = urlService.getRepositorySlugFromRepositoryUrlString(sourceExercise.getSolutionParticipation().getRepositoryUrl()).toLowerCase();
         final var testRepoName = urlService.getRepositorySlugFromRepositoryUrlString(sourceExercise.getTestRepositoryUrl()).toLowerCase();
@@ -466,13 +465,15 @@ public class ProgrammingExerciseTestService {
         params.add("recreateBuildPlans", String.valueOf(true));
         params.add("updateTemplate", String.valueOf(true));
 
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true);
+
         // Import the exercise and load all referenced entities
         var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
         importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
         // TODO: check why the assertions do not work correctly
-        // // Assert correct creation of test cases
+        // Assert correct creation of test cases
         // var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
         // var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
         // assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
