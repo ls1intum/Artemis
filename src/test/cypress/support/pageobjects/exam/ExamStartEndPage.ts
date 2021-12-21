@@ -11,7 +11,7 @@ export class ExamStartEndPage {
     }
 
     pressStart() {
-        cy.get('[jhitranslate="artemisApp.exam.startExam"]').click();
+        cy.get('#start-exam').click();
     }
 
     pressFinish() {

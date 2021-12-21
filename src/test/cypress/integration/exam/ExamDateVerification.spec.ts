@@ -62,7 +62,6 @@ describe('Exam date verification', () => {
                 cy.login(artemis.users.getStudentOne(), `/courses/${course.id}`);
                 cy.url().should('contain', `${course.id}`);
                 courseOverview.openExamsTab();
-                cy.url().should('contain', '/exams');
                 courseOverview.openExam(exam.id);
                 cy.url().should('contain', `/exams/${exam.id}`);
             });
@@ -87,11 +86,11 @@ describe('Exam date verification', () => {
                         courseManagementRequests.generateMissingIndividualExams(exam);
                         courseManagementRequests.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
-                        cy.contains(exam.title).click();
+                        courseOverview.openExam(exam.id);
                         cy.url().should('contain', `/exams/${exam.id}`);
                         cy.contains(exam.title).should('be.visible');
                         examStartEnd.startExam();
-                        cy.contains(textExercise.title).should('be.visible').click();
+                        examNavigationBar.openExerciseAtIndex(0);
                         cy.fixture('loremIpsum.txt').then((submission) => {
                             textEditor.typeSubmission(submission);
                         });
@@ -120,17 +119,16 @@ describe('Exam date verification', () => {
                         courseManagementRequests.generateMissingIndividualExams(exam);
                         courseManagementRequests.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
-                        cy.contains(exam.title).click();
+                        courseOverview.openExam(exam.id);
                         cy.contains(exam.title).should('be.visible');
                         examStartEnd.startExam();
-                        cy.contains(textExercise.title).should('be.visible').click();
+                        examNavigationBar.openExerciseAtIndex(0);
                         cy.fixture('loremIpsum.txt').then((submissionText) => {
                             textEditor.typeSubmission(submissionText);
                         });
-                        cy.contains('Save').click();
+                        examNavigationBar.clickSave();
                         cy.contains('This is the end of ' + exam.title, { timeout: 40000 });
                         examStartEnd.finishExam();
-                        cy.get('.alert').contains('Your exam was submitted successfully.');
                     });
                 });
             });
