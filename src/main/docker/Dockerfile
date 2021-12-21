@@ -1,4 +1,4 @@
-FROM openjdk:17-jdk-alpine
+FROM openjdk:17-jdk-slim-bullseye
 
 ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
     JHIPSTER_SLEEP=0 \
