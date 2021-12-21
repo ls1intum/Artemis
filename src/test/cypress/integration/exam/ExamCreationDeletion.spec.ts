@@ -10,10 +10,12 @@ const courseManagementRequests = artemis.requests.courseManagement;
 const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagement = artemis.pageobjects.courseManagement;
 const examManagement = artemis.pageobjects.examManagement;
+const creationPage = artemis.pageobjects.examCreation;
 
 describe('Exam creation/deletion', () => {
     let course: any;
     let examTitle: string;
+    let examId: string;
 
     before(() => {
         cy.login(artemis.users.getAdmin());
@@ -28,7 +30,6 @@ describe('Exam creation/deletion', () => {
     });
 
     it('Creates an exam', function () {
-        const creationPage = artemis.pageobjects.examCreation;
         navigationBar.openCourseManagement();
         courseManagement.openExamsOfCourse(course.shortName);
 
@@ -44,7 +45,13 @@ describe('Exam creation/deletion', () => {
         creationPage.setEndText('Cypress exam end text');
         creationPage.setConfirmationStartText('Cypress exam confirmation start text');
         creationPage.setConfirmationEndText('Cypress exam confirmation end text');
-        creationPage.submit().its('response.statusCode').should('eq', 201);
+        creationPage
+            .submit()
+            .then((examResponse) => {
+                examId = examResponse.response!.body.id;
+            })
+            .its('response.statusCode')
+            .should('eq', 201);
         examManagement.getExamRowRoot(examTitle).should('be.visible');
     });
 
@@ -57,7 +64,7 @@ describe('Exam creation/deletion', () => {
         it('Deletes an existing exam', () => {
             navigationBar.openCourseManagement();
             courseManagement.openExamsOfCourse(course.shortName);
-            examManagement.deleteExam(examTitle);
+            examManagement.deleteExam(examId, examTitle);
             examManagement.getExamSelector(examTitle).should('not.exist');
         });
     });

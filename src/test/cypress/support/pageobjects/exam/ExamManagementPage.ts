@@ -13,20 +13,21 @@ export class ExamManagementPage {
 
     /**
      * Deletes the exam with the specified title.
-     * @param examTitle the exam title
+     * @param examId the exam ID
+     * @param examTitle the exam ID
      */
-    deleteExam(examTitle: string) {
-        this.getExamRowRoot(examTitle).find('[deleteconfirmationtext="artemisApp.examManagement.delete.typeNameToConfirm"]').click();
-        cy.get('.modal-footer').find('.btn-danger').should('be.disabled');
-        cy.get('.modal-body').find('input').type(examTitle);
-        cy.get('.modal-footer').find('.btn-danger').should('not.be.disabled').click();
+    deleteExam(examId: string, examTitle: string) {
+        cy.get('#delete-exam-' + examId).click();
+        cy.get('#delete').should('be.disabled');
+        cy.get('#confirm-exercise-name').type(examTitle);
+        cy.get('#delete').should('not.be.disabled').click();
     }
 
     /**
      * Clicks the create new exam button.
      */
     createNewExam() {
-        cy.get('.create-exam').click();
+        cy.get('#create-exam').click();
     }
 
     /**

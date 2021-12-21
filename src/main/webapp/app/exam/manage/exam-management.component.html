@@ -2,7 +2,7 @@
     <div class="d-flex">
         <h4 id="course-page-heading" jhiTranslate="artemisApp.examManagement.title">Exams</h4>
         <div class="ms-auto d-flex" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-            <a class="btn btn-primary jh-create-entity create-exam" *ngIf="course.isAtLeastInstructor" [routerLink]="['new']">
+            <a class="btn btn-primary jh-create-entity create-exam" id="create-exam" *ngIf="course.isAtLeastInstructor" [routerLink]="['new']">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span class="hidden-sm-down">{{ 'artemisApp.examManagement.createExam' | artemisTranslate }}</span>
             </a>
@@ -187,6 +187,7 @@
                             </div>
                             <div class="d-flex flex-column me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                 <button
+                                    id="delete-exam-{{ exam.id }}"
                                     *ngIf="course.isAtLeastInstructor && exam"
                                     jhiDeleteButton
                                     [entityTitle]="exam.title || ''"
