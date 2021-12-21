@@ -26,7 +26,6 @@ import { SortService } from 'app/shared/service/sort.service';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
-import * as sinon from 'sinon';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { SortDirective } from 'app/shared/sort/sort.directive';
@@ -38,6 +37,7 @@ describe('Test Run Management Component', () => {
     let examManagementService: ExamManagementService;
     let accountService: AccountService;
     let modalService: NgbModal;
+    let userSpy: jest.SpyInstance;
 
     const course = { id: 1, isAtLeastInstructor: true } as Course;
     const exam = { id: 1, course, started: true } as Exam;
@@ -79,23 +79,25 @@ describe('Test Run Management Component', () => {
                 modalService = modalService = TestBed.inject(NgbModal);
                 jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
                 jest.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
-                jest.spyOn(accountService, 'fetch').mockReturnValue(of(new HttpResponse({ body: user })));
+                userSpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
                 jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
                 jest.spyOn(examManagementService, 'deleteTestRun').mockReturnValue(of(new HttpResponse({ body: {} })));
             });
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     describe('onInit', () => {
         it('should fetch exam with test runs and user on init', fakeAsync(() => {
             fixture.detectChanges();
 
+            tick();
+
             expect(examManagementService.find).toHaveBeenCalledWith(course.id!, exam.id!, false, true);
             expect(examManagementService.findAllTestRunsForExam).toHaveBeenCalledWith(course.id!, exam.id!);
-            expect(accountService.fetch).toHaveBeenCalledWith();
+            expect(userSpy).toHaveBeenCalledTimes(1);
 
             expect(component.exam).toEqual(exam);
             expect(component.isExamStarted).toEqual(exam.started!);
@@ -168,11 +170,12 @@ describe('Test Run Management Component', () => {
             expect(component.testRunCanBeAssessed).toBeFalsy();
         });
 
-        it('should be able to assess test run', () => {
+        it('should be able to assess test run', fakeAsync(() => {
             studentExams[0].submitted = true;
             fixture.detectChanges();
+            tick();
             expect(component.testRunCanBeAssessed).toBeTruthy();
-        });
+        }));
     });
 
     describe('sort rows', () => {

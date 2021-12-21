@@ -138,9 +138,6 @@ describe('CourseDiscussionComponent', () => {
             lectureId: undefined,
         });
         expect(component.formGroup.get('sortBy')?.value).toEqual(PostSortCriterion.CREATION_DATE);
-        fixture.detectChanges();
-        const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
-        expect(selectedDirectionOption.innerHTML).toContain('long-arrow-alt-down');
     }));
 
     it('should initialize overview page with course posts for default settings correctly', fakeAsync(() => {
@@ -173,8 +170,6 @@ describe('CourseDiscussionComponent', () => {
         const selectedSortByOption = getElement(fixture.debugElement, 'select[name=sortBy]');
         expect(selectedSortByOption.value).not.toBeNull();
         // descending should be selected as sort direction
-        const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
-        expect(selectedDirectionOption.innerHTML).toContain('long-arrow-alt-down');
         // show correct number of posts found
         const postCountInformation = getElement(fixture.debugElement, '.post-result-information');
         expect(component.posts).toEqual(metisCoursePosts);
@@ -305,7 +300,7 @@ describe('CourseDiscussionComponent', () => {
         const expectedPosts = metisCoursePosts.filter(
             (post: Post) =>
                 ((post.answers && post.answers.some((answer: AnswerPost) => answer.author === currentUser)) ||
-                    (post.reactions && post.reactions.some((reaction: Reaction) => reaction.user === currentUser))) &&
+                    (post.reactions && post.reactions.some((reaction: Reaction) => reaction.user?.id! === currentUser.id))) &&
                 !(post.answers && post.answers.some((answer: AnswerPost) => answer.resolvesPost === true)),
         );
         expect(component.posts).toHaveLength(expectedPosts.length);

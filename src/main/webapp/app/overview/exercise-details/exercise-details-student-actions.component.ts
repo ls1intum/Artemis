@@ -14,6 +14,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { finalize } from 'rxjs/operators';
+import { faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faUsers } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -41,6 +42,14 @@ export class ExerciseDetailsStudentActionsComponent {
     // extension points, see shared/extension-point
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
 
+    // Icons
+    faFolderOpen = faFolderOpen;
+    faUsers = faUsers;
+    faEye = faEye;
+    faPlayCircle = faPlayCircle;
+    faSignal = faSignal;
+    faRedo = faRedo;
+
     constructor(private alertService: AlertService, private courseExerciseService: CourseExerciseService, private httpClient: HttpClient, private router: Router) {}
 
     /**
@@ -53,7 +62,7 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     /**
-     * see exercise-utils -> isStartExerciseAvailable
+     * see exercise.utils -> isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
         return isStartExerciseAvailable(this.exercise as ProgrammingExercise);

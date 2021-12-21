@@ -1,5 +1,4 @@
 import { artemis } from '../../../support/ArtemisTesting';
-import { generateUUID } from '../../../support/utils';
 import { CypressExerciseType } from '../../../support/requests/CourseManagementRequests';
 
 // The user management object
@@ -14,26 +13,27 @@ const courseOverview = artemis.pageobjects.courseOverview;
 
 describe('Text exercise participation', () => {
     let course: any;
-    const exerciseTitle = 'Text exercise ' + generateUUID();
+    let exercise: any;
 
     before(() => {
         cy.login(users.getAdmin());
         courseManagement.createCourse().then((response) => {
             course = response.body;
             courseManagement.addStudentToCourse(course.id, users.getStudentOne().username);
-            courseManagement.createTextExercise({ course }, exerciseTitle);
+            courseManagement.createTextExercise({ course }).then((request: any) => {
+                exercise = request.body;
+            });
         });
     });
 
     it('Creates a text exercise in the UI', () => {
         cy.login(users.getStudentOne(), `/courses/${course.id}/exercises`);
-        courseOverview.startExercise(exerciseTitle, CypressExerciseType.TEXT);
-        courseOverview.openRunningExercise(exerciseTitle);
+        courseOverview.startExercise(exercise.id, CypressExerciseType.TEXT);
+        courseOverview.openRunningExercise(exercise.id);
 
         // Verify the initial state of the text editor
-        textEditor.shouldShowExerciseTitleInHeader(exerciseTitle);
+        textEditor.shouldShowExerciseTitleInHeader(exercise.title);
         textEditor.shouldShowProblemStatement();
-        textEditor.getHeaderElement().contains('No Submission').should('be.visible');
 
         // Make a submission
         cy.fixture('loremIpsum.txt').then((submission) => {
@@ -50,8 +50,6 @@ describe('Text exercise participation', () => {
                     expect(response.body.submitted).equals(true);
                     expect(response.statusCode).equals(200);
                 });
-            textEditor.shouldShowAlert();
-            textEditor.shouldShowNoGradedResultAvailable();
         });
     });
 

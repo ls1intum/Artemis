@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * Service Implementation for managing Participation.
  */
 @Service
-// TODO: this class is too large. We need to split it into multiple smaller classes with fewer dependencies
 public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
@@ -220,6 +219,8 @@ public class ParticipationService {
             // fetch again to get additional objects
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
             ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
+            // Note: we make sure to use the correct programming exercises here to avoid org.hibernate.LazyInitializationException later
+            programmingParticipation.setProgrammingExercise(programmingExercise);
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the deadline)
             programmingParticipation = copyRepository(programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
@@ -564,6 +565,44 @@ public class ParticipationService {
             participation.setInitializationState(InitializationState.FINISHED);
             programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
         }
+    }
+
+    /**
+     * Updates the individual due date for each given participation.
+     *
+     * Only sets individual due dates if the exercise has a due date and the
+     * individual due date is after this regular due date.
+     *
+     * @param exercise the {@code participations} belong to.
+     * @param participations for which the individual due date should be updated.
+     * @return all participations where the individual due date actually changed.
+     */
+    public List<StudentParticipation> updateIndividualDueDates(final Exercise exercise, final List<StudentParticipation> participations) {
+        final List<StudentParticipation> changedParticipations = new ArrayList<>();
+
+        for (final StudentParticipation toBeUpdated : participations) {
+            final Optional<StudentParticipation> originalParticipation = studentParticipationRepository.findById(toBeUpdated.getId());
+            if (originalParticipation.isEmpty()) {
+                continue;
+            }
+
+            // individual due dates can only exist if the exercise has a due date
+            // they also have to be after the exercise due date
+            final ZonedDateTime newIndividualDueDate;
+            if (exercise.getDueDate() == null || (toBeUpdated.getIndividualDueDate() != null && toBeUpdated.getIndividualDueDate().isBefore(exercise.getDueDate()))) {
+                newIndividualDueDate = null;
+            }
+            else {
+                newIndividualDueDate = toBeUpdated.getIndividualDueDate();
+            }
+
+            if (!Objects.equals(originalParticipation.get().getIndividualDueDate(), newIndividualDueDate)) {
+                originalParticipation.get().setIndividualDueDate(newIndividualDueDate);
+                changedParticipations.add(originalParticipation.get());
+            }
+        }
+
+        return changedParticipations;
     }
 
     /**

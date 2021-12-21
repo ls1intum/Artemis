@@ -21,8 +21,12 @@ export class ExamNavigationBar {
      * Presses the hand in early button in the navigation bar.
      */
     handInEarly() {
-        this.getNavigationBarRoot().find('.btn-danger').click();
+        cy.get('#hand-in-early').click();
         cy.get('[jhitranslate="artemisApp.examParticipation.handInEarlyNoticeFirstSentence"]').should('be.visible');
+    }
+
+    clickSave() {
+        cy.get('#save');
     }
 
     /**

@@ -28,6 +28,7 @@ const packageName = 'de.test';
 describe('Exam participation', () => {
     let course: any;
     let exam: any;
+    let quizExercise: any;
 
     before(() => {
         cy.login(users.getAdmin());
@@ -53,7 +54,9 @@ describe('Exam participation', () => {
                     courseRequests.createModelingExercise({ exerciseGroup: groupResponse.body });
                 });
                 courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
-                    courseRequests.createQuizExercise({ exerciseGroup: groupResponse.body }, [multipleChoiceTemplate]);
+                    courseRequests.createQuizExercise({ exerciseGroup: groupResponse.body }, [multipleChoiceTemplate]).then((quizResponse) => {
+                        quizExercise = quizResponse.body;
+                    });
                 });
                 courseRequests.generateMissingIndividualExams(exam);
                 courseRequests.prepareExerciseStartForExam(exam);
@@ -117,21 +120,18 @@ describe('Exam participation', () => {
         onlineEditor.getResultPanel().contains('100%').should('be.visible');
         onlineEditor.getResultPanel().contains('13 of 13 passed').should('be.visible');
         onlineEditor.getBuildOutput().contains('No build results available').should('be.visible');
-        onlineEditor.getInstructionSymbols().each(($el) => {
-            cy.wrap($el).find('[data-icon="check"]').should('be.visible');
-        });
     }
 
     function makeModelingExerciseSubmission() {
         modelingEditor.addComponentToModel(1, false);
         modelingEditor.addComponentToModel(2, false);
         modelingEditor.addComponentToModel(3, false);
-        modelingEditor.submit();
+        examNavigation.navigateRight();
     }
 
     function makeQuizExerciseSubmission() {
-        multipleChoiceQuiz.tickAnswerOption(0);
-        multipleChoiceQuiz.tickAnswerOption(2);
+        multipleChoiceQuiz.tickAnswerOption(0, quizExercise.quizQuestions[0].id);
+        multipleChoiceQuiz.tickAnswerOption(2, quizExercise.quizQuestions[0].id);
     }
 
     function handInEarly() {

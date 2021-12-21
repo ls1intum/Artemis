@@ -21,6 +21,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faEdit, faBan, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -54,6 +55,12 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     busy: boolean;
     userId: number;
     canOverrideAssessments: boolean;
+
+    // Icons
+    faSort = faSort;
+    faFolderOpen = faFolderOpen;
+    faBan = faBan;
+    faEdit = faEdit;
 
     constructor(
         private route: ActivatedRoute,

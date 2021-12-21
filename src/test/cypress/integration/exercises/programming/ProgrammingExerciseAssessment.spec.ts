@@ -53,15 +53,10 @@ describe('Programming exercise assessment', () => {
 
     function assessSubmission() {
         cy.login(tutor, '/course-management');
-        coursesPage.openAssessmentDashboardOfCourseWithId(course.id);
-        courseAssessment.checkShowFinishedExercises();
+        coursesPage.openAssessmentDashboardOfCourse(course.shortName);
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
-        cy.contains('There are no complaints at the moment').should('be.visible');
-        cy.contains('There are no requests at the moment.').should('be.visible');
         exerciseAssessment.clickStartNewAssessment();
-        programmingAssessment.getInstructionsRootElement().contains(exercise.title).should('be.visible');
-        programmingAssessment.getInstructionsRootElement().find('[jhitranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution"]').should('be.visible');
         onlineEditor.openFileWithName('BubbleSort.java');
         programmingAssessment.provideFeedbackOnCodeLine(9, tutorCodeFeedbackPoints, tutorCodeFeedback);
         programmingAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
@@ -73,7 +68,7 @@ describe('Programming exercise assessment', () => {
         const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
         const percentage = totalPoints * 10;
         exerciseResult.shouldShowExerciseTitle(exercise.title);
-        exerciseResult.clickOpenCodeEditor();
+        exerciseResult.clickOpenCodeEditor(exercise.id);
         programmingFeedback.shouldShowRepositoryLockedWarning();
         programmingFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
         programmingFeedback.shouldShowScore(totalPoints, exercise.maxPoints, percentage);
@@ -84,8 +79,7 @@ describe('Programming exercise assessment', () => {
     }
 
     function acceptComplaintAsInstructor() {
-        cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
-        courseAssessment.openComplaints(course.id);
+        cy.login(instructor, `/course-management/${course.id}/complaints`);
         programmingAssessment.acceptComplaint('Makes sense').its('response.statusCode').should('eq', 200);
     }
 

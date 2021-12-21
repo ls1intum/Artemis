@@ -4,11 +4,11 @@ import { GET, BASE_API } from './../../constants';
  */
 export class ExerciseResultPage {
     shouldShowProblemStatement(problemStatement: string) {
-        cy.get('.problem-statement').contains(problemStatement).should('be.visible');
+        cy.get('#problem-statement').contains(problemStatement).should('be.visible');
     }
 
     shouldShowExerciseTitle(title: string) {
-        cy.get('jhi-header-exercise-page-with-details').contains(title).should('be.visible');
+        cy.get('#exercise-header').contains(title).should('be.visible');
     }
 
     shouldShowScore(percentage: number) {
@@ -17,11 +17,11 @@ export class ExerciseResultPage {
 
     clickViewSubmission() {
         cy.intercept(GET, BASE_API + 'results/*/rating').as('getResults');
-        cy.contains('View submission').click();
+        cy.get('#view-submission').click();
         return cy.wait('@getResults');
     }
 
-    clickOpenCodeEditor() {
-        cy.contains('Open code editor').click();
+    clickOpenCodeEditor(exerciseId: string) {
+        cy.get('#open-exercise-' + exerciseId).click();
     }
 }

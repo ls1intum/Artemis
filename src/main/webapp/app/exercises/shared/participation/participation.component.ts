@@ -22,6 +22,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
+import { faCircleNotch, faEraser, faFilePowerpoint, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 enum FilterProp {
     ALL = 'all',
@@ -42,6 +43,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly FeatureToggle = FeatureToggle;
 
     participations: StudentParticipation[] = [];
+    participationsChangedDueDate: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
     filteredParticipationsSize = 0;
     eventSubscriber: Subscription;
     paramSub: Subscription;
@@ -62,6 +64,14 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     isAdmin = false;
 
     isLoading: boolean;
+
+    isSaving: boolean;
+
+    // Icons
+    faTimes = faTimes;
+    faCircleNotch = faCircleNotch;
+    faEraser = faEraser;
+    faFilePowerpoint = faFilePowerpoint;
 
     constructor(
         private route: ActivatedRoute,
@@ -209,6 +219,59 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Save that the due date of the given participation has changed.
+     *
+     * Does not issue an immediate update of the due date to the server.
+     * The actual update is performed with {@link saveChangedDueDates}.
+     * @param participation of which the individual due date has changed.
+     */
+    changedIndividualDueDate(participation: StudentParticipation) {
+        this.participationsChangedDueDate.set(participation.id!, participation);
+    }
+
+    /**
+     * Removes the individual due date from the given participation.
+     *
+     * Does not issue an immediate update of the due date to the server.
+     * The actual update is performed with {@link saveChangedDueDates}.
+     * @param participation of which the individual due date should be removed.
+     */
+    removeIndividualDueDate(participation: StudentParticipation) {
+        participation.individualDueDate = undefined;
+        this.participationsChangedDueDate.set(participation.id!, participation);
+    }
+
+    /**
+     * Saves the updated individual due dates for all participants.
+     *
+     * Changes are not updated directly when changing just a single due date, as
+     * an update here might require a full update of the scheduling of the
+     * exercise. Therefore, an explicit save action which can also update the
+     * due date for multiple participants at the same time is preferred.
+     */
+    saveChangedDueDates() {
+        this.isSaving = true;
+
+        const changedParticipations = Array.from(this.participationsChangedDueDate.values());
+        this.participationService.updateIndividualDueDates(this.exercise.id!, changedParticipations).subscribe({
+            next: (response) => {
+                response.body!.forEach((updatedParticipation) => {
+                    const changedIndex = this.participations.findIndex((participation) => participation.id! === updatedParticipation.id!);
+                    this.participations[changedIndex] = updatedParticipation;
+                });
+
+                this.participationsChangedDueDate.clear();
+                this.isSaving = false;
+                this.alertService.success('artemisApp.participation.updateDueDates.success', { count: response.body!.length });
+            },
+            error: () => {
+                this.alertService.error('artemisApp.participation.updateDueDates.error');
+                this.isSaving = false;
+            },
+        });
+    }
+
+    /**
      * Deletes participation
      * @param participationId the id of the participation that we want to delete
      * @param event passed from delete dialog to represent if checkboxes were checked
@@ -223,6 +286,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                     content: 'Deleted an participation',
                 });
                 this.dialogErrorSource.next('');
+                this.participationsChangedDueDate.delete(participationId);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

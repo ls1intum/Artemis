@@ -1,5 +1,5 @@
-<li class="list-group-item border-0">
-    <fa-icon aria-hidden="true" [icon]="createFileType === FileType.FILE ? 'file' : 'folder'" [fixedWidth]="true"></fa-icon>
+<li class="list-group-item border-0" id="file-browser-create-node">
+    <fa-icon aria-hidden="true" [icon]="createFileType === FileType.FILE ? faFile : faFolder" [fixedWidth]="true"></fa-icon>
     <span class="ms-1"
         ><input
             #creatingInput

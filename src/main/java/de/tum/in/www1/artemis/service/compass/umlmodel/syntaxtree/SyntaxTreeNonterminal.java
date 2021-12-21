@@ -34,10 +34,9 @@ public class SyntaxTreeNonterminal extends UMLElement {
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (!(reference instanceof SyntaxTreeNonterminal)) {
+        if (!(reference instanceof SyntaxTreeNonterminal referenceNonterminal)) {
             return similarity;
         }
-        SyntaxTreeNonterminal referenceNonterminal = (SyntaxTreeNonterminal) reference;
 
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceNonterminal.getName());
 
@@ -52,11 +51,9 @@ public class SyntaxTreeNonterminal extends UMLElement {
      */
     @Override
     public double overallSimilarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof SyntaxTreeNonterminal)) {
+        if (!(reference instanceof SyntaxTreeNonterminal referenceNonterminal)) {
             return 0;
         }
-
-        SyntaxTreeNonterminal referenceNonterminal = (SyntaxTreeNonterminal) reference;
 
         double similarity = similarity(referenceNonterminal);
 
