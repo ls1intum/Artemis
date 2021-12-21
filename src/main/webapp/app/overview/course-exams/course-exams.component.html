@@ -1,11 +1,11 @@
 <div class="row">
-    <ng-container *ngFor="let exam of course!.exams!; let i = index">
+    <ng-container *ngFor="let exam of course!.exams!">
         <jhi-course-exam-detail
             *ngIf="isVisible(exam)"
             [exam]="exam"
             [course]="course!"
             class="card clickable col-xl-3 col-lg-4 col-md-4 col-sm-6 col-xs-12 m-2"
-            id="exam-{{ i }}"
+            id="exam-{{ exam.id }}"
         ></jhi-course-exam-detail>
     </ng-container>
 </div>
