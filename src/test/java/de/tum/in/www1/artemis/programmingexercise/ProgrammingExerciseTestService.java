@@ -244,6 +244,7 @@ public class ProgrammingExerciseTestService {
      * Mocks the access and interaction with repository mocks on the local file system.
      *
      * @param exercise for which mock repositories should be created
+     * @param projectKey the unique short identifier of the exercise in the CI system
      * @param exerciseRepository represents exercise template code repository
      * @param exerciseRepoName the name of the exercise repository
      * @param solutionRepository represents exercise solution code repository
@@ -251,6 +252,7 @@ public class ProgrammingExerciseTestService {
      * @param testRepository represents exercise test code repository
      * @param testRepoName the name of the test repository
      * @param auxRepository represents an arbitrary template code repository
+     * @param auxRepoName the name of the auxiliary repository
      * @throws Exception in case any repository url is malformed or the GitService fails
      */
     public void setupRepositoryMocks(ProgrammingExercise exercise, String projectKey, LocalRepository exerciseRepository, String exerciseRepoName,
@@ -490,7 +492,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans, boolean addAuxRepos) throws Exception {
-        boolean staticCodeAnalysisEnabled = programmingLanguage == JAVA || programmingLanguage == ProgrammingLanguage.SWIFT;
+        boolean staticCodeAnalysisEnabled = programmingLanguage == JAVA || programmingLanguage == SWIFT;
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
         sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
