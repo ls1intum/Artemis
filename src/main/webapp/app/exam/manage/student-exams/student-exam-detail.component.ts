@@ -98,8 +98,8 @@ export class StudentExamDetailComponent implements OnInit {
      */
     saveWorkingTime() {
         this.isSavingWorkingTime = true;
-        const workingTime = this.workingTimeForm.controls.hours.value * 60 + this.workingTimeForm.controls.minutes.value;
-        this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, workingTime).subscribe(
+        const seconds = this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
+        this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, seconds).subscribe(
             (res) => {
                 if (res.body) {
                     this.setStudentExam(res.body);
@@ -144,11 +144,18 @@ export class StudentExamDetailComponent implements OnInit {
     }
 
     private initWorkingTimeForm() {
-        const workingTimeHours = Math.floor(this.studentExam.workingTime! / 60);
-        const workingTimeMinutes = this.studentExam.workingTime! - workingTimeHours * 60;
+        const workingTime = this.artemisDurationFromSecondsPipe.toHHmmNotation(this.studentExam.workingTime!);
+        const workingTimeParts = workingTime.split(':');
         this.workingTimeForm = new FormGroup({
-            hours: new FormControl({ value: workingTimeHours, disabled: this.examIsVisible() }, [Validators.min(0), Validators.required]),
-            minutes: new FormControl({ value: workingTimeMinutes, disabled: this.examIsVisible() }, [Validators.min(0), Validators.max(59), Validators.required]),
+            minutes: new FormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: this.examIsVisible() }, [
+                Validators.min(0),
+                Validators.required,
+            ]),
+            seconds: new FormControl({ value: parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), disabled: this.examIsVisible() }, [
+                Validators.min(0),
+                Validators.max(59),
+                Validators.required,
+            ]),
         });
     }
 
