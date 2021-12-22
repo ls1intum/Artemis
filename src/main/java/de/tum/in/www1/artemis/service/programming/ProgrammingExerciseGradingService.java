@@ -466,7 +466,7 @@ public class ProgrammingExerciseGradingService {
         }
 
         // Case 1: There are tests and test case feedback, find out which tests were not executed or should only count to the score after the due date.
-        if (testCasesForCurrentDate.size() > 0 && testCaseFeedback.size() > 0 && result.getFeedbacks().size() > 0) {
+        if (!testCasesForCurrentDate.isEmpty() && !testCaseFeedback.isEmpty() && !result.getFeedbacks().isEmpty()) {
             retainAutomaticFeedbacksWithTestCase(result, testCases);
 
             // Copy the visibility from test case to corresponding feedback
@@ -493,7 +493,7 @@ public class ProgrammingExerciseGradingService {
             updateResultString(result, successfulTestCases, testCasesForCurrentDate, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
-        else if (testCases.size() > 0 && result.getFeedbacks().size() > 0 && testCaseFeedback.size() > 0) {
+        else if (!testCases.isEmpty() && !result.getFeedbacks().isEmpty() && !testCaseFeedback.isEmpty()) {
             removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
 
             // Add feedbacks for all duplicate test cases
@@ -847,7 +847,7 @@ public class ProgrammingExerciseGradingService {
      */
     private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, List<Feedback> staticCodeAnalysisFeedback) {
         result.setFeedbacks(staticCodeAnalysisFeedback);
-        result.hasFeedback(staticCodeAnalysisFeedback.size() > 0);
+        result.hasFeedback(!staticCodeAnalysisFeedback.isEmpty());
         result.setScore(0D);
     }
 
