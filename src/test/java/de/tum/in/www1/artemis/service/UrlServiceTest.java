@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.net.MalformedURLException;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
@@ -16,9 +15,6 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
 public class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    private UrlService urlService;
 
     private final VcsRepositoryUrl repositoryUrl1 = new VcsRepositoryUrl("https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab");
 
@@ -50,7 +46,7 @@ public class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void testGetRepositoryPathFromRepositoryUrl() throws MalformedURLException {
+    public void testGetRepositoryPathFromRepositoryUrl() {
         String repoSlug = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl1);
         assertThat(repoSlug).isEqualTo("EIST2016RME/RMEXERCISE-ga42xab");
         repoSlug = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl2);

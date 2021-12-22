@@ -319,7 +319,7 @@ public class ResultResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> getResult(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
-        Result result = resultRepository.findOneElseThrow(resultId);
+        Result result = resultRepository.findByIdElseThrow(resultId);
         Participation participation = result.getParticipation();
         if (!participation.getId().equals(participationId)) {
             return badRequest("participationId", "400",
@@ -402,7 +402,7 @@ public class ResultResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> deleteResult(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to delete Result : {}", resultId);
-        Result result = resultRepository.findOneElseThrow(resultId);
+        Result result = resultRepository.findByIdElseThrow(resultId);
         Participation participation = result.getParticipation();
         if (!participation.getId().equals(participationId)) {
             return badRequest("participationId", "400",

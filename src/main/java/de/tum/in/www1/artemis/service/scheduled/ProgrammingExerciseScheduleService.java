@@ -545,7 +545,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * Returns a runnable that, once executed, will unlock all student repositories and will schedule all repository lock tasks.
-     * The unlock tasks will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
+     * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
      *
      * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
      *
@@ -565,34 +565,27 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     if (dueDate != null) {
                         individualDueDates.add(new Tuple<>(dueDate, participation));
                     }
-
-                    programmingExerciseParticipationService.unlockStudentRepository(
-                            programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId()), participation);
+                    programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
+                    programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
                 };
                 List<ProgrammingExerciseStudentParticipation> failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId,
                         unlockAndCollectOperation, participation -> true, "add write permissions to all student repositories");
 
                 // We sent a notification to the instructor about the success of the repository unlocking operation.
                 long numberOfFailedUnlockOperations = failedUnlockOperations.size();
-                Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
-                        .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
-                if (programmingExercise.isEmpty()) {
-                    throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
-                }
                 if (numberOfFailedUnlockOperations > 0) {
-                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise,
                             Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION + failedUnlockOperations.size());
                 }
                 else {
-                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
-                            Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION);
+                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION);
                 }
 
                 if (exercise.needsLockOperation()) {
                     // Schedule the lock operations here, this is also done here because the working times might change often before the exam start
                     // Note: this only makes sense before the due date of a course exercise or before the end date of an exam, because for individual dates in the past
-                    // the scheduler would execute the lock operation immediately, making the unlock obsolete, therefore we filter out all individual due dates in the past
-                    // one use case is that the unlock all operation is invoked directly after exam start
+                    // the scheduler would execute the lock operation immediately, making to unlock obsolete, therefore we filter out all individual due dates in the past
+                    // one use case is to unlock all operation is invoked directly after exam start
                     Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> futureIndividualDueDates = individualDueDates.stream()
                             .filter(tuple -> tuple.x != null && ZonedDateTime.now().isBefore(tuple.x)).collect(Collectors.toSet());
                     scheduleIndividualRepositoryLockTasks(exercise, futureIndividualDueDates);
@@ -657,48 +650,27 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             String operationName) {
         log.info("Invoking (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExerciseId);
 
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExerciseId);
-        if (programmingExercise.isEmpty()) {
-            throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
-        }
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", programmingExerciseId));
         List<ProgrammingExerciseStudentParticipation> failedOperations = new ArrayList<>();
 
         // TODO: we should think about executing those operations again in batches to avoid issues on the vcs server, however those operations are typically executed
         // synchronously so this might not be an issue
 
-        for (StudentParticipation studentParticipation : programmingExercise.get().getStudentParticipations()) {
+        for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            invokeOperationIfSatisfies(programmingExercise.get(), programmingExerciseStudentParticipation, operation, condition, operationName).ifPresent(failedOperations::add);
+            try {
+                if (condition.test(programmingExerciseStudentParticipation)) {
+                    operation.accept(programmingExercise, programmingExerciseStudentParticipation);
+                }
+            }
+            catch (Exception e) {
+                log.error(String.format("'%s' failed for programming exercise with id %d for student repository with participation id %d", operationName,
+                        programmingExercise.getId(), studentParticipation.getId()), e);
+                failedOperations.add(programmingExerciseStudentParticipation);
+            }
         }
 
         return failedOperations;
-    }
-
-    /**
-     * Invokes the given operation on the studentParticipation if it satisfies the condition.
-     *
-     * @param programmingExercise the participation belongs to.
-     * @param studentParticipation on which the operation should be performed.
-     * @param operation that should be performed.
-     * @param condition that tests whether to invoke the operation on the participation.
-     * @param operationName the name of the operation, this is only used for logging.
-     * @return the {@code studentParticipation} if the operation failed.
-     *         Nothing, if the condition was false or the operation was successfully performed.
-     */
-    private Optional<ProgrammingExerciseStudentParticipation> invokeOperationIfSatisfies(ProgrammingExercise programmingExercise,
-            ProgrammingExerciseStudentParticipation studentParticipation, BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> operation,
-            Predicate<ProgrammingExerciseStudentParticipation> condition, String operationName) {
-        try {
-            if (condition.test(studentParticipation)) {
-                operation.accept(programmingExercise, studentParticipation);
-            }
-        }
-        catch (Exception e) {
-            log.error(String.format("'%s' failed for programming exercise with id %d for student repository with participation id %d", operationName, programmingExercise.getId(),
-                    studentParticipation.getId()), e);
-            return Optional.of(studentParticipation);
-        }
-
-        return Optional.empty();
     }
 }
