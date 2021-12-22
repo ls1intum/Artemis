@@ -98,7 +98,7 @@ export class StudentExamDetailComponent implements OnInit {
      */
     saveWorkingTime() {
         this.isSavingWorkingTime = true;
-        const seconds = this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
+        const seconds = this.workingTimeForm.controls.hours.value * 3600 + this.workingTimeForm.controls.minutes.value * 60;
         this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, seconds).subscribe(
             (res) => {
                 if (res.body) {
@@ -147,11 +147,11 @@ export class StudentExamDetailComponent implements OnInit {
         const workingTime = this.artemisDurationFromSecondsPipe.toHHmmNotation(this.studentExam.workingTime!);
         const workingTimeParts = workingTime.split(':');
         this.workingTimeForm = new FormGroup({
-            minutes: new FormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: this.examIsVisible() }, [
+            hours: new FormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: this.examIsVisible() }, [
                 Validators.min(0),
                 Validators.required,
             ]),
-            seconds: new FormControl({ value: parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), disabled: this.examIsVisible() }, [
+            minutes: new FormControl({ value: parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), disabled: this.examIsVisible() }, [
                 Validators.min(0),
                 Validators.max(59),
                 Validators.required,

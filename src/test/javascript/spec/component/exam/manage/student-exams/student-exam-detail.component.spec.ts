@@ -79,14 +79,14 @@ describe('StudentExamDetailComponent', () => {
 
         studentExam = {
             id: 1,
-            workingTime: 200,
+            workingTime: 12000,
             exam,
             user: student,
             exercises: [exercise],
         };
         studentExam2 = {
             id: 1,
-            workingTime: 60,
+            workingTime: 3600,
             exam,
             user: student,
             submitted: true,
@@ -192,7 +192,7 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.workingTimeForm).not.toBe(null);
         expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
 
-        // 200 minutes working time = 3h 20min
+        // 12000 sec working time = 200 minutes = 3h 20 min
         expect(studentExamDetailComponent.workingTimeForm.controls.hours.value).toBe(3);
         expect(studentExamDetailComponent.workingTimeForm.controls.minutes.value).toBe(20);
     });
