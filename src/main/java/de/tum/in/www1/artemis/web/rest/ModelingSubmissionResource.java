@@ -187,7 +187,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "withoutResults", defaultValue = "false") boolean withoutResults) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
-        var modelingSubmission = modelingSubmissionRepository.findOne(submissionId);
+        var modelingSubmission = modelingSubmissionRepository.findByIdElseThrow(submissionId);
         var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());

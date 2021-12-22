@@ -6,16 +6,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.net.MalformedURLException;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
 public class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    private UrlService urlService;
 
     @Test
     public void testGetRepositorySlugFromRepositoryUrl() throws MalformedURLException {
