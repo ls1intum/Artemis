@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
@@ -84,7 +83,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
      * reference. The method updates the project object models (pom) in the target repository with the pom of the latest
      * Artemis template.
      *
-     * @param exercise The exercise for the the template files should be updated
+     * @param exercise The exercise for the template files should be updated
      * @param repositoryType The type of repository to be updated
      */
     private void upgradeTemplateFiles(ProgrammingExercise exercise, RepositoryType repositoryType) {
@@ -95,7 +94,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
             String templatePomDir = repositoryType == RepositoryType.TESTS ? "test/projectTemplate" : repositoryType.getName();
             Resource[] templatePoms = getTemplateResources(exercise, templatePomDir + "/**/" + POM_FILE);
             Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURL(repositoryType), true);
-            List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> Objects.equals(file.getName(), POM_FILE)).collect(Collectors.toList());
+            List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> Objects.equals(file.getName(), POM_FILE)).toList();
 
             // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place
             if (templatePoms.length == 1 && repositoryPoms.size() == 1) {
@@ -112,7 +111,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
                 overwriteFilesIfPresent(repository, testFileTemplates);
                 programmingExerciseService.replacePlaceholders(exercise, repository);
 
-                // Add latest static code analysis tool configurations or remove configurations
+                // Add the latest static code analysis tool configurations or remove configurations
                 if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
                     Resource[] staticCodeAnalysisResources = getTemplateResources(exercise, "test/" + SCA_CONFIG_FOLDER + "/**/*.*");
                     fileService.copyResources(staticCodeAnalysisResources, "java/test", repository.getLocalPath().toAbsolutePath().toString(), true);
@@ -188,11 +187,11 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
                 repoModel.getProperties().remove("analyzeTests");
             }
 
-            // Replace JUnit4 with AJTS
+            // Replace JUnit4 with Ares
             removeDependency(repoModel, "junit", "junit");
             addDependency(repoModel, templateModel, "de.tum.in.ase", "artemis-java-test-sandbox");
 
-            // Remove legacy dependencies which are no longer needed or were moved to AJTS
+            // Remove legacy dependencies which are no longer needed or were moved to Ares
             removeDependency(repoModel, "org.json", "json");
             removeDependency(repoModel, "me.xdrop", "fuzzywuzzy");
 

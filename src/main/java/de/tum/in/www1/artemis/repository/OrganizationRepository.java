@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.persistence.EntityNotFoundException;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Organization;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring JPA repository for Organization entities
@@ -77,26 +77,6 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     String getOrganizationTitle(@Param("organizationId") Long organizationId);
 
     /**
-     * Get an organization with eagerly loaded users, or else throw exception
-     * @param organizationId the id of the organization to find
-     * @return the organization entity with eagerly loaded users, if it exists
-     */
-    @NotNull
-    default Organization findByIdWithUsersElseThrow(Long organizationId) {
-        return findByIdWithEagerUsers(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization: " + organizationId));
-    }
-
-    /**
-     * Get an organization with eagerly loaded courses, or else throw exception
-     * @param organizationId the id of the organization to find
-     * @return the organization entity with eagerly loaded courses, if it exists
-     */
-    @NotNull
-    default Organization findByIdWithCoursesElseThrow(Long organizationId) {
-        return findByIdWithEagerCourses(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization: " + organizationId));
-    }
-
-    /**
      * Retrieve a set containing all organizations with an emailPattern matching the
      * provided user's email.
      * @param userEmail the email of the user to match
@@ -116,22 +96,22 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     }
 
     /**
-     * Get an organization by its Id, or else throw exception
+     * Get an organization by its id, or else throw exception
      * @param organizationId the id of the organization to find
      * @return the organization entity, if it exists
      */
     @NotNull
-    default Organization findOneOrElseThrow(long organizationId) {
-        return findById(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization with id: \"" + organizationId + "\" does not exist"));
+    default Organization findByIdElseThrow(long organizationId) throws EntityNotFoundException {
+        return findById(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization", organizationId));
     }
 
     /**
      * Get an organization containing the eagerly loaded list of users and courses
      * @param organizationId the id of the organization to retrieve
-     * @return the organization with the given Id containing eagerly loaded list of users and courses
+     * @return the organization with the given id containing eagerly loaded list of users and courses
      */
     @NotNull
-    default Organization findOneWithEagerUsersAndCoursesOrElseThrow(long organizationId) {
-        return findByIdWithEagerUsersAndCourses(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization with id: \"" + organizationId + "\" does not exist"));
+    default Organization findByIdWithEagerUsersAndCoursesElseThrow(long organizationId) throws EntityNotFoundException {
+        return findByIdWithEagerUsersAndCourses(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization", organizationId));
     }
 }
