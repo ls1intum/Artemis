@@ -47,7 +47,6 @@ services:
     lecture-app:
         image: ghcr.io/ls1intum/artemis-lecture-service:${TAG:-latest}
         volumes:
-#            - ${PWD}/config/application-prod-lecture.yml:/home/artemis/lecture/application-prod.yml:ro
             - ${PWD}/config/application-artemis.yml:/home/artemis/lecture/application-artemis.yml:ro
         environment:
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
