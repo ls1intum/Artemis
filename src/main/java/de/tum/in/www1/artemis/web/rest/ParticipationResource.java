@@ -188,7 +188,7 @@ public class ParticipationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
         if (isNotAllowedToStartProgrammingExercise(programmingExercise, participation)) {
-            throw new AccessForbiddenException("Not allowed");
+            throw new AccessForbiddenException("You are not allowed to start the programming exercise after its due date.");
         }
 
         participation = participationService.resumeProgrammingExercise(participation);
@@ -241,7 +241,7 @@ public class ParticipationResource {
             throw new BadRequestAlertException("The participation needs to be connected to an exercise", ENTITY_NAME, "exerciseidmissing");
         }
         if (participation.getExercise().getId() != exerciseId) {
-            throw new ConflictException();
+            throw new ConflictException("The exercise of the participation does not match the exercise id in the URL");
         }
         var originalParticipation = studentParticipationRepository.findByIdElseThrow(participation.getId());
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -554,10 +554,8 @@ public class ParticipationResource {
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)) {
             throw new AccessForbiddenException("Programming Exercise Feature is disabled.");
         }
-
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
-
         return deleteParticipation(participation, deleteBuildPlan, deleteRepository, user);
     }
 
@@ -575,9 +573,8 @@ public class ParticipationResource {
     public ResponseEntity<Void> deleteParticipationForGuidedTour(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
-
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)) {
-            throw new AccessForbiddenException("Not allowed");
+            throw new AccessForbiddenException("Programming Exercise Feature is disabled.");
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -588,7 +585,7 @@ public class ParticipationResource {
             guidedTourConfiguration.checkExerciseForTutorialElseThrow(participation.getExercise());
         }
         else {
-            throw new AccessForbiddenException("Not allowed");
+            throw new AccessForbiddenException("Users are not allowed to delete their own participation.");
         }
 
         return deleteParticipation(participation, deleteBuildPlan, deleteRepository, user);

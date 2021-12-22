@@ -7,6 +7,9 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -16,6 +19,8 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 
 public interface ProgrammingExerciseParticipation extends ParticipationInterface {
+
+    Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipation.class);
 
     String getRepositoryUrl();
 
@@ -47,6 +52,7 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
             return new URL(repoUrl.getProtocol(), repoUrl.getHost(), repoUrl.getPort(), repoUrl.getFile()).toString();
         }
         catch (MalformedURLException e) {
+            log.debug("Cannot create user independent repository url from {} due to malformed URL exception", getRepositoryUrl(), e);
             return null;
         }
     }
