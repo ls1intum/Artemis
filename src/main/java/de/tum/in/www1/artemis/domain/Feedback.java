@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_C
 
 import java.util.*;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
@@ -184,8 +185,9 @@ public class Feedback extends DomainObject {
         this.credits = credits;
     }
 
+    @Nonnull
     public Boolean isPositive() {
-        return positive;
+        return Boolean.TRUE.equals(positive);
     }
 
     public Feedback positive(Boolean positive) {

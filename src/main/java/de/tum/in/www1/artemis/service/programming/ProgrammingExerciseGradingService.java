@@ -594,66 +594,13 @@ public class ProgrammingExerciseGradingService {
      * @param programmingExercise        the given programming exercise.
      * @param hasDuplicateTestCases      indicates duplicate test cases.
      */
-    private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
-            List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
-
-        if (hasDuplicateTestCases || successfulTestCases.isEmpty()) {
+    private void updateScore(final Result result, final Set<ProgrammingExerciseTestCase> successfulTestCases, final Set<ProgrammingExerciseTestCase> allTests,
+            final List<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
+        if (hasDuplicateTestCases) {
             result.setScore(0D);
         }
         else {
-            double weightSum = allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
-            // Checks if weightSum == 0. We can't use == operator since we are comparing doubles
-            if (Precision.equals(weightSum, 0, 1E-8)) {
-                result.setScore(0D);
-                return;
-            }
-
-            // calculate the achieved points from the passed test cases
-            double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {
-                double testWeight = test.getWeight() * test.getBonusMultiplier();
-                double testPoints = testWeight / weightSum * programmingExercise.getMaxPoints();
-                double testPointsWithBonus = testPoints + test.getBonusPoints();
-                // Update credits of related feedback
-                // We need to compare testcases via lowercase, because the testcaseRepository is case-insensitive
-                result.getFeedbacks().stream().filter(fb -> fb.getType() == FeedbackType.AUTOMATIC && fb.getText().equalsIgnoreCase(test.getTestName())).findFirst()
-                        .ifPresent(feedback -> feedback.setCredits(testPointsWithBonus));
-                return testPointsWithBonus;
-            }).sum();
-
-            /*
-             * The points are capped by the maximum achievable points. The cap is applied before the static code analysis penalty is subtracted as otherwise the penalty won't have
-             * any effect in some cases. For example with maxPoints=20, successfulTestPoints=30 and penalty=10, a student would still receive the full 20 points, if the points are
-             * not capped before the penalty is subtracted. With the implemented order in place successfulTestPoints will be capped to 20 points first, then the penalty is
-             * subtracted resulting in 10 points.
-             */
-            double maxPoints = programmingExercise.getMaxPoints() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
-
-            if (successfulTestPoints > maxPoints) {
-                successfulTestPoints = maxPoints;
-            }
-            if (Double.isNaN(successfulTestPoints)) {
-                successfulTestPoints = 0.0;
-            }
-
-            // if static code analysis is enabled, reduce the points by the calculated penalty
-            if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())
-                    && Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(1) > 0) {
-                successfulTestPoints -= calculateStaticCodeAnalysisPenalty(staticCodeAnalysisFeedback, programmingExercise);
-            }
-
-            // If the submission policy should be enforced, we deduct the calculated deduction
-            // from the overall score
-            if (applySubmissionPolicy && programmingExercise.getSubmissionPolicy() instanceof SubmissionPenaltyPolicy penaltyPolicy) {
-                successfulTestPoints -= submissionPolicyService.calculateSubmissionPenalty(result.getParticipation(), penaltyPolicy);
-            }
-
-            if (successfulTestPoints < 0) {
-                successfulTestPoints = 0;
-            }
-
-            // The score is calculated as a percentage of the maximum points
-            double score = successfulTestPoints / programmingExercise.getMaxPoints() * 100.0;
-
+            double score = calculateScore(programmingExercise, allTests, result, successfulTestCases, staticCodeAnalysisFeedback, applySubmissionPolicy);
             result.setScore(score);
         }
 
@@ -662,6 +609,133 @@ public class ProgrammingExerciseGradingService {
                 feedback.setCredits(0D);
             }
         });
+    }
+
+    /**
+     * Calculates the score of automatic test casesfor the given result with possible penalties applied.
+     * @param programmingExercise the result belongs to.
+     * @param allTests that should be considered in the score calculation.
+     * @param result for which a score should be calculated.
+     * @param successfulTestCases all test cases that passed for the submission.
+     * @param staticCodeAnalysisFeedback that has been created for the submission.
+     * @param applySubmissionPolicy true, if penalties from submission policies should be applied.
+     * @return the final total score that should be given to the result.
+     */
+    private double calculateScore(final ProgrammingExercise programmingExercise, final Set<ProgrammingExerciseTestCase> allTests, final Result result,
+            final Set<ProgrammingExerciseTestCase> successfulTestCases, final List<Feedback> staticCodeAnalysisFeedback, boolean applySubmissionPolicy) {
+        if (successfulTestCases.isEmpty()) {
+            return 0;
+        }
+
+        final double weightSum = allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
+
+        double successfulTestPoints = calculateSuccessfulTestPoints(programmingExercise, result, successfulTestCases, allTests.size(), weightSum);
+        successfulTestPoints -= calculateTotalPenalty(programmingExercise, result.getParticipation(), staticCodeAnalysisFeedback, applySubmissionPolicy);
+
+        if (successfulTestPoints < 0) {
+            successfulTestPoints = 0;
+        }
+
+        // The score is calculated as a percentage of the maximum points
+        return successfulTestPoints / programmingExercise.getMaxPoints() * 100.0;
+    }
+
+    /**
+     * Calculates the total points that should be given for the successful test cases.
+     *
+     * Additionally, updates the feedback in the result for each passed test case with the points
+     * received for that specific test case.
+     *
+     * Does not apply any penalties to the score yet.
+     *
+     * @param programmingExercise which the result belongs to.
+     * @param result for which the points should be calculated.
+     * @param successfulTestCases all test cases the submission passed.
+     * @param totalTestCaseCount the total number of relevant test cases. This might not be the total
+     *                           number of test cases in the exercise as some test cases are ignored
+     *                           for the calculation before the exercise due date.
+     * @param weightSum the sum of test case weights of all test cases that have to be considered.
+     * @return the total score for this result without penalty deductions.
+     */
+    private double calculateSuccessfulTestPoints(final ProgrammingExercise programmingExercise, final Result result, final Set<ProgrammingExerciseTestCase> successfulTestCases,
+            int totalTestCaseCount, double weightSum) {
+        double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {
+            double credits = calculatePointsForSuccessfulTestCase(result, programmingExercise, test, totalTestCaseCount, weightSum);
+            setCreditsForTestCaseFeedback(result, test, credits);
+            return credits;
+        }).sum();
+
+        /*
+         * The points are capped by the maximum achievable points. The cap is applied before the static code analysis penalty is subtracted as otherwise the penalty won't have any
+         * effect in some cases. For example with maxPoints=20, successfulTestPoints=30 and penalty=10, a student would still receive the full 20 points, if the points are not
+         * capped before the penalty is subtracted. With the implemented order in place successfulTestPoints will be capped to 20 points first, then the penalty is subtracted
+         * resulting in 10 points.
+         */
+        double maxPoints = programmingExercise.getMaxPoints() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+
+        if (Double.isNaN(successfulTestPoints)) {
+            successfulTestPoints = 0;
+        }
+        else if (successfulTestPoints > maxPoints) {
+            successfulTestPoints = maxPoints;
+        }
+
+        return successfulTestPoints;
+    }
+
+    private void setCreditsForTestCaseFeedback(final Result result, final ProgrammingExerciseTestCase testCase, double credits) {
+        // We need to compare testcases ignoring the case, because the testcaseRepository is case-insensitive
+        result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && fb.getText().equalsIgnoreCase(testCase.getTestName())).findFirst()
+                .ifPresent(feedback -> feedback.setCredits(credits));
+    }
+
+    private double calculatePointsForSuccessfulTestCase(final Result result, final ProgrammingExercise programmingExercise, final ProgrammingExerciseTestCase test,
+            int totalTestCaseCount, double weightSum) {
+        final boolean isWeightSumZero = Precision.equals(weightSum, 0, 1E-8);
+        final double testPoints;
+
+        // a non-zero score has to be calculated for the solution even if the weight sum is zero
+        // to avoid a warning to the instructor that the solution has faults
+        // => each test case receives a weight of one
+        if (isWeightSumZero && result.getParticipation() instanceof SolutionProgrammingExerciseParticipation) {
+            testPoints = (1.0 / totalTestCaseCount) * programmingExercise.getMaxPoints();
+        }
+        else if (isWeightSumZero) {
+            // this test case must have zero weight as well; avoid division by zero
+            testPoints = 0D;
+        }
+        else {
+            double testWeight = test.getWeight() * test.getBonusMultiplier();
+            testPoints = (testWeight / weightSum) * programmingExercise.getMaxPoints();
+        }
+
+        return testPoints + test.getBonusPoints();
+    }
+
+    /**
+     * Calculates a total penalty that should be applied to the score.
+     *
+     * This includes the penalties from static code analysis and of submission policies.
+     *
+     * @param programmingExercise the participation belongs to.
+     * @param participation for which should be checked for possible penalties.
+     * @param staticCodeAnalysisFeedback automatic feedback from static code analysis.
+     * @param applySubmissionPolicy determines if the submission policy should be applied.
+     * @return a total penalty that should be deducted from the score.
+     */
+    private double calculateTotalPenalty(final ProgrammingExercise programmingExercise, final Participation participation, final List<Feedback> staticCodeAnalysisFeedback,
+            boolean applySubmissionPolicy) {
+        double penalty = 0;
+
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(1) > 0) {
+            penalty += calculateStaticCodeAnalysisPenalty(staticCodeAnalysisFeedback, programmingExercise);
+        }
+
+        if (applySubmissionPolicy && programmingExercise.getSubmissionPolicy() instanceof SubmissionPenaltyPolicy penaltyPolicy) {
+            penalty += submissionPolicyService.calculateSubmissionPenalty(participation, penaltyPolicy);
+        }
+
+        return penalty;
     }
 
     /**
