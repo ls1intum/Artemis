@@ -38,7 +38,7 @@ describe('Programming exercise assessment', () => {
         });
     });
 
-    it('Assesses the programming exercise submission and verify it', () => {
+    it('Assesses the programming exercise submission and verifies it', () => {
         assessSubmission();
         verifyAssessmentAsStudent();
         acceptComplaintAsInstructor();
