@@ -86,7 +86,7 @@ public class FeatureToggleService {
      * @return A list of enabled features
      */
     public List<Feature> enabledFeatures() {
-        return features.entrySet().stream().filter(feature -> Boolean.TRUE.equals(feature.getValue())).map(Map.Entry::getKey).collect(Collectors.toList());
+        return features.entrySet().stream().filter(feature -> Boolean.TRUE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
     }
 
     /**
@@ -95,6 +95,6 @@ public class FeatureToggleService {
      * @return A list of disabled features
      */
     public List<Feature> disabledFeatures() {
-        return features.entrySet().stream().filter(feature -> Boolean.FALSE.equals(feature.getValue())).map(Map.Entry::getKey).collect(Collectors.toList());
+        return features.entrySet().stream().filter(feature -> Boolean.FALSE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
     }
 }

@@ -165,7 +165,7 @@ describe('QuizParticipationComponent', () => {
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
             expect(component.quizExercise).toEqual(quizExercise);
             expect(component.waitingForQuizStart).toBe(false);
-            expect(component.totalScore).toEqual(6);
+            expect(component.totalScore).toBe(6);
             expect(component.dragAndDropMappings.get(question1.id!)).toEqual([]);
             expect(component.selectedAnswerOptions.get(question2.id!)).toEqual([]);
             expect(component.shortAnswerSubmittedTexts.get(question3.id!)).toEqual([]);
@@ -214,7 +214,7 @@ describe('QuizParticipationComponent', () => {
 
             const request = httpMock.expectOne({ method: 'POST' });
             request.flush({ submissionDate: now } as QuizSubmission);
-            expect(request.request.url).toEqual(`api/exercises/${quizExercise.id}/submissions/live`);
+            expect(request.request.url).toBe(`api/exercises/${quizExercise.id}/submissions/live`);
             fixture.detectChanges();
 
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
@@ -257,7 +257,7 @@ describe('QuizParticipationComponent', () => {
 
             const request = httpMock.expectOne({ method: 'POST' });
             request.flush({ submissionDate: now } as QuizSubmission);
-            expect(request.request.url).toEqual(`api/exercises/${quizExercise.id}/submissions/live`);
+            expect(request.request.url).toBe(`api/exercises/${quizExercise.id}/submissions/live`);
             fixture.detectChanges();
 
             expect(confirmSpy).toHaveBeenCalled();
@@ -275,8 +275,8 @@ describe('QuizParticipationComponent', () => {
             component.showQuizResultAfterQuizEnd(participation);
 
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
-            expect(component.questionScores[question2.id!]).toEqual(answer.scoreInPoints);
-            expect(component.userScore).toEqual(quizSubmission.scoreInPoints);
+            expect(component.questionScores[question2.id!]).toBe(answer.scoreInPoints);
+            expect(component.userScore).toBe(quizSubmission.scoreInPoints);
             expect(component.showingResult).toBe(true);
         });
 
@@ -308,9 +308,9 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should express timespan in humanized text', () => {
-            expect(component.relativeTimeText(100020)).toEqual('1667 min');
-            expect(component.relativeTimeText(60)).toEqual('1 min 0 s');
-            expect(component.relativeTimeText(5)).toEqual('5 s');
+            expect(component.relativeTimeText(100020)).toBe('1667 min');
+            expect(component.relativeTimeText(60)).toBe('1 min 0 s');
+            expect(component.relativeTimeText(5)).toBe('5 s');
         });
 
         it('should adjust release date of the quiz if it didnt start', () => {
@@ -320,7 +320,7 @@ describe('QuizParticipationComponent', () => {
 
             component.applyQuizFull(quizToApply);
             expect(component.quizExercise).toEqual(quizToApply);
-            expect(component.quizExercise.releaseDate!.toString()).toEqual(releaseDate.toString());
+            expect(component.quizExercise.releaseDate!.toString()).toBe(releaseDate.toString());
         });
 
         it('should apply participation', () => {
@@ -333,7 +333,7 @@ describe('QuizParticipationComponent', () => {
             component.timeDifference = 10;
             component.updateParticipationFromServer(participation);
 
-            expect(component.submission.id).toEqual(submission.id);
+            expect(component.submission.id).toBe(submission.id);
             expect(component.quizExercise.ended).toBe(true);
         });
     });
@@ -410,7 +410,7 @@ describe('QuizParticipationComponent', () => {
 
             const request = httpMock.expectOne({ method: 'POST' });
             request.flush({ submission: { submissionDate: now, submitted: true } as QuizSubmission } as Result);
-            expect(request.request.url).toEqual(`api/exercises/${quizExercise.id}/submissions/preview`);
+            expect(request.request.url).toBe(`api/exercises/${quizExercise.id}/submissions/preview`);
             fixture.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExercise.id);
@@ -491,7 +491,7 @@ describe('QuizParticipationComponent', () => {
             const request = httpMock.expectOne({ method: 'POST' });
             const quizSubmission = { submissionDate: now, submitted: true } as QuizSubmission;
             request.flush({ submission: quizSubmission, participation: { exercise: quizExerciseForPractice } as StudentParticipation } as Result);
-            expect(request.request.url).toEqual(`api/exercises/${quizExerciseForPractice.id}/submissions/practice`);
+            expect(request.request.url).toBe(`api/exercises/${quizExerciseForPractice.id}/submissions/practice`);
             fixture.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
@@ -548,7 +548,7 @@ describe('QuizParticipationComponent', () => {
 
             expect(resultForSolutionServiceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
             expect(component.showingResult).toBe(true);
-            expect(component.totalScore).toEqual(6);
+            expect(component.totalScore).toBe(6);
         });
 
         it('should update time', () => {
@@ -561,9 +561,9 @@ describe('QuizParticipationComponent', () => {
             component.updateDisplayedTimes();
             fixture.detectChanges();
 
-            expect(component.remainingTimeSeconds).toEqual(0);
-            expect(component.remainingTimeText).toEqual('?');
-            expect(component.timeUntilStart).toEqual('');
+            expect(component.remainingTimeSeconds).toBe(0);
+            expect(component.remainingTimeText).toBe('?');
+            expect(component.timeUntilStart).toBe('');
 
             // Now test the remaining non-error branches
             component.quizExercise = quizExerciseUnreleased;
@@ -575,8 +575,8 @@ describe('QuizParticipationComponent', () => {
             component.updateDisplayedTimes();
             fixture.detectChanges();
 
-            expect(component.remainingTimeText).toEqual('showStatistic.quizhasEnded');
-            expect(component.timeUntilStart).toEqual('showStatistic.now');
+            expect(component.remainingTimeText).toBe('showStatistic.quizhasEnded');
+            expect(component.timeUntilStart).toBe('showStatistic.now');
         });
     });
 });

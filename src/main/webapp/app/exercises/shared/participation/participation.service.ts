@@ -37,7 +37,7 @@ export class ParticipationService {
         const copies = participations.map((participation) => {
             // make sure participation and exercise are connected, because this is expected by the server
             participation.exercise = exercise;
-            this.convertDateFromClient(participation);
+            return this.convertDateFromClient(participation);
         });
         return this.http
             .put<StudentParticipation[]>(SERVER_API_URL + `api/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })

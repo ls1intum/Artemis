@@ -341,7 +341,7 @@ public class ParticipationResource {
         participations = participations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
             // remove unnecessary data to reduce response size
             participation.setExercise(null);
-        }).collect(Collectors.toList());
+        }).toList();
 
         Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
@@ -553,7 +553,7 @@ public class ParticipationResource {
             @RequestParam(defaultValue = "false") boolean deleteRepository) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)) {
-            throw new AccessForbiddenException("Not allowed");
+            throw new AccessForbiddenException("Programming Exercise Feature is disabled.");
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();

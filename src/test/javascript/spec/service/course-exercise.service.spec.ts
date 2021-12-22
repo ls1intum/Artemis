@@ -102,12 +102,12 @@ describe('Course Management Service', () => {
 
     const expectDateConversionToBeDone = (exerciseToCheck: Exercise, withoutAssessmentDueDate?: boolean) => {
         expect(dayjs.isDayjs(exerciseToCheck.releaseDate)).toBe(true);
-        expect(exerciseToCheck.releaseDate?.toISOString()).toEqual(releaseDateString);
+        expect(exerciseToCheck.releaseDate?.toISOString()).toBe(releaseDateString);
         expect(dayjs.isDayjs(exerciseToCheck.dueDate)).toBe(true);
-        expect(exerciseToCheck.dueDate?.toISOString()).toEqual(dueDateString);
+        expect(exerciseToCheck.dueDate?.toISOString()).toBe(dueDateString);
         if (!withoutAssessmentDueDate) {
             expect(dayjs.isDayjs(exerciseToCheck.assessmentDueDate)).toBe(true);
-            expect(exerciseToCheck.assessmentDueDate?.toISOString()).toEqual(assessmentDueDateString);
+            expect(exerciseToCheck.assessmentDueDate?.toISOString()).toBe(assessmentDueDateString);
         }
     };
 
@@ -185,7 +185,7 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res).toEqual(expected));
 
         requestAndExpectDateConversion('POST', SERVER_API_URL + `api/exercises/${exerciseId}/participations`, returnedFromService, participation.exercise, true);
-        expect(programmingExercise.studentParticipations?.[0]?.id).toEqual(participationId);
+        expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
         tick();
     }));
 
@@ -207,7 +207,7 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res).toEqual(expected));
 
         requestAndExpectDateConversion('PUT', SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation`, returnedFromService, participation.exercise, true);
-        expect(programmingExercise.studentParticipations?.[0]?.id).toEqual(participationId);
+        expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
         tick();
     }));
 
