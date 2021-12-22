@@ -138,7 +138,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetSubmissionsOnPageWithSize() throws Exception {
         Course course = database.addCourseWithModelingAndTextExercise();
         TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findFirst().orElse(null);
@@ -154,7 +154,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetSubmissionsOnPageWithSize_exerciseNotFound() throws Exception {
         long randomExerciseId = 12345L;
         PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
@@ -162,7 +162,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetSubmissionsOnPageWithSize_isNotAtLeastInstructorInExercise_forbidden() throws Exception {
         Course course = database.addCourseWithModelingAndTextExercise();
         TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findFirst().orElse(null);
