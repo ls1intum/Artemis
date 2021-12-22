@@ -14,7 +14,7 @@ const courseManagementRequest = artemis.requests.courseManagement;
 let course: any;
 let quizExercise: any;
 
-const resultSelector = '[jhitranslate="artemisApp.result.score"]';
+const resultSelector = '#submission-result-graded';
 
 describe('Quiz Exercise Assessment', () => {
     before('Set up course', () => {

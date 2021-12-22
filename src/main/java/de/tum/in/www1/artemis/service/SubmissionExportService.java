@@ -39,12 +39,15 @@ public abstract class SubmissionExportService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final ExerciseDateService exerciseDateService;
+
     private final ZipFileService zipFileService;
 
     private final FileService fileService;
 
-    public SubmissionExportService(ExerciseRepository exerciseRepository, ZipFileService zipFileService, FileService fileService) {
+    public SubmissionExportService(ExerciseRepository exerciseRepository, ExerciseDateService exerciseDateService, ZipFileService zipFileService, FileService fileService) {
         this.exerciseRepository = exerciseRepository;
+        this.exerciseDateService = exerciseDateService;
         this.zipFileService = zipFileService;
         this.fileService = fileService;
     }
@@ -117,20 +120,17 @@ public abstract class SubmissionExportService {
             exportedStudentParticipations = new ArrayList<>(exercise.getStudentParticipations());
         }
         else {
-            List<String> participantIds = Arrays.stream(submissionExportOptions.getParticipantIdentifierList().split(",")).map(String::trim).collect(Collectors.toList());
+            List<String> participantIds = Arrays.stream(submissionExportOptions.getParticipantIdentifierList().split(",")).map(String::trim).toList();
 
             exportedStudentParticipations = exercise.getStudentParticipations().stream().filter(participation -> participantIds.contains(participation.getParticipantIdentifier()))
                     .collect(Collectors.toList());
         }
 
-        if (exportedStudentParticipations.isEmpty()) {
-            return Optional.empty();
-        }
-
+        boolean enableFilterAfterDueDate = false;
         ZonedDateTime filterLateSubmissionsDate = null;
         if (submissionExportOptions.isFilterLateSubmissions()) {
             if (submissionExportOptions.getFilterLateSubmissionsDate() == null) {
-                filterLateSubmissionsDate = exercise.getDueDate();
+                enableFilterAfterDueDate = true;
             }
             else {
                 filterLateSubmissionsDate = submissionExportOptions.getFilterLateSubmissionsDate();
@@ -140,7 +140,8 @@ public abstract class SubmissionExportService {
         // Sort the student participations by id
         exportedStudentParticipations.sort(Comparator.comparing(DomainObject::getId));
 
-        return this.createZipFileFromParticipations(exercise, exportedStudentParticipations, filterLateSubmissionsDate, outputDir, exportErrors, reportData);
+        return this.createZipFileFromParticipations(exercise, exportedStudentParticipations, enableFilterAfterDueDate, filterLateSubmissionsDate, outputDir, exportErrors,
+                reportData);
     }
 
     /**
@@ -151,15 +152,16 @@ public abstract class SubmissionExportService {
      *
      * @param exercise the exercise in question
      * @param participations a list of participations to include
+     * @param enableFilterAfterDueDate true, if all submissions that have been submitted after the due date should not be included in the file
      * @param lateSubmissionFilter an optional date filter for submissions
      * @param outputDir directory to store the temporary files in
-     * @param  exportErrors a list of errors for submissions that couldn't be exported and are not included in the file
+     * @param exportErrors a list of errors for submissions that couldn't be exported and are not included in the file
      * @param reportData   a list of all exercises and their statistics
      * @return the zipped file
      * @throws IOException if an error occurred while zipping
      */
-    private Optional<File> createZipFileFromParticipations(Exercise exercise, List<StudentParticipation> participations, @Nullable ZonedDateTime lateSubmissionFilter,
-            Path outputDir, List<String> exportErrors, List<ArchivalReportEntry> reportData) throws IOException {
+    private Optional<File> createZipFileFromParticipations(Exercise exercise, List<StudentParticipation> participations, boolean enableFilterAfterDueDate,
+            @Nullable ZonedDateTime lateSubmissionFilter, Path outputDir, List<String> exportErrors, List<ArchivalReportEntry> reportData) throws IOException {
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
@@ -183,24 +185,8 @@ public abstract class SubmissionExportService {
         MutableInt skippedEntries = new MutableInt();
 
         // Save all Submissions
-        List<Path> submissionFilePaths = participations.stream().map((participation) -> {
-
-            Set<Submission> submissions = participation.getSubmissions();
-            Submission latestSubmission = null;
-
-            for (Submission submission : submissions) {
-                if (submission.getSubmissionDate() == null) {
-                    // ignore unsubmitted submissions
-                    continue;
-                }
-                // filter late submissions
-                if (lateSubmissionFilter == null || submission.getSubmissionDate().isBefore(lateSubmissionFilter)) {
-                    if (latestSubmission == null || submission.getSubmissionDate().isAfter(latestSubmission.getSubmissionDate())) {
-                        latestSubmission = submission;
-                    }
-                }
-            }
-
+        List<Path> submissionFilePaths = participations.stream().map(participation -> {
+            Submission latestSubmission = latestSubmission(participation, enableFilterAfterDueDate, lateSubmissionFilter);
             if (latestSubmission == null) {
                 skippedEntries.increment();
                 return Optional.<Path>empty();
@@ -218,12 +204,11 @@ public abstract class SubmissionExportService {
             }
             catch (Exception ex) {
                 String message = "Could not create file " + submissionFilePath + "  for exporting: " + ex.getMessage();
-                log.error(message);
+                log.error(message, ex);
                 exportErrors.add(message);
                 return Optional.<Path>empty();
             }
-
-        }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        }).flatMap(Optional::stream).collect(Collectors.toList());
 
         // Add report entry
         reportData.add(new ArchivalReportEntry(exercise, fileService.removeIllegalCharacters(exercise.getTitle()), participations.size(), submissionFilePaths.size(),
@@ -243,6 +228,34 @@ public abstract class SubmissionExportService {
         }
 
         return Optional.of(zipFilePath.toFile());
+    }
+
+    /**
+     * Finds the latest submission for the given participation while optionally ignoring all submissions after a given date.
+     *
+     * @param participation for which the latest submission should be returned.
+     * @param enableFilterAfterDueDate true, if all submissions that have been submitted after the due date should not be included in the file.
+     * @param lateSubmissionFilter an optional date filter for submissions.
+     * @return the latest submission of the given participation.
+     */
+    private Submission latestSubmission(final StudentParticipation participation, boolean enableFilterAfterDueDate, @Nullable ZonedDateTime lateSubmissionFilter) {
+        Submission latestSubmission = null;
+
+        for (Submission submission : participation.getSubmissions()) {
+            if (submission.getSubmissionDate() == null) {
+                // ignore unsubmitted submissions
+                continue;
+            }
+            // filter late submissions
+            boolean isSubmittedBeforeDueDate = exerciseDateService.getDueDate(participation).map(dueDate -> submission.getSubmissionDate().isBefore(dueDate)).orElse(true);
+            if ((enableFilterAfterDueDate && isSubmittedBeforeDueDate) || lateSubmissionFilter == null || submission.getSubmissionDate().isBefore(lateSubmissionFilter)) {
+                if (latestSubmission == null || submission.getSubmissionDate().isAfter(latestSubmission.getSubmissionDate())) {
+                    latestSubmission = submission;
+                }
+            }
+        }
+
+        return latestSubmission;
     }
 
     protected abstract void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException;

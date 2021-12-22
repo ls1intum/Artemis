@@ -1,0 +1,13 @@
+.layout-table {
+    margin: 1px;
+
+    .td-score,
+    .td-usage-count {
+        width: 4%;
+    }
+
+    .td-usage-count {
+        position: relative;
+        white-space: nowrap;
+    }
+}

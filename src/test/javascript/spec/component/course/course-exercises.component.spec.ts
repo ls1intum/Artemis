@@ -23,12 +23,13 @@ import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import dayjs from 'dayjs';
-import { By } from '@angular/platform-browser';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ParticipationType } from 'app/entities/participation/participation.model';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
@@ -106,18 +107,14 @@ describe('CourseExercisesComponent', () => {
         expect(courseCalculationSpy.mock.calls[1][0]).toBe(course.id);
     });
 
-    it('should invoke setSortingAttribute', () => {
-        const sortingButton = fixture.debugElement.query(By.css('#dueDateSorting'));
-        expect(sortingButton).not.toBe(null);
-
-        sortingButton.nativeElement.click();
-        expect(component.sortingAttribute).toBe(SortingAttribute.DUE_DATE);
-    });
-
     it('should react to changes', () => {
         jest.spyOn(exerciseService, 'getNextExerciseForHours').mockReturnValue(exercise);
         component.ngOnChanges();
-        expect(component.nextRelevantExercise).toEqual(exercise);
+        const expectedExercise = {
+            exercise,
+            dueDate: exercise.dueDate,
+        };
+        expect(component.nextRelevantExercise).toEqual(expectedExercise);
     });
 
     it('should reorder all exercises', () => {
@@ -140,14 +137,12 @@ describe('CourseExercisesComponent', () => {
         component.activeFilters.clear();
         component.activeFilters.add(ExerciseFilter.NEEDS_WORK);
 
-        const sortingButton = fixture.debugElement.query(By.css('#flip'));
-        expect(sortingButton).not.toBe(null);
-        sortingButton.nativeElement.click();
+        component.flipOrder();
 
         expect(component.sortingOrder).toBe(ExerciseSortingOrder.ASC);
         expect(component.weeklyIndexKeys).toEqual(['2021-01-03', '2021-01-10']);
 
-        sortingButton.nativeElement.click();
+        component.flipOrder();
 
         expect(component.sortingOrder).toBe(ExerciseSortingOrder.DESC);
         expect(component.weeklyIndexKeys).toEqual(['2021-01-10', '2021-01-03']);
@@ -247,28 +242,6 @@ describe('CourseExercisesComponent', () => {
         expect(component.upcomingExercises.length).toBe(5);
     });
 
-    it('should show the current amount of filters in the filter button and change background color', () => {
-        const filterDropdown = fixture.debugElement.query(By.css('#filter-dropdown-button'));
-        expect(filterDropdown).not.toBe(null);
-
-        const filterDropdownLabel = filterDropdown.query(By.css('span'));
-        expect(filterDropdownLabel).not.toBe(null);
-
-        // Start: No filters should bet set
-        component.activeFilters.clear();
-        fixture.detectChanges();
-
-        expect(filterDropdown.nativeElement.classList).toContain('btn-secondary');
-        expect(filterDropdownLabel.nativeElement.textContent).toBe('artemisApp.courseOverview.exerciseList.filter: [{"num":0}]');
-
-        // Set a few filters
-        component.toggleFilters([ExerciseFilter.OVERDUE, ExerciseFilter.NEEDS_WORK, ExerciseFilter.OPTIONAL]);
-        fixture.detectChanges();
-
-        expect(filterDropdown.nativeElement.classList).toContain('btn-success');
-        expect(filterDropdownLabel.nativeElement.textContent).toBe('artemisApp.courseOverview.exerciseList.filter: [{"num":3}]');
-    });
-
     it('should filter optional exercises', () => {
         component.activeFilters = new Set();
 
@@ -289,5 +262,75 @@ describe('CourseExercisesComponent', () => {
 
         expect(component.activeFilters).toEqual(new Set());
         expect(component.numberOfExercises).toBe(4);
+    });
+
+    it('should not filter exercises with an individual due date after the current date', () => {
+        component.sortingOrder = ExerciseSortingOrder.DESC;
+
+        // regular due date is in the past, but the individual one in the future
+        const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+        newExercise.releaseDate = dayjs('2021-01-10T16:11:00+01:00');
+        newExercise.dueDate = dayjs('2021-01-13T16:11:00+01:00');
+        const participation = new StudentParticipation();
+        participation.individualDueDate = dayjs().add(10, 'days');
+        newExercise.studentParticipations = [participation];
+
+        component.course!.exercises![1] = newExercise;
+
+        component.activeFilters.clear();
+        component.toggleFilters([ExerciseFilter.OVERDUE]);
+
+        expect(component.activeFilters).toEqual(new Set().add(ExerciseFilter.OVERDUE));
+        expect(component.exerciseCountMap.get('modeling')).toBe(1);
+
+        // the exercise should be grouped into the week with the individual due date
+        const sundayBeforeDueDate = participation.individualDueDate.day(0).format('YYYY-MM-DD');
+        expect(component.weeklyExercisesGrouped[sundayBeforeDueDate].exercises).toEqual([newExercise]);
+    });
+
+    it('should sort upcoming exercises by ascending individual due dates', () => {
+        const exerciseRegularDueDate = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
+        exerciseRegularDueDate.releaseDate = dayjs().add(10, 'days');
+        const dueDate1 = dayjs().add(11, 'days');
+        exerciseRegularDueDate.dueDate = dueDate1;
+        const participationRegularDueDate = new StudentParticipation(ParticipationType.STUDENT);
+        exerciseRegularDueDate.studentParticipations = [participationRegularDueDate];
+
+        const exerciseIndividualDueDate = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
+        exerciseIndividualDueDate.releaseDate = dayjs().add(5, 'days');
+        // regular due date before the due date of the other exercise
+        exerciseIndividualDueDate.dueDate = dayjs().add(7, 'days');
+        const participationIndividualDueDate = new StudentParticipation(ParticipationType.STUDENT);
+        // individual due date later than the due date of the other exercise
+        const dueDate2 = dayjs().add(20, 'days');
+        participationIndividualDueDate.individualDueDate = dueDate2;
+        exerciseIndividualDueDate.studentParticipations = [participationIndividualDueDate];
+
+        const checkUpcomingExercises = () => {
+            const expectedUpcomingExercises = [
+                { exercise: exerciseRegularDueDate, dueDate: dueDate1 },
+                { exercise: exerciseIndividualDueDate, dueDate: dueDate2 },
+            ];
+            expect(component.upcomingExercises).toEqual(expectedUpcomingExercises);
+        };
+
+        component.course!.exercises! = [exerciseIndividualDueDate, exerciseRegularDueDate];
+
+        // the sidebar should always be sorted by ascending due date
+        component.sortingOrder = ExerciseSortingOrder.DESC;
+        component.setSortingAttribute(SortingAttribute.DUE_DATE);
+        checkUpcomingExercises();
+
+        component.sortingOrder = ExerciseSortingOrder.ASC;
+        component.setSortingAttribute(SortingAttribute.DUE_DATE);
+        checkUpcomingExercises();
+
+        component.sortingOrder = ExerciseSortingOrder.DESC;
+        component.setSortingAttribute(SortingAttribute.RELEASE_DATE);
+        checkUpcomingExercises();
+
+        component.sortingOrder = ExerciseSortingOrder.ASC;
+        component.setSortingAttribute(SortingAttribute.RELEASE_DATE);
+        checkUpcomingExercises();
     });
 });

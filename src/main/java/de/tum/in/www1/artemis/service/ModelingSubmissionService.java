@@ -39,17 +39,20 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final ModelElementRepository modelElementRepository;
 
+    private final ExerciseDateService exerciseDateService;
+
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             CompassService compassService, UserRepository userRepository, SubmissionVersionService submissionVersionService, ParticipationService participationService,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository,
-            ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository, ModelElementRepository modelElementRepository,
-            ComplaintRepository complaintRepository) {
+            ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
+            ModelElementRepository modelElementRepository, ComplaintRepository complaintRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                courseRepository, participationRepository, complaintRepository);
+                exerciseDateService, courseRepository, participationRepository, complaintRepository);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.compassService = compassService;
         this.submissionVersionService = submissionVersionService;
         this.modelElementRepository = modelElementRepository;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -64,7 +67,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return the locked modeling submission
      */
     public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise, int correctionRound) {
-        ModelingSubmission modelingSubmission = modelingSubmissionRepository.findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
+        ModelingSubmission modelingSubmission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(submissionId);
 
         if (modelingSubmission.getLatestResult() == null || modelingSubmission.getLatestResult().getAssessor() == null) {
             checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -92,8 +95,8 @@ public class ModelingSubmissionService extends SubmissionService {
         }
         StudentParticipation participation = optionalParticipation.get();
 
-        final var exerciseDueDate = modelingExercise.getDueDate();
-        if (exerciseDueDate != null && exerciseDueDate.isBefore(ZonedDateTime.now()) && participation.getInitializationDate().isBefore(exerciseDueDate)) {
+        final Optional<ZonedDateTime> dueDate = exerciseDateService.getDueDate(participation);
+        if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
@@ -102,7 +105,7 @@ public class ModelingSubmissionService extends SubmissionService {
 
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (modelingExercise.isExamExercise() || !modelingExercise.isEnded()) {
+        if (modelingExercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
             modelingSubmission.setSubmitted(true);
         }
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());

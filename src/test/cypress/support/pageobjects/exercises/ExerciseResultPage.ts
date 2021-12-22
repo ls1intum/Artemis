@@ -3,7 +3,7 @@
  */
 export class ExerciseResultPage {
     shouldShowProblemStatement(problemStatement: string) {
-        cy.get('.problem-statement').contains(problemStatement).should('be.visible');
+        cy.get('#problem-statement').contains(problemStatement).should('be.visible');
     }
 
     shouldShowExerciseTitle(title: string) {
@@ -15,7 +15,7 @@ export class ExerciseResultPage {
     }
 
     clickViewSubmission() {
-        cy.contains('View submission').click();
+        cy.get('#view-submission').click();
     }
 
     clickOpenCodeEditor(exerciseId: string) {
