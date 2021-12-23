@@ -112,6 +112,7 @@ private excludedClassFilesForReport(classDirectories) {
         fileTree(dir: it,
             exclude: [
                 "**/de/tum/in/www1/artemis/domain/**/*_*",
+                "**/de/tum/in/www1/artemis/config/migration/entries/*_*"
             ]
         )
     }))
@@ -133,14 +134,13 @@ jacocoTestCoverageVerification {
             limit {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
-                // TODO: in the future the following value should become at least 0.90
-                minimum = 0.893
+                minimum = 0.90
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 20
-                maximum = 26
+                maximum = 27
             }
         }
     }
@@ -171,7 +171,7 @@ dependencies {
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2021.15"
+    implementation "net.sourceforge.plantuml:plantuml:1.2021.16"
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.3.1"
@@ -185,7 +185,7 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-ui:1.6.2"
 
     // import JHipster dependencies BOM
-    implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
+    implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"

@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
-import static java.util.stream.Collectors.toMap;
-
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -53,16 +50,4 @@ public interface ModelElementRepository extends JpaRepository<ModelElement, Long
             GROUP BY element.modelElementId
             """)
     List<ModelElementRepository.ModelElementCount> countOtherElementsInSameClusterForSubmissionId(@Param("submissionId") Long submissionId);
-
-    /**
-     * This function calls query `countOtherBlocksInSameClusterForSubmissionId` and converts the result into a Map
-     * so that it's values will be easily accessed through key value pairs
-     * @param submissionId the `id` of the Submission
-     * @return a Map data type representing key value pairs where the key is the TextBlock id
-     * and the value is the number of other blocks in the same cluster for that TextBlock.
-     */
-    default Map<String, Integer> countOtherElementsInClusterBySubmissionId(Long submissionId) {
-        return countOtherElementsInSameClusterForSubmissionId(submissionId).stream()
-                .collect(toMap(ModelElementRepository.ModelElementCount::getElementId, count -> count.getNumberOfOtherElements().intValue()));
-    }
 }
