@@ -20,6 +20,9 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/browser';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { faCircleNotch, faExclamationCircle, faFile } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 
 /**
  * Enumeration object representing the possible options that
@@ -111,6 +114,12 @@ export class ResultComponent implements OnInit, OnChanges {
     onlyShowSuccessfulCompileStatus: boolean;
 
     resultTooltip: string;
+
+    // Icons
+    faCircleNotch = faCircleNotch;
+    faFile = faFile;
+    farCircle = faCircle;
+    faExclamationCircle = faExclamationCircle;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -231,7 +240,7 @@ export class ResultComponent implements OnInit, OnChanges {
             // Based on its submission we test if the participation is in due time of the given exercise.
 
             const inDueTime = isParticipationInDueTime(this.participation, this.exercise);
-            const dueDate = ResultComponent.dateAsDayjs(this.exercise.dueDate);
+            const dueDate = ResultComponent.dateAsDayjs(getExerciseDueDate(this.exercise, this.participation));
             const assessmentDueDate = ResultComponent.dateAsDayjs(this.exercise.assessmentDueDate);
 
             if (inDueTime && initializedResultWithScore(this.result)) {
@@ -354,6 +363,14 @@ export class ResultComponent implements OnInit, OnChanges {
         if (this.templateStatus === ResultTemplateStatus.MISSING) {
             componentInstance.messageKey = 'artemisApp.result.notLatestSubmission';
         }
+
+        // The information should only be shown in case it is after the due date
+        // and some automatic test case feedbacks are possibly hidden due to
+        // other students still working on the exercise.
+        componentInstance.showMissingAutomaticFeedbackInformation =
+            this.result?.assessmentType === AssessmentType.AUTOMATIC &&
+            this.exercise?.type === ExerciseType.PROGRAMMING &&
+            hasExerciseDueDatePassed(this.exercise, this.participation);
     }
 
     /**
@@ -439,27 +456,27 @@ export class ResultComponent implements OnInit, OnChanges {
 
         // Build failure so return times icon.
         if (this.isBuildFailedAndResultIsAutomatic(result)) {
-            return ['far', 'times-circle'];
+            return faTimesCircle;
         }
 
         if (this.resultIsPreliminary(result)) {
-            return ['far', 'question-circle'];
+            return faQuestionCircle;
         }
 
         if (this.onlyShowSuccessfulCompileStatus) {
-            return ['far', 'check-circle'];
+            return faCheckCircle;
         }
 
         if (result.score == undefined) {
             if (result.successful) {
-                return ['far', 'check-circle'];
+                return faCheckCircle;
             }
-            return ['far', 'times-circle'];
+            return faTimesCircle;
         }
         if (result.score > 80) {
-            return ['far', 'check-circle'];
+            return faCheckCircle;
         }
-        return ['far', 'times-circle'];
+        return faTimesCircle;
     }
 
     /**

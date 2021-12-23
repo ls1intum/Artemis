@@ -28,7 +28,7 @@
                     <div class="col-7">{{ 'artemisApp.assessmentDashboard.complaints' | artemisTranslate }}</div>
                     <div class="col-5">
                         <div *ngIf="isAtLeastInstructor">
-                            <a [routerLink]="complaintsLink"> {{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }}) </a>
+                            <a id="open-complaints" [routerLink]="complaintsLink"> {{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }}) </a>
                             |
                             <a [routerLink]="complaintsLink" [queryParams]="{ tutorId: tutorId }">
                                 {{ complaints.tutor }}

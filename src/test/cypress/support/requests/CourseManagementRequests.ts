@@ -138,16 +138,6 @@ export class CourseManagementRequests {
         });
     }
 
-    updateProgrammingExerciseDueDate(exercise: any, due = day()) {
-        exercise.dueDate = dayjsToString(due);
-        return this.updateExercise(exercise, CypressExerciseType.PROGRAMMING);
-    }
-
-    updateProgrammingExerciseAssessmentDueDate(exercise: any, due = day()) {
-        exercise.assessmentDueDate = dayjsToString(due);
-        return this.updateExercise(exercise, CypressExerciseType.PROGRAMMING);
-    }
-
     updateModelingExerciseDueDate(exercise: any, due = day()) {
         exercise.dueDate = dayjsToString(due);
         return this.updateExercise(exercise, CypressExerciseType.MODELING);
@@ -403,7 +393,7 @@ export class CourseManagementRequests {
             {
                 ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
                 quizQuestion: quizExercise.quizQuestions[0],
-                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
+                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option].body),
             },
         ];
         const multipleChoiceSubmission = {
@@ -426,7 +416,12 @@ export class CourseManagementRequests {
         const submittedTexts = textAnswers.map((answer, index) => {
             return {
                 text: answer,
-                spot: quizExercise.quizQuestions[0].spots[index],
+                spot: {
+                    id: quizExercise.quizQuestions[0].spots[index].id,
+                    spotNr: quizExercise.quizQuestions[0].spots[index].spotNr,
+                    width: quizExercise.quizQuestions[0].spots[index].width,
+                    invalid: quizExercise.quizQuestions[0].spots[index].invalid,
+                },
             };
         });
         const submittedAnswers = [

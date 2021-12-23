@@ -1,5 +1,5 @@
 import * as ace from 'brace';
-import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick, discardPeriodicTasks } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
@@ -136,13 +136,14 @@ describe('TeamUpdateDialogComponent', () => {
         // Click on save
         debugElement.query(By.css('#teamUpdateDialogForm')).nativeElement.submit();
         fixture.detectChanges();
-
-        // Check that saving worked and that modal was closed
-        expect(comp.team).to.deep.equal(comp.pendingTeam);
-        expect(comp.isSaving).to.be.false;
-        expect(ngbActiveModal.close).to.have.been.called;
-
-        fixture.destroy();
+        fixture.whenStable().then(() => {
+            // Check that saving worked and that modal was closed
+            expect(comp.team).to.deep.equal(comp.pendingTeam);
+            expect(comp.isSaving).to.be.false;
+            expect(ngbActiveModal.close).to.have.been.called;
+            fixture.destroy();
+        });
+        discardPeriodicTasks();
         flush();
     }));
 

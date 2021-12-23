@@ -48,6 +48,7 @@ import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
@@ -69,6 +70,8 @@ public class ProgrammingExerciseExportService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
+    private final ExerciseDateService exerciseDateService;
+
     private final ObjectMapper objectMapper;
 
     private final FileService fileService;
@@ -82,11 +85,12 @@ public class ProgrammingExerciseExportService {
     public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
 
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
-            FileService fileService, GitService gitService, ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+            ExerciseDateService exerciseDateService, FileService fileService, GitService gitService, ZipFileService zipFileService,
+            MappingJackson2HttpMessageConverter springMvcJacksonConverter, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        this.exerciseDateService = exerciseDateService;
         this.fileService = fileService;
         this.gitService = gitService;
         this.zipFileService = zipFileService;
@@ -468,7 +472,7 @@ public class ProgrammingExerciseExportService {
      *
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
-     * @param repositoryExportOptions The options, that should get applied to the zipeed repo
+     * @param repositoryExportOptions The options, that should get applied to the zipped repo
      * @param outputDir The directory used for downloading and zipping the repository
      * @return The checked out and zipped repository
      * @throws IOException if zip file creation failed
@@ -490,8 +494,8 @@ public class ProgrammingExerciseExportService {
 
             gitService.resetToOriginHead(repository);
 
-            if (repositoryExportOptions.isFilterLateSubmissions() && repositoryExportOptions.getFilterLateSubmissionsDate() != null) {
-                filterLateSubmissions(repositoryExportOptions.getFilterLateSubmissionsDate(), participation, repository);
+            if (repositoryExportOptions.isFilterLateSubmissions()) {
+                filterLateSubmissions(repositoryExportOptions, participation, repository);
             }
 
             if (repositoryExportOptions.isAddParticipantName()) {
@@ -550,16 +554,25 @@ public class ProgrammingExerciseExportService {
     /**
      * Filters out all late commits of submissions from the checked out repository of a participation
      *
-     * @param submissionDate The submission date (inclusive), after which all submissions should get filtered out
+     * @param repositoryExportOptions The options that should get applied when exporting the submissions
      * @param participation  The participation related to the repository
      * @param repo           The repository for which to filter all late submissions
      */
-    private void filterLateSubmissions(ZonedDateTime submissionDate, ProgrammingExerciseStudentParticipation participation, Repository repo) {
+    private void filterLateSubmissions(RepositoryExportOptionsDTO repositoryExportOptions, ProgrammingExerciseStudentParticipation participation, Repository repo) {
         log.debug("Filter late submissions for participation {}", participation.toString());
-        Optional<Submission> lastValidSubmission = participation.getSubmissions().stream()
-                .filter(s -> s.getSubmissionDate() != null && s.getSubmissionDate().isBefore(submissionDate)).max(Comparator.comparing(Submission::getSubmissionDate));
+        final Optional<ZonedDateTime> latestAllowedDate;
+        if (repositoryExportOptions.isFilterLateSubmissionsIndividualDueDate()) {
+            latestAllowedDate = exerciseDateService.getDueDate(participation);
+        }
+        else {
+            latestAllowedDate = Optional.of(repositoryExportOptions.getFilterLateSubmissionsDate());
+        }
 
-        gitService.filterLateSubmissions(repo, lastValidSubmission, submissionDate);
+        if (latestAllowedDate.isPresent()) {
+            Optional<Submission> lastValidSubmission = participation.getSubmissions().stream()
+                    .filter(s -> s.getSubmissionDate() != null && s.getSubmissionDate().isBefore(latestAllowedDate.get())).max(Comparator.comparing(Submission::getSubmissionDate));
+            gitService.filterLateSubmissions(repo, lastValidSubmission, latestAllowedDate.get());
+        }
     }
 
     /**

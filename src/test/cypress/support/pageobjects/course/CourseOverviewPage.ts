@@ -7,11 +7,7 @@ import { COURSE_BASE, CypressExerciseType } from '../../requests/CourseManagemen
 export class CourseOverviewPage {
     readonly participationRequestId = 'participateInExerciseQuery';
 
-    private getExerciseCardRootElement(exerciseName: string) {
-        return cy.get('.course-body-container').contains(exerciseName).parents('.course-exercise-row');
-    }
-
-    startExercise(exerciseName: string, exerciseType: CypressExerciseType) {
+    startExercise(exerciseId: string, exerciseType: CypressExerciseType) {
         switch (exerciseType) {
             case CypressExerciseType.MODELING:
             case CypressExerciseType.TEXT:
@@ -24,33 +20,25 @@ export class CourseOverviewPage {
             default:
                 throw new Error(`Exercise type '${exerciseType}' is not supported yet!`);
         }
-        this.getExerciseCardRootElement(exerciseName).find('button').click();
+        cy.get('#start-exercise-' + exerciseId).click();
         cy.wait('@participateInExerciseQuery');
     }
 
-    openRunningExercise(exerciseTitle: string) {
-        this.getExerciseCardRootElement(exerciseTitle).find('[buttonicon="folder-open"]').click();
+    openRunningExercise(exerciseId: string) {
+        cy.get('#open-exercise-' + exerciseId).click();
     }
 
-    openRunningProgrammingExercise(exerciseTitle: string) {
+    openRunningProgrammingExercise(exerciseId: string) {
         cy.intercept(GET, BASE_API + 'programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
-        this.openRunningExercise(exerciseTitle);
+        this.openRunningExercise(exerciseId);
         cy.wait('@initialQuery');
     }
 
     openExamsTab() {
-        this.getTabBar().find('[jhitranslate="artemisApp.courseOverview.menu.exams"]').click();
+        cy.get('#exam-tab').click();
     }
 
-    openExam(examTitle: string) {
-        this.getExamsRootElement().contains(examTitle).click();
-    }
-
-    private getTabBar() {
-        return cy.get('.tab-bar-course-overview');
-    }
-
-    private getExamsRootElement() {
-        return cy.get('jhi-course-exams');
+    openExam(examId: string) {
+        cy.get('#exam-' + examId).click();
     }
 }

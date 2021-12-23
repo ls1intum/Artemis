@@ -1,8 +1,9 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faUnderline } from '@fortawesome/free-solid-svg-icons';
 import { Command } from './command';
 
 export class UnderlineCommand extends Command {
-    buttonIcon = 'underline' as IconProp;
+    buttonIcon = faUnderline as IconProp;
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.underline';
 
     /**

@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, HostBinding, Input, HostListener } from '@angular/core';
+import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import interact from 'interactjs';
 
 /**
@@ -7,7 +8,7 @@ import interact from 'interactjs';
  * <jhi-resizeable-container>
  *    <span left-header>Header Left</span>
  *    <p left-body>Body Left</p>
- *    <fa-icon [icon]="'exclamation-triangle'" right-header></fa-icon>
+ *    <fa-icon [icon]="faExclamationTriangle" right-header></fa-icon>
  *    <span right-header>Header Right</span>
  *    <p right-body>Body Right</p>
  *  </jhi-resizeable-container>
@@ -21,6 +22,11 @@ export class ResizeableContainerComponent implements AfterViewInit {
     @HostBinding('class.flex-grow-1') flexGrow1 = true;
     @Input() collapsed = false;
     @Input() isExerciseParticipation = false;
+
+    // Icons
+    faChevronRight = faChevronRight;
+    faChevronLeft = faChevronLeft;
+    faGripLinesVertical = faGripLinesVertical;
 
     /**
      * Performed after full initialization of the view.

@@ -113,7 +113,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testGetOverviewAsAdmin() {
         // Minimal testcase: Admins always see all courses
         // Add two courses, one not active
@@ -133,7 +133,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetOverviewAsInstructor() {
         // Testcase: Instructors see their courses
         // Add three courses, containing one not active and one not belonging to the instructor
@@ -161,7 +161,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetOverviewAsStudent() {
         // Testcase: Students should not see courses
         // Add three courses, containing one not active and one not belonging to the student

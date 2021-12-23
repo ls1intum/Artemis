@@ -12,7 +12,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exercise, IncludedInOverallScore, resetDates } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, resetDates, ValidationReason } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
@@ -27,6 +27,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { faBan, faExclamationCircle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -82,7 +83,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     // '-' or '/' characters.
     invalidDirectoryNamePattern = RegExp('^[\\w-]+(/[\\w-]+)*$');
 
-    readonly shortNamePattern = shortNamePattern; // must start with a letter and cannot contain special characters
+    // length of < 3 is also accepted in order to provide more accurate validation error messages
+    readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + shortNamePattern); // must start with a letter and cannot contain special characters
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
 
     exerciseCategories: ExerciseCategory[];
@@ -113,6 +115,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
     public projectTypes: ProjectType[] = [];
+
+    // Icons
+    faSave = faSave;
+    faBan = faBan;
+    faQuestionCircle = faQuestionCircle;
+    faExclamationCircle = faExclamationCircle;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -588,5 +596,170 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             return event.target.tagName === 'TEXTAREA';
         }
         return false;
+    }
+
+    /**
+     * Get a list of all reasons that describe why the current input to update is invalid
+     */
+    getInvalidReasons(): ValidationReason[] {
+        const result: ValidationReason[] = [];
+        if (this.programmingExercise.title === undefined || this.programmingExercise.title === '') {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.title.undefined',
+                translateValues: {},
+            });
+        } else if (this.programmingExercise.title.match(this.titleNamePattern) === null || this.programmingExercise.title?.match(this.titleNamePattern)?.length === 0) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.title.pattern',
+                translateValues: {},
+            });
+        }
+        if (this.programmingExercise.shortName === undefined || this.programmingExercise.shortName === '') {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.shortName.undefined',
+                translateValues: {},
+            });
+        } else {
+            if (this.programmingExercise.shortName.length < 3) {
+                result.push({
+                    translateKey: 'artemisApp.exercise.form.shortName.minlength',
+                    translateValues: {},
+                });
+            }
+            const shortNamePatternMatch = this.programmingExercise.shortName.match(this.shortNamePattern);
+            if (shortNamePatternMatch === null || shortNamePatternMatch.length === 0) {
+                result.push({
+                    translateKey: 'artemisApp.exercise.form.shortName.pattern',
+                    translateValues: {},
+                });
+            }
+        }
+
+        if (this.programmingExercise.maxPoints === undefined) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+        } else if (this.programmingExercise.maxPoints < 1) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.points.customMin',
+                translateValues: {},
+            });
+        } else if (this.programmingExercise.maxPoints > 9999) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.points.customMax',
+                translateValues: {},
+            });
+        }
+
+        if (this.programmingExercise.bonusPoints === undefined || typeof this.programmingExercise.bonusPoints !== 'number') {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.bonusPoints.undefined',
+                translateValues: {},
+            });
+        } else if (this.programmingExercise.bonusPoints! < 0) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.bonusPoints.customMin',
+                translateValues: {},
+            });
+        } else if (this.programmingExercise.bonusPoints! > 9999) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.bonusPoints.customMax',
+                translateValues: {},
+            });
+        }
+
+        const maxStaticCodeAnalysisPenaltyPatternMatch = this.programmingExercise.maxStaticCodeAnalysisPenalty?.toString().match(this.maxPenaltyPattern);
+        if (maxStaticCodeAnalysisPenaltyPatternMatch === null || maxStaticCodeAnalysisPenaltyPatternMatch?.length === 0) {
+            result.push({
+                translateKey: 'artemisApp.exercise.form.maxPenalty.pattern',
+                translateValues: {},
+            });
+        }
+
+        // validation on package name has not to be performed for languages Empty, C and Python
+        if (
+            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.C &&
+            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.PYTHON &&
+            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.EMPTY
+        ) {
+            if (this.programmingExercise.packageName === undefined || this.programmingExercise.packageName === '') {
+                result.push({
+                    translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                    translateValues: {},
+                });
+            } else {
+                const patternMatchJavaKotlin: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.packageNamePatternForJavaKotlin);
+                const patternMatchSwift: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.appNamePatternForSwift);
+                // window.alert(patternMatchJavaKotlin + ' ; ' + patternMatchSwift);
+                if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)) {
+                    result.push({
+                        translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                        translateValues: {},
+                    });
+                } else if (
+                    this.programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN &&
+                    (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)
+                ) {
+                    result.push({
+                        translateKey: 'artemisApp.exercise.form.packageName.pattern.KOTLIN',
+                        translateValues: {},
+                    });
+                } else if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.SWIFT && (patternMatchSwift === null || patternMatchSwift.length === 0)) {
+                    result.push({
+                        translateKey: 'artemisApp.exercise.form.packageName.pattern.SWIFT',
+                        translateValues: {},
+                    });
+                }
+            }
+        }
+
+        // verifying submission limit value
+        if (this.programmingExercise.submissionPolicy !== undefined && this.programmingExercise.submissionPolicy !== SubmissionPolicyType.NONE) {
+            const submissionLimit = this.programmingExercise.submissionPolicy?.submissionLimit;
+            if (submissionLimit === undefined || typeof submissionLimit !== 'number') {
+                result.push({
+                    translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.required',
+                    translateValues: {},
+                });
+            } else if (submissionLimit < 1 || submissionLimit > 500 || submissionLimit % 1 !== 0) {
+                result.push({
+                    translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.pattern',
+                    translateValues: {},
+                });
+            }
+        }
+
+        // verifying exceeding submission limit penalty
+        if (this.programmingExercise.submissionPolicy?.type === SubmissionPolicyType.SUBMISSION_PENALTY) {
+            const exceedingPenalty = this.programmingExercise.submissionPolicy?.exceedingPenalty;
+            if (exceedingPenalty === undefined || typeof exceedingPenalty !== 'number') {
+                result.push({
+                    translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.required',
+                    translateValues: {},
+                });
+            } else if (exceedingPenalty <= 0) {
+                result.push({
+                    translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.pattern',
+                    translateValues: {},
+                });
+            }
+        }
+
+        if (!this.auxiliaryRepositoriesValid) {
+            result.push({
+                translateKey: 'artemisApp.programmingExercise.auxiliaryRepository.error',
+                translateValues: {},
+            });
+        }
+
+        if (!this.validIdeSelection()) {
+            result.push({
+                translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
+                translateValues: {},
+            });
+        }
+
+        return result;
     }
 }

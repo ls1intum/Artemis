@@ -22,11 +22,9 @@ public class UMLObjectLink extends UMLElement {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLObjectLink)) {
+        if (!(reference instanceof UMLObjectLink referenceLink)) {
             return 0;
         }
-
-        UMLObjectLink referenceLink = (UMLObjectLink) reference;
 
         double similarity = 0;
 

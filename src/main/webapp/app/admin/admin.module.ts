@@ -25,11 +25,21 @@ import { OrganizationManagementDetailComponent } from './organization-management
 import { OrganizationManagementUpdateComponent } from './organization-management/organization-management-update.component';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { MetricsModule } from 'app/admin/metrics/metrics.module';
+import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 
 const ENTITY_STATES = [...adminState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, FormDateTimePickerModule, TagInputModule, NgxDatatableModule, ArtemisDataTableModule, MetricsModule],
+    imports: [
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisSharedModule,
+        FormDateTimePickerModule,
+        TagInputModule,
+        NgxDatatableModule,
+        ArtemisDataTableModule,
+        MetricsModule,
+        ArtemisChartsModule,
+    ],
     declarations: [
         AuditsComponent,
         UserManagementComponent,

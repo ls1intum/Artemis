@@ -329,7 +329,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testManualAssessmentSubmit_IncludedCompletelyWithBonusPointsExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -352,7 +352,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testManualAssessmentSubmit_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -368,7 +368,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testManualAssessmentSubmit_IncludedAsBonusExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
@@ -384,7 +384,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testManualAssessmentSubmit_NotIncludedExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
@@ -1056,88 +1056,88 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void cancelOwnAssessmentAsStudent() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void cancelOwnAssessmentAsTutor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = "tutor2", roles = "TA")
     public void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = "tutor2", roles = "TA")
     public void testOverrideAssessment_saveOtherTutorForbidden() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testOverrideAssessment_saveInstructorPossible() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testOverrideAssessment_saveSameTutorPossible() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = "tutor2", roles = "TA")
     public void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testOverrideAssessment_submitInstructorPossible() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testOverrideAssessment_submitSameTutorPossible() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = "tutor2", roles = "TA")
     public void testOverrideAssessment_saveOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testOverrideAssessment_saveInstructorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testOverrideAssessment_saveSameTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testOverrideAssessment_saveSameTutorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         // should be possible because the original result was not yet submitted
@@ -1145,28 +1145,28 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = "tutor2", roles = "TA")
     public void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         // should be possible because the original result was not yet submitted
@@ -1456,7 +1456,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCheckPlagiarismIdenticalLongTexts() throws Exception {
         database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student2");
@@ -1472,7 +1472,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testdeleteResult() throws Exception {
         Course course = database.addCourseWithOneExerciseAndSubmissions("modeling", 1, Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
         Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);

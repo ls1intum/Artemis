@@ -124,14 +124,14 @@
                                 [class.disabled]="isAssessmentButtonDisabled(value, value.submission)"
                                 [routerLink]="getAssessmentLink(exercise, value.participation, value.submission)"
                                 class="btn btn-warning btn-sm"
-                                ><fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                                ><fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                                 {{ 'artemisApp.exerciseAssessmentDashboard.' + assessmentAction(value.submission) + 'Assessment' | artemisTranslate }}</a
                             >
                         </div>
                         <fa-icon
                             class="mx-3"
                             *ngIf="value.submission?.result?.hasComplaint"
-                            [icon]="'flag'"
+                            [icon]="faFlag"
                             ngbTooltip="{{ 'artemisApp.team.detail.participationsTable.complaintOrMoreFeedbackRequest' | artemisTranslate }}"
                         ></fa-icon>
                     </div>
