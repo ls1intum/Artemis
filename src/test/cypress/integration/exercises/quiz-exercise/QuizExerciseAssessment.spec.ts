@@ -14,7 +14,7 @@ const courseManagementRequest = artemis.requests.courseManagement;
 let course: any;
 let quizExercise: any;
 
-const resultSelector = '[jhitranslate="artemisApp.result.score"]';
+const resultSelector = '#submission-result-graded';
 
 describe('Quiz Exercise Assessment', () => {
     before('Set up course', () => {
@@ -42,7 +42,7 @@ describe('Quiz Exercise Assessment', () => {
 
         it('Assesses a mc quiz submission automatically', () => {
             cy.login(student);
-            courseManagementRequest.startExerciseParticipation(course.id, quizExercise.id);
+            courseManagementRequest.startExerciseParticipation(quizExercise.id);
             courseManagementRequest.createMultipleChoiceSubmission(quizExercise, [0, 2]);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
             cy.reloadUntilFound(resultSelector);
@@ -57,7 +57,7 @@ describe('Quiz Exercise Assessment', () => {
 
         it('Assesses a sa quiz submission automatically', () => {
             cy.login(student);
-            courseManagementRequest.startExerciseParticipation(course.id, quizExercise.id);
+            courseManagementRequest.startExerciseParticipation(quizExercise.id);
             courseManagementRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
             cy.reloadUntilFound(resultSelector);
