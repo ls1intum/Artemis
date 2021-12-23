@@ -25,7 +25,7 @@ export class ModelingEditor {
     }
 
     clickCreateExampleSubmission() {
-        cy.get('#modeling-example-submission').click();
+        cy.get('#create-example-submission').click();
     }
 
     showExampleAssessment() {

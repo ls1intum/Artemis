@@ -12,6 +12,8 @@ public final class ProgrammingSubmissionConstants {
 
     public static final String BITBUCKET_REQUEST;
 
+    public static final String BITBUCKET_REQUEST_WITHOUT_COMMIT;
+
     public static final String BAMBOO_REQUEST;
 
     public final static String GITLAB_REQUEST;
@@ -19,6 +21,7 @@ public final class ProgrammingSubmissionConstants {
     static {
         try {
             BITBUCKET_REQUEST = IOUtils.toString(ProgrammingSubmissionConstants.class.getResource("bitbucketRequest.json"), StandardCharsets.UTF_8);
+            BITBUCKET_REQUEST_WITHOUT_COMMIT = IOUtils.toString(ProgrammingSubmissionConstants.class.getResource("bitbucketRequestWithoutCommit.json"), StandardCharsets.UTF_8);
             BAMBOO_REQUEST = IOUtils.toString(ProgrammingSubmissionConstants.class.getResource("bambooRequest.json"), StandardCharsets.UTF_8);
             GITLAB_REQUEST = IOUtils.toString(ProgrammingSubmissionConstants.class.getResource("gitlabRequest.json"), StandardCharsets.UTF_8);
         }

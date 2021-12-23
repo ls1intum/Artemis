@@ -143,7 +143,7 @@ describe('Exam assessment', () => {
                 examStartEnd.startExam();
                 cy.contains(exerciseTitle).click();
                 textEditor.typeSubmission(textSubmission.text);
-                textEditor.submit().then((submissionResponse) => {
+                textEditor.saveAndContinue().then((submissionResponse) => {
                     expect(submissionResponse.response?.statusCode).to.equal(200);
                 });
                 examNavigation.handInEarly();
@@ -174,14 +174,14 @@ describe('Exam assessment', () => {
         });
 
         beforeEach('Create exercise and submission', () => {
-            courseManagementRequests.createQuizExercise({ exerciseGroup }, [multipleChoiceQuizTemplate], 'Cypress Quiz').then(() => {
+            courseManagementRequests.createQuizExercise({ exerciseGroup }, [multipleChoiceQuizTemplate], 'Cypress Quiz').then((quizResponse) => {
                 courseManagementRequests.generateMissingIndividualExams(exam);
                 courseManagementRequests.prepareExerciseStartForExam(exam);
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                 examStartEnd.startExam();
                 cy.contains('Cypress Quiz').click();
-                multipleChoice.tickAnswerOption(0);
-                multipleChoice.tickAnswerOption(2);
+                multipleChoice.tickAnswerOption(0, quizResponse.body.quizQuestions[0].id);
+                multipleChoice.tickAnswerOption(2, quizResponse.body.quizQuestions[0].id);
                 examNavigation.handInEarly();
                 examStartEnd.finishExam();
             });

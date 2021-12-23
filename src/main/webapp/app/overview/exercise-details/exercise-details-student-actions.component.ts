@@ -62,7 +62,7 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     /**
-     * see exercise-utils -> isStartExerciseAvailable
+     * see exercise.utils -> isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
         return isStartExerciseAvailable(this.exercise as ProgrammingExercise);

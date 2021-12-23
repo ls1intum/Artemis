@@ -143,6 +143,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> searchByLoginOrNameWithGroups(@Param("searchTerm") String searchTerm, Pageable pageable);
 
     @Modifying
+    @Transactional // ok because of modifying query
     @Query("Update User user set user.lastNotificationRead = :#{#lastNotificationRead} where user.id = :#{#userId}")
     void updateUserNotificationReadDate(@Param("userId") Long userId, @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
 
@@ -156,6 +157,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param hideNotificationUntil indicates a time that is used to filter all notifications that are prior to it (if null -> show all notifications)
      */
     @Modifying
+    @Transactional // ok because of modifying query
     @Query("Update User user set user.hideNotificationsUntil = :#{#hideNotificationUntil} where user.id = :#{#userId}")
     void updateUserNotificationVisibility(@Param("userId") Long userId, @Param("hideNotificationUntil") ZonedDateTime hideNotificationUntil);
 
@@ -380,14 +382,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
      *
      * @param userId the user for which the notification read date should be updated
      */
-    // TODO: move to Repository
-    @Transactional // ok because of modifying query
     default void updateUserNotificationReadDate(long userId) {
         updateUserNotificationReadDate(userId, ZonedDateTime.now());
     }
-
-    @Query("select user from User user left join fetch user.organizations where user.login like :#{#login}")
-    Optional<User> findOneWithOrganizations(@Param("login") String login);
 
     @Query(value = "SELECT * from jhi_user u where u.email regexp ?1", nativeQuery = true)
     List<User> findAllMatchingEmailPattern(@Param("emailPattern") String emailPattern);

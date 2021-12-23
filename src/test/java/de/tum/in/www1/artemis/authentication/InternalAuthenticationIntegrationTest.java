@@ -216,28 +216,28 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUserWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY));
         assertUserGroups(user, true, false, false, false);
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void createTutorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY));
         assertUserGroups(user, true, true, false, false);
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void createEditorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY, EDITOR_AUTHORITY));
         assertUserGroups(user, true, true, true, false);
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void createInstructorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY, EDITOR_AUTHORITY, INSTRUCTOR_AUTHORITY));
         assertUserGroups(user, true, true, true, true);
@@ -260,7 +260,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUserWithRemovedGroups_internalAuth_successful() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
         gitlabRequestMockProvider.mockUpdateUser();
