@@ -96,8 +96,9 @@ public class EmailSummaryService {
         if (scheduleInterval.equals(weekly)) {
             return checkIfWeeklySummaryIsAllowedByNotificationSettingsForGivenUser(user);
         }
-        else
+        else {
             throw new UnsupportedOperationException("Unsupported scheduleInterval: " + scheduleInterval);
+        }
     }
 
     /**
@@ -123,7 +124,10 @@ public class EmailSummaryService {
             return false;
         }
         boolean releaseDateCheck = exercise.isReleased() && exercise.getReleaseDate().isAfter(ZonedDateTime.now().minus(scheduleInterval));
-        boolean dueDateCheck = exercise.getDueDate() == null ? true : ZonedDateTime.now().isBefore(exercise.getDueDate());
+        boolean dueDateCheck = true;
+        if (exercise.getDueDate() == null) {
+            dueDateCheck = ZonedDateTime.now().isBefore(exercise.getDueDate());
+        }
         return releaseDateCheck && dueDateCheck;
     }
 
