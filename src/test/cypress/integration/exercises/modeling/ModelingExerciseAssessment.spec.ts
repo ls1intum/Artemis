@@ -96,7 +96,7 @@ describe('Modeling Exercise Assessment Spec', () => {
 
     function makeModelingSubmissionAsStudent() {
         cy.login(student);
-        courseManagementRequests.startExerciseParticipation(course.id, modelingExercise.id).then((participation) => {
+        courseManagementRequests.startExerciseParticipation(modelingExercise.id).then((participation) => {
             courseManagementRequests.makeModelingExerciseSubmission(modelingExercise.id, participation.body);
         });
     }
