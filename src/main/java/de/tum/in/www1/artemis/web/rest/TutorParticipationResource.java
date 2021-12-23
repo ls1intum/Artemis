@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.TutorParticipationService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -132,9 +131,7 @@ public class TutorParticipationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         // Allow all tutors to delete their own participation if it's for a tutorial
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
-        if (!guidedTourConfiguration.isExerciseForTutorial(exercise)) {
-            throw new AccessForbiddenException("This exercise is not part of a tutorial. Current tutorials: " + guidedTourConfiguration.getTours());
-        }
+        guidedTourConfiguration.checkExerciseForTutorialElseThrow(exercise);
         tutorParticipationService.removeTutorParticipations(exercise, user);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
     }

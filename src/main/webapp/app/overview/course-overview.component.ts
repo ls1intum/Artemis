@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy, OnInit, QueryList, TemplateRef, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseExerciseService, CourseManagementService } from '../course/manage/course-management.service';
+import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -15,6 +15,7 @@ import dayjs from 'dayjs';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
