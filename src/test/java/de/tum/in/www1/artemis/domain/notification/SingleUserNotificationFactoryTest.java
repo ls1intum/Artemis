@@ -163,7 +163,6 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = FILE_SUBMISSION_SUCCESSFUL_TITLE;
         expectedText = "Your file for the exercise \"" + exercise.getTitle() + "\" was successfully submitted.";
         expectedPriority = MEDIUM;
-        // TODO FActory
         expectedTransientTarget = createExerciseTarget(exercise, FILE_SUBMISSION_SUCCESSFUL_TITLE);
         createAndCheckExerciseNotification();
     }
@@ -178,8 +177,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = EXERCISE_SUBMISSION_ASSESSED_TITLE;
         expectedText = "Your submission for the " + exercise.getExerciseType().getExerciseTypeAsReadableString() + " exercise \"" + exercise.getTitle() + "\" has been assessed.";
         expectedPriority = MEDIUM;
-        // TODO FActory
-        expectedTarget = createDefaultExpectedTarget(EXERCISE_SUBMISSION_ASSESSED_TITLE, "exercises", exerciseId);
+        expectedTransientTarget = createExerciseTarget(exercise, EXERCISE_SUBMISSION_ASSESSED_TITLE);
         createAndCheckExerciseNotification();
     }
 }
