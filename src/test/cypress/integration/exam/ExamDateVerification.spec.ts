@@ -114,8 +114,7 @@ describe('Exam date verification', () => {
                 courseManagementRequests.registerStudentForExam(exam, student);
                 courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.createTextExercise({ exerciseGroup }).then((response) => {
-                        textExercise = response.body;
+                    courseManagementRequests.createTextExercise({ exerciseGroup }).then(() => {
                         courseManagementRequests.generateMissingIndividualExams(exam);
                         courseManagementRequests.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
@@ -127,7 +126,7 @@ describe('Exam date verification', () => {
                             textEditor.typeSubmission(submissionText);
                         });
                         examNavigationBar.clickSave();
-                        cy.contains('This is the end of ' + exam.title, { timeout: 40000 });
+                        cy.get('#exam-finished-title').should('contain.text', exam.title, { timeout: 40000 });
                         examStartEnd.finishExam();
                     });
                 });
