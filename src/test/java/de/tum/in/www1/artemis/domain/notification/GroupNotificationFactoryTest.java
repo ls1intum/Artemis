@@ -74,7 +74,7 @@ public class GroupNotificationFactoryTest {
 
     private GroupNotificationType groupNotificationType = GroupNotificationType.STUDENT;
 
-    private static final String NOTIFICATION_TEXT = "notification text";
+    private static String notificationText = "notification text";
 
     private static List<String> archiveErrors = new ArrayList();
 
@@ -152,7 +152,7 @@ public class GroupNotificationFactoryTest {
      * Shortcut method to call the checks for the created notification that has a manually set notification text.
      */
     private void checkCreatedNotificationWithNotificationText() {
-        checkCreatedNotification(createdNotification, expectedTitle, NOTIFICATION_TEXT, expectedTransientTarget, expectedPriority);
+        checkCreatedNotification(createdNotification, expectedTitle, notificationText, expectedTransientTarget, expectedPriority);
     }
 
     /**
@@ -170,7 +170,7 @@ public class GroupNotificationFactoryTest {
     private void createAndCheckNotification(Base base) {
         switch (base) {
             case ATTACHMENT: {
-                createdNotification = createNotification(attachment, user, groupNotificationType, notificationType, NOTIFICATION_TEXT);
+                createdNotification = createNotification(attachment, user, groupNotificationType, notificationType, notificationText);
                 checkCreatedNotificationWithNotificationText();
                 createdNotification = createNotification(attachment, user, groupNotificationType, notificationType, null);
                 break;
@@ -298,7 +298,7 @@ public class GroupNotificationFactoryTest {
         // EXERCISE_UPDATED's implementation differs from the other types therefore the testing has to be adjusted (more explicit)
 
         // with notification text -> exam popup
-        createdNotification = createNotification(examExercise, user, groupNotificationType, notificationType, NOTIFICATION_TEXT);
+        createdNotification = createNotification(examExercise, user, groupNotificationType, notificationType, notificationText);
         checkCreatedNotificationWithNotificationText();
 
         // without notification text -> silent exam update (expectedText = null)
@@ -524,8 +524,7 @@ public class GroupNotificationFactoryTest {
         notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);
         expectedText = notificationText;
         expectedPriority = HIGH;
-        // TODO FACTORY
-        expectedTarget = createDefaultExpectedTarget("duplicateTestCase", "programming-exercises", exerciseId, "course-management");
+        expectedTransientTarget = createDuplicateTestCaseTarget(EXERCISE_ID);
         createAndCheckNotification(Base.EXERCISE);
     }
 

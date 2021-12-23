@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.domain.notification;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.metis.Post;
 
 public class NotificationTargetFactory {
@@ -92,6 +91,21 @@ public class NotificationTargetFactory {
      */
     public static NotificationTarget createExerciseTarget(Exercise exercise, String message) {
         return new NotificationTarget(message, exercise.getId(), EXERCISES_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId(), COURSES_TEXT);
+    }
+
+    /**
+     * Create a NotificationTarget for a GroupNotification for a duplicate test case.
+     *
+     * @param exerciseId of the exercise with duplicated test cases
+     * @return the final NotificationTarget for this case
+     */
+    public static NotificationTarget createDuplicateTestCaseTarget(Long exerciseId) {
+        NotificationTarget target = new NotificationTarget();
+        target.setMessage(DUPLICATE_TEST_CASE_TEXT);
+        target.setIdentifier(exerciseId);
+        target.setEntity(COURSE_MANAGEMENT_TEXT);
+        target.setMainPage(PROGRAMMING_EXERCISES_TEXT);
+        return target;
     }
 
     // LECTURE related targets

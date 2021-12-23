@@ -38,6 +38,9 @@ public class NotificationTarget {
 
     private Long lectureId; // will stay "lectureId" in toJsonString()
 
+    public NotificationTarget() {
+    };
+
     public NotificationTarget(Long identifier, Long courseId) {
         this.identifier = identifier;
         this.courseId = courseId;

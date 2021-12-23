@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
-import static de.tum.in.www1.artemis.service.notifications.NotificationTargetService.DUPLICATE_TEST_CASE_TEXT;
 
 import java.util.List;
 
