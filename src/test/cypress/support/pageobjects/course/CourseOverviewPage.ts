@@ -35,18 +35,10 @@ export class CourseOverviewPage {
     }
 
     openExamsTab() {
-        this.getTabBar().find('[jhitranslate="artemisApp.courseOverview.menu.exams"]').click();
+        cy.get('#exam-tab').click();
     }
 
-    openExam(examTitle: string) {
-        this.getExamsRootElement().contains(examTitle).click();
-    }
-
-    private getTabBar() {
-        return cy.get('.tab-bar-course-overview');
-    }
-
-    private getExamsRootElement() {
-        return cy.get('jhi-course-exams');
+    openExam(examId: string) {
+        cy.get('#exam-' + examId).click();
     }
 }
