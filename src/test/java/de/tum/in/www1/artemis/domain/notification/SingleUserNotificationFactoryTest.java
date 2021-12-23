@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
-import static de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -218,8 +217,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE;
         expectedText = PLAGIARISM_INSTRUCTOR_STATEMENT;
         expectedPriority = HIGH;
-        // TODO replace with Factory call
-        expectedTarget = createDefaultExpectedTarget(PLAGIARISM_DETECTED_TEXT, PLAGIARISM_TEXT, plagiarismComparison.getId());
+        expectedTransientTarget = createPlagiarismCaseTarget(plagiarismComparison.getId(), COURSE_ID);
         createAndCheckPlagiarismNotification();
     }
 
@@ -234,8 +232,7 @@ public class SingleUserNotificationFactoryTest {
         expectedText = "Your plagiarism case concerning the " + plagiarismResult.getExercise().getExerciseType().toString().toLowerCase() + " exercise \""
                 + plagiarismResult.getExercise().getTitle() + "\"" + " has a final verdict.";
         expectedPriority = HIGH;
-        // TODO replace with Factory call
-        expectedTarget = createDefaultExpectedTarget(PLAGIARISM_DETECTED_TEXT, PLAGIARISM_TEXT, plagiarismComparison.getId());
+        expectedTransientTarget = createPlagiarismCaseTarget(plagiarismComparison.getId(), COURSE_ID);
         createAndCheckPlagiarismNotification();
     }
 }

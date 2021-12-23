@@ -108,8 +108,7 @@ public class SingleUserNotificationFactory {
         notification = new SingleUserNotification(student, title, notificationText);
         notification.setPriority(HIGH);
         notification.setAuthor(instructor);
-        // TODO replace with new factory call
-        notification.setTarget(targetProvider.getTargetForPlagiarismCase(plagiarismComparison.getId(), courseId));
+        notification.setTransientAndStringTarget(createPlagiarismCaseTarget(plagiarismComparison.getId(), courseId));
         return notification;
     }
 }
