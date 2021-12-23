@@ -5,7 +5,7 @@ import { ModelingExerciseService } from './modeling-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
@@ -16,6 +16,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 @Component({
     selector: 'jhi-modeling-exercise',

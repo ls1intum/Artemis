@@ -40,7 +40,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
                                 step="1"
                                 name="submissionLimit"
                                 id="field_submissionLimit"
-                                (change)="updateSubmissionLimit()"
+                                (input)="updateSubmissionLimit()"
                             />
                         </div>
                         <ng-container *ngFor="let e of submissionLimitControl.errors! | keyvalue">
@@ -67,7 +67,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
                                 formControlName="exceedingPenalty"
                                 name="submissionLimitExceededPenalty"
                                 id="field_submissionLimitExceededPenalty"
-                                (change)="updateExceedingPenalty()"
+                                (input)="updateExceedingPenalty()"
                             />
                         </div>
                         <ng-container *ngFor="let e of exceedingPenaltyControl.errors! | keyvalue">
@@ -100,6 +100,9 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
     submissionLimitControl: FormControl;
     exceedingPenaltyControl: FormControl;
 
+    // penalty can be any (point) number greater than 0
+    exceedingPenaltyPattern = RegExp('^0*[1-9][0-9]*(\\.[0-9]+)?|0+\\.[0-9]*[1-9][0-9]*$');
+
     ngOnInit(): void {
         this.onSubmissionPolicyTypeChanged(this.programmingExercise.submissionPolicy?.type ?? SubmissionPolicyType.NONE);
         this.form = new FormGroup({
@@ -108,7 +111,7 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
                 Validators.required,
             ]),
             exceedingPenalty: new FormControl({ value: this.programmingExercise.submissionPolicy?.exceedingPenalty, disabled: !this.editable }, [
-                Validators.min(0),
+                Validators.pattern(this.exceedingPenaltyPattern),
                 Validators.required,
             ]),
         });
@@ -154,8 +157,16 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
                 newPolicy.id = this.programmingExercise.submissionPolicy.id;
                 newPolicy.active = this.programmingExercise.submissionPolicy.active;
                 newPolicy.submissionLimit = this.programmingExercise.submissionPolicy!.submissionLimit;
-                if (this.programmingExercise.submissionPolicy.exceedingPenalty) {
-                    newPolicy.exceedingPenalty = this.programmingExercise.submissionPolicy.exceedingPenalty;
+
+                if (this.programmingExercise.submissionPolicy?.exceedingPenalty) {
+                    newPolicy.exceedingPenalty = this.programmingExercise.submissionPolicy?.exceedingPenalty;
+                } else if (this.exceedingPenaltyControl) {
+                    // restore value when penalty has been set previously and was valid
+                    if (this.exceedingPenaltyControl.invalid) {
+                        this.exceedingPenaltyControl.setValue(undefined);
+                    } else {
+                        newPolicy.exceedingPenalty = this.exceedingPenaltyControl.value as number;
+                    }
                 }
             }
             this.programmingExercise.submissionPolicy = newPolicy;

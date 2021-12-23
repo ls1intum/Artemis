@@ -69,7 +69,7 @@
                         ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
                         : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
                 "
-                id="detailText-{{ textBlock.id }}"
+                id="feedback-editor-text-input"
                 [(ngModel)]="feedback.detailText"
                 #detailText
                 (keyup)="textareaAutogrow()"
@@ -97,7 +97,7 @@
                 type="number"
                 step="0.5"
                 [(ngModel)]="feedback.credits"
-                id="score-{{ textBlock.id }}"
+                id="feedback-editor-points-input"
                 (keydown.escape)="escKeyup()"
                 (click)="onScoreClick($event)"
                 (focus)="inFocus()"

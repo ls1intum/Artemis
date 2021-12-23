@@ -280,12 +280,12 @@
         <div *ngIf="!showVisualMode && !reEvaluationInProgress" class="toolbar">
             <div class="btn-group">
                 <div class="btn btn-outline-secondary active" jhiTranslate="artemisApp.shortAnswerQuestion.editor.text"></div>
-                <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.visual" (click)="togglePreview()"></div>
+                <div class="btn btn-outline-secondary" id="short-answer-show-visual" jhiTranslate="artemisApp.shortAnswerQuestion.editor.visual" (click)="togglePreview()"></div>
             </div>
         </div>
         <div *ngIf="showVisualMode && !reEvaluationInProgress" class="toolbar">
             <div class="btn-group">
-                <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.text" (click)="togglePreview()"></div>
+                <div class="btn btn-outline-secondary" id="short-answer-show-text" jhiTranslate="artemisApp.shortAnswerQuestion.editor.text" (click)="togglePreview()"></div>
                 <div class="btn btn-outline-secondary active" jhiTranslate="artemisApp.shortAnswerQuestion.editor.visual"></div>
             </div>
         </div>

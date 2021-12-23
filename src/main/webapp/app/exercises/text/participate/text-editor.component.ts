@@ -17,7 +17,7 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
@@ -161,7 +161,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     get isActive(): boolean {
         const isActive =
-            !this.examMode && !this.result && (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && dayjs(this.textExercise.dueDate).isSameOrAfter(dayjs())));
+            !this.examMode &&
+            !this.result &&
+            (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && !hasExerciseDueDatePassed(this.textExercise, this.participation)));
         return !!isActive;
     }
 

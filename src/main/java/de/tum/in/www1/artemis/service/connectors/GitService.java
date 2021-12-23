@@ -1062,7 +1062,7 @@ public class GitService {
         // Check if list of files is already cached
         if (repo.getFiles() == null) {
             Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE);
-            Collection<File> files = new LinkedList<>();
+            Collection<File> files = new ArrayList<>();
 
             while (itr.hasNext()) {
                 files.add(new File(itr.next(), repo));

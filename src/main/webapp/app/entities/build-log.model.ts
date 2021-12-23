@@ -61,7 +61,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
         } else {
             errorLogRegex = this.defaultErrorLogRegex;
         }
-        return (
+        return Array.from(
             this
                 // Parse build logs
                 .map(({ log, time }) => ({ log: log.match(errorLogRegex), time }))
@@ -87,7 +87,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
                     column: Math.max(parseInt(column, 10) - 1, 0),
                     text: safeUnescape(text) || '',
                     timestamp: Date.parse(time),
-                }))
+                })),
         );
     }
 }

@@ -42,7 +42,7 @@ module.exports = async (config, options, targetOptions) => {
             }),
             new WebpackNotifierPlugin({
                 title: 'Artemis',
-                contentImage: path.join(__dirname, 'logo-jhipster.png'),
+                contentImage: path.join(__dirname, 'src/main/resources/public/images/logo.png'),
             })
         );
     }

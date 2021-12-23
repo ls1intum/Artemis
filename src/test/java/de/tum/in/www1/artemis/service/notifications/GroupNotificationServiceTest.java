@@ -20,6 +20,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
@@ -43,7 +44,6 @@ public class GroupNotificationServiceTest {
     @Mock
     private static UserRepository userRepository;
 
-    @Mock
     private static User user;
 
     private static List<User> users = new ArrayList<>();
@@ -72,32 +72,28 @@ public class GroupNotificationServiceTest {
     @Mock
     private static Exercise exercise;
 
-    @Mock
     private static Exercise updatedExercise;
+
+    private static Exercise examExercise;
+
+    private static ExerciseGroup exerciseGroup;
+
+    private static QuizExercise quizExercise;
 
     private final static Long EXERCISE_ID = 13L;
 
-    @Mock
-    private static QuizExercise quizExercise;
-
-    @Mock
     private static ProgrammingExercise programmingExercise;
 
-    @Mock
     private static Lecture lecture;
 
-    @Mock
     private static Post post;
 
-    @Mock
     static AnswerPost answerPost;
 
-    @Mock
     private static Course course;
 
     private final static Long COURSE_ID = 27L;
 
-    @Mock
     private static Exam exam;
 
     // Problem statement of an exam exercise where the length is larger than the allowed max notification target size in the db
@@ -108,7 +104,6 @@ public class GroupNotificationServiceTest {
             + "consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, "
             + "sed diam voluptua. At vero eos et accusam et justo duo dolores et e";
 
-    @Mock
     private static Attachment attachment;
 
     private static List<String> archiveErrors;
@@ -129,19 +124,6 @@ public class GroupNotificationServiceTest {
 
     private final static int NUMBER_OF_ALL_GROUPS = 4;
 
-    private enum ExerciseStatus {
-        COURSE_EXERCISE_STATUS, EXAM_EXERCISE_STATUS
-    }
-
-    /**
-     * Auxiliary method to set the correct mock behavior for exercise status
-     * @param exerciseStatus indicates if the exercise is a course or exam exercise
-     */
-    private void setExerciseStatus(ExerciseStatus exerciseStatus) {
-        when(exercise.isExamExercise()).thenReturn(exerciseStatus == ExerciseStatus.EXAM_EXERCISE_STATUS);
-        when(exercise.isCourseExercise()).thenReturn(exerciseStatus == ExerciseStatus.COURSE_EXERCISE_STATUS);
-    }
-
     /**
      * Sets up all needed mocks and their wanted behavior once for all test cases.
      * These are the common mocks and structures which behavior is fixed and will not change
@@ -151,10 +133,10 @@ public class GroupNotificationServiceTest {
         mailService = mock(MailService.class);
         doNothing().when(mailService).sendNotificationEmailForMultipleUsers(any(), any(), any());
 
-        course = mock(Course.class);
-        when(course.getId()).thenReturn(COURSE_ID);
+        course = new Course();
+        course.setId(COURSE_ID);
 
-        user = mock(User.class);
+        user = new User();
 
         users.add(user);
 
@@ -181,53 +163,53 @@ public class GroupNotificationServiceTest {
 
         archiveErrors = new ArrayList<>();
 
-        exam = mock(Exam.class);
-        when(exam.getId()).thenReturn(EXAM_ID);
-        when(exam.getCourse()).thenReturn(course);
+        course = new Course();
+        course.setId(COURSE_ID);
 
-        course = mock(Course.class);
-        when(course.getId()).thenReturn(COURSE_ID);
+        exam = new Exam();
+        exam.setId(EXAM_ID);
+        exam.setCourse(course);
 
-        lecture = mock(Lecture.class);
-        when(lecture.getCourse()).thenReturn(course);
+        lecture = new Lecture();
+        lecture.setCourse(course);
 
-        attachment = mock(Attachment.class);
+        attachment = new Attachment();
 
-        exercise = mock(Exercise.class);
-        updatedExercise = mock(Exercise.class);
+        exercise = new TextExercise();
+        updatedExercise = new TextExercise();
 
-        quizExercise = mock(QuizExercise.class);
-        when(quizExercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
+        exerciseGroup = new ExerciseGroup();
+        exerciseGroup.setExam(exam);
 
-        programmingExercise = mock(ProgrammingExercise.class);
-        when(programmingExercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
+        examExercise = new TextExercise();
+        examExercise.setExerciseGroup(exerciseGroup);
+        examExercise.setProblemStatement(EXAM_PROBLEM_STATEMENT);
 
-        post = mock(Post.class);
-        when(post.getExercise()).thenReturn(exercise);
-        when(post.getLecture()).thenReturn(lecture);
+        quizExercise = new QuizExercise();
+        quizExercise.setCourse(course);
 
-        answerPost = mock(AnswerPost.class);
-        when(answerPost.getPost()).thenReturn(post);
+        programmingExercise = new ProgrammingExercise();
+        programmingExercise.setCourse(course);
+
+        post = new Post();
+        post.setExercise(exercise);
+        post.setLecture(lecture);
+
+        answerPost = new AnswerPost();
+        answerPost.setPost(post);
 
         instanceMessageSendService = mock(InstanceMessageSendService.class);
         doNothing().when(instanceMessageSendService).sendExerciseReleaseNotificationSchedule(EXERCISE_ID);
     }
 
     /**
-     * Prepares and cleans the mocks that are modified during the tests
+     * Prepares and cleans the mocks and variables that are modified during the tests
      */
     @BeforeEach
-    public void cleanMocks() {
-        reset(exercise);
-        when(exercise.getExamViaExerciseGroupOrCourseMember()).thenReturn(exam);
-        when(exercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
-
+    public void cleanMocksAndVariables() {
         reset(groupNotificationService);
 
         reset(notificationSettingsService);
-
-        reset(attachment);
-        when(attachment.getLecture()).thenReturn(lecture);
 
         reset(groupNotificationRepository);
         when(groupNotificationRepository.save(any())).thenReturn(null);
@@ -235,6 +217,10 @@ public class GroupNotificationServiceTest {
         reset(submissionRepository);
 
         reset(messagingTemplate);
+
+        exercise = new TextExercise();
+        exercise.setId(EXERCISE_ID);
+        exercise.setCourse(course);
     }
 
     /**
@@ -246,7 +232,7 @@ public class GroupNotificationServiceTest {
     private void verifyRepositoryCallWithCorrectNotification(int numberOfGroupsAndCalls, String expectedNotificationTitle) {
         verify(groupNotificationRepository, times(numberOfGroupsAndCalls)).save(notificationCaptor.capture());
         capturedNotification = notificationCaptor.getValue();
-        assertThat(capturedNotification.getTitle()).isEqualTo(expectedNotificationTitle);
+        assertThat(capturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
     }
 
     /// Exercise Update / Release & Scheduling related Tests
@@ -259,7 +245,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testNotifyAboutExerciseUpdate_undefinedReleaseDate() {
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
-        verify(groupNotificationService, times(0)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        verify(groupNotificationService, times(1)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
     }
 
     /**
@@ -267,7 +253,7 @@ public class GroupNotificationServiceTest {
     */
     @Test
     public void testNotifyAboutExerciseUpdate_futureReleaseDate() {
-        when(exercise.getReleaseDate()).thenReturn(ZonedDateTime.now().plusHours(1));
+        exercise.setReleaseDate(FUTURE_TIME);
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         verify(groupNotificationService, times(0)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
     }
@@ -277,11 +263,10 @@ public class GroupNotificationServiceTest {
     */
     @Test
     public void testNotifyAboutExerciseUpdate_correctReleaseDate_examExercise() {
-        when(exercise.getReleaseDate()).thenReturn(ZonedDateTime.now());
-        setExerciseStatus(ExerciseStatus.EXAM_EXERCISE_STATUS);
-        doNothing().when(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        examExercise.setReleaseDate(CURRENT_TIME);
+        doNothing().when(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(examExercise, NOTIFICATION_TEXT);
 
-        groupNotificationService.notifyAboutExerciseUpdate(exercise, null);
+        groupNotificationService.notifyAboutExerciseUpdate(examExercise, null);
 
         verify(groupNotificationService, times(1)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
     }
@@ -291,8 +276,7 @@ public class GroupNotificationServiceTest {
     */
     @Test
     public void testNotifyAboutExerciseUpdate_correctReleaseDate_courseExercise() {
-        when(exercise.getReleaseDate()).thenReturn(ZonedDateTime.now());
-        setExerciseStatus(ExerciseStatus.COURSE_EXERCISE_STATUS);
+        exercise.setReleaseDate(CURRENT_TIME);
         doNothing().when(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
 
         groupNotificationService.notifyAboutExerciseUpdate(exercise, null);
@@ -308,7 +292,6 @@ public class GroupNotificationServiceTest {
      * Auxiliary methods for testing the checkNotificationForExerciseRelease
      */
     private void prepareMocksForCheckNotificationForExerciseReleaseTesting() {
-        setExerciseStatus(ExerciseStatus.COURSE_EXERCISE_STATUS);
         doNothing().when(groupNotificationService).notifyAllGroupsAboutReleasedExercise(exercise);
     }
 
@@ -328,7 +311,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testCheckNotificationForExerciseRelease_currentOrPastReleaseDate() {
         prepareMocksForCheckNotificationForExerciseReleaseTesting();
-        when(exercise.getReleaseDate()).thenReturn(ZonedDateTime.now());
+        exercise.setReleaseDate(CURRENT_TIME);
         groupNotificationService.checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(any());
     }
@@ -339,7 +322,7 @@ public class GroupNotificationServiceTest {
     @Test
     public void testCheckNotificationForExerciseRelease_futureReleaseDate() {
         prepareMocksForCheckNotificationForExerciseReleaseTesting();
-        when(exercise.getReleaseDate()).thenReturn(ZonedDateTime.now().plusHours(1));
+        exercise.setReleaseDate(FUTURE_TIME);
         groupNotificationService.checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
         verify(instanceMessageSendService, times(1)).sendExerciseReleaseNotificationSchedule(any());
     }
@@ -351,10 +334,10 @@ public class GroupNotificationServiceTest {
      */
     private void testCheckNotificationForExerciseReleaseHelper(ZonedDateTime dueDateOfInitialExercise, ZonedDateTime dueDateOfUpdatedExercise,
             boolean expectNotifyAboutExerciseRelease, boolean expectNotifyUserAboutAssessedExerciseSubmission) {
-        when(exercise.getReleaseDate()).thenReturn(dueDateOfInitialExercise);
-        when(exercise.getAssessmentDueDate()).thenReturn(dueDateOfInitialExercise);
-        when(updatedExercise.getReleaseDate()).thenReturn(dueDateOfUpdatedExercise);
-        when(updatedExercise.getAssessmentDueDate()).thenReturn(dueDateOfUpdatedExercise);
+        exercise.setReleaseDate(dueDateOfInitialExercise);
+        exercise.setAssessmentDueDate(dueDateOfInitialExercise);
+        updatedExercise.setReleaseDate(dueDateOfUpdatedExercise);
+        updatedExercise.setAssessmentDueDate(dueDateOfUpdatedExercise);
         doNothing().when(groupNotificationService).notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         doNothing().when(groupNotificationService).checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
 
@@ -367,7 +350,7 @@ public class GroupNotificationServiceTest {
         // Assessed Exercise Submitted Notifications
         verify(submissionRepository, times(expectNotifyUserAboutAssessedExerciseSubmission ? 1 : 0)).findAllSubmittedAndRatedSubmissionsByExercise(any());
 
-        cleanMocks();
+        cleanMocksAndVariables();
     }
 
     /**
@@ -405,7 +388,7 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testNotifyStudentGroupAboutAttachmentChange_futureReleaseDate() {
-        when(attachment.getReleaseDate()).thenReturn(ZonedDateTime.now().plusHours(1));
+        attachment.setReleaseDate(FUTURE_TIME);
         groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
         verify(groupNotificationRepository, times(0)).save(any());
     }
@@ -415,7 +398,12 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testNotifyStudentGroupAboutAttachmentChange_nonFutureReleaseDate() {
-        when(attachment.getReleaseDate()).thenReturn(ZonedDateTime.now());
+        lecture = new Lecture();
+        lecture.setCourse(course);
+
+        attachment.setReleaseDate(CURRENT_TIME);
+        attachment.setLecture(lecture);
+
         groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotification(1, ATTACHMENT_CHANGE_TITLE);
     }
@@ -623,13 +611,13 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testSaveAndSend_ExamExerciseUpdate_basics() {
-        setExerciseStatus(ExerciseStatus.EXAM_EXERCISE_STATUS);
-        groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        groupNotificationService.notifyAboutExerciseUpdate(examExercise, NOTIFICATION_TEXT);
 
         verify(groupNotificationRepository, times(3)).save(any());
         verify(messagingTemplate, times(3)).convertAndSend(any(), notificationCaptor.capture());
         capturedNotification = notificationCaptor.getValue();
-        assertThat(capturedNotification.getTitle()).isEqualTo(LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE);
+        assertThat(capturedNotification.getTitle()).as("The title of the captured notification should be equal to the one for live exam updated")
+                .isEqualTo(LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE);
 
         // there should be no interaction with settings or email services
         verify(notificationSettingsService, times(0)).checkNotificationTypeForEmailSupport(any());
@@ -641,15 +629,15 @@ public class GroupNotificationServiceTest {
      */
     @Test
     public void testSaveAndSend_ExamExerciseUpdate_correctTargetForSendingViaWebSocket() {
-        setExerciseStatus(ExerciseStatus.EXAM_EXERCISE_STATUS);
-        when(exercise.getProblemStatement()).thenReturn(EXAM_PROBLEM_STATEMENT);
-        groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        groupNotificationService.notifyAboutExerciseUpdate(examExercise, NOTIFICATION_TEXT);
 
         verify(messagingTemplate, times(3)).convertAndSend(any(), notificationCaptor.capture());
         capturedNotification = notificationCaptor.getValue();
 
         // The notification target of notification that will be sent to the user via webapp at runtime should contain the problem statement again
-        assertThat(capturedNotification.getTarget().length()).isGreaterThanOrEqualTo(EXAM_PROBLEM_STATEMENT.length());
+        assertThat(capturedNotification.getTarget().length())
+                .as("The problem statement of the captured notification which will be send via WebSocket should contain the entire problem statement")
+                .isGreaterThanOrEqualTo(EXAM_PROBLEM_STATEMENT.length());
     }
 
     // Course related Notifications -> should use Settings & Email Services
@@ -663,7 +651,6 @@ public class GroupNotificationServiceTest {
         when(notificationSettingsService.checkNotificationTypeForEmailSupport(any())).thenReturn(true);
         when(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any())).thenReturn(true);
 
-        setExerciseStatus(ExerciseStatus.COURSE_EXERCISE_STATUS);
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
 
         // inside private saveAndSend method

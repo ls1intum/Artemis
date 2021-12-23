@@ -30,7 +30,7 @@
                 <fa-icon [icon]="faGraduationCap"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</span>
             </a>
-            <a *ngIf="course.isAtLeastEditor" [routerLink]="['/course-management', course.id, 'lectures']" class="tab-item btn btn-primary btn-md ms-1">
+            <a *ngIf="course.isAtLeastEditor" [routerLink]="['/course-management', course.id, 'lectures']" class="tab-item btn btn-primary btn-md ms-1" id="lectures">
                 <fa-icon [icon]="faFilePdf"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
             </a>
@@ -72,6 +72,7 @@
                     class="archive-button ms-1"
                 ></jhi-course-exam-archive-button>
                 <button
+                    id="delete-course"
                     class="tab-item btn btn-md ms-1 me-1"
                     *jhiHasAnyAuthority="['ROLE_ADMIN']"
                     [buttonSize]="ButtonSize.MEDIUM"

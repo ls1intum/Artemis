@@ -34,10 +34,9 @@ public class SyntaxTreeTerminal extends UMLElement {
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (!(reference instanceof SyntaxTreeTerminal)) {
+        if (!(reference instanceof SyntaxTreeTerminal referenceTerminal)) {
             return similarity;
         }
-        SyntaxTreeTerminal referenceTerminal = (SyntaxTreeTerminal) reference;
 
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceTerminal.getName());
 
@@ -52,11 +51,9 @@ public class SyntaxTreeTerminal extends UMLElement {
      */
     @Override
     public double overallSimilarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof SyntaxTreeTerminal)) {
+        if (!(reference instanceof SyntaxTreeTerminal referenceTerminal)) {
             return 0;
         }
-
-        SyntaxTreeTerminal referenceTerminal = (SyntaxTreeTerminal) reference;
 
         double similarity = similarity(referenceTerminal);
 

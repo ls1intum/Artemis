@@ -51,6 +51,8 @@ public class ModelingExerciseResource {
 
     private final CourseRepository courseRepository;
 
+    private final ParticipationRepository participationRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     private final ModelingExerciseService modelingExerciseService;
@@ -80,8 +82,8 @@ public class ModelingExerciseResource {
     private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService,
-            PlagiarismResultRepository plagiarismResultRepository, ModelingExerciseImportService modelingExerciseImportService,
+            CourseRepository courseRepository, ParticipationRepository participationRepository, ModelingExerciseService modelingExerciseService,
+            ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
             ExampleSubmissionRepository exampleSubmissionRepository, InstanceMessageSendService instanceMessageSendService, ModelClusterRepository modelClusterRepository,
@@ -94,6 +96,7 @@ public class ModelingExerciseResource {
         this.modelingSubmissionExportService = modelingSubmissionExportService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
+        this.participationRepository = participationRepository;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
@@ -200,6 +203,8 @@ public class ModelingExerciseResource {
             updatedModelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
             updatedModelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
+
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedModelingExercise, modelingExerciseBeforeUpdate.getDueDate());
 
         modelingExerciseService.scheduleOperations(updatedModelingExercise.getId());
 

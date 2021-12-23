@@ -159,7 +159,7 @@ public abstract class AssessmentResource {
         else {
             result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId());
         }
-        result = resultRepository.submitResult(result, exercise);
+        result = resultRepository.submitResult(result, exercise, Optional.empty());
         return ResponseEntity.ok(result);
     }
 

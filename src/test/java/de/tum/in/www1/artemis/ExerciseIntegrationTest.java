@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -42,6 +44,9 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Autowired
     private ResultRepository resultRepository;
+
+    @Autowired
+    private CourseRepository courseRepository;
 
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepo;
@@ -68,8 +73,8 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void testGetStatsForExerciseAssessmentDashboardTest() throws Exception {
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetStatsForExerciseAssessmentDashboardWithSubmissions() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(e -> e instanceof TextExercise).findFirst().get();
@@ -101,7 +106,54 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetStatsForExamExerciseAssessmentDashboard() throws Exception {
+        var user = database.getUserByLogin("student1");
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
+        course = courseRepository.findByIdWithEagerExercisesElseThrow(course.getId());
+        TextExercise textExercise = (TextExercise) exerciseRepository.findAll().stream().filter(e -> e instanceof TextExercise).findFirst().get();
+        StatsForDashboardDTO statsForDashboardDTO = request.get("/api/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
+                StatsForDashboardDTO.class);
+        assertThat(statsForDashboardDTO.getNumberOfSubmissions().inTime()).isEqualTo(0);
+        assertThat(statsForDashboardDTO.getTotalNumberOfAssessments().inTime()).isEqualTo(0);
+        assertThat(statsForDashboardDTO.getNumberOfAutomaticAssistedAssessments().inTime()).isEqualTo(0);
+
+        for (Exercise exercise : course.getExercises()) {
+            StatsForDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+            assertThat(stats.getNumberOfComplaints()).isEqualTo(0);
+            assertThat(stats.getNumberOfMoreFeedbackRequests()).isEqualTo(0);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testFilterOutExercisesThatUserShouldNotSee() throws Exception {
+        assertThrows(EntityNotFoundException.class, () -> exerciseService.findOneWithDetailsForStudents(Long.MAX_VALUE, database.getUserByLogin("student1")));
+        database.createCoursesWithExercisesAndLectures(false);
+        var exercises = exerciseRepository.findAll();
+        var student = userRepository.getUserWithGroupsAndAuthorities("student1");
+        assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(Set.of(), student)).hasSize(0);
+        exercises.get(0).setReleaseDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercises.get(0));
+        exercises = exerciseRepository.findAll();
+        assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), student)).hasSize(exercises.size() - 1);
+
+        var tutor = userRepository.getUserWithGroupsAndAuthorities("tutor1");
+        assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), tutor)).hasSize(exercises.size());
+
+        Course onlineCourse = exercises.get(0).getCourseViaExerciseGroupOrCourseMember();
+        onlineCourse.setOnlineCourse(true);
+        courseRepository.save(onlineCourse);
+        exercises = exerciseRepository.findAll();
+        assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), student)).hasSize(0);
+
+        database.createCoursesWithExercisesAndLectures(false);
+        var allExercises = new HashSet<>(exerciseRepository.findAll());
+        assertThrows(IllegalArgumentException.class, () -> exerciseService.filterOutExercisesThatUserShouldNotSee(allExercises, student));
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetExercise() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
@@ -173,14 +225,14 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "student11", roles = "USER")
+    @WithMockUser(username = "student11", roles = "USER")
     public void testGetExercise_forbidden() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId(), HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
-    @WithMockUser(value = "student11", roles = "USER")
+    @WithMockUser(username = "student11", roles = "USER")
     public void testGetExamExercise_asStudent_forbidden() throws Exception {
         getExamExercise();
     }
@@ -192,7 +244,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testGetUpcomingExercises() throws Exception {
         List<Exercise> exercises = request.getList("/api/exercises/upcoming", HttpStatus.OK, Exercise.class);
         assertThat(exercises.size()).isEqualTo(0);
@@ -205,25 +257,25 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "student11", roles = "USER")
+    @WithMockUser(username = "student11", roles = "USER")
     public void testGetUpcomingExercisesAsStudentForbidden() throws Exception {
         request.getList("/api/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
-    @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
     public void testGetUpcomingExercisesAsInstructorForbidden() throws Exception {
         request.getList("/api/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
-    @WithMockUser(value = "tutor6", roles = "TA")
+    @WithMockUser(username = "tutor6", roles = "TA")
     public void testGetUpcomingExercisesAsTutorForbidden() throws Exception {
         request.getList("/api/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetExerciseDetails() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
@@ -266,7 +318,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetExerciseDetails_assessmentDueDate_notPassed() throws Exception {
         Course course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(false);
         for (Exercise exercise : course.getExercises()) {
@@ -294,11 +346,11 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetExerciseDetails_assessmentDueDate_passed() throws Exception {
         Course course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(true);
         for (Exercise exercise : course.getExercises()) {
-            // For programming exercises we add an manual result, to check whether this is correctly displayed after the assessment due date
+            // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
                 database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next());
             }
@@ -319,7 +371,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void filterForCourseDashboard_assessmentDueDate_notPassed() {
         Course course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(false);
         for (Exercise exercise : course.getExercises()) {
@@ -345,11 +397,11 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void filterForCourseDashboard_assessmentDueDate_passed() {
         Course course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(true);
         for (Exercise exercise : course.getExercises()) {
-            // For programming exercises we add an manual result, to check whether this is correctly displayed after the assessment due date
+            // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
                 Result result = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
                         exercise.getStudentParticipations().iterator().next());
@@ -368,14 +420,14 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "student11", roles = "USER")
+    @WithMockUser(username = "student11", roles = "USER")
     public void testGetExerciseDetails_forbidden() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetExerciseForAssessmentDashboard() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
@@ -409,7 +461,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetExerciseForAssessmentDashboard_submissionsWithoutAssessments() throws Exception {
         var validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         database.addCourseWithOneModelingExercise();
@@ -421,21 +473,21 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "tutor6", roles = "TA")
+    @WithMockUser(username = "tutor6", roles = "TA")
     public void testGetExerciseForAssessmentDashboard_forbidden() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetExerciseForAssessmentDashboard_programmingExerciseWithAutomaticAssessment() throws Exception {
         database.addCourseWithOneProgrammingExercise();
         request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/for-assessment-dashboard", HttpStatus.BAD_REQUEST, Exercise.class);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetExerciseForAssessmentDashboard_exerciseWithTutorParticipation() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         var exercise = exerciseRepository.findAll().get(0);
@@ -458,7 +510,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetStatsForExerciseAssessmentDashboard() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
@@ -495,14 +547,14 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "tutor6", roles = "TA")
+    @WithMockUser(username = "tutor6", roles = "TA")
     public void testGetStatsForExerciseAssessmentDashboard_forbidden() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testResetExercise() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
@@ -516,14 +568,14 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
     public void testResetExercise_forbidden() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         request.delete("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/reset", HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCleanupExercise() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
@@ -538,7 +590,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
             }
         }
         // NOTE: for some reason, the cleanup does not work properly in this case.
-        // Therefore we have some additional cleanup code here
+        // Therefore, we have some additional cleanup code here
 
         tutorParticipationRepo.deleteAll();
         exampleSubmissionRepo.deleteAll();
@@ -548,14 +600,14 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
     public void testCleanupExercise_forbidden() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         request.delete("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/cleanup", HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSetSecondCorrectionEnabledFlagEnable() throws Exception {
         Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
@@ -565,7 +617,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSetSecondCorrectionEnabledFlagDisable() throws Exception {
         Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
@@ -576,7 +628,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(value = "tutor6", roles = "TA")
+    @WithMockUser(username = "tutor6", roles = "TA")
     public void testSetSecondCorrectionEnabledFlagForbidden() throws Exception {
         Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];

@@ -20,8 +20,8 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.notification.ExamNotificationTargetWithoutProblemStatement;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -297,7 +297,7 @@ public class GroupNotificationService {
 
     /**
      * Notify all groups but tutors about an exercise update.
-     * Tutors will only work on the exercise during the assesment therefore it is not urgent to inform them about changes beforehand.
+     * Tutors will only work on the exercise during the assessment therefore it is not urgent to inform them about changes beforehand.
      * Students, instructors, and editors should be notified about changed as quickly as possible.
      *
      * @param exercise         that has been updated
@@ -487,8 +487,9 @@ public class GroupNotificationService {
      */
     private void saveExamNotification(GroupNotification notification) {
         String originalTarget = notification.getTarget();
-        String targetWithoutProblemStatement = ExamNotificationTargetWithoutProblemStatement.getTargetWithoutProblemStatement(notification.getTarget());
-        notification.setTarget(targetWithoutProblemStatement);
+        NotificationTarget targetWithoutProblemStatement = notification.getTargetTransient();
+        targetWithoutProblemStatement.setProblemStatement(null);
+        notification.setTarget(targetWithoutProblemStatement.toJsonString());
         groupNotificationRepository.save(notification);
         notification.setTarget(originalTarget);
     }

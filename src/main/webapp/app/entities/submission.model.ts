@@ -145,3 +145,16 @@ export function getFirstResultWithComplaint(submission: Submission | undefined):
         }
     }
 }
+
+export function reconnectSubmissions(submissions: Submission[]): void {
+    return submissions.forEach((submission: Submission) => {
+        // reconnect some associations
+        const latestResult = getLatestSubmissionResult(submission);
+        if (latestResult) {
+            latestResult.submission = submission;
+            latestResult.participation = submission.participation;
+            submission.participation!.results = [latestResult!];
+            setLatestSubmissionResult(submission, latestResult);
+        }
+    });
+}
