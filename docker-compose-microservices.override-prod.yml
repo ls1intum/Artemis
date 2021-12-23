@@ -50,35 +50,40 @@ services:
             - ${PWD}/config/application-artemis.yml:/home/artemis/lecture/application-artemis.yml:ro
         environment:
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
-            - SPRING_PROFILES_ACTIVE=artemis
+            - SPRING_PROFILES_ACTIVE=prod,artemis
             - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
+            - SPRING_DEVTOOLS_RESTART_ENABLED=true
+            - SPRING_DEVTOOLS_LIVERELOAD_ENABLED=false
+            - SPRING_DATASOURCE_TYPE=com.zaxxer.hikari.HikariDataSource
             - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
             - SPRING_DATASOURCE_USERNAME=root
             - SPRING_DATASOURCE_HIKARI_POOLNAME=Hikari
-            - SPRING_DATASOURCE_HIKARI_AUTOCOMMIT=false
-            - SPRING_DATASOURCE_HIKARI_DATASOURCEPROPERTIES_CACHEPREPSTMTS=true
-            - SPRING_DATASOURCE_HIKARI_DATASOURCEPROPERTIES_PREPSTMTCACHESIZE=250
-            - SPRING_DATASOURCE_HIKARI_DATASOURCEPROPERTIES_PREPSTMTCACHESQLLIMIT=2048
-            - SPRING_DATASOURCE_HIKARI_DATASOURCEPROPERTIES_USESERVERPREPSTMTS=true
-            - SPRING_JPA_DATABASEPLATFORM=org.hibernate.dialect.MySQL8Dialect
+            - SPRING_DATASOURCE_HIKARI_AUTO_COMMIT=false
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_CACHEPREPSTMTS=true
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_PREPSTMTCACHESIZE=250
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_PREPSTMTCACHESQLLIMIT=2048
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_USESERVERPREPSTMTS=true
+            - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQL8Dialect
             - SPRING_JPA_DATABASE=MYSQL
+            - SPRING_JPA_SHOW_SQL=false
             - SPRING_LIQUIBASE_CONTEXTS=prod
             - SPRING_THYMELEAF_CACHE=true
-            - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
-            - SPRING_CLOUD_CONFIG_FAILFAST=true
+            - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
             - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
             - SPRING_CLOUD_CONFIG_NAME=lecture
+            - SPRING_CLOUD_CONFIG_FAILFAST=true
             - SPRING_CLOUD_CONFIG_PROFILE=prod
             - SPRING_CLOUD_CONFIG_LABEL=main
+            - SPRING_CLOUD_CONFIG_ENABLED=false
+            - SPRING_MESSAGES_CACHEDURATION=PT1S
+            - SPRING_SLEUTH_SAMPLER_PROBABILITY=1
             - JHIPSTER_SLEEP=30 # gives time for other services to boot before the application
-            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64SECRET=bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
-            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKENVALIDITYINSECONDS=86400
-            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKENVALIDITYINSECONDSFORREMEMBERME=2592000
+            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET=bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
+            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKEN_VALIDITY_IN_SECONDS=86400
+            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKEN_VALIDITY_IN_SECONDS_FOR_REMEMBER_ME=2592000
             - JHIPSTER_LOGGING_LOGSTASH_ENABLED=false
+            - JHIPSTER_LOGGING_AUDIT_EVENTS_RETENTION_PERIOD=120
             - SPRING_ARTEMIS_HOST=activemq-broker
-            - SPRING_CLOUND_CONFIG_RETRY_INITIALINTERVAL=1000
-            - SPRING_CLOUND_CONFIG_RETRY_MAXINTERVAL=2000
-            - SPRING_CLOUND_CONFIG_RETRY_MAXATTEMPS=100
             - SERVER_PORT=8086
             - SERVER_COMPRESSION_ENABLED=true
             - SERVER_COMPRESSION_MIMETYPES=text/html,text/xml,text/plain,text/css, application/javascript, application/json
