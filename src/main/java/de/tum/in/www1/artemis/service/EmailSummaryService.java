@@ -125,7 +125,7 @@ public class EmailSummaryService {
         }
         boolean releaseDateCheck = exercise.isReleased() && exercise.getReleaseDate().isAfter(ZonedDateTime.now().minus(scheduleInterval));
         boolean dueDateCheck = true;
-        if (exercise.getDueDate() == null) {
+        if (exercise.getDueDate() != null) {
             dueDateCheck = ZonedDateTime.now().isBefore(exercise.getDueDate());
         }
         return releaseDateCheck && dueDateCheck;
