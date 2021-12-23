@@ -1,7 +1,6 @@
 import { artemis } from '../../../support/ArtemisTesting';
 import multipleChoiceQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/shortAnswerQuiz_template.json';
-import { CypressExerciseType } from 'src/test/cypress/support/requests/CourseManagementRequests';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -60,7 +59,7 @@ describe('Quiz Exercise Participation', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             courseManagementRequest.startQuizNow(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
-            courseOverview.startExercise(quizExercise.id, CypressExerciseType.QUIZ);
+            courseOverview.startExercise(quizExercise.id);
             multipleChoiceQuiz.tickAnswerOption(0);
             multipleChoiceQuiz.tickAnswerOption(2);
             multipleChoiceQuiz.submit();
@@ -80,7 +79,7 @@ describe('Quiz Exercise Participation', () => {
         it('Student can participate in SA quiz', () => {
             const quizQuestionId = quizExercise.quizQuestions[0].id;
             cy.login(student, '/courses/' + course.id);
-            courseOverview.startExercise(quizExercise.id, CypressExerciseType.QUIZ);
+            courseOverview.startExercise(quizExercise.id);
             shortAnswerQuiz.typeAnswer(0, 1, quizQuestionId, 'give');
             shortAnswerQuiz.typeAnswer(1, 1, quizQuestionId, 'let');
             shortAnswerQuiz.typeAnswer(2, 1, quizQuestionId, 'run');
@@ -106,7 +105,7 @@ describe('Quiz Exercise Participation', () => {
 
         it('Student can participate in DnD Quiz', () => {
             cy.login(student, '/courses/' + course.id);
-            courseOverview.startExercise(quizExercise.id, CypressExerciseType.QUIZ);
+            courseOverview.startExercise(quizExercise.id);
             dragAndDropQuiz.dragItemIntoDragArea(0);
             dragAndDropQuiz.submit();
         });
