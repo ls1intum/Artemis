@@ -4,15 +4,15 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 import java.util.*;
 
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -20,42 +20,45 @@ import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 
-public class NotificationSettingsServiceTest {
+public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    private static NotificationSettingsService notificationSettingsService;
+    private NotificationSettingsService notificationSettingsService;
 
-    @Mock
-    private static NotificationSettingRepository notificationSettingRepository;
+    @Autowired
+    private NotificationSettingRepository notificationSettingRepository;
 
-    private static Notification notification;
+    private Notification notification;
 
-    private static User student1;
+    private User student1;
 
-    private static NotificationSetting unsavedNotificationSettingA;
+    private NotificationSetting unsavedNotificationSettingA;
 
-    private static NotificationSetting unsavedNotificationSettingB;
+    private NotificationSetting unsavedNotificationSettingB;
 
-    private static NotificationSetting unsavedNotificationSettingC;
+    private NotificationSetting unsavedNotificationSettingC;
 
-    private static NotificationSetting completeNotificationSettingA;
+    private NotificationSetting completeNotificationSettingA;
 
-    private static NotificationSetting completeNotificationSettingB;
+    private NotificationSetting completeNotificationSettingB;
 
-    private static NotificationSetting completeNotificationSettingC;
+    private NotificationSetting completeNotificationSettingC;
 
-    private static NotificationSetting[] unsavedNotificationSettings;
+    private NotificationSetting[] unsavedNotificationSettings;
 
-    private static NotificationSetting[] savedNotificationSettings;
+    private NotificationSetting[] savedNotificationSettings;
 
     /**
      * Prepares the needed values and objects for testing
      */
-    @BeforeAll
-    public static void setUp() {
-        student1 = new User();
-        student1.setId(555L);
+    @BeforeEach
+    public void setUp() {
+        SecurityUtils.setAuthorizationObject();
+
+        List<User> users = database.addUsers(1, 0, 0, 0);
+        student1 = users.get(0);
 
         unsavedNotificationSettingA = new NotificationSetting(false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
         unsavedNotificationSettingB = new NotificationSetting(true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
@@ -67,12 +70,14 @@ public class NotificationSettingsServiceTest {
         completeNotificationSettingC = new NotificationSetting(student1, false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
         savedNotificationSettings = new NotificationSetting[] { completeNotificationSettingA, completeNotificationSettingB, completeNotificationSettingC };
 
-        notificationSettingRepository = mock(NotificationSettingRepository.class);
-        when(notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(student1.getId())).thenReturn(new HashSet<>(Arrays.asList(savedNotificationSettings)));
-
-        notificationSettingsService = new NotificationSettingsService(notificationSettingRepository);
+        notificationSettingRepository.saveAll(Arrays.stream(savedNotificationSettings).toList());
 
         notification = new GroupNotification();
+    }
+
+    @AfterEach
+    public void resetDatabase() {
+        database.resetDatabase();
     }
 
     /**
@@ -138,9 +143,7 @@ public class NotificationSettingsServiceTest {
     public void testCheckLoadedNotificationSettingsForCorrectness_empty() {
         Set<NotificationSetting> testSet = new HashSet<>();
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
-        assertThat(testSet.size()).as("The number of loaded Settings should be equals to the number of default settings")
-                .isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
-        verify(notificationSettingRepository, times(0)).saveAll(any());
+        assertThat(testSet).as("The default notification settings should be returned").isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS);
     }
 
     /**
@@ -154,8 +157,6 @@ public class NotificationSettingsServiceTest {
         assertThat(testSet.size()).as("The number of loaded Settings should be equals to the number of default settings")
                 .isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
         assertThat(testSet).as("The loaded settings should contain the set of test settings").contains(completeNotificationSettingA);
-        verify(notificationSettingRepository, times(1)).deleteAll(any());
-        verify(notificationSettingRepository, times(1)).saveAll(any());
     }
 
     /**
@@ -163,12 +164,29 @@ public class NotificationSettingsServiceTest {
      */
     @Test
     public void testCheckLoadedNotificationSettingsForCorrectness_correct() {
-        Set<NotificationSetting> testSet = new HashSet<>();
-        testSet.addAll(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS);
+        Set<NotificationSetting> testSet = new HashSet<>(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS);
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
         assertThat(testSet.size()).as("The number of loaded Settings should be equals to the number of default settings")
                 .isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
-        verify(notificationSettingRepository, times(0)).deleteAll(any());
-        verify(notificationSettingRepository, times(0)).saveAll(any());
+    }
+
+    /**
+     * Tests the method checkLoadedNotificationSettingsForCorrectness with an outdated input
+     */
+    @Test
+    public void testCheckLoadedNotificationSettingsForCorrectness_outdated() {
+        NotificationSetting outdatedSetting = new NotificationSetting(student1, false, true, "Outdated Settings ID");
+        notificationSettingRepository.save(outdatedSetting);
+
+        Set<NotificationSetting> outdatedSet = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(student1.getId());
+
+        assertThat(outdatedSet.size()).as("Prior to checking the settings for correctness the outdated additional setting should be present")
+                .isNotEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
+
+        Set<NotificationSetting> resultingSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(outdatedSet);
+
+        assertThat(resultingSet.size()).as("The number of loaded Settings should be equals to the number of default settings")
+                .isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
+        assertThat(resultingSet).as("The outdated setting should have been removed").doesNotContain(outdatedSetting);
     }
 }
