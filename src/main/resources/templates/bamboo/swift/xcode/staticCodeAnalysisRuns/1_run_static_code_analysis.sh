@@ -1,5 +1,4 @@
-export LC_ALL=en_US.UTF-8
-export LANG=en_US.UTF-8
+mkdir target
 
-# Run Static Code Analysis with swiftlint
-fastlane sca
+# Execute static code analysis with swiftlint
+swiftlint > ../target/swiftlint-result.xml
