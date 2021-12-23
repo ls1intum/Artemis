@@ -1,0 +1,53 @@
+version: '2.1'
+services:
+    artemis-mysql:
+        extends:
+            file: mysql.yml
+            service: artemis-mysql
+
+    artemis-app:
+        image: ghcr.io/ls1intum/artemis
+        build:
+            context: ../../../..
+            dockerfile: src/main/docker/Dockerfile
+        volumes:
+            - ../../resources/config/application-dev.yml:/home/artemis/application-dev.yml:ro
+            - ../../resources/config/application-artemis.yml:/home/artemis/application-artemis.yml:ro
+        environment:
+            _JAVA_OPTIONS: -Xmx5120m -Xms2560m
+            SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,athene,local
+            SPRING_DATASOURCE_URL: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+            SPRING_DATASOURCE_USERNAME: root
+            SPRING_DATASOURCE_PASSWORD: 
+            JHIPSTER_SLEEP: 30 # gives time for other services to boot before the application
+        ports:
+            - 8080:8080
+        networks:
+            - artemis
+        depends_on:
+            artemis-mysql:
+                condition: service_healthy
+        # The container does not contain curl...
+        #healthcheck:
+        #    test: ["CMD", "curl", "-f", "http://artemis-app:8080"]
+        #    interval: 5s
+        #    timeout: 5s
+        #    retries: 40
+
+    artemis-cypress:
+        image: cypress/browsers:node16.5.0-chrome94-ff93
+        depends_on:
+            - artemis-app
+            - artemis-mysql
+        environment:
+            - CYPRESS_baseUrl=http://artemis-app:8080
+        # Give Artemis 120 seconds to start
+        command: sh -c "sleep 120 && cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci &&npm run cypress:run"
+        volumes:
+            - ../../../../:/app/artemis
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
