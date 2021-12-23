@@ -1,21 +1,27 @@
 <div class="row">
     <div class="col-md-2 d-flex">
         <div class="row flex-grow-1">
-            <h3 class="col-md-8 d-flex">{{ chartName }}</h3>
+            <h3 class="col-md-8 d-flex">{{ chartName | artemisTranslate }}</h3>
             <fa-icon [icon]="faArrowLeft" size="3x" class="col-md-4 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
         </div>
     </div>
-    <div class="col-md-9">
-        <canvas
-            baseChart
-            height="250"
-            width="1500"
-            [datasets]="chartData"
-            [labels]="barChartLabels"
-            [options]="barChartOptions"
-            [legend]="barChartLegend"
-            [chartType]="barChartType"
-        ></canvas>
+    <div #containerRef class="chart col-md-9">
+        <ngx-charts-bar-vertical
+            [view]="[containerRef.offsetWidth, 250]"
+            [results]="ngxData"
+            [scheme]="ngxColor"
+            [xAxis]="true"
+            [yAxis]="true"
+            [showDataLabel]="true"
+            [yScaleMax]="yScaleMax"
+            [yAxisTickFormatting]="yAxisTickFormatting"
+            [animations]="false"
+        >
+            <ng-template #tooltipTemplate let-model="model">
+                <b>{{ model.name }}</b> <br />
+                <span>{{ tooltipTranslation | artemisTranslate }}: {{ model.value }}</span>
+            </ng-template>
+        </ngx-charts-bar-vertical>
     </div>
     <fa-icon [icon]="faArrowRight" size="3x" class="col-md-1 d-flex justify-content-start align-items-center" role="button" (click)="switchTimeSpan(RIGHT)"></fa-icon>
 </div>

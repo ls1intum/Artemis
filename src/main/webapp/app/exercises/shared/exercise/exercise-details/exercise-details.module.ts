@@ -12,7 +12,7 @@ import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercise
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
-import { Ng2ChartsModule } from 'app/shared/chart/ng2-charts.module';
+import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 
 const ENTITY_STATES = [...exercisePopupRoute];
@@ -28,7 +28,7 @@ const ENTITY_STATES = [...exercisePopupRoute];
         RouterModule.forChild(ENTITY_STATES),
         ArtemisMarkdownModule,
         ArtemisProgrammingExerciseLifecycleModule,
-        Ng2ChartsModule,
+        ArtemisChartsModule,
     ],
     declarations: [ExerciseDetailsComponent, ExerciseDetailStatisticsComponent, ExerciseStatisticsComponent],
     exports: [ExerciseDetailsComponent, ExerciseDetailStatisticsComponent, ExerciseStatisticsComponent],

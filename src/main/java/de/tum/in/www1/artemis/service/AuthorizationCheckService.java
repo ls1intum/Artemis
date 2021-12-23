@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 
-import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -448,17 +447,6 @@ public class AuthorizationCheckService {
      */
     public boolean isStudentInTeam(@NotNull Course course, String teamShortName, @NotNull User user) {
         return userRepository.findAllInTeam(course.getId(), teamShortName).contains(user);
-    }
-
-    /**
-     * Method used to check whether the user of the websocket message is owner of this participation
-     *
-     * @param participation participation to check the rights for
-     * @param principal     a representation of the currently logged in user
-     * @return true, if user is student is owner of this participation, otherwise false
-     */
-    public boolean isOwnerOfParticipation(@NotNull StudentParticipation participation, @NotNull Principal principal) {
-        return participation.getParticipant() != null && participation.isOwnedBy(principal.getName());
     }
 
     /**
