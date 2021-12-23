@@ -45,12 +45,10 @@ describe('Exam creation/deletion', () => {
         creationPage.setEndText('Cypress exam end text');
         creationPage.setConfirmationStartText('Cypress exam confirmation start text');
         creationPage.setConfirmationEndText('Cypress exam confirmation end text');
-        creationPage
-            .submit()
-            .then((examResponse: any) => {
-                examId = examResponse.response.body.id;
-                expect(examResponse.response.statusCode).to.eq(201)
-            });
+        creationPage.submit().then((examResponse: any) => {
+            examId = examResponse.response.body.id;
+            expect(examResponse.response.statusCode).to.eq(201);
+        });
         examManagement.getExamRowRoot(examTitle).should('be.visible');
     });
 
