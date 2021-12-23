@@ -1,7 +1,11 @@
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { Exam } from 'app/entities/exam.model';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
+import { Course } from 'app/entities/course.model';
 
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -12,14 +16,14 @@ const textEditor = artemis.pageobjects.textExercise.editor;
 const examNavigationBar = artemis.pageobjects.examNavigationBar;
 
 describe('Exam date verification', () => {
-    let course: any;
+    let course: Course;
     let examTitle: string;
 
     before(() => {
         cy.login(artemis.users.getAdmin());
         courseManagementRequests.createCourse().then((response) => {
             course = response.body;
-            courseManagementRequests.addStudentToCourse(course.id, artemis.users.getStudentOne().username);
+            courseManagementRequests.addStudentToCourse(course.id!, artemis.users.getStudentOne().username);
         });
     });
 
@@ -29,8 +33,8 @@ describe('Exam date verification', () => {
     });
 
     describe('Exam timing', () => {
-        let exam: any;
-        let textExercise: any;
+        let exam: Exam;
+        let textExercise: TextExercise;
         it('Does not show exam before visible date', () => {
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
@@ -68,7 +72,7 @@ describe('Exam date verification', () => {
         });
 
         it('Student can start after start Date', () => {
-            let exerciseGroup: any;
+            let exerciseGroup: ExerciseGroup;
             const student = artemis.users.getStudentOne();
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
@@ -86,12 +90,12 @@ describe('Exam date verification', () => {
                         courseManagementRequests.generateMissingIndividualExams(exam);
                         courseManagementRequests.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
-                        cy.contains(exam.title).click();
+                        cy.contains(exam.title!).click();
                         cy.url().should('contain', `/exams/${exam.id}`);
                         cy.contains('Welcome to ' + exam.title).should('be.visible');
                         examStartEnd.startExam();
                         cy.contains('Exam Overview').should('exist');
-                        cy.contains(textExercise.title).should('be.visible').click();
+                        cy.contains(textExercise.title!).should('be.visible').click();
                         cy.fixture('loremIpsum.txt').then((submission) => {
                             textEditor.typeSubmission(submission);
                         });
@@ -102,7 +106,7 @@ describe('Exam date verification', () => {
         });
 
         it('Exam ends after end time', () => {
-            let exerciseGroup: any;
+            let exerciseGroup: ExerciseGroup;
             const student = artemis.users.getStudentOne();
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
@@ -120,10 +124,10 @@ describe('Exam date verification', () => {
                         courseManagementRequests.generateMissingIndividualExams(exam);
                         courseManagementRequests.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
-                        cy.contains(exam.title).click();
+                        cy.contains(exam.title!).click();
                         cy.contains('Welcome to ' + exam.title).should('be.visible');
                         examStartEnd.startExam();
-                        cy.contains(textExercise.title).should('be.visible').click();
+                        cy.contains(textExercise.title!).should('be.visible').click();
                         cy.fixture('loremIpsum.txt').then((submissionText) => {
                             textEditor.typeSubmission(submissionText);
                         });
@@ -145,7 +149,7 @@ describe('Exam date verification', () => {
     after(() => {
         if (!!course) {
             cy.login(artemis.users.getAdmin());
-            courseManagementRequests.deleteCourse(course.id);
+            courseManagementRequests.deleteCourse(course.id!);
         }
     });
 });

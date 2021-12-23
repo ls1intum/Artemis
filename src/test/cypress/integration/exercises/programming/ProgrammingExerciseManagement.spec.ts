@@ -1,3 +1,6 @@
+import { Interception } from 'cypress/types/net-stubbing';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Course } from 'app/entities/course.model';
 import { DELETE } from '../../../support/constants';
 import { artemis } from '../../../support/ArtemisTesting';
 import { generateUUID } from '../../../support/utils';
@@ -16,7 +19,7 @@ const programmingCreation = artemis.pageobjects.programmingExercise.creation;
 const courseExercises = artemis.pageobjects.courseManagementExercises;
 
 describe('Programming Exercise Management', () => {
-    let course: any;
+    let course: Course;
 
     before(() => {
         cy.login(admin);
@@ -30,7 +33,7 @@ describe('Programming Exercise Management', () => {
     });
 
     describe('Programming exercise deletion', () => {
-        let programmingExercise: any;
+        let programmingExercise: ProgrammingExercise;
 
         beforeEach(() => {
             artemisRequests.courseManagement
@@ -45,19 +48,19 @@ describe('Programming Exercise Management', () => {
         it('Deletes an existing programming exercise', function () {
             cy.login(admin, '/').wait(500);
             navigationBar.openCourseManagement();
-            courseManagementPage.openExercisesOfCourse(course.shortName);
+            courseManagementPage.openExercisesOfCourse(course.shortName!);
             cy.get('#delete-exercise').click();
             // Check all checkboxes to get rid of the git repositories and build plans
             cy.get('#additional-check-0').check();
             cy.get('#additional-check-1').check();
-            cy.get('#confirm-exercise-name').type(programmingExercise.title);
+            cy.get('#confirm-exercise-name').type(programmingExercise.title!);
             cy.intercept(DELETE, PROGRAMMING_EXERCISE_BASE + '*').as('deleteProgrammingExerciseQuery');
             // For some reason the deletion sometimes fails if we do it immediately
             cy.get('#delete').wait(4000).click();
             cy.wait('@deleteProgrammingExerciseQuery').then((request: any) => {
                 expect(request.response.statusCode).to.equal(200);
             });
-            cy.contains(programmingExercise.title).should('not.exist');
+            cy.contains(programmingExercise.title!).should('not.exist');
         });
     });
 
@@ -65,7 +68,7 @@ describe('Programming Exercise Management', () => {
         it('Creates a new programming exercise', function () {
             cy.login(admin, '/');
             navigationBar.openCourseManagement();
-            courseManagementPage.openExercisesOfCourse(course.shortName);
+            courseManagementPage.openExercisesOfCourse(course.shortName!);
             courseExercises.clickCreateProgrammingExerciseButton();
             cy.url().should('include', '/programming-exercises/new');
             cy.log('Filling out programming exercise info...');
@@ -75,8 +78,8 @@ describe('Programming Exercise Management', () => {
             programmingCreation.setPackageName('de.test');
             programmingCreation.setPoints(100);
             programmingCreation.checkAllowOnlineEditor();
-            programmingCreation.generate().then((request: any) => {
-                const exercise = request.response.body;
+            programmingCreation.generate().then((request: Interception) => {
+                const exercise = request.response!.body;
                 cy.url().should('include', '/exercises');
                 courseExercises.shouldContainExerciseWithName(exercise.id);
             });
@@ -85,7 +88,7 @@ describe('Programming Exercise Management', () => {
 
     after(() => {
         if (!!course) {
-            artemisRequests.courseManagement.deleteCourse(course.id);
+            artemisRequests.courseManagement.deleteCourse(course.id!);
         }
     });
 });

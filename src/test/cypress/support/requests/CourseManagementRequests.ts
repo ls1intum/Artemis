@@ -1,3 +1,8 @@
+import { Exam } from 'app/entities/exam.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Course } from 'app/entities/course.model';
 import { BASE_API, DELETE, POST, PUT, GET } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
@@ -14,6 +19,7 @@ import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtu
 import shortAnswerSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerSubmission_template.json';
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling_exercise/modelingSubmission_template.json';
 import lectureTemplate from '../../fixtures/lecture/lecture_template.json';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
@@ -45,7 +51,11 @@ export class CourseManagementRequests {
      * @param courseShortName the short name (will generate default name if not provided)
      * @returns <Chainable> request response
      */
-    createCourse(customizeGroups = false, courseName = 'Cypress course' + generateUUID(), courseShortName = 'cypress' + generateUUID()) {
+    createCourse(
+        customizeGroups = false,
+        courseName = 'Cypress course' + generateUUID(),
+        courseShortName = 'cypress' + generateUUID(),
+    ): Cypress.Chainable<Cypress.Response<Course>> {
         let course = { ...courseTemplate, title: courseName, shortName: courseShortName };
         const allowGroupCustomization: boolean = Cypress.env('allowGroupCustomization');
         if (customizeGroups && allowGroupCustomization) {
@@ -66,15 +76,6 @@ export class CourseManagementRequests {
     }
 
     /**
-     * Deletes the programming exercise with the specified id.
-     * @param id the exercise id
-     * @returns <Chainable> request response
-     */
-    deleteProgrammingExercise(id: number) {
-        return cy.request({ method: DELETE, url: PROGRAMMING_EXERCISE_BASE + id + '?deleteStudentReposBuildPlans=true&deleteBaseReposBuildPlans=true' });
-    }
-
-    /**
      * Creates a course with the specified title and short name.
      * @param body an object containing either the course or exercise group the exercise will be added to
      * @param scaMaxPenalty the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
@@ -88,7 +89,7 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     createProgrammingExercise(
-        body: { course: any } | { exerciseGroup: any },
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
         scaMaxPenalty?: number,
         releaseDate = day(),
         dueDate = day().add(1, 'day'),
@@ -97,7 +98,7 @@ export class CourseManagementRequests {
         packageName = 'de.test',
         assessmentDate = day().add(2, 'days'),
         assessmentType = CypressAssessmentType.AUTOMATIC,
-    ) {
+    ): Cypress.Chainable<Cypress.Response<ProgrammingExercise>> {
         const template = {
             ...programmingExerciseTemplate,
             title,
@@ -138,12 +139,12 @@ export class CourseManagementRequests {
         });
     }
 
-    updateModelingExerciseDueDate(exercise: any, due = day()) {
-        exercise.dueDate = dayjsToString(due);
+    updateModelingExerciseDueDate(exercise: ModelingExercise, due = day()) {
+        exercise.dueDate = due;
         return this.updateExercise(exercise, CypressExerciseType.MODELING);
     }
 
-    private updateExercise(exercise: any, type: CypressExerciseType) {
+    private updateExercise(exercise: Exercise, type: CypressExerciseType) {
         let url: string;
         switch (type) {
             case CypressExerciseType.PROGRAMMING:
@@ -179,8 +180,8 @@ export class CourseManagementRequests {
     /**
      * Adds the specified user to the tutor group in the course
      */
-    addTutorToCourse(course: any, user: CypressCredentials) {
-        return this.addUserToCourse(course.id, user.username, 'tutors');
+    addTutorToCourse(course: Course, user: CypressCredentials) {
+        return this.addUserToCourse(course.id!, user.username, 'tutors');
     }
 
     /**
@@ -207,16 +208,16 @@ export class CourseManagementRequests {
      * Deletes the exam with the given parameters
      * @returns <Chainable> request response
      * */
-    deleteExam(exam: any) {
-        return cy.request({ method: DELETE, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id });
+    deleteExam(exam: Exam) {
+        return cy.request({ method: DELETE, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id });
     }
 
     /**
      * register the student for the exam
      * @returns <Chainable> request response
      */
-    registerStudentForExam(exam: any, student: CypressCredentials) {
-        return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/students/' + student.username });
+    registerStudentForExam(exam: Exam, student: CypressCredentials) {
+        return cy.request({ method: POST, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id + '/students/' + student.username });
     }
 
     /**
@@ -244,16 +245,16 @@ export class CourseManagementRequests {
      * generate all missing individual exams
      * @returns <Chainable> request response
      */
-    generateMissingIndividualExams(exam: any) {
-        return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/generate-missing-student-exams' });
+    generateMissingIndividualExams(exam: Exam) {
+        return cy.request({ method: POST, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id + '/generate-missing-student-exams' });
     }
 
     /**
      * Prepares individual exercises for exam start
      * @returns <Chainable> request response
      */
-    prepareExerciseStartForExam(exam: any) {
-        return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
+    prepareExerciseStartForExam(exam: Exam) {
+        return cy.request({ method: POST, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
     }
 
     createModelingExercise(
@@ -262,7 +263,7 @@ export class CourseManagementRequests {
         releaseDate = day(),
         dueDate = day().add(1, 'days'),
         assessmentDueDate = day().add(2, 'days'),
-    ) {
+    ): Cypress.Chainable<Cypress.Response<ModelingExercise>> {
         const templateCopy = {
             ...modelingExerciseTemplate,
             title,
