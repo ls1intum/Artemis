@@ -39,6 +39,7 @@
                     "
                 >
                     <button
+                        id="exam-exercise-{{ i }}"
                         class="btn w-100"
                         [ngClass]="setExerciseButtonStatus(i)"
                         [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(exercise) | artemisTranslate"

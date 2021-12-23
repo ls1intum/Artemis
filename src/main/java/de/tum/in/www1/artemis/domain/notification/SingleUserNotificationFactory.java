@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.notification;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -9,11 +10,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider;
 
 public class SingleUserNotificationFactory {
-
-    private static final NotificationTargetProvider targetProvider = new NotificationTargetProvider();
 
     private static final String POST_NOTIFICATION_TEXT = "Your post got replied.";
 
@@ -33,17 +31,17 @@ public class SingleUserNotificationFactory {
             case NEW_REPLY_FOR_EXERCISE_POST -> {
                 title = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
-                notification.setTarget(targetProvider.getExercisePostTarget(post, course));
+                notification.setTransientAndStringTarget(createExercisePostTarget(post, course));
             }
             case NEW_REPLY_FOR_LECTURE_POST -> {
                 title = NEW_REPLY_FOR_LECTURE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
-                notification.setTarget(targetProvider.getLecturePostTarget(post, course));
+                notification.setTransientAndStringTarget(createLecturePostTarget(post, course));
             }
             case NEW_REPLY_FOR_COURSE_POST -> {
                 title = NEW_REPLY_FOR_COURSE_POST_TITLE;
                 notification = new SingleUserNotification(recipient, title, POST_NOTIFICATION_TEXT);
-                notification.setTarget(targetProvider.getCoursePostTarget(post, course));
+                notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
@@ -67,7 +65,7 @@ public class SingleUserNotificationFactory {
                 title = FILE_SUBMISSION_SUCCESSFUL_TITLE;
                 notificationText = "Your file for the exercise \"" + exercise.getTitle() + "\" was successfully submitted.";
                 notification = new SingleUserNotification(recipient, title, notificationText);
-                notification.setTarget(targetProvider.getExerciseTarget(exercise, title));
+                notification.setTransientAndStringTarget(createExerciseTarget(exercise, title));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
@@ -110,6 +108,7 @@ public class SingleUserNotificationFactory {
         notification = new SingleUserNotification(student, title, notificationText);
         notification.setPriority(HIGH);
         notification.setAuthor(instructor);
+        // TODO replace with new factory call
         notification.setTarget(targetProvider.getTargetForPlagiarismCase(plagiarismComparison.getId(), courseId));
         return notification;
     }

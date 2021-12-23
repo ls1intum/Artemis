@@ -1,17 +1,15 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.TEXT;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.service.notifications.NotificationTargetProvider.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
@@ -21,58 +19,37 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 
 public class SingleUserNotificationFactoryTest {
 
-    @Autowired
-    private static SingleUserNotificationFactory singleUserNotificationFactory;
-
-    private User user;
-
-    @Mock
-    private static User cheatingUser;
-
-    private final static String USER_LOGIN = "de27sms";
-
-    @Mock
     private static Lecture lecture;
 
-    private static Long lectureId = 0L;
+    private static final Long LECTURE_ID = 0L;
 
-    @Mock
     private static Course course;
 
-    private static Long courseId = 1L;
+    private static final Long COURSE_ID = 12L;
 
-    @Mock
     private static Exercise exercise;
 
-    private static Long exerciseId = 42L;
+    private static final Long EXERCISE_ID = 42L;
 
-    @Mock
+    private static final String EXERCISE_TITLE = "exercise title";
+
+    private static final String PROBLEM_STATEMENT = "problem statement";
+
     private static Post post;
 
-    @Mock
     private static AnswerPost answerPost;
 
-    @Mock
-    private static PlagiarismComparison plagiarismComparison;
-
-    @Mock
-    private static PlagiarismResult plagiarismResult;
-
-    @Mock
-    private static PlagiarismSubmission plagiarismSubmission;
-
     private static final String POST_NOTIFICATION_TEXT = "Your post got replied.";
-
-    private static final String PLAGIARISM_INSTRUCTOR_STATEMENT = "You definitely plagiarised! Your answers are identical!";
 
     private String expectedTitle;
 
     private String expectedText;
 
-    private String expectedTarget;
+    private NotificationTarget expectedTransientTarget;
 
     private NotificationPriority expectedPriority;
 
@@ -80,45 +57,58 @@ public class SingleUserNotificationFactoryTest {
 
     private NotificationType notificationType;
 
+    private User user = null;
+
+    private static User cheatingUser;
+
+    private final static String USER_LOGIN = "de27sms";
+
+    private static PlagiarismComparison plagiarismComparison;
+
+    private static PlagiarismResult plagiarismResult;
+
+    private static PlagiarismSubmission plagiarismSubmission;
+
+    private static final String PLAGIARISM_INSTRUCTOR_STATEMENT = "You definitely plagiarised! Your answers are identical!";
+
     /**
      * sets up all needed mocks and their wanted behavior once for all test cases.
      */
     @BeforeAll
     public static void setUp() {
-        course = mock(Course.class);
-        when(course.getId()).thenReturn(courseId);
+        course = new Course();
+        course.setId(COURSE_ID);
 
-        lecture = mock(Lecture.class);
-        when(lecture.getId()).thenReturn(lectureId);
-        when(lecture.getCourse()).thenReturn(course);
+        lecture = new Lecture();
+        lecture.setId(LECTURE_ID);
+        lecture.setCourse(course);
 
-        exercise = mock(Exercise.class);
-        when(exercise.getId()).thenReturn(exerciseId);
-        when(exercise.getTitle()).thenReturn("exercise title");
-        when(exercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
-        when(exercise.getProblemStatement()).thenReturn("problem statement");
-        when(exercise.getExerciseType()).thenReturn(TEXT);
+        exercise = new TextExercise();
+        exercise.setId(EXERCISE_ID);
+        exercise.setTitle(EXERCISE_TITLE);
+        exercise.setCourse(course);
+        exercise.setProblemStatement(PROBLEM_STATEMENT);
 
-        post = mock(Post.class);
-        when(post.getExercise()).thenReturn(exercise);
-        when(post.getLecture()).thenReturn(lecture);
+        post = new Post();
+        post.setExercise(exercise);
+        post.setLecture(lecture);
 
-        answerPost = mock(AnswerPost.class);
-        when(answerPost.getPost()).thenReturn(post);
+        answerPost = new AnswerPost();
+        answerPost.setPost(post);
 
-        cheatingUser = mock(User.class);
-        when(cheatingUser.getLogin()).thenReturn(USER_LOGIN);
+        cheatingUser = new User();
+        cheatingUser.setLogin(USER_LOGIN);
 
-        plagiarismResult = mock(PlagiarismResult.class);
-        when(plagiarismResult.getExercise()).thenReturn(exercise);
+        plagiarismResult = new TextPlagiarismResult();
+        plagiarismResult.setExercise(exercise);
 
-        plagiarismSubmission = mock(PlagiarismSubmission.class);
-        when(plagiarismSubmission.getStudentLogin()).thenReturn(USER_LOGIN);
+        plagiarismSubmission = new PlagiarismSubmission();
+        plagiarismSubmission.setStudentLogin(USER_LOGIN);
 
-        plagiarismComparison = mock(PlagiarismComparison.class);
-        when(plagiarismComparison.getInstructorStatementA()).thenReturn(PLAGIARISM_INSTRUCTOR_STATEMENT);
-        when(plagiarismComparison.getPlagiarismResult()).thenReturn(plagiarismResult);
-        when(plagiarismComparison.getSubmissionA()).thenReturn(plagiarismSubmission);
+        plagiarismComparison = new PlagiarismComparison();
+        plagiarismComparison.setInstructorStatementA(PLAGIARISM_INSTRUCTOR_STATEMENT);
+        plagiarismComparison.setPlagiarismResult(plagiarismResult);
+        plagiarismComparison.setSubmissionA(plagiarismSubmission);
     }
 
     /// Test for Notifications based on Posts
@@ -127,7 +117,7 @@ public class SingleUserNotificationFactoryTest {
      * Calls the real createNotification method of the singleUserNotificationFactory and tests if the result is correct for Post notifications.
      */
     private void createAndCheckPostNotification() {
-        createdNotification = singleUserNotificationFactory.createNotification(post, notificationType, course);
+        createdNotification = createNotification(post, notificationType, course);
         checkNotification();
     }
 
@@ -135,12 +125,15 @@ public class SingleUserNotificationFactoryTest {
      * Calls the real createNotification method of the singleUserNotificationFactory and tests if the result is correct for Exercise notifications.
      */
     private void createAndCheckExerciseNotification() {
-        createdNotification = singleUserNotificationFactory.createNotification(exercise, notificationType, user);
+        createdNotification = createNotification(exercise, notificationType, user);
         checkNotification();
     }
 
+    /**
+     * Calls the real createNotification method of the singleUserNotificationFactory and tests if the result is correct for plagiarism related notifications.
+     */
     private void createAndCheckPlagiarismNotification() {
-        createdNotification = singleUserNotificationFactory.createNotification(plagiarismComparison, notificationType, cheatingUser, user);
+        createdNotification = createNotification(plagiarismComparison, notificationType, cheatingUser, user);
         checkNotification();
     }
 
@@ -148,45 +141,11 @@ public class SingleUserNotificationFactoryTest {
      * Tests if the resulting notification is correct.
      */
     private void checkNotification() {
-        assertThat(createdNotification.getTitle()).isEqualTo(expectedTitle);
-        assertThat(createdNotification.getText()).isEqualTo(expectedText);
-        assertThat(createdNotification.getTarget()).isEqualTo(expectedTarget);
-        assertThat(createdNotification.getPriority()).isEqualTo(expectedPriority);
-        assertThat(createdNotification.getAuthor()).isEqualTo(user);
-    }
-
-    /**
-     * Auxiliary method to create the most common expected target with specific properties.
-     * @param message is the message that should be included in the notification's target.
-     * @param entity is the entity that should be pointed at in the notification's target.
-     * @param relevantIdForCurrentTestCase is the id of a relevant object that should be part of the notification's target.
-     * @return is the final notification target as a String.
-     */
-    private String createDefaultExpectedTarget(String message, String entity, Long relevantIdForCurrentTestCase) {
-        return "{\"" + MESSAGE_TEXT + "\":\"" + message + "\",\"" + ID_TEXT + "\":" + relevantIdForCurrentTestCase + ",\"" + ENTITY_TEXT + "\":\"" + entity + "\",\"" + COURSE_TEXT
-                + "\":" + courseId + ",\"" + MAIN_PAGE_TEXT + "\":\"" + COURSES_TEXT + "\"}";
-    }
-
-    /**
-     * Auxiliary method to create the most common expected target for Post Notifications with specific properties.
-     * @param postId is the id of the post
-     * @param relevantType can be "exerciseId" or "lectureId"
-     * @param idForRelevantType is the id of the exercise or lecture
-     * @param courseId is the course id that is needed for the url
-     * @return is the final notification target as a String.
-     */
-    private String createExpectedTargetForPosts(Long postId, String relevantType, Long idForRelevantType, Long courseId) {
-        return "{\"" + ID_TEXT + "\":" + postId + ",\"" + relevantType + "\":" + idForRelevantType + ",\"" + COURSE_TEXT + "\":" + courseId + "}";
-    }
-
-    /**
-     * Auxiliary method to create the most common expected target for course wide Post Notifications with specific properties.
-     * @param postId is the id of the post
-     * @param courseId is the course id that is needed for the url
-     * @return is the final notification target as a String.
-     */
-    private String createExpectedTargetForCourseWidePosts(Long postId, Long courseId) {
-        return "{\"" + ID_TEXT + "\":" + postId + ",\"" + COURSE_TEXT + "\":" + courseId + "}";
+        assertThat(createdNotification.getTitle()).as("Created notification title should be equal to the expected one").isEqualTo(expectedTitle);
+        assertThat(createdNotification.getText()).as("Created notification text should be equal to the expected one").isEqualTo(expectedText);
+        assertThat(createdNotification.getTarget()).as("Created notification target should be equal to the expected one").isEqualTo(expectedTransientTarget.toJsonString());
+        assertThat(createdNotification.getPriority()).as("Created notification priority should be equal to the expected one").isEqualTo(expectedPriority);
+        assertThat(createdNotification.getAuthor()).as("Created notification author should be equal to the expected one").isEqualTo(user);
     }
 
     /**
@@ -199,7 +158,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
         expectedPriority = MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), EXERCISE_ID_TEXT, post.getExercise().getId(), courseId);
+        expectedTransientTarget = createExercisePostTarget(post, course);
         createAndCheckPostNotification();
     }
 
@@ -213,7 +172,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
         expectedPriority = MEDIUM;
-        expectedTarget = createExpectedTargetForPosts(post.getId(), LECTURE_ID_TEXT, post.getLecture().getId(), courseId);
+        expectedTransientTarget = createLecturePostTarget(post, course);
         createAndCheckPostNotification();
     }
 
@@ -227,7 +186,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
         expectedPriority = MEDIUM;
-        expectedTarget = createExpectedTargetForCourseWidePosts(post.getId(), courseId);
+        expectedTransientTarget = createCoursePostTarget(post, course);
         createAndCheckPostNotification();
     }
 
@@ -243,7 +202,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = FILE_SUBMISSION_SUCCESSFUL_TITLE;
         expectedText = "Your file for the exercise \"" + exercise.getTitle() + "\" was successfully submitted.";
         expectedPriority = MEDIUM;
-        expectedTarget = createDefaultExpectedTarget(FILE_SUBMISSION_SUCCESSFUL_TITLE, EXERCISES_TEXT, exerciseId);
+        expectedTransientTarget = createExerciseTarget(exercise, FILE_SUBMISSION_SUCCESSFUL_TITLE);
         createAndCheckExerciseNotification();
     }
 
@@ -259,6 +218,7 @@ public class SingleUserNotificationFactoryTest {
         expectedTitle = NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE;
         expectedText = PLAGIARISM_INSTRUCTOR_STATEMENT;
         expectedPriority = HIGH;
+        // TODO replace with Factory call
         expectedTarget = createDefaultExpectedTarget(PLAGIARISM_DETECTED_TEXT, PLAGIARISM_TEXT, plagiarismComparison.getId());
         createAndCheckPlagiarismNotification();
     }
@@ -274,6 +234,7 @@ public class SingleUserNotificationFactoryTest {
         expectedText = "Your plagiarism case concerning the " + plagiarismResult.getExercise().getExerciseType().toString().toLowerCase() + " exercise \""
                 + plagiarismResult.getExercise().getTitle() + "\"" + " has a final verdict.";
         expectedPriority = HIGH;
+        // TODO replace with Factory call
         expectedTarget = createDefaultExpectedTarget(PLAGIARISM_DETECTED_TEXT, PLAGIARISM_TEXT, plagiarismComparison.getId());
         createAndCheckPlagiarismNotification();
     }
