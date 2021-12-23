@@ -1,4 +1,4 @@
-<div *ngIf="exam" (click)="openExam()">
+<div *ngIf="exam" (click)="openExam()" id="exam-{{ exam.id }}">
     <div class="row card-header text-white bg-secondary">
         <h4 class="card-title text-center">{{ exam.title }}</h4>
     </div>

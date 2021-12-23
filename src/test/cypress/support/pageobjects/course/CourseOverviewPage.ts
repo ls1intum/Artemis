@@ -35,14 +35,10 @@ export class CourseOverviewPage {
     }
 
     openExamsTab() {
-        this.getTabBar().find('#exams-tab').click();
+        cy.get('#exam-tab').click();
     }
 
     openExam(examId: string) {
         cy.get('#exam-' + examId).click();
-    }
-
-    private getTabBar() {
-        return cy.get('#tab-bar');
     }
 }

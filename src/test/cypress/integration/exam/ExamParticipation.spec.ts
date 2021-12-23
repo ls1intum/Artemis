@@ -80,7 +80,7 @@ describe('Exam participation', () => {
 
     function startParticipation() {
         cy.login(student, '/');
-        courses.openCourse(course.title);
+        courses.openCourse(course.id);
         courseOverview.openExamsTab();
         courseOverview.openExam(exam.id);
         cy.url().should('contain', `/exams/${exam.id}`);
@@ -119,14 +119,12 @@ describe('Exam participation', () => {
         onlineEditor.submit();
         onlineEditor.getResultPanel().contains('100%').should('be.visible');
         onlineEditor.getResultPanel().contains('13 of 13 passed').should('be.visible');
-        onlineEditor.getBuildOutput().contains('No build results available').should('be.visible');
     }
 
     function makeModelingExerciseSubmission() {
         modelingEditor.addComponentToModel(1, false);
         modelingEditor.addComponentToModel(2, false);
         modelingEditor.addComponentToModel(3, false);
-        examNavigation.navigateRight();
     }
 
     function makeQuizExerciseSubmission() {
@@ -136,11 +134,12 @@ describe('Exam participation', () => {
 
     function handInEarly() {
         examNavigation.handInEarly();
-        examStartEnd.finishExam().its('response.statusCode').should('eq', 200);
+        examStartEnd.finishExam().then((request: any) => {
+            expect(request.response.statusCode).to.eq(200);
+        });
     }
 
     function verifyFinalPage() {
-        cy.get('.alert').contains('Your exam was submitted successfully.');
         cy.contains(textExerciseTitle).should('be.visible');
         cy.fixture('loremIpsum.txt').then((submissionText) => {
             cy.contains(submissionText).should('be.visible');

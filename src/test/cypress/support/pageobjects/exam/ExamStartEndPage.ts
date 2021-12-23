@@ -1,5 +1,6 @@
+import { COURSE_BASE } from './../../requests/CourseManagementRequests';
 import { artemis } from '../../ArtemisTesting';
-import { BASE_API, POST } from '../../constants';
+import { POST } from '../../constants';
 
 export class ExamStartEndPage {
     enterFirstnameLastname() {
@@ -15,8 +16,8 @@ export class ExamStartEndPage {
     }
 
     pressFinish() {
-        cy.intercept(POST, BASE_API + 'courses/*/exams/*/student-exams/submit').as('finishExam');
-        cy.get('.btn').contains('Finish').click();
+        cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/submit').as('finishExam');
+        cy.get('#end-exam').click();
         return cy.wait('@finishExam');
     }
 

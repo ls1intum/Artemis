@@ -327,7 +327,7 @@ public class CourseService {
             case "tutors" -> course.getTeachingAssistantGroupName();
             case "instructors" -> course.getInstructorGroupName();
             case "editors" -> course.getEditorGroupName();
-            default -> throw new IllegalArgumentException();
+            default -> throw new IllegalArgumentException("The course group does not exist");
         };
     }
 
