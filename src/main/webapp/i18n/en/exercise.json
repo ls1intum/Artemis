@@ -75,7 +75,7 @@
             "assessmentDueDate": "Assessment Due Date",
             "assessmentDueDateError": "Assessment Due Date must be after Release and Due Date. Please check your selection again",
             "dateNotSet": "No date set",
-            "sampleSolutionPublicationDate": "Sample Solution Publication Date",
+            "sampleSolutionPublicationDate": "Example Solution Publication Date",
             "points": "Points",
             "pointsError": "Must be a number between 1 and 9999.",
             "bonusPoints": "Bonus Points",
