@@ -47,7 +47,6 @@ describe('Programming exercise assessment', () => {
     it('Assesses the programming exercise submission', () => {
         cy.login(tutor, '/course-management');
         coursesPage.openAssessmentDashboardOfCourse(course.shortName);
-        courseAssessment.checkShowFinishedExercises();
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
         exerciseAssessment.clickStartNewAssessment();
