@@ -8,13 +8,14 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise',

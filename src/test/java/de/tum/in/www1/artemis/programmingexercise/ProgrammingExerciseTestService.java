@@ -803,8 +803,8 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void resumeProgrammingExercise_doesNotExist(ExerciseMode exerciseMode) throws Exception {
         final Course course = setupCourseWithProgrammingExercise(exerciseMode);
-        request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/resume-programming-participation", null,
-                ProgrammingExerciseStudentParticipation.class, HttpStatus.NOT_FOUND);
+        request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.NOT_FOUND);
     }
 
     // TEST
@@ -819,8 +819,8 @@ public class ProgrammingExerciseTestService {
         var participant = participation.getParticipant();
         mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
 
-        participation = request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/resume-programming-participation", null,
-                ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
+        participation = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.OK);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(participation.getBuildPlanId()).as("Build Plan Id should be set")
@@ -897,7 +897,7 @@ public class ProgrammingExerciseTestService {
 
         if (!buildPlanExists) {
             mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
-            participation = request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/resume-programming-participation", null,
+            participation = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation", null,
                     ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         }
 
