@@ -47,11 +47,10 @@ describe('Exam creation/deletion', () => {
         creationPage.setConfirmationEndText('Cypress exam confirmation end text');
         creationPage
             .submit()
-            .then((examResponse) => {
-                examId = examResponse.response!.body.id;
-            })
-            .its('response.statusCode')
-            .should('eq', 201);
+            .then((examResponse: any) => {
+                examId = examResponse.response.body.id;
+                expect(examResponse.response.statusCode).to.eq(201)
+            });
         examManagement.getExamRowRoot(examTitle).should('be.visible');
     });
 

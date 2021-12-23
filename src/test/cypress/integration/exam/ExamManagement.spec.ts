@@ -68,7 +68,9 @@ describe('Exam management', () => {
         cy.visit(`/course-management/${course.id}/exams`);
         examManagement.openStudentRegistration(exam.id);
         cy.contains('Registered students: 0').should('be.visible');
-        studentExamManagement.clickRegisterCourseStudents().its('response.statusCode').should('eq', 200);
+        studentExamManagement.clickRegisterCourseStudents().then((request: any) => {
+             expect(request.response.statusCode).to.eq(200);
+        });
         cy.contains(users.getStudentOne().username).should('be.visible');
         cy.contains('Registered students: 1').should('be.visible');
     });
