@@ -1,3 +1,5 @@
+import { Participation } from 'app/entities/participation/participation.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exam } from 'app/entities/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -7,12 +9,10 @@ import { BASE_API, DELETE, POST, PUT, GET } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import { dayjsToString, generateUUID } from '../utils';
-import examTemplate from '../../fixtures/requests/exam_template.json';
 import day from 'dayjs';
 import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
 import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_template.json';
-import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 import assessment_submission from '../../fixtures/programming_exercise_submissions/assessment/submission.json';
 import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
 import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceSubmission_template.json';
@@ -106,12 +106,12 @@ export class CourseManagementRequests {
             packageName,
             assessmentType: CypressAssessmentType[assessmentType],
         };
-        const exercise: any = Object.assign({}, template, body);
+        const exercise: ProgrammingExercise = Object.assign({}, template, body) as ProgrammingExercise;
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
         if (!isExamExercise) {
-            exercise.releaseDate = dayjsToString(releaseDate);
-            exercise.dueDate = dayjsToString(dueDate);
-            exercise.assessmentDueDate = dayjsToString(assessmentDate);
+            exercise.releaseDate = releaseDate;
+            exercise.dueDate = dueDate;
+            exercise.assessmentDueDate = assessmentDate;
         }
 
         if (scaMaxPenalty) {
@@ -200,8 +200,8 @@ export class CourseManagementRequests {
      * @param exam the exam object created by a {@link CypressExamBuilder}
      * @returns <Chainable> request response
      */
-    createExam(exam: any) {
-        return cy.request({ url: COURSE_BASE + exam.course.id + '/exams', method: POST, body: exam });
+    createExam(exam: Exam) {
+        return cy.request({ url: COURSE_BASE + exam.course!.id + '/exams', method: POST, body: exam });
     }
 
     /**
@@ -224,20 +224,21 @@ export class CourseManagementRequests {
      * add exercise group to exam
      * @returns <Chainable> request response
      * */
-    addExerciseGroupForExam(exam: any, title = 'group' + generateUUID(), mandatory = true) {
+    addExerciseGroupForExam(exam: Exam, title = 'group' + generateUUID(), mandatory = true) {
+        const exerciseGroup = new ExerciseGroup();
         exerciseGroup.exam = exam;
         exerciseGroup.title = title;
         exerciseGroup.isMandatory = mandatory;
-        return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/exerciseGroups', body: exerciseGroup });
+        return cy.request({ method: POST, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id + '/exerciseGroups', body: exerciseGroup });
     }
 
     /**
      * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
      */
-    createTextExercise(body: { course: any } | { exerciseGroup: any }, title = 'Text exercise ' + generateUUID()) {
-        const template: any = { ...textExerciseTemplate, title };
-        const textExercise: any = Object.assign({}, template, body);
+    createTextExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Text exercise ' + generateUUID()) {
+        const template = { ...textExerciseTemplate, title };
+        const textExercise = Object.assign({}, template, body);
         return cy.request({ method: POST, url: TEXT_EXERCISE_BASE, body: textExercise });
     }
 
@@ -258,7 +259,7 @@ export class CourseManagementRequests {
     }
 
     createModelingExercise(
-        body: { course: any } | { exerciseGroup: any },
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
         title = 'Cypress modeling exercise ' + generateUUID(),
         releaseDate = day(),
         dueDate = day().add(1, 'days'),
@@ -286,8 +287,8 @@ export class CourseManagementRequests {
         });
     }
 
-    updateModelingExerciseAssessmentDueDate(exercise: any, due = day()) {
-        exercise.assessmentDueDate = dayjsToString(due);
+    updateModelingExerciseAssessmentDueDate(exercise: ModelingExercise, due = day()) {
+        exercise.assessmentDueDate = due;
         return this.updateExercise(exercise, CypressExerciseType.MODELING);
     }
 
@@ -298,13 +299,13 @@ export class CourseManagementRequests {
         });
     }
 
-    makeModelingExerciseSubmission(exerciseID: number, participation: any) {
+    makeModelingExerciseSubmission(exerciseID: number, participation: Participation) {
         return cy.request({
             url: `${EXERCISE_BASE}${exerciseID}/modeling-submissions`,
             method: PUT,
             body: {
                 ...modelingExerciseSubmissionTemplate,
-                id: participation.submissions[0].id,
+                id: participation.submissions![0].id,
                 participation,
             },
         });
@@ -327,7 +328,7 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     createQuizExercise(
-        body: { course: any } | { exerciseGroup: any },
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
         quizQuestions: [any],
         title = 'Cypress quiz exercise' + generateUUID(),
         releaseDate = day(),
@@ -369,9 +370,9 @@ export class CourseManagementRequests {
         });
     }
 
-    evaluateExamQuizzes(exam: any) {
+    evaluateExamQuizzes(exam: Exam) {
         return cy.request({
-            url: `${COURSE_BASE}${exam.course.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`,
+            url: `${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`,
             method: POST,
         });
     }
@@ -393,7 +394,7 @@ export class CourseManagementRequests {
         const submittedAnswers = [
             {
                 ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
-                quizQuestion: quizExercise.quizQuestions[0],
+                quizQuestion: quizExercise.quizQuestions![0],
                 selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option].body),
             },
         ];
@@ -457,13 +458,13 @@ export class CourseManagementRequests {
         });
     }
 
-    updateTextExerciseDueDate(exercise: any, due = day()) {
-        exercise.dueDate = dayjsToString(due);
+    updateTextExerciseDueDate(exercise: TextExercise, due = day()) {
+        exercise.dueDate = due;
         return this.updateExercise(exercise, CypressExerciseType.TEXT);
     }
 
-    updateTextExerciseAssessmentDueDate(exercise: any, due = day()) {
-        exercise.assessmentDueDate = dayjsToString(due);
+    updateTextExerciseAssessmentDueDate(exercise: TextExercise, due = day()) {
+        exercise.assessmentDueDate = due;
         return this.updateExercise(exercise, CypressExerciseType.TEXT);
     }
 
@@ -474,7 +475,7 @@ export class CourseManagementRequests {
         });
     }
 
-    createLecture(course: any, title = 'Cypress lecture' + generateUUID(), startDate = day(), endDate = day().add(10, 'minutes')) {
+    createLecture(course: Course, title = 'Cypress lecture' + generateUUID(), startDate = day(), endDate = day().add(10, 'minutes')) {
         const lecture = {
             ...lectureTemplate,
             course,
@@ -494,18 +495,18 @@ export class CourseManagementRequests {
  * Helper class to construct exam objects for the {@link CourseManagementRequests.createExam} method.
  */
 export class CypressExamBuilder {
-    readonly template: any = examTemplate;
+    readonly template = new Exam();
 
     /**
      * Initializes the exam builder.
      * @param course the course dto of a previous createCourse request
      */
-    constructor(course: any) {
+    constructor(course: Course) {
         this.template.course = course;
         this.template.title = 'exam' + generateUUID();
-        this.template.visibleDate = dayjsToString(day());
-        this.template.startDate = dayjsToString(day().add(1, 'day'));
-        this.template.endDate = dayjsToString(day().add(2, 'day'));
+        this.template.visibleDate = day();
+        this.template.startDate = day().add(1, 'day');
+        this.template.endDate = day().add(2, 'day');
     }
 
     /**
@@ -560,7 +561,7 @@ export class CypressExamBuilder {
      * @param date the date when the exam should be visible
      */
     visibleDate(date: day.Dayjs) {
-        this.template.visibleDate = dayjsToString(date);
+        this.template.visibleDate = date;
         return this;
     }
 
@@ -569,7 +570,7 @@ export class CypressExamBuilder {
      * @param date the date when the exam should start
      */
     startDate(date: day.Dayjs) {
-        this.template.startDate = dayjsToString(date);
+        this.template.startDate = date;
         return this;
     }
 
@@ -578,29 +579,29 @@ export class CypressExamBuilder {
      * @param date the date when the exam should end
      */
     endDate(date: day.Dayjs) {
-        this.template.endDate = dayjsToString(date);
+        this.template.endDate = date;
         return this;
     }
 
     publishResultsDate(date: day.Dayjs) {
-        this.template.publishResultsDate = dayjsToString(date);
+        this.template.publishResultsDate = date;
         return this;
     }
 
     examStudentReviewStart(date: day.Dayjs) {
-        this.template.examStudentReviewStart = dayjsToString(date);
+        this.template.examStudentReviewStart = date;
         return this;
     }
 
     examStudentReviewEnd(date: day.Dayjs) {
-        this.template.examStudentReviewEnd = dayjsToString(date);
+        this.template.examStudentReviewEnd = date;
         return this;
     }
 
     /**
      * @returns the exam object
      */
-    build() {
+    build(): Exam {
         return this.template;
     }
 }
