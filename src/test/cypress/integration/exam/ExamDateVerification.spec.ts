@@ -7,10 +7,11 @@ import { generateUUID } from '../../support/utils';
 const courseManagementRequests = artemis.requests.courseManagement;
 
 // page objects
+const examNavigationBar = artemis.pageobjects.exam.navigationBar;
 const examStartEnd = artemis.pageobjects.exam.startEnd;
 const textEditor = artemis.pageobjects.exercise.text.editor;
 
-describe('Exam management', () => {
+describe('Exam date verification', () => {
     let course: any;
     let examTitle: string;
 
@@ -94,7 +95,7 @@ describe('Exam management', () => {
                         cy.fixture('loremIpsum.txt').then((submission) => {
                             textEditor.typeSubmission(submission);
                         });
-                        textEditor.submit();
+                        examNavigationBar.clickSave();
                     });
                 });
             });

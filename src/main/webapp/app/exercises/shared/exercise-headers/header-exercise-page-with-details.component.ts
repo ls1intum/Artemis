@@ -5,6 +5,9 @@ import { Exam } from 'app/entities/exam.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
+import { faArrowLeft, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -14,6 +17,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     @Input() public exercise: Exercise;
+    @Input() public studentParticipation?: StudentParticipation;
     @Input() public onBackClick: () => void; // TODO: This can be removed once we are happy with the breadcrumb navigation
     @Input() public title: string;
     @Input() public exam?: Exam;
@@ -24,8 +28,13 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     public exerciseStatusBadge = 'bg-success';
     public exerciseCategories: ExerciseCategory[];
     public isExamMode = false;
+    public dueDate?: dayjs.Dayjs;
 
     icon: IconProp;
+
+    // Icons
+    faArrowLeft = faArrowLeft;
+    faQuestionCircle = faQuestionCircle;
 
     /**
      * Sets the status badge and categories of the exercise on changes
@@ -41,14 +50,18 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
         if (this.exam) {
             this.isExamMode = true;
         }
+
+        if (this.exercise && !this.isExamMode) {
+            this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
+        }
     }
 
     private setExerciseStatusBadge(): void {
         if (this.exercise) {
             if (this.isExamMode) {
-                this.exerciseStatusBadge = dayjs(this.exam?.endDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
+                this.exerciseStatusBadge = dayjs().isAfter(dayjs(this.exam?.endDate!)) ? 'bg-danger' : 'bg-success';
             } else {
-                this.exerciseStatusBadge = dayjs(this.exercise.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
+                this.exerciseStatusBadge = dayjs().isAfter(this.dueDate!) ? 'bg-danger' : 'bg-success';
             }
         }
     }

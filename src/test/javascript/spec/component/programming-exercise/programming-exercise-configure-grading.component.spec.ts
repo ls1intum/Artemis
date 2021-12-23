@@ -55,7 +55,6 @@ import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
-import { ChartsModule } from 'ng2-charts';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -210,7 +209,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, MockModule(TranslateTestingModule), MockModule(ChartsModule)],
+            imports: [ArtemisTestModule, NgxDatatableModule, MockModule(TranslateTestingModule)],
             declarations: [
                 ProgrammingExerciseConfigureGradingComponent,
                 ProgrammingExerciseConfigureGradingStatusComponent,
@@ -798,10 +797,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         headerElement.nativeElement.click();
         fixture.detectChanges();
 
-        const sortIcon = getElement(headerElement, 'fa-icon').attributes['ng-reflect-icon'].value;
-
         expect(comp.tableSorts[table]).toEqual([{ prop, dir }]);
-        expect(sortIcon).toBe(dir === 'asc' ? 'sort-up' : 'sort-down');
     };
 
     it('should sort test-case table', () => {

@@ -36,7 +36,6 @@ describe('Modeling Exercise Assessment Spec', () => {
         cy.login(tutor, '/course-management');
         cy.get(`[href="/course-management/${course.id}/assessment-dashboard"]`).click();
         cy.url().should('contain', `/course-management/${course.id}/assessment-dashboard`);
-        courseAssessmentDashboard.checkShowFinishedExercises();
         courseAssessmentDashboard.clickExerciseDashboardButton();
         exerciseAssessmentDashboard.clickHaveReadInstructionsButton();
         exerciseAssessmentDashboard.clickStartNewAssessment();
@@ -76,7 +75,7 @@ describe('Modeling Exercise Assessment Spec', () => {
 
         it('Instructor can see complaint and reject it', () => {
             cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
-            courseAssessmentDashboard.openComplaints(course.id);
+            courseAssessmentDashboard.openComplaints();
             courseAssessmentDashboard.showTheComplaint();
             assessmentEditor.rejectComplaint('You are wrong.');
         });
@@ -97,7 +96,7 @@ describe('Modeling Exercise Assessment Spec', () => {
 
     function makeModelingSubmissionAsStudent() {
         cy.login(student);
-        courseManagementRequests.startExerciseParticipation(course.id, modelingExercise.id).then((participation) => {
+        courseManagementRequests.startExerciseParticipation(modelingExercise.id).then((participation) => {
             courseManagementRequests.makeModelingExerciseSubmission(modelingExercise.id, participation.body);
         });
     }

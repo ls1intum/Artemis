@@ -27,6 +27,7 @@ import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { declareExerciseType } from 'app/entities/exercise.model';
 import { mean, median, standardDeviation, sum } from 'simple-statistics';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course, NgxDataEntry } from 'app/entities/course.model';
 import { ScaleType, Color } from '@swimlane/ngx-charts';
 
@@ -34,7 +35,7 @@ import { ScaleType, Color } from '@swimlane/ngx-charts';
     selector: 'jhi-exam-scores',
     templateUrl: './exam-scores.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrls: ['./exam-scores.component.scss'],
+    styleUrls: ['./exam-scores.component.scss', '../../shared/chart/vertical-bar-chart.scss'],
 })
 export class ExamScoresComponent implements OnInit, OnDestroy {
     public examScoreDTO: ExamScoreDTO;
@@ -78,6 +79,12 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     hasNumericGrades: boolean;
 
     course?: Course;
+
+    // Icons
+    faSort = faSort;
+    faDownload = faDownload;
+    faTimes = faTimes;
+    faCheckCircle = faCheckCircle;
 
     private languageChangeSubscription?: Subscription;
     constructor(

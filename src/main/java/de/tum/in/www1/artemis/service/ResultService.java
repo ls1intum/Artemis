@@ -4,13 +4,12 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -33,8 +32,6 @@ public class ResultService {
 
     private final LtiService ltiService;
 
-    private final ObjectMapper objectMapper;
-
     private final WebsocketMessagingService websocketMessagingService;
 
     private final ComplaintResponseRepository complaintResponseRepository;
@@ -49,13 +46,14 @@ public class ResultService {
 
     private final AuthorizationCheckService authCheckService;
 
-    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiService ltiService, ObjectMapper objectMapper, FeedbackRepository feedbackRepository,
+    private final ExerciseDateService exerciseDateService;
+
+    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiService ltiService, FeedbackRepository feedbackRepository,
             WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
-            ComplaintRepository complaintRepository, RatingRepository ratingRepository, AuthorizationCheckService authCheckService) {
+            ComplaintRepository complaintRepository, RatingRepository ratingRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
-        this.objectMapper = objectMapper;
         this.websocketMessagingService = websocketMessagingService;
         this.feedbackRepository = feedbackRepository;
         this.complaintResponseRepository = complaintResponseRepository;
@@ -63,6 +61,7 @@ public class ResultService {
         this.complaintRepository = complaintRepository;
         this.ratingRepository = ratingRepository;
         this.authCheckService = authCheckService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -88,14 +87,12 @@ public class ResultService {
         // manual feedback is always rated, can be overwritten though in the case of a result for an external submission
         result.setRated(ratedResult);
 
-        result.getFeedbacks().forEach(feedback -> {
-            feedback.setResult(result);
-        });
+        result.getFeedbacks().forEach(feedback -> feedback.setResult(result));
 
         // this call should cascade all feedback relevant changed and save them accordingly
         var savedResult = resultRepository.save(result);
         // The websocket client expects the submission and feedbacks, so we retrieve the result again instead of using the save result.
-        savedResult = resultRepository.findOneWithEagerSubmissionAndFeedback(result.getId());
+        savedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(result.getId());
 
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
@@ -202,7 +199,9 @@ public class ResultService {
                 result.filterSensitiveFeedbacks(!exam.resultsPublished());
             }
             else {
-                result.filterSensitiveFeedbacks(exercise.isBeforeDueDate());
+                boolean applyFilter = exerciseDateService.isBeforeDueDate(result.getParticipation())
+                        || (AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) && exerciseDateService.isBeforeLatestDueDate(exercise));
+                result.filterSensitiveFeedbacks(applyFilter);
             }
             feedbacks = result.getFeedbacks();
 

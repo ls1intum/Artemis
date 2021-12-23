@@ -138,16 +138,6 @@ export class CourseManagementRequests {
         });
     }
 
-    updateProgrammingExerciseDueDate(exercise: any, due = day()) {
-        exercise.dueDate = dayjsToString(due);
-        return this.updateExercise(exercise, CypressExerciseType.PROGRAMMING);
-    }
-
-    updateProgrammingExerciseAssessmentDueDate(exercise: any, due = day()) {
-        exercise.assessmentDueDate = dayjsToString(due);
-        return this.updateExercise(exercise, CypressExerciseType.PROGRAMMING);
-    }
-
     updateModelingExerciseDueDate(exercise: any, due = day()) {
         exercise.dueDate = dayjsToString(due);
         return this.updateExercise(exercise, CypressExerciseType.MODELING);
@@ -459,9 +449,9 @@ export class CourseManagementRequests {
         });
     }
 
-    startExerciseParticipation(courseId: number, exerciseId: number) {
+    startExerciseParticipation(exerciseId: number) {
         return cy.request({
-            url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/participations`,
+            url: EXERCISE_BASE + exerciseId + '/participations',
             method: POST,
         });
     }

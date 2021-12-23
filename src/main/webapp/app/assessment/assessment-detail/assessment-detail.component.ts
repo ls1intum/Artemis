@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { faExclamation, faExclamationTriangle, faQuestionCircle, faRobot, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
@@ -16,6 +17,13 @@ export class AssessmentDetailComponent {
     @Input() highlightDifferences: boolean;
 
     public FeedbackType_AUTOMATIC = FeedbackType.AUTOMATIC;
+    // Icons
+    faTrashAlt = faTrashAlt;
+    faRobot = faRobot;
+    faQuestionCircle = faQuestionCircle;
+    faExclamation = faExclamation;
+    faExclamationTriangle = faExclamationTriangle;
+
     constructor(private translateService: TranslateService, public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     /**

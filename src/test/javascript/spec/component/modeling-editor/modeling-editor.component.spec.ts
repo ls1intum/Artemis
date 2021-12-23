@@ -191,7 +191,6 @@ describe('ModelingEditorComponent', () => {
 
         const icon = statusHint.query(By.css('fa-icon'));
         expect(icon).not.toBe(null);
-        expect(icon.attributes['ng-reflect-icon']).toBe('fas,check');
 
         const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
         expect(spanText).toBe('All changes saved');
@@ -207,7 +206,6 @@ describe('ModelingEditorComponent', () => {
 
         const icon = statusHint.query(By.css('fa-icon'));
         expect(icon).not.toBe(null);
-        expect(icon.attributes['ng-reflect-icon']).toBe('fas,times');
 
         const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
         expect(spanText).toBe('Unsaved changes');
@@ -223,7 +221,6 @@ describe('ModelingEditorComponent', () => {
 
         const icon = statusHint.query(By.css('fa-icon'));
         expect(icon).not.toBe(null);
-        expect(icon.attributes['ng-reflect-icon']).toBe('fas,circle-notch');
 
         const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
         expect(spanText).toBe('Saving...');

@@ -44,7 +44,7 @@ describe('Exam management', () => {
     it('Adds an exercise group with a text exercise', () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
-        courseManagement.openExamsOfCourse(course.title, course.shortName);
+        courseManagement.openExamsOfCourse(course.shortName);
         examManagement.getExamRow(examTitle).openExerciseGroups();
         exerciseGroups.shouldShowNumberOfExerciseGroups(0);
         exerciseGroups.clickAddExerciseGroup();

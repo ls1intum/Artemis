@@ -1,3 +1,4 @@
+import { DELETE } from './../../../constants';
 import { artemis } from './../../../ArtemisTesting';
 import { CypressExerciseType } from '../../../requests/CourseManagementRequests';
 import { GET, BASE_API, POST } from '../../../constants';
@@ -20,6 +21,7 @@ export class OnlineEditorPage {
      * Focuses the code editor content to allow typing into it.
      */
     focusCodeEditor() {
+        // The ace editor is an external element, so we can't freely add ids here
         return cy.get('#ace-code-editor').find('.ace_content').click();
     }
 
@@ -58,9 +60,9 @@ export class OnlineEditorPage {
      * @param name the file name
      */
     deleteFile(name: string) {
-        cy.intercept('DELETE', '/api/repository/*/**').as('deleteFile');
-        this.findFile(name).find('[data-icon="trash"]').click();
-        cy.get('[jhitranslate="artemisApp.editor.fileBrowser.delete"]').click();
+        cy.intercept(DELETE, BASE_API + 'repository/*/**').as('deleteFile');
+        this.findFile(name).find('#file-browser-file-delete').click();
+        cy.get('#delete-file').click();
         cy.wait('@deleteFile').its('response.statusCode').should('eq', 200);
         this.findFileBrowser().contains(name).should('not.exist');
     }
@@ -70,7 +72,7 @@ export class OnlineEditorPage {
      * @returns the root element of a file in the filebrowser
      */
     private findFile(name: string) {
-        return this.findFileBrowser().contains(name).parent();
+        return this.findFileBrowser().contains(name).parents('#file-browser-file');
     }
 
     /**
@@ -101,10 +103,10 @@ export class OnlineEditorPage {
         const postRequestId = 'createFile' + fileName;
         const getRequestId = 'getFile' + fileName;
         const requestPath = BASE_API + 'repository/*/file?file=' + filePath;
-        cy.get('.file-icons').children('button').first().click().wait(500);
+        cy.get('#file-browser-folder-create-file').click().wait(500);
         cy.intercept(POST, requestPath).as(postRequestId);
         cy.intercept(GET, requestPath).as(getRequestId);
-        cy.get('jhi-code-editor-file-browser-create-node').type(fileName).wait(500).type('{enter}');
+        cy.get('#file-browser-create-node').type(fileName).wait(500).type('{enter}');
         cy.wait('@' + postRequestId)
             .its('response.statusCode')
             .should('eq', 200);
@@ -118,21 +120,7 @@ export class OnlineEditorPage {
      * @returns the root element of the result panel. This can be used for further querying inside this panel
      */
     getResultPanel() {
-        return cy.get('jhi-updating-result');
-    }
-
-    /**
-     * @returns the root element of the panel on the right, which shows all instructions
-     */
-    getInstructionsPanel() {
-        return cy.get('#cardInstructions');
-    }
-
-    /**
-     * @returns returns all instruction symbols. Each test has one instruction symbol with its state (questionmark, cross or checkmark)
-     */
-    getInstructionSymbols() {
-        return this.getInstructionsPanel().get('.stepwizard-row').find('.stepwizard-step');
+        return cy.get('#result');
     }
 
     /**
@@ -161,15 +149,16 @@ export function makeSubmissionAndVerifyResults(editorPage: OnlineEditorPage, pac
 /**
  * Starts the participation in the test programming exercise.
  */
-export function startParticipationInProgrammingExercise(courseName: string, programmingExerciseName: string, credentials: CypressCredentials) {
+export function startParticipationInProgrammingExercise(courseId: string, exerciseId: string, credentials: CypressCredentials) {
     const courseOverview = artemis.pageobjects.course.overview;
+    const courses = artemis.pageobjects.course.list;
     cy.login(credentials, '/');
     cy.url().should('include', '/courses');
     cy.log('Participating in the programming exercise as a student...');
-    cy.contains(courseName).parents('.card-header').click();
+    courses.openCourse(courseId);
     cy.url().should('include', '/exercises');
-    courseOverview.startExercise(programmingExerciseName, CypressExerciseType.PROGRAMMING);
-    courseOverview.openRunningProgrammingExercise(programmingExerciseName);
+    courseOverview.startExercise(exerciseId, CypressExerciseType.PROGRAMMING);
+    courseOverview.openRunningProgrammingExercise(exerciseId);
 }
 
 /**
