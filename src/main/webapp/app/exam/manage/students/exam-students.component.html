@@ -5,7 +5,8 @@
             <span class="text-muted">({{ exam.title }})</span>
         </h3>
         <div>
-            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span><span>: {{ allRegisteredUsers.length }}</span>
+            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span
+            ><span id="#registered-users">: {{ allRegisteredUsers.length }}</span>
             <span *ngIf="filteredUsersSize < allRegisteredUsers.length" class="text-muted">
                 (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize }})
             </span>

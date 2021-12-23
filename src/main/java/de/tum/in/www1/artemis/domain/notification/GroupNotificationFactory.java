@@ -131,7 +131,7 @@ public class GroupNotificationFactory {
                 notification.setPriority(HIGH);
             }
             else if (exercise instanceof ProgrammingExercise) {
-                notification.setTransientAndStringTarget(createExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
+                notification.setTransientAndStringTarget(createExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, EXERCISE_UPDATED_TEXT));
             }
         }
         // Exercises for courses (not for exams)
@@ -248,7 +248,7 @@ public class GroupNotificationFactory {
         }
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
-        notification.setTransientAndStringTarget(createCourseTarget(course, "courseArchiveUpdated"));
+        notification.setTransientAndStringTarget(createCourseTarget(course, COURSE_ARCHIVE_UPDATED_TEXT));
         return notification;
     }
 
