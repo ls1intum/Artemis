@@ -5,6 +5,11 @@ import { AbstractExerciseFeedback } from '../AbstractExerciseFeedbackPage';
  * A class which encapsulates UI selectors and actions for a programming exercise feedback page.
  */
 export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
+    shouldShowAdditionalFeedback(points: number, feedbackText: string) {
+        cy.reloadUntilFound(this.additionalFeedbackSelector);
+        cy.get(this.additionalFeedbackSelector).contains(`${points} Points: ${feedbackText}`).should('be.visible');
+    }
+
     shouldShowCodeFeedback(filename: string, feedback: string, points: string, editorPage: OnlineEditorPage) {
         editorPage.openFileWithName(filename);
         this.findVisibleInlineFeedback().contains(feedback).should('be.visible');

@@ -11,6 +11,7 @@
         <div class="form-group question-title">
             <input
                 class="form-control"
+                id="drag-and-drop-question-title"
                 [(ngModel)]="question.title"
                 (ngModelChange)="questionUpdated.emit()"
                 placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
@@ -141,7 +142,7 @@
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.uploadBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="!reEvaluationInProgress"></span>
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.changeBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="reEvaluationInProgress"></span>
             </div>
-            <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file">
+            <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file" id="background-image-input-form">
                 <input id="backgroundFileInput{{ questionIndex }}" type="file" accept="image/*" class="form-control" (change)="setBackgroundFile($event)" />
                 <div class="input-group-prepend">
                     <button class="btn btn-outline-primary" (click)="uploadBackground()" [disabled]="isUploadingBackgroundFile || !backgroundFile">
@@ -176,6 +177,7 @@
                     [ngClass]="{ disabled: !question.backgroundFilePath }"
                 >
                     <div
+                        id="drop-location"
                         class="drop-location"
                         *ngFor="let dropLocation of question.dropLocations"
                         [ngClass]="dropAllowed ? 'drop-allowed' : ''"
@@ -231,12 +233,12 @@
             <span jhiTranslate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
         </div>
         <div class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
-            <div class="drag-item" *ngFor="let dragItem of question.dragItems" dnd-draggable [dragEnabled]="true" [dragData]="dragItem">
+            <div class="drag-item" id="drag-item-{{ i }}" *ngFor="let dragItem of question.dragItems; let i = index" dnd-draggable [dragEnabled]="true" [dragData]="dragItem">
                 <div *ngIf="dragItem.pictureFilePath">
                     <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
                 </div>
                 <div *ngIf="!dragItem.pictureFilePath">
-                    <textarea [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
+                    <textarea id="drag-item-{{ i }}-text" [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
                 </div>
                 <div class="delete-button" title="Delete" (click)="deleteDragItem(dragItem)" *ngIf="!reEvaluationInProgress">
                     <fa-icon [icon]="faTrash" size="lg"></fa-icon>
@@ -301,7 +303,7 @@
             <ng-container *ngIf="!reEvaluationInProgress">
                 <div class="question-options">
                     <div class="col">
-                        <button class="btn btn-outline-secondary" (click)="addTextDragItem()">
+                        <button class="btn btn-outline-secondary" id="add-text-drag-item" (click)="addTextDragItem()">
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
                         </button>

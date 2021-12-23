@@ -62,8 +62,8 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     @Override
     public String toString() {
         return getClass().getSimpleName() + "{" + "id=" + getId() + ", repositoryUrl='" + getRepositoryUrl() + "'" + ", buildPlanId='" + getBuildPlanId() + "'"
-                + ", initializationState='" + getInitializationState() + "'" + ", initializationDate='" + getInitializationDate() + "'" + ", presentationScore="
-                + getPresentationScore() + "}";
+                + ", initializationState='" + getInitializationState() + "'" + ", initializationDate='" + getInitializationDate() + "'" + ", individualDueDate="
+                + getIndividualDueDate() + "'" + ", presentationScore=" + getPresentationScore() + "}";
     }
 
     @Override

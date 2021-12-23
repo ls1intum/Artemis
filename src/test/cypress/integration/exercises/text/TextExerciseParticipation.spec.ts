@@ -34,7 +34,6 @@ describe('Text exercise participation', () => {
         // Verify the initial state of the text editor
         textEditor.shouldShowExerciseTitleInHeader(exercise.title);
         textEditor.shouldShowProblemStatement();
-        textEditor.getHeaderElement().contains('No Submission').should('be.visible');
 
         // Make a submission
         cy.fixture('loremIpsum.txt').then((submission) => {
@@ -51,8 +50,6 @@ describe('Text exercise participation', () => {
                     expect(response.body.submitted).equals(true);
                     expect(response.statusCode).equals(200);
                 });
-            textEditor.shouldShowAlert();
-            textEditor.shouldShowNoGradedResultAvailable();
         });
     });
 

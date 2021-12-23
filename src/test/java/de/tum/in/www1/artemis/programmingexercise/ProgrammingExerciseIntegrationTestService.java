@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
@@ -364,10 +365,7 @@ public class ProgrammingExerciseIntegrationTestService {
         downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
-        // Recursively unzip the exported file, to make sure there is no erroneous content
-        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
-        Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
-        List<Path> entries = Files.walk(extractedZipDir).collect(Collectors.toList());
+        List<Path> entries = unzipExportedFile();
 
         // Make sure both repositories are present
         assertThat(entries.stream().anyMatch(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString()))).isTrue();
@@ -397,10 +395,7 @@ public class ProgrammingExerciseIntegrationTestService {
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
-        // Recursively unzip the exported file, to make sure there is no erroneous content
-        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
-        Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
-        List<Path> entries = Files.walk(extractedZipDir).collect(Collectors.toList());
+        List<Path> entries = unzipExportedFile();
 
         // Checks
         assertThat(entries.stream().anyMatch(entry -> entry.endsWith("Test.java"))).isTrue();
@@ -411,6 +406,17 @@ public class ProgrammingExerciseIntegrationTestService {
             assertThat(commit.getAuthorIdent().getName().equals("student")).isTrue();
             assertThat(commit.getFullMessage().equals("All student changes in one commit")).isTrue();
         }
+    }
+
+    /**
+     * Recursively unzips the exported file.
+     *
+     * @return the list of files that the {@code downloadedFile} contained.
+     */
+    private List<Path> unzipExportedFile() throws Exception {
+        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
+        Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
+        return Files.walk(extractedZipDir).collect(Collectors.toList());
     }
 
     public void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
@@ -759,6 +765,53 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Programming exercise update with the new course should fail.
         request.put(ROOT + PROGRAMMING_EXERCISES, newProgrammingExercise, HttpStatus.CONFLICT);
+    }
+
+    public void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+            participations.get(1).setIndividualDueDate(individualDueDate);
+            programmingExerciseStudentParticipationRepository.saveAll(participations);
+        }
+
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(12));
+        request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.OK);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            final var withNoIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+            assertThat(withNoIndividualDueDate).hasSize(1);
+
+            final var withIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() != null).toList();
+            assertThat(withIndividualDueDate).hasSize(1);
+            assertThat(withIndividualDueDate.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(individualDueDate);
+        }
+    }
+
+    public void updateExerciseRemoveDueDate() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            assertThat(participations).hasSize(2);
+            participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+            participations.get(1).setIndividualDueDate(ZonedDateTime.now().plusHours(20));
+            programmingExerciseStudentParticipationRepository.saveAll(participations);
+        }
+
+        programmingExercise.setDueDate(null);
+        request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.OK);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            final var withNoIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+            assertThat(withNoIndividualDueDate).hasSize(2);
+        }
     }
 
     public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
@@ -1746,15 +1799,15 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private String defaultRecreateBuildPlanEndpoint(Long exerciseId) {
-        return ROOT + RECREATE_BUILD_PLANS.replace("{exerciseId}", "" + exerciseId);
+        return ROOT + RECREATE_BUILD_PLANS.replace("{exerciseId}", exerciseId.toString());
     }
 
     private String defaultGetAuxReposEndpoint(Long exerciseId) {
-        return ROOT + AUXILIARY_REPOSITORY.replace("{exerciseId}", "" + exerciseId);
+        return ROOT + AUXILIARY_REPOSITORY.replace("{exerciseId}", exerciseId.toString());
     }
 
     private String defaultExportInstructorAuxiliaryRepository(Long exerciseId, Long repositoryId) {
-        return ROOT + EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY.replace("{exerciseId}", "" + exerciseId).replace("{repositoryId}", "" + repositoryId);
+        return ROOT + EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY.replace("{exerciseId}", exerciseId.toString()).replace("{repositoryId}", repositoryId.toString());
     }
 
     private void testAuxRepo(AuxiliaryRepositoryBuilder body, HttpStatus expectedStatus) throws Exception {
@@ -1762,7 +1815,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private void testAuxRepo(List<AuxiliaryRepository> body, HttpStatus expectedStatus) throws Exception {
-        String uniqueExerciseTitle = "Title" + System.nanoTime() + "" + new Random().nextInt(100);
+        String uniqueExerciseTitle = String.format("Title%d%d", System.nanoTime(), ThreadLocalRandom.current().nextInt(100));
         programmingExercise.setAuxiliaryRepositories(body);
         programmingExercise.setId(null);
         programmingExercise.setSolutionParticipation(null);

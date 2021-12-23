@@ -168,7 +168,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
-        var fileUploadSubmission = fileUploadSubmissionRepository.findOne(submissionId);
+        var fileUploadSubmission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
 
