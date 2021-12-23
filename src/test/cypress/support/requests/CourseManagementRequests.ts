@@ -9,6 +9,7 @@ import { BASE_API, DELETE, POST, PUT, GET } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import { dayjsToString, generateUUID } from '../utils';
+import examTemplate from '../../fixtures/requests/exam_template.json';
 import day from 'dayjs';
 import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
@@ -495,18 +496,18 @@ export class CourseManagementRequests {
  * Helper class to construct exam objects for the {@link CourseManagementRequests.createExam} method.
  */
 export class CypressExamBuilder {
-    readonly template = new Exam();
+    readonly template: any = examTemplate;
 
     /**
      * Initializes the exam builder.
      * @param course the course dto of a previous createCourse request
      */
-    constructor(course: Course) {
+    constructor(course: any) {
         this.template.course = course;
         this.template.title = 'exam' + generateUUID();
-        this.template.visibleDate = day();
-        this.template.startDate = day().add(1, 'day');
-        this.template.endDate = day().add(2, 'day');
+        this.template.visibleDate = dayjsToString(day());
+        this.template.startDate = dayjsToString(day().add(1, 'day'));
+        this.template.endDate = dayjsToString(day().add(2, 'day'));
     }
 
     /**
@@ -561,7 +562,7 @@ export class CypressExamBuilder {
      * @param date the date when the exam should be visible
      */
     visibleDate(date: day.Dayjs) {
-        this.template.visibleDate = date;
+        this.template.visibleDate = dayjsToString(date);
         return this;
     }
 
@@ -570,7 +571,7 @@ export class CypressExamBuilder {
      * @param date the date when the exam should start
      */
     startDate(date: day.Dayjs) {
-        this.template.startDate = date;
+        this.template.startDate = dayjsToString(date);
         return this;
     }
 
@@ -579,29 +580,29 @@ export class CypressExamBuilder {
      * @param date the date when the exam should end
      */
     endDate(date: day.Dayjs) {
-        this.template.endDate = date;
+        this.template.endDate = dayjsToString(date);
         return this;
     }
 
     publishResultsDate(date: day.Dayjs) {
-        this.template.publishResultsDate = date;
+        this.template.publishResultsDate = dayjsToString(date);
         return this;
     }
 
     examStudentReviewStart(date: day.Dayjs) {
-        this.template.examStudentReviewStart = date;
+        this.template.examStudentReviewStart = dayjsToString(date);
         return this;
     }
 
     examStudentReviewEnd(date: day.Dayjs) {
-        this.template.examStudentReviewEnd = date;
+        this.template.examStudentReviewEnd = dayjsToString(date);
         return this;
     }
 
     /**
      * @returns the exam object
      */
-    build(): Exam {
+    build() {
         return this.template;
     }
 }
