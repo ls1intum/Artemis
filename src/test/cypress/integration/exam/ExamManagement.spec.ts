@@ -67,20 +67,18 @@ describe('Exam management', () => {
         // We already verified in the previous test that we can navigate here
         cy.visit(`/course-management/${course.id}/exams`);
         examManagement.openStudentRegistration(exam.id);
-        cy.contains('Registered students: 0').should('be.visible');
+        cy.get('#registered-users').should('contain.text', '0');
         studentExamManagement.clickRegisterCourseStudents().then((request: any) => {
-             expect(request.response.statusCode).to.eq(200);
+            expect(request.response.statusCode).to.eq(200);
         });
         cy.contains(users.getStudentOne().username).should('be.visible');
-        cy.contains('Registered students: 1').should('be.visible');
+        cy.get('#registered-users').should('contain.text', '1');
     });
 
     it('Generates student exams', () => {
         cy.visit(`/course-management/${course.id}/exams`);
         examManagement.openStudenExams(exam.id);
-        cy.contains('0 total').should('be.visible');
         studentExamManagement.clickGenerateStudentExams();
-        cy.contains('1 total').should('be.visible');
         cy.get('#generateMissingStudentExamsButton').should('be.disabled');
     });
 

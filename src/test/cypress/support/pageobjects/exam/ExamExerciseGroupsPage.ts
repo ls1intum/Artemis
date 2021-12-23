@@ -7,7 +7,7 @@ export class ExamExerciseGroupsPage {
     }
 
     shouldShowNumberOfExerciseGroups(numberOfGroups: number) {
-        cy.contains(`Number of exercise groups: ${numberOfGroups}`).should('be.visible');
+        cy.get('#number-groups').should('contain.text', numberOfGroups);
     }
 
     clickAddExerciseGroup() {
