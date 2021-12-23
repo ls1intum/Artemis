@@ -122,7 +122,9 @@ public class EmailSummaryService {
         if (exercise == null || exercise.getReleaseDate() == null) {
             return false;
         }
-        return exercise.isReleased() && exercise.getReleaseDate().isAfter(ZonedDateTime.now().minus(scheduleInterval)) && !exercise.isEnded();
+        boolean releaseDateCheck = exercise.isReleased() && exercise.getReleaseDate().isAfter(ZonedDateTime.now().minus(scheduleInterval));
+        boolean dueDateCheck = exercise.getDueDate() == null ? true : ZonedDateTime.now().isBefore(exercise.getDueDate());
+        return releaseDateCheck && dueDateCheck;
     }
 
     /**
