@@ -42,27 +42,11 @@ public class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitb
     @Autowired
     private UserRepository userRepository;
 
-    private User userWithDeactivatedWeeklySummaries;
-
-    private final String USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN = "student1";
-
-    private User userWithActivatedWeeklySummaries;
-
-    private final String USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN = "student2";
-
-    private Course course;
-
     private Exercise exerciseReleasedYesterdayAndNotYetDue;
 
-    private Exercise exerciseReleasedYesterdayButAlreadyClosed;
+    private final static String USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN = "student1";
 
-    private Exercise exerciseReleasedTomorrow;
-
-    private Exercise exerciseReleasedAMonthAgo;
-
-    private Exercise exerciseWithoutAReleaseDate;
-
-    private Set<Exercise> allTestExercises;
+    private final static String USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN = "student2";
 
     /**
      * Prepares the needed values and objects for testing
@@ -72,13 +56,13 @@ public class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitb
         database.addUsers(2, 0, 0, 0);
 
         // preparation of the test data where a user deactivated weekly summaries
-        userWithDeactivatedWeeklySummaries = database.getUserByLogin(USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN);
+        User userWithDeactivatedWeeklySummaries = database.getUserByLogin(USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN);
         NotificationSetting deactivatedWeeklySummarySetting = new NotificationSetting(userWithDeactivatedWeeklySummaries, false, false,
                 NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
         notificationSettingRepository.save(deactivatedWeeklySummarySetting);
 
         // preparation of the test data where a user activated weekly summaries
-        userWithActivatedWeeklySummaries = database.getUserByLogin(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN);
+        User userWithActivatedWeeklySummaries = database.getUserByLogin(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN);
 
         NotificationSetting activatedWeeklySummarySetting = new NotificationSetting(userWithActivatedWeeklySummaries, false, true,
                 NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
@@ -87,10 +71,10 @@ public class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitb
         // preparation of test course with exercises for weekly summary testing
         ZonedDateTime now = ZonedDateTime.now();
 
-        course = database.createCourse();
-        allTestExercises = new HashSet<>();
+        Course course = database.createCourse();
+        Set<Exercise> allTestExercises = new HashSet<>();
 
-        exerciseWithoutAReleaseDate = ModelFactory.generateTextExercise(null, null, null, course);
+        Exercise exerciseWithoutAReleaseDate = ModelFactory.generateTextExercise(null, null, null, course);
         exerciseWithoutAReleaseDate.setTitle("exerciseWithoutAReleaseDate");
         allTestExercises.add(exerciseWithoutAReleaseDate);
 
@@ -99,16 +83,15 @@ public class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitb
         exerciseReleasedYesterdayAndNotYetDue.setDifficulty(DifficultyLevel.EASY);
         allTestExercises.add(exerciseReleasedYesterdayAndNotYetDue);
 
-        exerciseReleasedYesterdayButAlreadyClosed = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(5), null, course);
+        Exercise exerciseReleasedYesterdayButAlreadyClosed = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(5), null, course);
         exerciseReleasedYesterdayButAlreadyClosed.setTitle("exerciseReleasedYesterdayButAlreadyClosed");
         allTestExercises.add(exerciseReleasedYesterdayButAlreadyClosed);
 
-        exerciseReleasedTomorrow = ModelFactory.generateTextExercise(now.plusDays(1), null, null, course);
+        Exercise exerciseReleasedTomorrow = ModelFactory.generateTextExercise(now.plusDays(1), null, null, course);
         exerciseReleasedTomorrow.setTitle("exerciseReleasedTomorrow");
         allTestExercises.add(exerciseReleasedTomorrow);
 
-        exerciseReleasedAMonthAgo = ModelFactory.generateTextExercise(now.minusMonths(1), null, null, course);
-        ;
+        Exercise exerciseReleasedAMonthAgo = ModelFactory.generateTextExercise(now.minusMonths(1), null, null, course);
         exerciseReleasedAMonthAgo.setTitle("exerciseReleasedAMonthAgo");
         allTestExercises.add(exerciseReleasedAMonthAgo);
 

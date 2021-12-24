@@ -39,6 +39,10 @@ public class WeeklyEmailSummaryScheduleService {
         this.emailSummaryService = emailSummaryService;
         // time based variables needed for scheduling
         this.nextSummaryDate = ZonedDateTime.now().toLocalDateTime().with(DayOfWeek.FRIDAY).withHour(17).withMinute(0);
+        if (nextSummaryDate.isBefore(ZonedDateTime.now().toLocalDateTime())) {
+            // if the current time is e.g. 18:00 on a Friday the nextSummaryDate has to moved to next Friday
+            this.nextSummaryDate = this.nextSummaryDate.plusWeeks(1);
+        }
         this.emailSummaryService.setScheduleInterval(weekly);
     }
 
