@@ -59,7 +59,7 @@ public class SingleUserNotificationService {
             // Plagiarism related
             case NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_FINAL_STATE_STUDENT -> createNotification((PlagiarismComparison) notificationSubject, notificationType,
                     (User) typeSpecificInformation, author);
-            
+
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
         saveAndSend(resultingGroupNotification, notificationSubject);
@@ -104,7 +104,7 @@ public class SingleUserNotificationService {
      * @param recipient who should be notified
      */
     public void notifyUserAboutAssessedExerciseSubmission(Exercise exercise, User recipient) {
-        notifyRecipientWithNotificationType(exercise, EXERCISE_SUBMISSION_ASSESSED, recipient);
+        notifyRecipientWithNotificationType(exercise, EXERCISE_SUBMISSION_ASSESSED, recipient, null);
     }
 
     /**
