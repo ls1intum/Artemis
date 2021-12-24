@@ -11,10 +11,7 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -25,12 +22,6 @@ import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 
 public class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Mock
-    private SimpMessageSendingOperations messagingTemplate;
-
-    @Mock
-    private JavaMailSender javaMailSender;
 
     @Autowired
     private SingleUserNotificationService singleUserNotificationService;
@@ -69,10 +60,6 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
 
         course = new Course();
         course.setId(COURSE_ID);
-
-        /*
-         * messagingTemplate = mock(SimpMessageSendingOperations.class); javaMailSender = mock(JavaMailSender.class);
-         */
 
         exercise = new TextExercise();
 
@@ -153,11 +140,11 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      * Test for notifyUserAboutSuccessfulFileUploadSubmission method
      */
     @Test
-    public void testNotifyUserAboutSuccessfulFileUploadSubmission() throws InterruptedException {
+    public void testNotifyUserAboutSuccessfulFileUploadSubmission() {
         notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL));
         singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(fileUploadExercise, user);
         verifyRepositoryCallWithCorrectNotification(FILE_SUBMISSION_SUCCESSFUL_TITLE);
-        // verify(javaMailSender, timeout(1000).times(1)).send(any(MimeMessage.class));
+        // check if an email was created and send
         verify(javaMailSender, timeout(1000).times(1)).createMimeMessage();
     }
 }
