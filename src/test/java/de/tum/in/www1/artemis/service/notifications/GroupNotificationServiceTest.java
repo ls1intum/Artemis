@@ -43,8 +43,6 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
     @Autowired
     private ExamRepository examRepository;
 
-    private Notification capturedNotification;
-
     private Exercise exercise;
 
     private Exercise updatedExercise;
@@ -163,7 +161,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      */
     private void verifyRepositoryCallWithCorrectNotification(int numberOfGroupsAndCalls, String expectedNotificationTitle) {
         List<Notification> capturedNotifications = notificationRepository.findAll();
-        capturedNotification = capturedNotifications.get(0);
+        Notification capturedNotification = capturedNotifications.get(0);
         assertThat(capturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
         assertThat(capturedNotifications.size()).as("The number of created notification should be the same as the number of notified groups/authorities")
                 .isEqualTo(numberOfGroupsAndCalls);
