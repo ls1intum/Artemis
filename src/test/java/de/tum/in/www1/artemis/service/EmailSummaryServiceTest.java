@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -70,11 +71,6 @@ public class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitb
     public void setUp() {
         database.addUsers(2, 0, 0, 0);
 
-        // deactivate weekly email summary for admin to make testing easier
-        User artemisAdmin = database.getUserByLogin("artemis_admin");
-        notificationSettingRepository.save(new NotificationSetting(artemisAdmin, false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY));
-        userRepository.save(artemisAdmin);
-
         // preparation of the test data where a user deactivated weekly summaries
         userWithDeactivatedWeeklySummaries = database.getUserByLogin(USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN);
         NotificationSetting deactivatedWeeklySummarySetting = new NotificationSetting(userWithDeactivatedWeeklySummaries, false, false,
@@ -122,6 +118,16 @@ public class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitb
         allTestExercises.forEach(exercise -> exerciseRepository.save(exercise));
 
         weeklyEmailSummaryService.setScheduleInterval(Duration.ofDays(7));
+
+        // deactivate weekly email summary for currently available users to make testing easier (needed for verify())
+        List<User> currentUsers = userRepository.findAll();
+        currentUsers.remove(userWithActivatedWeeklySummaries);
+        currentUsers.remove(userWithDeactivatedWeeklySummaries);
+        if (!currentUsers.isEmpty()) {
+            currentUsers.forEach(user -> {
+                notificationSettingRepository.save(new NotificationSetting(user, false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY));
+            });
+        }
     }
 
     @AfterEach
