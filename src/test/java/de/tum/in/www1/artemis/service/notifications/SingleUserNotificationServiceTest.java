@@ -1,86 +1,83 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeAll;
+import java.util.List;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
-import de.tum.in.www1.artemis.service.MailService;
+import de.tum.in.www1.artemis.repository.NotificationRepository;
+import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 
-public class SingleUserNotificationServiceTest {
+public class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static SingleUserNotificationService singleUserNotificationService;
+    @Mock
+    private SimpMessageSendingOperations messagingTemplate;
 
-    @Captor
-    private static ArgumentCaptor<Notification> notificationCaptor;
+    @Mock
+    private JavaMailSender javaMailSender;
+
+    @Autowired
+    private SingleUserNotificationService singleUserNotificationService;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private NotificationSettingRepository notificationSettingRepository;
 
     private Notification capturedNotification;
 
-    private static User user;
+    private User user;
 
-    private static Exercise exercise;
+    private Exercise exercise;
 
-    private static FileUploadExercise fileUploadExercise;
+    private FileUploadExercise fileUploadExercise;
 
-    @Mock
-    private static SingleUserNotificationRepository singleUserNotificationRepository;
+    private Post post;
 
-    @Mock
-    private static SimpMessageSendingOperations messagingTemplate;
+    private Lecture lecture;
 
-    @Mock
-    private static MailService mailService;
+    private Course course;
 
-    @Mock
-    private static NotificationSettingsService notificationSettingsService;
-
-    private static Post post;
-
-    private static Lecture lecture;
-
-    private static Course course;
-
-    private static final Long COURSE_ID = 27L;
+    private final Long COURSE_ID = 27L;
 
     /**
-     * Sets up all needed mocks and their wanted behavior once for all test cases.
-     * These are the common mocks and structures which behavior is fixed and will not change
+     * Sets up all needed mocks and their wanted behavior
      */
-    @BeforeAll
-    public static void setUp() {
-        mailService = mock(MailService.class);
-        doNothing().when(mailService).sendNotificationEmailForMultipleUsers(any(), any(), any());
+    @BeforeEach
+    public void setUp() {
+        SecurityUtils.setAuthorizationObject();
+
+        List<User> users = database.addUsers(1, 0, 0, 0);
+        user = users.get(0);
 
         course = new Course();
         course.setId(COURSE_ID);
 
-        notificationCaptor = ArgumentCaptor.forClass(Notification.class);
-
-        messagingTemplate = mock(SimpMessageSendingOperations.class);
-
-        notificationSettingsService = mock(NotificationSettingsService.class);
-
-        singleUserNotificationRepository = mock(SingleUserNotificationRepository.class);
-
-        singleUserNotificationService = spy(new SingleUserNotificationService(singleUserNotificationRepository, messagingTemplate, mailService, notificationSettingsService));
+        /*
+         * messagingTemplate = mock(SimpMessageSendingOperations.class); javaMailSender = mock(JavaMailSender.class);
+         */
 
         exercise = new TextExercise();
 
         fileUploadExercise = new FileUploadExercise();
         fileUploadExercise.setCourse(course);
-
-        user = new User();
 
         lecture = new Lecture();
         lecture.setCourse(course);
@@ -92,39 +89,36 @@ public class SingleUserNotificationServiceTest {
         post.setCourse(course);
     }
 
-    /**
-     * Prepares and cleans the mocks that are modified during the tests
-     */
-    @BeforeEach
-    public void cleanMocks() {
-        reset(singleUserNotificationService);
-        reset(notificationSettingsService);
-        reset(singleUserNotificationRepository);
-        when(singleUserNotificationRepository.save(any())).thenReturn(null);
-        reset(messagingTemplate);
+    @AfterEach
+    public void resetDatabase() {
+        database.resetDatabase();
     }
 
     /**
      * Auxiliary method that checks if the groupNotificationRepository was called once successfully with the correct notification (type)
+     *
      * @param expectedNotificationTitle is the title (NotificationTitleTypeConstants) of the expected notification
      */
     private void verifyRepositoryCallWithCorrectNotification(String expectedNotificationTitle) {
-        verify(singleUserNotificationRepository, times(1)).save(notificationCaptor.capture());
-        capturedNotification = notificationCaptor.getValue();
+        capturedNotification = notificationRepository.findAll().get(0);
         assertThat(capturedNotification.getTitle()).as("Title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
     }
 
     /// General notify Tests
 
     /**
-     * Tests if no notification (or email) is send if the settings are deactivated
+     * Tests if no notification (or email) is sent if the settings are deactivated
      * However, the notification has to be saved to the DB
      */
     @Test
     public void testSendNoNotificationOrEmailWhenSettingsAreDeactivated() {
-        when(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any())).thenReturn(false);
-        singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post, course);
-        verify(singleUserNotificationRepository, times(1)).save(notificationCaptor.capture());
+        notificationSettingRepository.save(new NotificationSetting(user, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST));
+        assertThat(notificationRepository.findAll().size()).as("No notifications should be present prior to the method call").isEqualTo(0);
+
+        singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, course);
+
+        assertThat(notificationRepository.findAll().size()).as("The notification should have been saved to the DB").isEqualTo(1);
+        // no web app notification or email should be sent
         verify(messagingTemplate, times(0)).convertAndSend(any());
     }
 
@@ -133,7 +127,7 @@ public class SingleUserNotificationServiceTest {
      */
     @Test
     public void testNotifyUserAboutNewAnswerForExercise() {
-        singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post, course);
+        singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, course);
         verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_EXERCISE_POST_TITLE);
     }
 
@@ -142,7 +136,7 @@ public class SingleUserNotificationServiceTest {
      */
     @Test
     public void testNotifyUserAboutNewAnswerForLecture() {
-        singleUserNotificationService.notifyUserAboutNewAnswerForLecture(post, course);
+        singleUserNotificationService.notifyUserAboutNewReplyForLecture(post, course);
         verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_LECTURE_POST_TITLE);
     }
 
@@ -151,7 +145,7 @@ public class SingleUserNotificationServiceTest {
      */
     @Test
     public void testNotifyUserAboutNewAnswerForCoursePost() {
-        singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post, course);
+        singleUserNotificationService.notifyUserAboutNewReplyForCoursePost(post, course);
         verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
 
@@ -159,31 +153,11 @@ public class SingleUserNotificationServiceTest {
      * Test for notifyUserAboutSuccessfulFileUploadSubmission method
      */
     @Test
-    public void testNotifyUserAboutSuccessfulFileUploadSubmission() {
+    public void testNotifyUserAboutSuccessfulFileUploadSubmission() throws InterruptedException {
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL));
         singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(fileUploadExercise, user);
         verifyRepositoryCallWithCorrectNotification(FILE_SUBMISSION_SUCCESSFUL_TITLE);
-    }
-
-    /// Save & Send related Tests
-
-    /**
-     * Test for saveAndSend method for an exam exercise update (notification)
-     * Checks if the notification target contains the problem statement for transmitting it to the user via WebSocket
-     */
-    @Test
-    public void testSaveAndSend_CourseRelatedNotifications() {
-        when(notificationSettingsService.checkNotificationTypeForEmailSupport(any())).thenReturn(true);
-        when(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any())).thenReturn(true);
-
-        singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post, course);
-
-        // inside public saveAndSend method
-        verify(singleUserNotificationRepository, times(1)).save(any());
-        verify(messagingTemplate, times(1)).convertAndSend(any(), (Notification) any());
-
-        // inside private prepareSingleUserNotificationEmail method
-        verify(notificationSettingsService, times(1)).checkNotificationTypeForEmailSupport(any());
-        verify(notificationSettingsService, times(2)).checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any()); // 2 because we check once for webapp & email
-        verify(mailService, times(1)).sendNotificationEmail(any(), any(), any());
+        // verify(javaMailSender, timeout(1000).times(1)).send(any(MimeMessage.class));
+        verify(javaMailSender, timeout(1000).times(1)).createMimeMessage();
     }
 }
