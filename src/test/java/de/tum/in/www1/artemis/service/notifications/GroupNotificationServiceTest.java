@@ -23,8 +23,11 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
+import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -34,6 +37,12 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
 
+    @Autowired
+    private ExerciseRepository exerciseRepository;
+
+    @Autowired
+    private ExamRepository examRepository;
+
     private Notification capturedNotification;
 
     private Exercise exercise;
@@ -41,8 +50,6 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
     private Exercise updatedExercise;
 
     private Exercise examExercise;
-
-    private ExerciseGroup exerciseGroup;
 
     private QuizExercise quizExercise;
 
@@ -105,28 +112,28 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
 
         archiveErrors = new ArrayList<>();
 
-        exam = new Exam();
-        exam.setId(EXAM_ID);
-        exam.setCourse(course);
+        exam = database.addExam(course);
+        examRepository.save(exam);
 
         lecture = new Lecture();
         lecture.setCourse(course);
 
         attachment = new Attachment();
 
-        exercise = new TextExercise();
-        exercise.setCourse(course);
-        updatedExercise = new TextExercise();
+        exercise = ModelFactory.generateTextExercise(null, null, null, course);
+        exerciseRepository.save(exercise);
+        updatedExercise = ModelFactory.generateTextExercise(null, null, null, course);
+        exerciseRepository.save(updatedExercise);
 
-        exerciseGroup = new ExerciseGroup();
+        ExerciseGroup exerciseGroup = new ExerciseGroup();
         exerciseGroup.setExam(exam);
 
         examExercise = new TextExercise();
         examExercise.setExerciseGroup(exerciseGroup);
         examExercise.setProblemStatement(EXAM_PROBLEM_STATEMENT);
 
-        quizExercise = new QuizExercise();
-        quizExercise.setCourse(course);
+        quizExercise = database.createQuiz(course, null, null);
+        exerciseRepository.save(quizExercise);
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setCourse(course);
@@ -294,7 +301,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * @param notificationSettingIdentifier of the corresponding notification type
      */
     private void prepareNotificationSettingForTest(User user, String notificationSettingIdentifier) {
-        NotificationSetting notificationSetting = new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
+        NotificationSetting notificationSetting = new NotificationSetting(user, true, true, notificationSettingIdentifier);
         notificationSettingRepository.save(notificationSetting);
     }
 
