@@ -449,9 +449,9 @@ export class CourseManagementRequests {
         });
     }
 
-    startExerciseParticipation(courseId: number, exerciseId: number) {
+    startExerciseParticipation(exerciseId: number) {
         return cy.request({
-            url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/participations`,
+            url: EXERCISE_BASE + exerciseId + '/participations',
             method: POST,
         });
     }
