@@ -34,17 +34,7 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
 
     private User student1;
 
-    private NotificationSetting unsavedNotificationSettingA;
-
-    private NotificationSetting unsavedNotificationSettingB;
-
-    private NotificationSetting unsavedNotificationSettingC;
-
     private NotificationSetting completeNotificationSettingA;
-
-    private NotificationSetting completeNotificationSettingB;
-
-    private NotificationSetting completeNotificationSettingC;
 
     private NotificationSetting[] unsavedNotificationSettings;
 
@@ -60,14 +50,15 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
         List<User> users = database.addUsers(1, 0, 0, 0);
         student1 = users.get(0);
 
-        unsavedNotificationSettingA = new NotificationSetting(false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
-        unsavedNotificationSettingB = new NotificationSetting(true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
-        unsavedNotificationSettingC = new NotificationSetting(false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
+        NotificationSetting unsavedNotificationSettingA = new NotificationSetting(false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
+        NotificationSetting unsavedNotificationSettingB = new NotificationSetting(true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
+        NotificationSetting unsavedNotificationSettingC = new NotificationSetting(false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
         unsavedNotificationSettings = new NotificationSetting[] { unsavedNotificationSettingA, unsavedNotificationSettingB, unsavedNotificationSettingC };
 
         completeNotificationSettingA = new NotificationSetting(student1, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
-        completeNotificationSettingB = new NotificationSetting(student1, true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
-        completeNotificationSettingC = new NotificationSetting(student1, false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
+        NotificationSetting completeNotificationSettingB = new NotificationSetting(student1, true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
+        NotificationSetting completeNotificationSettingC = new NotificationSetting(student1, false, false,
+                NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
         savedNotificationSettings = new NotificationSetting[] { completeNotificationSettingA, completeNotificationSettingB, completeNotificationSettingC };
 
         notificationSettingRepository.saveAll(Arrays.stream(savedNotificationSettings).toList());
@@ -154,8 +145,7 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
         Set<NotificationSetting> testSet = new HashSet<>();
         testSet.add(completeNotificationSettingA);
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
-        assertThat(testSet.size()).as("The number of loaded Settings should be equals to the number of default settings")
-                .isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
+        assertThat(testSet.size()).as("The number of loaded Settings should be equals to the number of default settings").isEqualTo(DEFAULT_NOTIFICATION_SETTINGS.size());
         assertThat(testSet).as("The loaded settings should contain the set of test settings").contains(completeNotificationSettingA);
     }
 

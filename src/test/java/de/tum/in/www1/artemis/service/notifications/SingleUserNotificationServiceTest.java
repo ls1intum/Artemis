@@ -40,21 +40,13 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
 
     private User user;
 
-    private Exercise exercise;
-
     private FileUploadExercise fileUploadExercise;
 
     private Post post;
 
-    private Lecture lecture;
-
     private Course course;
 
     private PlagiarismComparison plagiarismComparison;
-
-    private PlagiarismSubmission plagiarismSubmission;
-
-    private PlagiarismResult plagiarismResult;
 
     /**
      * Sets up all needed mocks and their wanted behavior
@@ -68,13 +60,13 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
         List<User> users = database.addUsers(1, 0, 0, 0);
         user = users.get(0);
 
-        exercise = new TextExercise();
+        Exercise exercise = new TextExercise();
         exercise.setCourse(course);
 
         fileUploadExercise = new FileUploadExercise();
         fileUploadExercise.setCourse(course);
 
-        lecture = new Lecture();
+        Lecture lecture = new Lecture();
         lecture.setCourse(course);
 
         post = new Post();
@@ -83,10 +75,10 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
         post.setAuthor(user);
         post.setCourse(course);
 
-        plagiarismSubmission = new PlagiarismSubmission();
+        PlagiarismSubmission plagiarismSubmission = new PlagiarismSubmission();
         plagiarismSubmission.setStudentLogin(user.getLogin());
 
-        plagiarismResult = new TextPlagiarismResult();
+        PlagiarismResult plagiarismResult = new TextPlagiarismResult();
         plagiarismResult.setExercise(exercise);
 
         plagiarismComparison = new PlagiarismComparison();
