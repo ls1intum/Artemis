@@ -21,12 +21,24 @@
             <ul>
                 <tr th:each="exercise: ${weeklySummaryNewExercises}">
                     <li>
-                            <p class="bold-text" th:text="${exercise.getTitle()}"/>
-                            <ul>
+                        <p class="bold-text" th:text="${exercise.getTitle()}"/>
+                        <ul>
                             <!-- TODO Replace with toReadableString when other PR is merged -->
                             <li th:text="${exercise.getExerciseType()}"/>
                             <th:block th:if="${exercise.getDifficulty()}">
-                                <li th:include="mail/notification/fragments :: difficultyTranslation"/>
+                                <li>
+                                    <th:block th:switch="${exercise.getDifficulty().toString()}">
+                                        <th:block th:case="'EASY'">
+                                            <span th:utext="#{email.notification.title.exercise.information.difficulty(#{email.notification.aux.difficulty.easy})} "/>
+                                        </th:block>
+                                        <th:block th:case="'MEDIUM'">
+                                            <span th:utext="#{email.notification.title.exercise.information.difficulty(#{email.notification.aux.difficulty.medium})} "/>
+                                        </th:block>
+                                        <th:block th:case="'HARD'">
+                                            <span th:utext="#{email.notification.title.exercise.information.difficulty(#{email.notification.aux.difficulty.hard})} "/>
+                                        </th:block>
+                                    </th:block>
+                                </li>
                             </th:block>
                             <th:block th:if="${exercise.getReleaseDate()}">
                                 <li th:text="#{email.notification.aux.information.release.date(${timeService.convertToHumanReadableDate(exercise.getReleaseDate())})}">Release Date</li>
@@ -39,7 +51,7 @@
                                 <li th:text="#{email.notification.title.exercise.information.bonus(${exercise.getBonusPoints()})}">Bonus Points</li>
                             </th:block>
                         </ul>
-                        </li>
+                    </li>
                 </tr>
             </ul>
         </th:block>

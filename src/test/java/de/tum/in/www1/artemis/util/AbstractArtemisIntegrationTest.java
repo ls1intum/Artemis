@@ -7,6 +7,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
@@ -46,6 +47,12 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @SpyBean
     protected GroupNotificationService groupNotificationService;
+
+    @SpyBean
+    protected JavaMailSender javaMailSender;
+
+    @SpyBean
+    protected MailService mailService;
 
     @SpyBean
     protected WebsocketMessagingService websocketMessagingService;
@@ -88,7 +95,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     public void resetSpyBeans() {
         Mockito.reset(ltiService, gitService, groupNotificationService, websocketMessagingService, messagingTemplate, programmingSubmissionService, examAccessService,
-                instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scoreService, scheduleService);
+                instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scoreService, scheduleService, javaMailSender,
+                mailService);
     }
 
     @Override

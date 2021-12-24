@@ -7,177 +7,144 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class EmailSummaryServiceTest {
+public class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static EmailSummaryService weeklyEmailSummaryService;
+    @Autowired
+    private EmailSummaryService weeklyEmailSummaryService;
 
-    @Mock
-    private static UserRepository userRepository;
+    @Autowired
+    private NotificationSettingRepository notificationSettingRepository;
 
-    @Mock
-    private static NotificationSettingRepository notificationSettingRepository;
+    @Autowired
+    private CourseRepository courseRepository;
 
-    @Mock
-    private static MailService mailService;
+    @Autowired
+    private ExerciseRepository exerciseRepository;
 
-    @Mock
-    private static CourseService courseService;
+    @Autowired
+    private UserRepository userRepository;
 
-    @Mock
-    private static NotificationSettingsService notificationSettingsService;
+    private User userWithDeactivatedWeeklySummaries;
 
-    private static Set<User> users;
+    private final String USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN = "student1";
 
-    private static User userWithDeactivatedWeeklySummaries;
+    private User userWithActivatedWeeklySummaries;
 
-    private static final Long USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_ID = 33L;
+    private final String USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN = "student2";
 
-    private static User userWithActivatedWeeklySummaries;
+    private Course course;
 
-    private static final Long USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_ID = 27L;
+    private Exercise exerciseReleasedYesterdayAndNotYetDue;
 
-    private static Course course;
+    private Exercise exerciseReleasedYesterdayButAlreadyClosed;
 
-    private static Exercise exerciseReleasedYesterdayAndNotYetDue;
+    private Exercise exerciseReleasedTomorrow;
 
-    private static Exercise exerciseReleasedYesterdayButAlreadyClosed;
+    private Exercise exerciseReleasedAMonthAgo;
 
-    private static Exercise exerciseReleasedTomorrow;
+    private Exercise exerciseWithoutAReleaseDate;
 
-    private static Exercise exerciseReleasedAMonthAgo;
-
-    private static Exercise exerciseWithoutAReleaseDate;
-
-    private static Set<Exercise> exercises;
+    private Set<Exercise> allTestExercises;
 
     /**
      * Prepares the needed values and objects for testing
      */
-    @BeforeAll
-    public static void setUp() {
+    @BeforeEach
+    public void setUp() {
+        database.addUsers(2, 0, 0, 0);
+
+        // deactivate weekly email summary for admin to make testing easier
+        User artemisAdmin = database.getUserByLogin("artemis_admin");
+        notificationSettingRepository.save(new NotificationSetting(artemisAdmin, false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY));
+        userRepository.save(artemisAdmin);
+
         // preparation of the test data where a user deactivated weekly summaries
-        userWithDeactivatedWeeklySummaries = new User();
-        userWithDeactivatedWeeklySummaries.setId(USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_ID);
-
-        NotificationSetting deactivatedWeeklySummarySetting = new NotificationSetting();
-        deactivatedWeeklySummarySetting.setSettingId(NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
-        deactivatedWeeklySummarySetting.setEmail(false);
-
-        Set<NotificationSetting> deactivatedWeeklySummarySettingsSet = new HashSet<>();
-        deactivatedWeeklySummarySettingsSet.add(deactivatedWeeklySummarySetting);
+        userWithDeactivatedWeeklySummaries = database.getUserByLogin(USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN);
+        NotificationSetting deactivatedWeeklySummarySetting = new NotificationSetting(userWithDeactivatedWeeklySummaries, false, false,
+                NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
+        notificationSettingRepository.save(deactivatedWeeklySummarySetting);
 
         // preparation of the test data where a user activated weekly summaries
-        userWithActivatedWeeklySummaries = new User();
-        userWithActivatedWeeklySummaries.setId(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_ID);
+        userWithActivatedWeeklySummaries = database.getUserByLogin(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN);
 
-        NotificationSetting activatedWeeklySummarySetting = new NotificationSetting();
-        activatedWeeklySummarySetting.setSettingId(NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
-        activatedWeeklySummarySetting.setEmail(true);
-
-        Set<NotificationSetting> activatedWeeklySummarySettingsSet = new HashSet<>();
-        activatedWeeklySummarySettingsSet.add(activatedWeeklySummarySetting);
+        NotificationSetting activatedWeeklySummarySetting = new NotificationSetting(userWithActivatedWeeklySummaries, false, true,
+                NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
+        notificationSettingRepository.save(activatedWeeklySummarySetting);
 
         // preparation of test course with exercises for weekly summary testing
         ZonedDateTime now = ZonedDateTime.now();
 
-        exerciseWithoutAReleaseDate = new TextExercise();
+        course = database.createCourse();
+        allTestExercises = new HashSet<>();
 
-        exerciseReleasedYesterdayAndNotYetDue = new TextExercise();
-        exerciseReleasedYesterdayAndNotYetDue.setReleaseDate(now.minusDays(1));
+        exerciseWithoutAReleaseDate = ModelFactory.generateTextExercise(null, null, null, course);
+        exerciseWithoutAReleaseDate.setTitle("exerciseWithoutAReleaseDate");
+        allTestExercises.add(exerciseWithoutAReleaseDate);
 
-        exerciseReleasedYesterdayButAlreadyClosed = new TextExercise();
-        exerciseReleasedYesterdayButAlreadyClosed.setReleaseDate(now.minusDays(1));
-        exerciseReleasedYesterdayButAlreadyClosed.setDueDate(now.minusHours(5));
+        exerciseReleasedYesterdayAndNotYetDue = ModelFactory.generateTextExercise(now.minusDays(1), null, null, course);
+        exerciseReleasedYesterdayAndNotYetDue.setTitle("exerciseReleasedYesterdayAndNotYetDue");
+        exerciseReleasedYesterdayAndNotYetDue.setDifficulty(DifficultyLevel.EASY);
+        allTestExercises.add(exerciseReleasedYesterdayAndNotYetDue);
 
-        exerciseReleasedTomorrow = new TextExercise();
-        exerciseReleasedTomorrow.setReleaseDate(now.plusDays(1));
+        exerciseReleasedYesterdayButAlreadyClosed = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(5), null, course);
+        exerciseReleasedYesterdayButAlreadyClosed.setTitle("exerciseReleasedYesterdayButAlreadyClosed");
+        allTestExercises.add(exerciseReleasedYesterdayButAlreadyClosed);
 
-        exerciseReleasedAMonthAgo = new ModelingExercise();
-        exerciseReleasedAMonthAgo.setReleaseDate(now.minusMonths(1));
+        exerciseReleasedTomorrow = ModelFactory.generateTextExercise(now.plusDays(1), null, null, course);
+        exerciseReleasedTomorrow.setTitle("exerciseReleasedTomorrow");
+        allTestExercises.add(exerciseReleasedTomorrow);
 
-        exercises = new HashSet<>();
-        exercises.add(exerciseWithoutAReleaseDate);
-        exercises.add(exerciseReleasedTomorrow);
-        exercises.add(exerciseReleasedAMonthAgo);
-        exercises.add(exerciseReleasedYesterdayAndNotYetDue);
-        exercises.add(exerciseReleasedYesterdayButAlreadyClosed);
+        exerciseReleasedAMonthAgo = ModelFactory.generateTextExercise(now.minusMonths(1), null, null, course);
+        ;
+        exerciseReleasedAMonthAgo.setTitle("exerciseReleasedAMonthAgo");
+        allTestExercises.add(exerciseReleasedAMonthAgo);
 
-        course = new Course();
-        course.setExercises(exercises);
+        course.setExercises(allTestExercises);
+        courseRepository.save(course);
 
-        // preparation of the additional test data like mocks
+        allTestExercises.forEach(exercise -> exerciseRepository.save(exercise));
 
-        users = new HashSet<>();
-        users.add(userWithDeactivatedWeeklySummaries);
-        users.add(userWithActivatedWeeklySummaries);
-
-        mailService = mock(MailService.class);
-
-        userRepository = mock(UserRepository.class);
-        when(userRepository.findAllWithGroupsAndAuthorities()).thenReturn(users);
-
-        courseService = mock(CourseService.class);
-        when(courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(userWithActivatedWeeklySummaries)).thenReturn(List.of(course));
-
-        notificationSettingsService = mock(NotificationSettingsService.class);
-        when(notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(activatedWeeklySummarySettingsSet)).thenReturn(activatedWeeklySummarySettingsSet);
-        when(notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(deactivatedWeeklySummarySettingsSet)).thenReturn(deactivatedWeeklySummarySettingsSet);
-
-        notificationSettingRepository = mock(NotificationSettingRepository.class);
-        when(notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_ID))
-                .thenReturn(deactivatedWeeklySummarySettingsSet);
-        when(notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_ID)).thenReturn(activatedWeeklySummarySettingsSet);
-
-        weeklyEmailSummaryService = new EmailSummaryService(mailService, userRepository, notificationSettingRepository, courseService, notificationSettingsService);
         weeklyEmailSummaryService.setScheduleInterval(Duration.ofDays(7));
     }
 
-    /**
-     * Prepares and cleans the mocks that are modified during the tests
-     */
-    @BeforeEach
-    public void cleanMocks() {
-        reset(mailService);
-    }
-
-    /**
-     * Tests if the method/runnable prepareEmailSummaries correctly filters out users who deactivated weekly summaries.
-     */
-    @Test
-    public void testIfPrepareWeeklyEmailSummariesCorrectlyFiltersOutUsers() {
-        weeklyEmailSummaryService.prepareEmailSummaries();
-        verify(courseService, times(1)).findAllActiveWithExercisesAndLecturesAndExamsForUser(userWithActivatedWeeklySummaries);
-        verify(courseService, times(0)).findAllActiveWithExercisesAndLecturesAndExamsForUser(userWithDeactivatedWeeklySummaries);
+    @AfterEach
+    public void resetDatabase() {
+        database.resetDatabase();
     }
 
     /**
      * Tests if the method/runnable prepareEmailSummaries correctly selects exercises that are suited for weekly summaries
      */
     @Test
-    public void testIfPrepareWeeklyEmailSummariesCorrectlySelectsExercises() {
+    public void testIfPrepareWeeklyEmailSummariesCorrectlySelectsExercisesAndCreatesEmail() {
         ArgumentCaptor<Set<Exercise>> exerciseSetCaptor = ArgumentCaptor.forClass((Class) HashSet.class);
 
         weeklyEmailSummaryService.prepareEmailSummaries();
 
-        verify(mailService, times(1)).sendWeeklySummaryEmail(eq(userWithActivatedWeeklySummaries), exerciseSetCaptor.capture());
+        verify(mailService, timeout(1000).times(1)).sendWeeklySummaryEmail(eq(database.getUserByLogin(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN)), exerciseSetCaptor.capture());
         Set<Exercise> capturedExerciseSet = exerciseSetCaptor.getValue();
         assertThat(capturedExerciseSet).as("Weekly summary should contain exercises that were released yesterday and are not yet due.")
                 .contains(exerciseReleasedYesterdayAndNotYetDue);
-        assertThat(capturedExerciseSet).as("Weekly summary should not contain any other of the test exercises.").hasSize(1);
+        assertThat(capturedExerciseSet.size()).as("Weekly summary should not contain any other of the test exercises.").isEqualTo(1);
+
+        // check if email is created/send
+        verify(javaMailSender, timeout(1000).times(1)).createMimeMessage();
     }
 }

@@ -17,6 +17,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import de.tum.in.www1.artemis.service.scheduled.WeeklyEmailSummaryScheduleService;
 
+/**
+ * Tests if the WeeklyEmailSummaryScheduleService correctly calls the EmailSummaryService with the expected times and intervals
+ */
 public class WeeklyEmailSummaryScheduleServiceTest {
 
     private static WeeklyEmailSummaryScheduleService weeklyEmailSummaryService;
