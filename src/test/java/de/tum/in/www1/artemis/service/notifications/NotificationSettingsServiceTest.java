@@ -154,7 +154,7 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
      */
     @Test
     public void testCheckLoadedNotificationSettingsForCorrectness_correct() {
-        Set<NotificationSetting> testSet = new HashSet<>(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS);
+        Set<NotificationSetting> testSet = new HashSet<>(DEFAULT_NOTIFICATION_SETTINGS);
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
         assertThat(testSet.size()).as("The number of loaded Settings should be equals to the number of default settings")
                 .isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
