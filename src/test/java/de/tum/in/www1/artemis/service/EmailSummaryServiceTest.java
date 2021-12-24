@@ -123,7 +123,7 @@ public class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitb
      */
     @Test
     public void testIfPrepareWeeklyEmailSummariesCorrectlySelectsExercisesAndCreatesEmail() {
-        ArgumentCaptor<Set<Exercise>> exerciseSetCaptor = ArgumentCaptor.forClass((Class) HashSet.class);
+        ArgumentCaptor<Set<Exercise>> exerciseSetCaptor = ArgumentCaptor.forClass((Class) Set.class);
 
         weeklyEmailSummaryService.prepareEmailSummaries();
 
