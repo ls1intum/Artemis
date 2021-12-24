@@ -67,12 +67,10 @@ describe('Exam management', () => {
         // We already verified in the previous test that we can navigate here
         cy.visit(`/course-management/${course.id}/exams`);
         examManagement.openStudentRegistration(exam.id);
-        cy.get('#registered-users').should('contain.text', '0');
         studentExamManagement.clickRegisterCourseStudents().then((request: any) => {
             expect(request.response.statusCode).to.eq(200);
         });
-        cy.contains(users.getStudentOne().username).should('be.visible');
-        cy.get('#registered-users').should('contain.text', '1');
+        cy.get('#registered-students').contains(users.getStudentOne().username).should('be.visible');
     });
 
     it('Generates student exams', () => {
