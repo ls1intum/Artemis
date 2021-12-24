@@ -17,6 +17,10 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -59,11 +63,10 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
     public void setUp() {
         SecurityUtils.setAuthorizationObject();
 
+        course = database.createCourse();
+
         List<User> users = database.addUsers(1, 0, 0, 0);
         user = users.get(0);
-
-        course = new Course();
-        course.setId(COURSE_ID);
 
         exercise = new TextExercise();
         exercise.setCourse(course);
@@ -81,7 +84,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
         post.setCourse(course);
 
         plagiarismSubmission = new PlagiarismSubmission();
-        plagiarismSubmission.setStudentLogin(USER_LOGIN);
+        plagiarismSubmission.setStudentLogin(user.getLogin());
 
         plagiarismResult = new TextPlagiarismResult();
         plagiarismResult.setExercise(exercise);
@@ -160,6 +163,30 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
         singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(fileUploadExercise, user);
         verifyRepositoryCallWithCorrectNotification(FILE_SUBMISSION_SUCCESSFUL_TITLE);
         // check if an email was created and send
-        verify(javaMailSender, timeout(1000).times(1)).createMimeMessage();
+        verify(javaMailSender, timeout(3000).times(1)).createMimeMessage();
+    }
+
+    // Plagiarism related
+
+    /**
+     * Test for notifyUserAboutNewPossiblePlagiarismCase method
+     */
+    @Test
+    public void testNotifyUserAboutNewPossiblePlagiarismCase() {
+        // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
+        database.changeUser("student1");
+        singleUserNotificationService.notifyUserAboutNewPossiblePlagiarismCase(plagiarismComparison, user);
+        verifyRepositoryCallWithCorrectNotification(NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE);
+    }
+
+    /**
+     * Test for notifyUserAboutFinalPlagiarismState method
+     */
+    @Test
+    public void testNotifyUserAboutFinalPlagiarismState() {
+        // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
+        database.changeUser("student1");
+        singleUserNotificationService.notifyUserAboutFinalPlagiarismState(plagiarismComparison, user);
+        verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE);
     }
 }
