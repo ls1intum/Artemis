@@ -1,6 +1,5 @@
 import { DELETE } from './../../../constants';
 import { artemis } from './../../../ArtemisTesting';
-import { CypressExerciseType } from '../../../requests/CourseManagementRequests';
 import { GET, BASE_API, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 
@@ -157,7 +156,7 @@ export function startParticipationInProgrammingExercise(courseId: string, exerci
     cy.log('Participating in the programming exercise as a student...');
     courses.openCourse(courseId);
     cy.url().should('include', '/exercises');
-    courseOverview.startExercise(exerciseId, CypressExerciseType.PROGRAMMING);
+    courseOverview.startExercise(exerciseId);
     courseOverview.openRunningProgrammingExercise(exerciseId);
 }
 
