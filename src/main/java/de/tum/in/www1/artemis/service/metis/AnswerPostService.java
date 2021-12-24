@@ -169,13 +169,13 @@ public class AnswerPostService extends PostingService {
     void sendNotification(Post post, AnswerPost answerPost, Course course) {
         // notify via course
         if (post.getCourseWideContext() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(post, answerPost, course);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForCoursePost(post, answerPost, course);
             singleUserNotificationService.notifyUserAboutNewReplyForCoursePost(post, course);
             return;
         }
         // notify via exercise
         if (post.getExercise() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(post, answerPost, course);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForExercise(post, answerPost, course);
             singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, course);
             // protect Sample Solution, Grading Instructions, etc.
             post.getExercise().filterSensitiveInformation();

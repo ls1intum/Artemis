@@ -71,7 +71,7 @@ public class SingleUserNotificationService {
      * @param post that is replied
      * @param course that the post belongs to
      */
-    public void notifyUserAboutNewAnswerForExercise(Post post, Course course) {
+    public void notifyUserAboutNewReplyForExercise(Post post, Course course) {
         notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_EXERCISE_POST, course, post.getAuthor());
     }
 
