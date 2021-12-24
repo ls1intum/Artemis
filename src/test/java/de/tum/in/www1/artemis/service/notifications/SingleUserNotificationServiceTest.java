@@ -46,7 +46,11 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
 
     private Course course;
 
-    private final Long COURSE_ID = 27L;
+    private PlagiarismComparison plagiarismComparison;
+
+    private PlagiarismSubmission plagiarismSubmission;
+
+    private PlagiarismResult plagiarismResult;
 
     /**
      * Sets up all needed mocks and their wanted behavior
@@ -62,6 +66,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
         course.setId(COURSE_ID);
 
         exercise = new TextExercise();
+        exercise.setCourse(course);
 
         fileUploadExercise = new FileUploadExercise();
         fileUploadExercise.setCourse(course);
@@ -74,6 +79,16 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
         post.setLecture(lecture);
         post.setAuthor(user);
         post.setCourse(course);
+
+        plagiarismSubmission = new PlagiarismSubmission();
+        plagiarismSubmission.setStudentLogin(USER_LOGIN);
+
+        plagiarismResult = new TextPlagiarismResult();
+        plagiarismResult.setExercise(exercise);
+
+        plagiarismComparison = new PlagiarismComparison();
+        plagiarismComparison.setSubmissionA(plagiarismSubmission);
+        plagiarismComparison.setPlagiarismResult(plagiarismResult);
     }
 
     @AfterEach

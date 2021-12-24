@@ -15,7 +15,9 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.MailService;
 
 @Service
@@ -23,15 +25,18 @@ public class SingleUserNotificationService {
 
     private final SingleUserNotificationRepository singleUserNotificationRepository;
 
+    private final UserRepository userRepository;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
     private final MailService mailService;
 
     private final NotificationSettingsService notificationSettingsService;
 
-    public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, SimpMessageSendingOperations messagingTemplate, MailService mailService,
-            NotificationSettingsService notificationSettingsService) {
+    public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, UserRepository userRepository,
+            SimpMessageSendingOperations messagingTemplate, MailService mailService, NotificationSettingsService notificationSettingsService) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
+        this.userRepository = userRepository;
         this.messagingTemplate = messagingTemplate;
         this.mailService = mailService;
         this.notificationSettingsService = notificationSettingsService;
@@ -43,7 +48,7 @@ public class SingleUserNotificationService {
      * @param notificationType is the discriminator for the factory
      * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, Exercise -> user)
      */
-    private void notifyRecipientWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation) {
+    private void notifyRecipientWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation, User author) {
         SingleUserNotification resultingGroupNotification;
         resultingGroupNotification = switch (notificationType) {
             // Post Types
@@ -51,6 +56,10 @@ public class SingleUserNotificationService {
                     (Course) typeSpecificInformation);
             // Exercise related
             case FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
+            // Plagiarism related
+            case NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_FINAL_STATE_STUDENT -> createNotification((PlagiarismComparison) notificationSubject, notificationType,
+                    (User) typeSpecificInformation, author);
+
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
         saveAndSend(resultingGroupNotification, notificationSubject);
@@ -62,8 +71,8 @@ public class SingleUserNotificationService {
      * @param post that is replied
      * @param course that the post belongs to
      */
-    public void notifyUserAboutNewReplyForExercise(Post post, Course course) {
-        notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_EXERCISE_POST, course);
+    public void notifyUserAboutNewAnswerForExercise(Post post, Course course) {
+        notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_EXERCISE_POST, course, post.getAuthor());
     }
 
     /**
@@ -73,7 +82,7 @@ public class SingleUserNotificationService {
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewReplyForLecture(Post post, Course course) {
-        notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_LECTURE_POST, course);
+        notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_LECTURE_POST, course, post.getAuthor());
     }
 
     /**
@@ -84,7 +93,7 @@ public class SingleUserNotificationService {
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewReplyForCoursePost(Post post, Course course) {
-        notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_COURSE_POST, course);
+        notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_COURSE_POST, course, post.getAuthor());
     }
 
     /**
@@ -95,7 +104,27 @@ public class SingleUserNotificationService {
      * @param recipient that should be notified
      */
     public void notifyUserAboutSuccessfulFileUploadSubmission(FileUploadExercise exercise, User recipient) {
-        notifyRecipientWithNotificationType(exercise, FILE_SUBMISSION_SUCCESSFUL, recipient);
+        notifyRecipientWithNotificationType(exercise, FILE_SUBMISSION_SUCCESSFUL, recipient, null);
+    }
+
+    /**
+     * Notify student about possible plagiarism case.
+     *
+     * @param plagiarismComparison that hold the major information for the plagiarism case
+     * @param student who should be notified
+     */
+    public void notifyUserAboutNewPossiblePlagiarismCase(PlagiarismComparison plagiarismComparison, User student) {
+        notifyRecipientWithNotificationType(plagiarismComparison, NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT, student, userRepository.getUser());
+    }
+
+    /**
+     * Notify student about plagiarism case update.
+     *
+     * @param plagiarismComparison that hold the major information for the plagiarism case
+     * @param student who should be notified
+     */
+    public void notifyUserAboutFinalPlagiarismState(PlagiarismComparison plagiarismComparison, User student) {
+        notifyRecipientWithNotificationType(plagiarismComparison, PLAGIARISM_CASE_FINAL_STATE_STUDENT, student, userRepository.getUser());
     }
 
     /**
