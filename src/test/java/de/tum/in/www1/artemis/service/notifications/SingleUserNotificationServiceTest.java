@@ -15,7 +15,12 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.MailService;
 
 public class SingleUserNotificationServiceTest {
@@ -28,6 +33,8 @@ public class SingleUserNotificationServiceTest {
     private Notification capturedNotification;
 
     private static User user;
+
+    private final static String USER_LOGIN = "de27sms";
 
     private static Exercise exercise;
 
@@ -43,6 +50,9 @@ public class SingleUserNotificationServiceTest {
     private static MailService mailService;
 
     @Mock
+    private static UserRepository userRepository;
+
+    @Mock
     private static NotificationSettingsService notificationSettingsService;
 
     private static Post post;
@@ -52,6 +62,12 @@ public class SingleUserNotificationServiceTest {
     private static Course course;
 
     private static final Long COURSE_ID = 27L;
+
+    private static PlagiarismComparison plagiarismComparison;
+
+    private static PlagiarismSubmission plagiarismSubmission;
+
+    private static PlagiarismResult plagiarismResult;
 
     /**
      * Sets up all needed mocks and their wanted behavior once for all test cases.
@@ -65,6 +81,11 @@ public class SingleUserNotificationServiceTest {
         course = new Course();
         course.setId(COURSE_ID);
 
+        user = new User();
+
+        userRepository = mock(UserRepository.class);
+        when(userRepository.getUser()).thenReturn(user);
+
         notificationCaptor = ArgumentCaptor.forClass(Notification.class);
 
         messagingTemplate = mock(SimpMessageSendingOperations.class);
@@ -73,14 +94,14 @@ public class SingleUserNotificationServiceTest {
 
         singleUserNotificationRepository = mock(SingleUserNotificationRepository.class);
 
-        singleUserNotificationService = spy(new SingleUserNotificationService(singleUserNotificationRepository, messagingTemplate, mailService, notificationSettingsService));
+        singleUserNotificationService = spy(
+                new SingleUserNotificationService(singleUserNotificationRepository, userRepository, messagingTemplate, mailService, notificationSettingsService));
 
         exercise = new TextExercise();
+        exercise.setCourse(course);
 
         fileUploadExercise = new FileUploadExercise();
         fileUploadExercise.setCourse(course);
-
-        user = new User();
 
         lecture = new Lecture();
         lecture.setCourse(course);
@@ -90,6 +111,16 @@ public class SingleUserNotificationServiceTest {
         post.setLecture(lecture);
         post.setAuthor(user);
         post.setCourse(course);
+
+        plagiarismSubmission = new PlagiarismSubmission();
+        plagiarismSubmission.setStudentLogin(USER_LOGIN);
+
+        plagiarismResult = new TextPlagiarismResult();
+        plagiarismResult.setExercise(exercise);
+
+        plagiarismComparison = new PlagiarismComparison();
+        plagiarismComparison.setSubmissionA(plagiarismSubmission);
+        plagiarismComparison.setPlagiarismResult(plagiarismResult);
     }
 
     /**
@@ -162,6 +193,26 @@ public class SingleUserNotificationServiceTest {
     public void testNotifyUserAboutSuccessfulFileUploadSubmission() {
         singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(fileUploadExercise, user);
         verifyRepositoryCallWithCorrectNotification(FILE_SUBMISSION_SUCCESSFUL_TITLE);
+    }
+
+    // Plagiarism related
+
+    /**
+     * Test for notifyUserAboutNewPossiblePlagiarismCase method
+     */
+    @Test
+    public void testNotifyUserAboutNewPossiblePlagiarismCase() {
+        singleUserNotificationService.notifyUserAboutNewPossiblePlagiarismCase(plagiarismComparison, user);
+        verifyRepositoryCallWithCorrectNotification(NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE);
+    }
+
+    /**
+     * Test for notifyUserAboutFinalPlagiarismState method
+     */
+    @Test
+    public void testNotifyUserAboutFinalPlagiarismState() {
+        singleUserNotificationService.notifyUserAboutFinalPlagiarismState(plagiarismComparison, user);
+        verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE);
     }
 
     /// Save & Send related Tests
