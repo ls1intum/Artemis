@@ -182,6 +182,9 @@ export class SubmissionService {
         return convertedSubmission;
     }
 
+    /**
+     * Convert a Submission to a JSON which can be sent to the server.
+     */
     public convert<T>(submission: T) {
         return Object.assign({}, submission);
     }
