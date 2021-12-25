@@ -479,7 +479,6 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
         prepareNotificationSettingForTest(instructor, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED);
         groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(programmingExercise);
         verifyRepositoryCallWithCorrectNotification(2, PROGRAMMING_TEST_CASES_CHANGED_TITLE);
-        verifyEmail();
     }
 
     // Course Archiving
