@@ -136,6 +136,11 @@
   "defaultProject": "artemis",
   "cli": {
     "analytics": false,
-    "packageManager": "npm"
+    "packageManager": "npm",
+    "cache": {
+      "enabled": true,
+      "path": ".cache",
+      "environment": "all"
+    }
   }
 }
