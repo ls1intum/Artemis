@@ -99,7 +99,7 @@ export class ModelingSubmissionService {
         if (resultId && resultId > 0) {
             params = params.set('resultId', resultId.toString());
         }
-        return this.http.get<ModelingSubmission>(url, { params });
+        return this.http.get<ModelingSubmission>(url, { params }).pipe(map((res: ModelingSubmission) => this.submissionService.convertSubmissionFromServer(res)));
     }
 
     /**
