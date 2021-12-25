@@ -121,7 +121,8 @@ describe('DragAndDropQuestionComponent', () => {
     });
 
     it('should show sample solution if force sample solution is set to true', () => {
-        const mappings = [getDropLocationMappingAndItem()];
+        const { mapping } = getDropLocationMappingAndItem();
+        const mappings = [mapping];
         const solveSpy = jest.spyOn(dragAndDropQuestionUtil, 'solve').mockReturnValue(mappings);
         comp.mappings = mappings;
         comp.forceSampleSolution = true;

@@ -51,10 +51,16 @@ describe('Exam Exercise Row Buttons Component', () => {
         {
             id: 1,
             text: 'text1',
+            invalid: false,
+            exportQuiz: false,
+            randomizeOrder: true,
         },
         {
             id: 2,
             text: 'text2',
+            invalid: false,
+            exportQuiz: false,
+            randomizeOrder: true,
         },
     ];
 

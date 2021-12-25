@@ -40,9 +40,9 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 
 // Store a copy of now to avoid timing issues
 const now = dayjs();
-const question1 = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1 } as QuizQuestion;
-const question2 = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [] } as QuizQuestion;
-const question3 = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3 } as QuizQuestion;
+const question1 = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1, invalid: false, exportQuiz: false, randomizeOrder: true } as QuizQuestion;
+const question2 = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [], invalid: false, exportQuiz: false, randomizeOrder: true } as QuizQuestion;
+const question3 = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3, invalid: false, exportQuiz: false, randomizeOrder: true } as QuizQuestion;
 
 const quizExercise = (<any>{
     id: 1,

@@ -31,11 +31,14 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     let component: MultipleChoiceQuestionEditComponent;
 
     const question: MultipleChoiceQuestion = {
+        exportQuiz: false,
+        randomizeOrder: true,
         id: 1,
         text: 'some-text',
         hint: 'some-hint',
         explanation: 'some-explanation',
-        answerOptions: [{ id: 1, explanation: 'answer-explanation', hint: 'answer-hint', text: 'answer-text' }],
+        invalid: false,
+        answerOptions: [{ id: 1, explanation: 'answer-explanation', hint: 'answer-hint', text: 'answer-text', invalid: false }],
     };
 
     beforeEach(() => {
@@ -81,6 +84,9 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
         const expected: MultipleChoiceQuestion = {
             id: question.id,
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
             text: undefined,
             explanation: undefined,
             hint: undefined,
@@ -117,6 +123,9 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         const expected: MultipleChoiceQuestion = {
             id: question.id,
             text: undefined,
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
             hint: 'text2',
             explanation: 'text1',
             hasCorrectOption: undefined,

@@ -50,7 +50,10 @@ describe('MultipleChoiceQuestionComponent', () => {
             text: 'some-text',
             hint: 'some-hint',
             explanation: 'some-explanation',
-            answerOptions: [{ id: 1, explanation: 'answer-explanation', hint: 'answer-hint', text: 'answer-text' }],
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions: [{ id: 1, explanation: 'answer-explanation', hint: 'answer-hint', text: 'answer-text', invalid: false }],
         };
 
         component.question = question;
@@ -73,7 +76,10 @@ describe('MultipleChoiceQuestionComponent', () => {
         const question: MultipleChoiceQuestion = {
             text: 'some-text',
             hint: undefined,
-            answerOptions: [{ explanation: 'answer-explanation', text: 'false' }],
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions: [{ explanation: 'answer-explanation', text: 'false', invalid: false }],
         };
 
         component.question = question;
@@ -98,7 +104,11 @@ describe('MultipleChoiceQuestionComponent', () => {
     }
 
     it('should return true is if the answer option was selected', function () {
-        const answerOptions: AnswerOption[] = [{ id: 1 }, { id: 2 }, { id: 3 }];
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+            { id: 3, invalid: false },
+        ];
 
         component.selectedAnswerOptions = [answerOptions[0], answerOptions[2]];
         expect(component.isAnswerOptionSelected(answerOptions[0])).to.be.true;
@@ -107,7 +117,11 @@ describe('MultipleChoiceQuestionComponent', () => {
     });
 
     it('should not toggle anything on disabled click', function () {
-        const answerOptions: AnswerOption[] = [{ id: 1 }, { id: 2 }, { id: 3 }];
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+            { id: 3, invalid: false },
+        ];
 
         component.clickDisabled = true;
         component.selectedAnswerOptions = [];
@@ -118,7 +132,10 @@ describe('MultipleChoiceQuestionComponent', () => {
     });
 
     it('should toggle answer options', function () {
-        const answerOptions: AnswerOption[] = [{ id: 1 }, { id: 2 }];
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+        ];
 
         component.selectedAnswerOptions = [];
         component.toggleSelection(answerOptions[1]);

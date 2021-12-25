@@ -165,7 +165,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.mouse.offsetY = 15;
         component.draggingState = DragState.MOVE;
         const lengthOfElement = 15;
-        component.currentDropLocation = { posX: 10, posY: 10, width: lengthOfElement, height: lengthOfElement };
+        component.currentDropLocation = { posX: 10, posY: 10, width: lengthOfElement, height: lengthOfElement, invalid: false };
 
         // @ts-ignore
         component['mouseMoveAction'](event2, { left: 0, top: 0 }, 10, 10);
@@ -222,8 +222,8 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.draggingState = DragState.CREATE;
         const lengthOfElement = 15;
-        const dropLocation = { posX: 10, posY: 10, width: lengthOfElement, height: lengthOfElement };
-        const alternativeDropLocation = { posX: 15, posY: 15, width: lengthOfElement, height: lengthOfElement };
+        const dropLocation = { posX: 10, posY: 10, width: lengthOfElement, height: lengthOfElement, invalid: false };
+        const alternativeDropLocation = { posX: 15, posY: 15, width: lengthOfElement, height: lengthOfElement, invalid: false };
         component.currentDropLocation = dropLocation;
         component.question.dropLocations = [dropLocation, alternativeDropLocation];
         component.question.correctMappings = undefined;
