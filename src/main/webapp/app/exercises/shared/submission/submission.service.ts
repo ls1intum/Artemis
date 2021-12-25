@@ -11,7 +11,6 @@ import { Feedback } from 'app/entities/feedback.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -157,9 +156,14 @@ export class SubmissionService {
         return Object.assign({}, submission);
     }
 
-    public convertArrayResponse(res: HttpResponse<ModelingSubmission[]>): HttpResponse<ModelingSubmission[]> {
+    public convertResponse(res: EntityResponseType): EntityResponseType {
+        const body: Submission = this.convertSubmissionFromServer(res.body!);
+        return res.clone({ body });
+    }
+
+    public convertArrayResponse<T>(res: HttpResponse<T[]>): HttpResponse<T[]> {
         if (res.body) {
-            res.body.forEach((submission: ModelingSubmission) => this.convertSubmissionFromServer(submission));
+            res.body.forEach((submission: T) => this.convertSubmissionFromServer(submission));
         }
         return res;
     }
@@ -168,13 +172,18 @@ export class SubmissionService {
      * Sets the result and the access rights for the submission.
      *
      * @param submission
-     * @return submission with set result and access rights
+     * @return convertedSubmission with set result and access rights
      * @private
      */
     public convertSubmissionFromServer<T>(submission: T): T {
-        setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-        this.setSubmissionAccessRights(submission);
-        return submission;
+        const convertedSubmission = this.convert(submission);
+        setLatestSubmissionResult(convertedSubmission, getLatestSubmissionResult(convertedSubmission));
+        this.setSubmissionAccessRights(convertedSubmission);
+        return convertedSubmission;
+    }
+
+    public convert<T>(submission: T) {
+        return Object.assign({}, submission);
     }
 
     /**
