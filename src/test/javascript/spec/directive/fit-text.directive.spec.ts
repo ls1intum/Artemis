@@ -9,16 +9,16 @@ import { FitTextDirective } from 'app/exercises/quiz/shared/fit-text/fit-text.di
         </div>
     </div>`,
 })
-class TestFittextComponent {}
+class TestFitTextComponent {}
 
 describe('FitTextDirective', () => {
-    let fixture: ComponentFixture<TestFittextComponent>;
+    let fixture: ComponentFixture<TestFitTextComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [TestFittextComponent, FitTextDirective],
+            declarations: [TestFitTextComponent, FitTextDirective],
         });
-        fixture = TestBed.createComponent(TestFittextComponent);
+        fixture = TestBed.createComponent(TestFitTextComponent);
     });
 
     it('should create an instance', () => {
