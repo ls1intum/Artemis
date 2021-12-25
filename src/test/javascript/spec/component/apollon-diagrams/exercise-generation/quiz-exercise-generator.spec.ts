@@ -32,7 +32,7 @@ const question2 = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, an
 const question3 = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3 } as QuizQuestion;
 const now = dayjs();
 
-const quizExercise = (<any>{
+const quizExercise = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(2, 'minutes'),
@@ -40,7 +40,7 @@ const quizExercise = (<any>{
     dueDate: dayjs(now).add(2, 'minutes'),
     adjustedDueDate: dayjs(now).add(2, 'minutes'),
     started: true,
-}) as QuizExercise;
+} as QuizExercise;
 
 describe('QuizExercise Generator', () => {
     let quizExerciseService: QuizExerciseService;

@@ -101,7 +101,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let findWithParticipationsStub: jest.SpyInstance;
 
     const user = <User>{ id: 99, groups: ['instructorGroup'] };
-    const result: Result = <any>{
+    const result: Result = {
         feedbacks: [new Feedback()],
         participation: new StudentParticipation(),
         score: 80,

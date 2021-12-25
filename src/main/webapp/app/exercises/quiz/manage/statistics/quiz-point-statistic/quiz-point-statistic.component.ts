@@ -129,7 +129,7 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
                 this.remainingTimeSeconds = -1;
-                this.remainingTimeText = this.translateService.instant(translationBasePath + 'quizhasEnded');
+                this.remainingTimeText = this.translateService.instant(translationBasePath + 'quizHasEnded');
             }
         } else {
             // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled

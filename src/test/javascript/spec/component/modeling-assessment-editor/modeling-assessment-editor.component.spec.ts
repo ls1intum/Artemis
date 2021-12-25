@@ -6,7 +6,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { User } from 'app/core/user/user.model';
@@ -28,13 +28,8 @@ import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
-import * as chai from 'chai';
-import dayjs from 'dayjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
-import * as sinon from 'sinon';
-import { SinonStub, stub } from 'sinon';
-import sinonChai from 'sinon-chai';
 import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -47,9 +42,7 @@ import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/asses
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import dayjs from 'dayjs';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;
@@ -58,8 +51,8 @@ describe('ModelingAssessmentEditorComponent', () => {
     let mockAuth: MockAccountService;
     let modelingSubmissionService: ModelingSubmissionService;
     let complaintService: ComplaintService;
-    let modelingSubmissionStub: SinonStub;
-    let complaintStub: SinonStub;
+    let modelingSubmissionSpy: jest.SpyInstance;
+    let complaintSpy: jest.SpyInstance;
     let router: any;
     let submissionService: SubmissionService;
     let exampleSubmissionService: ExampleSubmissionService;
@@ -100,12 +93,12 @@ describe('ModelingAssessmentEditorComponent', () => {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
     describe('ngOnInit tests', () => {
         it('ngOnInit', fakeAsync(() => {
-            modelingSubmissionStub = stub(modelingSubmissionService, 'getSubmission');
-            complaintStub = stub(complaintService, 'findBySubmissionId');
+            modelingSubmissionSpy = jest.spyOn(modelingSubmissionService, 'getSubmission');
+            complaintSpy = jest.spyOn(complaintService, 'findBySubmissionId');
             const submission = {
                 id: 1,
                 submitted: true,
@@ -115,7 +108,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                     type: ParticipationType.SOLUTION,
                     exercise: {
                         id: 1,
-                        problemStatement: 'problemo',
+                        problemStatement: 'problem',
                         gradingInstructions: 'grading',
                         title: 'title',
                         shortName: 'name',
@@ -145,9 +138,9 @@ describe('ModelingAssessmentEditorComponent', () => {
                 ],
             } as unknown as ModelingSubmission;
 
-            modelingSubmissionStub.returns(of(submission));
+            modelingSubmissionSpy.mockReturnValue(of(submission));
             const user = <User>{ id: 99, groups: ['instructorGroup'] };
-            const result: Result = <any>{
+            const result: Result = {
                 feedbacks: [new Feedback()],
                 participation: new StudentParticipation(),
                 score: 80,
@@ -159,33 +152,33 @@ describe('ModelingAssessmentEditorComponent', () => {
                 id: 2,
             };
             const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
-            complaintStub.returns(of({ body: complaint } as HttpResponse<Complaint>));
+            complaintSpy.mockReturnValue(of({ body: complaint } as HttpResponse<Complaint>));
 
-            const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
+            const handleFeedbackSpy = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
 
             component.ngOnInit();
             tick(500);
-            expect(modelingSubmissionStub).to.have.been.calledOnce;
-            expect(component.isLoading).to.be.false;
-            expect(component.complaint).to.deep.equal(complaint);
-            modelingSubmissionStub.restore();
-            expect(handleFeedbackStub).to.have.been.called;
+            expect(modelingSubmissionSpy).toHaveBeenCalledTimes(1);
+            expect(component.isLoading).toBeFalse();
+            expect(component.complaint).toEqual(complaint);
+            modelingSubmissionSpy.mockRestore();
+            expect(handleFeedbackSpy).toHaveBeenCalled();
         }));
 
         it('wrongly call ngOnInit and throw exception', fakeAsync(() => {
-            modelingSubmissionStub = stub(modelingSubmissionService, 'getSubmission');
+            modelingSubmissionSpy = jest.spyOn(modelingSubmissionService, 'getSubmission');
             const response = new HttpErrorResponse({ status: 403 });
-            modelingSubmissionStub.returns(throwError(response));
+            modelingSubmissionSpy.mockReturnValue(throwError(response));
 
-            const accountStub = stub(mockAuth, 'hasAnyAuthorityDirect');
-            accountStub.returns(true);
+            const accountSpy = jest.spyOn(mockAuth, 'hasAnyAuthorityDirect');
+            accountSpy.mockReturnValue(true);
 
             component.ngOnInit();
             tick(500);
-            expect(modelingSubmissionStub).to.have.been.calledOnce;
-            expect(accountStub).to.have.been.calledTwice;
-            modelingSubmissionStub.restore();
-            accountStub.restore();
+            expect(modelingSubmissionSpy).toHaveBeenCalledTimes(1);
+            expect(accountSpy).toHaveBeenCalledTimes(2);
+            modelingSubmissionSpy.mockRestore();
+            accountSpy.mockRestore();
         }));
     });
 
@@ -196,18 +189,18 @@ describe('ModelingAssessmentEditorComponent', () => {
         mockAuth.isAtLeastInstructorInCourse(course);
         component['checkPermissions']();
         fixture.detectChanges();
-        expect(component.isAtLeastInstructor).to.be.true;
+        expect(component.isAtLeastInstructor).toBeTrue();
 
         let assessmentLayoutComponent: AssessmentHeaderComponent = fixture.debugElement.query(By.directive(AssessmentLayoutComponent)).componentInstance;
-        expect(assessmentLayoutComponent.isAtLeastInstructor).to.be.true;
+        expect(assessmentLayoutComponent.isAtLeastInstructor).toBeTrue();
 
         course.isAtLeastInstructor = false;
         mockAuth.isAtLeastInstructorInCourse(course);
         component['checkPermissions']();
         fixture.detectChanges();
-        expect(component.isAtLeastInstructor).to.be.false;
+        expect(component.isAtLeastInstructor).toBeFalse();
         assessmentLayoutComponent = fixture.debugElement.query(By.directive(AssessmentLayoutComponent)).componentInstance;
-        expect(assessmentLayoutComponent.isAtLeastInstructor).to.be.false;
+        expect(assessmentLayoutComponent.isAtLeastInstructor).toBeFalse();
     }));
 
     describe('should test the overwrite access rights and return true', () => {
@@ -217,7 +210,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.ngOnInit();
             tick(500);
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-            expect(component.canOverride).to.be.true;
+            expect(component.canOverride).toBeTrue();
         }));
 
         it('tests the method with tutor rights and as assessor', fakeAsync(() => {
@@ -233,8 +226,8 @@ describe('ModelingAssessmentEditorComponent', () => {
             mockAuth.isAtLeastInstructorInCourse(course);
             component['checkPermissions']();
             fixture.detectChanges();
-            expect(component.isAtLeastInstructor).to.be.false;
-            expect(component.canOverride).to.be.false;
+            expect(component.isAtLeastInstructor).toBeFalse();
+            expect(component.canOverride).toBeFalse();
         }));
     });
 
@@ -270,13 +263,12 @@ describe('ModelingAssessmentEditorComponent', () => {
                 credits: 1,
             } as Feedback,
         ];
-        const fake = sinon.fake.returns(of(getLatestSubmissionResult(component.submission)));
-        sinon.replace(service, 'saveAssessment', fake);
+        const saveAssessmentSpy = jest.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission)!));
 
         component.ngOnInit();
         tick(500);
         component.onSaveAssessment();
-        expect(fake).to.have.been.calledOnce;
+        expect(saveAssessmentSpy).toHaveBeenCalledTimes(1);
     }));
 
     it('should try to submit assessment', fakeAsync(() => {
@@ -316,19 +308,16 @@ describe('ModelingAssessmentEditorComponent', () => {
                 credits: 1,
             } as Feedback,
         ];
-        const fake = sinon.fake.returns(of(getLatestSubmissionResult(component.submission)));
-        sinon.replace(service, 'saveAssessment', fake);
-
-        const secondFake = sinon.fake.returns(false);
-        sinon.replace(window, 'confirm', secondFake);
+        jest.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission)!));
+        jest.spyOn(window, 'confirm').mockReturnValue(false);
 
         component.ngOnInit();
         tick(500);
 
         component.onSubmitAssessment();
 
-        expect(window.confirm).to.be.calledOnce;
-        expect(component.highlightMissingFeedback).to.be.true;
+        expect(window.confirm).toHaveBeenCalledTimes(1);
+        expect(component.highlightMissingFeedback).toBeTrue();
     }));
 
     it('should update assessment after complaint', fakeAsync(() => {
@@ -343,7 +332,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             text: 'Test\n\nTest\n\nTest',
         } as unknown as ModelingSubmission;
 
-        const comp_result = {
+        const changedResult = {
             id: 2374,
             resultString: '1 of 12 points',
             score: 8,
@@ -356,20 +345,18 @@ describe('ModelingAssessmentEditorComponent', () => {
             } as unknown as Participation,
         } as unknown as Result;
 
-        const fake = sinon.fake.returns(of({ body: comp_result }));
-        sinon.replace(service, 'updateAssessmentAfterComplaint', fake);
+        const serviceSpy = jest.spyOn(service, 'updateAssessmentAfterComplaint').mockReturnValue(of({ body: changedResult } as EntityResponseType));
 
         component.ngOnInit();
         tick(500);
 
         component.onUpdateAssessmentAfterComplaint(complaintResponse);
-        expect(fake).to.have.been.calledOnce;
-        expect(component.result?.participation?.results).to.deep.equal([comp_result]);
+        expect(serviceSpy).toHaveBeenCalledTimes(1);
+        expect(component.result?.participation?.results).toEqual([changedResult]);
     }));
 
     it('should cancel the current assessment', fakeAsync(() => {
-        const windowFake = sinon.fake.returns(true);
-        sinon.replace(window, 'confirm', windowFake);
+        const windowSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
 
         component.submission = {
             id: 2,
@@ -378,15 +365,14 @@ describe('ModelingAssessmentEditorComponent', () => {
             text: 'Test\n\nTest\n\nTest',
         } as unknown as ModelingSubmission;
 
-        const fake = sinon.fake.returns(of());
-        sinon.replace(service, 'cancelAssessment', fake);
+        const serviceSpy = jest.spyOn(service, 'cancelAssessment').mockReturnValue(of());
 
         component.ngOnInit();
         tick(500);
 
         component.onCancelAssessment();
-        expect(windowFake).to.have.been.calledOnce;
-        expect(fake).to.have.been.calledOnce;
+        expect(windowSpy).toHaveBeenCalledTimes(1);
+        expect(serviceSpy).toHaveBeenCalledTimes(1);
     }));
 
     it('should handle changed feedback', fakeAsync(() => {
@@ -409,11 +395,11 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         component.modelingExercise.maxPoints = 5;
         component.modelingExercise.bonusPoints = 5;
-        const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
+        const handleFeedbackSpy = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
         component.onFeedbackChanged(feedbacks);
-        expect(component.referencedFeedback).to.have.lengthOf(1);
-        expect(component.totalScore).to.be.equal(3);
-        expect(handleFeedbackStub).to.have.been.calledOnce;
+        expect(component.referencedFeedback).toHaveLength(1);
+        expect(component.totalScore).toBe(3);
+        expect(handleFeedbackSpy).toHaveBeenCalledTimes(1);
     }));
 
     describe('test assessNext', () => {
@@ -422,10 +408,9 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.id = 1;
 
-            const routerStub = stub(router, 'navigate');
+            const routerSpy = jest.spyOn(router, 'navigate').mockImplementation();
             const modelingSubmission: ModelingSubmission = { id: 1 };
-            const fake = sinon.fake.returns(of(modelingSubmission));
-            sinon.replace(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment', fake);
+            const serviceSpy = jest.spyOn(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment').mockReturnValue(of(modelingSubmission));
 
             component.ngOnInit();
 
@@ -443,8 +428,8 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.assessNext();
             tick(500);
 
-            expect(fake).to.have.been.calledOnce;
-            expect(routerStub).to.have.been.calledWith(url, queryParams);
+            expect(serviceSpy).toHaveBeenCalledTimes(1);
+            expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
         }));
 
         it('throw error while assessNext', fakeAsync(() => {
@@ -453,13 +438,12 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.modelingExercise.id = 1;
 
             const response = new HttpErrorResponse({ status: 403 });
-            const fake = sinon.fake.returns(throwError(response));
-            sinon.replace(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment', fake);
+            const serviceSpy = jest.spyOn(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment').mockReturnValue(throwError(response));
 
             component.ngOnInit();
             tick(500);
             component.assessNext();
-            expect(fake).to.have.been.calledOnce;
+            expect(serviceSpy).toHaveBeenCalledTimes(1);
         }));
     });
     it('should invoke import example submission', () => {
@@ -473,12 +457,11 @@ describe('ModelingAssessmentEditorComponent', () => {
             text: 'Test\n\nTest\n\nTest',
         } as ModelingSubmission;
 
-        const importStub = sinon.stub(exampleSubmissionService, 'import');
-        importStub.returns(of(new HttpResponse({ body: new ExampleSubmission() })));
+        const importSpy = jest.spyOn(exampleSubmissionService, 'import').mockReturnValue(of(new HttpResponse({ body: new ExampleSubmission() })));
 
         component.useStudentSubmissionAsExampleSubmission();
 
-        expect(importStub).to.have.calledOnce;
-        expect(importStub).to.have.been.calledWith(component.submission.id, component.modelingExercise!.id);
+        expect(importSpy).toHaveBeenCalledTimes(1);
+        expect(importSpy).toHaveBeenCalledWith(component.submission.id, component.modelingExercise!.id);
     });
 });

@@ -130,7 +130,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
             // check
             expect(comp.remainingTimeSeconds).toEqual(-1);
-            expect(comp.remainingTimeText).toEqual(translateService.instant('showStatistic.quizhasEnded'));
+            expect(comp.remainingTimeText).toEqual(translateService.instant('showStatistic.quizHasEnded'));
         });
 
         it('should show remaining time as zero if time unknown', () => {
