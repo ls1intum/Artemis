@@ -74,7 +74,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
         return this._forceSampleSolution;
     }
     @Input()
-    fnOnMappingUpdate: any;
+    onMappingUpdate: any;
 
     @Output()
     mappingsChange = new EventEmitter<DragAndDropMapping[]>();
@@ -201,8 +201,8 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
 
         this.mappingsChange.emit(this.mappings);
         /** Only execute the onMappingUpdate function if we received such input **/
-        if (this.fnOnMappingUpdate) {
-            this.fnOnMappingUpdate();
+        if (this.onMappingUpdate) {
+            this.onMappingUpdate();
         }
     }
 
@@ -210,7 +210,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
      * Get the drag item that was mapped to the given drop location
      *
      * @param dropLocation {object} the drop location that the drag item should be mapped to
-     * @return {object | null} the mapped drag item, or null, if no drag item has been mapped to this location
+     * @return {object | undefined} the mapped drag item, or undefined, if no drag item has been mapped to this location
      */
     dragItemForDropLocation(dropLocation: DropLocation) {
         const that = this;
@@ -219,10 +219,10 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
             if (mapping) {
                 return mapping.dragItem;
             } else {
-                return null;
+                return undefined;
             }
         }
-        return null;
+        return undefined;
     }
 
     invalidDragItemForDropLocation(dropLocation: DropLocation) {
@@ -265,7 +265,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
             });
         const selectedItem = this.dragItemForDropLocation(dropLocation);
 
-        if (selectedItem === null) {
+        if (!selectedItem) {
             return validDragItems.length === 0 ? MappingResult.NOT_MAPPED : MappingResult.MAPPED_INCORRECT;
         } else {
             return validDragItems.some(function (dragItem) {

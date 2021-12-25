@@ -13,7 +13,7 @@ export class DragAndDropQuestionUtil {
      *
      * @param question {object} the drag and drop question we want to solve
      * @param [mappings] {Array} (optional) the mappings we try to use in the sample solution (this may contain incorrect mappings - they will be filtered out)
-     * @return {Array} array of mappings that would solve this question (may be empty, if question is unsolvable)
+     * @return {Array} array of mappings that would solve this question (can be empty, if question is unsolvable)
      */
     solve(question: DragAndDropQuestion, mappings?: DragAndDropMapping[]) {
         if (!question.correctMappings) {

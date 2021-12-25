@@ -3,7 +3,7 @@
         <jhi-secured-image *ngIf="dragItem.pictureFilePath" [src]="dragItem.pictureFilePath" [mobileDragAndDrop]="isMobile"></jhi-secured-image>
     </div>
     <div class="drag-item-text" *ngIf="dragItem && !dragItem.pictureFilePath">
-        <div [fittext]="true" [activateOnResize]="true" [maxFontSize]="17" [minFontSize]="15" [delay]="150">
+        <div [fitText]="true" [activateOnResize]="true" [maxFontSize]="17" [minFontSize]="15" [delay]="150">
             <span dnd-draggable [dragEnabled]="!clickDisabled" [dragData]="dragItem">{{ dragItem.text }}</span>
         </div>
     </div>
