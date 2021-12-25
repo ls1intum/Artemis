@@ -159,18 +159,31 @@ export class SubmissionService {
 
     public convertArrayResponse(res: HttpResponse<ModelingSubmission[]>): HttpResponse<ModelingSubmission[]> {
         if (res.body) {
-            res.body.forEach((submission: ModelingSubmission) => this.processSubmission(submission));
+            res.body.forEach((submission: ModelingSubmission) => this.convertSubmissionFromServer(submission));
         }
         return res;
     }
 
-    public processSubmission(submission: Submission): Submission {
+    /**
+     * Sets the result and the access rights for the submission.
+     *
+     * @param submission
+     * @return submission with set result and access rights
+     * @private
+     */
+    public convertSubmissionFromServer<T>(submission: T): T {
         setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-        this.setSubmissionExerciseAccessRights(submission);
+        this.setSubmissionAccessRights(submission);
         return submission;
     }
 
-    public setSubmissionExerciseAccessRights(submission: Submission): Submission {
+    /**
+     * Sets the access rights for the exercise that is referenced by the participation of the submission.
+     *
+     * @param submission
+     * @return submission with set access rights
+     */
+    public setSubmissionAccessRights(submission: Submission): Submission {
         if (submission.participation?.exercise) {
             this.accountService.setAccessRightsForExerciseAndReferencedCourse(submission.participation.exercise);
         }

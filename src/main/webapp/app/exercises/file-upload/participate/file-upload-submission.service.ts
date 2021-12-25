@@ -6,14 +6,13 @@ import { map } from 'rxjs/operators';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { stringifyCircular } from 'app/shared/util/utils';
-import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
-import { AccountService } from 'app/core/auth/account.service';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 export type EntityResponseType = HttpResponse<FileUploadSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadSubmissionService {
-    constructor(private http: HttpClient, private accountService: AccountService) {}
+    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
 
     /**
      * Updates File Upload submission on the server
@@ -22,8 +21,9 @@ export class FileUploadSubmissionService {
      * @param submissionFile the file submitted that will for the exercise
      */
     update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFile: Blob | File): Observable<EntityResponseType> {
+        const copy = FileUploadSubmissionService.convert(fileUploadSubmission);
         const formData = new FormData();
-        const submissionBlob = new Blob([stringifyCircular(fileUploadSubmission)], { type: 'application/json' });
+        const submissionBlob = new Blob([stringifyCircular(copy)], { type: 'application/json' });
         formData.append('file', submissionFile);
         formData.append('submission', submissionBlob);
         return this.http
@@ -93,7 +93,7 @@ export class FileUploadSubmissionService {
             params = params.set('lock', 'true');
         }
 
-        return this.http.get<FileUploadSubmission>(url, { params }).pipe(map((res: FileUploadSubmission) => this.processFileUploadSubmission(res)));
+        return this.http.get<FileUploadSubmission>(url, { params }).pipe(map((res: FileUploadSubmission) => this.submissionService.convertSubmissionFromServer(res)));
     }
 
     /**
@@ -103,47 +103,27 @@ export class FileUploadSubmissionService {
     getDataForFileUploadEditor(participationId: number): Observable<FileUploadSubmission> {
         return this.http
             .get<FileUploadSubmission>(`api/participations/${participationId}/file-upload-editor`, { responseType: 'json' })
-            .pipe(map((res: FileUploadSubmission) => this.processFileUploadSubmission(res)));
+            .pipe(map((res: FileUploadSubmission) => this.submissionService.convertSubmissionFromServer(res)));
     }
 
     private convertFileUploadParticipationResponse(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.processFileUploadSubmission(res.body);
+            this.submissionService.convertSubmissionFromServer(res.body);
         }
         return res;
     }
 
     private convertFileUploadParticipationArrayResponse(res: HttpResponse<FileUploadSubmission[]>): HttpResponse<FileUploadSubmission[]> {
         if (res.body) {
-            res.body.forEach((fileUploadSubmission: FileUploadSubmission) => this.processFileUploadSubmission(fileUploadSubmission));
+            res.body.forEach((fileUploadSubmission: FileUploadSubmission) => this.submissionService.convertSubmissionFromServer(fileUploadSubmission));
         }
         return res;
     }
 
     /**
-     * Sets the result and the access rights for the submission.
-     *
-     * @param fileUploadSubmission
-     * @return fileUploadSubmission with set result and access rights
-     * @private
+     * Convert a FileUploadSubmission to a JSON which can be sent to the server.
      */
-    private processFileUploadSubmission(fileUploadSubmission: FileUploadSubmission): FileUploadSubmission {
-        setLatestSubmissionResult(fileUploadSubmission, getLatestSubmissionResult(fileUploadSubmission));
-        this.setFileUploadSubmissionAccessRights(fileUploadSubmission);
-        return fileUploadSubmission;
-    }
-
-    /**
-     * Sets the access rights for the exercise that is referenced by the participation of the submission.
-     *
-     * @param fileUploadSubmission
-     * @return fileUploadSubmission with set access rights
-     * @private
-     */
-    private setFileUploadSubmissionAccessRights(fileUploadSubmission: FileUploadSubmission): FileUploadSubmission {
-        if (fileUploadSubmission.participation?.exercise) {
-            this.accountService.setAccessRightsForExercise(fileUploadSubmission.participation.exercise);
-        }
-        return fileUploadSubmission;
+    private static convert(fileUploadSubmission: FileUploadSubmission): FileUploadSubmission {
+        return Object.assign({}, fileUploadSubmission);
     }
 }

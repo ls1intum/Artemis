@@ -130,7 +130,7 @@ export class ModelingSubmissionService {
      * Convert a returned JSON object to ModelingSubmission.
      */
     private processModelingSubmission(modelingSubmission: ModelingSubmission): ModelingSubmission {
-        this.submissionService.processSubmission(modelingSubmission);
+        this.submissionService.convertSubmissionFromServer(modelingSubmission);
         return modelingSubmission;
     }
 
