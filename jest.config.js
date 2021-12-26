@@ -49,12 +49,12 @@ module.exports = {
     modulePathIgnorePatterns: [],
     testTimeout: 2000,
     testMatch: [
-        '<rootDir>/src/test/javascript/spec/component/**/*.ts',
-        '<rootDir>/src/test/javascript/spec/directive/**/*.ts',
-        '<rootDir>/src/test/javascript/spec/integration/**/*.ts',
-        '<rootDir>/src/test/javascript/spec/pipe/**/*.ts',
-        '<rootDir>/src/test/javascript/spec/service/**/*.ts',
-        '<rootDir>/src/test/javascript/spec/util/**/*.ts',
+        '<rootDir>/src/test/javascript/spec/component/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/directive/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/integration/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/pipe/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/service/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/util/**/*.spec.ts',
     ],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',

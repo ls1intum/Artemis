@@ -59,7 +59,7 @@
                 (onCreateFile)="onCreateFile($event)"
             ></jhi-code-editor-file-browser-create-node>
         </ng-container>
-        <treeview *ngIf="!isLoadingFiles" #treeview [config]="treeviewConfig" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </treeview>
+        <treeview *ngIf="!isLoadingFiles" #treeview [maxHeight]="treeViewMaxHeight" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </treeview>
         <!-- Loading files indicator -->
         <div *ngIf="isLoadingFiles" class="text-center lead text-muted pt-2">
             <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
@@ -70,7 +70,7 @@
 </div>
 
 <!--Treeview Item Template-->
-<ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand" let-onCheckedChange="onCheckedChange">
+<ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand">
     <!--file-->
     <jhi-code-editor-file-browser-folder
         *ngIf="repositoryFiles[item.value] === FileType.FOLDER"

@@ -1,5 +1,4 @@
 import { isBoolean, isString } from 'lodash-es';
-import { TreeviewHelper } from '../helpers/treeview-helper';
 
 export interface TreeviewSelection {
     checkedItems: TreeviewItem[];
@@ -17,22 +16,22 @@ export interface TreeItem {
 
 export class TreeviewItem {
     private internalDisabled = false;
-    private internalChecked: boolean | undefined = true;
     private internalCollapsed = false;
     private internalChildren: TreeviewItem[] = [];
+    checked = false;
     text: string;
     value: any;
 
-    constructor(item: TreeItem, autoCorrectChecked = false) {
+    constructor(item: TreeItem) {
+        if (!item) {
+            throw new Error('Item must be defined');
+        }
         if (isString(item.text)) {
             this.text = item.text;
         } else {
             throw new Error('A text of item must be string object');
         }
         this.value = item.value;
-        if (isBoolean(item.checked)) {
-            this.checked = item.checked;
-        }
         if (isBoolean(item.collapsed)) {
             this.collapsed = item.collapsed;
         }
@@ -47,31 +46,6 @@ export class TreeviewItem {
 
                 return new TreeviewItem(child);
             });
-        }
-
-        if (autoCorrectChecked) {
-            this.correctChecked();
-        }
-    }
-
-    get checked(): boolean | undefined {
-        return this.internalChecked;
-    }
-
-    set checked(value: boolean | undefined) {
-        if (!this.internalDisabled) {
-            if (this.internalChecked !== value) {
-                this.internalChecked = value;
-            }
-        }
-    }
-
-    setCheckedRecursive(value: boolean | undefined): void {
-        if (!this.internalDisabled) {
-            this.internalChecked = value;
-            if (this.internalChildren) {
-                this.internalChildren.forEach((child) => child.setCheckedRecursive(value));
-            }
         }
     }
 
@@ -115,64 +89,6 @@ export class TreeviewItem {
                 throw new Error('Children must be not an empty array');
             }
             this.internalChildren = value;
-            if (this.internalChildren) {
-                let checked: boolean | undefined = undefined;
-                this.internalChildren.forEach((child) => {
-                    if (checked == undefined) {
-                        checked = child.checked;
-                    } else {
-                        if (child.checked !== checked) {
-                            checked = undefined;
-                            return;
-                        }
-                    }
-                });
-                this.internalChecked = checked;
-            }
         }
-    }
-
-    getSelection(): TreeviewSelection {
-        let checkedItems: TreeviewItem[] = [];
-        let uncheckedItems: TreeviewItem[] = [];
-        if (!this.internalChildren) {
-            if (this.internalChecked) {
-                checkedItems.push(this);
-            } else {
-                uncheckedItems.push(this);
-            }
-        } else {
-            const selection = TreeviewHelper.concatSelection(this.internalChildren, checkedItems, uncheckedItems);
-            checkedItems = selection.checked;
-            uncheckedItems = selection.unchecked;
-        }
-
-        return {
-            checkedItems,
-            uncheckedItems,
-        };
-    }
-
-    correctChecked(): void {
-        this.internalChecked = this.getCorrectChecked();
-    }
-
-    private getCorrectChecked(): boolean | undefined {
-        let checked: boolean | undefined = undefined;
-        if (this.internalChildren) {
-            for (const child of this.internalChildren) {
-                child.internalChecked = child.getCorrectChecked();
-                if (checked == undefined) {
-                    checked = child.internalChecked;
-                } else if (checked !== child.internalChecked) {
-                    checked = undefined;
-                    break;
-                }
-            }
-        } else {
-            checked = this.checked;
-        }
-
-        return checked;
     }
 }

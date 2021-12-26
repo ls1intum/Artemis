@@ -1,13 +1,27 @@
-import { Component, DebugElement, Injectable } from '@angular/core';
-import { TestBed, ComponentFixture, fakeAsync, tick, async, inject } from '@angular/core/testing';
+import { Component, DebugElement } from '@angular/core';
+import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
-import { slice } from 'lodash';
-import { TreeviewConfig } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-config';
+import { slice } from 'lodash-es';
 import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
-import { fakeItemTemplate } from './treeview-item-template.spec';
 import { createGenericTestComponent } from './common';
+
+const fakeItemTemplate = `
+<ng-template #itemTemplate let-item="item"
+  let-onCollapseExpand="onCollapseExpand"
+  let-onCheckedChange="onCheckedChange">
+  <div class="form-check">
+    <i *ngIf="item.children" (click)="onCollapseExpand()" aria-hidden="true"
+      class="fa" [class.fa-caret-right]="item.collapsed" [class.fa-caret-down]="!item.collapsed"></i>
+    <label class="form-check-label">
+      <input type="checkbox" class="form-check-input"
+        [(ngModel)]="item.checked" (ngModelChange)="onCheckedChange()" [disabled]="item.disabled" />
+      {{item.text}}
+    </label>
+  </div>
+</ng-template>
+`;
 
 interface FakeData {
     item: TreeviewItem;
@@ -17,7 +31,7 @@ interface FakeData {
 const fakeData: FakeData = {
     // @ts-ignore
     item: undefined,
-    checkedChange: (checked: boolean) => {},
+    checkedChange: () => {},
 };
 
 const testTemplate = fakeItemTemplate + '<treeview-item [item]="item" [template]="itemTemplate" (checkedChange)="checkedChange($event)"></treeview-item>';
@@ -39,14 +53,7 @@ describe('TreeviewItemComponent', () => {
         TestBed.configureTestingModule({
             imports: [FormsModule, BrowserModule],
             declarations: [TestComponent, TreeviewItemComponent],
-            providers: [TreeviewConfig],
         });
-    });
-
-    it('should initialize with default config', () => {
-        const defaultConfig = new TreeviewConfig();
-        const component = TestBed.createComponent(TreeviewItemComponent).componentInstance;
-        expect(component.config).toEqual(defaultConfig);
     });
 
     describe('item', () => {
@@ -101,7 +108,7 @@ describe('TreeviewItemComponent', () => {
             expect(textElement.nativeElement.innerText.trim()).toBe('Parent 1');
             expect(parentCheckbox.nativeElement.checked).toBeTruthy();
             expect(parentCheckbox.nativeElement.disabled).toBeFalsy();
-            expect(collapsedElement.nativeElement).toHaveCssClass('fa-caret-down');
+            expect(collapsedElement.nativeElement.querySelector('#fa-caret-down')).not.toBeNull();
         });
 
         it('should render "Parent 1", "Child 1" & "Child 2" with checked', () => {
@@ -117,7 +124,8 @@ describe('TreeviewItemComponent', () => {
             }));
 
             it('should invoke onCollapseExpand to change value of collapsed', () => {
-                expect(collapsedElement.nativeElement).toHaveCssClass('fa-caret-right');
+                const cssClass = 'fa-caret-right';
+                expect(collapsedElement.nativeElement.querySelector(`.${cssClass}`)).not.toBeNull();
             });
 
             it('should not render children', () => {

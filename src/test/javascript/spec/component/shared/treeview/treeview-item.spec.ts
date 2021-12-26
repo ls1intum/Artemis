@@ -27,84 +27,7 @@ describe('TreeviewItem', () => {
 
     it('should allow to create TreeviewItem with empty children', () => {
         const treeviewItem = new TreeviewItem({ text: 'Parent', value: 1, children: [] });
-        expect(treeviewItem.children).toBeUndefined();
-    });
-
-    describe('checked', () => {
-        it('should have value is true by default', () => {
-            const treeviewItem = new TreeviewItem({ text: 'Parent', value: 1 });
-            expect(treeviewItem.checked).toBeTruthy();
-        });
-
-        it('should correct checked value when input second param', () => {
-            const treeviewItem = new TreeviewItem(
-                {
-                    text: 'Parent',
-                    value: 1,
-                    checked: false,
-                    children: [{ text: 'Child 1', value: 11, checked: true }],
-                },
-                true,
-            );
-            expect(treeviewItem.checked).toBe(true);
-        });
-
-        it('should set checked value correctly when invoke correctChecked', () => {
-            const treeviewItem = new TreeviewItem({
-                text: 'Parent',
-                value: 1,
-                checked: false,
-                children: [{ text: 'Child 1', value: 11, checked: true }],
-            });
-            expect(treeviewItem.checked).toBe(true);
-            treeviewItem.children.push(
-                new TreeviewItem({
-                    text: 'Child 2',
-                    value: 12,
-                    checked: false,
-                }),
-            );
-            treeviewItem.correctChecked();
-            expect(treeviewItem.checked).toBe(undefined);
-        });
-
-        it('should not change checked value if item is disabled', () => {
-            const treeviewItem = new TreeviewItem({
-                text: 'Parent',
-                value: 1,
-                checked: true,
-                disabled: true,
-            });
-            expect(treeviewItem.checked).toBe(true);
-            treeviewItem.checked = false;
-            expect(treeviewItem.checked).toBe(true);
-        });
-    });
-
-    describe('setCheckedRecursive', () => {
-        it('should apply checked value to children if item is enabled', () => {
-            const treeviewItem = new TreeviewItem({
-                text: 'Parent',
-                value: 1,
-                checked: false,
-                children: [{ text: 'Child 1', value: 11, checked: false }],
-            });
-            expect(treeviewItem.children[0].checked).toBe(false);
-            treeviewItem.setCheckedRecursive(true);
-            expect(treeviewItem.children[0].checked).toBe(true);
-        });
-
-        it('should not apply checked value to children if item is disabled', () => {
-            const treeviewItem = new TreeviewItem({
-                text: 'Parent',
-                value: 1,
-                disabled: true,
-                children: [{ text: 'Child 1', value: 11 }],
-            });
-            expect(treeviewItem.children[0].checked).toBe(true);
-            treeviewItem.setCheckedRecursive(true);
-            expect(treeviewItem.children[0].checked).toBe(true);
-        });
+        expect(treeviewItem.children).toEqual([]);
     });
 
     describe('collapsed', () => {
@@ -177,7 +100,7 @@ describe('TreeviewItem', () => {
         it('should affectly change children value', () => {
             const treeviewItem = new TreeviewItem({ text: 'Parent', value: 1 });
             const children: TreeviewItem[] = [new TreeviewItem({ text: 'Child 1', value: 11 })];
-            expect(treeviewItem.children).toBeUndefined();
+            expect(treeviewItem.children).toEqual([]);
             treeviewItem.children = children;
             expect(treeviewItem.children).toBe(children);
             treeviewItem.children = children;
@@ -194,39 +117,6 @@ describe('TreeviewItem', () => {
             // @ts-ignore
             treeviewItem.children = undefined;
             expect(treeviewItem.children).toBeUndefined();
-        });
-    });
-
-    describe('getSelection', () => {
-        describe('no children', () => {
-            it('should return empty list if item is unchecked', () => {
-                const parentItem = new TreeviewItem({ text: 'Parent', value: 1, checked: false });
-                const selection = parentItem.getSelection();
-                expect(selection.checkedItems).toEqual([]);
-                expect(selection.uncheckedItems).toEqual([parentItem]);
-            });
-
-            it('should return a list of current item if item is unchecked', () => {
-                const parentItem = new TreeviewItem({ text: 'Parent', value: 1 });
-                const selection = parentItem.getSelection();
-                expect(selection.checkedItems).toEqual([parentItem]);
-                expect(selection.uncheckedItems).toEqual([]);
-            });
-        });
-
-        describe('has children', () => {
-            it('should return list of checked items', () => {
-                const parentItem = new TreeviewItem({ text: 'Parent', value: 1, checked: false });
-                const childItem1 = new TreeviewItem({ text: 'Child 1', value: 11, checked: true });
-                const childItem2 = new TreeviewItem({ text: 'Child 2', value: 12, checked: false });
-                const childItem21 = new TreeviewItem({ text: 'Child 21', value: 121, checked: true });
-                const childItem22 = new TreeviewItem({ text: 'Child 22', value: 122, checked: false });
-                childItem2.children = [childItem21, childItem22];
-                parentItem.children = [childItem1, childItem2];
-                const selection = parentItem.getSelection();
-                expect(selection.checkedItems).toEqual([childItem1, childItem21]);
-                expect(selection.uncheckedItems).toEqual([childItem22]);
-            });
         });
     });
 });

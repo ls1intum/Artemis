@@ -22,10 +22,9 @@ import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 import { supportedTextFileExtensions } from 'app/exercises/programming/shared/code-editor/file-browser/supported-file-extensions';
 import { faAngleDoubleDown, faAngleDoubleUp, faChevronLeft, faChevronRight, faCircleNotch, faFile, faFolder, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { TreeviewConfig } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-config';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
-import { TreeviewHelper } from 'app/exercises/programming/shared/code-editor/treeview/helpers/treeview-helper';
+import { findItemInList } from 'app/exercises/programming/shared/code-editor/treeview/helpers/treeview-helper';
 
 export type InteractableEvent = {
     // Click event object; contains target information
@@ -98,15 +97,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     // Tuple: [filePath, fileType]
     creatingFile?: [string, FileType];
 
-    /** Provide basic configuration for the TreeView **/
-    treeviewConfig = TreeviewConfig.create({
-        hasAllCheckBox: false,
-        hasFilter: false,
-        hasCollapseExpand: false,
-        decoupleChildFromParent: false,
-        // Default limit is 500, as our styling makes tree item relatively large, we need to increase it a lot
-        maxHeight: 5000,
-    });
+    // Default limit is 500, as our styling makes tree item relatively large, we need to increase it a lot
+    treeViewMaxHeight: 5000;
 
     /** Resizable constants **/
     resizableMinWidth = 100;
@@ -272,7 +264,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             item.checked = true;
             // If we had selected a file prior to this, we 'uncheck' it
             if (this.selectedFile) {
-                const priorFileSelection = TreeviewHelper.findItemInList(this.filesTreeViewItem, this.selectedFile);
+                const priorFileSelection = findItemInList(this.filesTreeViewItem, this.selectedFile);
                 // Avoid issues after file deletion
                 if (priorFileSelection) {
                     priorFileSelection.checked = false;
@@ -361,7 +353,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 node.value = node.file;
                 node.checked = false;
 
-                // Currently processed node selected?
+                // Currently, processed node selected?
                 if (node.file === this.selectedFile) {
                     folder = node.folder;
                     node.checked = true;
@@ -397,9 +389,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * Rename the file (if new fileName is different than old fileName and new fileName is not empty)
+     * Rename the file (if new fileName is different from old fileName and new fileName is not empty)
      * and emit the changes to the parent.
-     * After rename the rename state is exited.
+     * After rename the state is exited.
      **/
     onRenameFile(event: any) {
         const newFileName = event as string;
@@ -437,7 +429,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * Set renamingFile to undefined to make the input disappear.
+     * Set renamingFile to undefined so that the input disappears.
      **/
     clearRenamingFile() {
         this.renamingFile = undefined;
@@ -493,14 +485,14 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * Set creatingFile to undefined to make the input disappear.
+     * Set creatingFile to undefined so that the input disappears.
      **/
     clearCreatingFile() {
         this.creatingFile = undefined;
     }
 
     /**
-     * Load files from the participants repository.
+     * Load files from the participants' repository.
      * Files that are not relevant for the conduction of the exercise are removed from result.
      */
     loadFiles = (): Observable<{ [fileName: string]: FileType }> => {

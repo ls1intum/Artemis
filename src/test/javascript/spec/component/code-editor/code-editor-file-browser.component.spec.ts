@@ -123,7 +123,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(folder.children).toHaveLength(1);
         const file1 = folder.children.find(({ value }) => value === 'folder/file1')!;
         expect(file1).not.toBe(undefined);
-        expect(file1.children).toBe(undefined);
+        expect(file1.children).toBe([]);
         const folder2 = comp.filesTreeViewItem.find(({ value }) => value === 'folder2')!;
         expect(folder2).toBeObject();
         expect(folder2.children).toHaveLength(2);

@@ -6,3 +6,8 @@ export function createGenericTestComponent<T>(html: string, type: { new (...args
     fixture.detectChanges();
     return fixture as ComponentFixture<T>;
 }
+
+export function raiseInput(input: HTMLInputElement, value: string): void {
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+}
