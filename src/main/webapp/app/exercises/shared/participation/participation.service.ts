@@ -42,7 +42,7 @@ export class ParticipationService {
         });
         return this.http
             .put<StudentParticipation[]>(SERVER_API_URL + `api/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
     }
 
     find(participationId: number): Observable<EntityResponseType> {
@@ -73,19 +73,7 @@ export class ParticipationService {
                 params: options,
                 observe: 'response',
             })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
-            .pipe(map((res: EntityArrayResponseType) => this.setAccessRightsParticipationEntityArrayResponseType(res)));
-    }
-
-    private setAccessRightsParticipationEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((participation) => {
-                if (participation.exercise) {
-                    this.accountService.setAccessRightsForExercise(participation.exercise as Exercise);
-                }
-            });
-        }
-        return res;
+            .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
     }
 
     delete(participationId: number, req?: any): Observable<HttpResponse<any>> {
@@ -183,24 +171,6 @@ export class ParticipationService {
         return undefined;
     }
 
-    /**
-     * This method bundles recurring conversion steps for Participation EntityResponses.
-     * @param participationRes
-     * @private
-     */
-    private processParticipationEntityResponseType(participationRes: EntityResponseType): EntityResponseType {
-        this.convertDateFromServer(participationRes);
-        this.setAccessRightsParticipationEntityResponseType(participationRes);
-        return participationRes;
-    }
-
-    private setAccessRightsParticipationEntityResponseType(res: EntityResponseType): EntityResponseType {
-        if (res.body?.exercise) {
-            this.accountService.setAccessRightsForExercise(res.body.exercise);
-        }
-        return res;
-    }
-
     private mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {
         const combinedParticipation = new ProgrammingExerciseStudentParticipation();
         if (participations && participations.length > 0) {
@@ -256,5 +226,45 @@ export class ParticipationService {
                 submission.participation = combinedParticipation;
             });
         }
+    }
+
+    /**
+     * This method bundles recurring conversion steps for Participation EntityArrayResponses.
+     * @param participationRes
+     * @private
+     */
+    private processParticipationEntityArrayResponseType(participationRes: EntityArrayResponseType): EntityArrayResponseType {
+        this.convertDateArrayFromServer(participationRes);
+        this.setAccessRightsParticipationEntityArrayResponseType(participationRes);
+        return participationRes;
+    }
+
+    /**
+     * This method bundles recurring conversion steps for Participation EntityResponses.
+     * @param participationRes
+     * @private
+     */
+    private processParticipationEntityResponseType(participationRes: EntityResponseType): EntityResponseType {
+        this.convertDateFromServer(participationRes);
+        this.setAccessRightsParticipationEntityResponseType(participationRes);
+        return participationRes;
+    }
+
+    private setAccessRightsParticipationEntityResponseType(res: EntityResponseType): EntityResponseType {
+        if (res.body?.exercise) {
+            this.accountService.setAccessRightsForExercise(res.body.exercise);
+        }
+        return res;
+    }
+
+    private setAccessRightsParticipationEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((participation) => {
+                if (participation.exercise) {
+                    this.accountService.setAccessRightsForExercise(participation.exercise as Exercise);
+                }
+            });
+        }
+        return res;
     }
 }
