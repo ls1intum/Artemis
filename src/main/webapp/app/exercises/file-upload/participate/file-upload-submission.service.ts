@@ -21,7 +21,7 @@ export class FileUploadSubmissionService {
      * @param submissionFile the file submitted that will for the exercise
      */
     update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFile: Blob | File): Observable<EntityResponseType> {
-        const copy = FileUploadSubmissionService.convert(fileUploadSubmission);
+        const copy = this.submissionService.convert(fileUploadSubmission);
         const formData = new FormData();
         const submissionBlob = new Blob([stringifyCircular(copy)], { type: 'application/json' });
         formData.append('file', submissionFile);
@@ -30,7 +30,7 @@ export class FileUploadSubmissionService {
             .post<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submissions`, formData, {
                 observe: 'response',
             })
-            .pipe(map((res: EntityResponseType) => this.convertFileUploadParticipationResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.submissionService.convertSubmissionFromServer(res)));
     }
 
     /**
@@ -50,7 +50,7 @@ export class FileUploadSubmissionService {
         }
         return this.http
             .get<FileUploadSubmission>(url, { params, observe: 'response' })
-            .pipe(map((res: HttpResponse<FileUploadSubmission>) => this.convertFileUploadParticipationResponse(res)));
+            .pipe(map((res: HttpResponse<FileUploadSubmission>) => this.submissionService.convertSubmissionFromServer(res)));
     }
 
     /**
@@ -74,7 +74,7 @@ export class FileUploadSubmissionService {
                 params,
                 observe: 'response',
             })
-            .pipe(map((res: HttpResponse<FileUploadSubmission[]>) => this.convertFileUploadParticipationArrayResponse(res)));
+            .pipe(map((res: HttpResponse<FileUploadSubmission[]>) => this.submissionService.convertArrayResponse(res)));
     }
 
     /**
@@ -104,26 +104,5 @@ export class FileUploadSubmissionService {
         return this.http
             .get<FileUploadSubmission>(`api/participations/${participationId}/file-upload-editor`, { responseType: 'json' })
             .pipe(map((res: FileUploadSubmission) => this.submissionService.convertSubmissionFromServer(res)));
-    }
-
-    private convertFileUploadParticipationResponse(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            this.submissionService.convertSubmissionFromServer(res.body);
-        }
-        return res;
-    }
-
-    private convertFileUploadParticipationArrayResponse(res: HttpResponse<FileUploadSubmission[]>): HttpResponse<FileUploadSubmission[]> {
-        if (res.body) {
-            res.body.forEach((fileUploadSubmission: FileUploadSubmission) => this.submissionService.convertSubmissionFromServer(fileUploadSubmission));
-        }
-        return res;
-    }
-
-    /**
-     * Convert a FileUploadSubmission to a JSON which can be sent to the server.
-     */
-    private static convert(fileUploadSubmission: FileUploadSubmission): FileUploadSubmission {
-        return Object.assign({}, fileUploadSubmission);
     }
 }
