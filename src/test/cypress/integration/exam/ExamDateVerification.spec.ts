@@ -7,9 +7,9 @@ import { generateUUID } from '../../support/utils';
 const courseManagementRequests = artemis.requests.courseManagement;
 
 // page objects
-const examStartEnd = artemis.pageobjects.examStartEnd;
-const textEditor = artemis.pageobjects.textExercise.editor;
-const examNavigationBar = artemis.pageobjects.examNavigationBar;
+const examNavigationBar = artemis.pageobjects.exam.navigationBar;
+const examStartEnd = artemis.pageobjects.exam.startEnd;
+const textEditor = artemis.pageobjects.exercise.text.editor;
 
 describe('Exam date verification', () => {
     let course: any;
