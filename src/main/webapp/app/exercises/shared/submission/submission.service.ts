@@ -48,6 +48,7 @@ export class SubmissionService {
             tap((res) =>
                 res.body!.forEach((submission) => {
                     this.reconnectSubmissionAndResult(submission);
+                    this.setSubmissionAccessRights(submission);
                 }),
             ),
         );
@@ -78,6 +79,7 @@ export class SubmissionService {
             res.body.forEach((dto) => {
                 dto.submission = this.convertSubmissionDateFromServer(dto.submission);
                 dto.complaint = this.convertDateFromServerComplaint(dto.complaint);
+                this.setSubmissionAccessRights(dto.submission);
             });
         }
         return res;
