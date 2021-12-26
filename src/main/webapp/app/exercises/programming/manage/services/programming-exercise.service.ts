@@ -206,21 +206,19 @@ export class ProgrammingExerciseService {
     findWithTemplateAndSolutionParticipation(programmingExerciseId: number, withSubmissionResults = false): Observable<EntityResponseType> {
         let params = new HttpParams();
         params = params.set('withSubmissionResults', withSubmissionResults.toString());
-        return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-template-and-solution-participation`, { params, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)))
-            .pipe(
-                map((res: EntityResponseType) => {
-                    if (res.body && withSubmissionResults) {
-                        // We need to reconnect the submissions with the results. They got removed because of the circular dependency
-                        const templateSubmissions = res.body.templateParticipation?.submissions;
-                        this.reconnectSubmissionAndResult(templateSubmissions);
-                        const solutionSubmissions = res.body.solutionParticipation?.submissions;
-                        this.reconnectSubmissionAndResult(solutionSubmissions);
-                    }
-                    return res;
-                }),
-            );
+        return this.http.get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-template-and-solution-participation`, { params, observe: 'response' }).pipe(
+            map((res: EntityResponseType) => {
+                if (res.body && withSubmissionResults) {
+                    // We need to reconnect the submissions with the results. They got removed because of the circular dependency
+                    const templateSubmissions = res.body.templateParticipation?.submissions;
+                    this.reconnectSubmissionAndResult(templateSubmissions);
+                    const solutionSubmissions = res.body.solutionParticipation?.submissions;
+                    this.reconnectSubmissionAndResult(solutionSubmissions);
+                    this.processProgrammingExerciseEntityResponse(res);
+                }
+                return res;
+            }),
+        );
     }
 
     /**
