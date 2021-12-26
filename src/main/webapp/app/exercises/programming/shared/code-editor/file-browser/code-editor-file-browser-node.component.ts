@@ -8,16 +8,16 @@ export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
 
     @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
 
-    @Input() item: TreeviewItem;
+    @Input() item: TreeviewItem<string>;
     @Input() hasError = false;
     @Input() hasUnsavedChanges = false;
     @Input() isBeingRenamed = false;
 
-    @Output() onNodeSelect = new EventEmitter<TreeviewItem>();
-    @Output() onSetRenamingNode = new EventEmitter<TreeviewItem>();
+    @Output() onNodeSelect = new EventEmitter<TreeviewItem<string>>();
+    @Output() onSetRenamingNode = new EventEmitter<TreeviewItem<string>>();
     @Output() onClearRenamingNode = new EventEmitter<void>();
-    @Output() onRenameNode = new EventEmitter<{ item: TreeviewItem; newFileName: string }>();
-    @Output() onDeleteNode = new EventEmitter<TreeviewItem>();
+    @Output() onRenameNode = new EventEmitter<{ item: TreeviewItem<string>; newFileName: string }>();
+    @Output() onDeleteNode = new EventEmitter<TreeviewItem<string>>();
 
     /**
      * Check if the node is being renamed now, if so, focus the input when the view is rendered.

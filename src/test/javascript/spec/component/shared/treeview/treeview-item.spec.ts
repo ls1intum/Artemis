@@ -13,31 +13,25 @@ describe('TreeviewItem', () => {
         const error = new Error('A text of item must be string object');
         const fakeString: any = 1;
         // @ts-ignore
-        expect(() => new TreeviewItem({ text: null, value: 1 })).toThrow(error);
+        expect(() => new TreeviewItem<number>({ text: null, value: 1 })).toThrow(error);
         // @ts-ignore
-        expect(() => new TreeviewItem({ text: undefined, value: 1 })).toThrow(error);
-        expect(() => new TreeviewItem({ text: fakeString, value: 1 })).toThrow(error);
-    });
-
-    it('should throw error if TreeviewItem children is assigned an empty array', () => {
-        const error = new Error('Children must be not an empty array');
-        const treeviewItem = new TreeviewItem({ text: 'Parent', value: 1 });
-        expect(() => (treeviewItem.children = [])).toThrow(error);
+        expect(() => new TreeviewItem<number>({ text: undefined, value: 1 })).toThrow(error);
+        expect(() => new TreeviewItem<number>({ children: [], text: fakeString, value: 1 })).toThrow(error);
     });
 
     it('should allow to create TreeviewItem with empty children', () => {
-        const treeviewItem = new TreeviewItem({ text: 'Parent', value: 1, children: [] });
+        const treeviewItem = new TreeviewItem<number>({ text: 'Parent', value: 1, children: [] });
         expect(treeviewItem.children).toEqual([]);
     });
 
     describe('collapsed', () => {
         it('should set value is false by default', () => {
-            const treeviewItem = new TreeviewItem({ text: 'Parent', value: 1 });
+            const treeviewItem = new TreeviewItem<number>({ children: [], text: 'Parent', value: 1 });
             expect(treeviewItem.collapsed).toBeFalsy();
         });
 
-        it('should affectly change collapsed value', () => {
-            const treeviewItem = new TreeviewItem({ text: 'Parent', value: 1, collapsed: true });
+        it('should affectedly change collapsed value', () => {
+            const treeviewItem = new TreeviewItem<number>({ children: [], text: 'Parent', value: 1, collapsed: true });
             expect(treeviewItem.collapsed).toBeTruthy();
             treeviewItem.collapsed = false;
             expect(treeviewItem.collapsed).toBeFalsy();
@@ -52,7 +46,7 @@ describe('TreeviewItem', () => {
                 text: 'Parent',
                 value: 1,
                 collapsed: false,
-                children: [{ text: 'Child 1', value: 11, collapsed: false }],
+                children: [{ text: 'Child 1', value: 11, collapsed: false } as TreeviewItem<number>],
             });
             expect(treeviewItem.children[0].collapsed).toBe(false);
             treeviewItem.setCollapsedRecursive(true);
@@ -62,7 +56,7 @@ describe('TreeviewItem', () => {
 
     describe('disabled', () => {
         it('should set value is false by default', () => {
-            const treeviewItem = new TreeviewItem({ text: 'Parent', value: 1 });
+            const treeviewItem = new TreeviewItem<number>({ children: [], text: 'Parent', value: 1 });
             expect(treeviewItem.disabled).toBeFalsy();
         });
 
@@ -71,7 +65,7 @@ describe('TreeviewItem', () => {
                 text: 'Parent',
                 value: 1,
                 disabled: true,
-                children: [{ text: 'Child', value: 11, disabled: false }],
+                children: [{ text: 'Child', value: 11, disabled: false } as TreeviewItem<number>],
             });
             expect(treeviewItem.children[0].disabled).toBeTruthy();
         });
@@ -80,7 +74,7 @@ describe('TreeviewItem', () => {
             const treeviewItem = new TreeviewItem({
                 text: 'Parent',
                 value: 1,
-                children: [{ text: 'Child 1', value: 11 }],
+                children: [{ text: 'Child 1', value: 11 } as TreeviewItem<number>],
             });
             expect(treeviewItem.children[0].disabled).toBe(false);
             treeviewItem.disabled = true;
@@ -91,15 +85,9 @@ describe('TreeviewItem', () => {
     });
 
     describe('children', () => {
-        it('should throw error if change value to empty list', () => {
-            const treeviewItem = new TreeviewItem({ text: 'Parent', value: 1 });
-            const error = new Error('Children must be not an empty array');
-            expect(() => (treeviewItem.children = [])).toThrow(error);
-        });
-
-        it('should affectly change children value', () => {
-            const treeviewItem = new TreeviewItem({ text: 'Parent', value: 1 });
-            const children: TreeviewItem[] = [new TreeviewItem({ text: 'Child 1', value: 11 })];
+        it('should affectedly change children value', () => {
+            const treeviewItem = new TreeviewItem<number>({ children: [], text: 'Parent', value: 1 });
+            const children: TreeviewItem<number>[] = [new TreeviewItem<number>({ children: [], text: 'Child 1', value: 11 })];
             expect(treeviewItem.children).toEqual([]);
             treeviewItem.children = children;
             expect(treeviewItem.children).toBe(children);
@@ -111,7 +99,7 @@ describe('TreeviewItem', () => {
             const treeviewItem = new TreeviewItem({
                 text: 'Parent',
                 value: 1,
-                children: [{ text: 'Child 1', value: 11 }],
+                children: [{ text: 'Child 1', value: 11 } as TreeviewItem<number>],
             });
             expect(treeviewItem.children).toBeDefined();
             // @ts-ignore

@@ -8,9 +8,9 @@ import { TreeviewItemTemplateContext } from '../../models/treeview-item-template
     templateUrl: './treeview-item.component.html',
     styleUrls: ['./treeview-item.component.scss'],
 })
-export class TreeviewItemComponent {
-    @Input() template: TemplateRef<TreeviewItemTemplateContext>;
-    @Input() item: TreeviewItem;
+export class TreeviewItemComponent<T> {
+    @Input() template: TemplateRef<TreeviewItemTemplateContext<T>>;
+    @Input() item: TreeviewItem<T>;
     @Output() checkedChange = new EventEmitter<boolean>();
 
     onCollapseExpand = () => {
@@ -22,8 +22,7 @@ export class TreeviewItemComponent {
         this.checkedChange.emit(checked);
     };
 
-    // TODO: remove???
-    onChildCheckedChange(child: TreeviewItem, checked: boolean): void {
+    onChildCheckedChange(child: TreeviewItem<T>, checked: boolean): void {
         let itemChecked: boolean | undefined = undefined;
         for (const childItem of this.item.children) {
             if (itemChecked == undefined) {

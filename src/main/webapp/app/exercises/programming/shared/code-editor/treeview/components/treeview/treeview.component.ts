@@ -8,9 +8,9 @@ import { TreeviewItemTemplateContext } from '../../models/treeview-item-template
     templateUrl: './treeview.component.html',
     styleUrls: ['./treeview.component.scss'],
 })
-export class TreeviewComponent {
-    @Input() itemTemplate: TemplateRef<TreeviewItemTemplateContext>;
-    @Input() items: TreeviewItem[];
+export class TreeviewComponent<T> {
+    @Input() itemTemplate: TemplateRef<TreeviewItemTemplateContext<T>>;
+    @Input() items: TreeviewItem<T>[];
     @Input() maxHeight = 500;
     @Output() filterChange = new EventEmitter<string>();
 }

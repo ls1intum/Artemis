@@ -74,7 +74,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     it('should create no treeviewItems if getRepositoryContent returns an empty result', () => {
         const repositoryContent: { [fileName: string]: string } = {};
-        const expectedFileTreeItems: TreeviewItem[] = [];
+        const expectedFileTreeItems: TreeviewItem<string>[] = [];
         getRepositoryContenStub.mockReturnValue(of(repositoryContent));
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
@@ -116,29 +116,76 @@ describe('CodeEditorFileBrowserComponent', () => {
             'folder2/folder3': FileType.FOLDER,
             'folder2/folder3/file3': FileType.FILE,
         };
+        comp.compressFolders = false;
         comp.setupTreeview();
         fixture.detectChanges();
+        // after compression
+        expect(comp.filesTreeViewItem).toHaveLength(2);
+        expect(comp.filesTreeViewItem[0].children).toHaveLength(1);
+        expect(comp.filesTreeViewItem[1].children).toHaveLength(2);
+        expect(comp.filesTreeViewItem[1].children[0].children).toHaveLength(0);
+        expect(comp.filesTreeViewItem[1].children[1].children).toHaveLength(1);
         const folder = comp.filesTreeViewItem.find(({ value }) => value === 'folder')!;
         expect(folder).toBeObject();
         expect(folder.children).toHaveLength(1);
         const file1 = folder.children.find(({ value }) => value === 'folder/file1')!;
         expect(file1).not.toBe(undefined);
-        expect(file1.children).toBe([]);
+        expect(file1.children).toEqual([]);
         const folder2 = comp.filesTreeViewItem.find(({ value }) => value === 'folder2')!;
         expect(folder2).toBeObject();
         expect(folder2.children).toHaveLength(2);
         const file2 = folder2.children.find(({ value }) => value === 'folder2/file2')!;
         expect(file2).not.toBe(undefined);
-        expect(file2.children).toBe(undefined);
+        expect(file2.children).toEqual([]);
         const folder3 = folder2.children.find(({ value }) => value === 'folder2/folder3')!;
         expect(folder3).toBeObject();
         expect(folder3.children).toHaveLength(1);
         const file3 = folder3.children.find(({ value }) => value === 'folder2/folder3/file3')!;
         expect(file3).not.toBe(undefined);
-        expect(file3.children).toBe(undefined);
+        expect(file3.children).toEqual([]);
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).toHaveLength(3);
+        expect(renderedFiles).toHaveLength(3);
+    });
+
+    it('should create compressed treeviewItems with nested folder structure', () => {
+        comp.repositoryFiles = {
+            folder: FileType.FOLDER,
+            'folder/file1': FileType.FILE,
+            folder2: FileType.FOLDER,
+            'folder2/file2': FileType.FILE,
+            'folder2/folder3': FileType.FOLDER,
+            'folder2/folder3/file3': FileType.FILE,
+        };
+        comp.compressFolders = true;
+        comp.setupTreeview();
+        fixture.detectChanges();
+        // after compression
+        expect(comp.filesTreeViewItem).toHaveLength(2);
+        expect(comp.filesTreeViewItem[0].children).toHaveLength(0);
+        expect(comp.filesTreeViewItem[1].children).toHaveLength(2);
+        expect(comp.filesTreeViewItem[1].children[0].children).toHaveLength(0);
+        expect(comp.filesTreeViewItem[1].children[1].children).toHaveLength(0);
+        const folder = comp.filesTreeViewItem.find(({ value }) => value === 'folder')!;
+        expect(folder).toBe(undefined);
+        const file1 = comp.filesTreeViewItem.find(({ value }) => value === 'folder/file1')!;
+        expect(file1).toBeObject();
+        expect(file1.children).toEqual([]);
+        const folder2 = comp.filesTreeViewItem.find(({ value }) => value === 'folder2')!;
+        expect(folder2).toBeObject();
+        expect(folder2.children).toHaveLength(2);
+        const file2 = folder2.children.find(({ value }) => value === 'folder2/file2')!;
+        expect(file2).not.toBe(undefined);
+        expect(file2.children).toEqual([]);
+        const folder3 = folder2.children.find(({ value }) => value === 'folder2/folder3')!;
+        expect(folder3).toBe(undefined);
+        const file3 = folder2.children.find(({ value }) => value === 'folder2/folder3/file3')!;
+        expect(file3).not.toBe(undefined);
+        expect(file3.children).toEqual([]);
+        const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
+        const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
+        expect(renderedFolders).toHaveLength(1);
         expect(renderedFiles).toHaveLength(3);
     });
 
@@ -279,14 +326,14 @@ describe('CodeEditorFileBrowserComponent', () => {
         const filePath = 'folder2/file2';
         const repositoryFiles = { file1: FileType.FILE, folder2: FileType.FOLDER };
         const treeItems = [
-            new TreeviewItem({
+            new TreeviewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
                 text: 'file1',
                 value: 'file1',
             } as any),
-            new TreeviewItem({
+            new TreeviewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
@@ -330,14 +377,14 @@ describe('CodeEditorFileBrowserComponent', () => {
         const filePath = 'folder2/folder3';
         const repositoryFiles = { file1: FileType.FILE, folder2: FileType.FOLDER };
         const treeItems = [
-            new TreeviewItem({
+            new TreeviewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
                 text: 'file1',
                 value: 'file1',
             } as any),
-            new TreeviewItem({
+            new TreeviewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
@@ -403,14 +450,14 @@ describe('CodeEditorFileBrowserComponent', () => {
         const fileName = 'file1';
         const afterRename = 'newFileName';
         const treeItems = [
-            new TreeviewItem({
+            new TreeviewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
                 text: 'file1',
                 value: 'file1',
             } as any),
-            new TreeviewItem({
+            new TreeviewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
@@ -463,28 +510,28 @@ describe('CodeEditorFileBrowserComponent', () => {
         const folderName = 'folder';
         const afterRename = 'newFolderName';
         const treeItems = [
-            new TreeviewItem({
+            new TreeviewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
                 text: 'file1',
                 value: 'folder/file1',
             } as any),
-            new TreeviewItem({
+            new TreeviewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
                 text: 'file2',
                 value: 'folder/file2',
             } as any),
-            new TreeviewItem({
+            new TreeviewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,
                 text: 'folder',
                 value: 'folder',
             } as any),
-            new TreeviewItem({
+            new TreeviewItem<string>({
                 internalDisabled: false,
                 internalChecked: false,
                 internalCollapsed: false,

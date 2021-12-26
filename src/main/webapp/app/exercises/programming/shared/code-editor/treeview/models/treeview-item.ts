@@ -1,28 +1,23 @@
 import { isBoolean, isString } from 'lodash-es';
 
-export interface TreeviewSelection {
-    checkedItems: TreeviewItem[];
-    uncheckedItems: TreeviewItem[];
-}
-
-export interface TreeItem {
+export interface TreeItem<T> {
     text: string;
-    value: any;
+    value: T;
     disabled?: boolean;
     checked?: boolean;
     collapsed?: boolean;
-    children?: TreeItem[];
+    children: TreeItem<T>[];
 }
 
-export class TreeviewItem {
+export class TreeviewItem<T> {
     private internalDisabled = false;
     private internalCollapsed = false;
-    private internalChildren: TreeviewItem[] = [];
+    private internalChildren: TreeviewItem<T>[] = [];
     checked = false;
     text: string;
-    value: any;
+    value: T;
 
-    constructor(item: TreeItem) {
+    constructor(item: TreeItem<T>) {
         if (!item) {
             throw new Error('Item must be defined');
         }
@@ -32,6 +27,9 @@ export class TreeviewItem {
             throw new Error('A text of item must be string object');
         }
         this.value = item.value;
+        if (isBoolean(item.checked)) {
+            this.checked = item.checked;
+        }
         if (isBoolean(item.collapsed)) {
             this.collapsed = item.collapsed;
         }
@@ -79,15 +77,12 @@ export class TreeviewItem {
         }
     }
 
-    get children(): TreeviewItem[] {
+    get children(): TreeviewItem<T>[] {
         return this.internalChildren;
     }
 
-    set children(value: TreeviewItem[]) {
+    set children(value: TreeviewItem<T>[]) {
         if (this.internalChildren !== value) {
-            if (value?.length === 0) {
-                throw new Error('Children must be not an empty array');
-            }
             this.internalChildren = value;
         }
     }

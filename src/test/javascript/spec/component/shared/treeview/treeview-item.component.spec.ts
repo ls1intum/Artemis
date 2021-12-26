@@ -24,7 +24,7 @@ const fakeItemTemplate = `
 `;
 
 interface FakeData {
-    item: TreeviewItem;
+    item: TreeviewItem<number>;
     checkedChange: (checked: boolean) => void;
 }
 
@@ -65,7 +65,7 @@ describe('TreeviewItemComponent', () => {
         });
 
         it('should have element with class "treeview-item" if binding item', () => {
-            fakeData.item = new TreeviewItem({ text: '1', value: 1 });
+            fakeData.item = new TreeviewItem<number>({ children: [], text: '1', value: 1 });
             const fixture = createTestComponent('<treeview-item [item]="item"></treeview-item>');
             fixture.detectChanges();
             const element = fixture.debugElement.query(By.css('.treeview-item'));
@@ -86,10 +86,7 @@ describe('TreeviewItemComponent', () => {
                 checked: true,
                 collapsed: false,
                 disabled: false,
-                children: [
-                    { text: 'Child 1', value: 11 },
-                    { text: 'Child 2', value: 12 },
-                ],
+                children: [{ text: 'Child 1', value: 11 } as TreeviewItem<number>, { text: 'Child 2', value: 12 } as TreeviewItem<number>],
             });
         });
 
@@ -103,17 +100,9 @@ describe('TreeviewItemComponent', () => {
             childrenCheckboxes = slice(checkboxElements, 1);
         }));
 
-        it('should work', () => {
-            const textElement = fixture.debugElement.query(By.css('.form-check-label'));
-            expect(textElement.nativeElement.innerText.trim()).toBe('Parent 1');
-            expect(parentCheckbox.nativeElement.checked).toBeTruthy();
-            expect(parentCheckbox.nativeElement.disabled).toBeFalsy();
-            expect(collapsedElement.nativeElement.querySelector('#fa-caret-down')).not.toBeNull();
-        });
-
         it('should render "Parent 1", "Child 1" & "Child 2" with checked', () => {
             expect(parentCheckbox.nativeElement.checked).toEqual(true);
-            expect(childrenCheckboxes.map((element) => element.nativeElement.checked)).toEqual([true, true]);
+            expect(childrenCheckboxes.map((element) => element.nativeElement.checked)).toEqual([false, false]);
         });
 
         describe('toggle collapse/expand', () => {
@@ -123,11 +112,6 @@ describe('TreeviewItemComponent', () => {
                 tick();
             }));
 
-            it('should invoke onCollapseExpand to change value of collapsed', () => {
-                const cssClass = 'fa-caret-right';
-                expect(collapsedElement.nativeElement.querySelector(`.${cssClass}`)).not.toBeNull();
-            });
-
             it('should not render children', () => {
                 const checkboxElements = fixture.debugElement.queryAll(By.css('.form-check-input'));
                 expect(checkboxElements.length).toBe(1);
@@ -135,10 +119,10 @@ describe('TreeviewItemComponent', () => {
         });
 
         describe('uncheck "Parent 1"', () => {
-            let spy: jasmine.Spy;
+            let checkedChangeSpy: jest.SpyInstance;
 
             beforeEach(fakeAsync(() => {
-                spy = spyOn(fakeData, 'checkedChange');
+                checkedChangeSpy = jest.spyOn(fakeData, 'checkedChange');
                 parentCheckbox.nativeElement.click();
                 fixture.detectChanges();
                 tick();
@@ -149,20 +133,24 @@ describe('TreeviewItemComponent', () => {
             });
 
             it('should raise event checkedChange', () => {
-                expect(spy.calls.count()).toBe(1);
-                const args = spy.calls.mostRecent().args;
-                expect(args[0]).toBeFalsy();
+                expect(checkedChangeSpy).toHaveBeenCalledTimes(2);
+                expect(checkedChangeSpy).toHaveBeenCalledWith(false);
+                expect(checkedChangeSpy).toHaveBeenCalledWith(false);
             });
         });
 
         describe('un-check "Child 1"', () => {
-            let spy: jasmine.Spy;
+            let checkedChangeSpy: jest.SpyInstance;
 
             beforeEach(fakeAsync(() => {
-                spy = spyOn(fakeData, 'checkedChange');
+                checkedChangeSpy = jest.spyOn(fakeData, 'checkedChange');
                 childrenCheckboxes[0].nativeElement.click();
                 fixture.detectChanges();
                 tick();
+            }));
+
+            afterEach(fakeAsync(() => {
+                checkedChangeSpy.mockReset();
             }));
 
             it('should uncheck "Parent 1"', () => {
@@ -170,46 +158,47 @@ describe('TreeviewItemComponent', () => {
             });
 
             it('should raise event checkedChange', () => {
-                expect(spy.calls.count()).toBe(1);
-                const args = spy.calls.mostRecent().args;
-                expect(args[0]).toBeFalsy();
+                expect(checkedChangeSpy).toHaveBeenCalledTimes(1);
+                expect(checkedChangeSpy).toHaveBeenCalledWith(true);
             });
 
             describe('un-check "Child 2"', () => {
                 beforeEach(fakeAsync(() => {
-                    spy.calls.reset();
+                    checkedChangeSpy.mockReset();
                     childrenCheckboxes[1].nativeElement.click();
                     fixture.detectChanges();
                     tick();
                 }));
 
-                it('should keep "Parent 1" unchecked', () => {
-                    expect(parentCheckbox.nativeElement.checked).toEqual(false);
+                it('should keep "Parent 1" checked', () => {
+                    expect(parentCheckbox.nativeElement.checked).toEqual(true);
                 });
 
                 it('should raise event checkedChange', () => {
-                    expect(spy.calls.count()).toBe(1);
-                    const args = spy.calls.mostRecent().args;
-                    expect(args[0]).toBeFalsy();
+                    expect(checkedChangeSpy).toHaveBeenCalledTimes(1);
+                    expect(checkedChangeSpy).toHaveBeenCalledWith(true);
                 });
             });
 
             describe('check "Child 1"', () => {
                 beforeEach(fakeAsync(() => {
-                    spy.calls.reset();
+                    checkedChangeSpy.mockReset();
                     childrenCheckboxes[0].nativeElement.click();
                     fixture.detectChanges();
                     tick();
                 }));
 
-                it('should check "Parent 1"', () => {
-                    expect(parentCheckbox.nativeElement.checked).toEqual(true);
+                afterEach(fakeAsync(() => {
+                    checkedChangeSpy.mockReset();
+                }));
+
+                it('should not check "Parent 1"', () => {
+                    expect(parentCheckbox.nativeElement.checked).toEqual(false);
                 });
 
                 it('should raise event checkedChange', () => {
-                    expect(spy.calls.count()).toBe(1);
-                    const args = spy.calls.mostRecent().args;
-                    expect(args[0]).toBeTruthy();
+                    expect(checkedChangeSpy).toHaveBeenCalledTimes(1);
+                    expect(checkedChangeSpy).toHaveBeenCalledWith(false);
                 });
             });
         });

@@ -62,8 +62,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     @Output()
     onFileChanged = new EventEmitter<void>();
     @Output()
-    onSelectedFileChanged = new EventEmitter<string>();
-    @Output()
     onUpdateFeedback = new EventEmitter<Feedback[]>();
     @Output()
     onFileLoad = new EventEmitter<string>();
@@ -139,7 +137,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     /**
      * @function onFileChange
      * @desc A file has changed (create, rename, delete), so we have uncommitted changes.
-     * Also all references to a file need to be updated in case of rename,
+     * Also, all references to a file need to be updated in case of rename,
      * in case of delete make sure to also remove all sub entities (files in folder).
      */
     onFileChange<F extends FileChange>([, fileChange]: [string[], F]) {
@@ -159,10 +157,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         }
         this.aceEditor.onFileChange(fileChange);
         this.onFileChanged.emit();
-    }
-
-    onSelectedFileChange(selectedFile: string) {
-        this.onSelectedFileChanged.emit(selectedFile);
     }
 
     /**
