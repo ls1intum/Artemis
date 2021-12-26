@@ -149,23 +149,18 @@ export class SubmissionService {
             .pipe(map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res)));
     }
 
-    /**
-     * Convert a returned JSON object to Submission.
-     */
-    private convertItemFromServer(submission: Submission): Submission {
-        return Object.assign({}, submission);
-    }
-
     public convertResponse(res: EntityResponseType): EntityResponseType {
         const body: Submission = this.convertSubmissionFromServer(res.body!);
         return res.clone({ body });
     }
 
     public convertArrayResponse<T>(res: HttpResponse<T[]>): HttpResponse<T[]> {
-        if (res.body) {
-            res.body.forEach((submission: T) => this.convertSubmissionFromServer(submission));
+        const jsonResponse: T[] = res.body!;
+        const body: T[] = [];
+        for (let i = 0; i < jsonResponse.length; i++) {
+            body.push(this.convertSubmissionFromServer(jsonResponse[i]));
         }
-        return res;
+        return res.clone({ body });
     }
 
     /**
@@ -185,7 +180,7 @@ export class SubmissionService {
     /**
      * Convert a Submission to a JSON which can be sent to the server.
      */
-    public convert<T>(submission: T) {
+    public convert<T>(submission: T): T {
         return Object.assign({}, submission);
     }
 
