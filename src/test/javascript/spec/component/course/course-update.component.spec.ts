@@ -17,7 +17,6 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from 'ng-mocks';
-import { ImageCropperModule } from 'ngx-image-cropper';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -29,7 +28,8 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { Organization } from 'app/entities/organization.model';
 import dayjs from 'dayjs';
 import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-uploader.service';
-import { base64StringToBlob } from 'blob-util';
+import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
+import { base64StringToBlob } from 'app/utils/blob-util';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -77,7 +77,7 @@ describe('Course Management Update Component', () => {
         } as any as ActivatedRoute;
         const route = { parent: parentRoute } as any as ActivatedRoute;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(ImageCropperModule)],
+            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), ImageCropperModule],
             providers: [
                 {
                     provide: ActivatedRoute,
