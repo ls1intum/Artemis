@@ -45,10 +45,10 @@ export class TextAssessmentService {
 
     /**
      * Submits the passed feedback items of the assessment.
-     * @param exerciseId id of the exercise the assessed submission was made to of type {number}
-     * @param resultId id of the corresponding result of type {number}
-     * @param feedbacks list of feedback made during assessment of type {Feedback[]}
-     * @param textBlocks list of text blocks of type {TextBlock[]}
+     * @param participationId the assessed submission was made to of type {number}
+     * @param resultId of the corresponding result of type {number}
+     * @param feedbacks made during assessment of type {Feedback[]}
+     * @param textBlocks of type {TextBlock[]}
      */
     public submit(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
@@ -79,10 +79,11 @@ export class TextAssessmentService {
 
     /**
      * Updates an assessment after a complaint.
-     * @param feedbacks list of feedback made during assessment of type {Feedback[]}
-     * @param textBlocks list of text blocks of type {TextBlock[]}
-     * @param complaintResponse response on the complaint of type {ComplaintResponse}
-     * @param submissionId id of corresponding submission of type {number}
+     * @param feedbacks made during assessment of type {Feedback[]}
+     * @param textBlocks of type {TextBlock[]}
+     * @param complaintResponse of type {ComplaintResponse}
+     * @param submissionId of corresponding submission of type {number}
+     * @param participationId of the corresponding participation
      */
     public updateAssessmentAfterComplaint(
         feedbacks: Feedback[],
@@ -108,8 +109,8 @@ export class TextAssessmentService {
 
     /**
      * Cancels an assessment.
-     * @param exerciseId id of the exercise the assessed submission was made to of type {number}
-     * @param submissionId id of corresponding submission of type {number}
+     * @param participationId the assessed submission was made to of type {number}
+     * @param submissionId of corresponding submission of type {number}
      */
     public cancelAssessment(participationId: number, submissionId: number): Observable<void> {
         return this.http.post<void>(`${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/cancel-assessment`, undefined);
@@ -174,8 +175,8 @@ export class TextAssessmentService {
     /**
      * Deletes the example assessment associated with given example submission.
      *
-     * @param exerciseId   id of the exercise for which the example assessment should be deleted
-     * @param submissionId id of the submission for which the example assessment should be deleted
+     * @param exerciseId   for which the example assessment should be deleted
+     * @param exampleSubmissionId for which the example assessment should be deleted
      */
     public deleteExampleAssessment(exerciseId: number, exampleSubmissionId: number): Observable<void> {
         return this.http.delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/example-submissions/${exampleSubmissionId}/example-text-assessment/feedback`);
@@ -184,8 +185,9 @@ export class TextAssessmentService {
     /**
      * Gets an array of text submissions that contains conflicting feedback with the given feedback id.
      *
-     * @param submissionId id of the submission feedback belongs to of type {number}
-     * @param feedbackId id of the feedback to search for conflicts of type {number}
+     * @param participationId the feedback belongs to
+     * @param submissionId the feedback belongs to of type {number}
+     * @param feedbackId to search for conflicts of type {number}
      */
     public getConflictingTextSubmissions(participationId: number, submissionId: number, feedbackId: number): Observable<TextSubmission[]> {
         return this.http.get<TextSubmission[]>(`${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/feedback/${feedbackId}/feedback-conflicts`);
