@@ -5,6 +5,8 @@ import { TextSubmissionService } from 'app/exercises/text/participate/text-submi
 import { TextSubmission } from 'app/entities/text-submission.model';
 import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 
 chai.use(sinonChai);
 
@@ -20,6 +22,7 @@ describe('TextSubmission Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
+            providers: [{ provide: AccountService, useClass: MockAccountService }],
         });
         injector = getTestBed();
         service = injector.get(TextSubmissionService);

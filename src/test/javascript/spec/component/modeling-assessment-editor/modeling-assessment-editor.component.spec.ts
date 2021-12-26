@@ -1,10 +1,8 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -115,7 +113,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                     type: ParticipationType.SOLUTION,
                     exercise: {
                         id: 1,
-                        problemStatement: 'problemo',
+                        problemStatement: 'problem statement',
                         gradingInstructions: 'grading',
                         title: 'title',
                         shortName: 'name',
@@ -176,64 +174,37 @@ describe('ModelingAssessmentEditorComponent', () => {
             modelingSubmissionStub = stub(modelingSubmissionService, 'getSubmission');
             const response = new HttpErrorResponse({ status: 403 });
             modelingSubmissionStub.returns(throwError(response));
-
-            const accountStub = stub(mockAuth, 'hasAnyAuthorityDirect');
-            accountStub.returns(true);
-
             component.ngOnInit();
             tick(500);
             expect(modelingSubmissionStub).to.have.been.calledOnce;
-            expect(accountStub).to.have.been.calledTwice;
             modelingSubmissionStub.restore();
-            accountStub.restore();
         }));
     });
-
-    it('should propagate isAtLeastInstructor', fakeAsync(() => {
-        const course = new Course();
-        course.isAtLeastInstructor = true;
-        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-        mockAuth.isAtLeastInstructorInCourse(course);
-        component['checkPermissions']();
-        fixture.detectChanges();
-        expect(component.isAtLeastInstructor).to.be.true;
-
-        let assessmentLayoutComponent: AssessmentHeaderComponent = fixture.debugElement.query(By.directive(AssessmentLayoutComponent)).componentInstance;
-        expect(assessmentLayoutComponent.isAtLeastInstructor).to.be.true;
-
-        course.isAtLeastInstructor = false;
-        mockAuth.isAtLeastInstructorInCourse(course);
-        component['checkPermissions']();
-        fixture.detectChanges();
-        expect(component.isAtLeastInstructor).to.be.false;
-        assessmentLayoutComponent = fixture.debugElement.query(By.directive(AssessmentLayoutComponent)).componentInstance;
-        expect(assessmentLayoutComponent.isAtLeastInstructor).to.be.false;
-    }));
 
     describe('should test the overwrite access rights and return true', () => {
         it('tests the method with instructor rights', fakeAsync(() => {
             const course = new Course();
-            course.isAtLeastInstructor = true;
             component.ngOnInit();
             tick(500);
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+            component.modelingExercise.isAtLeastInstructor = true;
             expect(component.canOverride).to.be.true;
         }));
 
         it('tests the method with tutor rights and as assessor', fakeAsync(() => {
             const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+            component.modelingExercise.isAtLeastInstructor = false;
             component.isAssessor = true;
             component.complaint = new Complaint();
             component.complaint.id = 0;
             component.complaint.complaintText = 'complaint';
             component.ngOnInit();
             tick(500);
-            course.isAtLeastInstructor = false;
             mockAuth.isAtLeastInstructorInCourse(course);
             component['checkPermissions']();
             fixture.detectChanges();
-            expect(component.isAtLeastInstructor).to.be.false;
+            expect(component.modelingExercise.isAtLeastInstructor).to.be.false;
             expect(component.canOverride).to.be.false;
         }));
     });

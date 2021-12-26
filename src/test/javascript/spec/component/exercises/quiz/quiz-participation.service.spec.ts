@@ -4,6 +4,8 @@ import * as chai from 'chai';
 import { QuizParticipationService } from 'app/exercises/quiz/participate/quiz-participation.service';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Result } from 'app/entities/result.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 const expect = chai.expect;
 
 describe('Quiz Participation Service', () => {
@@ -14,6 +16,7 @@ describe('Quiz Participation Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
+            providers: [{ provide: AccountService, useClass: MockAccountService }],
         });
         injector = getTestBed();
         service = injector.get(QuizParticipationService);

@@ -31,6 +31,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -93,10 +94,7 @@ describe('ExamDetailComponent', () => {
                         snapshot: {},
                     },
                 },
-                MockProvider(AccountService, {
-                    isAtLeastInstructorInCourse: () => true,
-                    isAtLeastEditorInCourse: () => true,
-                }),
+                { provide: AccountService, useClass: MockAccountService },
                 MockProvider(ArtemisMarkdownService, {
                     safeHtmlForMarkdown: () => exampleHTML,
                 }),
@@ -115,6 +113,8 @@ describe('ExamDetailComponent', () => {
         // reset exam
         exam.id = 1;
         exam.course = new Course();
+        exam.course.isAtLeastInstructor = true;
+        exam.course.isAtLeastEditor = true;
         exam.course.id = 1;
         exam.title = 'Example Exam';
         exam.numberOfRegisteredUsers = 3;
