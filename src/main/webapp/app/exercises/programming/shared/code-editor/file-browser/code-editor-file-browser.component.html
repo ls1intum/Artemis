@@ -59,7 +59,7 @@
                 (onCreateFile)="onCreateFile($event)"
             ></jhi-code-editor-file-browser-create-node>
         </ng-container>
-        <ngx-treeview *ngIf="!isLoadingFiles" #treeview [config]="treeviewConfig" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </ngx-treeview>
+        <treeview *ngIf="!isLoadingFiles" #treeview [config]="treeviewConfig" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </treeview>
         <!-- Loading files indicator -->
         <div *ngIf="isLoadingFiles" class="text-center lead text-muted pt-2">
             <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>

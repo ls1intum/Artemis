@@ -40,7 +40,6 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
-import { TreeviewItem, TreeviewComponent } from 'ngx-treeview';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -68,6 +67,8 @@ import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/sh
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
+import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -166,7 +167,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 CodeEditorContainerComponent,
                 CodeEditorFileBrowserComponent,
                 MockPipe(KeysPipe),
-                MockComponent(TreeviewComponent),
+                TreeviewComponent,
                 MockComponent(CodeEditorStatusComponent),
                 MockComponent(CodeEditorFileBrowserCreateNodeComponent),
                 MockComponent(CodeEditorFileBrowserFolderComponent),

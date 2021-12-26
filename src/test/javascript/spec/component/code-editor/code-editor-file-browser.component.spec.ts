@@ -2,7 +2,6 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
-import { TreeviewItem, TreeviewModule } from 'ngx-treeview';
 import { of, Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { CommitState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
@@ -18,6 +17,8 @@ import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/moc
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/mock-code-editor-conflict-state.service';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
+import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 
 describe('CodeEditorFileBrowserComponent', () => {
     let comp: CodeEditorFileBrowserComponent;

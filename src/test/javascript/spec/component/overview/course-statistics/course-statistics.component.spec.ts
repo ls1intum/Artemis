@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs';
-import { TreeviewModule } from 'ngx-treeview';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
 import { ActivatedRoute } from '@angular/router';
@@ -23,6 +22,7 @@ import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/m
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;

@@ -1,0 +1,9 @@
+:host {
+    display: block;
+    .treeview-item {
+        white-space: nowrap;
+        .treeview-item {
+            margin-left: 2rem;
+        }
+    }
+}

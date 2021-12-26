@@ -3,7 +3,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, of, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { fromPairs, toPairs } from 'lodash-es';
-import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import {
@@ -23,6 +22,10 @@ import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 import { supportedTextFileExtensions } from 'app/exercises/programming/shared/code-editor/file-browser/supported-file-extensions';
 import { faAngleDoubleDown, faAngleDoubleUp, faChevronLeft, faChevronRight, faCircleNotch, faFile, faFolder, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { TreeviewConfig } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-config';
+import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
+import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
+import { TreeviewHelper } from 'app/exercises/programming/shared/code-editor/treeview/helpers/treeview-helper';
 
 export type InteractableEvent = {
     // Click event object; contains target information
@@ -95,7 +98,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     // Tuple: [filePath, fileType]
     creatingFile?: [string, FileType];
 
-    /** Provide basic configuration for the TreeView (ngx-treeview) **/
+    /** Provide basic configuration for the TreeView **/
     treeviewConfig = TreeviewConfig.create({
         hasAllCheckBox: false,
         hasFilter: false,
@@ -299,7 +302,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     /**
      * @function transformTreeToTreeViewItem
-     * @desc Converts a parsed filetree to a TreeViewItem[] which will then be used by the Treeviewer (ngx-treeview)
+     * @desc Converts a parsed filetree to a TreeViewItem[] which will then be used by the Treeviewer
      * @param tree: Filetree obtained by parsing the repository file list
      */
     transformTreeToTreeViewItem(tree: any): TreeviewItem[] {

@@ -1,9 +1,9 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TreeviewItem } from 'ngx-treeview';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileBrowserNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-node.component';
 import { faChevronDown, faChevronRight, faEdit, faFile, faFolder, faFolderOpen, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 
 @Component({
     selector: 'jhi-code-editor-file-browser-folder',

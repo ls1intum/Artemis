@@ -1,6 +1,6 @@
 import { ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, Component } from '@angular/core';
-import { TreeviewItem } from 'ngx-treeview';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 
 @Component({ template: '' })
 export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
