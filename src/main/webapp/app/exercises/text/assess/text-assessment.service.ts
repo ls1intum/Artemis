@@ -40,7 +40,7 @@ export class TextAssessmentService {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
             .put<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/text-assessment`, body, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
     /**
@@ -54,7 +54,7 @@ export class TextAssessmentService {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
             .post<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/submit-text-assessment`, body, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
     /**
@@ -98,13 +98,13 @@ export class TextAssessmentService {
             textBlocks,
             complaintResponse,
         };
-        return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
+        return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
     saveExampleAssessment(exerciseId: number, exampleSubmissionId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/exercises/${exerciseId}/example-submissions/${exampleSubmissionId}/example-text-assessment`;
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
-        return this.http.put<Result>(url, body, { observe: 'response' }).pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
+        return this.http.put<Result>(url, body, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
     /**
@@ -219,17 +219,22 @@ export class TextAssessmentService {
         return { feedbacks, textBlocks };
     }
 
-    private static convertResponse(res: EntityResponseType): EntityResponseType {
+    private convertResponse(res: EntityResponseType): EntityResponseType {
         const result = TextAssessmentService.convertItemFromServer(res.body!);
 
         if (result.completionDate) {
             result.completionDate = dayjs(result.completionDate);
         }
-        if (result.submission && result.submission.submissionDate) {
+        if (result.submission?.submissionDate) {
             result.submission.submissionDate = dayjs(result.submission.submissionDate);
         }
-        if (result.participation && result.participation.initializationDate) {
-            result.participation.initializationDate = dayjs(result.participation.initializationDate);
+        if (result.participation) {
+            if (result.participation.initializationDate) {
+                result.participation.initializationDate = dayjs(result.participation.initializationDate);
+            }
+            if (result.participation.exercise) {
+                this.accountService.setAccessRightsForExercise(result.participation.exercise);
+            }
         }
 
         return res.clone({ body: result });
