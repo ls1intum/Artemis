@@ -9,7 +9,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
 import { AccountService } from 'app/core/auth/account.service';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
@@ -26,11 +25,24 @@ export class ParticipationService {
 
     constructor(private http: HttpClient, private submissionService: SubmissionService, private accountService: AccountService) {}
 
-    update(exerciseId: number, participation: StudentParticipation): Observable<EntityResponseType> {
+    update(exercise: Exercise, participation: StudentParticipation): Observable<EntityResponseType> {
+        // make sure participation and exercise are connected, because this is expected by the server
+        participation.exercise = exercise;
         const copy = this.convertDateFromClient(participation);
         return this.http
-            .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations`, copy, { observe: 'response' })
+            .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exercise.id}/participations`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
+    }
+
+    updateIndividualDueDates(exercise: Exercise, participations: StudentParticipation[]): Observable<EntityArrayResponseType> {
+        const copies = participations.map((participation) => {
+            // make sure participation and exercise are connected, because this is expected by the server
+            participation.exercise = exercise;
+            return this.convertDateFromClient(participation);
+        });
+        return this.http
+            .put<StudentParticipation[]>(SERVER_API_URL + `api/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
     find(participationId: number): Observable<EntityResponseType> {
@@ -46,21 +58,12 @@ export class ParticipationService {
     }
 
     /*
-     * Finds one participation for the currently logged in user for the given exercise in the given course
+     * Finds one participation for the currently logged-in user for the given exercise in the given course
      */
-    findParticipation(exerciseId: number): Observable<EntityResponseType | null> {
+    findParticipationForCurrentUser(exerciseId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participation`, { observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => {
-                    if (res == undefined) {
-                        return null;
-                    }
-                    return this.convertDateFromServer(res);
-                }),
-            )
-            .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.setAccessRightsParticipationEntityResponseType(res)));
+            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     findAllParticipationsByExercise(exerciseId: number, withLatestResult = false): Observable<EntityArrayResponseType> {
@@ -71,7 +74,6 @@ export class ParticipationService {
                 observe: 'response',
             })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
-            .pipe(map((res: EntityArrayResponseType) => this.adjustRepositoryUrlArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.setAccessRightsParticipationEntityArrayResponseType(res)));
     }
 
@@ -117,6 +119,7 @@ export class ParticipationService {
         // return a copy of the object
         return Object.assign({}, participation, {
             initializationDate: participation.initializationDate && dayjs(participation.initializationDate).isValid() ? participation.initializationDate.toJSON() : undefined,
+            individualDueDate: participation.individualDueDate && dayjs(participation.individualDueDate).isValid() ? participation.individualDueDate.toJSON() : undefined,
         });
     }
 
@@ -150,6 +153,7 @@ export class ParticipationService {
     protected convertParticipationDateFromServer(participation?: StudentParticipation) {
         if (participation != undefined) {
             participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
+            participation.individualDueDate = participation.individualDueDate ? dayjs(participation.individualDueDate) : undefined;
             participation.results = this.submissionService.convertResultsDateFromServer(participation.results);
             participation.submissions = this.submissionService.convertSubmissionsDateFromServer(participation.submissions);
         }
@@ -164,24 +168,6 @@ export class ParticipationService {
             });
         }
         return convertedParticipations;
-    }
-
-    protected adjustRepositoryUrlFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body?.type === ParticipationType.PROGRAMMING) {
-            addUserIndependentRepositoryUrl(res.body);
-        }
-        return res;
-    }
-
-    protected adjustRepositoryUrlArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((participation: StudentParticipation) => {
-                if (participation.type === ParticipationType.PROGRAMMING) {
-                    addUserIndependentRepositoryUrl(participation);
-                }
-            });
-        }
-        return res;
     }
 
     public mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation | undefined {
@@ -204,7 +190,6 @@ export class ParticipationService {
      */
     private processParticipationEntityResponseType(participationRes: EntityResponseType): EntityResponseType {
         this.convertDateFromServer(participationRes);
-        this.adjustRepositoryUrlFromServer(participationRes);
         this.setAccessRightsParticipationEntityResponseType(participationRes);
         return participationRes;
     }
@@ -230,6 +215,7 @@ export class ParticipationService {
         combinedParticipation.id = participations[0].id;
         combinedParticipation.initializationState = participations[0].initializationState;
         combinedParticipation.initializationDate = participations[0].initializationDate;
+        combinedParticipation.individualDueDate = participations[0].individualDueDate;
         combinedParticipation.presentationScore = participations[0].presentationScore;
         combinedParticipation.exercise = participations[0].exercise;
         combinedParticipation.type = participations[0].type;

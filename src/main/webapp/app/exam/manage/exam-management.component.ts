@@ -14,6 +14,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import dayjs from 'dayjs';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faClipboard, faEye, faListAlt, faPlus, faSort, faThList, faTimes, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -27,6 +28,17 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     eventSubscriber: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faSort = faSort;
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faEye = faEye;
+    faWrench = faWrench;
+    faUser = faUser;
+    faListAlt = faListAlt;
+    faClipboard = faClipboard;
+    faThList = faThList;
 
     constructor(
         private route: ActivatedRoute,

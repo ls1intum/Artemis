@@ -14,8 +14,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.validation.constraints.NotNull;
+
 import org.eclipse.jgit.lib.ObjectId;
-import org.jetbrains.annotations.NotNull;
 import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -464,6 +465,18 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCaseChanged() throws Exception {
+        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipationId).get();
+        bambooRequestMockProvider.mockTriggerBuild(templateParticipation);
+        setBuildAndTestAfterDueDateForProgrammingExercise(null);
+        postTestRepositorySubmissionWithoutCommit(HttpStatus.INTERNAL_SERVER_ERROR);
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        when(gitService.getLastCommitHash(any())).thenReturn(ObjectId.fromString(dummyHash));
+        postTestRepositorySubmissionWithoutCommit(HttpStatus.OK);
+    }
+
     /**
      * After a commit into the test repository, the VCS triggers Artemis to create submissions for all participations of the given exercise.
      * The reason for this is that the test repository update will trigger a build run in the CI for every participation.
@@ -494,7 +507,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // Now for both student's submission a result should have been created and assigned to the submission.
         List<Result> results = resultRepository.findAll();
         submissions = submissionRepository.findAll();
-        participations = new LinkedList<>();
+        participations = new ArrayList<>();
         participations.add(solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get());
         // After a push to the test repository, only the solution and template repository are built.
         assertThat(results).hasSize(1);
@@ -746,6 +759,16 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Api should return ok.
         request.postWithoutLocation(TEST_CASE_CHANGED_API_PATH + exerciseId, obj, HttpStatus.OK, new HttpHeaders());
+    }
+
+    /**
+     * Simulate a commit to the test repository, this executes a http request from the VCS to Artemis.
+     */
+    @SuppressWarnings("unchecked")
+    private void postTestRepositorySubmissionWithoutCommit(HttpStatus status) throws Exception {
+        JSONParser jsonParser = new JSONParser();
+        Object obj = jsonParser.parse(BITBUCKET_REQUEST_WITHOUT_COMMIT);
+        request.postWithoutLocation(TEST_CASE_CHANGED_API_PATH + exerciseId, obj, status, new HttpHeaders());
     }
 
     private String getBuildPlanIdByParticipationType(IntegrationTestParticipationType participationType, int participationIndex) {

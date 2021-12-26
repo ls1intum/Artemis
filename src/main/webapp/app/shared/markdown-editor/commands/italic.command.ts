@@ -1,8 +1,9 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faItalic } from '@fortawesome/free-solid-svg-icons';
 import { Command } from './command';
 
 export class ItalicCommand extends Command {
-    buttonIcon = 'italic' as IconProp;
+    buttonIcon = faItalic as IconProp;
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.italic';
 
     /**

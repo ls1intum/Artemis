@@ -8,17 +8,17 @@
                 </ng-container>
                 <!-- start discussion -->
                 <button *ngIf="sortedAnswerPosts.length === 0" class="btn btn-sm btn-outline-secondary mt-2" (click)="createAnswerPostModal.open()">
-                    <fa-icon [icon]="'comments'"></fa-icon>
+                    <fa-icon [icon]="faComments"></fa-icon>
                     <span class="d-none d-md-inline">{{ 'artemisApp.metis.startDiscussion' | artemisTranslate }}</span>
                 </button>
                 <!-- add new answer to expanded discussion -->
                 <button *ngIf="showAnswers && sortedAnswerPosts.length > 0" class="btn btn-sm btn-outline-secondary mt-2" (click)="createAnswerPostModal.open()">
-                    <fa-icon [icon]="'comments'"></fa-icon>
+                    <fa-icon [icon]="faComments"></fa-icon>
                     <span class="d-none d-md-inline">{{ 'artemisApp.metis.answerNow' | artemisTranslate }}</span>
                 </button>
                 <!-- expand answers -->
                 <button *ngIf="!showAnswers && sortedAnswerPosts.length > 0" class="btn btn-sm btn-outline-secondary mt-2" (click)="showAnswers = true">
-                    <fa-icon [icon]="'comments'"></fa-icon>
+                    <fa-icon [icon]="faComments"></fa-icon>
                     <span class="d-none d-md-inline">
                         {{
                             sortedAnswerPosts.length === 1
@@ -29,7 +29,7 @@
                 </button>
                 <!-- collapse answers -->
                 <button *ngIf="showAnswers && sortedAnswerPosts.length > 0" class="btn btn-sm btn-outline-secondary mt-2" (click)="showAnswers = false">
-                    <fa-icon [icon]="'eye-slash'"></fa-icon>
+                    <fa-icon [icon]="faEyeSlash"></fa-icon>
                     <span class="d-none d-md-inline"> {{ 'artemisApp.metis.collapseAnswers' | artemisTranslate }}</span>
                 </button>
                 <jhi-answer-post-create-edit-modal

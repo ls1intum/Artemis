@@ -8,7 +8,6 @@ import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/co
 import { CodeEditorBuildLogService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { hasParticipationChanged } from 'app/overview/participation.utils';
 import { Result } from 'app/entities/result.model';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
@@ -17,6 +16,8 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { findLatestResult } from 'app/shared/util/utils';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { faChevronDown, faCircleNotch, faTerminal } from '@fortawesome/free-solid-svg-icons';
+import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -44,6 +45,11 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
 
     private resultSubscription: Subscription;
     private submissionSubscription: Subscription;
+
+    // Icons
+    faChevronDown = faChevronDown;
+    faCircleNotch = faCircleNotch;
+    faTerminal = faTerminal;
 
     constructor(
         private buildLogService: CodeEditorBuildLogService,

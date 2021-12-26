@@ -44,8 +44,8 @@ describe('Exam management', () => {
     it('Adds an exercise group with a text exercise', () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
-        courseManagement.openExamsOfCourse(course.title, course.shortName);
-        examManagement.getExamRow(examTitle).openExerciseGroups();
+        courseManagement.openExamsOfCourse(course.shortName);
+        examManagement.openExerciseGroups(exam.id);
         exerciseGroups.shouldShowNumberOfExerciseGroups(0);
         exerciseGroups.clickAddExerciseGroup();
         const groupName = 'group 1';
@@ -66,19 +66,19 @@ describe('Exam management', () => {
     it('Registers the course students for the exam', () => {
         // We already verified in the previous test that we can navigate here
         cy.visit(`/course-management/${course.id}/exams`);
-        examManagement.getExamRow(examTitle).openStudentRegistration();
-        cy.contains('Registered students: 0').should('be.visible');
-        studentExamManagement.clickRegisterCourseStudents().its('response.statusCode').should('eq', 200);
+        examManagement.openStudentRegistration(exam.id);
+        cy.get('#registered-users').should('contain.text', '0');
+        studentExamManagement.clickRegisterCourseStudents().then((request: any) => {
+            expect(request.response.statusCode).to.eq(200);
+        });
         cy.contains(users.getStudentOne().username).should('be.visible');
-        cy.contains('Registered students: 1').should('be.visible');
+        cy.get('#registered-users').should('contain.text', '1');
     });
 
     it('Generates student exams', () => {
         cy.visit(`/course-management/${course.id}/exams`);
-        examManagement.getExamRow(examTitle).openStudenExams();
-        cy.contains('0 total').should('be.visible');
+        examManagement.openStudenExams(exam.id);
         studentExamManagement.clickGenerateStudentExams();
-        cy.contains('1 total').should('be.visible');
         cy.get('#generateMissingStudentExamsButton').should('be.disabled');
     });
 

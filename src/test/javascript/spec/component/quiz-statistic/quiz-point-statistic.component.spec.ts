@@ -18,6 +18,8 @@ import { QuizPointStatisticComponent } from 'app/exercises/quiz/manage/statistic
 import dayjs from 'dayjs';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { MockProvider } from 'ng-mocks';
+import { ChangeDetectorRef } from '@angular/core';
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 const question = { id: 1 } as QuizQuestion;
@@ -56,6 +58,7 @@ describe('QuizExercise Point Statistic Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
+                MockProvider(ChangeDetectorRef),
             ],
         })
             .overrideTemplate(QuizPointStatisticComponent, '')
@@ -198,16 +201,20 @@ describe('QuizExercise Point Statistic Component', () => {
         });
     });
 
-    it('should calculate the MaxScore', () => {
+    it('should calculate the MaxScore if no quiz questions are contained', () => {
         // setup
-        quizExercise.quizQuestions = [{ points: 1 }, { points: 2 }];
+        quizExercise.quizQuestions = undefined;
+        quizExercise.maxPoints = 42;
         comp.quizExercise = quizExercise;
+        accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+
+        jest.spyOn(comp, 'loadData').mockImplementation();
 
         // call
-        const result = comp.calculateMaxScore();
+        comp.loadQuizSuccess(quizExercise);
 
         // check
-        expect(result).toBe(3);
+        expect(comp.maxScore).toBe(42);
     });
 
     describe('loadData', function () {
@@ -222,7 +229,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
             // check
             expect(loadDataInDiagramSpy).toHaveBeenCalled();
-            expect(comp.labels).toEqual(['1', '4']);
+            expect(comp.label).toEqual(['1', '4']);
             expect(comp.ratedData).toEqual([2, 5]);
             expect(comp.unratedData).toEqual([3, 6]);
         });

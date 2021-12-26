@@ -9,8 +9,9 @@ const courseManagementRequests = artemis.requests.courseManagement;
 // page objects
 const examStartEnd = artemis.pageobjects.examStartEnd;
 const textEditor = artemis.pageobjects.textExercise.editor;
+const examNavigationBar = artemis.pageobjects.examNavigationBar;
 
-describe('Exam management', () => {
+describe('Exam date verification', () => {
     let course: any;
     let examTitle: string;
 
@@ -94,7 +95,7 @@ describe('Exam management', () => {
                         cy.fixture('loremIpsum.txt').then((submission) => {
                             textEditor.typeSubmission(submission);
                         });
-                        textEditor.submit();
+                        examNavigationBar.clickSave();
                     });
                 });
             });

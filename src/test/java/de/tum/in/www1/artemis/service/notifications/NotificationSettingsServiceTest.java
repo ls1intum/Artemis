@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
@@ -28,7 +29,6 @@ public class NotificationSettingsServiceTest {
     @Mock
     private static NotificationSettingRepository notificationSettingRepository;
 
-    @Mock
     private static Notification notification;
 
     private static User student1;
@@ -72,7 +72,7 @@ public class NotificationSettingsServiceTest {
 
         notificationSettingsService = new NotificationSettingsService(notificationSettingRepository);
 
-        notification = mock(Notification.class);
+        notification = new GroupNotification();
     }
 
     /**
@@ -104,12 +104,12 @@ public class NotificationSettingsServiceTest {
         // SettingA : exercise-open-for-practice -> [EXERCISE_PRACTICE] : webapp deactivated
         // SettingB : attachment-changes -> [ATTACHMENT_CHANGE] : webapp activated <- not part of set
         // SettingC : course-and-exam-archiving-started -> [EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED] : webapp deactivated
-        assertThat(resultingTypeSet).hasSize(3);
-        assertThat(resultingTypeSet).contains(EXERCISE_PRACTICE);
-        assertThat(resultingTypeSet).contains(EXAM_ARCHIVE_STARTED);
-        assertThat(resultingTypeSet).contains(COURSE_ARCHIVE_STARTED);
-        assertThat(resultingTypeSet).contains(COURSE_ARCHIVE_STARTED);
-        assertThat(resultingTypeSet).doesNotContain(ATTACHMENT_CHANGE);
+        assertThat(resultingTypeSet).as("The resulting type set should contain all 3 corresponding types").hasSize(3);
+        assertThat(resultingTypeSet).as("The type for EXERCISE_PRACTICE should be returned").contains(EXERCISE_PRACTICE);
+        assertThat(resultingTypeSet).as("The type for EXAM_ARCHIVE_STARTED should be returned").contains(EXAM_ARCHIVE_STARTED);
+        assertThat(resultingTypeSet).as("The type for COURSE_ARCHIVE_STARTED should be returned").contains(COURSE_ARCHIVE_STARTED);
+        assertThat(resultingTypeSet).as("The type for COURSE_ARCHIVE_STARTED should be returned").contains(COURSE_ARCHIVE_STARTED);
+        assertThat(resultingTypeSet).as("The type for ATTACHMENT_CHANGE should be returned").doesNotContain(ATTACHMENT_CHANGE);
     }
 
     /**
@@ -118,14 +118,17 @@ public class NotificationSettingsServiceTest {
      */
     @Test
     public void testCheckIfNotificationEmailIsAllowedBySettingsForGivenUser() {
-        when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(ATTACHMENT_CHANGE));
-        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL)).isTrue();
+        notification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(ATTACHMENT_CHANGE));
+        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL))
+                .as("Emails with type ATTACHMENT_CHANGE should be allowed for the given user").isTrue();
 
-        when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXERCISE_PRACTICE));
-        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL)).isTrue();
+        notification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXERCISE_PRACTICE));
+        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL))
+                .as("Emails with type EXERCISE_PRACTICE should be allowed for the given user").isTrue();
 
-        when(notification.getTitle()).thenReturn(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXAM_ARCHIVE_STARTED));
-        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL)).isFalse();
+        notification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXAM_ARCHIVE_STARTED));
+        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL))
+                .as("Emails with type EXAM_ARCHIVE_STARTED should not be allowed for the given user").isFalse();
     }
 
     /**
@@ -135,7 +138,8 @@ public class NotificationSettingsServiceTest {
     public void testCheckLoadedNotificationSettingsForCorrectness_empty() {
         Set<NotificationSetting> testSet = new HashSet<>();
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
-        assertThat(testSet.size()).isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
+        assertThat(testSet.size()).as("The number of loaded Settings should be equals to the number of default settings")
+                .isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
         verify(notificationSettingRepository, times(0)).saveAll(any());
     }
 
@@ -147,8 +151,9 @@ public class NotificationSettingsServiceTest {
         Set<NotificationSetting> testSet = new HashSet<>();
         testSet.add(completeNotificationSettingA);
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
-        assertThat(testSet.size()).isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
-        assertThat(testSet).contains(completeNotificationSettingA);
+        assertThat(testSet.size()).as("The number of loaded Settings should be equals to the number of default settings")
+                .isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
+        assertThat(testSet).as("The loaded settings should contain the set of test settings").contains(completeNotificationSettingA);
         verify(notificationSettingRepository, times(1)).deleteAll(any());
         verify(notificationSettingRepository, times(1)).saveAll(any());
     }
@@ -161,7 +166,8 @@ public class NotificationSettingsServiceTest {
         Set<NotificationSetting> testSet = new HashSet<>();
         testSet.addAll(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS);
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
-        assertThat(testSet.size()).isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
+        assertThat(testSet.size()).as("The number of loaded Settings should be equals to the number of default settings")
+                .isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
         verify(notificationSettingRepository, times(0)).deleteAll(any());
         verify(notificationSettingRepository, times(0)).saveAll(any());
     }

@@ -37,8 +37,8 @@ import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/uti
 import { Observable } from 'rxjs';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { SubmissionType } from 'app/entities/submission.model';
-import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -102,6 +102,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // function override, if set will be executed instead of going to the next submission page
     @Input() overrideNextSubmission?: (submissionId: number) => {} = undefined;
 
+    // Icons
+    faTimesCircle = faTimesCircle;
+
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
         private router: Router,
@@ -123,7 +126,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     /**
      * On init set up the route param subscription.
-     * Will load the participation according to participation Id with the latest result and result details.
+     * Will load the participation according to participation id with the latest result and result details.
      */
     ngOnInit(): void {
         // Used to check if the assessor is the current user
@@ -212,7 +215,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.submission = submission;
         this.manualResult = getLatestSubmissionResult(this.submission);
         this.participation = submission.participation!;
-        addUserIndependentRepositoryUrl(this.participation);
         this.exercise = this.participation.exercise as ProgrammingExercise;
         this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && dayjs(this.exercise!.assessmentDueDate).isBefore(dayjs());
 
@@ -302,7 +304,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     /**
      * Shared functionality for save and submit
      *
-     * @param submit true if it is a submit, undefined if save
+     * @param submit true if the user submits, undefined if the user saves
      * @param translationKey key for the alert to be shown on success
      */
     private handleSaveOrSubmit(submit: boolean | undefined, translationKey: string) {
@@ -560,7 +562,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             }
             this.isFirstAssessment = false;
         } else {
-            /* Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated,
+            /* Result string has the following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated,
              * as the points the student has achieved have changed
              */
             const resultStringParts: string[] = this.manualResult!.resultString!.split(', ');

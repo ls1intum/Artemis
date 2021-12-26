@@ -20,7 +20,7 @@
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
     [(highlightDifferences)]="highlightDifferences"
     [correctionRound]="correctionRound"
-    (importExampleSubmission)="importStudentSubmissionAsExampleSubmission()"
+    (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
 >
     <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
 </jhi-assessment-layout>

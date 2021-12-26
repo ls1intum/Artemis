@@ -1,6 +1,6 @@
 <li class="nav-item pointer">
     <button class="guided-tour-notification nav-link notification-button light-button" (click)="toggleSidebar(); updateLastNotificationRead()">
-        <fa-icon [icon]="'bell'"></fa-icon>
+        <fa-icon [icon]="faBell"></fa-icon>
         <span class="badge bg-danger rounded-pill" *ngIf="recentNotificationCount > 0">
             {{ recentNotificationCount }}<span *ngIf="recentNotificationCount >= notifications.length">+</span>
         </span>
@@ -14,16 +14,28 @@
         <div class="header pt-4 px-3">
             <div class="d-flex header-icon justify-content-between align-items-baseline">
                 <a class="ps-2" [routerLink]="['/user-settings/notifications']" (click)="toggleSidebar()">
-                    <fa-icon class="ng-fa-icon" [icon]="'cog'"></fa-icon>
+                    <fa-icon class="ng-fa-icon" [icon]="faCog"></fa-icon>
                 </a>
                 <h5 class="mb-3 text-center fw-medium">
                     {{ 'artemisApp.notification.notifications' | artemisTranslate }}
                 </h5>
                 <button class="close header-icon border-0 bg-transparent pe-2" (click)="toggleSidebar()">
-                    <fa-icon class="ng-fa-icon" [icon]="'times'"></fa-icon>
+                    <fa-icon class="ng-fa-icon" [icon]="faTimes"></fa-icon>
                 </button>
             </div>
             <div class="text-end">
+                <button id="hide-until-toggle" class="border-0 bg-transparent pe-2" (click)="toggleNotificationDisplay()">
+                    <fa-icon
+                        *ngIf="showButtonToHideCurrentlyDisplayedNotifications; else showButtonToDisplayAllNotifications"
+                        class="ng-fa-icon"
+                        [icon]="faArchive"
+                        [ngbTooltip]="'artemisApp.notification.hideAllCurrentlyDisplayedNotifications' | artemisTranslate"
+                    >
+                    </fa-icon>
+                    <ng-template #showButtonToDisplayAllNotifications>
+                        <fa-icon class="ng-fa-icon" [icon]="faEye" [ngbTooltip]="'artemisApp.notification.showAllSavedNotifications' | artemisTranslate"> </fa-icon>
+                    </ng-template>
+                </button>
                 <small class="text-muted">
                     {{ 'artemisApp.notification.loadedNotificationCount' | artemisTranslate: { loaded: sortedNotifications?.length || '0', total: totalNotifications } }}
                 </small>
@@ -51,7 +63,7 @@
                 </div>
             </div>
             <div class="loading-spinner text-center mx-3 my-2" style="font-size: large" *ngIf="loading">
-                <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
+                <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
             </div>
             <small class="all-loaded text-center d-block mx-3 my-2" *ngIf="notifications.length > 0 && notifications.length >= totalNotifications">
                 {{ 'artemisApp.notification.allLoaded' | artemisTranslate }}

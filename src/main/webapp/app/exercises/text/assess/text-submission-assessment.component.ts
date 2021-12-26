@@ -34,6 +34,7 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -89,6 +90,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private get assessments(): Feedback[] {
         return [...this.referencedFeedback, ...this.unreferencedFeedback];
     }
+
+    // Icons
+    farListAlt = faListAlt;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -466,9 +470,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     /**
-     * Invokes exampleSubmissionService when importExampleSubmission is emitted in assessment-layout
+     * Invokes exampleSubmissionService when useAsExampleSubmission is emitted in assessment-layout
      */
-    importStudentSubmissionAsExampleSubmission(): void {
+    useStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.exercise) {
             this.exampleSubmissionService.import(this.submission.id!, this.exercise.id!).subscribe(
                 () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
