@@ -155,14 +155,14 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     it('should initialize apollon editor', () => {
-        comp.model = mockModel;
+        comp.umlModel = mockModel;
         comp.diagramType = UMLDiagramType.ClassDiagram;
         fixture.detectChanges();
         expect(comp.apollonEditor).to.exist;
     });
 
     it('should filter references', () => {
-        comp.model = mockModel;
+        comp.umlModel = mockModel;
         comp.readOnly = true;
         comp.feedbacks = mockFeedbacks;
         fixture.detectChanges();
@@ -175,7 +175,7 @@ describe('ModelingAssessmentComponent', () => {
         const highlightedElements = new Map();
         highlightedElements.set('elementId1', 'red');
         highlightedElements.set('relationshipId', 'blue');
-        comp.model = mockModel;
+        comp.umlModel = mockModel;
         comp.highlightedElements = highlightedElements;
         fixture.detectChanges();
         expect(comp.apollonEditor).to.exist;
@@ -205,7 +205,7 @@ describe('ModelingAssessmentComponent', () => {
         const highlightedElements = new Map();
         highlightedElements.set('elementId2', 'green');
         const changes = { highlightedElements: { currentValue: highlightedElements } as SimpleChange };
-        comp.model = mockModel;
+        comp.umlModel = mockModel;
         fixture.detectChanges();
         comp.highlightedElements = highlightedElements;
         comp.ngOnChanges(changes);
@@ -226,7 +226,7 @@ describe('ModelingAssessmentComponent', () => {
     it('should update highlighted assessments first round', () => {
         const changes = { highlightDifferences: { currentValue: true } as SimpleChange };
         comp.highlightDifferences = true;
-        comp.model = mockModel;
+        comp.umlModel = mockModel;
         fixture.detectChanges();
         comp.feedbacks = [mockFeedbackWithReference];
         comp.referencedFeedbacks = [mockFeedbackWithReference];
@@ -246,7 +246,7 @@ describe('ModelingAssessmentComponent', () => {
         const changes = { highlightDifferences: { currentValue: true } as SimpleChange };
         const highlightDifferences = true;
         comp.highlightDifferences = highlightDifferences;
-        comp.model = mockModel;
+        comp.umlModel = mockModel;
         fixture.detectChanges();
         comp.feedbacks = [mockFeedbackWithReferenceCopied];
         comp.referencedFeedbacks = [mockFeedbackWithReferenceCopied];
@@ -268,7 +268,7 @@ describe('ModelingAssessmentComponent', () => {
         const newMockFeedbackInvalid = { text: 'NewFeedbackInvalid', referenceId: '4', reference: 'reference' };
         const newMockValidFeedbacks = [newMockFeedbackWithReference, newMockFeedbackWithoutReference];
         const newMockFeedbacks = [...newMockValidFeedbacks, newMockFeedbackInvalid];
-        comp.model = mockModel;
+        comp.umlModel = mockModel;
         comp.readOnly = true;
         fixture.detectChanges();
         const changes = { feedbacks: { currentValue: newMockFeedbacks } as SimpleChange };
