@@ -139,7 +139,7 @@ public class GroupNotificationFactory {
             notification.setTransientAndStringTarget(createExerciseReleasedTarget(exercise));
         }
         else if (notificationType == DUPLICATE_TEST_CASE) {
-            notification.setTransientAndStringTarget(createDuplicateTestCaseTarget(exercise.getId()));
+            notification.setTransientAndStringTarget(createDuplicateTestCaseTarget(exercise));
         }
         else {
             notification.setTransientAndStringTarget(createExerciseUpdatedTarget(exercise));

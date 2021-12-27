@@ -101,16 +101,12 @@ public class NotificationTargetFactory {
     /**
      * Create a NotificationTarget for a GroupNotification for a duplicate test case.
      *
-     * @param exerciseId of the exercise with duplicated test cases
+     * @param exercise with duplicated test cases
      * @return the final NotificationTarget for this case
      */
-    public static NotificationTarget createDuplicateTestCaseTarget(Long exerciseId) {
-        NotificationTarget target = new NotificationTarget();
-        target.setMessage(DUPLICATE_TEST_CASE_TEXT);
-        target.setIdentifier(exerciseId);
-        target.setEntity(COURSE_MANAGEMENT_TEXT);
-        target.setMainPage(PROGRAMMING_EXERCISES_TEXT);
-        return target;
+    public static NotificationTarget createDuplicateTestCaseTarget(Exercise exercise) {
+        return new NotificationTarget(DUPLICATE_TEST_CASE_TEXT, exercise.getId(), PROGRAMMING_EXERCISES_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId(),
+                COURSE_MANAGEMENT_TEXT);
     }
 
     // LECTURE related targets

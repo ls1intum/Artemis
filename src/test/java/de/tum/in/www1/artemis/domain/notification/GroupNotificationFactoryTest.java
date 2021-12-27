@@ -524,7 +524,7 @@ public class GroupNotificationFactoryTest {
         notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);
         expectedText = notificationText;
         expectedPriority = HIGH;
-        expectedTransientTarget = createDuplicateTestCaseTarget(EXERCISE_ID);
+        expectedTransientTarget = createDuplicateTestCaseTarget(exercise);
         createAndCheckNotification(Base.EXERCISE);
     }
 
