@@ -179,7 +179,8 @@
             "courseAverage": "Kursdurchschnitt",
             "exerciseAverage": "Aufgabendurchschnitt",
             "amountOfStudents": "# Studierende",
-            "activeStudents": "Aktive Studierende"
+            "activeStudents": "Aktive Studierende",
+            "activeStudentsExplanation": "Aktive Studierende sind Studierende, die in der entsprechenden Woche mindestens eine Abgabe getätigt haben."
         }
     }
 }

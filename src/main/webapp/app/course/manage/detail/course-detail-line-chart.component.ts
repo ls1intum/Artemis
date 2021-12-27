@@ -6,6 +6,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import * as shape from 'd3-shape';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',
@@ -59,6 +60,8 @@ export class CourseDetailLineChartComponent implements OnChanges {
     ];
     // Used for storing absolute values to display in tooltip
     absoluteSeries = [{}];
+    curve: any = shape.curveMonotoneX;
+    average = { name: 'Average', value: 0 };
 
     // Icons
     faSpinner = faSpinner;
@@ -97,15 +100,22 @@ export class CourseDetailLineChartComponent implements OnChanges {
      */
     private processDataAndCreateChart(array: number[]) {
         if (this.numberOfStudentsInCourse > 0) {
+            const allValues = [];
             for (let i = 0; i < array.length; i++) {
-                this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course);
+                allValues.push(roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course));
+                this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course); // allValues[i];
                 this.absoluteSeries[i]['absoluteValue'] = array[i];
             }
+            const value = this.computeAverage(allValues);
+            this.average.name = 'Average: ' + value.toFixed(2) + '%';
+            this.average.value = value;
+            // this.median = { name: 'median', value: this.computeMedian(allValues) };
         } else {
             for (let i = 0; i < this.displayedNumberOfWeeks; i++) {
                 this.dataCopy[0].series[i]['value'] = 0;
                 this.absoluteSeries[i]['absoluteValue'] = 0;
             }
+            // this.median = { name: 'median', value: 0 };
         }
         this.loading = false;
     }
@@ -149,5 +159,12 @@ export class CourseDetailLineChartComponent implements OnChanges {
     findAbsoluteValue(model: any) {
         const result: any = this.absoluteSeries.find((entry: any) => entry.name === model.name);
         return result ? result.absoluteValue : '/';
+    }
+
+    private computeAverage(array: number[]): number {
+        let sum = 0;
+
+        array.forEach((number) => (sum += number));
+        return sum / array.length;
     }
 }

@@ -179,7 +179,8 @@
             "courseAverage": "Course average",
             "exerciseAverage": "exercise average",
             "amountOfStudents": "# of students",
-            "activeStudents": "Active students"
+            "activeStudents": "Active students",
+            "activeStudentsExplanation": "Active students are students that did at least one submission in the corresponding week."
         }
     }
 }
