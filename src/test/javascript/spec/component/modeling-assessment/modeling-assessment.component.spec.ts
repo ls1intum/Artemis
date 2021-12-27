@@ -79,11 +79,11 @@ describe('ModelingAssessmentComponent', () => {
     };
 
     const mockModel = generateMockModel('elementId1', 'elementId2', 'relationshipId');
-    const mockFeedbackWithReference = { text: 'FeedbackWithReference', referenceId: 'relationshipId', reference: 'referemce', credits: 30 } as Feedback;
+    const mockFeedbackWithReference = { text: 'FeedbackWithReference', referenceId: 'relationshipId', reference: 'reference', credits: 30 } as Feedback;
     const mockFeedbackWithReferenceCopied = {
         text: 'FeedbackWithReference Copied',
         referenceId: 'relationshipId',
-        reference: 'referemce',
+        reference: 'reference',
         credits: 35,
         copiedFeedbackId: 12,
     } as Feedback;
@@ -244,8 +244,7 @@ describe('ModelingAssessmentComponent', () => {
 
     it('should update highlighted assessments', () => {
         const changes = { highlightDifferences: { currentValue: true } as SimpleChange };
-        const highlightDifferences = true;
-        comp.highlightDifferences = highlightDifferences;
+        comp.highlightDifferences = true;
         comp.umlModel = mockModel;
         fixture.detectChanges();
         comp.feedbacks = [mockFeedbackWithReferenceCopied];

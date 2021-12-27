@@ -181,7 +181,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.mouse.startY = 10;
 
         // @ts-ignore
-        component['mouseMoveAction'](event2, { left: 0, top: 0 }, 10, 10);
+        component['mouseMoveAction'](event2, 0, 0, 10, 10);
 
         expect(component.mouse.x).toBe(0);
         expect(component.mouse.y).toBe(0);
@@ -194,7 +194,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         fixture.detectChanges();
         // @ts-ignore
-        component['mouseMoveAction'](event2, { left: 0, top: 0 }, 10, 10);
+        component['mouseMoveAction'](event2, 0, 0, 10, 10);
 
         expect(component.currentDropLocation.posX).toBe(0);
         expect(component.currentDropLocation.posY).toBe(0);
@@ -204,7 +204,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.mouse.startY = 10;
 
         // @ts-ignore
-        component['mouseMoveAction'](event2, { left: 0, top: 0 }, 10, 10);
+        component['mouseMoveAction'](event2, 0, 0, 10, 10);
 
         expect(component.currentDropLocation.posX).toBe(0);
         expect(component.currentDropLocation.posY).toBe(0);

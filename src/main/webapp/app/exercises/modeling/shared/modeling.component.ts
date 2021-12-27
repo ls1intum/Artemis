@@ -14,7 +14,7 @@ export abstract class ModelingComponent {
     @Input() explanation: string;
     @Input() readOnly = false;
 
-    protected apollonEditor?: ApollonEditor;
+    apollonEditor?: ApollonEditor;
 
     // Icons
     faGripLines = faGripLines;
