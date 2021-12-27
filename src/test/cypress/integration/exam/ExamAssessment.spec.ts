@@ -85,12 +85,12 @@ describe('Exam assessment', () => {
 
         it('Assess a programming exercise submission (MANUAL)', () => {
             cy.login(tutor, '/course-management/' + course.id + '/exams');
-            examManagement.openAssessmentDashboard(exam.id, 60000);
+            examManagement.openAssessmentDashboard(exam.id, 120000);
             startAssessing();
             examAssessment.addNewFeedback(2, 'Good job');
             examAssessment.submit();
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-            cy.get('.question-options').contains('6.6 of 10 points').should('be.visible');
+            cy.get('#result-score').should('contain.text', '6.6 of 10 points');
         });
     });
 
@@ -130,7 +130,7 @@ describe('Exam assessment', () => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                cy.contains('4 of 10 points').should('be.visible');
+                cy.get('#result-score').should('contain.text', '4 of 10 points');
             });
         });
 
@@ -160,7 +160,7 @@ describe('Exam assessment', () => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                cy.get('.question-options').contains('7 of 10 points').should('be.visible');
+                cy.get('#result-score').should('contain.text', '7 of 10 points');
             });
         });
     });
@@ -198,10 +198,9 @@ describe('Exam assessment', () => {
                 cy.wait(examEnd.diff(dayjs(), 'ms'));
             }
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-            const score = '5 of 10 points';
             // Sometimes the feedback fails to load properly on the first load...
-            cy.reloadUntilFound(`jhi-result:contains(${score})`);
-            cy.get('jhi-result').contains(score).should('be.visible');
+            cy.reloadUntilFound(`#result-score`);
+            cy.get('#result-score').should('contain.text', '5 of 10 points');
         });
     });
 
