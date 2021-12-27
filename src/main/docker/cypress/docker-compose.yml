@@ -14,10 +14,18 @@ services:
             - ../../resources/config/application-dev.yml:/home/artemis/application-dev.yml:ro
             - ../../resources/config/application-artemis.yml:/home/artemis/application-artemis.yml:ro
         environment:
+            _JAVA_OPTIONS: "-Xmx5120m -Xms2560m"
+            JHIPSTER_SLEEP: 30 # gives time for other services to boot before the application
+            spring.profiles.active: "dev,bamboo,bitbucket,jira,artemis,scheduling,athene"
             spring.datasource.url: "${DATASOURCE_URL}"
+            spring.datasource.username: root
+            spring.datasource.password: ""
             artemis.user-management.external.url: "${USER_MANAGEMENT_URL}"
             artemis.user-management.external.user: "${EXTERNAL_USER}"
             artemis.user-management.external.password: "${EXTERNAL_PASSWORD}"
+            artemis.version-control.url: "${SCM_URL}"
+            artemis.version-control.user: "${EXTERNAL_USER}"
+            artemis.version-control.password: "${EXTERNAL_PASSWORD}"
         ports:
             - 8080:8080
         networks:
