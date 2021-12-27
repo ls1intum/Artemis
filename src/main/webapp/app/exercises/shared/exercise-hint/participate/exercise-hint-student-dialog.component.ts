@@ -6,8 +6,9 @@ import { catchError, map, tap } from 'rxjs/operators';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 import { ExerciseHintService } from '../manage/exercise-hint.service';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { TextHint } from 'app/entities/hestia/text-hint-model';
 
 /**
  * This component is a modal that shows the exercise's hints.
@@ -18,7 +19,7 @@ import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
     styleUrls: ['./exercise-hint-student-dialog.scss'],
 })
 export class ExerciseHintStudentDialogComponent {
-    @Input() exerciseHints: ExerciseHint[];
+    @Input() exerciseHints: TextHint[];
 
     constructor(public activeModal: NgbActiveModal) {}
 

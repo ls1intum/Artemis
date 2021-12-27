@@ -19,7 +19,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { problemStatement } from '../../helpers/sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';

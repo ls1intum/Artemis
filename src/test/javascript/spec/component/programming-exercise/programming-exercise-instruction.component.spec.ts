@@ -18,7 +18,7 @@ import { ProgrammingExerciseInstructionService } from 'app/exercises/programming
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { HttpResponse } from '@angular/common/http';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { LocalStorageService } from 'ngx-webstorage';

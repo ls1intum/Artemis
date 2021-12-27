@@ -1,6 +1,6 @@
 import { problemStatement } from '../helpers/sample/problemStatement.json';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 
 describe('ProgrammingExerciseInstructionAnalysisService', () => {

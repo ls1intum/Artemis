@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 export type ExerciseHintResponse = HttpResponse<ExerciseHint>;

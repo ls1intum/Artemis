@@ -3,13 +3,13 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ExerciseHintDetailComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-detail.component';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ArtemisTestModule } from '../../test.module';
+import { TextHint } from 'app/entities/hestia/text-hint-model';
 
 describe('ExerciseHint Management Detail Component', () => {
     let comp: ExerciseHintDetailComponent;
     let fixture: ComponentFixture<ExerciseHintDetailComponent>;
-    const exerciseHint = new ExerciseHint();
+    const exerciseHint = new TextHint();
     exerciseHint.id = 123;
     const route = { data: of({ exerciseHint }), params: of({ exerciseId: 1 }) } as any as ActivatedRoute;
 

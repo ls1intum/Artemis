@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable, of, Subscription } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
 import { EditorMode, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { Exercise } from 'app/entities/exercise.model';
@@ -13,6 +13,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faCircleNotch, faSave } from '@fortawesome/free-solid-svg-icons';
+import { TextHint } from 'app/entities/hestia/text-hint-model';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -24,7 +25,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     courseId: number;
     exerciseId: number;
-    exerciseHint = new ExerciseHint();
+    exerciseHint = new TextHint();
 
     isSaving: boolean;
     isLoading: boolean;

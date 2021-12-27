@@ -2,15 +2,15 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { faWrench } from '@fortawesome/free-solid-svg-icons';
+import { TextHint } from 'app/entities/hestia/text-hint-model';
 
 @Component({
     selector: 'jhi-exercise-hint-detail',
     templateUrl: './exercise-hint-detail.component.html',
 })
 export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
-    exerciseHint: ExerciseHint;
+    exerciseHint: TextHint;
 
     courseId: number;
     exerciseId: number;

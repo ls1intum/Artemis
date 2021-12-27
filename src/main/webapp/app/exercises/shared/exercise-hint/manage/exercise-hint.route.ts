@@ -8,9 +8,10 @@ import { ExerciseHintService } from './exercise-hint.service';
 import { ExerciseHintComponent } from './exercise-hint.component';
 import { ExerciseHintDetailComponent } from './exercise-hint-detail.component';
 import { ExerciseHintUpdateComponent } from './exercise-hint-update.component';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { exerciseTypes } from 'app/entities/exercise.model';
+import { TextHint } from 'app/entities/hestia/text-hint-model';
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseHintResolve implements Resolve<ExerciseHint> {
@@ -28,7 +29,7 @@ export class ExerciseHintResolve implements Resolve<ExerciseHint> {
                 map((exerciseHint: HttpResponse<ExerciseHint>) => exerciseHint.body!),
             );
         }
-        return of(new ExerciseHint());
+        return of(new TextHint());
     }
 }
 

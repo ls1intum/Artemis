@@ -5,10 +5,10 @@ import { of } from 'rxjs';
 
 import { ExerciseHintUpdateComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-update.component';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
+import { TextHint } from 'app/entities/hestia/text-hint-model';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;
@@ -32,7 +32,7 @@ describe('ExerciseHint Management Update Component', () => {
     describe('save', () => {
         it('Should call update service on save for existing entity', fakeAsync(() => {
             // GIVEN
-            const entity = new ExerciseHint();
+            const entity = new TextHint();
             entity.id = 123;
             jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.exerciseHint = entity;
@@ -49,7 +49,7 @@ describe('ExerciseHint Management Update Component', () => {
 
         it('Should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
-            const entity = new ExerciseHint();
+            const entity = new TextHint();
             jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.exerciseHint = entity;
             comp.courseId = 1;

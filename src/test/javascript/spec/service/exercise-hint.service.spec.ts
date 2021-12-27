@@ -3,18 +3,19 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { HttpResponse } from '@angular/common/http';
 import { take } from 'rxjs/operators';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { MockProvider } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { TextHint } from 'app/entities/hestia/text-hint-model';
 
 describe('ExerciseHint Service', () => {
     let injector: TestBed;
     let service: ExerciseHintService;
     let httpMock: HttpTestingController;
-    let elemDefault: ExerciseHint;
-    let exerciseHint: ExerciseHint;
+    let elemDefault: TextHint;
+    let exerciseHint: TextHint;
     let expectedResult: any;
 
     beforeEach(() => {
@@ -36,13 +37,13 @@ describe('ExerciseHint Service', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.id = 1;
 
-        elemDefault = new ExerciseHint();
+        elemDefault = new TextHint();
         elemDefault.id = 0;
         elemDefault.title = 'AAAAAAA';
         elemDefault.content = 'AAAAAAA';
         elemDefault.exercise = exercise;
 
-        exerciseHint = new ExerciseHint();
+        exerciseHint = new TextHint();
         exerciseHint.title = 'AAAAA';
         exerciseHint.content = 'BBBBB';
         exerciseHint.exercise = exercise;

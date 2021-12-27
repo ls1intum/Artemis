@@ -18,7 +18,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
 import { Course } from 'app/entities/course.model';
 
