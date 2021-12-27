@@ -14,14 +14,21 @@ services:
             - ../../resources/config/application-dev.yml:/home/artemis/application-dev.yml:ro
             - ../../resources/config/application-artemis.yml:/home/artemis/application-artemis.yml:ro
         environment:
-            _JAVA_OPTIONS: -Xmx5120m -Xms2560m
-            SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,athene,local
-            SPRING_DATASOURCE_URL: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
-            SPRING_DATASOURCE_USERNAME: root
-            SPRING_DATASOURCE_PASSWORD: 
-            JHIPSTER_SLEEP: 30 # gives time for other services to boot before the application
-        env_file:
-            - environment.env
+            - JAVA_OPTIONS
+            - SPRING_DATASOURCE_URL
+            - SPRING_DATASOURCE_USERNAME
+            - SPRING_DATASOURCE_PASSWORD
+            - SPRING_PROFILES_ACTIVE
+            - JHIPSTER_SLEEP
+            - ARTEMIS_USERMANAGEMENT_EXTERNAL_URL
+            - ARTEMIS_USERMANAGEMENT_EXTERNAL_USER
+            - ARTEMIS_USERMANAGEMENT_EXTERNAL_PASSWORD
+            - ARTEMIS_VERSIONCONTROL_URL
+            - ARTEMIS_VERSIONCONTROL_USER
+            - ARTEMIS_VERSIONCONTROL_PASSWORD
+            - ARTEMIS_CONTINUOUSINTEGRATION_URL
+            - ARTEMIS_CONTINUOUSINTEGRATION_USER
+            - ARTEMIS_CONTINUOUSINTEGRATION_PASSWORD
         ports:
             - 8080:8080
         networks:
