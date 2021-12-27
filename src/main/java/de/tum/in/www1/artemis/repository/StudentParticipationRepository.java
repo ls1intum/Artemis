@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -181,6 +182,28 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacks(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Get all participations without individual due date for an exercise with each latest {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).
+     *
+     * @param exerciseId Exercise id.
+     * @return participations for the exercise.
+     */
+    default List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacksWithoutIndividualDueDate(Long exerciseId) {
+        return findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+    }
+
+    @Query("""
+            select distinct p from StudentParticipation p
+            left join fetch p.results r
+            left join fetch r.feedbacks
+            left join fetch r.submission s
+            where p.id = :#{#participationId}
+                and (r.id = (select max(pr.id) from p.results pr
+                    left join pr.submission prs
+                    where pr.assessmentType = 'AUTOMATIC' and (prs.type <> 'ILLEGAL' or prs.type is null)))
+            """)
+    Optional<StudentParticipation> findByIdWithLatestAutomaticResultAndFeedbacks(@Param("participationId") Long participationId);
+
     // Manual result can either be from type MANUAL or SEMI_AUTOMATIC
     @Query("""
             select distinct p from StudentParticipation p
@@ -192,6 +215,21 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                  and (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI_AUTOMATIC')
             """)
     List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacks(@Param("exerciseId") Long exerciseId);
+
+    default List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksWithoutIndividualDueDate(Long exerciseId) {
+        return findByExerciseIdWithManualResultAndFeedbacks(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+    }
+
+    @Query("""
+            select distinct p from StudentParticipation p
+            left join fetch p.results r
+            left join fetch r.feedbacks
+            left join fetch r.submission s
+            where p.id = :#{#participationId}
+                 and (s.type <> 'ILLEGAL' or s.type is null)
+                 and (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI_AUTOMATIC')
+            """)
+    Optional<StudentParticipation> findByIdWithManualResultAndFeedbacks(@Param("participationId") Long participationId);
 
     @Query("""
             select distinct p from StudentParticipation p
@@ -337,6 +375,22 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     AND s.id = (SELECT max(id) FROM p.submissions)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT p FROM Participation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            LEFT JOIN FETCH r.feedbacks
+            WHERE p.exercise.id = :#{#exerciseId}
+            AND (p.individualDueDate IS NULL OR p.individualDueDate <= :#{#now})
+            AND NOT EXISTS
+                (SELECT prs FROM p.results prs
+                    WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
+                    AND s.submitted = true
+                    AND s.id = (SELECT max(id) FROM p.submissions)
+            """)
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDate(@Param("exerciseId") Long exerciseId,
+            @Param("now") ZonedDateTime now);
 
     @Query("""
             select p from Participation p
