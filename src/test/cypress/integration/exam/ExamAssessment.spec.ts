@@ -74,7 +74,7 @@ describe('Exam assessment', () => {
                     courseManagementRequests.prepareExerciseStartForExam(exam);
                     cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                     examStartEnd.startExam();
-                    cy.contains(programmingExercise.title).should('be.visible').click();
+                    examNavigation.openExerciseAtIndex(0);
                     makeSubmissionAndVerifyResults(editorPage, programmingExercise.packageName, partiallySuccessful, () => {
                         examNavigation.handInEarly();
                         examStartEnd.finishExam();
@@ -106,7 +106,7 @@ describe('Exam assessment', () => {
                     courseManagementRequests.prepareExerciseStartForExam(exam);
                     cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                     examStartEnd.startExam();
-                    cy.contains(modelingResponse.body.title).should('be.visible').click();
+                    examNavigation.openExerciseAtIndex(0);
                     modelingEditor.addComponentToModel(1);
                     modelingEditor.addComponentToModel(2);
                     modelingEditor.addComponentToModel(3);
@@ -141,7 +141,7 @@ describe('Exam assessment', () => {
                 courseManagementRequests.prepareExerciseStartForExam(exam);
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                 examStartEnd.startExam();
-                cy.contains(exerciseTitle).click();
+                examNavigation.openExerciseAtIndex(0);
                 textEditor.typeSubmission(textSubmission.text);
                 textEditor.saveAndContinue().then((submissionResponse) => {
                     expect(submissionResponse.response?.statusCode).to.equal(200);
@@ -179,7 +179,7 @@ describe('Exam assessment', () => {
                 courseManagementRequests.prepareExerciseStartForExam(exam);
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                 examStartEnd.startExam();
-                cy.contains('Cypress Quiz').click();
+                examNavigation.openExerciseAtIndex(0);
                 multipleChoice.tickAnswerOption(0, quizResponse.body.quizQuestions[0].id);
                 multipleChoice.tickAnswerOption(2, quizResponse.body.quizQuestions[0].id);
                 examNavigation.handInEarly();
