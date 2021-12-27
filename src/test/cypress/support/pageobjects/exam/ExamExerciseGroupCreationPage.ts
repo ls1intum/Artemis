@@ -15,7 +15,7 @@ export class ExamExerciseGroupCreationPage {
 
     clickSave() {
         cy.intercept({ method: POST, url: `${BASE_API}courses/*/exams/*/exerciseGroups` }).as('createExerciseGroup');
-        cy.get('[jhitranslate="entity.action.save"]').click();
+        cy.get('#save-group').click();
         cy.wait('@createExerciseGroup');
     }
 }
