@@ -287,8 +287,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         const backgroundElement = this.clickLayer.nativeElement;
         const backgroundOffsetLeft = backgroundElement.offsetLeft;
         const backgroundOffsetTop = backgroundElement.offsetTop;
-        const backgroundWidth = backgroundElement.offsetWidth; // alternative: this.clickLayer.nativeElement.style.width
-        const backgroundHeight = backgroundElement.offsetHeight; // alternative: this.clickLayer.nativeElement.style.height
+        const backgroundWidth = backgroundElement.offsetWidth;
+        const backgroundHeight = backgroundElement.offsetHeight;
         this.mouseMoveAction(event, backgroundOffsetLeft, backgroundOffsetTop, backgroundWidth, backgroundHeight);
     }
 
@@ -344,8 +344,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             switch (this.draggingState) {
                 case DragState.CREATE:
                     const backgroundElement = this.clickLayer.nativeElement;
-                    const backgroundWidth = backgroundElement.offsetWidth; // alternative: this.clickLayer.nativeElement.style.width
-                    const backgroundHeight = backgroundElement.offsetHeight; // alternative: this.clickLayer.nativeElement.style.height
+                    const backgroundWidth = backgroundElement.offsetWidth;
+                    const backgroundHeight = backgroundElement.offsetHeight;
                     if ((this.currentDropLocation!.width! / MAX_SIZE_UNIT) * backgroundWidth < 14 && (this.currentDropLocation!.height! / MAX_SIZE_UNIT) * backgroundHeight < 14) {
                         // Remove drop Location if too small (assume it was an accidental click/drag),
                         this.deleteDropLocation(this.currentDropLocation!);
@@ -402,8 +402,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     dropLocationMouseDown(dropLocation: DropLocation): void {
         if (this.draggingState === DragState.NONE) {
             const backgroundElement = this.clickLayer.nativeElement;
-            const backgroundWidth = backgroundElement.offsetWidth; // alternative: this.clickLayer.nativeElement.style.width
-            const backgroundHeight = backgroundElement.offsetHeight; // alternative: this.clickLayer.nativeElement.style.height
+            const backgroundWidth = backgroundElement.offsetWidth;
+            const backgroundHeight = backgroundElement.offsetHeight;
 
             const dropLocationX = (dropLocation.posX! / MAX_SIZE_UNIT) * backgroundWidth;
             const dropLocationY = (dropLocation.posY! / MAX_SIZE_UNIT) * backgroundHeight;
