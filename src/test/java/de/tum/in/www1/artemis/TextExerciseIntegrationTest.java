@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Function;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
@@ -1000,5 +1001,68 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
 
         request.putWithResponseBody("/api/text-exercises/" + 123456789 + "/re-evaluate", textExercise, TextExercise.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetTextExercise_asStudent_sampleSolutionVisibility() throws Exception {
+        testGetTextExercise_sampleSolutionVisibility(true, "student1");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetTextExercise_asInstructor_sampleSolutionVisibility() throws Exception {
+        testGetTextExercise_sampleSolutionVisibility(false, "instructor1");
+    }
+
+    private void testGetTextExercise_sampleSolutionVisibility(boolean isStudent, String username) throws Exception {
+        Course course = database.addCourseWithOneReleasedTextExercise();
+        final TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        // Utility function to avoid duplication
+        Function<Course, TextExercise> textExerciseGetter = c -> (TextExercise) c.getExercises().stream().filter(e -> e.getId().equals(textExercise.getId())).findAny().get();
+
+        textExercise.setSampleSolution("Sample<br>solution");
+
+        if (isStudent) {
+            database.createAndSaveParticipationForExercise(textExercise, username);
+        }
+
+        // Test sample solution publication date not set.
+        textExercise.setSampleSolutionPublicationDate(null);
+        textExerciseRepository.save(textExercise);
+
+        course = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        TextExercise textExerciseFromApi = textExerciseGetter.apply(course);
+
+        if (isStudent) {
+            assertThat(textExerciseFromApi.getSampleSolution()).isNull();
+        }
+        else {
+            assertThat(textExerciseFromApi.getSampleSolution()).isEqualTo(textExercise.getSampleSolution());
+        }
+
+        // Test sample solution publication date in the past.
+        textExercise.setSampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
+        textExerciseRepository.save(textExercise);
+
+        course = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        textExerciseFromApi = textExerciseGetter.apply(course);
+
+        assertThat(textExerciseFromApi.getSampleSolution()).isEqualTo(textExercise.getSampleSolution());
+
+        // Test sample solution publication date in the future.
+        textExercise.setSampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
+        textExerciseRepository.save(textExercise);
+
+        course = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        textExerciseFromApi = textExerciseGetter.apply(course);
+
+        if (isStudent) {
+            assertThat(textExerciseFromApi.getSampleSolution()).isNull();
+        }
+        else {
+            assertThat(textExerciseFromApi.getSampleSolution()).isEqualTo(textExercise.getSampleSolution());
+        }
     }
 }

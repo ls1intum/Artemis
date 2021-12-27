@@ -204,16 +204,15 @@
                 </div>
             </div>
             <!-- RESULTS END -->
-            <ng-container *ngIf="modelingExercise && (sampleSolutionUML || sampleSolution)">
+            <ng-container *ngIf="sampleSolutionUML || sampleSolution">
                 <div class="row mb-2 mt-2 align-items-baseline">
                     <div class="col-auto">
-                        <h3>{{ 'artemisApp.modelingExercise.exampleSolution' | artemisTranslate }}</h3>
+                        <h3>{{ 'artemisApp.exercise.sampleSolution' | artemisTranslate }}</h3>
                     </div>
                 </div>
                 <dl class="row-md jh-entity-details markdown-preview">
-                    <dd class="editor-outline-background">
+                    <dd *ngIf="sampleSolutionUML && modelingExercise" class="editor-outline-background">
                         <jhi-modeling-editor
-                            *ngIf="sampleSolutionUML"
                             [readOnly]="true"
                             [diagramType]="modelingExercise.diagramType!"
                             [umlModel]="sampleSolutionUML!"
@@ -221,6 +220,7 @@
                             [explanation]="modelingExercise.sampleSolutionExplanation || ''"
                         ></jhi-modeling-editor>
                     </dd>
+                    <dd *ngIf="sampleSolution" class="editor-outline-background" [innerHTML]="sampleSolution"></dd>
                 </dl>
             </ng-container>
             <jhi-complaint-student-view

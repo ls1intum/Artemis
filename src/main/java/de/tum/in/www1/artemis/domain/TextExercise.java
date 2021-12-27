@@ -51,7 +51,9 @@ public class TextExercise extends Exercise {
      */
     @Override
     public void filterSensitiveInformation() {
-        setSampleSolution(null);
+        if (!isSampleSolutionPublished()) {
+            setSampleSolution(null);
+        }
         super.filterSensitiveInformation();
     }
 

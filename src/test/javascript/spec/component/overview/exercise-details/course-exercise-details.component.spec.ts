@@ -60,6 +60,8 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { expect as jestExpect } from '@jest/globals';
 
 describe('CourseExerciseDetailsComponent', () => {
@@ -83,6 +85,18 @@ describe('CourseExerciseDetailsComponent', () => {
         sampleSolutionModel: '{ "key": "value" }',
         sampleSolutionExplanation: 'Solution<br>Explanation',
     } as unknown as ModelingExercise;
+    const textExercise = {
+        id: 24,
+        type: ExerciseType.TEXT,
+        studentParticipations: [],
+        sampleSolution: 'Sample<br>Solution',
+    } as unknown as TextExercise;
+    const fileUploadExercise = {
+        id: 25,
+        type: ExerciseType.FILE_UPLOAD,
+        studentParticipations: [],
+        sampleSolution: 'Sample<br>Solution',
+    } as unknown as FileUploadExercise;
     const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
     beforeEach(() => {
@@ -264,8 +278,28 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should fill & empty sample modeling solution', () => {
         comp.showIfSampleSolutionPresent({ ...modelingExercise });
-        jestExpect(comp.sampleSolution).not.toBe(undefined);
+        jestExpect(comp.sampleSolution).toBe(undefined);
         jestExpect(comp.sampleSolutionUML).not.toBe(undefined);
+
+        comp.showIfSampleSolutionPresent({ ...exercise });
+        jestExpect(comp.sampleSolution).toBe(undefined);
+        jestExpect(comp.sampleSolutionUML).toBe(undefined);
+    });
+
+    it('should fill & empty sample text solution', () => {
+        comp.showIfSampleSolutionPresent({ ...textExercise });
+        jestExpect(comp.sampleSolution).not.toBe(undefined);
+        jestExpect(comp.sampleSolutionUML).toBe(undefined);
+
+        comp.showIfSampleSolutionPresent({ ...exercise });
+        jestExpect(comp.sampleSolution).toBe(undefined);
+        jestExpect(comp.sampleSolutionUML).toBe(undefined);
+    });
+
+    it('should fill & empty sample file upload solution', () => {
+        comp.showIfSampleSolutionPresent({ ...fileUploadExercise });
+        jestExpect(comp.sampleSolution).not.toBe(undefined);
+        jestExpect(comp.sampleSolutionUML).toBe(undefined);
 
         comp.showIfSampleSolutionPresent({ ...exercise });
         jestExpect(comp.sampleSolution).toBe(undefined);

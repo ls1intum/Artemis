@@ -48,4 +48,15 @@ public class FileUploadExercise extends Exercise {
     public ExerciseType getExerciseType() {
         return FILE_UPLOAD;
     }
+
+    /**
+     * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
+     */
+    @Override
+    public void filterSensitiveInformation() {
+        if (!isSampleSolutionPublished()) {
+            setSampleSolution(null);
+        }
+        super.filterSensitiveInformation();
+    }
 }

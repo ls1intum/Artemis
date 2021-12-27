@@ -48,6 +48,8 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { UMLModel } from '@ls1intum/apollon';
 import { SafeHtml } from '@angular/platform-browser';
 import { faBook, faExternalLinkAlt, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -247,15 +249,20 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     showIfSampleSolutionPresent(newExercise: Exercise) {
+        // Clear fields below to avoid displaying old data if this method is called more than once.
         this.modelingExercise = undefined;
         this.sampleSolution = undefined;
         this.sampleSolutionUML = undefined;
 
         if (newExercise.type === ExerciseType.MODELING) {
             this.modelingExercise = newExercise as ModelingExercise;
-            this.sampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
-            if (this.modelingExercise.sampleSolutionModel && this.modelingExercise.sampleSolutionModel !== '') {
+            if (this.modelingExercise.sampleSolutionModel) {
                 this.sampleSolutionUML = JSON.parse(this.modelingExercise.sampleSolutionModel);
+            }
+        } else if (newExercise.type === ExerciseType.TEXT || newExercise.type === ExerciseType.FILE_UPLOAD) {
+            const exercise = newExercise as TextExercise & FileUploadExercise;
+            if (exercise.sampleSolution) {
+                this.sampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(exercise.sampleSolution);
             }
         }
     }

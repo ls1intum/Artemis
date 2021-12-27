@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -534,4 +535,67 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         request.putWithResponseBody("/api/file-upload-exercises/" + 123456789 + "/re-evaluate", fileUploadExercise, FileUploadExercise.class, HttpStatus.NOT_FOUND);
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetFileUploadExercise_asStudent_sampleSolutionVisibility() throws Exception {
+        testGetFileUploadExercise_sampleSolutionVisibility(true, "student1");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetFileUploadExercise_asInstructor_sampleSolutionVisibility() throws Exception {
+        testGetFileUploadExercise_sampleSolutionVisibility(false, "instructor1");
+    }
+
+    private void testGetFileUploadExercise_sampleSolutionVisibility(boolean isStudent, String username) throws Exception {
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        final FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        // Utility function to avoid duplication
+        Function<Course, FileUploadExercise> fileUploadExerciseGetter = c -> (FileUploadExercise) c.getExercises().stream()
+                .filter(e -> e.getId().equals(fileUploadExercise.getId())).findAny().get();
+
+        fileUploadExercise.setSampleSolution("Sample<br>solution");
+
+        if (isStudent) {
+            database.createAndSaveParticipationForExercise(fileUploadExercise, username);
+        }
+
+        // Test sample solution publication date not set.
+        fileUploadExercise.setSampleSolutionPublicationDate(null);
+        fileUploadExerciseRepository.save(fileUploadExercise);
+
+        course = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        FileUploadExercise fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
+
+        if (isStudent) {
+            assertThat(fileUploadExerciseFromApi.getSampleSolution()).isNull();
+        }
+        else {
+            assertThat(fileUploadExerciseFromApi.getSampleSolution()).isEqualTo(fileUploadExercise.getSampleSolution());
+        }
+
+        // Test sample solution publication date in the past.
+        fileUploadExercise.setSampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
+        fileUploadExerciseRepository.save(fileUploadExercise);
+
+        course = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
+
+        assertThat(fileUploadExerciseFromApi.getSampleSolution()).isEqualTo(fileUploadExercise.getSampleSolution());
+
+        // Test sample solution publication date in the future.
+        fileUploadExercise.setSampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
+        fileUploadExerciseRepository.save(fileUploadExercise);
+
+        course = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
+
+        if (isStudent) {
+            assertThat(fileUploadExerciseFromApi.getSampleSolution()).isNull();
+        }
+        else {
+            assertThat(fileUploadExerciseFromApi.getSampleSolution()).isEqualTo(fileUploadExercise.getSampleSolution());
+        }
+    }
 }
