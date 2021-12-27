@@ -170,12 +170,7 @@
                     style="visibility: hidden"
                 >
                 </jhi-secured-image>
-                <div
-                    #clickLayer
-                    class="click-layer click-layer-question-{{ questionIndex }}"
-                    (mousedown)="backgroundMouseDown()"
-                    [ngClass]="{ disabled: !question.backgroundFilePath }"
-                >
+                <div #clickLayer class="click-layer" (mousedown)="backgroundMouseDown()" [ngClass]="{ disabled: !question.backgroundFilePath }">
                     <div
                         id="drop-location"
                         class="drop-location"

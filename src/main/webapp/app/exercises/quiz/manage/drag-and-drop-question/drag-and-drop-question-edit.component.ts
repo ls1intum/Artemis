@@ -17,7 +17,6 @@ import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/entities/quiz/drag-state.enum';
-import $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
@@ -61,29 +60,19 @@ import { faFileImage } from '@fortawesome/free-regular-svg-icons';
     encapsulation: ViewEncapsulation.None,
 })
 export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
-    @ViewChild('clickLayer', { static: false })
-    private clickLayer: ElementRef;
-    @ViewChild('backgroundImage', { static: false })
-    private backgroundImage: SecuredImageComponent;
-    @ViewChild('markdownEditor', { static: false })
-    private markdownEditor: MarkdownEditorComponent;
+    @ViewChild('clickLayer', { static: false }) private clickLayer: ElementRef;
+    @ViewChild('backgroundImage', { static: false }) private backgroundImage: SecuredImageComponent;
+    @ViewChild('markdownEditor', { static: false }) private markdownEditor: MarkdownEditorComponent;
 
-    @Input()
-    question: DragAndDropQuestion;
-    @Input()
-    questionIndex: number;
-    @Input()
-    reEvaluationInProgress: boolean;
+    @Input() question: DragAndDropQuestion;
+    @Input() questionIndex: number;
+    @Input() reEvaluationInProgress: boolean;
 
-    @Output()
-    questionUpdated = new EventEmitter();
-    @Output()
-    questionDeleted = new EventEmitter();
+    @Output() questionUpdated = new EventEmitter();
+    @Output() questionDeleted = new EventEmitter();
     /** Question move up and down are used for re-evaluate **/
-    @Output()
-    questionMoveUp = new EventEmitter();
-    @Output()
-    questionMoveDown = new EventEmitter();
+    @Output() questionMoveUp = new EventEmitter();
+    @Output() questionMoveDown = new EventEmitter();
 
     /** Ace Editor configuration constants **/
     questionEditorText = '';
@@ -295,20 +284,21 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     mouseMove(event: MouseEvent): void {
         // Update mouse x and y value
-        const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-        const jQueryBackgroundOffset = jQueryBackgroundElement.offset()!;
-        const backgroundWidth = jQueryBackgroundElement.width()!;
-        const backgroundHeight = jQueryBackgroundElement.height()!;
-        this.mouseMoveAction(event, jQueryBackgroundOffset, backgroundWidth, backgroundHeight);
+        const backgroundElement = this.clickLayer.nativeElement;
+        const backgroundOffsetLeft = backgroundElement.offsetLeft;
+        const backgroundOffsetTop = backgroundElement.offsetTop;
+        const backgroundWidth = backgroundElement.offsetWidth; // alternative: this.clickLayer.nativeElement.style.width
+        const backgroundHeight = backgroundElement.offsetHeight; // alternative: this.clickLayer.nativeElement.style.height
+        this.mouseMoveAction(event, backgroundOffsetLeft, backgroundOffsetTop, backgroundWidth, backgroundHeight);
     }
 
-    private mouseMoveAction(event: MouseEvent, jQueryBackgroundOffset: { left: number; top: number }, backgroundWidth: number, backgroundHeight: number) {
+    private mouseMoveAction(event: MouseEvent, backgroundOffsetLeft: number, backgroundOffsetTop: number, backgroundWidth: number, backgroundHeight: number) {
         if (event.pageX) {
-            this.mouse.x = event.pageX - jQueryBackgroundOffset.left;
-            this.mouse.y = event.pageY - jQueryBackgroundOffset.top;
+            this.mouse.x = event.pageX - backgroundOffsetLeft;
+            this.mouse.y = event.pageY - backgroundOffsetTop;
         } else if (event.clientX) {
-            this.mouse.x = event.clientX - jQueryBackgroundOffset.left;
-            this.mouse.y = event.clientY - jQueryBackgroundOffset.top;
+            this.mouse.x = event.clientX - backgroundOffsetLeft;
+            this.mouse.y = event.clientY - backgroundOffsetTop;
         }
         this.mouse.x = Math.min(Math.max(0, this.mouse.x), backgroundWidth);
         this.mouse.y = Math.min(Math.max(0, this.mouse.y), backgroundHeight);
@@ -353,9 +343,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         if (this.draggingState !== DragState.NONE) {
             switch (this.draggingState) {
                 case DragState.CREATE:
-                    const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-                    const backgroundWidth = jQueryBackgroundElement.width()!;
-                    const backgroundHeight = jQueryBackgroundElement.height()!;
+                    const backgroundElement = this.clickLayer.nativeElement;
+                    const backgroundWidth = backgroundElement.offsetWidth; // alternative: this.clickLayer.nativeElement.style.width
+                    const backgroundHeight = backgroundElement.offsetHeight; // alternative: this.clickLayer.nativeElement.style.height
                     if ((this.currentDropLocation!.width! / MAX_SIZE_UNIT) * backgroundWidth < 14 && (this.currentDropLocation!.height! / MAX_SIZE_UNIT) * backgroundHeight < 14) {
                         // Remove drop Location if too small (assume it was an accidental click/drag),
                         this.deleteDropLocation(this.currentDropLocation!);
@@ -411,9 +401,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     dropLocationMouseDown(dropLocation: DropLocation): void {
         if (this.draggingState === DragState.NONE) {
-            const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-            const backgroundWidth = jQueryBackgroundElement.width()!;
-            const backgroundHeight = jQueryBackgroundElement.height()!;
+            const backgroundElement = this.clickLayer.nativeElement;
+            const backgroundWidth = backgroundElement.offsetWidth; // alternative: this.clickLayer.nativeElement.style.width
+            const backgroundHeight = backgroundElement.offsetHeight; // alternative: this.clickLayer.nativeElement.style.height
 
             const dropLocationX = (dropLocation.posX! / MAX_SIZE_UNIT) * backgroundWidth;
             const dropLocationY = (dropLocation.posY! / MAX_SIZE_UNIT) * backgroundHeight;

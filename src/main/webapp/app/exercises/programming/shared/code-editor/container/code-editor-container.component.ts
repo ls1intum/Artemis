@@ -26,12 +26,19 @@ import { CodeEditorInstructionsComponent } from 'app/exercises/programming/share
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 
+export enum CollapsableCodeEditorElement {
+    FileBrowser,
+    BuildOutput,
+    Instructions,
+}
+
 @Component({
     selector: 'jhi-code-editor-container',
     templateUrl: './code-editor-container.component.html',
 })
 export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     readonly CommitState = CommitState;
+    readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
@@ -227,8 +234,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         }
     }
 
-    onToggleCollapse(event: InteractableEvent) {
-        this.grid.toggleCollapse(event);
+    onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
+        this.grid.toggleCollapse(event, collapsableElement);
     }
 
     onGridResize(type: ResizeType) {
