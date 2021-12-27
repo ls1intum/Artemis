@@ -4,8 +4,6 @@ import { BASE_API, GET } from '../../constants';
  * A class which encapsulates UI selectors and actions for the course overview page (/courses/*).
  */
 export class CourseOverviewPage {
-    readonly participationRequestId = 'participateInExerciseQuery';
-
     startExercise(exerciseId: string) {
         cy.get('#start-exercise-' + exerciseId).click();
     }
