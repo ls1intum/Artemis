@@ -10,7 +10,7 @@ import { Exam } from '../../../../main/webapp/app/entities/exam.model';
 const courseManagementRequests = artemis.requests.courseManagement;
 
 // page objects
-const courseOverview = artemis.pageobjects.courseOverview;
+const courseOverview = artemis.pageobjects.course.overview;
 const examNavigationBar = artemis.pageobjects.exam.navigationBar;
 const examStartEnd = artemis.pageobjects.exam.startEnd;
 const textEditor = artemis.pageobjects.exercise.text.editor;
@@ -103,12 +103,13 @@ describe('Exam date verification', () => {
 
         it('Exam ends after end time', () => {
             let exerciseGroup: ExerciseGroup;
+            const examEnd = dayjs().add(30, 'seconds');
             const student = artemis.users.getStudentOne();
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(2, 'days'))
-                .endDate(dayjs().add(30, 'seconds'))
+                .endDate(examEnd)
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
@@ -127,6 +128,9 @@ describe('Exam date verification', () => {
                             textEditor.typeSubmission(submissionText);
                         });
                         examNavigationBar.clickSave();
+                        if (examEnd.isAfter(dayjs())) {
+                            cy.wait(examEnd.diff(dayjs()));
+                        }
                         cy.get('#exam-finished-title').should('contain.text', exam.title, { timeout: 40000 });
                         examStartEnd.finishExam();
                     });
