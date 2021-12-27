@@ -26,6 +26,9 @@ services:
             artemis.version-control.url: "${SCM_URL}"
             artemis.version-control.user: "${EXTERNAL_USER}"
             artemis.version-control.password: "${EXTERNAL_PASSWORD}"
+            artemis.continuous-integration.url: "${CI_URL}"
+            artemis.continuous-integration.user: "${EXTERNAL_USER}"
+            artemis.continuous-integration.password: "${EXTERNAL_PASSWORD}"
         ports:
             - 8080:8080
         networks:
