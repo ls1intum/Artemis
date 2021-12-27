@@ -155,7 +155,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const event2 = { clientX: -10, clientY: -10 };
 
         // @ts-ignore
-        component['mouseMoveAction'](event1, { left: 0, top: 0 }, 10, 10);
+        component['mouseMoveAction'](event1, 0, 0, 10, 10);
 
         expect(component.mouse.x).toBe(10);
         expect(component.mouse.y).toBe(10);
@@ -168,7 +168,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.currentDropLocation = { posX: 10, posY: 10, width: lengthOfElement, height: lengthOfElement, invalid: false };
 
         // @ts-ignore
-        component['mouseMoveAction'](event2, { left: 0, top: 0 }, 10, 10);
+        component['mouseMoveAction'](event2, 0, 0, 10, 10);
 
         expect(component.mouse.x).toBe(0);
         expect(component.mouse.y).toBe(0);
