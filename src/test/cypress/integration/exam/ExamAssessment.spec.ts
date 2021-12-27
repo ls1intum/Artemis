@@ -209,7 +209,7 @@ describe('Exam assessment', () => {
         artemis.pageobjects.assessment.course.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
         exerciseAssessment.clickStartNewAssessment();
-        cy.contains('You have the lock for this assessment').should('be.visible');
+        cy.get('#assessmentLockedCurrentUser').should('contain.text', 'You have the lock for this assessment');
     }
 
     function prepareExam(end: dayjs.Dayjs, resultDate = end.add(1, 'seconds')) {
