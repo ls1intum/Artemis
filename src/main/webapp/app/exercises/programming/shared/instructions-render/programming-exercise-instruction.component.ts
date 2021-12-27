@@ -23,7 +23,6 @@ import { Result } from 'app/entities/result.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { findLatestResult } from 'app/shared/util/utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TextHint } from 'app/entities/hestia/text-hint-model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -95,8 +94,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 tap((markdownExtensionsInitialized: boolean) => !markdownExtensionsInitialized && this.setupMarkdownSubscriptions()),
                 switchMap(() => this.loadExerciseHints(this.exercise.id)),
                 tap((hints: ExerciseHint[]) => {
-                    this.exerciseHints = hints.filter((hint) => hint instanceof TextHint);
-                    this.programmingExerciseTaskWrapper.exerciseHints = hints.filter((hint) => hint instanceof TextHint);
+                    this.exerciseHints = hints;
+                    this.programmingExerciseTaskWrapper.exerciseHints = hints;
                 }),
                 // If the participation has changed, set up the websocket subscriptions.
                 map(() => hasParticipationChanged(changes)),
@@ -173,7 +172,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         }
 
         return this.exerciseHintService.findByExerciseId(exerciseId).pipe(
-            map(({ body }) => body?.filter((hint) => hint instanceof TextHint)),
+            map(({ body }) => body),
             catchError(() => of([])),
         );
     }
