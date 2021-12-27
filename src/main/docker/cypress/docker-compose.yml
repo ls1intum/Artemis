@@ -14,21 +14,9 @@ services:
             - ../../resources/config/application-dev.yml:/home/artemis/application-dev.yml:ro
             - ../../resources/config/application-artemis.yml:/home/artemis/application-artemis.yml:ro
         environment:
-            - JAVA_OPTIONS
-            - SPRING_DATASOURCE_URL
-            - SPRING_DATASOURCE_USERNAME
-            - SPRING_DATASOURCE_PASSWORD
-            - SPRING_PROFILES_ACTIVE
-            - JHIPSTER_SLEEP
-            - ARTEMIS_USERMANAGEMENT_EXTERNAL_URL
-            - ARTEMIS_USERMANAGEMENT_EXTERNAL_USER
-            - ARTEMIS_USERMANAGEMENT_EXTERNAL_PASSWORD
-            - ARTEMIS_VERSIONCONTROL_URL
-            - ARTEMIS_VERSIONCONTROL_USER
-            - ARTEMIS_VERSIONCONTROL_PASSWORD
-            - ARTEMIS_CONTINUOUSINTEGRATION_URL
-            - ARTEMIS_CONTINUOUSINTEGRATION_USER
-            - ARTEMIS_CONTINUOUSINTEGRATION_PASSWORD
+            artemis.user-management.external.url: "${USER_MANAGEMENT_URL}"
+            artemis.user-management.external.user: "${EXTERNAL_USER}"
+            artemis.user-management.external.password: "${EXTERNAL_PASSWORD}"
         ports:
             - 8080:8080
         networks:
