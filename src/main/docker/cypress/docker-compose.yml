@@ -14,6 +14,7 @@ services:
             - ../../resources/config/application-dev.yml:/home/artemis/application-dev.yml:ro
             - ../../resources/config/application-artemis.yml:/home/artemis/application-artemis.yml:ro
         environment:
+            spring.datasource.url: "${DATASOURCE_URL}"
             artemis.user-management.external.url: "${USER_MANAGEMENT_URL}"
             artemis.user-management.external.user: "${EXTERNAL_USER}"
             artemis.user-management.external.password: "${EXTERNAL_PASSWORD}"
