@@ -20,6 +20,7 @@ const examNavigation = artemis.pageobjects.exam.navigationBar;
 const textEditor = artemis.pageobjects.exercise.text.editor;
 const exerciseAssessment = artemis.pageobjects.assessment.exercise;
 const multipleChoice = artemis.pageobjects.exercise.quiz.multipleChoice;
+const examManagement = artemis.pageobjects.exam.management;
 
 // Common primitives
 const admin = artemis.users.getAdmin();
@@ -84,7 +85,7 @@ describe('Exam assessment', () => {
 
         it('Assess a programming exercise submission (MANUAL)', () => {
             cy.login(tutor, '/course-management/' + course.id + '/exams');
-            cy.contains('Assessment Dashboard', { timeout: examDuration }).click();
+            examManagement.openAssessmentDashboard(exam.id, 60000);
             startAssessing();
             examAssessment.addNewFeedback(2, 'Good job');
             examAssessment.submit();
@@ -101,7 +102,7 @@ describe('Exam assessment', () => {
 
         describe('Modeling exercise assessment', () => {
             beforeEach('Create exercise and submission', () => {
-                courseManagementRequests.createModelingExercise({ exerciseGroup }).then((modelingResponse) => {
+                courseManagementRequests.createModelingExercise({ exerciseGroup }).then(() => {
                     courseManagementRequests.generateMissingIndividualExams(exam);
                     courseManagementRequests.prepareExerciseStartForExam(exam);
                     cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
@@ -117,7 +118,7 @@ describe('Exam assessment', () => {
 
             it('Assess a modeling exercise submission', () => {
                 cy.login(tutor, '/course-management/' + course.id + '/exams');
-                cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
+                examManagement.openAssessmentDashboard(exam.id, 60000);
                 startAssessing();
                 modelingAssessment.addNewFeedback(5, 'Good');
                 modelingAssessment.openAssessmentForComponent(1);
@@ -152,7 +153,7 @@ describe('Exam assessment', () => {
 
             it('Assess a text exercise submission', () => {
                 cy.login(tutor, '/course-management/' + course.id + '/exams');
-                cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
+                examManagement.openAssessmentDashboard(exam.id, 60000);
                 startAssessing();
                 examAssessment.addNewFeedback(7, 'Good job');
                 examAssessment.submitTextAssessment().then((assessmentResponse) => {

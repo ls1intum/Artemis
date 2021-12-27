@@ -59,4 +59,14 @@ export class ExamManagementPage {
     openStudenExams(examId: string) {
         cy.get(`#student-exams-${examId}`).click();
     }
+
+    /**
+     * Opens the exam assessment dashboard
+     * @param examId the id of the exam
+     * @param timeout how long to wait for the assessment dashboard button
+     */
+    openAssessmentDashboard(examId: string, timeout: number) {
+        cy.reloadUntilFound(`#exercises-button-${examId}`, undefined, timeout);
+        cy.get('#exercises-button-' + examId).click({ timeout });
+    }
 }
