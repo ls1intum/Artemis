@@ -85,7 +85,7 @@ describe('Exam assessment', () => {
 
         it('Assess a programming exercise submission (MANUAL)', () => {
             cy.login(tutor, '/course-management/' + course.id + '/exams');
-            examManagement.openAssessmentDashboard(exam.id, 120000);
+            examManagement.openAssessmentDashboard(exam.id, examDuration);
             startAssessing();
             examAssessment.addNewFeedback(2, 'Good job');
             examAssessment.submit();
