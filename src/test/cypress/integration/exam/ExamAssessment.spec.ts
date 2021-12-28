@@ -5,6 +5,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
 import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import { makeSubmissionAndVerifyResults } from '../../support/pageobjects/exercises/programming/OnlineEditorPage';
+import { Interception } from 'cypress/types/net-stubbing';
 
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -126,7 +127,7 @@ describe('Exam assessment', () => {
                 modelingAssessment.clickNextAssessment();
                 modelingAssessment.assessComponent(0, 'Neutral');
                 modelingAssessment.clickNextAssessment();
-                examAssessment.submitModelingAssessment().then((assessmentResponse) => {
+                examAssessment.submitModelingAssessment().then((assessmentResponse: Interception) => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
