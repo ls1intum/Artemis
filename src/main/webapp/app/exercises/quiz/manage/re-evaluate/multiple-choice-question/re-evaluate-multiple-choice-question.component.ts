@@ -8,6 +8,7 @@ import { cloneDeep } from 'lodash-es';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { generateTextHintExplanation, parseTextHintExplanation } from 'app/shared/util/markdown.util';
 import { faArrowsAltV, faChevronDown, faChevronUp, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',
@@ -15,25 +16,18 @@ import { faArrowsAltV, faChevronDown, faChevronUp, faTrash, faUndo } from '@fort
     styleUrls: ['./re-evaluate-multiple-choice-question.component.scss', '../../../shared/quiz.scss'],
 })
 export class ReEvaluateMultipleChoiceQuestionComponent {
-    @Input()
-    question: MultipleChoiceQuestion;
-    @Input()
-    questionIndex: number;
+    @Input() question: MultipleChoiceQuestion;
+    @Input() questionIndex: number;
 
-    @Output()
-    questionDeleted = new EventEmitter<object>();
-    @Output()
-    questionUpdated = new EventEmitter<object>();
-    @Output()
-    questionMoveUp = new EventEmitter<object>();
-    @Output()
-    questionMoveDown = new EventEmitter<object>();
+    @Output() questionDeleted = new EventEmitter<object>();
+    @Output() questionUpdated = new EventEmitter<object>();
+    @Output() questionMoveUp = new EventEmitter<object>();
+    @Output() questionMoveDown = new EventEmitter<object>();
 
     editorMode = EditorMode.NONE;
 
     // Create Backup Question for resets
-    @Input()
-    backupQuestion: MultipleChoiceQuestion;
+    @Input() backupQuestion: MultipleChoiceQuestion;
 
     // Icons
     faTrash = faTrash;
@@ -75,7 +69,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
     }
 
     /**
-     * Generate the markdown text for this question
+     * Generate the Markdown text for this question
      *
      * The markdown is generated according to these rules:
      *
@@ -90,7 +84,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
     }
 
     /**
-     * Parse the an answer markdown and apply the result to the question's data
+     * Parse the answer Markdown and apply the result to the question's data
      *
      * The markdown rules are as follows:
      *
@@ -98,7 +92,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
      *    => Answer options are marked as isCorrect depending on [wrong] or [correct]
      * 2. The answer text is parsed with ArtemisMarkdown
      *
-     * @param text {string} the markdown text to parse
+     * @param text {string} the Markdown text to parse
      * @param answer {AnswerOption} the answer, where to save the result
      */
     parseAnswerMarkdown(text: string, answer: AnswerOption) {
@@ -211,5 +205,9 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
      */
     isAnswerInvalid(answer: AnswerOption) {
         return answer.invalid;
+    }
+
+    onReorderAnswerOptionDrop(event: CdkDragDrop<string[]>) {
+        moveItemInArray(this.question.answerOptions || [], event.previousIndex, event.currentIndex);
     }
 }

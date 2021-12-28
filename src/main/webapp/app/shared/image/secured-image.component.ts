@@ -33,7 +33,7 @@ export enum CachingStrategy {
             <img [attr.src]="dataUrl | async" alt="alt" />
         </ng-template>
         <ng-template [ngIf]="this.mobileDragAndDrop">
-            <img [attr.src]="dataUrl | async" class="dnd-drag-start" draggable="true" alt="alt" dnd-draggable />
+            <img [attr.src]="dataUrl | async" class="dnd-drag-start" draggable="true" alt="alt" cdkDrag />
         </ng-template>
     `,
 })

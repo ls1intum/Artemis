@@ -19,7 +19,6 @@ import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.comm
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { DraggableComponent } from 'ng2-dnd';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { ArtemisTestModule } from '../../test.module';
@@ -27,6 +26,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { clone } from 'lodash-es';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 describe('DragAndDropQuestionEditComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
@@ -43,7 +43,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, DragDropModule],
             declarations: [
                 DragAndDropQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -53,7 +53,6 @@ describe('DragAndDropQuestionEditComponent', () => {
                 MockComponent(DragAndDropQuestionComponent),
                 MockDirective(NgbCollapse),
                 MockDirective(NgModel),
-                MockComponent(DraggableComponent),
             ],
             providers: [
                 MockProvider(ArtemisMarkdownService),

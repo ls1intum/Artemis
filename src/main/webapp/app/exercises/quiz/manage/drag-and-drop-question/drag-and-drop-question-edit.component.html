@@ -183,8 +183,8 @@
                             height: dropLocation.height! / 2 + '%'
                         }"
                         (mousedown)="dropLocationMouseDown(dropLocation)"
-                        (onDropSuccess)="onDragDrop(dropLocation, $event)"
-                        dnd-droppable
+                        (cdkDropListDropped)="onDragDrop(dropLocation, $event)"
+                        cdkDropList
                     >
                         <div class="dimensions">{{ dropLocation.width }}x{{ dropLocation.height }}</div>
                         <div class="re-evaluate-button" title="Set invalid" *ngIf="reEvaluationInProgress && !dropLocation.invalid" (click)="dropLocation.invalid = true">
@@ -228,7 +228,7 @@
             <span jhiTranslate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
         </div>
         <div class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
-            <div class="drag-item" id="drag-item-{{ i }}" *ngFor="let dragItem of question.dragItems; let i = index" dnd-draggable [dragEnabled]="true" [dragData]="dragItem">
+            <div class="drag-item" id="drag-item-{{ i }}" *ngFor="let dragItem of question.dragItems; let i = index" cdkDrag [cdkDragDisabled]="false" [cdkDragData]="dragItem">
                 <div *ngIf="dragItem.pictureFilePath">
                     <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
                 </div>

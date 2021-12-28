@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DragItemComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-item.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { DndModule } from 'ng2-dnd';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { DeviceDetectorService, DeviceInfo } from 'ngx-device-detector';
 import { ArtemisTestModule } from '../../test.module';
 import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.module';
@@ -14,7 +14,7 @@ describe('DragItemComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, DndModule.forRoot(), FitTextModule],
+            imports: [ArtemisTestModule, DragDropModule, FitTextModule],
             declarations: [MockComponent(SecuredImageComponent), DragItemComponent],
             providers: [MockProvider(DeviceDetectorService)],
         })
