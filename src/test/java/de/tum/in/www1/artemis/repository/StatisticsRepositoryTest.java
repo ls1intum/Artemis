@@ -29,6 +29,10 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
     @Autowired
     private PersistenceAuditEventRepository persistenceAuditEventRepository;
 
+    /**
+     * Tests that filterDuplicatedUsers() works as intended for logged in students with weekly and quarterly view.
+     * @param spanType the different views (either weekly or quarterly)
+     */
     @ParameterizedTest
     @EnumSource(value = SpanType.class, names = { "WEEK", "QUARTER" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -40,60 +44,62 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
         database.addUsers(2, 0, 0, 0);
         // the persistentEvents simulate a log in of a student
         // here we simulate that student1 logged in on 03.12.07
-        var persistentEvent_student_1 = setupPersistentEvent("student1", startDate);
+        var persistentEventStudent1 = setupPersistentEvent("student1", startDate);
         // here we simulate student1 logged in again on 07.12.07 for the weekly view and for the quarter view a login on 03.02.08
-        var persistentEvent_student_1_later = spanType == SpanType.WEEK ? setupPersistentEvent("student1", startDate.plusDays(4))
+        var persistentEventStudent1Later = spanType == SpanType.WEEK ? setupPersistentEvent("student1", startDate.plusDays(4))
                 : setupPersistentEvent("student1", startDate.plusMonths(2));
         // here we simulate that student2 logged in on 07.12.07
-        var persistentEvent_student_2 = setupPersistentEvent("student2", startDate.plusDays(4));
+        var persistentEventStudent2 = setupPersistentEvent("student2", startDate.plusDays(4));
         // we simulate the same case again in order to have duplication in the result of the query
-        var persistentEvent_student_2_duplicate = setupPersistentEvent("student2", startDate.plusDays(4).plusHours(2));
+        var persistentEventStudent2Duplicate = setupPersistentEvent("student2", startDate.plusDays(4).plusHours(2));
         // save the events
-        persistenceAuditEventRepository
-                .saveAll(List.of(persistentEvent_student_1, persistentEvent_student_1_later, persistentEvent_student_2, persistentEvent_student_2_duplicate));
+        persistenceAuditEventRepository.saveAll(List.of(persistentEventStudent1, persistentEventStudent1Later, persistentEventStudent2, persistentEventStudent2Duplicate));
         // this is the entry that should be returned by both span types
-        StatisticsEntry entry_03_12_07 = new StatisticsEntry();
-        entry_03_12_07.setDay(ZonedDateTime.parse("2007-12-03T00:00:00+01:00[Europe/Paris]"));
+        StatisticsEntry entry031207 = new StatisticsEntry();
+        entry031207.setDay(ZonedDateTime.parse("2007-12-03T00:00:00+01:00[Europe/Paris]"));
 
         // needed as entry method due to private
         List<StatisticsEntry> entryList = statisticsRepository.getNumberOfEntriesPerTimeSlot(spanType, startDate, endDate, GraphType.LOGGED_IN_USERS, StatisticsView.ARTEMIS, null);
 
         if (spanType == SpanType.WEEK) {
-            StatisticsEntry entry_07_12_07 = new StatisticsEntry(ZonedDateTime.parse("2007-12-07T00:00:00+01:00[Europe/Paris]"), 2);
-            entry_03_12_07.setAmount(1);
+            StatisticsEntry entry071207 = new StatisticsEntry(ZonedDateTime.parse("2007-12-07T00:00:00+01:00[Europe/Paris]"), 2);
+            entry031207.setAmount(1);
 
-            assertThat(entryList).as("Result contains the entry for 07.12.07").anyMatch((entry) -> compareStatisticsEntries(entry, entry_07_12_07));
+            assertThat(entryList).as("Result contains the entry for 07.12.07").anyMatch((entry) -> compareStatisticsEntries(entry, entry071207));
         }
         else {
-            entry_03_12_07.setAmount(2);
-            StatisticsEntry entry_29_01_08 = new StatisticsEntry(ZonedDateTime.parse("2008-01-29T00:00+01:00[Europe/Paris]"), 1);
+            entry031207.setAmount(2);
+            StatisticsEntry entry290108 = new StatisticsEntry(ZonedDateTime.parse("2008-01-29T00:00+01:00[Europe/Paris]"), 1);
 
-            assertThat(entryList).as("Result contains the entry for 29.01.08").anyMatch((entry) -> compareStatisticsEntries(entry, entry_29_01_08));
+            assertThat(entryList).as("Result contains the entry for 29.01.08").anyMatch((entry) -> compareStatisticsEntries(entry, entry290108));
         }
 
         assertThat(entryList).as("Result has 2 entries for two time slots").hasSize(2);
-        assertThat(entryList).as("Result contains the entry for 03.12.07").anyMatch((entry) -> compareStatisticsEntries(entry, entry_03_12_07));
+        assertThat(entryList).as("Result contains the entry for 03.12.07").anyMatch((entry) -> compareStatisticsEntries(entry, entry031207));
 
         database.resetDatabase();
         persistenceAuditEventRepository.deleteAll();
     }
 
-    @Test
-    public void testGetNumberOfEntriesPerTimeSlot_forInvalidView() {
+    /**
+     * Tests how getNumberOfEntriesPerTimeSlot() handles views that are not expected for on different graph types
+     * @param graphType The graph type that is tested. Note that not all possible graph types are tested, as some cover every possible view in the code already
+     */
+    @ParameterizedTest
+    @EnumSource(value = GraphType.class, names = { "RELEASED_EXERCISES", "EXERCISES_DUE", "CONDUCTED_EXAMS", "EXAM_PARTICIPATIONS", "EXAM_REGISTRATIONS", "POSTS",
+            "RESOLVED_POSTS" })
+    public void testGetNumberOfEntriesPerTimeSlot_forInvalidView(GraphType graphType) {
         var startDate = ZonedDateTime.parse("2007-12-03T10:15:30+01:00[Europe/Paris]");
         var endDate = startDate.plusDays(7);
 
-        // the other graph types cover every possible view. The default cases for the view switch statements for these graph types are dead code as far as I can tell
-        GraphType[] graphTypes = new GraphType[] { GraphType.RELEASED_EXERCISES, GraphType.EXERCISES_DUE, GraphType.CONDUCTED_EXAMS, GraphType.EXAM_PARTICIPATIONS,
-                GraphType.EXAM_REGISTRATIONS, GraphType.POSTS, GraphType.RESOLVED_POSTS };
-
-        for (GraphType graphType : graphTypes) {
-            // depending on the graph type, we inject the view that is not supported for it
-            StatisticsView view = graphType == GraphType.POSTS || graphType == GraphType.RESOLVED_POSTS ? StatisticsView.ARTEMIS : StatisticsView.EXERCISE;
-            assertThrows(UnsupportedOperationException.class, () -> statisticsRepository.getNumberOfEntriesPerTimeSlot(SpanType.WEEK, startDate, endDate, graphType, view, null));
-        }
+        // depending on the graph type, we inject the view that is not supported for it
+        StatisticsView view = graphType == GraphType.POSTS || graphType == GraphType.RESOLVED_POSTS ? StatisticsView.ARTEMIS : StatisticsView.EXERCISE;
+        assertThrows(UnsupportedOperationException.class, () -> statisticsRepository.getNumberOfEntriesPerTimeSlot(SpanType.WEEK, startDate, endDate, graphType, view, null));
     }
 
+    /**
+     * Tests mergeResultsIntoArrayForYear() if start date is in a different year than the statistics entry date
+     */
     @Test
     public void testMergeResultsIntoArrayForYear_differentYear_and_differentQuarter() {
         List<StatisticsEntry> outcome = setupStatisticsEntryList();
@@ -105,6 +111,26 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
 
         assertThat(returnedResultYear).as("Bucket 11 now has value for the entry date (123)").isEqualTo(expectedResultYear);
 
+        Integer[] resultQuarter = new Integer[53];
+        Integer[] expectedResultQuarter = new Integer[53];
+        for (int i = 0; i < 53; i++) {
+            resultQuarter[i] = 0;
+            expectedResultQuarter[i] = i != 48 ? 0 : 123;
+        }
+
+        Integer[] returnedResultQuarter = statisticsRepository.mergeResultsIntoArrayForQuarter(outcome, resultQuarter, startDate);
+
+        assertThat(returnedResultQuarter).as("Bucket 48 now has value for the entry date (123)").isEqualTo(expectedResultQuarter);
+    }
+
+    /**
+     * Tests mergeResultsIntoArrayForQuarter() if start date is in a different year than the statistics entry date
+     */
+    @Test
+    public void testMergeResultsIntoArrayForQuarter_differentYear() {
+        List<StatisticsEntry> outcome = setupStatisticsEntryList();
+        // the start time is in a different year
+        ZonedDateTime startDate = ZonedDateTime.parse("2020-12-03T10:15:30+01:00[Europe/Paris]");
         Integer[] resultQuarter = new Integer[53];
         Integer[] expectedResultQuarter = new Integer[53];
         for (int i = 0; i < 53; i++) {
