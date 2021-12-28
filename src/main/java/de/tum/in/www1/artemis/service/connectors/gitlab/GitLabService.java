@@ -63,9 +63,9 @@ public class GitLabService extends AbstractVersionControlService {
 
     private final ScheduledExecutorService scheduler;
 
-    public GitLabService(UserRepository userRepository, UrlService urlService, @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab,
+    public GitLabService(UserRepository userRepository, @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService,
             GitLabUserManagementService gitLabUserManagementService, GitService gitService, ApplicationContext applicationContext) {
-        super(applicationContext, urlService, gitService);
+        super(applicationContext, gitService, urlService);
         this.userRepository = userRepository;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.gitlab = gitlab;

@@ -21,6 +21,7 @@ import { CourseManagementStatisticsComponent } from './course-management-statist
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 import { isOrion } from 'app/shared/orion/orion';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
+import { PlagiarismCasesComponent } from 'app/course/plagiarism-cases/plagiarism-cases.component';
 
 @Injectable({ providedIn: 'root' })
 export class CourseResolve implements Resolve<Course> {
@@ -88,6 +89,15 @@ export const courseManagementState: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.course.gradingSystem',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/plagiarism-cases',
+        component: PlagiarismCasesComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.plagiarism.cases.pageTitle',
         },
         canActivate: [UserRouteAccessService],
     },
