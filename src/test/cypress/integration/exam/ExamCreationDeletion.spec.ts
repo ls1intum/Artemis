@@ -10,9 +10,9 @@ const courseManagementRequests = artemis.requests.courseManagement;
 
 // Pageobjects
 const navigationBar = artemis.pageobjects.navigationBar;
-const courseManagement = artemis.pageobjects.courseManagement;
-const examManagement = artemis.pageobjects.examManagement;
-const creationPage = artemis.pageobjects.examCreation;
+const courseManagement = artemis.pageobjects.course.management;
+const examManagement = artemis.pageobjects.exam.management;
+const creationPage = artemis.pageobjects.exam.creation;
 
 describe('Exam creation/deletion', () => {
     let course: Course;

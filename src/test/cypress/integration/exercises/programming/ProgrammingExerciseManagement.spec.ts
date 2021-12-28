@@ -13,10 +13,10 @@ const admin = artemis.users.getAdmin();
 const artemisRequests = artemis.requests;
 
 // PageObjects
-const courseManagementPage = artemis.pageobjects.courseManagement;
+const courseManagementPage = artemis.pageobjects.course.management;
 const navigationBar = artemis.pageobjects.navigationBar;
-const programmingCreation = artemis.pageobjects.programmingExercise.creation;
-const courseExercises = artemis.pageobjects.courseManagementExercises;
+const programmingCreation = artemis.pageobjects.exercise.programming.creation;
+const courseExercises = artemis.pageobjects.course.managementExercises;
 
 describe('Programming Exercise Management', () => {
     let course: Course;

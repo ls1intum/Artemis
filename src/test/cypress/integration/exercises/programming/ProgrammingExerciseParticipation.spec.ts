@@ -12,7 +12,7 @@ const users = artemis.users;
 const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
-const editorPage = artemis.pageobjects.programmingExercise.editor;
+const editorPage = artemis.pageobjects.exercise.programming.editor;
 
 describe('Programming exercise participations', () => {
     let course: Course;

@@ -4,11 +4,11 @@ import { artemis } from '../../../support/ArtemisTesting';
 import day from 'dayjs';
 
 // pageobjects
-const assessmentEditor = artemis.pageobjects.modelingExercise.assessmentEditor;
+const assessmentEditor = artemis.pageobjects.assessment.modeling;
 const courseAssessmentDashboard = artemis.pageobjects.assessment.course;
 const exerciseAssessmentDashboard = artemis.pageobjects.assessment.exercise;
-const exerciseResult = artemis.pageobjects.exerciseResult;
-const modelingFeedback = artemis.pageobjects.modelingExercise.feedback;
+const exerciseResult = artemis.pageobjects.exercise.result;
+const modelingFeedback = artemis.pageobjects.exercise.modeling.feedback;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 // Users

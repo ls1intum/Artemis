@@ -13,12 +13,12 @@ const users = artemis.users;
 
 // Pageobjects
 const navigationBar = artemis.pageobjects.navigationBar;
-const courseManagement = artemis.pageobjects.courseManagement;
-const examManagement = artemis.pageobjects.examManagement;
-const textCreation = artemis.pageobjects.textExercise.creation;
-const exerciseGroups = artemis.pageobjects.examExerciseGroups;
-const exerciseGroupCreation = artemis.pageobjects.examExerciseGroupCreation;
-const studentExamManagement = artemis.pageobjects.studentExamManagement;
+const courseManagement = artemis.pageobjects.course.management;
+const examManagement = artemis.pageobjects.exam.management;
+const textCreation = artemis.pageobjects.exercise.text.creation;
+const exerciseGroups = artemis.pageobjects.exam.exerciseGroups;
+const exerciseGroupCreation = artemis.pageobjects.exam.exerciseGroupCreation;
+const studentExamManagement = artemis.pageobjects.exam.studentExamManagement;
 
 // Common primitives
 const uid = generateUUID();
@@ -70,12 +70,10 @@ describe('Exam management', () => {
         // We already verified in the previous test that we can navigate here
         cy.visit(`/course-management/${course.id}/exams`);
         examManagement.openStudentRegistration(exam.id!);
-        cy.get('#registered-users').should('contain.text', '0');
         studentExamManagement.clickRegisterCourseStudents().then((request: Interception) => {
             expect(request.response!.statusCode).to.eq(200);
         });
-        cy.contains(users.getStudentOne().username).should('be.visible');
-        cy.get('#registered-users').should('contain.text', '1');
+        cy.get('#registered-students').contains(users.getStudentOne().username).should('be.visible');
     });
 
     it('Generates student exams', () => {
