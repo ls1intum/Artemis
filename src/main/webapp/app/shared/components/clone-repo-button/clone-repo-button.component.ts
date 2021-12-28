@@ -128,17 +128,14 @@ export class CloneRepoButtonComponent implements OnInit {
     /**
      * set wasCopied for 3 seconds on success
      */
-    onCopySuccess() {
-        this.wasCopied = true;
-        setTimeout(() => {
-            this.wasCopied = false;
-        }, 3000);
+    onCopyFinished(successful: boolean) {
+        if (successful) {
+            this.wasCopied = true;
+            setTimeout(() => {
+                this.wasCopied = false;
+            }, 3000);
+        }
     }
-
-    /**
-     * console log if copy fails
-     */
-    onCopyFailure() {}
 
     /**
      * build the sourceTreeUrl from the repository url
