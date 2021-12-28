@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -29,6 +30,13 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
     @Autowired
     private PersistenceAuditEventRepository persistenceAuditEventRepository;
 
+    private ZonedDateTime startDate;
+
+    @BeforeEach
+    public void setup() {
+        startDate = ZonedDateTime.parse("2007-12-03T10:15:30+01:00[Europe/Paris]");
+    }
+
     /**
      * Tests that filterDuplicatedUsers() works as intended for logged in students with weekly and quarterly view.
      * @param spanType the different views (either weekly or quarterly)
@@ -37,8 +45,7 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
     @EnumSource(value = SpanType.class, names = { "WEEK", "QUARTER" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testFilterDuplicatedUsers_GraphType_LoggedInUsers(SpanType spanType) {
-        // start time and end time for the method call
-        var startDate = ZonedDateTime.parse("2007-12-03T10:15:30+01:00[Europe/Paris]");
+        // end date for the method call
         var endDate = spanType == SpanType.WEEK ? startDate.plusDays(7) : startDate.plusYears(1);
         // we need to add users in order to get non-empty results returned
         database.addUsers(2, 0, 0, 0);
@@ -89,7 +96,6 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
     @EnumSource(value = GraphType.class, names = { "RELEASED_EXERCISES", "EXERCISES_DUE", "CONDUCTED_EXAMS", "EXAM_PARTICIPATIONS", "EXAM_REGISTRATIONS", "POSTS",
             "RESOLVED_POSTS" })
     public void testGetNumberOfEntriesPerTimeSlot_forInvalidView(GraphType graphType) {
-        var startDate = ZonedDateTime.parse("2007-12-03T10:15:30+01:00[Europe/Paris]");
         var endDate = startDate.plusDays(7);
 
         // depending on the graph type, we inject the view that is not supported for it
@@ -117,9 +123,9 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     public void testMergeResultsIntoArrayForQuarter_differentYear() {
+        startDate.plusYears(13);
         List<StatisticsEntry> outcome = setupStatisticsEntryList();
         // the start time is in a different year
-        ZonedDateTime startDate = ZonedDateTime.parse("2020-12-03T10:15:30+01:00[Europe/Paris]");
         Integer[] resultQuarter = new Integer[53];
         Integer[] expectedResultQuarter = new Integer[53];
         for (int i = 0; i < 53; i++) {
