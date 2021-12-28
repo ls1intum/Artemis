@@ -9,7 +9,6 @@ import { MockActivatedRoute } from './helpers/mocks/activated-route/mock-activat
 import { MockRouter } from './helpers/mocks/mock-router';
 import { MockActiveModal } from './helpers/mocks/service/mock-active-modal.service';
 import { MockEventManager } from './helpers/mocks/service/mock-event-manager.service';
-import { CookieService } from 'ngx-cookie-service';
 import { FontAwesomeModule, FaIconComponent } from '@fortawesome/angular-fontawesome';
 import locale from '@angular/common/locales/en';
 import dayjs from 'dayjs';
@@ -25,7 +24,6 @@ import { MockTranslateService } from './helpers/mocks/service/mock-translate.ser
     imports: [HttpClientTestingModule, FontAwesomeModule],
     providers: [
         DatePipe,
-        CookieService,
         ParseLinks,
         {
             provide: EventManager,
