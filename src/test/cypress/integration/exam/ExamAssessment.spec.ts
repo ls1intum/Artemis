@@ -131,7 +131,7 @@ describe('Exam assessment', () => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                cy.get('#result-score').should('contain.text', '4 of 10 points');
+                cy.get('#result-score').should('contain.text', '4 of 10 points').should('be.visible');
             });
         });
 
@@ -161,7 +161,7 @@ describe('Exam assessment', () => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                cy.get('#result-score').should('contain.text', '7 of 10 points');
+                cy.get('#result-score').should('contain.text', '7 of 10 points').should('be.visible');
             });
         });
     });
