@@ -90,7 +90,7 @@ describe('Exam assessment', () => {
             examAssessment.addNewFeedback(2, 'Good job');
             examAssessment.submit();
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-            cy.get('#result-score').should('contain.text', '6.6 of 10 points');
+            cy.get('#result-score').should('contain.text', '6.6 of 10 points').and('be.visible');
         });
     });
 
@@ -199,8 +199,9 @@ describe('Exam assessment', () => {
             }
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
             // Sometimes the feedback fails to load properly on the first load...
-            cy.reloadUntilFound(`#result-score`);
-            cy.get('#result-score').should('contain.text', '5 of 10 points');
+            const resultSelector = '#result-score';
+            cy.reloadUntilFound(resultSelector);
+            cy.get(resultSelector).should('contain.text', '5 of 10 points').and('be.visible');
         });
     });
 
@@ -208,7 +209,7 @@ describe('Exam assessment', () => {
         artemis.pageobjects.assessment.course.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
         exerciseAssessment.clickStartNewAssessment();
-        cy.get('#assessmentLockedCurrentUser').should('contain.text', 'You have the lock for this assessment');
+        cy.get('#assessmentLockedCurrentUser').should('be.visible');
     }
 
     function prepareExam(end: dayjs.Dayjs, resultDate = end.add(1, 'seconds')) {
