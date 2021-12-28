@@ -110,17 +110,6 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
         Integer[] returnedResultYear = statisticsRepository.mergeResultsIntoArrayForYear(outcome, resultYear, startDate);
 
         assertThat(returnedResultYear).as("Bucket 11 now has value for the entry date (123)").isEqualTo(expectedResultYear);
-
-        Integer[] resultQuarter = new Integer[53];
-        Integer[] expectedResultQuarter = new Integer[53];
-        for (int i = 0; i < 53; i++) {
-            resultQuarter[i] = 0;
-            expectedResultQuarter[i] = i != 48 ? 0 : 123;
-        }
-
-        Integer[] returnedResultQuarter = statisticsRepository.mergeResultsIntoArrayForQuarter(outcome, resultQuarter, startDate);
-
-        assertThat(returnedResultQuarter).as("Bucket 48 now has value for the entry date (123)").isEqualTo(expectedResultQuarter);
     }
 
     /**
