@@ -16,7 +16,7 @@ import { AnswerPostFooterComponent } from 'app/shared/metis/posting-footer/answe
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TagInputModule } from 'ngx-chips';
+import { MatChipsModule } from '@angular/material/chips';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -40,7 +40,7 @@ import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-p
         ArtemisCoursesRoutingModule,
         ReactiveFormsModule,
         FormsModule,
-        TagInputModule,
+        MatChipsModule,
         ArtemisSharedComponentModule,
         PickerModule,
         EmojiModule,

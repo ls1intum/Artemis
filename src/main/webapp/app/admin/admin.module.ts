@@ -5,7 +5,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { AdminFeatureToggleComponent } from 'app/admin/features/admin-feature-toggle.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { TagInputModule } from 'ngx-chips';
+import { MatChipsModule } from '@angular/material/chips';
 import { UserManagementDetailComponent } from 'app/admin/user-management/user-management-detail.component';
 import { LogsComponent } from 'app/admin/logs/logs.component';
 import { HealthComponent } from 'app/admin/health/health.component';
@@ -34,7 +34,7 @@ const ENTITY_STATES = [...adminState];
         RouterModule.forChild(ENTITY_STATES),
         ArtemisSharedModule,
         FormDateTimePickerModule,
-        TagInputModule,
+        MatChipsModule,
         NgxDatatableModule,
         ArtemisDataTableModule,
         MetricsModule,

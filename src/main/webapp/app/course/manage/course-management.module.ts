@@ -5,7 +5,7 @@ import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-up
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
-import { TagInputModule } from 'ngx-chips';
+import { MatChipsModule } from '@angular/material/chips';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
@@ -63,7 +63,7 @@ import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.modul
         ReactiveFormsModule,
         ImageCropperModule,
         OrionModule,
-        TagInputModule,
+        MatChipsModule,
         ArtemisExerciseModule,
         ArtemisLectureModule,
         ArtemisCourseScoresModule,

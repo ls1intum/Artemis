@@ -9,7 +9,9 @@ import { MetisService } from 'app/shared/metis/metis.service';
 })
 export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, AfterContentChecked {
     @Input() postTags?: string[];
+
     @Output() postTagsChange = new EventEmitter<string[]>();
+
     existingPostTags: string[];
     tags: string[];
 

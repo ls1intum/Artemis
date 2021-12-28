@@ -207,7 +207,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
         return answer.invalid;
     }
 
-    onReorderAnswerOptionDrop(event: CdkDragDrop<string[]>) {
+    onReorderAnswerOptionDrop(event: CdkDragDrop<AnswerOption[]>) {
         moveItemInArray(this.question.answerOptions || [], event.previousIndex, event.currentIndex);
     }
 }
