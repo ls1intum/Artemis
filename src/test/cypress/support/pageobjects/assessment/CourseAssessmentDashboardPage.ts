@@ -12,7 +12,7 @@ export class CourseAssessmentDashboardPage {
     }
 
     showTheComplaint() {
-        cy.get('#show-complaint').should('contain.text', 'Show the complaint').click();
+        cy.get('#show-complaint').click();
     }
 
     clickExerciseDashboardButton() {
