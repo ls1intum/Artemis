@@ -105,8 +105,8 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
         List<StatisticsEntry> outcome = setupStatisticsEntryList();
         // the start time is in a different year
         ZonedDateTime startDate = ZonedDateTime.parse("2020-12-03T10:15:30+01:00[Europe/Paris]");
-        Integer[] resultYear = new Integer[] { 0, 0, 0, 0, 42, 0, 0, 0, 0, 0, 0, 0 };
-        Integer[] expectedResultYear = new Integer[] { 0, 0, 0, 0, 42, 0, 0, 0, 0, 0, 0, 123 };
+        Integer[] resultYear = { 0, 0, 0, 0, 42, 0, 0, 0, 0, 0, 0, 0 };
+        Integer[] expectedResultYear = { 0, 0, 0, 0, 42, 0, 0, 0, 0, 0, 0, 123 };
         Integer[] returnedResultYear = statisticsRepository.mergeResultsIntoArrayForYear(outcome, resultYear, startDate);
 
         assertThat(returnedResultYear).as("Bucket 11 now has value for the entry date (123)").isEqualTo(expectedResultYear);
