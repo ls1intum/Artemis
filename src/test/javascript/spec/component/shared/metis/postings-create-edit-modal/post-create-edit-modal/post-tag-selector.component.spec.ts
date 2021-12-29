@@ -4,7 +4,6 @@ import { MockMetisService } from '../../../../../helpers/mocks/service/mock-meti
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockModule, MockPipe } from 'ng-mocks';
-import { By } from '@angular/platform-browser';
 import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 import { metisTags } from '../../../../../helpers/sample/metis-sample-data';
@@ -46,10 +45,5 @@ describe('PostTagSelectorComponent', () => {
         expect(component.existingPostTags).toEqual(metisTags);
     }));
 
-    it('should update tags', fakeAsync(() => {
-        fixture.detectChanges();
-        const onItemAddSpy = jest.spyOn(component, 'onItemAdd');
-        // TODO: implement differently now after framework change
-        expect(onItemAddSpy).toHaveBeenCalled();
-    }));
+    // TODO: implement a test which removes a category and one which adds a category
 });
