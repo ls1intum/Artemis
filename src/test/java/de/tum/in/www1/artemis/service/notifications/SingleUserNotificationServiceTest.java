@@ -10,18 +10,21 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.MailService;
 
 public class SingleUserNotificationServiceTest {
 
-    @Autowired
     private static SingleUserNotificationService singleUserNotificationService;
 
     @Captor
@@ -29,13 +32,12 @@ public class SingleUserNotificationServiceTest {
 
     private Notification capturedNotification;
 
-    @Mock
     private static User user;
 
-    @Mock
+    private final static String USER_LOGIN = "de27sms";
+
     private static Exercise exercise;
 
-    @Mock
     private static FileUploadExercise fileUploadExercise;
 
     @Mock
@@ -48,18 +50,24 @@ public class SingleUserNotificationServiceTest {
     private static MailService mailService;
 
     @Mock
+    private static UserRepository userRepository;
+
+    @Mock
     private static NotificationSettingsService notificationSettingsService;
 
-    @Mock
     private static Post post;
 
-    @Mock
     private static Lecture lecture;
 
-    @Mock
     private static Course course;
 
-    private final static Long COURSE_ID = 27L;
+    private static final Long COURSE_ID = 27L;
+
+    private static PlagiarismComparison plagiarismComparison;
+
+    private static PlagiarismSubmission plagiarismSubmission;
+
+    private static PlagiarismResult plagiarismResult;
 
     /**
      * Sets up all needed mocks and their wanted behavior once for all test cases.
@@ -70,8 +78,13 @@ public class SingleUserNotificationServiceTest {
         mailService = mock(MailService.class);
         doNothing().when(mailService).sendNotificationEmailForMultipleUsers(any(), any(), any());
 
-        course = mock(Course.class);
-        when(course.getId()).thenReturn(COURSE_ID);
+        course = new Course();
+        course.setId(COURSE_ID);
+
+        user = new User();
+
+        userRepository = mock(UserRepository.class);
+        when(userRepository.getUser()).thenReturn(user);
 
         notificationCaptor = ArgumentCaptor.forClass(Notification.class);
 
@@ -81,23 +94,33 @@ public class SingleUserNotificationServiceTest {
 
         singleUserNotificationRepository = mock(SingleUserNotificationRepository.class);
 
-        singleUserNotificationService = spy(new SingleUserNotificationService(singleUserNotificationRepository, messagingTemplate, mailService, notificationSettingsService));
+        singleUserNotificationService = spy(
+                new SingleUserNotificationService(singleUserNotificationRepository, userRepository, messagingTemplate, mailService, notificationSettingsService));
 
-        exercise = mock(Exercise.class);
+        exercise = new TextExercise();
+        exercise.setCourse(course);
 
-        fileUploadExercise = mock(FileUploadExercise.class);
-        when(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
+        fileUploadExercise = new FileUploadExercise();
+        fileUploadExercise.setCourse(course);
 
-        user = mock(User.class);
+        lecture = new Lecture();
+        lecture.setCourse(course);
 
-        lecture = mock(Lecture.class);
-        when(lecture.getCourse()).thenReturn(course);
+        post = new Post();
+        post.setExercise(exercise);
+        post.setLecture(lecture);
+        post.setAuthor(user);
+        post.setCourse(course);
 
-        post = mock(Post.class);
-        when(post.getExercise()).thenReturn(exercise);
-        when(post.getLecture()).thenReturn(lecture);
-        when(post.getAuthor()).thenReturn(user);
-        when(post.getCourse()).thenReturn(course);
+        plagiarismSubmission = new PlagiarismSubmission();
+        plagiarismSubmission.setStudentLogin(USER_LOGIN);
+
+        plagiarismResult = new TextPlagiarismResult();
+        plagiarismResult.setExercise(exercise);
+
+        plagiarismComparison = new PlagiarismComparison();
+        plagiarismComparison.setSubmissionA(plagiarismSubmission);
+        plagiarismComparison.setPlagiarismResult(plagiarismResult);
     }
 
     /**
@@ -105,16 +128,10 @@ public class SingleUserNotificationServiceTest {
      */
     @BeforeEach
     public void cleanMocks() {
-        reset(exercise);
-        when(exercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
-
         reset(singleUserNotificationService);
-
         reset(notificationSettingsService);
-
         reset(singleUserNotificationRepository);
         when(singleUserNotificationRepository.save(any())).thenReturn(null);
-
         reset(messagingTemplate);
     }
 
@@ -125,7 +142,7 @@ public class SingleUserNotificationServiceTest {
     private void verifyRepositoryCallWithCorrectNotification(String expectedNotificationTitle) {
         verify(singleUserNotificationRepository, times(1)).save(notificationCaptor.capture());
         capturedNotification = notificationCaptor.getValue();
-        assertThat(capturedNotification.getTitle()).isEqualTo(expectedNotificationTitle);
+        assertThat(capturedNotification.getTitle()).as("Title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
     }
 
     /// General notify Tests
@@ -176,6 +193,26 @@ public class SingleUserNotificationServiceTest {
     public void testNotifyUserAboutSuccessfulFileUploadSubmission() {
         singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(fileUploadExercise, user);
         verifyRepositoryCallWithCorrectNotification(FILE_SUBMISSION_SUCCESSFUL_TITLE);
+    }
+
+    // Plagiarism related
+
+    /**
+     * Test for notifyUserAboutNewPossiblePlagiarismCase method
+     */
+    @Test
+    public void testNotifyUserAboutNewPossiblePlagiarismCase() {
+        singleUserNotificationService.notifyUserAboutNewPossiblePlagiarismCase(plagiarismComparison, user);
+        verifyRepositoryCallWithCorrectNotification(NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE);
+    }
+
+    /**
+     * Test for notifyUserAboutFinalPlagiarismState method
+     */
+    @Test
+    public void testNotifyUserAboutFinalPlagiarismState() {
+        singleUserNotificationService.notifyUserAboutFinalPlagiarismState(plagiarismComparison, user);
+        verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE);
     }
 
     /// Save & Send related Tests

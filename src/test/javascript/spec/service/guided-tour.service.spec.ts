@@ -186,7 +186,7 @@ describe('GuidedTourService', () => {
                     participationService = TestBed.inject(ParticipationService);
                     courseService = TestBed.inject(CourseManagementService);
 
-                    findParticipationStub = jest.spyOn(participationService, 'findParticipation');
+                    findParticipationStub = jest.spyOn(participationService, 'findParticipationForCurrentUser');
                     deleteParticipationStub = jest.spyOn(participationService, 'deleteForGuidedTour');
                     // @ts-ignore
                     deleteGuidedTourSettingStub = jest.spyOn(guidedTourService, 'deleteGuidedTourSetting');
