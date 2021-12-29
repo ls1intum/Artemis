@@ -78,7 +78,7 @@
         "@types/chai": "4.3.0",
         "@types/chai-as-promised": "7.1.4",
         "@types/chai-string": "1.4.2",
-        "@types/crypto-js": "4.0.2",
+        "@types/crypto-js": "4.1.0",
         "@types/dompurify": "2.3.2",
         "@types/jest": "27.0.3",
         "@types/lodash-es": "4.17.5",
