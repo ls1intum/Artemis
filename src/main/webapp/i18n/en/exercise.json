@@ -143,7 +143,6 @@
             "showAutomatic": "Show Automatic",
             "showAll": "Show All",
             "tagPlaceholder": "+Category",
-            "tagSecondaryPlaceholder": "Enter a new category",
             "isProgramming": "This is a programming exercise",
             "isModeling": "This is a modelling exercise",
             "isQuiz": "This is a quiz exercise",

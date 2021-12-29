@@ -30,7 +30,7 @@ export class CategorySelectorComponent implements OnChanges, OnInit {
     uniqueCategories: Observable<string[]>;
     private readonly colorSelectorHeight = 150;
 
-    separatorKeysCodes: number[] = [ENTER, COMMA, TAB];
+    separatorKeysCodes = [ENTER, COMMA, TAB];
     categoryCtrl = new FormControl();
 
     ngOnInit() {
@@ -76,11 +76,11 @@ export class CategorySelectorComponent implements OnChanges, OnInit {
      */
     onSelectedColor(selectedColor: string) {
         this.selectedCategory.color = selectedColor;
-        this.exerciseCategories = this.exerciseCategories.map((el) => {
-            if (el.category === this.selectedCategory.category) {
+        this.exerciseCategories = this.exerciseCategories.map((category) => {
+            if (category.category === this.selectedCategory.category) {
                 return this.selectedCategory;
             }
-            return el;
+            return category;
         });
         this.selectedCategories.emit(this.exerciseCategories);
     }

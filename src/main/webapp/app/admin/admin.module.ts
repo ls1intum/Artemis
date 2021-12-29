@@ -5,7 +5,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { AdminFeatureToggleComponent } from 'app/admin/features/admin-feature-toggle.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { MatChipsModule } from '@angular/material/chips';
 import { UserManagementDetailComponent } from 'app/admin/user-management/user-management-detail.component';
 import { LogsComponent } from 'app/admin/logs/logs.component';
 import { HealthComponent } from 'app/admin/health/health.component';
@@ -26,6 +25,10 @@ import { OrganizationManagementUpdateComponent } from './organization-management
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { MetricsModule } from 'app/admin/metrics/metrics.module';
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatSelectModule } from '@angular/material/select';
 
 const ENTITY_STATES = [...adminState];
 
@@ -34,11 +37,14 @@ const ENTITY_STATES = [...adminState];
         RouterModule.forChild(ENTITY_STATES),
         ArtemisSharedModule,
         FormDateTimePickerModule,
-        MatChipsModule,
         NgxDatatableModule,
         ArtemisDataTableModule,
         MetricsModule,
         ArtemisChartsModule,
+        MatChipsModule,
+        MatIconModule,
+        MatAutocompleteModule,
+        MatSelectModule,
     ],
     declarations: [
         AuditsComponent,

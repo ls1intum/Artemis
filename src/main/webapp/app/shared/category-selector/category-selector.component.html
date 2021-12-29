@@ -1,5 +1,5 @@
-<mat-form-field class="example-chip-list" appearance="fill">
-    <mat-chip-list #chipList aria-label="Fruit selection">
+<mat-form-field class="category-list" appearance="fill">
+    <mat-chip-list #chipList aria-label="Category selection">
         <mat-chip *ngFor="let category of exerciseCategories" (removed)="onItemRemove(category)">
             <ng-template let-item="item" let-index="index">
                 <div class="custom-tag" [ngStyle]="{ backgroundColor: item.color }">

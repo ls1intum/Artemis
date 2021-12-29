@@ -1,5 +1,5 @@
 jhi-category-selector {
-    .tag-input {
+    .mat-chip-list {
         padding: 0 0.5rem;
 
         .ng2-tag-input.bootstrap {
@@ -11,7 +11,7 @@ jhi-category-selector {
             }
         }
 
-        tag {
+        mat-chip {
             padding: 0 !important;
             height: 30px !important;
             border-radius: 0.25rem !important;

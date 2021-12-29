@@ -1,6 +1,10 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { AfterContentChecked, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { map, Observable, startWith, Subscription } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
+import { FormControl } from '@angular/forms';
+import { MatChipInputEvent } from '@angular/material/chips';
+import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 
 @Component({
     selector: 'jhi-post-tag-selector',
@@ -12,22 +16,35 @@ export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, A
 
     @Output() postTagsChange = new EventEmitter<string[]>();
 
-    existingPostTags: string[];
+    @ViewChild('tagInput') tagInput: ElementRef<HTMLInputElement>;
+
+    existingPostTags: Observable<string[]>;
     tags: string[];
+
+    separatorKeysCodes = [ENTER, COMMA, TAB];
+    tagCtrl = new FormControl();
 
     private tagsSubscription: Subscription;
 
-    constructor(private metisService: MetisService, private cdref: ChangeDetectorRef) {}
+    constructor(private metisService: MetisService, private changeDetector: ChangeDetectorRef) {}
 
     /**
      * on initialization: subscribes to existing post tags used in this course (will be shown in dropdown of tag selector),
-     * copies the input post tags to tags, so that they are shown in the selector
+     * copies the input post tags to string tags, so that they are shown in the selector
      */
     ngOnInit(): void {
         this.tagsSubscription = this.metisService.tags.subscribe((tags: string[]) => {
-            this.existingPostTags = tags;
+            this.existingPostTags = this.tagCtrl.valueChanges.pipe(
+                startWith(undefined),
+                map((category: string | undefined) => (category ? this._filter(category) : tags.slice())),
+            );
         });
         this.tags = this.postTags ? this.postTags : [];
+    }
+
+    private _filter(value: string): string[] {
+        const filterValue = value.toLowerCase();
+        return this.tags.filter((tag) => tag.toLowerCase().includes(filterValue));
     }
 
     /**
@@ -42,15 +59,40 @@ export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, A
      * on dismissing the edit-create-modal -> we do not want to store changes in the create-edit-modal that are not saved
      */
     ngAfterContentChecked() {
-        this.cdref.detectChanges();
+        this.changeDetector.detectChanges();
     }
 
     /**
-     * emits an event with all post tags selected in the selector component
-     * @param tags
+     * set color if not selected and add exerciseCategory
+     * @param event a new category was added
      */
-    onPostTagsChange(tags: string[]): void {
-        this.postTagsChange.emit(tags);
+    onItemAdd(event: MatChipInputEvent) {
+        if (this.tags) {
+            this.tags.push(event.value);
+        } else {
+            this.tags = [event.value];
+        }
+
+        // Clear the input value
+        event.chipInput!.clear();
+        this.tagCtrl.setValue(null);
+        this.postTagsChange.emit(this.tags);
+    }
+
+    onItemSelect(event: MatAutocompleteSelectedEvent): void {
+        this.tags.push(event.option.viewValue);
+        this.tagInput.nativeElement.value = '';
+        this.tagCtrl.setValue(null);
+        this.postTagsChange.emit(this.tags);
+    }
+
+    /**
+     * cancel colorSelector and remove exerciseCategory
+     * @param {string} tagToRemove
+     */
+    onItemRemove(tagToRemove: string) {
+        this.tags = this.tags.filter((tag) => tag !== tagToRemove);
+        this.postTagsChange.emit(this.tags);
     }
 
     ngOnDestroy(): void {
