@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
@@ -21,6 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 
 public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -43,8 +43,9 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
      */
     @ParameterizedTest
     @EnumSource(value = SpanType.class, names = { "WEEK", "QUARTER" })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testFilterDuplicatedUsers_GraphType_LoggedInUsers(SpanType spanType) {
+        // we need an authorization object for the database queries
+        SecurityUtils.setAuthorizationObject();
         // end date for the method call
         var endDate = spanType == SpanType.WEEK ? startDate.plusDays(7) : startDate.plusYears(1);
         // we need to add users in order to get non-empty results returned
