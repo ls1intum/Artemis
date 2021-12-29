@@ -9,9 +9,9 @@ const users = artemis.users;
 const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
-const editorPage = artemis.pageobjects.programmingExercise.editor;
-const scaConfig = artemis.pageobjects.programmingExercise.scaConfiguration;
-const scaFeedback = artemis.pageobjects.programmingExercise.scaFeedback;
+const editorPage = artemis.pageobjects.exercise.programming.editor;
+const scaConfig = artemis.pageobjects.exercise.programming.scaConfiguration;
+const scaFeedback = artemis.pageobjects.exercise.programming.scaFeedback;
 
 describe('Static code analysis tests', () => {
     let course: any;
@@ -23,7 +23,7 @@ describe('Static code analysis tests', () => {
 
     it('Configures SCA grading and makes a successful submission with SCA errors', () => {
         configureStaticCodeAnalysisGrading();
-        startParticipationInProgrammingExercise(course.title, exercise.id, users.getStudentOne());
+        startParticipationInProgrammingExercise(course.id, exercise.id, users.getStudentOne());
         makeSuccessfulSubmissionWithScaErrors();
     });
 

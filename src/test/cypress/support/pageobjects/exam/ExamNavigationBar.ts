@@ -7,14 +7,7 @@ export class ExamNavigationBar {
      * @param index 0-based index
      */
     openExerciseAtIndex(index: number) {
-        this.clickNavigationItemAtIndex(index + 2);
-    }
-
-    /**
-     * Presses the right arrow in the navigation bar.
-     */
-    navigateRight() {
-        this.getNavigationItems().last().click();
+        cy.get('#exam-exercise-' + index).click();
     }
 
     /**
@@ -22,27 +15,9 @@ export class ExamNavigationBar {
      */
     handInEarly() {
         cy.get('#hand-in-early').click();
-        cy.get('[jhitranslate="artemisApp.examParticipation.handInEarlyNoticeFirstSentence"]').should('be.visible');
     }
 
     clickSave() {
         cy.get('#save');
-    }
-
-    /**
-     * Clicks the navigation item at the specified index.
-     * @param index the navigation item index. If the exam has x exercises:
-     *              index = 0 -> navigation overview, 1 -> left arrow, 2 -> first exercise, x + 1 -> last exercise, x + 2 -> right arrow
-     */
-    private clickNavigationItemAtIndex(index: number) {
-        this.getNavigationItems().eq(index).click();
-    }
-
-    private getNavigationItems() {
-        return this.getNavigationBarRoot().find('.navigation-item');
-    }
-
-    private getNavigationBarRoot() {
-        return cy.get('#exam-navigation-bar');
     }
 }

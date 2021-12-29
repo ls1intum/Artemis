@@ -1,5 +1,4 @@
-import { BASE_API, GET, POST } from '../../constants';
-import { COURSE_BASE, CypressExerciseType } from '../../requests/CourseManagementRequests';
+import { BASE_API, GET } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the course overview page (/courses/*).
@@ -7,21 +6,8 @@ import { COURSE_BASE, CypressExerciseType } from '../../requests/CourseManagemen
 export class CourseOverviewPage {
     readonly participationRequestId = 'participateInExerciseQuery';
 
-    startExercise(exerciseId: string, exerciseType: CypressExerciseType) {
-        switch (exerciseType) {
-            case CypressExerciseType.MODELING:
-            case CypressExerciseType.TEXT:
-            case CypressExerciseType.PROGRAMMING:
-                cy.intercept(POST, COURSE_BASE + '*/exercises/*/participations').as(this.participationRequestId);
-                break;
-            case CypressExerciseType.QUIZ:
-                cy.intercept(GET, BASE_API + 'exercises/*/participation').as(this.participationRequestId);
-                break;
-            default:
-                throw new Error(`Exercise type '${exerciseType}' is not supported yet!`);
-        }
+    startExercise(exerciseId: string) {
         cy.get('#start-exercise-' + exerciseId).click();
-        cy.wait('@participateInExerciseQuery');
     }
 
     openRunningExercise(exerciseId: string) {
@@ -35,18 +21,10 @@ export class CourseOverviewPage {
     }
 
     openExamsTab() {
-        this.getTabBar().find('[jhitranslate="artemisApp.courseOverview.menu.exams"]').click();
+        cy.get('#exam-tab').click();
     }
 
-    openExam(examTitle: string) {
-        this.getExamsRootElement().contains(examTitle).click();
-    }
-
-    private getTabBar() {
-        return cy.get('.tab-bar-course-overview');
-    }
-
-    private getExamsRootElement() {
-        return cy.get('jhi-course-exams');
+    openExam(examId: string) {
+        cy.get('#exam-' + examId).click();
     }
 }

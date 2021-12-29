@@ -11,12 +11,12 @@ const instructor = users.getInstructor();
 const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
-const coursesPage = artemis.pageobjects.courseManagement;
+const coursesPage = artemis.pageobjects.course.management;
 const courseAssessment = artemis.pageobjects.assessment.course;
 const exerciseAssessment = artemis.pageobjects.assessment.exercise;
 const textAssessment = artemis.pageobjects.assessment.text;
-const exerciseResult = artemis.pageobjects.exerciseResult;
-const textFeedback = artemis.pageobjects.textExercise.feedback;
+const exerciseResult = artemis.pageobjects.exercise.result;
+const textFeedback = artemis.pageobjects.exercise.text.feedback;
 
 // This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
 Cypress.on('uncaught:exception', () => {
@@ -101,7 +101,7 @@ describe('Text exercise assessment', () => {
 
     function makeTextSubmissionAsStudent() {
         cy.login(student);
-        courseManagement.startExerciseParticipation(course.id, exercise.id);
+        courseManagement.startExerciseParticipation(exercise.id);
         cy.fixture('loremIpsum.txt').then((submission) => {
             courseManagement.makeTextExerciseSubmission(exercise.id, submission);
         });
