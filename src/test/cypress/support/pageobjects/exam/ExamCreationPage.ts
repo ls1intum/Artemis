@@ -88,7 +88,7 @@ export class ExamCreationPage {
      */
     submit() {
         cy.intercept('POST', '/api/courses/*/exams').as('examCreationQuery');
-        cy.get('button[type="submit"]').click();
+        cy.get('#save-exam').click();
         return cy.wait('@examCreationQuery');
     }
 
@@ -97,6 +97,6 @@ export class ExamCreationPage {
     }
 
     private enterDate(selector: string, date: dayjs.Dayjs) {
-        cy.get(selector).find('input').clear().type(dayjsToString(date), { force: true });
+        cy.get(selector).find('#date-input-field').clear().type(dayjsToString(date), { force: true });
     }
 }

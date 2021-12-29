@@ -36,14 +36,14 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     private final ApplicationContext applicationContext;
 
-    protected final UrlService urlService;
-
     private final GitService gitService;
 
-    public AbstractVersionControlService(ApplicationContext applicationContext, UrlService urlService, GitService gitService) {
+    protected final UrlService urlService;
+
+    public AbstractVersionControlService(ApplicationContext applicationContext, GitService gitService, UrlService urlService) {
         this.applicationContext = applicationContext;
-        this.urlService = urlService;
         this.gitService = gitService;
+        this.urlService = urlService;
     }
 
     /**

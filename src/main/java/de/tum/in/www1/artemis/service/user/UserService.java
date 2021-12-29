@@ -592,7 +592,7 @@ public class UserService {
      *       @param courseGroupName        the courseGroup the user has to be added to
      *       @param courseGroupRole        the courseGroupRole enum
      *       @param login                  the login of the user
-     *       @return the found student, otherwise returns an emtpy optional
+     *       @return the found student, otherwise returns an empty optional
      *
      * */
     public Optional<User> findUserAndAddToCourse(String registrationNumber, String courseGroupName, Role courseGroupRole, String login) {
@@ -636,7 +636,6 @@ public class UserService {
         return Optional.empty();
     }
 
-    @Transactional
     public void updateUserNotificationVisibility(Long userId, ZonedDateTime hideUntil) {
         userRepository.updateUserNotificationVisibility(userId, hideUntil);
     }

@@ -10,7 +10,7 @@ const users = artemis.users;
 const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
-const editorPage = artemis.pageobjects.programmingExercise.editor;
+const editorPage = artemis.pageobjects.exercise.programming.editor;
 
 describe('Programming exercise participations', () => {
     let course: any;
@@ -21,17 +21,17 @@ describe('Programming exercise participations', () => {
     });
 
     it('Makes a failing submission', () => {
-        startParticipationInProgrammingExercise(course.title, exercise.id, users.getStudentOne());
+        startParticipationInProgrammingExercise(course.id, exercise.id, users.getStudentOne());
         makeFailingSubmission();
     });
 
     it('Makes a partially successful submission', () => {
-        startParticipationInProgrammingExercise(course.title, exercise.id, users.getStudentTwo());
+        startParticipationInProgrammingExercise(course.id, exercise.id, users.getStudentTwo());
         makePartiallySuccessfulSubmission();
     });
 
     it('Makes a successful submission', () => {
-        startParticipationInProgrammingExercise(course.title, exercise.id, users.getStudentThree());
+        startParticipationInProgrammingExercise(course.id, exercise.id, users.getStudentThree());
         makeSuccessfulSubmission();
     });
 

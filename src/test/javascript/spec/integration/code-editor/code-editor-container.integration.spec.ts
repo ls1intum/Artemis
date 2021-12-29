@@ -1,9 +1,6 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslateModule } from '@ngx-translate/core';
 import dayjs from 'dayjs';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, of, Subject } from 'rxjs';
@@ -14,7 +11,6 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { CommitState, DeleteFileChange, DomainType, EditorState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { buildLogs, extractedBuildLogErrors, extractedErrorFiles } from '../../helpers/sample/build-logs';
 import { problemStatement } from '../../helpers/sample/problemStatement.json';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
@@ -94,8 +90,8 @@ describe('CodeEditorContainerIntegration', () => {
     const result = { id: 3, successful: false, completionDate: dayjs().subtract(2, 'days') };
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule],
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, AceEditorModule],
             declarations: [
                 CodeEditorContainerComponent,
                 MockComponent(CodeEditorGridComponent),
@@ -117,11 +113,9 @@ describe('CodeEditorContainerIntegration', () => {
                 MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
             ],
             providers: [
-                JhiLanguageHelper,
                 ChangeDetectorRef,
                 DeviceDetectorService,
                 CodeEditorConflictStateService,
-                { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
@@ -175,7 +169,6 @@ describe('CodeEditorContainerIntegration', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
-
         subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
         subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
 
@@ -186,7 +179,6 @@ describe('CodeEditorContainerIntegration', () => {
     const cleanInitialize = () => {
         const exercise = { id: 1, problemStatement };
         const participation = { id: 2, exercise, student: { id: 99 }, results: [result] } as StudentParticipation;
-        const commitState = CommitState.UNDEFINED;
         const isCleanSubject = new Subject();
         const getRepositoryContentSubject = new Subject();
         const getBuildLogsSubject = new Subject();
@@ -202,7 +194,7 @@ describe('CodeEditorContainerIntegration', () => {
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
         containerFixture.detectChanges();
 
-        container.commitState = commitState;
+        container.commitState = CommitState.UNDEFINED;
 
         isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
         getBuildLogsSubject.next(buildLogs);
@@ -265,7 +257,6 @@ describe('CodeEditorContainerIntegration', () => {
     it('should not load files and render other components correctly if the repository status cannot be retrieved', (done) => {
         const exercise = { id: 1, problemStatement, course: { id: 2 } };
         const participation = { id: 2, exercise, results: [result] } as StudentParticipation;
-        const commitState = CommitState.UNDEFINED;
         const isCleanSubject = new Subject();
         const getBuildLogsSubject = new Subject();
         checkIfRepositoryIsCleanStub.mockReturnValue(isCleanSubject);
@@ -279,7 +270,7 @@ describe('CodeEditorContainerIntegration', () => {
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
         containerFixture.detectChanges();
 
-        container.commitState = commitState;
+        container.commitState = CommitState.UNDEFINED;
 
         isCleanSubject.error('fatal error');
         getBuildLogsSubject.next(buildLogs);
@@ -339,7 +330,6 @@ describe('CodeEditorContainerIntegration', () => {
         loadFile(selectedFile, fileContent);
 
         containerFixture.detectChanges();
-
         expect(container.selectedFile).toBe(selectedFile);
         expect(container.aceEditor.selectedFile).toBe(selectedFile);
         expect(container.aceEditor.isLoading).toBe(false);
@@ -415,7 +405,6 @@ describe('CodeEditorContainerIntegration', () => {
 
         container.fileBrowser.onFileDeleted(new DeleteFileChange(FileType.FILE, 'file'));
         containerFixture.detectChanges();
-
         expect(container.unsavedFiles).toStrictEqual({});
         expect(container.fileBrowser.repositoryFiles).toEqual(expectedFilesAfterDelete);
         expect(container.actions.editorState).toBe(EditorState.CLEAN);

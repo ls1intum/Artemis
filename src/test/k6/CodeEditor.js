@@ -54,7 +54,7 @@ export default function (data) {
         const artemis = login(currentUsername, currentPassword);
 
         // Start exercise
-        const participationId = startExercise(artemis, data.courseId, data.exerciseId);
+        const participationId = startExercise(artemis, data.exerciseId);
 
         // Initiate websocket connection if connection time is set to value greater than 0
         if (websocketConnectionTime > 0) {
