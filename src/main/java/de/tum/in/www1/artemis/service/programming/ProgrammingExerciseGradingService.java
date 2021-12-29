@@ -100,7 +100,8 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Use the given requestBody to extract the relevant information from it. Fetch and attach the result's feedback items to it. For programming exercises the test cases are
+     * Uses the given requestBody to extract the relevant information from it.
+     * Fetches and attaches the result's feedback items to it. For programming exercises the test cases are
      * extracted from the feedbacks & the result is updated with the information from the test cases.
      *
      * @param participation the participation for which the build was finished
@@ -110,68 +111,88 @@ public class ProgrammingExerciseGradingService {
     public Optional<Result> processNewProgrammingExerciseResult(@NotNull ProgrammingExerciseParticipation participation, @NotNull Object requestBody) {
         log.debug("Received new build result (NEW) for participation {}", participation.getId());
 
-        Result newResult;
+        Result newResult = null;
         try {
             newResult = continuousIntegrationService.get().onBuildCompleted(participation, requestBody);
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Result for participation " + participation.getId() + " could not be created", ex);
-            return Optional.empty();
         }
 
         if (newResult != null) {
-            ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-            boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
-            boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
-            // Find out which test cases were executed and calculate the score according to their status and weight.
-            // This needs to be done as some test cases might not have been executed.
-            // When the result is from a solution participation, extract the feedback items (= test cases) and store them in our database.
-            if (isSolutionParticipation) {
-                extractTestCasesFromResult(programmingExercise, newResult);
-            }
-            newResult = calculateScoreForResult(newResult, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
+            return Optional.of(processNewProgrammingExerciseResult(participation, newResult));
+        }
+        else {
+            return Optional.empty();
+        }
+    }
 
-            // Note: This programming submission might already have multiple results, however they do not contain the assessor or the feedback
-            var programmingSubmission = (ProgrammingSubmission) newResult.getSubmission();
+    /**
+     * Fetches and attaches the result's feedback items to it. For programming exercises the test cases are
+     * extracted from the feedbacks & the result is updated with the information from the test cases.
+     *
+     * @param participation the new result should belong to.
+     * @param newResult that contains the build result with its feedbacks.
+     * @return the result after processing and persisting.
+     */
+    private Result processNewProgrammingExerciseResult(final ProgrammingExerciseParticipation participation, final Result newResult) {
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
+        boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
+        boolean isStudentParticipation = !isSolutionParticipation && !isTemplateParticipation;
 
-            // If the solution participation was updated, also trigger the template participation build.
-            if (isSolutionParticipation) {
-                // This method will return without triggering the build if the submission is not of type TEST.
-                triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), programmingSubmission);
-            }
-
-            if (!isTemplateParticipation && !isSolutionParticipation) {
-                // When a student receives a new result, we want to check whether we need to lock the participation
-                // repository when a lock repository policy is present. At this point, we know that the programming
-                // exercise exists.
-                SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
-                if (submissionPolicy instanceof LockRepositoryPolicy policy) {
-                    submissionPolicyService.handleLockRepositoryPolicy(newResult, (Participation) participation, policy);
-                }
-
-                if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual()) {
-                    // Note: in this case, we do not want to save the newResult, but we only want to update the latest semi-automatic one
-                    Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), newResult,
-                            programmingExercise);
-                    // Adding back dropped submission
-                    updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
-                    programmingSubmissionRepository.save(programmingSubmission);
-                    resultRepository.save(updatedLatestSemiAutomaticResult);
-                    return Optional.of(updatedLatestSemiAutomaticResult);
-                }
-            }
-
-            // Finally save the new result once and make sure the order column between submission and result is maintained
-            newResult.setSubmission(null); // workaround to avoid org.hibernate.HibernateException: null index column for collection:
-                                           // de.tum.in.www1.artemis.domain.Submission.results
-            newResult = resultRepository.save(newResult);
-            newResult.setSubmission(programmingSubmission);
-            programmingSubmission.addResult(newResult);
-            programmingSubmissionRepository.save(programmingSubmission);
+        // Find out which test cases were executed and calculate the score according to their status and weight.
+        // This needs to be done as some test cases might not have been executed.
+        // When the result is from a solution participation, extract the feedback items (= test cases) and store them in our database.
+        if (isSolutionParticipation) {
+            extractTestCasesFromResult(programmingExercise, newResult);
         }
 
-        return Optional.ofNullable(newResult);
+        Result processedResult = calculateScoreForResult(newResult, programmingExercise, isStudentParticipation);
+
+        // Note: This programming submission might already have multiple results, however they do not contain the assessor or the feedback
+        var programmingSubmission = (ProgrammingSubmission) processedResult.getSubmission();
+
+        // If the solution participation was updated, also trigger the template participation build.
+        if (isSolutionParticipation) {
+            // This method will return without triggering the build if the submission is not of type TEST.
+            triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), programmingSubmission);
+        }
+
+        if (isStudentParticipation) {
+            // When a student receives a new result, we want to check whether we need to lock the participation
+            // repository when a lock repository policy is present. At this point, we know that the programming
+            // exercise exists.
+            SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
+            if (submissionPolicy instanceof LockRepositoryPolicy policy) {
+                submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
+            }
+
+            if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual()) {
+                // Note: in this case, we do not want to save the processedResult, but we only want to update the latest semi-automatic one
+                Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), processedResult,
+                        programmingExercise);
+                // Adding back dropped submission
+                updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
+                programmingSubmissionRepository.save(programmingSubmission);
+                resultRepository.save(updatedLatestSemiAutomaticResult);
+
+                return updatedLatestSemiAutomaticResult;
+            }
+        }
+
+        // Finally, save the new result once and make sure the order column between submission and result is maintained
+
+        // workaround to avoid org.hibernate.HibernateException: null index column for collection: de.tum.in.www1.artemis.domain.Submission.results
+        processedResult.setSubmission(null);
+
+        processedResult = resultRepository.save(processedResult);
+        processedResult.setSubmission(programmingSubmission);
+        programmingSubmission.addResult(processedResult);
+        programmingSubmissionRepository.save(programmingSubmission);
+
+        return processedResult;
     }
 
     /**
@@ -194,7 +215,7 @@ public class ProgrammingExerciseGradingService {
         latestSemiAutomaticResult.getFeedbacks().removeIf(feedback -> feedback != null && feedback.getType() == FeedbackType.AUTOMATIC);
 
         // copy all feedback from the automatic result
-        List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+        List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).toList();
         latestSemiAutomaticResult = resultService.addFeedbackToResult(latestSemiAutomaticResult, copiedFeedbacks, false);
 
         String resultString = updateManualResultString(newAutomaticResult.getResultString(), latestSemiAutomaticResult, programmingExercise);
@@ -547,7 +568,7 @@ public class ProgrammingExerciseGradingService {
      */
     private void createFeedbackForNotExecutedTests(Result result, Set<ProgrammingExerciseTestCase> allTests) {
         List<Feedback> feedbacksForNotExecutedTestCases = allTests.stream().filter(wasNotExecuted(result))
-                .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).collect(Collectors.toList());
+                .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).toList();
         result.addFeedbacks(feedbacksForNotExecutedTestCases);
     }
 
@@ -571,7 +592,7 @@ public class ProgrammingExerciseGradingService {
             String duplicateDetailText = "This is a duplicate test case. Please review all your test cases and verify that your test cases have unique names!";
             List<Feedback> feedbacksForDuplicateTestCases = duplicateFeedbackNames.stream()
                     .map(feedbackName -> new Feedback().type(FeedbackType.AUTOMATIC).text(feedbackName + " - Duplicate Test Case!").detailText(duplicateDetailText).positive(false))
-                    .collect(Collectors.toList());
+                    .toList();
             result.addFeedbacks(feedbacksForDuplicateTestCases);
             // Enables to view the result details in case all test cases are positive
             result.setHasFeedback(true);
@@ -911,7 +932,7 @@ public class ProgrammingExerciseGradingService {
 
             for (var feedback : result.getFeedbacks()) {
                 // analyse the feedback and add to the statistics
-                addFeedbackToStatistics(feedback, categoryIssuesMap, testCaseStatsMap);
+                addFeedbackToStatistics(categoryIssuesMap, testCaseStatsMap, feedback);
             }
 
             // merge the student specific issue map with the overall students issue map
@@ -954,45 +975,23 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Analyses the feedback and updates the statistics maps
-     * @param feedback The given feedback object
      * @param categoryIssuesMap The issues map for sca statistics
      * @param testCaseStatsMap The map for test case statistics
+     * @param feedback The given feedback object
      */
-    private void addFeedbackToStatistics(Feedback feedback, Map<String, Integer> categoryIssuesMap,
-            Map<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap) {
+    private void addFeedbackToStatistics(final Map<String, Integer> categoryIssuesMap, final Map<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap,
+            final Feedback feedback) {
         if (feedback.isStaticCodeAnalysisFeedback()) {
-            // sca feedback
-            var categoryName = feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
+            String categoryName = feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
             if ("".equals(categoryName)) {
-                return; // this feedback belongs to no category
+                return;
             }
-
-            // add 1 to the issues for this category
-            if (categoryIssuesMap.containsKey(categoryName)) {
-                categoryIssuesMap.merge(categoryName, 1, Integer::sum);
-            }
-            else {
-                categoryIssuesMap.put(categoryName, 1);
-            }
-
+            categoryIssuesMap.compute(categoryName, (category, count) -> count == null ? 1 : count + 1);
         }
         else if (feedback.getType().equals(FeedbackType.AUTOMATIC)) {
-            // test case feedback
-            var testName = feedback.getText();
-
-            // add 1 to the passed or failed amount for this test case
-            // dependant on the positive flag of the feedback
-            if (testCaseStatsMap.containsKey(testName)) {
-                if (Boolean.TRUE.equals(feedback.isPositive())) {
-                    testCaseStatsMap.get(testName).increaseNumPassed();
-                }
-                else {
-                    testCaseStatsMap.get(testName).increaseNumFailed();
-                }
-            }
-            else {
-                testCaseStatsMap.put(testName, new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(feedback.isPositive() ? 1 : 0, feedback.isPositive() ? 0 : 1));
-            }
+            String testName = feedback.getText();
+            testCaseStatsMap.putIfAbsent(testName, new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(0, 0));
+            testCaseStatsMap.get(testName).updateWithFeedback(feedback);
         }
     }
 }
