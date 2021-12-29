@@ -87,13 +87,7 @@
                     <jhi-exam-checklist-exercisegroup-table [exerciseGroups]="exam.exerciseGroups || []"></jhi-exam-checklist-exercisegroup-table>
                 </td>
                 <td>
-                    <a
-                        *ngIf="exam!.course!.isAtLeastInstructor"
-                        type="submit"
-                        [routerLink]="getExamRoutesByIdentifier('exercise-groups')"
-                        class="btn btn-primary"
-                        id="exercises-button-groups-table"
-                    >
+                    <a type="submit" [routerLink]="getExamRoutesByIdentifier('exercise-groups')" class="btn btn-primary" id="exercises-button-groups-table">
                         <fa-icon [icon]="faListAlt"></fa-icon>
                         <span>{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</span>
                     </a>
@@ -115,7 +109,7 @@
                     </ul>
                 </td>
                 <td>
-                    <a *ngIf="exam!.course!.isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info">
+                    <a [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info">
                         <fa-icon [icon]="faUser"></fa-icon>
                         <span>{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>
                     </a>
@@ -143,7 +137,7 @@
                     </ul>
                 </td>
                 <td>
-                    <a *ngIf="exam!.course!.isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info">
+                    <a [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info">
                         <fa-icon [icon]="faUser"></fa-icon>
                         <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
                     </a>
@@ -167,7 +161,7 @@
                     </ul>
                 </td>
                 <td>
-                    <a *ngIf="exam!.course!.isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
+                    <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
                         <fa-icon [icon]="faEye"></fa-icon>
                         <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
                     </a>
@@ -191,7 +185,7 @@
                     </span>
                 </td>
                 <td>
-                    <a *ngIf="exam!.course!.isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
+                    <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
                         <fa-icon [icon]="faEye"></fa-icon>
                         <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
                     </a>
@@ -206,7 +200,7 @@
                     <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examDetails' | artemisTranslate }}</span>
                 </td>
                 <td>
-                    <a id="editButton_table" *ngIf="exam!.course!.isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning">
+                    <a id="editButton_table" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning">
                         <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
                     </a>
                 </td>
@@ -265,7 +259,7 @@
                     </div>
                 </td>
                 <td>
-                    <a *ngIf="exam!.course!.isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
+                    <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
                         <fa-icon [icon]="faEye"></fa-icon>
                         <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
                     </a>
@@ -302,7 +296,7 @@
                     <br />
                 </td>
                 <td>
-                    <a *ngIf="exam!.course!.isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary">
+                    <a [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary">
                         <fa-icon [icon]="faThList"></fa-icon>
                         <span>{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
                     </a>
@@ -327,7 +321,7 @@
                     </ul>
                 </td>
                 <td>
-                    <a id="editButton_publish" *ngIf="exam!.course!.isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning">
+                    <a id="editButton_publish" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning">
                         <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
                     </a>
                 </td>
@@ -357,7 +351,7 @@
                     </ul>
                 </td>
                 <td>
-                    <a id="editButton_review" *ngIf="exam!.course!.isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning">
+                    <a id="editButton_review" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning">
                         <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
                     </a>
                 </td>
@@ -386,12 +380,7 @@
                     <br />
                 </td>
                 <td>
-                    <a
-                        *ngIf="exam!.course!.isAtLeastInstructor"
-                        [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')"
-                        class="btn btn-primary"
-                        id="tutor-exam-dashboard-button_table_complaints"
-                    >
+                    <a [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary" id="tutor-exam-dashboard-button_table_complaints">
                         <fa-icon [icon]="faThList"></fa-icon>
                         <span>{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
                     </a>
@@ -406,7 +395,7 @@
                     <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.exportResults' | artemisTranslate }}</span>
                 </td>
                 <td>
-                    <a *ngIf="exam!.course!.isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info" id="scores-button_publish_result">
+                    <a [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info" id="scores-button_publish_result">
                         <fa-icon [icon]="faEye"></fa-icon>
                         <span>{{ 'entity.action.scores' | artemisTranslate }}</span>
                     </a>
