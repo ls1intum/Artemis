@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -61,9 +60,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Autowired
     private CourseRepository courseRepo;
-
-    @Autowired
-    private StudentParticipationRepository studentParticipationRepo;
 
     private ModelingExercise classExercise;
 
@@ -711,9 +707,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         classExercise.setSampleSolutionExplanation("<Sample solution explanation>");
 
         if (isStudent) {
-            User user = userRepo.findOneByLogin(username).get();
-            StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, classExercise, user);
-            studentParticipationRepo.save(participation);
+            database.createAndSaveParticipationForExercise(classExercise, username);
         }
 
         // Test sample solution publication date not set.
