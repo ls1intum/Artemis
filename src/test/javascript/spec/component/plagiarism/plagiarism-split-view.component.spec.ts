@@ -38,7 +38,16 @@ describe('Plagiarism Split View Component', () => {
     const submissionA = { studentLogin: 'studentA' } as PlagiarismSubmission<TextSubmissionElement>;
     const submissionB = { studentLogin: 'studentB' } as PlagiarismSubmission<TextSubmissionElement>;
 
-    const comparison = { id: 1, submissionA, submissionB, matches: [], similarity: 42, status: PlagiarismStatus.DENIED } as PlagiarismComparison<TextSubmissionElement>;
+    const comparison = {
+        id: 1,
+        submissionA,
+        submissionB,
+        matches: [],
+        similarity: 42,
+        status: PlagiarismStatus.DENIED,
+        statusA: PlagiarismStatus.NONE,
+        statusB: PlagiarismStatus.NONE,
+    } as PlagiarismComparison<TextSubmissionElement>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

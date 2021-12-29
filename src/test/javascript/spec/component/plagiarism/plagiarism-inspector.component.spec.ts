@@ -102,6 +102,10 @@ describe('Plagiarism Inspector Component', () => {
             });
     });
 
+    afterEach(() => {
+        jest.resetAllMocks();
+    });
+
     it('should register to topic and fetch latest results on init', fakeAsync(() => {
         const websocketService = TestBed.inject(JhiWebsocketService);
         const websocketServiceSpy = jest.spyOn(websocketService, 'subscribe');
