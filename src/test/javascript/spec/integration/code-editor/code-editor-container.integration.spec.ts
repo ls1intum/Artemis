@@ -64,6 +64,7 @@ import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
+import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
 
 describe('CodeEditorContainerIntegration', () => {
     // needed to make sure ace is defined
@@ -109,6 +110,7 @@ describe('CodeEditorContainerIntegration', () => {
                 MockComponent(CodeEditorFileBrowserFileComponent),
                 MockComponent(CodeEditorStatusComponent),
                 TreeviewComponent,
+                TreeviewItemComponent,
                 MockPipe(ArtemisDatePipe),
                 MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
             ],

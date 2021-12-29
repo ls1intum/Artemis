@@ -4,9 +4,12 @@ import { MockMetisService } from '../../../../../helpers/mocks/service/mock-meti
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockModule, MockPipe } from 'ng-mocks';
-import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 import { metisTags } from '../../../../../helpers/sample/metis-sample-data';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatSelectModule } from '@angular/material/select';
 
 describe('PostTagSelectorComponent', () => {
     let component: PostTagSelectorComponent;
@@ -16,7 +19,7 @@ describe('PostTagSelectorComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(MatChipsModule), MockModule(FormsModule)],
+            imports: [MockModule(MatChipsModule), MockModule(MatIconModule), MockModule(MatAutocompleteModule), MockModule(MatSelectModule), MockModule(FormsModule)],
             providers: [{ provide: MetisService, useClass: MockMetisService }],
             declarations: [PostTagSelectorComponent, MockPipe(ArtemisTranslatePipe)],
         })
@@ -42,7 +45,9 @@ describe('PostTagSelectorComponent', () => {
     it('should be initialized with existing list of tags', fakeAsync(() => {
         tick();
         expect(metisServiceGetTagSpy).toHaveBeenCalled();
-        expect(component.existingPostTags).toEqual(metisTags);
+        component.existingPostTags.subscribe((tags) => {
+            expect(tags).toEqual(metisTags);
+        });
     }));
 
     // TODO: implement a test which removes a category and one which adds a category
