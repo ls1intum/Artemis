@@ -20,15 +20,15 @@ services:
             spring.datasource.url: "${DATASOURCE_URL}"
             spring.datasource.username: root
             spring.datasource.password: ""
-            artemis.user-management.external.url: "${USER_MANAGEMENT_URL}"
-            artemis.user-management.external.user: "${EXTERNAL_USER}"
-            artemis.user-management.external.password: "${EXTERNAL_PASSWORD}"
+            artemis.user-management.external.url: "${UM_URL}"
+            artemis.user-management.external.user: "${UM_USER}"
+            artemis.user-management.external.password: "${UM_PASSWORD}"
             artemis.version-control.url: "${SCM_URL}"
-            artemis.version-control.user: "${EXTERNAL_USER}"
-            artemis.version-control.password: "${EXTERNAL_PASSWORD}"
+            artemis.version-control.user: "${SCM_USER}"
+            artemis.version-control.password: "${SCM_PASSWORD}"
             artemis.continuous-integration.url: "${CI_URL}"
-            artemis.continuous-integration.user: "${EXTERNAL_USER}"
-            artemis.continuous-integration.password: "${EXTERNAL_PASSWORD}"
+            artemis.continuous-integration.user: "${CI_USER}"
+            artemis.continuous-integration.password: "${CI_PASSWORD}"
         ports:
             - 8080:8080
         networks:
