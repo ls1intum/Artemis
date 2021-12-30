@@ -6,6 +6,7 @@ import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
 import { FormControl } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { map, Observable, startWith } from 'rxjs';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 
@@ -32,6 +33,9 @@ export class CategorySelectorComponent implements OnChanges, OnInit {
 
     separatorKeysCodes = [ENTER, COMMA, TAB];
     categoryCtrl = new FormControl();
+
+    // Icons
+    faTimes = faTimes;
 
     ngOnInit() {
         this.uniqueCategories = this.categoryCtrl.valueChanges.pipe(

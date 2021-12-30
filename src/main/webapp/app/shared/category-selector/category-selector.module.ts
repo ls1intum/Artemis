@@ -5,12 +5,12 @@ import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-sele
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatIconModule } from '@angular/material/icon';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisColorSelectorModule, ReactiveFormsModule, FormsModule, MatChipsModule, MatIconModule, MatAutocompleteModule, MatSelectModule],
+    imports: [ArtemisSharedModule, ArtemisColorSelectorModule, ReactiveFormsModule, FormsModule, MatChipsModule, MatAutocompleteModule, MatSelectModule, MatFormFieldModule],
     declarations: [CategorySelectorComponent],
     exports: [CategorySelectorComponent],
 })

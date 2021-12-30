@@ -1,14 +1,10 @@
 jhi-category-selector {
-    .mat-chip-list {
-        padding: 0 0.5rem;
+    .category-chip-list {
+        width: 100%;
 
-        .ng2-tag-input.bootstrap {
-            border: none !important;
-            padding: 0 !important;
-
-            .ng2-tag-input__text-input {
-                height: 33px;
-            }
+        .mat-form-field-outline {
+            top: -0.1em;
+            color: #cccccc;
         }
 
         mat-chip {
@@ -18,12 +14,17 @@ jhi-category-selector {
             background: transparent !important;
 
             .custom-tag {
-                padding: 0 0.45rem;
+                padding: 0.15rem 0.45rem;
                 background: #cccccc;
                 border-radius: 0.25rem;
+                color: #ffffff;
 
                 &:hover {
                     opacity: 0.8;
+                }
+
+                fa-icon {
+                    color: #ffffff;
                 }
             }
         }
@@ -33,6 +34,15 @@ jhi-category-selector {
 .tag-options {
     position: absolute;
     transition: all 0.2s ease-in-out;
+}
+
+.tag-option {
+    background: #ffffff;
+    box-shadow: 4px 4px rgb(100, 100, 100);
+
+    &:hover {
+        background: #cccccc;
+    }
 }
 
 .category-name:hover + .tag-options,

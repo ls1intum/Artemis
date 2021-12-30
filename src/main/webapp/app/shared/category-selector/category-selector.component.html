@@ -1,20 +1,18 @@
-<mat-form-field class="category-list" appearance="fill">
+<mat-form-field class="category-chip-list" appearance="outline" color="primary">
     <mat-chip-list #chipList aria-label="Category selection">
         <mat-chip *ngFor="let category of exerciseCategories" (removed)="onItemRemove(category)">
-            <ng-template let-item="item" let-index="index">
-                <div class="custom-tag" [ngStyle]="{ backgroundColor: item.color }">
-                    <span class="category-name" (click)="openColorSelector($event, item)">
-                        {{ item.category }}
-                    </span>
-                    <button matChipRemove>
-                        <mat-icon>cancel</mat-icon>
-                    </button>
-                </div>
-            </ng-template>
+            <div class="custom-tag" [ngStyle]="{ backgroundColor: category.color }">
+                <span class="category-name" (click)="openColorSelector($event, category)">
+                    {{ category.category }}
+                </span>
+                <button matChipRemove>
+                    <fa-icon [icon]="faTimes"></fa-icon>
+                </button>
+            </div>
         </mat-chip>
         <input
-            placeholder="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"
             #categoryInput
+            [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"
             [formControl]="categoryCtrl"
             [matAutocomplete]="auto"
             [matChipInputFor]="chipList"
@@ -23,7 +21,7 @@
         />
     </mat-chip-list>
     <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onItemSelect($event)">
-        <mat-option *ngFor="let category of uniqueCategories | async" [value]="category">
+        <mat-option *ngFor="let category of uniqueCategories | async" [value]="category" class="tag-option">
             {{ category }}
         </mat-option>
     </mat-autocomplete>
