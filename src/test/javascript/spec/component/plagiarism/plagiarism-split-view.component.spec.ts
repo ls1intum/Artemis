@@ -156,7 +156,7 @@ describe('Plagiarism Split View Component', () => {
         expect(textSubmissionB).toEqual(submissionB);
     });
 
-    it('parses text matches', () => {
+    it('should parse text matches', () => {
         jest.spyOn(comp, 'mapMatchesToElements').mockReturnValue(new Map());
 
         const matches: PlagiarismMatch[] = [
@@ -168,5 +168,16 @@ describe('Plagiarism Split View Component', () => {
         expect(comp.matchesA).toBeDefined();
         expect(comp.matchesB).toBeDefined();
         expect(comp.mapMatchesToElements).toHaveBeenCalledTimes(2);
+    });
+
+    it('should map matches to elements', () => {
+        const matches = [
+            { start: 0, length: 5 },
+            { start: 10, length: 20 },
+        ];
+
+        // const result = comp.mapMatchesToElements(matches, submissionA);
+
+        // console.log('heyheyhey', result);
     });
 });
