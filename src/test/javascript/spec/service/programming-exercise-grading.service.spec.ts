@@ -1,4 +1,4 @@
-import { async, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { of, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
@@ -36,7 +36,7 @@ describe('ProgrammingExerciseGradingService', () => {
     const exercise1Topic = `/topic/programming-exercise/${exercise1.id}/test-cases`;
     const exercise2Topic = `/topic/programming-exercise/${exercise2.id}/test-cases`;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: HttpClient, useClass: MockHttpService },
@@ -71,7 +71,7 @@ describe('ProgrammingExerciseGradingService', () => {
                     }
                 });
             });
-    }));
+    });
 
     afterEach(() => {
         jest.restoreAllMocks();
