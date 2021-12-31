@@ -17,6 +17,15 @@
         <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | artemisTranslate }}</p>
         <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
         <div class="d-flex" style="margin: 0; max-width: 100%">
+            <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
+                <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button">
+                    {{ useSsh ? 'SSH' : 'HTTPS' }}
+                </button>
+                <div class="dropdown-menu" ngbDropdownMenu>
+                    <a (click)="setUseSSH(false)" class="dropdown-item {{ !useSsh ? 'active' : '' }}" id="useHTTPSButton">HTTPS</a>
+                    <a (click)="setUseSSH(true)" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
+                </div>
+            </div>
             <pre
                 style="flex: 1"
                 [ngStyle]="sshEnabled ? { borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' } : {}"
@@ -26,17 +35,6 @@
                 (cbOnError)="onCopyFailure()"
                 >{{ getHttpOrSshRepositoryUrl() }}</pre
             >
-            <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
-                <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button">
-                    {{ 'artemisApp.exerciseActions.gitProtocol' | artemisTranslate }}
-                </button>
-                <div class="dropdown-menu" ngbDropdownMenu>
-                    <a (click)="setUseSSH(false)" class="dropdown-item {{ !useSsh ? 'active' : '' }}" jhiTranslate="artemisApp.exerciseActions.useHTTPS" id="useHTTPSButton">
-                        USE HTTPS
-                    </a>
-                    <a (click)="setUseSSH(true)" class="dropdown-item {{ useSsh ? 'active' : '' }}" jhiTranslate="artemisApp.exerciseActions.useSSH" id="useSSHButton">USE SSH</a>
-                </div>
-            </div>
         </div>
         <p *ngIf="repositoryPassword">
             {{ 'artemisApp.exerciseActions.repositoryPassword' | artemisTranslate }} <code class="password">{{ repositoryPassword }}</code>
