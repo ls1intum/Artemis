@@ -1,4 +1,3 @@
-import { async } from '@angular/core/testing';
 import { ActivateService } from 'app/account/activate/activate.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { HttpParams } from '@angular/common/http';
@@ -10,21 +9,21 @@ describe('ActivateService', () => {
 
     const getURL = SERVER_API_URL + 'api/activate';
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         httpService = new MockHttpService();
         // @ts-ignore
         activateService = new ActivateService(httpService);
         getStub = jest.spyOn(httpService, 'get');
-    }));
+    });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('should send a request to the server to activate the user', async () => {
+    it('should send a request to the server to activate the user', () => {
         const key = 'key';
 
-        await activateService.get(key);
+        activateService.get(key).subscribe();
 
         expect(getStub).toHaveBeenCalledTimes(1);
         expect(getStub).toHaveBeenCalledWith(getURL, {
