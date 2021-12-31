@@ -30,9 +30,9 @@ import { PostingContentPartComponent } from 'app/shared/metis/posting-content/po
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatIconModule } from '@angular/material/icon';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 @NgModule({
     imports: [
@@ -50,9 +50,9 @@ import { MatSelectModule } from '@angular/material/select';
         CommonModule,
         FontAwesomeModule,
         MatChipsModule,
-        MatIconModule,
         MatAutocompleteModule,
         MatSelectModule,
+        MatFormFieldModule,
     ],
     declarations: [
         PostingThreadComponent,

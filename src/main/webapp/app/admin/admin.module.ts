@@ -26,9 +26,9 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
 import { MetricsModule } from 'app/admin/metrics/metrics.module';
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatIconModule } from '@angular/material/icon';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 const ENTITY_STATES = [...adminState];
 
@@ -42,9 +42,9 @@ const ENTITY_STATES = [...adminState];
         MetricsModule,
         ArtemisChartsModule,
         MatChipsModule,
-        MatIconModule,
         MatAutocompleteModule,
         MatSelectModule,
+        MatFormFieldModule,
     ],
     declarations: [
         AuditsComponent,

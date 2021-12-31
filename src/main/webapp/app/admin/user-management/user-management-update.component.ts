@@ -17,6 +17,7 @@ import { MatChipInputEvent } from '@angular/material/chips';
 @Component({
     selector: 'jhi-user-management-update',
     templateUrl: './user-management-update.component.html',
+    styleUrls: ['./user-management-update.component.scss'],
 })
 export class UserManagementUpdateComponent implements OnInit {
     readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;

@@ -1,4 +1,4 @@
-<mat-form-field class="category-chip-list" appearance="outline" color="primary">
+<mat-form-field class="category-chip-list" appearance="outline">
     <mat-chip-list #chipList aria-label="Category selection">
         <mat-chip *ngFor="let category of exerciseCategories" (removed)="onItemRemove(category)">
             <div class="custom-tag" [ngStyle]="{ backgroundColor: category.color }">
@@ -11,6 +11,7 @@
             </div>
         </mat-chip>
         <input
+            class="category-chip-input"
             #categoryInput
             [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"
             [formControl]="categoryCtrl"

@@ -2,11 +2,6 @@ jhi-category-selector {
     .category-chip-list {
         width: 100%;
 
-        .mat-form-field-outline {
-            top: -0.1em;
-            color: #cccccc;
-        }
-
         mat-chip {
             padding: 0 !important;
             height: 30px !important;
@@ -29,28 +24,16 @@ jhi-category-selector {
             }
         }
     }
-}
 
-.tag-options {
-    position: absolute;
-    transition: all 0.2s ease-in-out;
+    .category-chip-input {
+        height: 30px;
+    }
 }
 
 .tag-option {
     background: #ffffff;
-    box-shadow: 4px 4px rgb(100, 100, 100);
 
     &:hover {
         background: #cccccc;
     }
-}
-
-.category-name:hover + .tag-options,
-.tag-options:hover {
-    transform: scale(2);
-    transform-origin: 50% 50%;
-}
-
-.delete {
-    margin-left: 15px;
 }

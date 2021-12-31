@@ -5,6 +5,7 @@ import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
 import { FormControl } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-post-tag-selector',
@@ -25,6 +26,9 @@ export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, A
     tagCtrl = new FormControl();
 
     private tagsSubscription: Subscription;
+
+    // Icons
+    faTimes = faTimes;
 
     constructor(private metisService: MetisService, private changeDetector: ChangeDetectorRef) {}
 

@@ -1159,3 +1159,8 @@ Course Info Bar
 .mat-autocomplete-panel.mat-autocomplete-visible {
     box-shadow: 3px 3px 6px rgb(100 100 100);
 }
+
+.mat-form-field-outline {
+    top: -0.1em !important;
+    color: #cccccc;
+}

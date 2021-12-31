@@ -1,4 +1,4 @@
-.post-tag-list {
+.group-tag-list {
     width: 100%;
 
     mat-chip {
@@ -23,15 +23,7 @@
         }
     }
 
-    .post-tag-input {
+    .group-tag-input {
         height: 30px;
-    }
-}
-
-.tag-option {
-    background: #ffffff;
-
-    &:hover {
-        background: #cccccc;
     }
 }
