@@ -36,12 +36,12 @@
             >
             -->
             <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group">
-                {{ useSsh ? 'SSH' : 'HTTPS' }}
                 <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button"></button>
+                {{ 'artemisApp.exerciseActions.gitProtocol' | artemisTranslate }}
                 <div class="dropdown-menu" ngbDropdownMenu>
-                    <a (click)="setUseSSH(false)" class="dropdown-item {{ !useSsh ? 'active' : '' }}" jhiTranslate="artemisApp.exerciseActions.useHTTPS" id="useHTTPSButton"
-                        >USE HTTPS</a
-                    >
+                    <a (click)="setUseSSH(false)" class="dropdown-item {{ !useSsh ? 'active' : '' }}" jhiTranslate="artemisApp.exerciseActions.useHTTPS" id="useHTTPSButton">
+                        USE HTTPS
+                    </a>
                     <a (click)="setUseSSH(true)" class="dropdown-item {{ useSsh ? 'active' : '' }}" jhiTranslate="artemisApp.exerciseActions.useSSH" id="useSSHButton">USE SSH</a>
                 </div>
             </div>
