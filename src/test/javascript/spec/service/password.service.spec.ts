@@ -1,4 +1,4 @@
-import { async, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { PasswordService } from 'app/account/password/password.service';
 import { HttpClient } from '@angular/common/http';
@@ -10,7 +10,7 @@ describe('ActivateService', () => {
 
     const postURL = SERVER_API_URL + 'api/account/change-password';
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [{ provide: HttpClient, useClass: MockHttpService }],
         })
@@ -20,17 +20,17 @@ describe('ActivateService', () => {
                 httpService = TestBed.inject(HttpClient);
                 postStub = jest.spyOn(httpService, 'post');
             });
-    }));
+    });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('should set a new password for the current user', async () => {
+    it('should set a new password for the current user', () => {
         const newPassword = 'newPassword';
         const currentPassword = 'currentPassword';
 
-        await passwordService.save(newPassword, currentPassword);
+        passwordService.save(newPassword, currentPassword).subscribe();
 
         expect(postStub).toHaveBeenCalledTimes(1);
         expect(postStub).toHaveBeenCalledWith(postURL, { currentPassword, newPassword });
