@@ -128,7 +128,7 @@ describe('Notification Service', () => {
             const expectedResult = notificationArray.sort();
 
             notificationService.queryNotificationsFilteredBySettings().subscribe((resp) => {
-                expect(resp.body).toBe(expectedResult);
+                expect(resp.body).toEqual(expectedResult);
             });
 
             const req = httpMock.expectOne({ method: 'GET' });
@@ -138,7 +138,7 @@ describe('Notification Service', () => {
 
         it('should subscribe to single user notification updates and receive new single user notification', fakeAsync(() => {
             notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
-                expect(notification).toBe(singleUserNotification);
+                expect(notification).toEqual(singleUserNotification);
             });
 
             tick(); // position of tick is very important here !
@@ -159,7 +159,7 @@ describe('Notification Service', () => {
 
         it('should subscribe to group notification updates and receive new group notification', fakeAsync(() => {
             notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
-                expect(notification).toBe(groupNotification);
+                expect(notification).toEqual(groupNotification);
             });
 
             tick(); // position of tick is very important here !
