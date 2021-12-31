@@ -72,8 +72,8 @@ export class CloneRepoButtonComponent implements OnInit {
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
     }
 
-    public toggleUseSsh(): void {
-        this.useSsh = !this.useSsh;
+    public setUseSSH(useSsh: boolean): void {
+        this.useSsh = useSsh;
         this.localStorage.store('useSsh', this.useSsh);
     }
 
