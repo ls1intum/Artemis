@@ -26,15 +26,6 @@
                 (cbOnError)="onCopyFailure()"
                 >{{ getHttpOrSshRepositoryUrl() }}</pre
             >
-            <!--
-            <pre
-                *ngIf="sshEnabled"
-                class="btn btn-primary d-inline-flex align-items-center ms-0 use-ssh"
-                style="border-top-left-radius: 0; border-bottom-left-radius: 0"
-                (click)="toggleUseSsh()"
-                >{{ useSsh ? 'USE HTTPS' : 'USE SSH' }}</pre
-            >
-            -->
             <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group">
                 <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button"></button>
                 {{ 'artemisApp.exerciseActions.gitProtocol' | artemisTranslate }}
