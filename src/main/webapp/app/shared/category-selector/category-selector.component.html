@@ -11,6 +11,7 @@
             </div>
         </mat-chip>
         <input
+            *ngIf="exerciseCategories.length < 2"
             class="category-chip-input"
             #categoryInput
             [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"
