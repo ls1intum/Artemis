@@ -26,7 +26,7 @@
             "copiedUrl": "Copied URL",
             "uploadFile": "Upload a file",
             "viewTeam": "Team",
-            "gitProtocol": "git protocol",
+            "gitProtocol": "Git protocol",
             "useHTTPS": "Use HTTPS",
             "useSSH": "Use SSH",
             "sshKeyTip": "To use ssh, you need to add an ssh-key to your account {link:here}."
