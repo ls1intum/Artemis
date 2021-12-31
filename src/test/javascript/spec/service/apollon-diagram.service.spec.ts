@@ -43,7 +43,7 @@ describe('ApollonDiagramService', () => {
         tick();
 
         expect(requestWrapper.request.method).toBe('POST');
-        expect(response!.body).toBe(responseObject);
+        expect(response!.body).toEqual(responseObject);
         expect(response!.status).toBe(200);
     }));
 
@@ -64,7 +64,7 @@ describe('ApollonDiagramService', () => {
         tick();
 
         expect(requestWrapper.request.method).toBe('PUT');
-        expect(response!.body).toBe(responseObject);
+        expect(response!.body).toEqual(responseObject);
         expect(response!.status).toBe(200);
     }));
 
@@ -86,7 +86,7 @@ describe('ApollonDiagramService', () => {
         tick();
 
         expect(requestWrapper.request.method).toBe('GET');
-        expect(response!.body).toBe(responseObject);
+        expect(response!.body).toEqual(responseObject);
         expect(response!.status).toBe(200);
     }));
 
@@ -108,7 +108,7 @@ describe('ApollonDiagramService', () => {
         tick();
 
         expect(requestWrapper.request.method).toBe('DELETE');
-        expect(response!.body).toBe(responseObject);
+        expect(response!.body).toEqual(responseObject);
         expect(response!.status).toBe(200);
     }));
 
@@ -129,7 +129,7 @@ describe('ApollonDiagramService', () => {
         tick();
 
         expect(requestWrapper.request.method).toBe('GET');
-        expect(response!.body).toBe(responseObject);
+        expect(response!.body).toEqual(responseObject);
         expect(response!.status).toBe(200);
     }));
 });
