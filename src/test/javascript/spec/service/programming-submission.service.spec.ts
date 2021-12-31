@@ -18,7 +18,7 @@ import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { HttpClient } from '@angular/common/http';
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 describe('ProgrammingSubmissionService', () => {
@@ -103,9 +103,10 @@ describe('ProgrammingSubmissionService', () => {
         expect(subscribeForNewResultSpy).not.toHaveBeenCalled();
     });
 
-    it('should query httpService endpoint and setup the websocket subscriptions if no subject is cached for the provided participation', async () => {
+    it('should query httpService endpoint and setup the websocket subscriptions if no subject is cached for the provided participation', () => {
         httpGetStub.mockReturnValue(of(currentSubmission));
-        const submission = await new Promise((resolve) => submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => resolve(s)));
+        let submission;
+        submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((sub) => (submission = sub));
         expect(submission).toEqual({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId });
         expect(wsSubscribeStub).toHaveBeenCalledTimes(1);
         expect(wsSubscribeStub).toHaveBeenCalledWith(submissionTopic);
@@ -162,7 +163,7 @@ describe('ProgrammingSubmissionService', () => {
         ]);
     });
 
-    it('should emit the failed submission state when the result waiting timer runs out AND accept a late result', async () => {
+    it('should emit the failed submission state when the result waiting timer runs out AND accept a late result', fakeAsync(() => {
         // Set the timer to 10ms for testing purposes.
         // @ts-ignore
         submissionService.DEFAULT_EXPECTED_RESULT_ETA = 10;
@@ -178,8 +179,8 @@ describe('ProgrammingSubmissionService', () => {
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
         ]);
-        // Wait 10ms for the timeout
-        await new Promise<void>((resolve) => setTimeout(() => resolve(), 10));
+
+        tick(10);
 
         // Expect the fallback mechanism to kick in after the timeout
         expect(getLatestResultStub).toHaveBeenCalledTimes(1);
@@ -200,9 +201,9 @@ describe('ProgrammingSubmissionService', () => {
             { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: currentSubmission2, participationId },
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
         ]);
-    });
+    }));
 
-    it('should emit has no pending submission if the fallback mechanism fetches the right result from the server', async () => {
+    it('should emit has no pending submission if the fallback mechanism fetches the right result from the server', fakeAsync(() => {
         // Set the timer to 10ms for testing purposes.
         // @ts-ignore
         submissionService.DEFAULT_EXPECTED_RESULT_ETA = 10;
@@ -218,8 +219,8 @@ describe('ProgrammingSubmissionService', () => {
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
         ]);
-        // Wait 10ms for the timeout.
-        await new Promise<void>((resolve) => setTimeout(() => resolve(), 10));
+
+        tick(10);
 
         // Expect the fallback mechanism to kick in after the timeout
         expect(getLatestResultStub).toHaveBeenCalledTimes(1);
@@ -242,9 +243,9 @@ describe('ProgrammingSubmissionService', () => {
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
         ]);
-    });
+    }));
 
-    it('should fetch the latest pending submissions for all participations of an exercise if preloadLatestPendingSubmissionsForExercise is called', async () => {
+    it('should fetch the latest pending submissions for all participations of an exercise if preloadLatestPendingSubmissionsForExercise is called', () => {
         const exerciseId = 3;
         const participation1 = { id: 2 } as StudentParticipation;
         const participation2 = { id: 3 } as StudentParticipation;
@@ -270,16 +271,16 @@ describe('ProgrammingSubmissionService', () => {
         expect(httpGetStub).toHaveBeenCalledWith('api/programming-exercises/3/latest-pending-submissions');
         // Fetching the latest pending submission should not trigger a rest call for a cached submission.
         expect(fetchLatestPendingSubmissionSpy).not.toHaveBeenCalled();
-        expect(submissionState).toEqual(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+        expect(submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
         expect(submission).toEqual(currentSubmission);
 
         // Fetching the latest pending submission should trigger a rest call if the submission is not cached.
-        await submissionService.getLatestPendingSubmissionByParticipationId(participation3.id!, exerciseId, true);
+        submissionService.getLatestPendingSubmissionByParticipationId(participation3.id!, exerciseId, true).subscribe();
         expect(fetchLatestPendingSubmissionSpy).toHaveBeenCalledTimes(1);
         expect(fetchLatestPendingSubmissionSpy).toHaveBeenCalledWith(participation3.id);
     });
 
-    it('should not throw an error on getSubmissionStateOfExercise if state is an empty object', async () => {
+    it('should not throw an error on getSubmissionStateOfExercise if state is an empty object', () => {
         const exerciseId = 10;
         const submissionState: ExerciseSubmissionState = {};
         // @ts-ignore
@@ -295,7 +296,7 @@ describe('ProgrammingSubmissionService', () => {
         expect(httpGetStub).toHaveBeenCalledWith(SERVER_API_URL + `api/programming-exercises/${exerciseId}/latest-pending-submissions`);
     });
 
-    it('should correctly return the submission state based on the servers response', async () => {
+    it('should correctly return the submission state based on the servers response', () => {
         const exerciseId = 10;
         const submissionState = { 1: { id: 11, submissionDate: dayjs().subtract(2, 'hours') } as ProgrammingSubmission, 2: undefined };
         const expectedSubmissionState = {

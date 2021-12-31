@@ -114,7 +114,7 @@ describe('ProgrammingExerciseGradingService', () => {
             .subscribe();
 
         expect(getStub).toHaveBeenCalledTimes(1);
-        expect(testCasesExercise1).toBe(testCases1);
+        expect(testCasesExercise1).toEqual(testCases1);
     });
 
     it('should notify subscribers on new test case value', () => {
@@ -132,12 +132,12 @@ describe('ProgrammingExerciseGradingService', () => {
             .pipe(tap((newTestCases) => (testCasesExercise1Subscriber2 = newTestCases)))
             .subscribe();
 
-        expect(testCasesExercise1Subscriber1).toBe(testCases1);
-        expect(testCasesExercise1Subscriber2).toBe(testCases1);
+        expect(testCasesExercise1Subscriber1).toEqual(testCases1);
+        expect(testCasesExercise1Subscriber2).toEqual(testCases1);
 
         gradingService.notifyTestCases(exercise1.id, newTestCasesOracle);
 
-        expect(testCasesExercise1Subscriber1).toBe(newTestCasesOracle);
-        expect(testCasesExercise1Subscriber2).toBe(newTestCasesOracle);
+        expect(testCasesExercise1Subscriber1).toEqual(newTestCasesOracle);
+        expect(testCasesExercise1Subscriber2).toEqual(newTestCasesOracle);
     });
 });
