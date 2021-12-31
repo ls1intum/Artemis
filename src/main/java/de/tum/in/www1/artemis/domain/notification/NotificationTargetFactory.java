@@ -98,6 +98,17 @@ public class NotificationTargetFactory {
         return new NotificationTarget(message, exercise.getId(), EXERCISES_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId(), COURSES_TEXT);
     }
 
+    /**
+     * Create a NotificationTarget for a GroupNotification for a duplicate test case.
+     *
+     * @param exercise with duplicated test cases
+     * @return the final NotificationTarget for this case
+     */
+    public static NotificationTarget createDuplicateTestCaseTarget(Exercise exercise) {
+        return new NotificationTarget(DUPLICATE_TEST_CASE_TEXT, exercise.getId(), PROGRAMMING_EXERCISES_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId(),
+                COURSE_MANAGEMENT_TEXT);
+    }
+
     // LECTURE related targets
 
     /**
