@@ -15,6 +15,7 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 describe('Participation Service', () => {
     let injector: TestBed;
@@ -189,6 +190,8 @@ describe('Participation Service', () => {
     it('should update a Participation', fakeAsync(() => {
         const exercise = new TextExercise(new Course(), undefined);
         exercise.id = 1;
+        exercise.categories = undefined;
+
         const returnedFromService = Object.assign(
             {
                 repositoryUrl: 'BBBBBB',
