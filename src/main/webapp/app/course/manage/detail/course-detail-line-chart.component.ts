@@ -25,7 +25,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
 
     LEFT = false;
     RIGHT = true;
-    displayedNumberOfWeeks = 16;
+    displayedNumberOfWeeks = 17;
     showsCurrentWeek = true;
 
     // Chart related
@@ -62,6 +62,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
     absoluteSeries = [{}];
     curve: any = shape.curveMonotoneX;
     average = { name: 'Average', value: 0 };
+    showAverage = true;
 
     // Icons
     faSpinner = faSpinner;
@@ -106,16 +107,14 @@ export class CourseDetailLineChartComponent implements OnChanges {
                 this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course); // allValues[i];
                 this.absoluteSeries[i]['absoluteValue'] = array[i];
             }
-            const value = this.computeAverage(allValues);
-            this.average.name = 'Average: ' + value.toFixed(2) + '%';
-            this.average.value = value;
-            // this.median = { name: 'median', value: this.computeMedian(allValues) };
+            const currentAverage = this.computeAverage(allValues);
+            this.average.name = /*this.translateService.instant('artemisApp.courseStatistics.average') + */ currentAverage.toFixed(2) + '%';
+            this.average.value = currentAverage;
         } else {
             for (let i = 0; i < this.displayedNumberOfWeeks; i++) {
                 this.dataCopy[0].series[i]['value'] = 0;
                 this.absoluteSeries[i]['absoluteValue'] = 0;
             }
-            // this.median = { name: 'median', value: 0 };
         }
         this.loading = false;
     }
@@ -161,10 +160,20 @@ export class CourseDetailLineChartComponent implements OnChanges {
         return result ? result.absoluteValue : '/';
     }
 
+    /**
+     * Computes the average of the given number array
+     * @param array of numbers the average should be returned
+     * @returns average of the number array
+     * @private
+     */
     private computeAverage(array: number[]): number {
         let sum = 0;
 
         array.forEach((number) => (sum += number));
         return sum / array.length;
+    }
+
+    toggleAverageLine(): void {
+        this.showAverage = !this.showAverage;
     }
 }

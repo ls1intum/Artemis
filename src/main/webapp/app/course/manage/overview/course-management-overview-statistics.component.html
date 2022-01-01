@@ -1,10 +1,9 @@
-<!--<h4 class="col-md-12 mt-3 text-center">{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h4>-->
-<div class="row justify-content-center" style="margin-top: 15px">
+<div class="row justify-content-center chart-title-line">
     <div class="d-inline-flex flex-nowrap justify-content-center align-items-center">
         <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id]" class="text-center">
             <h4>{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h4>
         </a>
-        <jhi-help-icon style="padding-left: 6px; margin-bottom: 0.3rem" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation"></jhi-help-icon>
+        <jhi-help-icon class="chart-explanation-tooltip headline-margin" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation"></jhi-help-icon>
     </div>
 </div>
 <div #containerRef class="col-md-12 text-center">
@@ -29,7 +28,7 @@
             <span> {{ model[0].name }}: {{ model[0].absoluteValue }} </span>
         </ng-template>
     </ngx-charts-line-chart>
-    <div *ngIf="loading" style="z-index: 1; position: absolute; font-size: large">
+    <div *ngIf="loading" class="overview-spinner">
         <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
     </div>
 </div>

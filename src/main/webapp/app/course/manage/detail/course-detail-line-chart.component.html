@@ -1,10 +1,10 @@
 <div class="course-detail-parent-container col">
-    <div class="row justify-content-center" style="margin-top: 15px">
+    <div class="row justify-content-center chart-title-line">
         <div class="d-inline-flex flex-nowrap justify-content-center">
             <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="text-center">
                 <h5>{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h5>
             </a>
-            <jhi-help-icon style="padding-left: 6px" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation"></jhi-help-icon>
+            <jhi-help-icon class="chart-explanation-tooltip" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation"></jhi-help-icon>
         </div>
     </div>
     <div class="row d-flex justify-content-center align-items-center flex-nowrap" style="flex: 1">
@@ -27,7 +27,8 @@
                 [yAxisTickFormatting]="formatYAxis"
                 [curve]="curve"
                 [referenceLines]="[average]"
-                [showRefLines]="true"
+                [showRefLines]="showAverage"
+                [showRefLabels]="showAverage"
             >
                 <ng-template #tooltipTemplate let-model="model">
                     <span>{{ model.series }} in {{ model.name }}: </span><br />
@@ -38,7 +39,7 @@
                 </ng-template>
             </ngx-charts-line-chart>
         </div>
-        <h1 *ngIf="loading" style="z-index: 1; display: flex; justify-content: center; align-items: center; position: absolute">
+        <h1 *ngIf="loading" class="spinner">
             <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
         </h1>
         <fa-icon
@@ -50,5 +51,9 @@
             [ngClass]="showsCurrentWeek ? 'hide-arrow' : ''"
         ></fa-icon>
     </div>
-    <h5 class="col-md-10 offset-md-1 text-center mt-4">{{ chartTime }}</h5>
+    <div class="col-md-10 offset-md-1 text-center mt-4">
+        <h5>{{ chartTime }}</h5>
+        <input type="checkbox" [checked]="showAverage" (change)="toggleAverageLine()" />
+        <label>{{ 'artemisApp.courseStatistics.averageReferenceLineCheckboxLabel' | artemisTranslate }}</label>
+    </div>
 </div>

@@ -53,6 +53,7 @@ import { UserImportModule } from 'app/shared/import/user-import.module';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
+import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 
 @NgModule({
     imports: [
@@ -65,6 +66,7 @@ import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
         TagInputModule,
         ArtemisExerciseModule,
         ArtemisLectureModule,
+        ArtemisFullscreenModule,
         ArtemisCourseScoresModule,
         ArtemisLearningGoalsModule,
         ArtemisExerciseScoresModule,

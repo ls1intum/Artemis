@@ -141,6 +141,8 @@ public class StatisticsService {
         averageScoreForExercises.forEach(exercise -> {
             var roundedAverageScore = roundScoreSpecifiedByCourseSettings(exercise.getAverageScore(), course);
             exercise.setAverageScore(roundedAverageScore);
+            var fittingExercise = includedExercises.stream().filter(includedExercise -> includedExercise.getId() == exercise.getExerciseId()).findAny().get();
+            exercise.setExerciseType(fittingExercise.getExerciseType());
         });
 
         if (averageScoreForCourse != null && averageScoreForCourse > 0) {

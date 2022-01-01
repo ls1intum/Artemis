@@ -3,6 +3,8 @@ import { GraphColors, Graphs, SpanType } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Router } from '@angular/router';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 export const ngxColor = {
     name: 'Course statistics',
@@ -10,6 +12,13 @@ export const ngxColor = {
     group: ScaleType.Ordinal,
     domain: [GraphColors.DARK_BLUE],
 } as Color;
+
+interface ExerciseStatisticsEntry {
+    name: string;
+    value: number;
+    exerciseType: ExerciseType;
+    exerciseId: number;
+}
 
 @Component({
     selector: 'jhi-statistics-average-score-graph',
@@ -20,6 +29,8 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     exerciseAverageScores: CourseManagementStatisticsModel[];
     @Input()
     courseAverage: number;
+    @Input()
+    courseId: number;
 
     // Html properties
     LEFT = false;
@@ -30,8 +41,13 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     // Data
     barChartLabels: string[] = [];
     // ngx
-    ngxData: any[] = [];
-    readonly ngxColor = ngxColor;
+    ngxData: ExerciseStatisticsEntry[] = [];
+    ngxColor = {
+        name: 'Course statistics',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: [],
+    } as Color;
 
     // Left arrow -> decrease, right arrow -> increase
     currentPeriod = 0;
@@ -40,15 +56,24 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
 
+    constructor(private router: Router) {}
+
     ngOnInit(): void {
         this.initializeChart();
     }
 
     private initializeChart(): void {
         this.barChartLabels = this.exerciseAverageScores.slice(this.currentPeriod, 10 + this.currentPeriod).map((exercise) => exercise.exerciseName);
-        this.ngxData = this.exerciseAverageScores
-            .slice(this.currentPeriod, 10 + this.currentPeriod)
-            .map((exercise, index) => ({ name: this.barChartLabels[index], value: exercise.averageScore }));
+        this.ngxData = this.exerciseAverageScores.slice(this.currentPeriod, 10 + this.currentPeriod).map(
+            (exercise, index) =>
+                ({
+                    name: this.barChartLabels[index],
+                    value: exercise.averageScore,
+                    exerciseType: exercise.exerciseType,
+                    exerciseId: exercise.exerciseId,
+                } as ExerciseStatisticsEntry),
+        );
+        this.ngxColor.domain = this.ngxData.map((exercise) => this.determineColor(exercise.value));
     }
 
     // handles arrow clicks and updates the exercises which are shown, forward is boolean since it is either forward or backward
@@ -56,5 +81,84 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
         // eslint-disable-next-line chai-friendly/no-unused-expressions
         this.currentPeriod += forward ? 1 : -1;
         this.initializeChart();
+    }
+
+    /**
+     * Determines the color of the bar given the score
+     * @param score that is represented by the bar
+     * @returns string rgba representation of the color
+     * @private
+     */
+    private determineColor(score: number): string {
+        if (score >= 90) {
+            return GraphColors.GREEN;
+        } else if (score <= 25) {
+            return GraphColors.RED;
+        } else {
+            return GraphColors.DARK_BLUE;
+        }
+    }
+
+    /**
+     * Handles the click event on one of the bars and navigates to the corresponding exercise statistics page
+     * @param event the event that is passed by the framework
+     */
+    onSelect(event: any): void {
+        const dataEntry = this.determineChartEntry(event.name, event.value);
+
+        // a workaround in order to prevent false navigation. If more than one exercise is matching, no routing is done
+        if (dataEntry) {
+            const route = ['course-management', this.courseId, '', dataEntry.exerciseId, 'exercise-statistics'];
+            let type = dataEntry.exerciseType.toLowerCase();
+            if (type === ExerciseType.QUIZ) {
+                route[4] = 'quiz-point-statistic';
+            } else if (type === 'file_upload') {
+                type = 'file-upload';
+            }
+            route[2] = type + '-exercises';
+            this.router.navigate(route);
+        }
+    }
+
+    /**
+     * Determines the entry in the chart for a mouse event
+     * @param name name of the exercise
+     * @param value average score of the exercise
+     * @private
+     */
+    private determineChartEntry(name: string, value: number): ExerciseStatisticsEntry | undefined {
+        let counter = 0;
+        let result;
+        /**
+         * this is not a good solution as neither the name of the exercise nor its average score is necessarily unique.
+         * But as the exercise type is not included in the emitted event, I do not see a better solution.
+         */
+        this.ngxData.forEach((exercise) => {
+            if (exercise.name === name && exercise.value === value) {
+                counter++;
+                result = exercise;
+                return;
+            }
+        });
+        // if more than one exercise match, we do not navigate
+        return counter === 1 ? result : undefined;
+    }
+
+    /**
+     * Converts the exercise type contained in the ExerciseStatisticEntries for the tooltip in order to make it translatable
+     * @param name the name of the exercise
+     * @param value the average score of the exercise
+     */
+    convertTypeForTooltip(name: string, value: number): string {
+        const entry = this.determineChartEntry(name, value);
+        if (entry) {
+            const type = entry.exerciseType.toLowerCase();
+            if (type === 'file_upload') {
+                return 'file-upload';
+            }
+            return type;
+        } else {
+            return 'Unknown';
+        }
     }
 }

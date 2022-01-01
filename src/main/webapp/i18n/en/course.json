@@ -180,7 +180,15 @@
             "exerciseAverage": "exercise average",
             "amountOfStudents": "# of students",
             "activeStudents": "Active students",
-            "activeStudentsExplanation": "Active students are students that did at least one submission in the corresponding week."
+            "activeStudentsExplanation": "Active students are students that did at least one submission in the corresponding week.",
+            "average": "Average: ",
+            "averageReferenceLineCheckboxLabel": "Show average as reference line",
+            "exerciseType": "Exercise type",
+            "programming": "Programming",
+            "quiz": "Quiz",
+            "modeling": "Modeling",
+            "text": "Text",
+            "file-upload": "File Upload"
         }
     }
 }

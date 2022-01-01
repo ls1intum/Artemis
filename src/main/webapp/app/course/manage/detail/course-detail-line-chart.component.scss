@@ -19,8 +19,23 @@
     visibility: hidden;
 }
 
+.chart-title-line {
+    margin-top: 15px;
+}
+
+.chart-explanation-tooltip {
+    padding-left: 6px;
+}
+
+.spinner {
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+}
+
 :host ::ng-deep .refline-label {
-    margin-bottom: 1rem;
     font-size: larger !important;
     font-weight: bolder;
 }
