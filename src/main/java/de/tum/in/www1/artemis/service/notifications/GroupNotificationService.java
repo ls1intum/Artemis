@@ -153,36 +153,21 @@ public class GroupNotificationService {
         ZonedDateTime timeNow = ZonedDateTime.now();
 
         // "decision matrix" based on initial and updated release date to decide if a notification has to be sent out now, scheduled, or not
-        if (initialAssessmentDueDate == null) {
+        if (initialAssessmentDueDate != null && initialAssessmentDueDate.isAfter(timeNow)) {
             if (updatedAssessmentDueDate != null && updatedAssessmentDueDate.isAfter(timeNow)) {
-                instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exerciseAfterUpdate.getId());
+                if (!initialAssessmentDueDate.isEqual(updatedAssessmentDueDate)) {
+                    instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exerciseAfterUpdate.getId());
+                }
+                return;
             }
-            return;
-        }
-        if (updatedAssessmentDueDate == null) {
-            // second undefined base case
-            if (initialAssessmentDueDate.isAfter(timeNow)) {
-                // only send (not schedule) notifications/emails if the initial date is in the future
-                singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(exerciseAfterUpdate);
-            }
-            return;
-        }
-        if (!initialAssessmentDueDate.isAfter(timeNow) && !updatedAssessmentDueDate.isAfter(timeNow)) {
-            // if the initial and update dates are not in the future do not send or schedule anything
-            return;
-        }
-        if (updatedAssessmentDueDate != null && initialAssessmentDueDate.isEqual(updatedAssessmentDueDate)) {
-            // if the updated time is the same as the initial one do nothing
-            return;
-        }
-        if (updatedAssessmentDueDate.isAfter(timeNow)) {
-            // if the updated date is in the future (a different one than the initial date) reschedule
-            instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exerciseAfterUpdate.getId());
-        }
-        else {
-            // send the notifications now without any scheduling
             singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(exerciseAfterUpdate);
+            return;
         }
+        if (updatedAssessmentDueDate != null && updatedAssessmentDueDate.isAfter(timeNow)) {
+            instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exerciseAfterUpdate.getId());
+            return;
+        }
+        return;
     }
 
     /**
@@ -327,18 +312,6 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, EXERCISE_UPDATED, exercise, notificationText, null);
-    }
-
-    /**
-     * Notify student group about assessed exercise submissions.
-     * This method is called when the assessmentDueDate is set, thus a scheduled notification was created, and all students can be notified at the same time.
-     * If the date is not set SingleUserNotifications are created dynamically instead.
-     *
-     * @param exercise         that has been updated
-     * @param notificationText that should be displayed
-     */
-    public void notifyStudentGroupAboutAssessedExerciseSubmission(Exercise exercise, String notificationText) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT }, EXERCISE_SUBMISSION_ASSESSED, exercise, notificationText, null);
     }
 
     /**
