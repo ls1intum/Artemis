@@ -167,7 +167,6 @@ public class GroupNotificationService {
             instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exerciseAfterUpdate.getId());
             return;
         }
-        return;
     }
 
     /**
