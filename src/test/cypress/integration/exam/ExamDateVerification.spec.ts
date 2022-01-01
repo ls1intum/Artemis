@@ -1,5 +1,4 @@
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
