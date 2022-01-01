@@ -43,7 +43,6 @@ Exemplary exercise detail page with posts:
 
 |exercise-posts|
 
-.. _course-wide:
 Course-wide Posts & Course Discussion Overview
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -75,8 +74,6 @@ To foster interaction we integrate the well-known emoji reaction bar.
 Each user in the course can react on every post by making use of the emoji selection button.
 The ``+`` emoji serves as up-voting reaction, which influences the display order.
 
-|react-on-posts|
-
 Reference Posts
 ^^^^^^^^^^^^^^^
 
@@ -95,7 +92,7 @@ Mark Your Post As Resolved
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Marking a post as resolved will indicate to other users that the posted question is resolved and does not need any further input.
-This can be done by selecting one of the given answers as resolving, i.e., as correct as shown in the screenshot below.
+This can be done by clicking the checkmark next to the answer post.
 Note, that only the author of the post as well as a moderator can perform this action.
 This is helpful for moderators to identify open questions, e.g., by applying the according filter in the course overview.
 It also highlights the correct answer for other students that have a similar problem and search for a suitable solution.
@@ -113,7 +110,6 @@ The following features are only available for moderators, not for students.
 
 Move Posts
 ^^^^^^^^^^
-
 
 Tutors can change the context (lecture, exercise, course-wide topic) in the edit mode of the post.
 By changing the context, for example from a certain exercise to a course-wide topic, the post is automatically moved.
@@ -147,10 +143,8 @@ As soon as the announcement is created, all participants, that did not actively 
 Additionally, announcements visually differ from normal posts and are always displayed on top of the discussion overview.
 
 .. |lecture-posts| image:: discussion/lecture-posts.png
-    :width: 700
+    :width: 800
 .. |exercise-posts| image:: discussion/exercise-posts.png
-    :width: 700
+    :width: 800
 .. |course-posts| image:: discussion/course-posts.png
-    :width: 700
-.. |react-on-posts| image:: discussion/react-on-posts.png
-    :width: 300
+    :width: 800
