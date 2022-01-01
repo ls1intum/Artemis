@@ -143,8 +143,8 @@ As soon as the announcement is created, all participants, that did not actively 
 Additionally, announcements visually differ from normal posts and are always displayed on top of the discussion overview.
 
 .. |lecture-posts| image:: discussion/lecture-posts.png
-    :width: 800
+    :width: 1000
 .. |exercise-posts| image:: discussion/exercise-posts.png
-    :width: 800
+    :width: 1000
 .. |course-posts| image:: discussion/course-posts.png
-    :width: 800
+    :width: 1000
