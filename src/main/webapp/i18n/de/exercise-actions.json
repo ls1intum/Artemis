@@ -26,9 +26,6 @@
             "copiedUrl": "URL kopiert",
             "uploadFile": "Datei hochladen",
             "viewTeam": "Team",
-            "gitProtocol": "Git-Protokoll",
-            "useHTTPS": "HTTPS nutzen",
-            "useSSH": "SSH nutzen",
             "sshKeyTip": "Um SSH zu nutzen, musst du {link:hier} einen SSH-Schlüssel zu deinem Konto hinzufügen."
         }
     }
