@@ -1,4 +1,4 @@
-.. _metis:
+.. _discussion:
 
 Discussion
 ==========
@@ -146,11 +146,11 @@ Announcements can be created in the course discussion overview by selecting the 
 As soon as the announcement is created, all participants, that did not actively refrain from being notified, will receive an email containing the announcement's content.
 Additionally, announcements visually differ from normal posts and are always displayed on top of the discussion overview.
 
-.. |lecture-posts| image:: metis/lecture-posts.png
-    :width: 500
-.. |exercise-posts| image:: metis/exercise-posts.png
-    :width: 500
-.. |course-posts| image:: metis/course-posts.png
-    :width: 500
-.. |react-on-posts| image:: metis/react-on-posts.png
-    :width: 200
+.. |lecture-posts| image:: discussion/lecture-posts.png
+    :width: 700
+.. |exercise-posts| image:: discussion/exercise-posts.png
+    :width: 700
+.. |course-posts| image:: discussion/course-posts.png
+    :width: 700
+.. |react-on-posts| image:: discussion/react-on-posts.png
+    :width: 300
