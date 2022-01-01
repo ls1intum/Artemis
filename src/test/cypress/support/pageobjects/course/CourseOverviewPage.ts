@@ -24,7 +24,7 @@ export class CourseOverviewPage {
         cy.get('#exam-tab').click();
     }
 
-    openExam(examId: string) {
+    openExam(examId: number) {
         cy.get('#exam-' + examId).click();
     }
 }
