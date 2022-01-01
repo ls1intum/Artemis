@@ -9,6 +9,7 @@ import java.util.List;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -71,6 +72,8 @@ public class GroupNotificationFactory {
             String notificationText) {
         String title;
         String text;
+        NotificationPriority priority = MEDIUM;
+
         switch (notificationType) {
             case EXERCISE_RELEASED -> {
                 title = EXERCISE_RELEASED_TITLE;
@@ -101,11 +104,13 @@ public class GroupNotificationFactory {
             }
             case DUPLICATE_TEST_CASE -> {
                 title = DUPLICATE_TEST_CASE_TITLE;
-                text = "Exercise \"" + exercise.getTitle() + "\" has multiple test cases with the same name.";
+                text = notificationText;
+                priority = HIGH;
             }
             case ILLEGAL_SUBMISSION -> {
                 title = ILLEGAL_SUBMISSION_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" has illegal submissions of students.";
+                priority = HIGH;
             }
 
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
@@ -117,7 +122,7 @@ public class GroupNotificationFactory {
             text = notificationText;
         }
 
-        GroupNotification notification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), title, text, author, groupNotificationType);
+        GroupNotification notification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), title, text, author, groupNotificationType, priority);
 
         // Exercises for exams
         if (exercise.isExamExercise()) {
@@ -134,7 +139,7 @@ public class GroupNotificationFactory {
             notification.setTransientAndStringTarget(createExerciseReleasedTarget(exercise));
         }
         else if (notificationType == DUPLICATE_TEST_CASE) {
-            notification.setTransientAndStringTarget(createExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, DUPLICATE_TEST_CASE_TEXT));
+            notification.setTransientAndStringTarget(createDuplicateTestCaseTarget(exercise));
         }
         else {
             notification.setTransientAndStringTarget(createExerciseUpdatedTarget(exercise));
