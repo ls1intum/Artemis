@@ -18,7 +18,7 @@
         <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
         <div class="d-flex" style="margin: 0; max-width: 100%">
             <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
-                <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button">
+                <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button" style="border-top-right-radius: 0; border-bottom-right-radius: 0">
                     {{ useSsh ? 'SSH' : 'HTTPS' }}
                 </button>
                 <div class="dropdown-menu" ngbDropdownMenu>
@@ -28,8 +28,8 @@
             </div>
             <pre
                 style="flex: 1"
-                [ngStyle]="sshEnabled ? { borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' } : {}"
                 ngxClipboard
+                [ngStyle]="borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none'"
                 [cbContent]="getHttpOrSshRepositoryUrl()"
                 (cbOnSuccess)="onCopySuccess()"
                 (cbOnError)="onCopyFailure()"
