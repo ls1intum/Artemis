@@ -95,13 +95,6 @@ describe('FileUploadExercise Service', () => {
             },
             elemDefault,
         );
-        returnedFromService.assessmentDueDate = undefined;
-        returnedFromService.assessmentDueDateError = false;
-        returnedFromService.dueDate = undefined;
-        returnedFromService.dueDateError = false;
-        returnedFromService.releaseDate = undefined;
-        returnedFromService.studentParticipations = [];
-
         const expected = Object.assign({}, returnedFromService);
         service
             .query(expected)

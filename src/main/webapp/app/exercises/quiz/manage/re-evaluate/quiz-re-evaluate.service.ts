@@ -7,19 +7,19 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 export class QuizReEvaluateService {
     private resourceUrl = SERVER_API_URL + 'api/quiz-exercises/';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
     update(quizExercise: QuizExercise) {
-        const copy = QuizReEvaluateService.convert(quizExercise);
+        const copy = this.convert(quizExercise);
         return this.http.put<QuizExercise>(this.resourceUrl + quizExercise.id + '/re-evaluate', copy, { observe: 'response' });
     }
 
     /**
      * Copy the QuizExercise object
      */
-    private static convert(quizExercise: QuizExercise): QuizExercise {
+    private convert(quizExercise: QuizExercise): QuizExercise {
         const copy: QuizExercise = Object.assign({}, quizExercise);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
         return copy;
     }
 }

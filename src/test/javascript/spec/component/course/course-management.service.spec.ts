@@ -25,6 +25,7 @@ describe('Course Management Service', () => {
     let injector: TestBed;
     let courseManagementService: CourseManagementService;
     let accountService: AccountService;
+    let exerciseService: ExerciseService;
     let lectureService: LectureService;
     let httpMock: HttpTestingController;
     let isAtLeastTutorInCourseSpy: jest.SpyInstance;
@@ -38,7 +39,6 @@ describe('Course Management Service', () => {
     let exercises: Exercise[];
     let returnedFromService: any;
     let participations: StudentParticipation[];
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -53,6 +53,7 @@ describe('Course Management Service', () => {
         courseManagementService = injector.get(CourseManagementService);
         httpMock = injector.get(HttpTestingController);
         accountService = injector.get(AccountService);
+        exerciseService = injector.get(ExerciseService);
         lectureService = injector.get(LectureService);
 
         isAtLeastTutorInCourseSpy = jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
@@ -70,7 +71,7 @@ describe('Course Management Service', () => {
         course.endDate = undefined;
         returnedFromService = { ...course } as Course;
         participations = [new StudentParticipation()];
-        convertExercisesDateFromServerSpy = jest.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
+        convertExercisesDateFromServerSpy = jest.spyOn(exerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
     });
 
     const expectDateConversionToBeCalled = (courseForConversion: Course) => {

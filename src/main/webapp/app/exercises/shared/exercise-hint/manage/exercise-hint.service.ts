@@ -43,16 +43,16 @@ export interface IExerciseHintService {
 export class ExerciseHintService implements IExerciseHintService {
     public resourceUrl = SERVER_API_URL + 'api/exercise-hints';
 
-    constructor(protected http: HttpClient) {}
+    constructor(protected http: HttpClient, private exerciseService: ExerciseService) {}
 
     /**
      * Creates an exercise hint
      * @param exerciseHint Exercise hint to create
      */
     create(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
-        exerciseHint.exercise = ExerciseService.convertDateFromClient(exerciseHint.exercise!);
+        exerciseHint.exercise = this.exerciseService.convertDateFromClient(exerciseHint.exercise!);
         if (exerciseHint.exercise.categories) {
-            exerciseHint.exercise.categories = ExerciseService.stringifyExerciseCategories(exerciseHint.exercise);
+            exerciseHint.exercise.categories = this.exerciseService.stringifyExerciseCategories(exerciseHint.exercise);
         }
         return this.http.post<ExerciseHint>(this.resourceUrl, exerciseHint, { observe: 'response' });
     }
@@ -62,8 +62,8 @@ export class ExerciseHintService implements IExerciseHintService {
      * @param exerciseHint Exercise hint to update
      */
     update(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
-        exerciseHint.exercise = ExerciseService.convertDateFromClient(exerciseHint.exercise!);
-        exerciseHint.exercise.categories = ExerciseService.stringifyExerciseCategories(exerciseHint.exercise);
+        exerciseHint.exercise = this.exerciseService.convertDateFromClient(exerciseHint.exercise!);
+        exerciseHint.exercise.categories = this.exerciseService.stringifyExerciseCategories(exerciseHint.exercise);
         return this.http.put<ExerciseHint>(`${this.resourceUrl}/${exerciseHint.id}`, exerciseHint, { observe: 'response' });
     }
 

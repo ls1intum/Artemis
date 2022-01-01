@@ -9,7 +9,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
@@ -26,23 +25,23 @@ export class ParticipationService {
     constructor(private http: HttpClient, private submissionService: SubmissionService) {}
 
     update(exercise: Exercise, participation: StudentParticipation): Observable<EntityResponseType> {
-        const copy = this.convertParticipationForServer(participation, exercise);
+        // make sure participation and exercise are connected, because this is expected by the server
+        participation.exercise = exercise;
+        const copy = this.convertDateFromClient(participation);
         return this.http
             .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exercise.id}/participations`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     updateIndividualDueDates(exercise: Exercise, participations: StudentParticipation[]): Observable<EntityArrayResponseType> {
-        const copies = participations.map((participation) => this.convertParticipationForServer(participation, exercise));
+        const copies = participations.map((participation) => {
+            // make sure participation and exercise are connected, because this is expected by the server
+            participation.exercise = exercise;
+            return this.convertDateFromClient(participation);
+        });
         return this.http
             .put<StudentParticipation[]>(SERVER_API_URL + `api/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
-    }
-
-    private convertParticipationForServer(participation: StudentParticipation, exercise: Exercise): StudentParticipation {
-        // make sure participation and exercise are connected, because this is expected by the server
-        participation.exercise = ExerciseService.convertExerciseForServer(exercise);
-        return this.convertDateFromClient(participation);
     }
 
     find(participationId: number): Observable<EntityResponseType> {
@@ -116,7 +115,7 @@ export class ParticipationService {
             ParticipationService.convertParticipationDatesFromServer(res.body);
             res.body.results = this.submissionService.convertResultsDateFromServer(res.body.results);
             res.body.submissions = this.submissionService.convertSubmissionsDateFromServer(res.body.submissions);
-            res.body.exercise = ExerciseService.convertExerciseDateFromServer(res.body.exercise);
+            res.body.exercise = this.convertExerciseDateFromServer(res.body.exercise);
         }
         return res;
     }
@@ -128,6 +127,14 @@ export class ParticipationService {
             });
         }
         return res;
+    }
+
+    protected convertExerciseDateFromServer(exercise?: Exercise) {
+        if (exercise) {
+            exercise.releaseDate = exercise.releaseDate ? dayjs(exercise.releaseDate) : undefined;
+            exercise.dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
+        }
+        return exercise;
     }
 
     /**
@@ -144,7 +151,7 @@ export class ParticipationService {
         return participation;
     }
 
-    public static convertParticipationsDateFromServer(participations?: StudentParticipation[]) {
+    public convertParticipationsDateFromServer(participations?: StudentParticipation[]) {
         const convertedParticipations: StudentParticipation[] = [];
         if (participations && participations.length > 0) {
             participations.forEach((participation: StudentParticipation) => {

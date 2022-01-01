@@ -58,7 +58,13 @@ export class TeamParticipationTableComponent implements OnInit {
     faFolderOpen = faFolderOpen;
     faFlag = faFlag;
 
-    constructor(private teamService: TeamService, private alertService: AlertService, private router: Router, private accountService: AccountService) {}
+    constructor(
+        private teamService: TeamService,
+        private exerciseService: ExerciseService,
+        private alertService: AlertService,
+        private router: Router,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * Loads all needed data from the server for this component
@@ -92,7 +98,7 @@ export class TeamParticipationTableComponent implements OnInit {
      * @param exercises Exercises from the server which to transform
      */
     transformExercisesFromServer(exercises: Exercise[]): ExerciseForTeam[] {
-        return ExerciseService.convertExercisesDateFromServer(exercises).map((exercise: ExerciseForTeam) => {
+        return this.exerciseService.convertExercisesDateFromServer(exercises).map((exercise: ExerciseForTeam) => {
             exercise.team = exercise.teams![0];
             const participation = get(exercise, 'studentParticipations[0]', undefined);
             exercise.participation = participation;

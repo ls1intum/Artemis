@@ -31,7 +31,7 @@ export class ResultService implements IResultService {
     private resultResourceUrl = SERVER_API_URL + 'api/results';
     private participationResourceUrl = SERVER_API_URL + 'api/participations';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
     find(resultId: number): Observable<EntityResponseType> {
         return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
@@ -121,7 +121,7 @@ export class ResultService implements IResultService {
         if (participation) {
             ParticipationService.convertParticipationDatesFromServer(participation);
             if (participation.exercise) {
-                participation.exercise = ExerciseService.convertExerciseDateFromServer(participation.exercise);
+                participation.exercise = this.exerciseService.convertExerciseDateFromServer(participation.exercise);
             }
         }
         return participation;

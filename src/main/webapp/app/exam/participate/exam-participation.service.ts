@@ -22,7 +22,12 @@ export class ExamParticipationService {
         return `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}`;
     }
 
-    constructor(private httpClient: HttpClient, private localStorageService: LocalStorageService, private sessionStorage: SessionStorageService) {}
+    constructor(
+        private httpClient: HttpClient,
+        private localStorageService: LocalStorageService,
+        private sessionStorage: SessionStorageService,
+        private exerciseService: ExerciseService,
+    ) {}
 
     private static getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
         const prefix = 'artemis_student_exam';
@@ -201,7 +206,7 @@ export class ExamParticipationService {
     }
 
     private convertStudentExamFromServer(studentExam: StudentExam): StudentExam {
-        studentExam.exercises = ExerciseService.convertExercisesDateFromServer(studentExam.exercises);
+        studentExam.exercises = this.exerciseService.convertExercisesDateFromServer(studentExam.exercises);
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
         return studentExam;
     }

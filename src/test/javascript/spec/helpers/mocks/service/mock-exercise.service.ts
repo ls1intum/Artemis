@@ -18,23 +18,23 @@ export class MockExerciseService {
         return of({ body: entity }) as Observable<HttpResponse<T>>;
     }
 
-    static convertExerciseForServer<E extends Exercise>(exercise: E): Exercise {
+    convertExerciseForServer<E extends Exercise>(exercise: E): Exercise {
         return exercise;
     }
 
-    static convertDateArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
+    convertDateArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
         return res;
     }
 
-    static convertExerciseCategoryArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
+    convertExerciseCategoryArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
         return res;
     }
 
-    static convertDateFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
+    convertDateFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
         return res;
     }
 
-    static convertDateFromClient<E extends Exercise>(exercise: E): E {
+    convertDateFromClient<E extends Exercise>(exercise: E): E {
         return Object.assign({}, exercise, {
             releaseDate: exercise.releaseDate && dayjs(exercise.releaseDate).isValid() ? dayjs(exercise.releaseDate).toJSON() : undefined,
             dueDate: exercise.dueDate && dayjs(exercise.dueDate).isValid() ? dayjs(exercise.dueDate).toJSON() : undefined,
@@ -42,7 +42,7 @@ export class MockExerciseService {
         });
     }
 
-    static convertExerciseCategoriesFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
+    convertExerciseCategoriesFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
         return res;
     }
 
@@ -54,7 +54,7 @@ export class MockExerciseService {
         return res;
     }
 
-    static stringifyExerciseCategories(exercise: Exercise) {
+    stringifyExerciseCategories(exercise: Exercise) {
         return exercise;
     }
 }

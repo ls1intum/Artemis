@@ -25,12 +25,12 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * @param textExercise that should be stored of type {TextExercise}
      */
     create(textExercise: TextExercise): Observable<EntityResponseType> {
-        let copy = ExerciseService.convertDateFromClient(textExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        let copy = this.exerciseService.convertDateFromClient(textExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
         return this.http.post<TextExercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => ExerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => ExerciseService.convertExerciseCategoriesFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
         );
     }
 
@@ -42,12 +42,12 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * (like the old ID) will be handled by the server.
      */
     import(adaptedSourceTextExercise: TextExercise) {
-        let copy = ExerciseService.convertDateFromClient(adaptedSourceTextExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        let copy = this.exerciseService.convertDateFromClient(adaptedSourceTextExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
         return this.http.post<TextExercise>(`${this.resourceUrl}/import/${adaptedSourceTextExercise.id}`, copy, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => ExerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => ExerciseService.convertExerciseCategoriesFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
         );
     }
 
@@ -58,12 +58,12 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      */
     update(textExercise: TextExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertDateFromClient(textExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        let copy = this.exerciseService.convertDateFromClient(textExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
         return this.http.put<TextExercise>(this.resourceUrl, copy, { params: options, observe: 'response' }).pipe(
-            map((res: EntityResponseType) => ExerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => ExerciseService.convertExerciseCategoriesFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
         );
     }
 
@@ -73,8 +73,8 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      */
     find(id: number): Observable<EntityResponseType> {
         return this.http.get<TextExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => ExerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => ExerciseService.convertExerciseCategoriesFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.checkPermission(res)),
         );
     }
@@ -86,8 +86,8 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http.get<TextExercise[]>(this.resourceUrl, { params: options, observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => ExerciseService.convertDateArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => ExerciseService.convertExerciseCategoryArrayFromServer(res)),
+            map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)),
+            map((res: EntityArrayResponseType) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)),
         );
     }
 
@@ -137,12 +137,12 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      */
     reevaluateAndUpdate(textExercise: TextExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertDateFromClient(textExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        let copy = this.exerciseService.convertDateFromClient(textExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
         return this.http.put<TextExercise>(`${this.resourceUrl}/${textExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' }).pipe(
-            map((res: EntityResponseType) => ExerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => ExerciseService.convertExerciseCategoriesFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
         );
     }
 
