@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
-import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL;
-import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -54,6 +53,8 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
 
     private PlagiarismComparison plagiarismComparison;
 
+    private Result result;
+
     /**
      * Sets up all needed mocks and their wanted behavior
      */
@@ -68,6 +69,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
 
         exercise = new TextExercise();
         exercise.setCourse(course);
+        exercise.setMaxPoints(10D);
 
         fileUploadExercise = new FileUploadExercise();
         fileUploadExercise.setCourse(course);
@@ -90,6 +92,10 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
         plagiarismComparison = new PlagiarismComparison();
         plagiarismComparison.setSubmissionA(plagiarismSubmission);
         plagiarismComparison.setPlagiarismResult(plagiarismResult);
+
+        result = new Result();
+        result.setScore(1D);
+        result.setCompletionDate(ZonedDateTime.now().minusMinutes(1));
     }
 
     @AfterEach
@@ -160,8 +166,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
         notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL));
         singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(fileUploadExercise, user);
         verifyRepositoryCallWithCorrectNotification(FILE_SUBMISSION_SUCCESSFUL_TITLE);
-        // check if an email was created and send
-        verify(javaMailSender, timeout(3000).times(1)).createMimeMessage();
+        verifyEmail();
     }
 
     // AssessedExerciseSubmission related
@@ -171,8 +176,13 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      */
     @Test
     public void testNotifyUserAboutAssessedExerciseSubmission() {
-        singleUserNotificationService.notifyUserAboutAssessedExerciseSubmission(exercise, user);
+        NotificationSetting notificationSetting = new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED);
+        notificationSettingRepository.save(notificationSetting);
+
+        singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
+
         verifyRepositoryCallWithCorrectNotification(EXERCISE_SUBMISSION_ASSESSED_TITLE);
+        verifyEmail();
     }
 
     /**
@@ -181,8 +191,8 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
     @Test
     public void testCheckNotificationForAssessmentExerciseSubmission_undefinedAssessmentDueDate() {
         exercise = ModelFactory.generateTextExercise(null, null, null, course);
-        singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user);
-        verify(singleUserNotificationService, times(1)).notifyUserAboutAssessedExerciseSubmission(exercise, user);
+        singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
+        verify(singleUserNotificationService, times(1)).checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
     }
 
     /**
@@ -191,8 +201,8 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
     @Test
     public void testCheckNotificationForAssessmentExerciseSubmission_currentOrPastAssessmentDueDate() {
         exercise = ModelFactory.generateTextExercise(null, null, ZonedDateTime.now(), course);
-        singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user);
-        verify(singleUserNotificationService, times(1)).notifyUserAboutAssessedExerciseSubmission(exercise, user);
+        singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
+        assertThat(notificationRepository.findAll().size()).as("One new notification should have been created").isEqualTo(1);
     }
 
     /**
@@ -201,8 +211,8 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
     @Test
     public void testCheckNotificationForAssessmentExerciseSubmission_futureAssessmentDueDate() {
         exercise = ModelFactory.generateTextExercise(null, null, ZonedDateTime.now().plusHours(1), course);
-        singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user);
-        verify(singleUserNotificationService, times(0)).notifyUserAboutAssessedExerciseSubmission(exercise, user);
+        singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
+        assertThat(notificationRepository.findAll().size()).as("No new notification should have been created").isEqualTo(0);
     }
 
     @Test
@@ -211,8 +221,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
         Exercise testExercise = testCourse.getExercises().iterator().next();
 
         User studentWithParticipationAndSubmissionAndResult = database.getUserByLogin("student1");
-        User studentWithoutParticipation = database.getUserByLogin("student2");
-        User studentWithParticipationButWithoutSubmission = database.getUserByLogin("student3");
+        User studentWithParticipationButWithoutSubmission = database.getUserByLogin("student2");
 
         database.createParticipationSubmissionAndResult(testExercise.getId(), studentWithParticipationAndSubmissionAndResult, 10.0, 10.0, 50, true);
         database.createAndSaveParticipationForExercise(testExercise, studentWithParticipationButWithoutSubmission.getLogin());
@@ -221,9 +230,8 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
 
         singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(testExercise);
 
-        verify(singleUserNotificationService, times(1)).notifyUserAboutAssessedExerciseSubmission(testExercise, studentWithParticipationAndSubmissionAndResult);
-        verify(singleUserNotificationService, times(0)).notifyUserAboutAssessedExerciseSubmission(testExercise, studentWithoutParticipation);
-        verify(singleUserNotificationService, times(0)).notifyUserAboutAssessedExerciseSubmission(testExercise, studentWithParticipationButWithoutSubmission);
+        assertThat(notificationRepository.findAll().size()).as("Only one notification should have been created (for the user with a valid paticipation,submission, and result)")
+                .isEqualTo(1);
     }
 
     // Plagiarism related
@@ -248,5 +256,12 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
         database.changeUser("student1");
         singleUserNotificationService.notifyUserAboutFinalPlagiarismState(plagiarismComparison, user);
         verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE);
+    }
+
+    /**
+     * Checks if an email was created and send
+     */
+    private void verifyEmail() {
+        verify(javaMailSender, timeout(1000).times(1)).createMimeMessage();
     }
 }

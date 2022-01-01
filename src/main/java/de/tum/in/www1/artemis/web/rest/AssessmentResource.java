@@ -126,7 +126,7 @@ public abstract class AssessmentResource {
             result = assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
             Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
             if (optionalStudent.isPresent()) {
-                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, optionalStudent.get());
+                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, optionalStudent.get(), result);
             }
         }
         var participation = result.getParticipation();

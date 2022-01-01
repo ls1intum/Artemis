@@ -81,6 +81,6 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
 
         await().until(() -> notificationRepository.count() > 0);
 
-        verify(singleUserNotificationService, times(1)).notifyUserAboutAssessedExerciseSubmission(exercise, database.getUserByLogin("student1"));
+        verify(singleUserNotificationService, times(1)).notifyUsersAboutAssessedExerciseSubmission(exercise);
     }
 }

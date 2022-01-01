@@ -84,13 +84,18 @@ public class SingleUserNotificationService {
      * @param exercise which assessmentDueDate is the trigger for the notification process
      */
     public void notifyUsersAboutAssessedExerciseSubmission(Exercise exercise) {
-        // This process can not be replaces via a GroupNotification (can only notify ALL students of the course) because we want to notify only the students that have a valid
-        // assessed submission.
+        // This process can not be replaces via a GroupNotification (can only notify ALL students of the course)
+        // because we want to notify only the students that have a valid assessed submission.
+
+        Set<StudentParticipation> relevantParticipationsWithResults = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResult(exercise.getId()).stream()
+                .map(participation -> exercise.findLatestSubmissionWithRatedResultWithCompletionDate(participation, true)).filter(Objects::nonNull)
+                .map(relevantSubmission -> ((StudentParticipation) relevantSubmission.getParticipation())).collect(Collectors.toSet());
+
+        // Load and assign all studentParticipations with results (this information is needed for the emails later)
+        exercise.setStudentParticipations(relevantParticipationsWithResults);
 
         // Find all users that should be notified, i.e. users with an assessed participation
-        Set<User> relevantStudents = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResult(exercise.getId()).stream()
-                .map(participation -> exercise.findLatestSubmissionWithRatedResultWithCompletionDate(participation, true)).filter(Objects::nonNull)
-                .map(relevantSubmission -> ((StudentParticipation) relevantSubmission.getParticipation()).getStudent().orElseThrow()).collect(Collectors.toSet());
+        Set<User> relevantStudents = relevantParticipationsWithResults.stream().map(participation -> participation.getStudent().orElseThrow()).collect(Collectors.toSet());
 
         // notify all relevant users
         relevantStudents.forEach(student -> notifyUserAboutAssessedExerciseSubmission(exercise, student));
@@ -131,10 +136,13 @@ public class SingleUserNotificationService {
      * Notify student about the finished assessment for an exercise submission.
      * Also creates and sends an email.
      *
+     * private because it is called by other methods that check e.g. if the time or results are correct
+     *
      * @param exercise that was assessed
      * @param recipient who should be notified
+     *
      */
-    public void notifyUserAboutAssessedExerciseSubmission(Exercise exercise, User recipient) {
+    private void notifyUserAboutAssessedExerciseSubmission(Exercise exercise, User recipient) {
         notifyRecipientWithNotificationType(exercise, EXERCISE_SUBMISSION_ASSESSED, recipient, null);
     }
 
@@ -143,15 +151,35 @@ public class SingleUserNotificationService {
      *
      * @param exercise which the submission is based on
      * @param recipient of the notification (i.e. the student)
+     * @param result containing information needed for the email
      */
-    public void checkNotificationForAssessmentExerciseSubmission(Exercise exercise, User recipient) {
+    public void checkNotificationForAssessmentExerciseSubmission(Exercise exercise, User recipient, Result result) {
         if (exercise.isCourseExercise()) {
             // only send the notification now if no assessment due date was set or if it is in the past
             if (exercise.getAssessmentDueDate() == null || !exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
+                saturateExerciseWithResultAndStudentParticipationForGivenUserForEmail(exercise, recipient, result);
                 notifyUserAboutAssessedExerciseSubmission(exercise, recipient);
             }
             // no scheduling needed because it is already part of updating/creating exercises
         }
+    }
+
+    /**
+     * Auxiliary method needed to create an email based on assessed exercises.
+     * We saturate the wanted result information (e.g. score) in the exercise
+     * This method is only called in those cases where no assessmentDueDate is set, i.e. individual/dynamic processes.
+     *
+     * @param exercise that should contain information that is needed for emails
+     * @param recipient who should be notified
+     * @param result that should be loaded as part of the exercise
+     * @return the input exercise with information about a result
+     */
+    public Exercise saturateExerciseWithResultAndStudentParticipationForGivenUserForEmail(Exercise exercise, User recipient, Result result) {
+        StudentParticipation studentParticipationForEmail = new StudentParticipation();
+        studentParticipationForEmail.setResults(Set.of(result));
+        studentParticipationForEmail.setParticipant(recipient);
+        exercise.setStudentParticipations(Set.of(studentParticipationForEmail));
+        return exercise;
     }
 
     /**

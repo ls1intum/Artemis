@@ -11,6 +11,11 @@
                 ${notificationSubject.getTitle()},
                 ${notificationSubject.getCourseViaExerciseGroupOrCourseMember().getTitle()}
                 )}">Notification Content for assessed exercise submissions</span>
+        <p class="bold-text" th:text="#{email.notification.title.exercise.information}">Information about this exercise:</p>
+        <ul>
+            <li th:text="#{email.notification.title.exercise.information.possible(${notificationSubject.getMaxPoints()})}">Max Points</li>
+            <li th:text="#{email.notification.aux.information.exercise.score(${assessedScore})}">Score</li>
+        </ul>
         <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
     </div>
     <th:block th:replace="mail/notification/fragments :: farewell"/>

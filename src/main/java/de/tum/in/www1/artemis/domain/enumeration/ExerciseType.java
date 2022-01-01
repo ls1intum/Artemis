@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.enumeration;
 
-import java.util.Locale;
-
 public enum ExerciseType {
 
     TEXT, PROGRAMMING, MODELING, FILE_UPLOAD, QUIZ;
