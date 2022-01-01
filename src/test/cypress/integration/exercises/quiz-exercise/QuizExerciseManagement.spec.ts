@@ -10,8 +10,8 @@ const admin = artemis.users.getAdmin();
 const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
-const courseManagement = artemis.pageobjects.courseManagement;
-const quizCreation = artemis.pageobjects.quizExercise.creation;
+const courseManagement = artemis.pageobjects.course.management;
+const quizCreation = artemis.pageobjects.exercise.quiz.creation;
 
 // Common primitives
 let course: any;
@@ -32,7 +32,7 @@ describe('Quiz Exercise Management', () => {
     describe('Quiz Exercise Creation', () => {
         beforeEach(() => {
             cy.login(admin, '/course-management/');
-            courseManagement.openExercisesOfCourse(course.title, course.shortName);
+            courseManagement.openExercisesOfCourse(course.shortName);
             cy.get('#create-quiz-button').click();
             quizCreation.setTitle('Cypress Quiz Exercise ' + generateUUID());
         });
@@ -65,11 +65,11 @@ describe('Quiz Exercise Management', () => {
 
         it('Deletes a Quiz Exercise', () => {
             cy.login(admin, '/course-management/');
-            courseManagement.openExercisesOfCourse(course.title, course.shortName);
+            courseManagement.openExercisesOfCourse(course.shortName);
             cy.get('#delete-quiz-' + quizExercise.id).click();
-            cy.get('.form-control').type(quizExercise.title);
+            cy.get('#confirm-exercise-name').type(quizExercise.title);
             cy.intercept(DELETE, '/api/quiz-exercises/*').as('deleteQuizQuery');
-            cy.get('.modal-footer').find('.btn-danger').click();
+            cy.get('#delete').click();
             cy.wait('@deleteQuizQuery').then((deleteResponse) => {
                 expect(deleteResponse?.response?.statusCode).to.eq(200);
             });

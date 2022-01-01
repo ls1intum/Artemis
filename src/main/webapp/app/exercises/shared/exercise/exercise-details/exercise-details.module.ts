@@ -11,6 +11,9 @@ import { exercisePopupRoute } from 'app/exercises/shared/exercise/exercise.route
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
+import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
+import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
+import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 
 const ENTITY_STATES = [...exercisePopupRoute];
 
@@ -25,8 +28,9 @@ const ENTITY_STATES = [...exercisePopupRoute];
         RouterModule.forChild(ENTITY_STATES),
         ArtemisMarkdownModule,
         ArtemisProgrammingExerciseLifecycleModule,
+        ArtemisChartsModule,
     ],
-    declarations: [ExerciseDetailsComponent],
-    exports: [ExerciseDetailsComponent],
+    declarations: [ExerciseDetailsComponent, ExerciseDetailStatisticsComponent, ExerciseStatisticsComponent],
+    exports: [ExerciseDetailsComponent, ExerciseDetailStatisticsComponent, ExerciseStatisticsComponent],
 })
 export class ExerciseDetailsModule {}

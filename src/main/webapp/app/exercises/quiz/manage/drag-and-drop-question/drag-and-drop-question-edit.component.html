@@ -6,11 +6,12 @@
             [attr.aria-expanded]="!isQuestionCollapsed"
             [attr.aria-controls]="'collapseQuestion' + questionIndex"
         >
-            <fa-icon size="3x" [icon]="isQuestionCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
+            <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown"></fa-icon>
         </button>
         <div class="form-group question-title">
             <input
                 class="form-control"
+                id="drag-and-drop-question-title"
                 [(ngModel)]="question.title"
                 (ngModelChange)="questionUpdated.emit()"
                 placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
@@ -39,7 +40,7 @@
                     />
                     <span class="input-group-btn">
                         <button class="btn btn-outline-secondary" type="button" (click)="resetQuestionTitle()">
-                            <fa-icon [icon]="'undo'"></fa-icon>
+                            <fa-icon [icon]="faUndo"></fa-icon>
                         </button>
                     </span>
                 </div>
@@ -47,16 +48,16 @@
             <div class="col-md-2 text-end">
                 <div class="form-group">
                     <div class="re-evaluate-button" (click)="moveUpQuestion()">
-                        <fa-icon [icon]="'chevron-up'" size="2x"></fa-icon>
+                        <fa-icon [icon]="faChevronUp" size="2x"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" (click)="moveDownQuestion()">
-                        <fa-icon [icon]="'chevron-down'" size="2x"></fa-icon>
+                        <fa-icon [icon]="faChevronDown" size="2x"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" (click)="resetQuestion()">
-                        <fa-icon [icon]="'undo'" size="2x"></fa-icon>
+                        <fa-icon [icon]="faUndo" size="2x"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" (click)="deleteQuestion()">
-                        <fa-icon [icon]="'trash'" size="2x"></fa-icon>
+                        <fa-icon [icon]="faTrash" size="2x"></fa-icon>
                     </div>
                 </div>
             </div>
@@ -84,7 +85,7 @@
             </div>
             <div class="form-group">
                 <div class="delete-button" (click)="deleteQuestion()">
-                    <fa-icon [icon]="'trash'" size="2x"></fa-icon>
+                    <fa-icon [icon]="faTrash" size="2x"></fa-icon>
                 </div>
             </div>
             <ng-container *ngIf="reEvaluationInProgress">
@@ -129,7 +130,7 @@
                     ></jhi-markdown-editor>
                     <span class="input-group-btn" style="vertical-align: top">
                         <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
-                            <fa-icon [icon]="'undo'"></fa-icon>
+                            <fa-icon [icon]="faUndo"></fa-icon>
                         </button>
                     </span>
                 </div>
@@ -141,7 +142,7 @@
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.uploadBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="!reEvaluationInProgress"></span>
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.changeBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="reEvaluationInProgress"></span>
             </div>
-            <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file">
+            <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file" id="background-image-input-form">
                 <input id="backgroundFileInput{{ questionIndex }}" type="file" accept="image/*" class="form-control" (change)="setBackgroundFile($event)" />
                 <div class="input-group-prepend">
                     <button class="btn btn-outline-primary" (click)="uploadBackground()" [disabled]="isUploadingBackgroundFile || !backgroundFile">
@@ -151,7 +152,7 @@
                 </div>
             </div>
             <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetBackground()" *ngIf="reEvaluationInProgress">
-                <fa-icon [icon]="'undo'"></fa-icon>
+                <fa-icon [icon]="faUndo"></fa-icon>
             </button>
         </div>
         <div class="dnd-instructions" *ngIf="!question.backgroundFilePath">
@@ -176,6 +177,7 @@
                     [ngClass]="{ disabled: !question.backgroundFilePath }"
                 >
                     <div
+                        id="drop-location"
                         class="drop-location"
                         *ngFor="let dropLocation of question.dropLocations"
                         [ngClass]="dropAllowed ? 'drop-allowed' : ''"
@@ -191,16 +193,16 @@
                     >
                         <div class="dimensions">{{ dropLocation.width }}x{{ dropLocation.height }}</div>
                         <div class="re-evaluate-button" title="Set invalid" *ngIf="reEvaluationInProgress && !dropLocation.invalid" (click)="dropLocation.invalid = true">
-                            <fa-icon [icon]="'ban'" size="lg"></fa-icon>
+                            <fa-icon [icon]="faBan" size="lg"></fa-icon>
                         </div>
                         <div class="re-evaluate-button" title="Reset" (click)="resetDropLocation(dropLocation)" *ngIf="reEvaluationInProgress">
-                            <fa-icon [icon]="'undo'" size="lg"></fa-icon>
+                            <fa-icon [icon]="faUndo" size="lg"></fa-icon>
                         </div>
                         <div class="duplicate-button" title="Duplicate" (click)="duplicateDropLocation(dropLocation)" *ngIf="!reEvaluationInProgress">
-                            <fa-icon [icon]="'copy'" size="lg"></fa-icon>
+                            <fa-icon [icon]="faCopy" size="lg"></fa-icon>
                         </div>
                         <div [ngClass]="reEvaluationInProgress ? 're-evaluate-button' : 'delete-button'" title="Delete" (click)="deleteDropLocation(dropLocation)">
-                            <fa-icon [icon]="'trash'" size="lg"></fa-icon>
+                            <fa-icon [icon]="faTrash" size="lg"></fa-icon>
                         </div>
                         <div class="resize top left" (mousedown)="resizeMouseDown(dropLocation, 'top', 'left')"></div>
                         <div class="resize top center" (mousedown)="resizeMouseDown(dropLocation, 'top', 'center')"></div>
@@ -216,7 +218,7 @@
                         >
                             {{ getMappingIndex(getMappingsForDropLocation(dropLocation)[0]) }}
                             <div class="unlink-mapping" (click)="deleteMappingsForDropLocation(dropLocation)">
-                                <fa-icon [icon]="'unlink'" size="lg"></fa-icon>
+                                <fa-icon [icon]="faUnlink" size="lg"></fa-icon>
                             </div>
                         </div>
                     </div>
@@ -231,19 +233,19 @@
             <span jhiTranslate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
         </div>
         <div class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
-            <div class="drag-item" *ngFor="let dragItem of question.dragItems" dnd-draggable [dragEnabled]="true" [dragData]="dragItem">
+            <div class="drag-item" id="drag-item-{{ i }}" *ngFor="let dragItem of question.dragItems; let i = index" dnd-draggable [dragEnabled]="true" [dragData]="dragItem">
                 <div *ngIf="dragItem.pictureFilePath">
                     <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
                 </div>
                 <div *ngIf="!dragItem.pictureFilePath">
-                    <textarea [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
+                    <textarea id="drag-item-{{ i }}-text" [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
                 </div>
                 <div class="delete-button" title="Delete" (click)="deleteDragItem(dragItem)" *ngIf="!reEvaluationInProgress">
-                    <fa-icon [icon]="'trash'" size="lg"></fa-icon>
+                    <fa-icon [icon]="faTrash" size="lg"></fa-icon>
                 </div>
                 <div class="delete-button" *ngIf="reEvaluationInProgress">
                     <div class="re-evaluate-button" title="Change to Text Drag Item" *ngIf="dragItem.pictureFilePath" (click)="changeToTextDragItem(dragItem)">
-                        <fa-icon [icon]="'font'" size="lg"></fa-icon>
+                        <fa-icon [icon]="faFont" size="lg"></fa-icon>
                     </div>
                     <div
                         class="re-evaluate-button"
@@ -251,20 +253,20 @@
                         [hidden]="dragItemFile == null"
                         (click)="changeToPictureDragItem(dragItem)"
                     >
-                        <fa-icon [icon]="['far', 'file-image']" size="lg"></fa-icon>
+                        <fa-icon [icon]="farFileImage" size="lg"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" title="Set invalid" *ngIf="!dragItem.invalid" (click)="dragItem.invalid = true">
-                        <fa-icon [icon]="'ban'" size="lg"></fa-icon>
+                        <fa-icon [icon]="faBan" size="lg"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" title="Reset" (click)="resetDragItem(dragItem)">
-                        <fa-icon [icon]="'undo'" size="lg"></fa-icon>
+                        <fa-icon [icon]="faUndo" size="lg"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" title="Delete" (click)="deleteDragItem(dragItem)">
-                        <fa-icon [icon]="'trash'" size="lg"></fa-icon>
+                        <fa-icon [icon]="faTrash" size="lg"></fa-icon>
                     </div>
                 </div>
                 <div class="drag-handle drag-handle-wrapper" title="Move">
-                    <fa-icon [icon]="'bars'" class="drag-handle" size="lg"></fa-icon>
+                    <fa-icon [icon]="faBars" class="drag-handle" size="lg"></fa-icon>
                 </div>
                 <div class="dimensions" *ngIf="reEvaluationInProgress">
                     <span style="color: red" *ngIf="dragItem.invalid" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
@@ -273,7 +275,7 @@
                     <div *ngFor="let mapping of getMappingsForDragItem(dragItem)" [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(mapping) % 8)">
                         {{ getMappingIndex(mapping) }}
                         <div class="unlink-mapping" (click)="deleteMapping(mapping)">
-                            <fa-icon [icon]="'unlink'" size="lg"></fa-icon>
+                            <fa-icon [icon]="faUnlink" size="lg"></fa-icon>
                         </div>
                     </div>
                 </div>
@@ -283,7 +285,7 @@
             <div class="input-group col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
                 <div class="input-group-prepend">
                     <button class="btn btn-outline-secondary" [disabled]="isUploadingDragItemFile || !dragItemFile" (click)="uploadDragItem()">
-                        <fa-icon [icon]="reEvaluationInProgress ? 'upload' : 'plus'"></fa-icon>
+                        <fa-icon [icon]="reEvaluationInProgress ? faUpload : faPlus"></fa-icon>
                         <span *ngIf="isUploadingDragItemFile" jhiTranslate="artemisApp.dragAndDropQuestion.uploading"></span>
                         <span *ngIf="!isUploadingDragItemFile && !reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemPicture"> </span>
                         <span *ngIf="!isUploadingDragItemFile && reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.changeDragItemPicture"> </span>
@@ -301,8 +303,8 @@
             <ng-container *ngIf="!reEvaluationInProgress">
                 <div class="question-options">
                     <div class="col">
-                        <button class="btn btn-outline-secondary" (click)="addTextDragItem()">
-                            <fa-icon [icon]="'plus'"></fa-icon>
+                        <button class="btn btn-outline-secondary" id="add-text-drag-item" (click)="addTextDragItem()">
+                            <fa-icon [icon]="faPlus"></fa-icon>
                             <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
                         </button>
                     </div>
@@ -314,7 +316,7 @@
             <div class="question-options">
                 <div class="form-group">
                     <div class="btn btn-outline-secondary" (click)="togglePreview()">
-                        <fa-icon [icon]="'eye'"></fa-icon>
+                        <fa-icon [icon]="faEye"></fa-icon>
                         <span jhiTranslate="entity.action.preview"></span>
                     </div>
                 </div>
@@ -326,7 +328,7 @@
     <jhi-drag-and-drop-question [question]="question" [mappings]="[]" [questionIndex]="questionIndex"></jhi-drag-and-drop-question>
     <hr />
     <div class="btn btn-outline-secondary" (click)="togglePreview()">
-        <fa-icon [icon]="'pencil-alt'"></fa-icon>
+        <fa-icon [icon]="faPencilAlt"></fa-icon>
         <span jhiTranslate="entity.action.edit"></span>
     </div>
 </div>

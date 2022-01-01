@@ -1,6 +1,7 @@
 <ng-container *ngIf="autoTextBlockAssessment; else manualTextBlockSelection">
     <jhi-textblock-assessment-card
-        *ngFor="let ref of textBlockRefs"
+        *ngFor="let ref of textBlockRefs; let i = index"
+        id="text-feedback-block-{{ i }}"
         [textBlockRef]="ref"
         [selected]="selectedRef === ref"
         [readOnly]="readOnly"
@@ -26,10 +27,10 @@
 </ng-template>
 
 <div>
-    <span class="badge bg-primary mb-2">
+    <span class="badge bg-primary mb-2" id="text-assessment-word-count">
         {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
     </span>
-    <span class="badge bg-primary mb-2">
+    <span class="badge bg-primary mb-2" id="text-assessment-character-count">
         {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
     </span>
 </div>

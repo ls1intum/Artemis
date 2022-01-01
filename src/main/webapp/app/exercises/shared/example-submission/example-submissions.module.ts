@@ -8,11 +8,12 @@ import { routes as modelingExerciseRoutes } from 'app/exercises/modeling/manage/
 import { ExampleSubmissionImportComponent } from './example-submission-import/example-submission-import.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
+import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
 const ENTITY_STATES = [...textExerciseRoutes, ...modelingExerciseRoutes];
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), ArtemisSharedComponentModule, ArtemisResultModule],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), ArtemisSharedComponentModule, ArtemisResultModule, SubmissionResultStatusModule],
     declarations: [ExampleSubmissionsComponent, ExampleSubmissionImportComponent],
 })
 export class ExampleSubmissionsModule {}

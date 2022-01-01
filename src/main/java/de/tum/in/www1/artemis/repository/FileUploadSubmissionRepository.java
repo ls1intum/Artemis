@@ -53,7 +53,7 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @return the file upload submission with the given id
      */
     @NotNull
-    default FileUploadSubmission findOneWithEagerResultAndAssessorAndFeedback(Long submissionId) {
+    default FileUploadSubmission findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(Long submissionId) {
         return findByIdWithEagerResultAndAssessorAndFeedback(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
     }
 
@@ -65,7 +65,7 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @return the file upload submission with the given id
      */
     @NotNull
-    default FileUploadSubmission findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
+    default FileUploadSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(Long submissionId) {
         return findWithResultsFeedbacksAssessorAndParticipationResultsById(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
     }
 
@@ -76,7 +76,7 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @return the file upload submission with the given id
      */
     @NotNull
-    default FileUploadSubmission findOne(Long submissionId) {
+    default FileUploadSubmission findByIdElseThrow(Long submissionId) {
         return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
     }
 }

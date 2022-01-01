@@ -53,24 +53,24 @@ public class BitbucketRequestMockProvider {
     @Value("${artemis.lti.user-prefix-u4i:#{null}}")
     private Optional<String> userPrefixU4I;
 
+    @Autowired
+    private PasswordService passwordService;
+
+    @Autowired
+    private UrlService urlService;
+
     private final RestTemplate restTemplate;
 
     private final RestTemplate shortTimeoutRestTemplate;
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    @Autowired
-    private UrlService urlService;
-
     private MockRestServiceServer mockServer;
 
     private MockRestServiceServer mockServerShortTimeout;
 
-    private final PasswordService passwordService;
-
-    public BitbucketRequestMockProvider(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate,
+    public BitbucketRequestMockProvider(@Qualifier("bitbucketRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate) {
-        this.passwordService = passwordService;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
@@ -160,23 +160,20 @@ public class BitbucketRequestMockProvider {
         final var projectKey = exercise.getProjectKey();
         final var repoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
         for (User user : users) {
-            if (exercise.isCourseExercise()) {
-                // add mock for userExists() check, if the username contains edx_ or u4i_
-                String loginName = user.getLogin();
-                if (userPrefixEdx.isPresent() && loginName.startsWith(userPrefixEdx.get()) || userPrefixU4I.isPresent() && loginName.startsWith(userPrefixU4I.get())) {
-                    if (ltiUserExists) {
-                        mockUserExists(loginName);
-                    }
-                    else {
-                        mockUserDoesNotExist(loginName);
-                        String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
-                        mockCreateUser(loginName, passwordService.decryptPassword(user.getPassword()), user.getEmail(), displayName);
-                        mockAddUserToGroups();
-                    }
+            // add mock for userExists() check, if the username contains edx_ or u4i_
+            String loginName = user.getLogin();
+            if (userPrefixEdx.isPresent() && loginName.startsWith(userPrefixEdx.get()) || userPrefixU4I.isPresent() && loginName.startsWith(userPrefixU4I.get())) {
+                if (ltiUserExists) {
+                    mockUserExists(loginName);
                 }
-                mockGiveWritePermission(exercise, repoName, user.getLogin(), HttpStatus.OK);
+                else {
+                    mockUserDoesNotExist(loginName);
+                    String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
+                    mockCreateUser(loginName, passwordService.decryptPassword(user.getPassword()), user.getEmail(), displayName);
+                    mockAddUserToGroups();
+                }
             }
-            // exam exercises receive write permissions when the exam starts
+            mockGiveWritePermission(exercise, repoName, user.getLogin(), HttpStatus.OK);
         }
         mockProtectBranches(exercise, repoName);
     }

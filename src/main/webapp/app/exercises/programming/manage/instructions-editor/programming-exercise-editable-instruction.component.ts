@@ -21,6 +21,7 @@ import { ProgrammingExerciseGradingService } from 'app/exercises/programming/man
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { Result } from 'app/entities/result.model';
+import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -99,6 +100,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.hasUnsavedChanges.emit(hasChanges);
         }
     }
+
+    // Icons
+    faSave = faSave;
+    faCheckCircle = faCheckCircle;
+    faExclamationTriangle = faExclamationTriangle;
+    faCircleNotch = faCircleNotch;
+    faGripLines = faGripLines;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,

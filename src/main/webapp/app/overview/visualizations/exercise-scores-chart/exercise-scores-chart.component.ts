@@ -24,6 +24,8 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     exerciseScores: ExerciseScoresDTO[] = [];
     excludedExerciseScores: ExerciseScoresDTO[] = [];
 
+    readonly Math = Math;
+
     // ngx
     ngxData: any[] = [];
     backUpData: any[] = [];

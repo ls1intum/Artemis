@@ -286,9 +286,6 @@ Java best practices
   `Jqwik <https://jqwik.net>`__ allows testing with arbitrary inputs and shrinks the test errors, resulting in excellent
   counter examples when student code fails (usually exactly the edge case).
 
-  .. note::
-    Ares currently only supports jqwik 1.3.4.
-
 - **Eclipse Compiler and Best-Effort Compilation**
 
   Use the Eclipse Java Compiler for partial, best-effort compilation. This is particularly useful for exam exercises and

@@ -25,31 +25,46 @@
             </div>
         </div>
         <jhi-alert></jhi-alert>
-        <div class="tab-bar tab-bar-course-overview">
-            <div *ngIf="course.exams && hasVisibleExams()" jhiOrionFilter [showInOrionWindow]="false" class="tab-item exams" routerLink="exams" routerLinkActive="active">
-                <b jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</b>
+        <div class="tab-bar tab-bar-course-overview" id="tab-bar">
+            <div class="col-12" [ngClass]="{ 'no-indent': !controlConfiguration?.useIndentation, 'col-lg-8': controlConfiguration?.useIndentation }">
+                <div>
+                    <div
+                        id="exam-tab"
+                        *ngIf="course.exams && hasVisibleExams()"
+                        jhiOrionFilter
+                        [showInOrionWindow]="false"
+                        class="tab-item exams"
+                        routerLink="exams"
+                        routerLinkActive="active"
+                    >
+                        <b jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</b>
+                    </div>
+                    <div class="tab-item exercises" routerLink="exercises" routerLinkActive="active">
+                        <b jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</b>
+                    </div>
+                    <div *ngIf="course.lectures" jhiOrionFilter [showInOrionWindow]="false" class="tab-item lectures" routerLink="lectures" routerLinkActive="active">
+                        <b jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</b>
+                    </div>
+                    <div jhiOrionFilter [showInOrionWindow]="false" class="guided-tour tab-item statistics" routerLink="statistics" routerLinkActive="active">
+                        <b jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</b>
+                    </div>
+                    <div *ngIf="course.postsEnabled" jhiOrionFilter [showInOrionWindow]="false" class="tab-item discussion" routerLink="discussion" routerLinkActive="active">
+                        <b jhiTranslate="artemisApp.courseOverview.menu.discussion">Discussion</b>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button class="btn btn-primary btn-md ms-1" (click)="loadCourse(true)" [disabled]="refreshingCourse">
+                        <fa-icon [icon]="faSync" [spin]="refreshingCourse"></fa-icon>
+                        <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
+                    </button>
+                    <ng-container #controlsViewContainer></ng-container>
+                </div>
             </div>
-            <div class="tab-item exercises" routerLink="exercises" routerLinkActive="active">
-                <b jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</b>
-            </div>
-            <div *ngIf="course.lectures" jhiOrionFilter [showInOrionWindow]="false" class="tab-item lectures" routerLink="lectures" routerLinkActive="active">
-                <b jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</b>
-            </div>
-            <div jhiOrionFilter [showInOrionWindow]="false" class="guided-tour tab-item statistics" routerLink="statistics" routerLinkActive="active">
-                <b jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</b>
-            </div>
-            <div *ngIf="course.postsEnabled" jhiOrionFilter [showInOrionWindow]="false" class="tab-item discussion" routerLink="discussion" routerLinkActive="active">
-                <b jhiTranslate="artemisApp.courseOverview.menu.discussion">Discussion</b>
-            </div>
-            <button class="btn btn-primary btn-md ms-1" (click)="loadCourse(true)" [disabled]="refreshingCourse">
-                <fa-icon [icon]="'sync'" [spin]="refreshingCourse"></fa-icon>
-                <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
-            </button>
         </div>
         <div class="course-body-container">
-            <router-outlet></router-outlet>
+            <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()"></router-outlet>
             <div class="refresh-overlay" [class.active]="refreshingCourse">
-                <fa-icon size="lg" [icon]="'circle-notch'" [spin]="true"></fa-icon>
+                <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
             </div>
         </div>
     </div>

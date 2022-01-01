@@ -1,15 +1,19 @@
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { Component, Input, OnInit } from '@angular/core';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-structured-grading-instructions-assessment-layout',
     templateUrl: './structured-grading-instructions-assessment-layout.component.html',
+    styleUrls: ['./structured-grading-instructions-assessment-layout.component.scss'],
 })
 export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit {
     @Input() public criteria: GradingCriterion[];
     @Input() readonly: boolean;
     allowDrop: boolean;
+    // Icons
+    faInfoCircle = faInfoCircle;
 
     /**
      * OnInit set the allowDrop property to allow drop of SGI if not in readOnly mode

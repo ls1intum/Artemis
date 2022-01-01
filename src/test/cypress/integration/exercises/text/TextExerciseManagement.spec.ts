@@ -11,12 +11,12 @@ const users = artemis.users;
 const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
-const textCreation = artemis.pageobjects.textExercise.creation;
-const exampleSubmissions = artemis.pageobjects.textExercise.exampleSubmissions;
-const exampleSubmissionCreation = artemis.pageobjects.textExercise.exampleSubmissionCreation;
+const textCreation = artemis.pageobjects.exercise.text.creation;
+const exampleSubmissions = artemis.pageobjects.exercise.text.exampleSubmissions;
+const exampleSubmissionCreation = artemis.pageobjects.exercise.text.exampleSubmissionCreation;
 const navigationBar = artemis.pageobjects.navigationBar;
-const courseManagementPage = artemis.pageobjects.courseManagement;
-const courseManagementExercises = artemis.pageobjects.courseManagementExercises;
+const courseManagementPage = artemis.pageobjects.course.management;
+const courseManagementExercises = artemis.pageobjects.course.managementExercises;
 
 describe('Text exercise management', () => {
     let course: any;
@@ -31,8 +31,8 @@ describe('Text exercise management', () => {
     it('Creates a text exercise in the UI', () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
-        courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
-        cy.get('[jhitranslate="artemisApp.textExercise.home.createLabel"]').click();
+        courseManagementPage.openExercisesOfCourse(course.shortName);
+        cy.get('#create-text-exercise').click();
 
         // Fill out text exercise form
         const exerciseTitle = 'text exercise' + generateUUID();
@@ -46,8 +46,11 @@ describe('Text exercise management', () => {
         const exampleSolution = 'E = mc^2';
         textCreation.typeProblemStatement(problemStatement);
         textCreation.typeExampleSolution(exampleSolution);
-        cy.get('[jhitranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise"]').should('be.visible');
-        textCreation.create().its('response.statusCode').should('eq', 201);
+        cy.get('#example-submission-message').should('be.visible');
+        let exercise: any;
+        textCreation.create().then((request: any) => {
+            exercise = request.response.body;
+        });
 
         // Create an example submission
         exampleSubmissions.clickCreateExampleSubmission();
@@ -65,26 +68,30 @@ describe('Text exercise management', () => {
             });
 
         // Make sure text exercise is shown in exercises list
-        cy.visit(`course-management/${course.id}/exercises`);
-        courseManagementExercises.getExerciseRowRootElement(exerciseTitle).should('be.visible');
+        cy.visit(`course-management/${course.id}/exercises`).then(() => {
+            courseManagementExercises.getExerciseRowRootElement(exercise.id).should('be.visible');
+        });
     });
 
     describe('Text exercise deletion', () => {
-        const exerciseTitle = 'Text exercise' + generateUUID();
+        let exercise: any;
 
         beforeEach(() => {
             cy.login(users.getAdmin(), '/');
-            courseManagement.createTextExercise({ course }, exerciseTitle);
+            courseManagement.createTextExercise({ course }).then((request: any) => {
+                exercise = request.body;
+            });
         });
 
         it('Deletes an existing text exercise', () => {
             navigationBar.openCourseManagement();
-            courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
-            courseManagementExercises.clickDeleteExercise(exerciseTitle);
+            courseManagementPage.openExercisesOfCourse(course.shortName);
+            courseManagementExercises.clickDeleteExercise(exercise.id);
+            cy.get('#confirm-exercise-name').type(exercise.title);
             cy.intercept(DELETE, BASE_API + 'text-exercises/*').as('deleteTextExercise');
-            cy.get('[type="text"], [name="confirmExerciseName"]').type(exerciseTitle).type('{enter}');
+            cy.get('#delete').click();
             cy.wait('@deleteTextExercise');
-            cy.contains(exerciseTitle).should('not.exist');
+            cy.contains(exercise.title).should('not.exist');
         });
     });
 

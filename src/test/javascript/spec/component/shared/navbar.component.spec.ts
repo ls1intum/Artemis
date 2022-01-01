@@ -565,7 +565,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/4/',
             };
             const plagiarismCrumb = {
-                label: 'artemisApp.plagiarism.plagiarism-detection',
+                label: 'artemisApp.plagiarism.plagiarismDetection',
                 translate: true,
                 uri: '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/4/plagiarism/',
             };

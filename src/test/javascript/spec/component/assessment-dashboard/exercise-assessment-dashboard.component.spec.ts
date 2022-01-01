@@ -1,4 +1,3 @@
-import * as ace from 'brace';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -57,14 +56,19 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
-import { RouterTestingModule } from '@angular/router/testing';
+import { PieChartModule } from '@swimlane/ngx-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { RouterTestingModule } from '@angular/router/testing';
+import { SortService } from 'app/shared/service/sort.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
-    // needed to make sure ace is defined
-    ace.acequire('ace/ext/modelist.js');
     let comp: ExerciseAssessmentDashboardComponent;
     let fixture: ComponentFixture<ExerciseAssessmentDashboardComponent>;
 
@@ -177,7 +181,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let navigateSpy: jest.SpyInstance;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, exerciseId: modelingExercise.id! }) } } as any as ActivatedRoute;
 
-    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(NgxChartsModule)];
+    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(PieChartModule)];
 
     const declarations = [
         ExerciseAssessmentDashboardComponent,
@@ -195,20 +199,29 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockComponent(ButtonComponent),
         MockComponent(ResultComponent),
         MockComponent(AlertComponent),
-        MockPipe(ArtemisTranslatePipe),
-        MockPipe(ArtemisDatePipe),
         MockDirective(ExtensionPointDirective),
         MockHasAnyAuthorityDirective,
         MockTranslateValuesDirective,
         MockDirective(NgbTooltip),
         MockComponent(AssessmentWarningComponent),
+        MockPipe(ArtemisDatePipe),
+        MockPipe(ArtemisTranslatePipe),
     ];
 
     const providers = [
-        MockProvider(ArtemisDatePipe),
+        { provide: TranslateService, useClass: MockTranslateService },
+        { provide: AccountService, useClass: MockAccountService },
         { provide: ActivatedRoute, useValue: route },
         { provide: LocalStorageService, useClass: MockSyncStorage },
         { provide: SessionStorageService, useClass: MockSyncStorage },
+        MockProvider(ExerciseService),
+        MockProvider(AlertService),
+        MockProvider(TutorParticipationService),
+        MockProvider(ArtemisMarkdownService),
+        MockProvider(ComplaintService),
+        MockProvider(GuidedTourService),
+        MockProvider(ArtemisDatePipe),
+        MockProvider(SortService),
     ];
 
     beforeEach(() => {
@@ -277,12 +290,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
-    });
-
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(comp).toBeDefined();
+        jest.restoreAllMocks();
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
@@ -298,8 +306,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
         expect(comp.unassessedSubmissionByCorrectionRound?.get(0)).toEqual(modelingSubmission);
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(0)?.latestResult).toBeUndefined();
-        expect(comp.submissionLockLimitReached).toEqual(false);
+        expect(comp.unassessedSubmissionByCorrectionRound?.get(0)?.latestResult).toBe(undefined);
+        expect(comp.submissionLockLimitReached).toBe(false);
         expect(comp.submissionsByCorrectionRound?.get(0)).toHaveLength(0);
     });
 
@@ -313,8 +321,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).toBeUndefined();
-        expect(comp.submissionLockLimitReached).toEqual(true);
+        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).toBe(undefined);
+        expect(comp.submissionLockLimitReached).toBe(true);
         expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
     });
 
@@ -326,10 +334,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
-        expect(comp.numberOfAssessmentsOfCorrectionRounds[0].inTime).toEqual(1);
-        expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).toEqual(8);
-        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[0].inTime).toEqual(2);
-        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[1].inTime).toEqual(7);
+        expect(comp.numberOfAssessmentsOfCorrectionRounds[0].inTime).toBe(1);
+        expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).toBe(8);
+        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[0].inTime).toBe(2);
+        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[1].inTime).toBe(7);
         expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
     });
 
@@ -343,24 +351,23 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should set exam and stats properties', () => {
-        expect(comp.exam).toBeUndefined();
+        expect(comp.exam).toBe(undefined);
 
         comp.loadAll();
-
-        expect(comp.exercise).toBeDefined();
+        expect(comp.exercise.id).toBe(modelingExercise.id);
         expect(comp.exam).toEqual(exam);
-        expect(comp.exam?.numberOfCorrectionRoundsInExam).toEqual(numberOfAssessmentsOfCorrectionRounds.length);
+        expect(comp.exam?.numberOfCorrectionRoundsInExam).toBe(numberOfAssessmentsOfCorrectionRounds.length);
         expect(comp.numberOfAssessmentsOfCorrectionRounds).toEqual(numberOfAssessmentsOfCorrectionRounds);
     });
 
     it('should calculateStatus DRAFT', () => {
-        expect(modelingSubmission.latestResult).toBeUndefined();
-        expect(comp.calculateSubmissionStatusIsDraft(modelingSubmission)).toEqual(true);
+        expect(modelingSubmission.latestResult).toBe(undefined);
+        expect(comp.calculateSubmissionStatusIsDraft(modelingSubmission)).toBe(true);
     });
 
     it('should call hasBeenCompletedByTutor', () => {
         comp.exampleSubmissionsCompletedByTutor = [{ id: 1 }, { id: 2 }];
-        expect(comp.hasBeenCompletedByTutor(1)).toEqual(true);
+        expect(comp.hasBeenCompletedByTutor(1)).toBe(true);
     });
 
     it('should call readInstruction', () => {
@@ -368,7 +375,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const tutorParticipation = { id: 1, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS };
         tutorParticipationServiceCreateStub.mockReturnValue(of(new HttpResponse({ body: tutorParticipation, headers: new HttpHeaders() })));
 
-        expect(comp.tutorParticipation).toEqual(undefined);
+        expect(comp.tutorParticipation).toBe(undefined);
         comp.readInstruction();
 
         expect(comp.tutorParticipation).toEqual(tutorParticipation);
@@ -486,7 +493,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             };
             const complaintQuery = comp.getComplaintQueryParams(complaintComplaint);
 
-            expect(complaintQuery).toBeUndefined();
+            expect(complaintQuery).toBe(undefined);
         });
 
         it('Expect present complaint to delegate the correct query', () => {
@@ -518,7 +525,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.submissionsWithComplaints = fakeDTOList;
             const submissionToView = comp.getSubmissionToViewFromComplaintSubmission(inputSubmission);
 
-            expect(submissionToView).toBeUndefined();
+            expect(submissionToView).toBe(undefined);
         });
 
         it('Expect submission without results to gain an empty list', () => {

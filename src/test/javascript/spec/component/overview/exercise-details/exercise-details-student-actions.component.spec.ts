@@ -2,7 +2,6 @@ import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { SinonStub, stub } from 'sinon';
 import { Subject, of } from 'rxjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -29,6 +28,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { HttpClient } from '@angular/common/http';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

@@ -1,10 +1,9 @@
 import { artemis } from '../../../support/ArtemisTesting';
-import { CypressExerciseType } from '../../../support/requests/CourseManagementRequests';
 
 // pageobjects
-const courseManagement = artemis.pageobjects.courseManagement;
-const modelingEditor = artemis.pageobjects.modelingExercise.editor;
-const courseOverview = artemis.pageobjects.courseOverview;
+const courseManagement = artemis.pageobjects.course.management;
+const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
+const courseOverview = artemis.pageobjects.course.overview;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 // Users
@@ -34,8 +33,8 @@ describe('Modeling Exercise Participation Spec', () => {
 
     it('Student can start and submit their model', () => {
         cy.login(student, `/courses/${course.id}`);
-        courseOverview.startExercise(modelingExercise.title, CypressExerciseType.MODELING);
-        cy.get('#open-modeling-editor-action').click();
+        courseOverview.startExercise(modelingExercise.id);
+        cy.get('#open-exercise-' + modelingExercise.id).click();
         modelingEditor.addComponentToModel(1);
         modelingEditor.addComponentToModel(2);
         modelingEditor.addComponentToModel(3);

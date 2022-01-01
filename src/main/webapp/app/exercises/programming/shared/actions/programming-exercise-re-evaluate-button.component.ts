@@ -5,6 +5,7 @@ import { ProgrammingExerciseGradingService } from 'app/exercises/programming/man
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
+import { faRedo } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * A button that re-evaluates all latest automatic results of the given programming exercise.
@@ -19,7 +20,7 @@ import { ButtonType } from 'app/shared/components/button.component';
             [btnType]="ButtonType.ERROR"
             [isLoading]="isReEvaluationRunning"
             [tooltip]="'artemisApp.programmingExercise.reEvaluateTooltip'"
-            [icon]="'redo'"
+            [icon]="faRedo"
             [title]="'artemisApp.programmingExercise.reEvaluate'"
             [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             (onClick)="triggerReEvaluate()"
@@ -34,6 +35,9 @@ export class ProgrammingExerciseReEvaluateButtonComponent {
     @Input() disabled = false;
 
     isReEvaluationRunning = false;
+
+    // Icons
+    faRedo = faRedo;
 
     constructor(private testCaseService: ProgrammingExerciseGradingService, private alertService: AlertService) {}
 
