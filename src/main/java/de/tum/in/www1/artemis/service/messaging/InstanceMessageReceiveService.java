@@ -45,12 +45,10 @@ public class InstanceMessageReceiveService {
 
     private final UserScheduleService userScheduleService;
 
-    private final SubmissionRepository submissionRepository;
-
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService, TextExerciseRepository textExerciseRepository,
             ExerciseRepository exerciseRepository, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository,
-            UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService, SubmissionRepository submissionRepository) {
+            UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.textExerciseRepository = textExerciseRepository;
@@ -61,7 +59,6 @@ public class InstanceMessageReceiveService {
         this.userRepository = userRepository;
         this.userScheduleService = userScheduleService;
         this.notificationScheduleService = notificationScheduleService;
-        this.submissionRepository = submissionRepository;
 
         hazelcastInstance.<Long>getTopic("programming-exercise-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();

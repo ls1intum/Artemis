@@ -300,9 +300,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions", "studentParticipations.results" })
-    Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsAndResultsById(Long exerciseId);
-
     /**
      * Returns the title of the exercise with the given id
      *

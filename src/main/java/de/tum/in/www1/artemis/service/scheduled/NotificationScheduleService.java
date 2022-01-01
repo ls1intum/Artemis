@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
@@ -31,8 +30,6 @@ public class NotificationScheduleService {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final SubmissionRepository submissionRepository;
-
     private final Environment environment;
 
     private final GroupNotificationService groupNotificationService;
@@ -40,12 +37,11 @@ public class NotificationScheduleService {
     private final SingleUserNotificationService singleUserNotificationService;
 
     public NotificationScheduleService(ScheduleService scheduleService, ExerciseRepository exerciseRepository, GroupNotificationService groupNotificationService,
-            Environment environment, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
+            Environment environment, SingleUserNotificationService singleUserNotificationService) {
         this.scheduleService = scheduleService;
         this.exerciseRepository = exerciseRepository;
         this.environment = environment;
         this.groupNotificationService = groupNotificationService;
-        this.submissionRepository = submissionRepository;
         this.singleUserNotificationService = singleUserNotificationService;
     }
 

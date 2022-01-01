@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -38,19 +37,16 @@ public class SingleUserNotificationService {
 
     private final NotificationSettingsService notificationSettingsService;
 
-    private final ExerciseRepository exerciseRepository;
-
     private final StudentParticipationRepository studentParticipationRepository;
 
     public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, UserRepository userRepository,
-            SimpMessageSendingOperations messagingTemplate, MailService mailService, NotificationSettingsService notificationSettingsService, ExerciseRepository exerciseRepository,
+            SimpMessageSendingOperations messagingTemplate, MailService mailService, NotificationSettingsService notificationSettingsService,
             StudentParticipationRepository studentParticipationRepository) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.userRepository = userRepository;
         this.messagingTemplate = messagingTemplate;
         this.mailService = mailService;
         this.notificationSettingsService = notificationSettingsService;
-        this.exerciseRepository = exerciseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
     }
 
@@ -154,14 +150,12 @@ public class SingleUserNotificationService {
      * @param result containing information needed for the email
      */
     public void checkNotificationForAssessmentExerciseSubmission(Exercise exercise, User recipient, Result result) {
-        if (exercise.isCourseExercise()) {
-            // only send the notification now if no assessment due date was set or if it is in the past
-            if (exercise.getAssessmentDueDate() == null || !exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
-                saturateExerciseWithResultAndStudentParticipationForGivenUserForEmail(exercise, recipient, result);
-                notifyUserAboutAssessedExerciseSubmission(exercise, recipient);
-            }
-            // no scheduling needed because it is already part of updating/creating exercises
+        // only send the notification now if no assessment due date was set or if it is in the past
+        if (exercise.isCourseExercise() && (exercise.getAssessmentDueDate() == null || !exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now()))) {
+            saturateExerciseWithResultAndStudentParticipationForGivenUserForEmail(exercise, recipient, result);
+            notifyUserAboutAssessedExerciseSubmission(exercise, recipient);
         }
+        // no scheduling needed because it is already part of updating/creating exercises
     }
 
     /**
