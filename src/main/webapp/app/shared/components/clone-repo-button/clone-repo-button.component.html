@@ -28,8 +28,8 @@
             </div>
             <pre
                 style="flex: 1"
+                [ngStyle]="sshEnabled ? { borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none' } : {}"
                 ngxClipboard
-                [ngStyle]="borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none'"
                 [cbContent]="getHttpOrSshRepositoryUrl()"
                 (cbOnSuccess)="onCopySuccess()"
                 (cbOnError)="onCopyFailure()"
