@@ -77,7 +77,7 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
 
         assertThat(notificationRepository.count()).isEqualTo(0);
 
-        instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(textSubmission.getId());
+        instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exercise.getId());
 
         await().until(() -> notificationRepository.count() > 0);
 
