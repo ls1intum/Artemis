@@ -109,7 +109,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     /**
      * This method gets called if a new commit was pushed to the VCS
      *
-     * @param participationId The ID to the Participation, where the push happend
+     * @param participationId The ID to the Participation, where the push happened
      * @param requestBody the body of the post request by the VCS.
      * @return the ProgrammingSubmission for the last commitHash
      * @throws EntityNotFoundException if no ProgrammingExerciseParticipation could be found
@@ -371,15 +371,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
     }
 
-    private String getLastCommitHashForTestRepository(ProgrammingExercise programmingExercise) throws IllegalStateException {
-        try {
-            return gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUrl()).getName();
-        }
-        catch (EntityNotFoundException ex) {
-            throw new IllegalStateException("Last commit hash for test repository of programming exercise with id " + programmingExercise.getId() + " could not be retrieved");
-        }
-    }
-
     /**
      * Create a submission with SubmissionType.TEST and the provided commitHash.
      *
@@ -391,16 +382,16 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     public ProgrammingSubmission createSolutionParticipationSubmissionWithTypeTest(Long programmingExerciseId, @Nullable String commitHash)
             throws EntityNotFoundException, IllegalStateException {
-        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExerciseParticipationService
-                .findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
+        var solutionParticipation = programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
         // If no commitHash is provided, use the last commitHash for the test repository.
         if (commitHash == null) {
-            Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
-                    .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
-            if (programmingExercise.isEmpty()) {
-                throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " not found.");
+            ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
+            try {
+                commitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUrl()).getName();
             }
-            commitHash = getLastCommitHashForTestRepository(programmingExercise.get());
+            catch (EntityNotFoundException ex) {
+                throw new IllegalStateException("Last commit hash for test repository of programming exercise with id " + programmingExercise.getId() + " could not be retrieved");
+            }
         }
         return createSubmissionWithCommitHashAndSubmissionType(solutionParticipation, commitHash, SubmissionType.TEST);
     }

@@ -4,7 +4,7 @@ public enum RepositoryType {
 
     TEMPLATE("exercise"), SOLUTION("solution"), TESTS("tests"), AUXILIARY("auxiliary");
 
-    private String name;
+    private final String name;
 
     RepositoryType(String name) {
         this.name = name;

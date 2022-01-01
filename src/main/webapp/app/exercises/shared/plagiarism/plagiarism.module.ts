@@ -29,6 +29,6 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
         SplitPaneHeaderComponent,
         PlagiarismRunDetailsComponent,
     ],
-    exports: [PlagiarismInspectorComponent],
+    exports: [PlagiarismInspectorComponent, PlagiarismSplitViewComponent],
 })
 export class ArtemisPlagiarismModule {}

@@ -10,12 +10,12 @@ const users = artemis.users;
 
 // Pageobjects
 const navigationBar = artemis.pageobjects.navigationBar;
-const courseManagement = artemis.pageobjects.courseManagement;
-const examManagement = artemis.pageobjects.examManagement;
-const textCreation = artemis.pageobjects.textExercise.creation;
-const exerciseGroups = artemis.pageobjects.examExerciseGroups;
-const exerciseGroupCreation = artemis.pageobjects.examExerciseGroupCreation;
-const studentExamManagement = artemis.pageobjects.studentExamManagement;
+const courseManagement = artemis.pageobjects.course.management;
+const examManagement = artemis.pageobjects.exam.management;
+const textCreation = artemis.pageobjects.exercise.text.creation;
+const exerciseGroups = artemis.pageobjects.exam.exerciseGroups;
+const exerciseGroupCreation = artemis.pageobjects.exam.exerciseGroupCreation;
+const studentExamManagement = artemis.pageobjects.exam.studentExamManagement;
 
 // Common primitives
 const uid = generateUUID();
@@ -45,7 +45,7 @@ describe('Exam management', () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
         courseManagement.openExamsOfCourse(course.shortName);
-        examManagement.getExamRow(examTitle).openExerciseGroups();
+        examManagement.openExerciseGroups(exam.id);
         exerciseGroups.shouldShowNumberOfExerciseGroups(0);
         exerciseGroups.clickAddExerciseGroup();
         const groupName = 'group 1';
@@ -66,19 +66,17 @@ describe('Exam management', () => {
     it('Registers the course students for the exam', () => {
         // We already verified in the previous test that we can navigate here
         cy.visit(`/course-management/${course.id}/exams`);
-        examManagement.getExamRow(examTitle).openStudentRegistration();
-        cy.contains('Registered students: 0').should('be.visible');
-        studentExamManagement.clickRegisterCourseStudents().its('response.statusCode').should('eq', 200);
-        cy.contains(users.getStudentOne().username).should('be.visible');
-        cy.contains('Registered students: 1').should('be.visible');
+        examManagement.openStudentRegistration(exam.id);
+        studentExamManagement.clickRegisterCourseStudents().then((request: any) => {
+            expect(request.response.statusCode).to.eq(200);
+        });
+        cy.get('#registered-students').contains(users.getStudentOne().username).should('be.visible');
     });
 
     it('Generates student exams', () => {
         cy.visit(`/course-management/${course.id}/exams`);
-        examManagement.getExamRow(examTitle).openStudenExams();
-        cy.contains('0 total').should('be.visible');
+        examManagement.openStudenExams(exam.id);
         studentExamManagement.clickGenerateStudentExams();
-        cy.contains('1 total').should('be.visible');
         cy.get('#generateMissingStudentExamsButton').should('be.disabled');
     });
 

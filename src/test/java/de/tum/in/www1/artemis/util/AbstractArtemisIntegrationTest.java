@@ -51,9 +51,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected WebsocketMessagingService websocketMessagingService;
 
     @SpyBean
-    protected PlantUmlService plantUmlService;
-
-    @SpyBean
     protected SimpMessageSendingOperations messagingTemplate;
 
     @SpyBean
@@ -90,26 +87,22 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected RequestUtilService request;
 
     public void resetSpyBeans() {
-        Mockito.reset(ltiService, gitService, groupNotificationService, websocketMessagingService, plantUmlService, messagingTemplate, programmingSubmissionService,
-                examAccessService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scoreService,
-                scheduleService);
+        Mockito.reset(ltiService, gitService, groupNotificationService, websocketMessagingService, messagingTemplate, programmingSubmissionService, examAccessService,
+                instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scoreService, scheduleService);
     }
 
     @Override
     public void mockGetRepositorySlugFromRepositoryUrl(String repositorySlug, VcsRepositoryUrl repositoryUrl) {
-        // we convert this to URL to make sure the mock is properly hit, as there could be problems with objects such as VcsRepositoryUrl and its subclasses
         doReturn(repositorySlug).when(urlService).getRepositorySlugFromRepositoryUrl(repositoryUrl);
     }
 
     @Override
     public void mockGetProjectKeyFromRepositoryUrl(String projectKey, VcsRepositoryUrl repositoryUrl) {
-        // we convert this to URL to make sure the mock is properly hit, as there could be problems with objects such as VcsRepositoryUrl and its subclasses
         doReturn(projectKey).when(urlService).getProjectKeyFromRepositoryUrl(repositoryUrl);
     }
 
     @Override
     public void mockGetRepositoryPathFromRepositoryUrl(String projectPath, VcsRepositoryUrl repositoryUrl) {
-        // we convert this to URL to make sure the mock is properly hit, as there could be problems with objects such as VcsRepositoryUrl and its subclasses
         doReturn(projectPath).when(urlService).getRepositoryPathFromRepositoryUrl(repositoryUrl);
     }
 

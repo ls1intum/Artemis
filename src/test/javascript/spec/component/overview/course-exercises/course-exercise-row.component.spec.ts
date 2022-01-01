@@ -18,7 +18,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/entities/course.model';
@@ -32,6 +32,7 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { RouterTestingModule } from '@angular/router/testing';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 @Component({
     template: '',

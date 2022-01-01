@@ -812,31 +812,31 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCheckPlagiarism() throws Exception {
         programmingExerciseIntegrationTestService.testCheckPlagiarism();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCheckPlagiarismJplagReport() throws Exception {
         programmingExerciseIntegrationTestService.testCheckPlagiarismJplagReport();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetPlagiarismResult() throws Exception {
         programmingExerciseIntegrationTestService.testGetPlagiarismResult();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetPlagiarismResultWithoutResult() throws Exception {
         programmingExerciseIntegrationTestService.testGetPlagiarismResultWithoutResult();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetPlagiarismResultWithoutExercise() throws Exception {
         programmingExerciseIntegrationTestService.testGetPlagiarismResultWithoutExercise();
     }

@@ -11,15 +11,15 @@ const courseManagementRequests = artemis.requests.courseManagement;
 
 // page objects
 const assessmentDashboard = artemis.pageobjects.assessment.course;
-const examStartEnd = artemis.pageobjects.examStartEnd;
-const modelingEditor = artemis.pageobjects.modelingExercise.editor;
-const modelingAssessment = artemis.pageobjects.modelingExercise.assessmentEditor;
-const editorPage = artemis.pageobjects.programmingExercise.editor;
+const examStartEnd = artemis.pageobjects.exam.startEnd;
+const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
+const modelingAssessment = artemis.pageobjects.assessment.modeling;
+const editorPage = artemis.pageobjects.exercise.programming.editor;
 const examAssessment = artemis.pageobjects.assessment.exam;
-const examNavigation = artemis.pageobjects.examNavigationBar;
-const textEditor = artemis.pageobjects.textExercise.editor;
+const examNavigation = artemis.pageobjects.exam.navigationBar;
+const textEditor = artemis.pageobjects.exercise.text.editor;
 const exerciseAssessment = artemis.pageobjects.assessment.exercise;
-const multipleChoice = artemis.pageobjects.quizExercise.multipleChoice;
+const multipleChoice = artemis.pageobjects.exercise.quiz.multipleChoice;
 
 // Common primitives
 const admin = artemis.users.getAdmin();

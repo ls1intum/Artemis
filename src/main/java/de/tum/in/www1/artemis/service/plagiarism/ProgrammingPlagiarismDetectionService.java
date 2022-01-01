@@ -56,8 +56,6 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final UrlService urlService;
-
     private final ZipFileService zipFileService;
 
     private final GitService gitService;
@@ -72,19 +70,20 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final PlagiarismWebsocketService plagiarismWebsocketService;
 
-    public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, UrlService urlService,
-            ZipFileService zipFileService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
-            PlagiarismResultRepository plagiarismResultRepository, ProgrammingExerciseExportService programmingExerciseExportService,
-            PlagiarismWebsocketService plagiarismWebsocketService) {
+    private final UrlService urlService;
+
+    public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, ZipFileService zipFileService,
+            GitService gitService, StudentParticipationRepository studentParticipationRepository, PlagiarismResultRepository plagiarismResultRepository,
+            ProgrammingExerciseExportService programmingExerciseExportService, PlagiarismWebsocketService plagiarismWebsocketService, UrlService urlService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
-        this.urlService = urlService;
         this.zipFileService = zipFileService;
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.plagiarismWebsocketService = plagiarismWebsocketService;
+        this.urlService = urlService;
     }
 
     /**
