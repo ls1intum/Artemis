@@ -5,23 +5,24 @@ import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 import { BarChartModule } from '@swimlane/ngx-charts';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
     let component: StatisticsAverageScoreGraphComponent;
 
     const returnValue = [
-        { exerciseId: 1, exerciseName: 'BridgePattern', averageScore: 20 },
-        { exerciseId: 2, exerciseName: 'AdapterPattern', averageScore: 35 },
-        { exerciseId: 3, exerciseName: 'ProxyPattern', averageScore: 40 },
-        { exerciseId: 4, exerciseName: 'SingletonPattern', averageScore: 55 },
-        { exerciseId: 5, exerciseName: 'ObserverPattern', averageScore: 60 },
-        { exerciseId: 6, exerciseName: 'StrategyPattern', averageScore: 75 },
-        { exerciseId: 7, exerciseName: 'BuilderPattern', averageScore: 50 },
-        { exerciseId: 8, exerciseName: 'StatePattern', averageScore: 100 },
-        { exerciseId: 9, exerciseName: 'FarcadePattern', averageScore: 0 },
-        { exerciseId: 10, exerciseName: 'VisitorPattern', averageScore: 25 },
-        { exerciseId: 11, exerciseName: 'BehaviouralPattern', averageScore: 55 },
+        { exerciseId: 1, exerciseName: 'BridgePattern', averageScore: 20, exerciseType: ExerciseType.PROGRAMMING },
+        { exerciseId: 2, exerciseName: 'AdapterPattern', averageScore: 35, exerciseType: ExerciseType.QUIZ },
+        { exerciseId: 3, exerciseName: 'ProxyPattern', averageScore: 40, exerciseType: ExerciseType.MODELING },
+        { exerciseId: 4, exerciseName: 'SingletonPattern', averageScore: 55, exerciseType: ExerciseType.TEXT },
+        { exerciseId: 5, exerciseName: 'ObserverPattern', averageScore: 60, exerciseType: ExerciseType.FILE_UPLOAD },
+        { exerciseId: 6, exerciseName: 'StrategyPattern', averageScore: 75, exerciseType: ExerciseType.PROGRAMMING },
+        { exerciseId: 7, exerciseName: 'BuilderPattern', averageScore: 50, exerciseType: ExerciseType.QUIZ },
+        { exerciseId: 8, exerciseName: 'StatePattern', averageScore: 100, exerciseType: ExerciseType.MODELING },
+        { exerciseId: 9, exerciseName: 'FarcadePattern', averageScore: 0, exerciseType: ExerciseType.TEXT },
+        { exerciseId: 10, exerciseName: 'VisitorPattern', averageScore: 25, exerciseType: ExerciseType.FILE_UPLOAD },
+        { exerciseId: 11, exerciseName: 'BehaviouralPattern', averageScore: 55, exerciseType: ExerciseType.PROGRAMMING },
     ];
 
     const courseAverageScore = 75;

@@ -359,7 +359,7 @@ public class CourseService {
      *
      * @param exerciseIds the ids to get the active students for
      * @param periodIndex the deviation from the current time
-     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 16 for the courde detail view
+     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 17 for the course detail view
      * @return An Integer array containing active students for each index. An index corresponds to a week
      */
     public Integer[] getActiveStudents(Set<Long> exerciseIds, long periodIndex, int length) {

@@ -17,6 +17,7 @@ import { CourseManagementStatisticsComponent } from 'app/course/manage/course-ma
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { of } from 'rxjs';
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -29,8 +30,8 @@ describe('CourseManagementStatisticsComponent', () => {
     const returnValue = {
         averageScoreOfCourse: 75,
         averageScoresOfExercises: [
-            { exerciseId: 1, exerciseName: 'PatternsExercise', averageScore: 50 },
-            { exerciseId: 2, exerciseName: 'MorePatterns', averageScore: 50 },
+            { exerciseId: 1, exerciseName: 'PatternsExercise', averageScore: 50, exerciseType: ExerciseType.PROGRAMMING },
+            { exerciseId: 2, exerciseName: 'MorePatterns', averageScore: 50, exerciseType: ExerciseType.MODELING },
         ],
     };
 
