@@ -329,11 +329,7 @@ export class ExerciseService {
      */
     static parseExerciseCategories(exercise?: Exercise) {
         if (exercise?.categories) {
-            exercise.categories = exercise.categories.map((category) => {
-                console.log(category);
-                console.log(category as string);
-                return JSON.parse(category as string) as ExerciseCategory;
-            });
+            exercise.categories = exercise.categories.map((category) => JSON.parse(category as string) as ExerciseCategory);
         }
     }
 
