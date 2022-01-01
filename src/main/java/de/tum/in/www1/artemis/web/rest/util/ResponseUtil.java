@@ -22,10 +22,6 @@ public final class ResponseUtil implements tech.jhipster.web.util.ResponseUtil {
     @Value("${jhipster.clientApp.name}")
     private static String applicationName = "artemisApp";
 
-    public static <X> ResponseEntity<X> ok() {
-        return ResponseEntity.ok().build();
-    }
-
     public static <X> ResponseEntity<X> notFound() {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }

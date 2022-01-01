@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.ok;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -163,7 +162,7 @@ public class ComplaintResource {
 
         Optional<Complaint> optionalComplaint = complaintRepository.findByResultSubmissionId(submissionId);
         if (optionalComplaint.isEmpty()) {
-            return ok();
+            return ResponseEntity.ok().build();
         }
         Complaint complaint = optionalComplaint.get();
         var user = userRepository.getUserWithGroupsAndAuthorities();
