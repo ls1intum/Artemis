@@ -202,9 +202,9 @@ public class InstanceMessageReceiveService {
         notificationScheduleService.updateSchedulingForReleasedExercises(exercise);
     }
 
-    public void processScheduleAssessedExerciseSubmittedNotification(Long submissionId) {
-        log.info("Received schedule update for assessed exercise submitted {} notification ", submissionId);
-        Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
-        notificationScheduleService.updateSchedulingForAssessedExercisesSubmissions(submission);
+    public void processScheduleAssessedExerciseSubmittedNotification(Long exerciseId) {
+        log.info("Received schedule update for assessed exercise submitted {} notification ", exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        notificationScheduleService.updateSchedulingForAssessedExercisesSubmissions(exercise);
     }
 }

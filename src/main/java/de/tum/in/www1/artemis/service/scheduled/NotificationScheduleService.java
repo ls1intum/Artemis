@@ -12,10 +12,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -68,29 +65,17 @@ public class NotificationScheduleService {
             checkSecurityUtils();
 
             // EXERCISE_RELEASED
-            Set<Exercise> exercisesToBeScheduled = exerciseRepository.findAllExercisesWithCurrentOrUpcomingReleaseDate(ZonedDateTime.now());
-            exercisesToBeScheduled.forEach(this::scheduleNotificationForReleasedExercise);
+            Set<Exercise> exercisesToBeScheduledForReleaseDate = exerciseRepository.findAllExercisesWithCurrentOrUpcomingReleaseDate(ZonedDateTime.now());
+            exercisesToBeScheduledForReleaseDate.forEach(this::scheduleNotificationForReleasedExercise);
+            log.info("Scheduled {} notifications for released exercises.", exercisesToBeScheduledForReleaseDate.size());
 
             // EXERCISE_SUBMISSION_ASSESSED
-            List<Submission> submissionsToBeScheduled = submissionRepository.findAllSubmittedAndRatedSubmissionsWithFutureOrCurrentAssessmentDueDate(ZonedDateTime.now());
-            submissionsToBeScheduled.forEach(submission -> {
-                Exercise foundExercise = submission.getParticipation().getExercise();
-                scheduleNotificationForAssessedExercisesSubmissions(foundExercise, submission);
-            });
-
-            log.info("Scheduled {} released exercise notifications.", exercisesToBeScheduled.size());
+            Set<Exercise> exercisesToBeScheduledForAssessmentDueDate = exerciseRepository.findAllExercisesWithCurrentOrUpcomingAssessmentDueDate(ZonedDateTime.now());
+            exercisesToBeScheduledForAssessmentDueDate.forEach(this::scheduleNotificationForAssessedExercisesSubmissions);
+            log.info("Scheduled {} notifications for assessed exercise submissions.", exercisesToBeScheduledForAssessmentDueDate.size());
         }
         catch (Exception exception) {
             log.error("Failed to start NotificationScheduleService", exception);
-        }
-    }
-
-    /**
-     * Checks the SecurityUtils for authentication, if not yet authenticated do so.
-     */
-    private void checkSecurityUtils() {
-        if (!SecurityUtils.isAuthenticated()) {
-            SecurityUtils.setAuthorizationObject();
         }
     }
 
@@ -120,18 +105,11 @@ public class NotificationScheduleService {
             checkSecurityUtils();
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, () -> {
                 checkSecurityUtils();
-                // if the exercise has been updated in the meantime the scheduled immutable exercise is outdated and has to be replaced by the current one in the DB
-                Exercise foundCurrentVersionOfScheduledExercise;
-                try {
-                    foundCurrentVersionOfScheduledExercise = exerciseRepository.findByIdElseThrow(exercise.getId());
-                }
-                catch (EntityNotFoundException entityNotFoundException) {
-                    log.debug("Exercise is no longer in the database " + exercise.getId());
+                Exercise foundCurrentVersionOfScheduledExercise = findCurrentVersionOfScheduledExercise(exercise);
+                if (foundCurrentVersionOfScheduledExercise == null) {
                     return;
                 }
-                // only send a notification if ReleaseDate is defined and not in the future (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
-                ZonedDateTime releaseDate = foundCurrentVersionOfScheduledExercise.getReleaseDate();
-                if (releaseDate != null && !releaseDate.isBefore(ZonedDateTime.now().minusMinutes(2)) && !releaseDate.isAfter(ZonedDateTime.now())) {
+                if (checkIfTimeIsCorrectForScheduledTask(foundCurrentVersionOfScheduledExercise.getReleaseDate())) {
                     groupNotificationService.notifyAllGroupsAboutReleasedExercise(foundCurrentVersionOfScheduledExercise);
                 }
             });
@@ -146,21 +124,17 @@ public class NotificationScheduleService {
 
     /**
      * updateScheduling method for the notificationType EXERCISE_SUBMISSION_ASSESSED
-     * @param submission that should trigger a notification when the assessment due date (of the respective exercise) is over
+     * @param exercise that should trigger a notification when the assessment due date is over
      */
-    public void updateSchedulingForAssessedExercisesSubmissions(Submission submission) {
+    public void updateSchedulingForAssessedExercisesSubmissions(Exercise exercise) {
         checkSecurityUtils();
-        StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
-        long exerciseId = studentParticipation.getExercise().getId();
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-
         if (exercise.getAssessmentDueDate() == null || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate())) {
-            // to avoid canceling more important tasks we simply return here.
             // to make sure no wrong notification is sent out the date is checked again in the concrete notification method
+            scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.ASSESSMENT_DUE);
             return;
         }
         if (exercise.isCourseExercise()) {
-            scheduleNotificationForAssessedExercisesSubmissions(exercise, submission);
+            scheduleNotificationForAssessedExercisesSubmissions(exercise);
         }
     }
 
@@ -168,46 +142,62 @@ public class NotificationScheduleService {
      * The place where the actual tasks/methods are called/scheduled that should be run when at the assessment due date of the exercise
      * @param exercise which will be announced by a notifications at release date
      */
-    private void scheduleNotificationForAssessedExercisesSubmissions(Exercise exercise, Submission submission) {
+    private void scheduleNotificationForAssessedExercisesSubmissions(Exercise exercise) {
         try {
             checkSecurityUtils();
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.ASSESSMENT_DUE, () -> {
                 checkSecurityUtils();
-                // if the exercise has been updated in the meantime the scheduled immutable exercise is outdated and has to be replaced by the current one in the DB
-                Exercise foundCurrentVersionOfScheduledExercise;
-                try {
-                    foundCurrentVersionOfScheduledExercise = exerciseRepository.findByIdElseThrow(exercise.getId());
-                }
-                catch (EntityNotFoundException entityNotFoundException) {
-                    log.debug("Exercise is no longer in the database " + exercise.getId());
+                Exercise foundCurrentVersionOfScheduledExercise = findCurrentVersionOfScheduledExercise(exercise);
+                if (foundCurrentVersionOfScheduledExercise == null) {
                     return;
                 }
-
-                // check if submission is still available (could have been deleted in the meantime)
-                Submission foundCurrentVersionOfScheduledSubmission;
-                try {
-                    // findByIdWithResultsElseThrow() is strangely throwing an EntityNotFound exception even though the submission is found
-                    foundCurrentVersionOfScheduledSubmission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).orElseThrow();
-                }
-                catch (EntityNotFoundException entityNotFoundException) {
-                    log.debug("Submission is no longer in the database " + submission.getId());
-                    return;
-                }
-
-                // check if user is available
-                User student = ((StudentParticipation) foundCurrentVersionOfScheduledSubmission.getParticipation()).getStudent().orElseThrow();
-
-                // only send a notification if AssessmentDueDate is defined and not in the future (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
-                ZonedDateTime assessmentDueDate = foundCurrentVersionOfScheduledExercise.getAssessmentDueDate();
-                if (assessmentDueDate != null && !assessmentDueDate.isBefore(ZonedDateTime.now().minusMinutes(2)) && !assessmentDueDate.isAfter(ZonedDateTime.now())) {
-                    singleUserNotificationService.notifyUserAboutAssessedExerciseSubmission(foundCurrentVersionOfScheduledExercise, student);
+                if (checkIfTimeIsCorrectForScheduledTask(foundCurrentVersionOfScheduledExercise.getAssessmentDueDate())) {
+                    singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(foundCurrentVersionOfScheduledExercise);
                 }
             });
-            log.debug("Scheduled notify about assessed exercise submission after assessment due date for exercise '{}' (#{}) and submission (#{}) at {}.", exercise.getTitle(),
-                    exercise.getId(), exercise.getAssessmentDueDate(), submission.getId());
+            log.debug("Scheduled notify about assessed exercise submission after assessment due date for exercise '{}' (#{}) at {}.", exercise.getTitle(), exercise.getId(),
+                    exercise.getAssessmentDueDate());
         }
         catch (Exception exception) {
             log.error("Failed to schedule notification for exercise " + exercise.getId(), exception);
+        }
+    }
+
+    /**
+     * If the exercise has been updated in the meantime the scheduled immutable exercise is outdated and has to be replaced by the current one in the DB
+     *
+     * @param exercise that has to be checked
+     * @return the newest version of the exercise or null if none was found
+     */
+    private Exercise findCurrentVersionOfScheduledExercise(Exercise exercise) {
+        try {
+            return exerciseRepository.findByIdElseThrow(exercise.getId());
+        }
+        catch (EntityNotFoundException entityNotFoundException) {
+            log.debug("Exercise is no longer in the database " + exercise.getId());
+            return null;
+        }
+    }
+
+    /// SHARED AUXILIARY
+
+    /**
+     * Check if relevant time for scheduled notification process is (still) valid at the expected execution time
+     *
+     * @param relevantTime of the scheduled event (e.g. release Date for scheduled released exercise notifications)
+     * @return true if the time is valid else false
+     */
+    private boolean checkIfTimeIsCorrectForScheduledTask(ZonedDateTime relevantTime) {
+        // only send a notification if relevantTime is defined and not in the future (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
+        return relevantTime != null && !relevantTime.isBefore(ZonedDateTime.now().minusMinutes(2)) && !relevantTime.isAfter(ZonedDateTime.now());
+    }
+
+    /**
+     * Checks the SecurityUtils for authentication, if not yet authenticated do so.
+     */
+    private void checkSecurityUtils() {
+        if (!SecurityUtils.isAuthenticated()) {
+            SecurityUtils.setAuthorizationObject();
         }
     }
 }

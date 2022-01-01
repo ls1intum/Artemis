@@ -5,6 +5,9 @@ import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationF
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -14,11 +17,13 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.MailService;
-import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 
 @Service
 public class SingleUserNotificationService {
@@ -33,13 +38,20 @@ public class SingleUserNotificationService {
 
     private final NotificationSettingsService notificationSettingsService;
 
+    private final ExerciseRepository exerciseRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, UserRepository userRepository,
-            SimpMessageSendingOperations messagingTemplate, MailService mailService, NotificationSettingsService notificationSettingsService) {
+            SimpMessageSendingOperations messagingTemplate, MailService mailService, NotificationSettingsService notificationSettingsService, ExerciseRepository exerciseRepository,
+            StudentParticipationRepository studentParticipationRepository) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.userRepository = userRepository;
         this.messagingTemplate = messagingTemplate;
         this.mailService = mailService;
         this.notificationSettingsService = notificationSettingsService;
+        this.exerciseRepository = exerciseRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -63,6 +75,25 @@ public class SingleUserNotificationService {
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
         saveAndSend(resultingGroupNotification, notificationSubject);
+    }
+
+    /**
+     * Notify all users with available assessments about the finished assessment for an exercise submission.
+     * This is an auxiliary method that finds all relevant users and initiates the process for sending SingleUserNotifications and emails
+     *
+     * @param exercise which assessmentDueDate is the trigger for the notification process
+     */
+    public void notifyUsersAboutAssessedExerciseSubmission(Exercise exercise) {
+        // This process can not be replaces via a GroupNotification (can only notify ALL students of the course) because we want to notify only the students that have a valid
+        // assessed submission.
+
+        // Find all users that should be notified, i.e. users with an assessed participation
+        Set<User> relevantStudents = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResult(exercise.getId()).stream()
+                .map(participation -> exercise.findLatestSubmissionWithRatedResultWithCompletionDate(participation, true)).filter(Objects::nonNull)
+                .map(relevantSubmission -> ((StudentParticipation) relevantSubmission.getParticipation()).getStudent().orElseThrow()).collect(Collectors.toSet());
+
+        // notify all relevant users
+        relevantStudents.forEach(student -> notifyUserAboutAssessedExerciseSubmission(exercise, student));
     }
 
     /**
@@ -108,22 +139,18 @@ public class SingleUserNotificationService {
     }
 
     /**
-     * Checks if a new assessed-exercise-submission notification has to be created now or scheduled
+     * Checks if a new assessed-exercise-submission notification has to be created now
      *
-     * @param submission that is needed for potential scheduling
      * @param exercise which the submission is based on
      * @param recipient of the notification (i.e. the student)
-     * @param instanceMessageSendService that will call the service to update the scheduled assessed-exercise-submission notification
      */
-    public void checkNotificationForAssessmentExerciseSubmission(Submission submission, Exercise exercise, User recipient, InstanceMessageSendService instanceMessageSendService) {
+    public void checkNotificationForAssessmentExerciseSubmission(Exercise exercise, User recipient) {
         if (exercise.isCourseExercise()) {
             // only send the notification now if no assessment due date was set or if it is in the past
             if (exercise.getAssessmentDueDate() == null || !exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
                 notifyUserAboutAssessedExerciseSubmission(exercise, recipient);
             }
-            else {
-                instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(submission.getId());
-            }
+            // no scheduling needed because it is already part of updating/creating exercises
         }
     }
 

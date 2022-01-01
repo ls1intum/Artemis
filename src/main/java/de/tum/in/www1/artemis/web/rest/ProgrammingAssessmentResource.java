@@ -193,7 +193,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             newManualResult = resultRepository.submitManualAssessment(existingManualResult.getId());
             Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
             if (optionalStudent.isPresent()) {
-                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(submission, programmingExercise, optionalStudent.get(), instanceMessageSendService);
+                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(programmingExercise, optionalStudent.get());
             }
         }
         // remove information about the student for tutors to ensure double-blind assessment

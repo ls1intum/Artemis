@@ -86,7 +86,7 @@ public interface InstanceMessageSendService {
 
     /**
      * Send a message to the main server that schedules a notification for an assessed exercise submission
-     * @param submissionId of the submission a notification should be created for
+     * @param exerciseId of the exercise a notification should be created for
      */
-    void sendAssessedExerciseSubmissionNotificationSchedule(Long submissionId);
+    void sendAssessedExerciseSubmissionNotificationSchedule(Long exerciseId);
 }

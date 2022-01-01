@@ -23,10 +23,8 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
@@ -44,19 +42,15 @@ public class GroupNotificationService {
 
     private final NotificationSettingsService notificationSettingsService;
 
-    private final SubmissionRepository submissionRepository;
-
     private final SingleUserNotificationService singleUserNotificationService;
 
     public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
-            MailService mailService, NotificationSettingsService notificationSettingsService, SubmissionRepository submissionRepository,
-            SingleUserNotificationService singleUserNotificationService) {
+            MailService mailService, NotificationSettingsService notificationSettingsService, SingleUserNotificationService singleUserNotificationService) {
         this.groupNotificationRepository = groupNotificationRepository;
         this.messagingTemplate = messagingTemplate;
         this.userRepository = userRepository;
         this.mailService = mailService;
         this.notificationSettingsService = notificationSettingsService;
-        this.submissionRepository = submissionRepository;
         this.singleUserNotificationService = singleUserNotificationService;
     }
 
@@ -163,28 +157,18 @@ public class GroupNotificationService {
             return;
         }
 
-        // there is only a need to modify the notification behavior if the initialAssessmentDueDate was in the future
-        if (initialAssessmentDueDate.isAfter(timeNow)) {
-            // "decision matrix" based on initial and updated release date to decide if a notification has to be sent out now, scheduled, or not
-            if (updatedAssessmentDueDate != null && initialAssessmentDueDate.isEqual(updatedAssessmentDueDate)) {
-                // if the updated time is the same as the initial one do nothing
-                return;
-            }
-            List<Submission> submissions = submissionRepository.findAllSubmittedAndRatedSubmissionsByExercise(exerciseAfterUpdate.getId());
-            if (updatedAssessmentDueDate != null && updatedAssessmentDueDate.isAfter(timeNow)) {
-                // if the updated date is in the future reschedule all notifications
-                submissions.forEach(submission -> {
-                    instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(submission.getId());
-                });
-            }
-            else {
-                // the updated date is undefined or not in the future notify all students about their graded submissions
-                submissions.forEach(submission -> {
-                    Exercise exercise = submission.getParticipation().getExercise();
-                    User recipient = ((StudentParticipation) submission.getParticipation()).getStudent().orElseThrow();
-                    singleUserNotificationService.notifyUserAboutAssessedExerciseSubmission(exercise, recipient);
-                });
-            }
+        // "decision matrix" based on initial and updated release date to decide if a notification has to be sent out now, scheduled, or not
+        if (updatedAssessmentDueDate != null && initialAssessmentDueDate.isEqual(updatedAssessmentDueDate)) {
+            // if the updated time is the same as the initial one do nothing
+            return;
+        }
+        if (updatedAssessmentDueDate != null && updatedAssessmentDueDate.isAfter(timeNow)) {
+            // if the updated date is in the future reschedule
+            instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exerciseAfterUpdate.getId());
+        }
+        else {
+            // the updated date is undefined or not in the future notify all students about their graded submissions now
+            singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(exerciseAfterUpdate);
         }
     }
 
@@ -208,6 +192,7 @@ public class GroupNotificationService {
     /**
      * Checks if a new exercise-released notification has to be created or even scheduled
      * The exercise update might have changed the release date, so the scheduled notification that informs the users about the release of this exercise has to be updated
+     * Also initiates scheduling process for notifications if the assessment due date is set
      *
      * @param exercise that is updated
      * @param instanceMessageSendService that will call the service to update the scheduled exercise-created notification
@@ -220,6 +205,9 @@ public class GroupNotificationService {
             }
             else {
                 instanceMessageSendService.sendExerciseReleaseNotificationSchedule(exercise.getId());
+                if (exercise.getAssessmentDueDate() != null) {
+                    instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exercise.getId());
+                }
             }
         }
     }
@@ -329,6 +317,18 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, EXERCISE_UPDATED, exercise, notificationText, null);
+    }
+
+    /**
+     * Notify student group about assessed exercise submissions.
+     * This method is called when the assessmentDueDate is set, thus a scheduled notification was created, and all students can be notified at the same time.
+     * If the date is not set SingleUserNotifications are created dynamically instead.
+     *
+     * @param exercise         that has been updated
+     * @param notificationText that should be displayed
+     */
+    public void notifyStudentGroupAboutAssessedExerciseSubmission(Exercise exercise, String notificationText) {
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT }, EXERCISE_SUBMISSION_ASSESSED, exercise, notificationText, null);
     }
 
     /**

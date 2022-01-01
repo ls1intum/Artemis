@@ -96,8 +96,8 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
-    public void sendAssessedExerciseSubmissionNotificationSchedule(Long submissionId) {
+    public void sendAssessedExerciseSubmissionNotificationSchedule(Long exerciseId) {
         // No need to go through the broker, pass it directly
-        instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(submissionId);
+        instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exerciseId);
     }
 }
