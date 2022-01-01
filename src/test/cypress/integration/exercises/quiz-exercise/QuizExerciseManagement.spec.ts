@@ -10,26 +10,19 @@ const admin = artemis.users.getAdmin();
 const courseManagementRequest = artemis.requests.courseManagement;
 
 // PageObjects
-const navigationBar = artemis.pageobjects.navigationBar;
-const courseManagement = artemis.pageobjects.courseManagement;
-const quizCreation = artemis.pageobjects.quizExercise.creation;
+const courseManagement = artemis.pageobjects.course.management;
+const quizCreation = artemis.pageobjects.exercise.quiz.creation;
 
 // Common primitives
-let uid: string;
-let quizExerciseName: string;
 let course: any;
+const quizQuestionTitle = 'Cypress Quiz Exercise';
 
 describe('Quiz Exercise Management', () => {
     before('Set up course', () => {
-        uid = generateUUID();
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = response.body;
         });
-    });
-
-    beforeEach('New UID', () => {
-        quizExerciseName = 'Cypress Quiz ' + generateUUID();
     });
 
     after('Delete Course', () => {
@@ -37,41 +30,26 @@ describe('Quiz Exercise Management', () => {
     });
 
     describe('Quiz Exercise Creation', () => {
-        let quizExercise: any;
-
-        afterEach('Delete Quiz', () => {
-            courseManagementRequest.deleteQuizExercise(quizExercise.id);
-        });
-
         beforeEach(() => {
-            beginQuizCreation();
+            cy.login(admin, '/course-management/');
+            courseManagement.openExercisesOfCourse(course.shortName);
+            cy.get('#create-quiz-button').click();
+            quizCreation.setTitle('Cypress Quiz Exercise ' + generateUUID());
         });
 
         it('Creates a Quiz with Multiple Choice', () => {
-            quizCreation.addMultipleChoiceQuestion('MC Quiz' + uid);
-            quizCreation.saveQuiz().then((quizResponse) => {
-                quizExercise = quizResponse.response?.body;
-                cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
-                cy.contains('MC Quiz' + uid).should('be.visible');
-            });
+            quizCreation.addMultipleChoiceQuestion(quizQuestionTitle);
+            saveAndVerifyQuizCreation();
         });
 
         it('Creates a Quiz with Short Answer', () => {
-            quizCreation.addShortAnswerQuestion('SA Quiz' + uid);
-            quizCreation.saveQuiz().then((quizResponse) => {
-                quizExercise = quizResponse.response?.body;
-                cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
-                cy.contains('SA Quiz' + uid).should('be.visible');
-            });
+            quizCreation.addShortAnswerQuestion(quizQuestionTitle);
+            saveAndVerifyQuizCreation();
         });
 
         it('Creates a Quiz with Drag and Drop', () => {
-            quizCreation.addDragAndDropQuestion('DnD Quiz' + uid);
-            quizCreation.saveQuiz().then((quizResponse) => {
-                quizExercise = quizResponse.response?.body;
-                cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
-                cy.contains('DnD Quiz' + uid).should('be.visible');
-            });
+            quizCreation.addDragAndDropQuestion(quizQuestionTitle);
+            saveAndVerifyQuizCreation();
         });
     });
 
@@ -86,24 +64,22 @@ describe('Quiz Exercise Management', () => {
         });
 
         it('Deletes a Quiz Exercise', () => {
-            cy.login(admin, '/');
-            navigationBar.openCourseManagement();
-            courseManagement.openExercisesOfCourse(course.title, course.shortName);
+            cy.login(admin, '/course-management/');
+            courseManagement.openExercisesOfCourse(course.shortName);
             cy.get('#delete-quiz-' + quizExercise.id).click();
-            cy.get('.form-control').type(quizExercise.title);
+            cy.get('#confirm-exercise-name').type(quizExercise.title);
             cy.intercept(DELETE, '/api/quiz-exercises/*').as('deleteQuizQuery');
-            cy.get('.modal-footer').find('.btn-danger').click();
+            cy.get('#delete').click();
             cy.wait('@deleteQuizQuery').then((deleteResponse) => {
                 expect(deleteResponse?.response?.statusCode).to.eq(200);
             });
         });
     });
-});
 
-function beginQuizCreation() {
-    cy.login(admin, '/');
-    navigationBar.openCourseManagement();
-    courseManagement.openExercisesOfCourse(course.title, course.shortName);
-    cy.get('#create-quiz-button').click();
-    quizCreation.setTitle(quizExerciseName);
-}
+    function saveAndVerifyQuizCreation() {
+        quizCreation.saveQuiz().then((quizResponse: any) => {
+            cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizResponse.response.body.id + '/preview');
+            cy.contains(quizQuestionTitle).should('be.visible');
+        });
+    }
+});

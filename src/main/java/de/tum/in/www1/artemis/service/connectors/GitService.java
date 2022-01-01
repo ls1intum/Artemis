@@ -190,34 +190,43 @@ public class GitService {
             public boolean keyLoaded(URIish uri, int attempt, Exception error) {
                 return false;
             }
-        }).setConfigStoreFactory((homeDir, configFile, localUserName) -> (hostName, port, userName) -> new SshConfigStore.HostConfig() {
+        }).setConfigStoreFactory((homeDir, configFile, localUserName) -> new SshConfigStore() {
 
             @Override
-            public String getValue(String key) {
-                return null;
+            public HostConfig lookup(String hostName, int port, String userName) {
+                return new HostConfig() {
+
+                    @Override
+                    public String getValue(String key) {
+                        return null;
+                    }
+
+                    @Override
+                    public List<String> getValues(String key) {
+                        return Collections.emptyList();
+                    }
+
+                    @Override
+                    public Map<String, String> getOptions() {
+                        log.debug("getOptions: {}:{}", hostName, port);
+                        if (hostName.equals(gitUrl.getHost())) {
+                            return Collections.singletonMap(SshConstants.STRICT_HOST_KEY_CHECKING, SshConstants.NO);
+                        }
+                        else {
+                            return Collections.emptyMap();
+                        }
+                    }
+
+                    @Override
+                    public Map<String, List<String>> getMultiValuedOptions() {
+                        return Collections.emptyMap();
+                    }
+                };
             }
 
             @Override
-            public List<String> getValues(String key) {
-                return Collections.emptyList();
-            }
-
-            @Override
-            // NOTE: this is some kind of workaround to only avoid host checking for the git server that we use
-            // this simplifies administration and should be secure, because the known hosts file does not need to be created
-            public Map<String, String> getOptions() {
-                log.debug("getOptions: {}:{}", hostName, port);
-                if (hostName.equals(gitUrl.getHost())) {
-                    return Collections.singletonMap(SshConstants.STRICT_HOST_KEY_CHECKING, SshConstants.NO);
-                }
-                else {
-                    return Collections.emptyMap();
-                }
-            }
-
-            @Override
-            public Map<String, List<String>> getMultiValuedOptions() {
-                return Collections.emptyMap();
+            public HostConfig lookupDefault(String hostName, int port, String userName) {
+                return lookup(hostName, port, userName);
             }
         }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.get())).setHomeDirectory(new java.io.File(System.getProperty("user.home"))).build(new JGitKeyCache());
 
@@ -1053,7 +1062,7 @@ public class GitService {
         // Check if list of files is already cached
         if (repo.getFiles() == null) {
             Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE);
-            Collection<File> files = new LinkedList<>();
+            Collection<File> files = new ArrayList<>();
 
             while (itr.hasNext()) {
                 files.add(new File(itr.next(), repo));
@@ -1110,7 +1119,7 @@ public class GitService {
         Git git = new Git(repo);
         try {
             resetToOriginHead(repo);
-            List<RevCommit> commits = StreamSupport.stream(git.log().call().spliterator(), false).collect(Collectors.toList());
+            List<RevCommit> commits = StreamSupport.stream(git.log().call().spliterator(), false).toList();
             RevCommit firstCommit = commits.get(commits.size() - 1);
             // If there is a first commit, combine all other commits into it.
             if (firstCommit != null) {

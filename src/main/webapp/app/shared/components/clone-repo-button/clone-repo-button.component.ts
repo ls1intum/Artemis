@@ -7,6 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LocalStorageService } from 'ngx-webstorage';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-clone-repo-button',
@@ -35,6 +36,9 @@ export class CloneRepoButtonComponent implements OnInit {
     wasCopied = false;
     FeatureToggle = FeatureToggle;
     user: User;
+
+    // Icons
+    faDownload = faDownload;
 
     constructor(
         private translateService: TranslateService,

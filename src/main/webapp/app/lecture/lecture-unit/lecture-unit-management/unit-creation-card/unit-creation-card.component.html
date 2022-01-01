@@ -1,4 +1,4 @@
-<div class="creation-card bg-light text-primary container">
+<div class="creation-card bg-light text-primary container" id="unit-creation">
     <div class="row">
         <div class="col text-center">
             <h4 class="font-weight-bold">
@@ -9,19 +9,19 @@
     <div class="row">
         <div class="col text-center">
             <a id="createTextUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['text-units', 'create']">
-                <fa-icon [icon]="'scroll'"></fa-icon>
+                <fa-icon [icon]="faScroll"></fa-icon>
                 <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.text">text</span>
             </a>
             <a id="createExerciseUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['exercise-units', 'create']">
-                <fa-icon [icon]="'check'"></fa-icon>
+                <fa-icon [icon]="faCheck"></fa-icon>
                 <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.exercise">Exercise</span>
             </a>
             <a id="createVideoUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['video-units', 'create']">
-                <fa-icon [icon]="'video'"></fa-icon>
+                <fa-icon [icon]="faVideo"></fa-icon>
                 <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.video">Video</span>
             </a>
             <a id="createFileUploadUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['attachment-units', 'create']">
-                <fa-icon [icon]="'file-upload'"></fa-icon>
+                <fa-icon [icon]="faFileUpload"></fa-icon>
                 <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.file">File</span>
             </a>
         </div>

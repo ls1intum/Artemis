@@ -15,7 +15,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SortService } from 'app/shared/service/sort.service';
-import { ProgrammingAssessmentDashboardComponent } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-assessment-dashboard.component';
+import { ProgrammingExerciseSubmissionsComponent } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-exercise-submissions.component';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -49,8 +49,8 @@ const programmingSubmission2 = {
 };
 
 describe('ProgrammingAssessmentDashboardComponent', () => {
-    let component: ProgrammingAssessmentDashboardComponent;
-    let fixture: ComponentFixture<ProgrammingAssessmentDashboardComponent>;
+    let component: ProgrammingExerciseSubmissionsComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseSubmissionsComponent>;
     let exerciseService: ExerciseService;
     let programmingSubmissionService: ProgrammingSubmissionService;
     let programmingAssessmentService: ProgrammingAssessmentManualResultService;
@@ -60,10 +60,10 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [RouterTestingModule, ArtemisTestModule],
-            declarations: [ProgrammingAssessmentDashboardComponent],
+            declarations: [ProgrammingExerciseSubmissionsComponent],
             providers: [
                 JhiLanguageHelper,
-                { provide: Router, useClass: route },
+                { provide: Router, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -81,17 +81,18 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
                 },
             ],
         })
-            .overrideTemplate(ProgrammingAssessmentDashboardComponent, '')
+            .overrideTemplate(ProgrammingExerciseSubmissionsComponent, '')
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ProgrammingAssessmentDashboardComponent);
+                fixture = TestBed.createComponent(ProgrammingExerciseSubmissionsComponent);
                 component = fixture.componentInstance;
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
                 programmingSubmissionService = fixture.debugElement.injector.get(ProgrammingSubmissionService);
                 programmingAssessmentService = fixture.debugElement.injector.get(ProgrammingAssessmentManualResultService);
                 accountService = fixture.debugElement.injector.get(AccountService);
                 sortService = fixture.debugElement.injector.get(SortService);
-            });
+            })
+            .catch((e) => console.error(e));
     });
 
     it('should set parameters and call functions on init', fakeAsync(() => {

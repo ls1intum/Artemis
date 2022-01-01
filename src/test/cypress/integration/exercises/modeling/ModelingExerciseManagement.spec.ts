@@ -6,9 +6,9 @@ import { MODELING_EDITOR_CANVAS } from '../../../support/pageobjects/exercises/m
 import dayjs from 'dayjs';
 
 // pageobjects
-const createModelingExercise = artemis.pageobjects.modelingExercise.creation;
-const modelingExerciseExampleSubmission = artemis.pageobjects.modelingExercise.assessmentEditor;
-const modelingEditor = artemis.pageobjects.modelingExercise.editor;
+const createModelingExercise = artemis.pageobjects.exercise.modeling.creation;
+const modelingExerciseExampleSubmission = artemis.pageobjects.assessment.modeling;
+const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 // Users
@@ -63,8 +63,7 @@ describe('Modeling Exercise Management Spec', () => {
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
                     modelingEditor.addComponentToModel(1);
                     createModelingExercise.save();
-                    cy.get('jhi-exercise-submission-export').should('be.visible');
-                    cy.get(`${MODELING_EDITOR_CANVAS} > :nth-child(1)`).should('exist');
+                    cy.get(`${MODELING_EDITOR_CANVAS}`).children().eq(0).should('exist');
 
                     cy.log('Create Example Submission');
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
@@ -73,7 +72,6 @@ describe('Modeling Exercise Management Spec', () => {
                     modelingEditor.addComponentToModel(2);
                     modelingEditor.addComponentToModel(3);
                     modelingEditor.clickCreateNewExampleSubmission();
-                    cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
                     modelingEditor.showExampleAssessment();
                     modelingExerciseExampleSubmission.openAssessmentForComponent(1);
                     modelingExerciseExampleSubmission.assessComponent(-1, 'False');
@@ -83,7 +81,7 @@ describe('Modeling Exercise Management Spec', () => {
                     modelingExerciseExampleSubmission.assessComponent(0, 'Unnecessary');
                     modelingExerciseExampleSubmission.submitExample();
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}`);
-                    cy.get('.apollon-editor').should('exist');
+                    cy.get('#modeling-editor-canvas').should('exist');
                 });
         });
     });
@@ -109,8 +107,12 @@ describe('Modeling Exercise Management Spec', () => {
             createModelingExercise.setPoints(points);
             createModelingExercise.save();
             cy.visit(`/course-management/${course.id}/exercises`);
-            cy.get('tbody > tr > :nth-child(2)').should('contain.text', newTitle);
-            cy.get('tbody > tr > :nth-child(6)').should('contain.text', points.toString());
+            cy.get('#exercise-card-' + modelingExercise.id)
+                .find('#modeling-exercise-' + modelingExercise.id + '-title')
+                .should('contain.text', newTitle);
+            cy.get('#exercise-card-' + modelingExercise.id)
+                .find('#modeling-exercise-' + modelingExercise.id + '-maxPoints')
+                .should('contain.text', points.toString());
         });
     });
 
@@ -124,7 +126,7 @@ describe('Modeling Exercise Management Spec', () => {
                 modelingExercise = resp.body;
             });
             cy.login(student, '/courses');
-            cy.get('.card-body').contains(course.title).click({ force: true });
+            cy.contains(course.title).click({ force: true });
             cy.contains('No exercises available for the course.').should('be.visible');
         });
 

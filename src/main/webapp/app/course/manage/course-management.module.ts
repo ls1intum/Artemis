@@ -52,6 +52,8 @@ import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-
 import { UserImportModule } from 'app/shared/import/user-import.module';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
+import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 
 @NgModule({
     imports: [
@@ -94,6 +96,8 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
         ArtemisSharedComponentModule,
         UserImportModule,
         NgxChartsModule,
+        ArtemisPlagiarismModule,
+        ArtemisChartsModule,
     ],
     declarations: [
         CourseManagementComponent,

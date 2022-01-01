@@ -294,7 +294,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         const importStub = sinon.stub(exampleSubmissionService, 'import');
         importStub.returns(of(new HttpResponse({ body: new ExampleSubmission() })));
 
-        component.importStudentSubmissionAsExampleSubmission();
+        component.useStudentSubmissionAsExampleSubmission();
 
         expect(importStub).to.have.calledOnce;
         expect(importStub).to.have.been.calledWith(submission.id, exercise.id);

@@ -1,11 +1,11 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
-import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-statistics.component';
-import { ChartType } from 'chart.js';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { Course, NgxDataEntry } from 'app/entities/course.model';
+import { ScaleType, Color } from '@swimlane/ngx-charts';
 
 @Component({
     selector: 'jhi-doughnut-chart',
@@ -26,46 +26,34 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
     stats: number[];
     titleLink: string[] | undefined;
 
+    // Icons
+    faSpinner = faSpinner;
+
     constructor(private router: Router) {}
 
-    // Chart.js data
-    doughnutChartType: ChartType = 'doughnut';
-    doughnutChartColors: any[] = ['limegreen', 'red'];
-    doughnutChartLabels: string[] = ['Done', 'Not Done'];
-    totalScoreOptions: object = {
-        cutoutPercentage: 75,
-        scaleShowVerticalLines: false,
-        responsive: false,
-        tooltips: {
-            backgroundColor: 'rgba(0, 0, 0, 1)',
-            callbacks: {
-                label(tooltipItem: any, data: any) {
-                    if (data && data['datasets'] && data['datasets'][0] && data['datasets'][0]['data']) {
-                        const value = data['datasets'][0]['data'][tooltipItem['index']];
-                        return '' + (value === -1 ? 0 : value);
-                    }
-                    return '';
-                },
-            },
-        },
-    };
-    doughnutChartData: CourseStatisticsDataSet[] = [
-        {
-            data: [0, 0],
-            backgroundColor: this.doughnutChartColors,
-        },
+    // ngx
+    ngxDoughnutData: NgxDataEntry[] = [
+        { name: 'Done', value: 0 },
+        { name: 'Not done', value: 0 },
     ];
+    ngxColor = {
+        name: 'vivid',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: ['#32cd32', '#ff0000'], // colors: green, red
+    } as Color;
+    bindFormatting = this.valueFormatting.bind(this);
 
     ngOnChanges(): void {
         // [0, 0] will lead to the chart not being displayed,
         // assigning [-1, 0] works around this issue and displays 0 %, 0 / 0 with a green circle
         if (this.currentAbsolute == undefined && !this.receivedStats) {
-            this.doughnutChartData[0].data = [-1, 0];
+            this.assignValuesToData([1, 0]);
         } else {
             this.receivedStats = true;
             const remaining = roundScoreSpecifiedByCourseSettings(this.currentMax! - this.currentAbsolute!, this.course);
             this.stats = [this.currentAbsolute!, remaining];
-            this.doughnutChartData[0].data = this.currentMax === 0 ? [-1, 0] : this.stats;
+            return this.currentMax === 0 ? this.assignValuesToData([1, 0]) : this.assignValuesToData(this.stats);
         }
     }
 
@@ -100,5 +88,28 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
         if (this.course.id && this.exerciseId && this.titleLink) {
             this.router.navigate(this.titleLink);
         }
+    }
+
+    /**
+     * Assigns a given array of numbers to ngxData
+     * @param values the values that should be displayed by the chart
+     * @private
+     */
+    private assignValuesToData(values: number[]) {
+        this.ngxDoughnutData[0].value = values[0];
+        this.ngxDoughnutData[1].value = values[1];
+        this.ngxDoughnutData.forEach((entry: NgxDataEntry, index: number) => (entry.value = values[index]));
+        this.ngxDoughnutData = [...this.ngxDoughnutData];
+    }
+
+    /**
+     * Modifies the tooltip content of the chart.
+     * @param data a dedicated object passed by ngx-charts
+     * @returns absolute value represented by doughnut piece or 0 if the currentMax is 0.
+     * This is necessary in order to compensate the workaround for
+     * displaying a chart even if no values are there to display (i.e. currentMax is 0)
+     */
+    valueFormatting(data: any): string {
+        return this.currentMax === 0 ? '0' : data.value;
     }
 }

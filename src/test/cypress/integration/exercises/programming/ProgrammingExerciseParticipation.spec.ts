@@ -10,7 +10,7 @@ const users = artemis.users;
 const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
-const editorPage = artemis.pageobjects.programmingExercise.editor;
+const editorPage = artemis.pageobjects.exercise.programming.editor;
 
 describe('Programming exercise participations', () => {
     let course: any;
@@ -21,17 +21,17 @@ describe('Programming exercise participations', () => {
     });
 
     it('Makes a failing submission', () => {
-        startParticipationInProgrammingExercise(course.title, exercise.title, users.getStudentOne());
+        startParticipationInProgrammingExercise(course.id, exercise.id, users.getStudentOne());
         makeFailingSubmission();
     });
 
     it('Makes a partially successful submission', () => {
-        startParticipationInProgrammingExercise(course.title, exercise.title, users.getStudentTwo());
+        startParticipationInProgrammingExercise(course.id, exercise.id, users.getStudentTwo());
         makePartiallySuccessfulSubmission();
     });
 
     it('Makes a successful submission', () => {
-        startParticipationInProgrammingExercise(course.title, exercise.title, users.getStudentThree());
+        startParticipationInProgrammingExercise(course.id, exercise.id, users.getStudentThree());
         makeSuccessfulSubmission();
     });
 
@@ -66,10 +66,6 @@ describe('Programming exercise participations', () => {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName, submission, () => {
             editorPage.getResultPanel().contains('Build Failed').should('be.visible');
             editorPage.getResultPanel().contains('0%').should('be.visible');
-            editorPage.getBuildOutput().contains('[ERROR] COMPILATION ERROR').should('be.visible');
-            editorPage.getInstructionSymbols().each(($el) => {
-                cy.wrap($el).find('[data-icon="question"]').should('be.visible');
-            });
         });
     }
 
@@ -81,13 +77,6 @@ describe('Programming exercise participations', () => {
             editorPage.getResultPanel().contains('46.2%').should('be.visible');
             editorPage.getResultPanel().contains('6 of 13 passed').should('be.visible');
             editorPage.getBuildOutput().contains('No build results available').should('be.visible');
-            editorPage.getInstructionSymbols().each(($el, $index) => {
-                if ($index < 3) {
-                    cy.wrap($el).find('[data-icon="check"]').should('be.visible');
-                } else {
-                    cy.wrap($el).find('[data-icon="times"]').should('be.visible');
-                }
-            });
         });
     }
 
@@ -98,10 +87,6 @@ describe('Programming exercise participations', () => {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName, allSuccessful, () => {
             editorPage.getResultPanel().contains('100%').should('be.visible');
             editorPage.getResultPanel().contains('13 of 13 passed').should('be.visible');
-            editorPage.getBuildOutput().contains('No build results available').should('be.visible');
-            editorPage.getInstructionSymbols().each(($el) => {
-                cy.wrap($el).find('[data-icon="check"]').should('be.visible');
-            });
         });
     }
 });

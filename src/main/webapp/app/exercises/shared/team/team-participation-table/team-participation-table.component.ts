@@ -16,6 +16,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Participation } from 'app/entities/participation/participation.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { faFlag, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 
@@ -49,6 +51,10 @@ export class TeamParticipationTableComponent implements OnInit {
 
     exercises: ExerciseForTeam[];
     isLoading: boolean;
+
+    // Icons
+    faFolderOpen = faFolderOpen;
+    faFlag = faFlag;
 
     constructor(
         private teamService: TeamService,
@@ -176,9 +182,7 @@ export class TeamParticipationTableComponent implements OnInit {
         // Programming exercises can only be assessed by anyone / all other exercises can be assessed by tutors
         // if the exercise due date has passed
         if (exercise.type === ExerciseType.PROGRAMMING || !exercise.isAtLeastInstructor) {
-            if (exercise.dueDate.isBefore(dayjs())) {
-                return false;
-            }
+            return !hasExerciseDueDatePassed(exercise, submission!.participation);
         } else if (exercise.isAtLeastInstructor) {
             return false;
         }

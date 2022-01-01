@@ -11,12 +11,12 @@ const instructor = users.getInstructor();
 const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
-const coursesPage = artemis.pageobjects.courseManagement;
+const coursesPage = artemis.pageobjects.course.management;
 const courseAssessment = artemis.pageobjects.assessment.course;
 const exerciseAssessment = artemis.pageobjects.assessment.exercise;
 const textAssessment = artemis.pageobjects.assessment.text;
-const exerciseResult = artemis.pageobjects.exerciseResult;
-const textFeedback = artemis.pageobjects.textExercise.feedback;
+const exerciseResult = artemis.pageobjects.exercise.result;
+const textFeedback = artemis.pageobjects.exercise.text.feedback;
 
 // This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
 Cypress.on('uncaught:exception', () => {
@@ -47,22 +47,22 @@ describe('Text exercise assessment', () => {
 
     it('Assesses the text exercise submission', () => {
         cy.login(tutor, '/course-management');
-        coursesPage.openAssessmentDashboardOfCourseWithId(course.id);
-        courseAssessment.checkShowFinishedExercises();
+        coursesPage.openAssessmentDashboardOfCourse(course.shortName);
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
-        cy.contains('There are no complaints at the moment').should('be.visible');
-        cy.contains('There are no requests at the moment.').should('be.visible');
         exerciseAssessment.clickStartNewAssessment();
         textAssessment.getInstructionsRootElement().contains(exercise.title).should('be.visible');
         textAssessment.getInstructionsRootElement().contains(exercise.problemStatement).should('be.visible');
         textAssessment.getInstructionsRootElement().contains(exercise.sampleSolution).should('be.visible');
         textAssessment.getInstructionsRootElement().contains(exercise.gradingInstructions).should('be.visible');
-        cy.contains('Number of words: 100').should('be.visible');
-        cy.contains('Number of characters: 591').should('be.visible');
-        textAssessment.provideFeedbackOnTextSection('sed diam voluptua', tutorTextFeedbackPoints, tutorTextFeedback);
+        // Assert the correct word and character count without relying on translations
+        textAssessment.getWordCountElement().should('contain.text', 100).and('be.visible');
+        textAssessment.getCharacterCountElement().should('contain.text', 591).and('be.visible');
+        textAssessment.provideFeedbackOnTextSection(1, tutorTextFeedbackPoints, tutorTextFeedback);
         textAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
-        textAssessment.submit().its('response.statusCode').should('eq', 200);
+        textAssessment.submit().then((request: any) => {
+            expect(request.response.statusCode).to.equal(200);
+        });
     });
 
     describe('Feedback', () => {
@@ -74,15 +74,14 @@ describe('Text exercise assessment', () => {
             exerciseResult.shouldShowProblemStatement(exercise.problemStatement);
             exerciseResult.shouldShowScore(percentage);
             exerciseResult.clickViewSubmission();
-            textFeedback.shouldShowTextFeedback(tutorTextFeedback);
+            textFeedback.shouldShowTextFeedback(1, tutorTextFeedback);
             textFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
             textFeedback.shouldShowScore(totalPoints, exercise.maxPoints, percentage);
             textFeedback.complain(complaint);
         });
 
         it('Instructor can see complaint and reject it', () => {
-            cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
-            courseAssessment.openComplaints(course.id);
+            cy.login(instructor, `/course-management/${course.id}/complaints`);
             textAssessment.acceptComplaint('Makes sense').its('response.statusCode').should('eq', 200);
         });
     });
@@ -102,7 +101,7 @@ describe('Text exercise assessment', () => {
 
     function makeTextSubmissionAsStudent() {
         cy.login(student);
-        courseManagement.startExerciseParticipation(course.id, exercise.id);
+        courseManagement.startExerciseParticipation(exercise.id);
         cy.fixture('loremIpsum.txt').then((submission) => {
             courseManagement.makeTextExerciseSubmission(exercise.id, submission);
         });

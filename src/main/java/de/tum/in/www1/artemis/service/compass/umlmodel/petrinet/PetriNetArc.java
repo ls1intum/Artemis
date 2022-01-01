@@ -25,11 +25,9 @@ public class PetriNetArc extends UMLElement {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof PetriNetArc)) {
+        if (!(reference instanceof PetriNetArc referenceArc)) {
             return 0;
         }
-
-        PetriNetArc referenceArc = (PetriNetArc) reference;
 
         double similarity = 0;
 

@@ -10,11 +10,9 @@ public class UMLControlFlow extends UMLElement implements Serializable {
 
     public static final String UML_CONTROL_FLOW_TYPE = "ActivityControlFlow";
 
-    private final String CONTROL_FLOW_SYMBOL = " --> ";
+    private final UMLActivityElement source;
 
-    private UMLActivityElement source;
-
-    private UMLActivityElement target;
+    private final UMLActivityElement target;
 
     public UMLControlFlow(UMLActivityElement source, UMLActivityElement target, String jsonElementID) {
         super(jsonElementID);
@@ -25,11 +23,9 @@ public class UMLControlFlow extends UMLElement implements Serializable {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLControlFlow)) {
+        if (!(reference instanceof UMLControlFlow referenceControlFlow)) {
             return 0;
         }
-
-        UMLControlFlow referenceControlFlow = (UMLControlFlow) reference;
 
         double similarity = 0;
         double weight = 0.5;
@@ -42,7 +38,7 @@ public class UMLControlFlow extends UMLElement implements Serializable {
 
     @Override
     public String toString() {
-        return "Control Flow " + getSource().getName() + CONTROL_FLOW_SYMBOL + getTarget().getName() + " (" + getType() + ")";
+        return "Control Flow " + getSource().getName() + " --> " + getTarget().getName() + " (" + getType() + ")";
     }
 
     @Override

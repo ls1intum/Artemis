@@ -4,9 +4,9 @@ import { ParticipationType } from 'app/entities/participation/participation.mode
 export class ProgrammingExerciseStudentParticipation extends StudentParticipation {
     public repositoryUrl?: string;
     public buildPlanId?: string;
-    public buildPlanUrl?: string;
 
     // helper attribute
+    public buildPlanUrl?: string;
     public userIndependentRepositoryUrl?: string;
 
     constructor() {

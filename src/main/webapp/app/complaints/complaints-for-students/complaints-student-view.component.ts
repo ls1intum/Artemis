@@ -14,10 +14,12 @@ import { filter } from 'rxjs/operators';
 import dayjs from 'dayjs';
 import { HttpResponse } from '@angular/common/http';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-complaint-student-view',
     templateUrl: './complaints-student-view.component.html',
+    styleUrls: ['../complaints.scss'],
 })
 export class ComplaintsStudentViewComponent implements OnInit {
     @Input() exercise: Exercise;
@@ -41,6 +43,9 @@ export class ComplaintsStudentViewComponent implements OnInit {
     timeOfComplaintValid = false;
 
     ComplaintType = ComplaintType;
+
+    // Icons
+    faInfoCircle = faInfoCircle;
 
     constructor(
         private complaintService: ComplaintService,
@@ -143,8 +148,12 @@ export class ComplaintsStudentViewComponent implements OnInit {
         if (!actionThresholdInDays) {
             return false;
         }
-        if (!this.exercise.assessmentDueDate || dayjs().isAfter(dayjs(this.exercise.assessmentDueDate))) {
-            return dayjs().isSameOrBefore(dayjs(completionDate).add(actionThresholdInDays, 'day'));
+        const isWithinThreshold = dayjs().isSameOrBefore(dayjs(completionDate).add(actionThresholdInDays, 'day'));
+        if (!this.exercise.assessmentDueDate) {
+            return isWithinThreshold;
+        }
+        if (dayjs().isAfter(dayjs(this.exercise.assessmentDueDate))) {
+            return isWithinThreshold || dayjs().isSameOrBefore(dayjs(this.exercise.assessmentDueDate).add(actionThresholdInDays, 'day'));
         }
         return false;
     }

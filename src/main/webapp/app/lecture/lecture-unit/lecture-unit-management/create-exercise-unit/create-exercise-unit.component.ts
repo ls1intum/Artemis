@@ -10,6 +10,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { forkJoin, combineLatest, from } from 'rxjs';
 import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
+import { faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-create-exercise-unit',
@@ -25,6 +26,9 @@ export class CreateExerciseUnitComponent implements OnInit {
     courseId: number;
     exercisesAvailableForUnitCreation: Exercise[] = [];
     exercisesToCreateUnitFor: Exercise[] = [];
+
+    // Icons
+    faSort = faSort;
 
     constructor(
         private activatedRoute: ActivatedRoute,
