@@ -17,7 +17,7 @@
         <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | artemisTranslate }}</p>
         <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
         <div class="d-flex" style="margin: 0; max-width: 100%">
-            <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
+            <div *ngIf="sshEnabled" aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
                 <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button" style="border-top-right-radius: 0; border-bottom-right-radius: 0">
                     {{ useSsh ? 'SSH' : 'HTTPS' }}
                 </button>
