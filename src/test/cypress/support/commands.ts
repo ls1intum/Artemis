@@ -80,7 +80,7 @@ Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
         log: false,
         failOnStatusCode: false,
     }).then((response) => {
-        expect(response.status).toEqual(200);
+        expect(response.status).to.equal(200);
         localStorage.setItem(authTokenKey, '"' + response.body.id_token + '"');
         if (url) {
             cy.visit(url);
