@@ -31,8 +31,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
      * Sets the status badge and categories of the exercise on init
      */
     ngOnInit(): void {
-        this.setExerciseStatusBadge();
-        this.exerciseCategories = this.exercise?.categories || [];
+        this.ngOnChanges();
     }
 
     /**
@@ -54,7 +53,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
      */
     ngOnChanges(): void {
         this.setExerciseStatusBadge();
-        this.exerciseCategories = this.exercise?.categories || [];
+        this.exerciseCategories = this.exercise.categories || [];
         this.dueDate = getExerciseDueDate(this.exercise, this.participation);
     }
 
