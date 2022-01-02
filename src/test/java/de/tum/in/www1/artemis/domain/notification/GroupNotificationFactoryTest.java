@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createNotification;
@@ -9,6 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -40,6 +42,8 @@ public class GroupNotificationFactoryTest {
 
     private static Exercise exercise;
 
+    private static ProgrammingExercise programmingExercise;
+
     private static final Long EXERCISE_ID = 42L;
 
     private static final String EXERCISE_TITLE = "exercise title";
@@ -70,7 +74,7 @@ public class GroupNotificationFactoryTest {
 
     private GroupNotificationType groupNotificationType = GroupNotificationType.STUDENT;
 
-    private static final String NOTIFICATION_TEXT = "notification text";
+    private static String notificationText = "notification text";
 
     private static List<String> archiveErrors = new ArrayList();
 
@@ -102,6 +106,12 @@ public class GroupNotificationFactoryTest {
         exercise.setTitle(EXERCISE_TITLE);
         exercise.setCourse(course);
         exercise.setProblemStatement(PROBLEM_STATEMENT);
+
+        programmingExercise = new ProgrammingExercise();
+        programmingExercise.setId(EXERCISE_ID);
+        programmingExercise.setTitle(EXERCISE_TITLE);
+        programmingExercise.setCourse(course);
+        programmingExercise.setProblemStatement(PROBLEM_STATEMENT);
 
         examExercise = new TextExercise();
         examExercise.setId(EXERCISE_ID);
@@ -142,7 +152,7 @@ public class GroupNotificationFactoryTest {
      * Shortcut method to call the checks for the created notification that has a manually set notification text.
      */
     private void checkCreatedNotificationWithNotificationText() {
-        checkCreatedNotification(createdNotification, expectedTitle, NOTIFICATION_TEXT, expectedTransientTarget, expectedPriority);
+        checkCreatedNotification(createdNotification, expectedTitle, notificationText, expectedTransientTarget, expectedPriority);
     }
 
     /**
@@ -160,15 +170,22 @@ public class GroupNotificationFactoryTest {
     private void createAndCheckNotification(Base base) {
         switch (base) {
             case ATTACHMENT: {
-                createdNotification = createNotification(attachment, user, groupNotificationType, notificationType, NOTIFICATION_TEXT);
+                createdNotification = createNotification(attachment, user, groupNotificationType, notificationType, notificationText);
                 checkCreatedNotificationWithNotificationText();
                 createdNotification = createNotification(attachment, user, groupNotificationType, notificationType, null);
                 break;
             }
             case EXERCISE: {
-                createdNotification = createNotification(exercise, user, groupNotificationType, notificationType, NOTIFICATION_TEXT);
-                checkCreatedNotificationWithNotificationText();
-                createdNotification = createNotification(exercise, user, groupNotificationType, notificationType, null);
+                if (notificationType == DUPLICATE_TEST_CASE) {
+                    createdNotification = createNotification(programmingExercise, user, groupNotificationType, notificationType, notificationText);
+                    checkCreatedNotificationWithNotificationText();
+                    // duplicate test cases always have a notification text
+                }
+                else {
+                    createdNotification = createNotification(exercise, user, groupNotificationType, notificationType, notificationText);
+                    checkCreatedNotificationWithNotificationText();
+                    createdNotification = createNotification(exercise, user, groupNotificationType, notificationType, null);
+                }
                 break;
             }
             case POST: {
@@ -281,7 +298,7 @@ public class GroupNotificationFactoryTest {
         // EXERCISE_UPDATED's implementation differs from the other types therefore the testing has to be adjusted (more explicit)
 
         // with notification text -> exam popup
-        createdNotification = createNotification(examExercise, user, groupNotificationType, notificationType, NOTIFICATION_TEXT);
+        createdNotification = createNotification(examExercise, user, groupNotificationType, notificationType, notificationText);
         checkCreatedNotificationWithNotificationText();
 
         // without notification text -> silent exam update (expectedText = null)
@@ -492,4 +509,23 @@ public class GroupNotificationFactoryTest {
         expectedTransientTarget = createCourseTarget(course, EXAM_ARCHIVE_UPDATED_TEXT);
         createAndCheckNotification(Base.EXAM);
     }
+
+    // Critical Situations (e.g. Duplicate Test Cases)
+
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of DUPLICATE_TEST_CASE.
+     * I.e. notifications that are created when duplicate test cases (in programming exercises) occur.
+     */
+    @Test
+    public void createNotificationBasedOnExam_withNotificationType_DuplicateTestCase() {
+        notificationType = DUPLICATE_TEST_CASE;
+        expectedTitle = DUPLICATE_TEST_CASE_TITLE;
+        Set<String> duplicateFeedbackNames = Set.of("TestCaseA", "TestCaseB");
+        notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);
+        expectedText = notificationText;
+        expectedPriority = HIGH;
+        expectedTransientTarget = createDuplicateTestCaseTarget(exercise);
+        createAndCheckNotification(Base.EXERCISE);
+    }
+
 }
