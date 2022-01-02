@@ -108,7 +108,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
                 this.absoluteSeries[i]['absoluteValue'] = array[i];
             }
             const currentAverage = this.computeAverage(allValues);
-            this.average.name = /*this.translateService.instant('artemisApp.courseStatistics.average') + */ currentAverage.toFixed(2) + '%';
+            this.average.name = currentAverage.toFixed(2) + '%';
             this.average.value = currentAverage;
         } else {
             for (let i = 0; i < this.displayedNumberOfWeeks; i++) {
@@ -173,6 +173,9 @@ export class CourseDetailLineChartComponent implements OnChanges {
         return sum / array.length;
     }
 
+    /**
+     * Switches the visibility state for the reference line in the chart
+     */
     toggleAverageLine(): void {
         this.showAverage = !this.showAverage;
     }

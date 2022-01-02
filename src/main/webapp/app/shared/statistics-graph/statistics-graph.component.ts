@@ -2,9 +2,8 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
-import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
+import { Graphs, ngxColor, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { ngxColor } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 import { yAxisTickFormatting } from 'app/shared/statistics-graph/statistics-graph.utils';
 
 @Component({

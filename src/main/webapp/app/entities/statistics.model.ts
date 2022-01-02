@@ -1,3 +1,5 @@
+import { Color, ScaleType } from '@swimlane/ngx-charts';
+
 export enum SpanType {
     DAY = 'DAY',
     WEEK = 'WEEK',
@@ -43,3 +45,10 @@ export enum GraphColors {
     GREEN = 'rgba(40,164,40,1)',
     RED = 'rgba(204,0,0,1)',
 }
+
+export const ngxColor = {
+    name: 'Statistics',
+    selectable: true,
+    group: ScaleType.Ordinal,
+    domain: [GraphColors.DARK_BLUE],
+} as Color;

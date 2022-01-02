@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
@@ -18,9 +15,6 @@ import { StatisticsService } from 'app/shared/statistics-graph/statistics.servic
 import { of } from 'rxjs';
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 import { ExerciseType } from 'app/entities/exercise.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('CourseManagementStatisticsComponent', () => {
     let fixture: ComponentFixture<CourseManagementStatisticsComponent>;
@@ -61,26 +55,25 @@ describe('CourseManagementStatisticsComponent', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
-        jest.spyOn(service, 'getCourseStatistics').mockReturnValue(of(returnValue));
+        const statisticsService = jest.spyOn(service, 'getCourseStatistics').mockReturnValue(of(returnValue));
         fixture.detectChanges();
-        expect(component).to.be.ok;
+        expect(statisticsService).toHaveBeenCalledTimes(1);
     });
 
     it('should trigger when tab changed', fakeAsync(() => {
         jest.spyOn(service, 'getCourseStatistics').mockReturnValue(of(returnValue));
-        const tabSpy = sinon.spy(component, 'onTabChanged');
+        const tabSpy = jest.spyOn(component, 'onTabChanged');
         fixture.detectChanges();
 
         const button = fixture.debugElement.nativeElement.querySelector('#option3');
         button.click();
 
         tick();
-        expect(tabSpy).to.have.been.calledOnce;
-        expect(component.currentSpan).to.be.equal(SpanType.MONTH);
-        tabSpy.restore();
+        expect(tabSpy).toHaveBeenCalledTimes(1);
+        expect(component.currentSpan).toBe(SpanType.MONTH);
     }));
 });

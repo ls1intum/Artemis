@@ -5,17 +5,9 @@ import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { Router } from '@angular/router';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { NgxDataEntry } from 'app/entities/course.model';
 
-export const ngxColor = {
-    name: 'Course statistics',
-    selectable: true,
-    group: ScaleType.Ordinal,
-    domain: [GraphColors.DARK_BLUE],
-} as Color;
-
-interface ExerciseStatisticsEntry {
-    name: string;
-    value: number;
+interface ExerciseStatisticsEntry extends NgxDataEntry {
     exerciseType: ExerciseType;
     exerciseId: number;
 }
@@ -137,7 +129,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
             if (exercise.name === name && exercise.value === value) {
                 counter++;
                 result = exercise;
-                return;
             }
         });
         // if more than one exercise match, we do not navigate
@@ -158,7 +149,8 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
             }
             return type;
         } else {
-            return 'Unknown';
+            // if the name and value is not unique, we cannot determine the type
+            return '';
         }
     }
 }
