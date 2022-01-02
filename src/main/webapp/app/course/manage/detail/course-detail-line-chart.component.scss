@@ -35,6 +35,10 @@
     position: absolute;
 }
 
+.checkbox-label {
+    margin-left: 0.25rem;
+}
+
 :host ::ng-deep .refline-label {
     font-size: larger !important;
     font-weight: bolder;
