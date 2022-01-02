@@ -27,13 +27,13 @@ describe('TextUnitFormComponent', () => {
         // mocking router
         // mocking the local storage for cache testing
         store = {};
-        jest.spyOn(localStorage, 'getItem').callsFake((key: string) => {
+        jest.spyOn(localStorage, 'getItem').mockImplementation((key: string) => {
             return store[key] || null;
         });
-        jest.spyOn(localStorage, 'removeItem').callsFake((key: string) => {
+        jest.spyOn(localStorage, 'removeItem').mockImplementation((key: string) => {
             delete store[key];
         });
-        jest.spyOn(localStorage, 'setItem').callsFake((key: string, value: string) => {
+        jest.spyOn(localStorage, 'setItem').mockImplementation((key: string, value: string) => {
             return (store[key] = <string>value);
         });
 
@@ -70,12 +70,12 @@ describe('TextUnitFormComponent', () => {
         };
         store[fakeUrl] = JSON.stringify(cache);
 
-        jest.spyOn(window, 'confirm').callsFake(() => {
+        jest.spyOn(window, 'confirm').mockImplementation(() => {
             return true;
         });
 
         const translateService = TestBed.inject(TranslateService);
-        jest.spyOn(translateService, 'instant').callsFake(() => {
+        jest.spyOn(translateService, 'instant').mockImplementation(() => {
             return '';
         });
         textUnitFormComponentFixture.detectChanges(); // ngOnInit

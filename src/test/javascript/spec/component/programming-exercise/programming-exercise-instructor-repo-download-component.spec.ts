@@ -37,7 +37,7 @@ describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
     it('should not download when there is no exercise', () => {
         const spy = jest.spyOn(service, 'exportInstructorRepository');
         component.exportRepository();
-        expect(spy).callCount(0);
+        expect(spy).toHaveBeenCalledTimes(0);
     });
 
     it('should download the repos', () => {
@@ -48,8 +48,8 @@ describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
         repoTypes.forEach((repoType) => {
             component.repositoryType = repoType;
             component.exportRepository();
-            expect(spy).callCount(1);
-            spy.resetHistory();
+            expect(spy).toHaveBeenCalledTimes(1);
+            spy.mockRestore();
         });
     });
 });

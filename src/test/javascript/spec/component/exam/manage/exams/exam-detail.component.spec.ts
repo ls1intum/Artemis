@@ -209,7 +209,8 @@ describe('ExamDetailComponent', () => {
         // GIVEN
         examDetailComponent.exam = { ...exam, studentExams: [{ id: 1 }] };
         const responseFakeReset = { body: exam } as HttpResponse<Exam>;
-        sinon.replace(service, 'reset', sinon.fake.mockReturnValue(of(responseFakeReset)));
+        jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
+        jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
 
         // WHEN
         examDetailComponent.resetExam();

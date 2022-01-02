@@ -159,8 +159,8 @@ describe('ExamPointsSummaryComponent', function () {
     });
 
     it('should calculate exam grade correctly', () => {
-        const gradingSystemServiceMatchPercentageStub = sinon
-            .stub(gradingSystemService, 'matchPercentageToGradeStepForExam')
+        const gradingSystemServiceMatchPercentageStub = jest
+            .spyOn(gradingSystemService, 'matchPercentageToGradeStepForExam')
             .mockReturnValue(of(new HttpResponse<GradeDTO>({ body: gradeDto })));
         const achievedPointsRelative = (component.calculatePointsSum() / component.calculateMaxPointsSum()) * 100;
 

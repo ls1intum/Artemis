@@ -3,7 +3,7 @@ import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { BehaviorSubject } from 'rxjs';
+import { ReplaySubject } from 'rxjs';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -91,26 +91,26 @@ describe('Notification Popup Component', () => {
 
             it('should remove notification from component state when notification is closed', () => {
                 jest.spyOn(notificationPopupComponent, 'removeNotification');
-                sinon.replace(notificationPopupComponent, 'navigateToTarget', sinon.fake());
+                jest.spyOn(notificationPopupComponent, 'navigateToTarget').mockReturnValue();
                 const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
                 button.nativeElement.click();
                 expect(notificationPopupComponent.removeNotification).toHaveBeenCalled();
-                expect(notificationPopupComponent.notifications).to.be.empty;
+                expect(notificationPopupComponent.notifications).toBeEmpty();
             });
 
             it('should remove quiz notification from component state and navigate to quiz target when notification is clicked', () => {
                 jest.spyOn(notificationPopupComponent, 'removeNotification');
-                sinon.replace(notificationPopupComponent, 'navigateToTarget', sinon.fake());
+                jest.spyOn(notificationPopupComponent, 'navigateToTarget').mockReturnValue();
                 const notificationElement = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div'));
                 notificationElement.nativeElement.click();
                 expect(notificationPopupComponent.removeNotification).toHaveBeenCalledTimes(1);
-                expect(notificationPopupComponent.notifications).to.be.empty;
+                expect(notificationPopupComponent.notifications).toBeEmpty();
                 expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledTimes(1);
             });
 
             it('should navigate to quiz target when quiz notification is clicked', () => {
                 jest.spyOn(notificationPopupComponent, 'navigateToTarget');
-                sinon.replace(router, 'navigateByUrl', sinon.fake());
+                jest.spyOn(router, 'navigateByUrl');
                 const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
                 button.nativeElement.click();
                 expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledTimes(1);
@@ -123,7 +123,7 @@ describe('Notification Popup Component', () => {
             notificationPopupComponentFixture.detectChanges();
 
             jest.spyOn(notificationPopupComponent, 'navigateToTarget');
-            sinon.replace(examExerciseUpdateService, 'navigateToExamExercise', sinon.fake());
+            jest.spyOn(examExerciseUpdateService, 'navigateToExamExercise').mockReturnValue();
             const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
             button.nativeElement.click();
             expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledTimes(1);
@@ -133,16 +133,18 @@ describe('Notification Popup Component', () => {
 
     describe('Websocket receive', () => {
         const replaceSubscribeToNotificationUpdatesUsingQuizNotification = () => {
-            const fake = sinon.fake.mockReturnValue(new BehaviorSubject(quizNotification));
-            sinon.replace(notificationService, 'subscribeToNotificationUpdates', fake);
+            const replay = new ReplaySubject<Notification>();
+            jest.spyOn(notificationService, 'subscribeToNotificationUpdates').mockReturnValue(replay);
+            replay.next(quizNotification);
         };
         const replaceSubscribeToNotificationUpdatesUsingExamExerciseUpdateNotification = () => {
-            const fake = sinon.fake.mockReturnValue(new BehaviorSubject(examExerciseUpdateNotification));
-            sinon.replace(notificationService, 'subscribeToNotificationUpdates', fake);
+            const replay = new ReplaySubject<Notification>();
+            jest.spyOn(notificationService, 'subscribeToNotificationUpdates').mockReturnValue(replay);
+            replay.next(examExerciseUpdateNotification);
         };
 
         it('should prepend received notification', fakeAsync(() => {
-            sinon.replace(router, 'isActive', sinon.fake.mockReturnValue(false));
+            jest.spyOn(router, 'isActive').mockReturnValue(false);
             replaceSubscribeToNotificationUpdatesUsingQuizNotification();
             const otherNotification = generateQuizNotification(2);
             notificationPopupComponent.notifications = [otherNotification];
@@ -155,26 +157,26 @@ describe('Notification Popup Component', () => {
         }));
 
         it('should not add received quiz notification if user is already on quiz page', () => {
-            sinon.replace(router, 'isActive', sinon.fake.mockReturnValue(true));
+            jest.spyOn(router, 'isActive').mockReturnValue(true);
             replaceSubscribeToNotificationUpdatesUsingQuizNotification();
             notificationPopupComponent.ngOnInit();
-            expect(notificationPopupComponent.notifications).to.be.empty;
+            expect(notificationPopupComponent.notifications).toBeEmpty();
         });
 
         it('should not add received exam exercise update notification if user is not in exam mode', () => {
-            sinon.replace(router, 'isActive', sinon.fake.mockReturnValue(false));
-            sinon.replace(examExerciseUpdateService, 'updateLiveExamExercise', sinon.fake());
+            jest.spyOn(router, 'isActive').mockReturnValue(false);
+            jest.spyOn(examExerciseUpdateService, 'updateLiveExamExercise').mockReturnValue();
             replaceSubscribeToNotificationUpdatesUsingExamExerciseUpdateNotification();
             notificationPopupComponent.ngOnInit();
-            expect(notificationPopupComponent.notifications).to.be.empty;
+            expect(notificationPopupComponent.notifications).toBeEmpty();
         });
 
         it('should add received exam exercise update notification if user is in exam mode', () => {
-            sinon.replace(router, 'isActive', sinon.fake.mockReturnValue(true));
-            sinon.replace(examExerciseUpdateService, 'updateLiveExamExercise', sinon.fake());
+            jest.spyOn(router, 'isActive').mockReturnValue(true);
+            jest.spyOn(examExerciseUpdateService, 'updateLiveExamExercise').mockReturnValue();
             replaceSubscribeToNotificationUpdatesUsingExamExerciseUpdateNotification();
             notificationPopupComponent.ngOnInit();
-            expect(notificationPopupComponent.notifications).to.not.be.empty;
+            expect(notificationPopupComponent.notifications).not.toBeEmpty();
         });
     });
 });

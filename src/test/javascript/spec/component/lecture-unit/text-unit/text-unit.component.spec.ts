@@ -80,7 +80,7 @@ describe('TextUnitFormComponent', () => {
         const contentOfNewWindow: string[] = [];
         const innerHtmlCopy = window.document.body.innerHTML;
 
-        const writeStub = jest.spyOn(window.document, 'write').callsFake((content: string) => {
+        const writeStub = jest.spyOn(window.document, 'write').mockImplementation((content: string) => {
             contentOfNewWindow.push(content);
         });
         const closeStub = jest.spyOn(window.document, 'close');

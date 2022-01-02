@@ -37,15 +37,15 @@ describe('ProgrammingExerciseInstructorExerciseDownloadComponent', () => {
     it('should not download when there is no exercise', () => {
         const spy = jest.spyOn(service, 'exportInstructorExercise');
         component.exportExercise();
-        expect(spy).callCount(0);
-        spy.resetHistory();
+        expect(spy).toHaveBeenCalledTimes(0);
+        spy.mockRestore();
     });
 
     it('should download the exercise', () => {
         const spy = jest.spyOn(service, 'exportInstructorExercise');
         component.exerciseId = 1;
         component.exportExercise();
-        expect(spy).callCount(1);
-        spy.resetHistory();
+        expect(spy).toHaveBeenCalledTimes(1);
+        spy.mockRestore();
     });
 });

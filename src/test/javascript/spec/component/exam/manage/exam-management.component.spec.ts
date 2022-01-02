@@ -80,7 +80,7 @@ describe('Exam Management Component', () => {
     it('should call find of courseManagementService to get course on init', () => {
         // GIVEN
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
-        sinon.replace(courseManagementService, 'find', sinon.fake.mockReturnValue(of(responseFakeCourse)));
+        jest.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
 
         // WHEN
         comp.ngOnInit();
@@ -93,9 +93,9 @@ describe('Exam Management Component', () => {
     it('should call loadAllExamsForCourse on init', () => {
         // GIVEN
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
-        sinon.replace(courseManagementService, 'find', sinon.fake.mockReturnValue(of(responseFakeCourse)));
+        jest.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
         const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
-        sinon.replace(service, 'findAllExamsForCourse', sinon.fake.mockReturnValue(of(responseFakeExams)));
+        jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeExams));
 
         // WHEN
         comp.ngOnInit();
@@ -108,14 +108,14 @@ describe('Exam Management Component', () => {
     it('should call getLatestIndividualDate on init', () => {
         // GIVEN
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
-        sinon.replace(courseManagementService, 'find', sinon.fake.mockReturnValue(of(responseFakeCourse)));
+        jest.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
         const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
-        sinon.replace(service, 'findAllExamsForCourse', sinon.fake.mockReturnValue(of(responseFakeExams)));
+        jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeExams));
 
         const examInformationDTO = new ExamInformationDTO();
         examInformationDTO.latestIndividualEndDate = dayjs();
         const responseFakeLatestIndividualEndDateOfExam = { body: examInformationDTO } as HttpResponse<ExamInformationDTO>;
-        sinon.replace(service, 'getLatestIndividualEndDateOfExam', sinon.fake.mockReturnValue(of(responseFakeLatestIndividualEndDateOfExam)));
+        jest.spyOn(service, 'getLatestIndividualEndDateOfExam').mockReturnValue(of(responseFakeLatestIndividualEndDateOfExam));
 
         // WHEN
         comp.ngOnInit();
@@ -129,7 +129,7 @@ describe('Exam Management Component', () => {
         // GIVEN
         comp.course = course;
         const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
-        sinon.replace(service, 'findAllExamsForCourse', sinon.fake.mockReturnValue(of(responseFakeExams)));
+        jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeExams));
 
         // WHEN
         comp.registerChangeInExams();
@@ -146,8 +146,8 @@ describe('Exam Management Component', () => {
         comp.course = course;
         const responseFakeDelete = {} as HttpResponse<any[]>;
         const responseFakeEmptyExamArray = { body: [exam] } as HttpResponse<Exam[]>;
-        sinon.replace(service, 'delete', sinon.fake.mockReturnValue(of(responseFakeDelete)));
-        sinon.replace(service, 'findAllExamsForCourse', sinon.fake.mockReturnValue(of(responseFakeEmptyExamArray)));
+        jest.spyOn(service, 'delete').mockReturnValue(of(responseFakeDelete));
+        jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeEmptyExamArray));
 
         // WHEN
         comp.deleteExam(exam.id!);
@@ -200,7 +200,7 @@ describe('Exam Management Component', () => {
 
     it('should call sortService when sortRows is called ', () => {
         // GIVEN
-        sinon.replace(sortService, 'sortByProperty', sinon.fake.mockReturnValue([]));
+        jest.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
 
         // WHEN
         comp.sortRows();

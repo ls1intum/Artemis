@@ -16,7 +16,7 @@ describe('GuidedTourUtils', () => {
             const mockElement = { click: () => {} } as HTMLElement;
             querySelectorStub.mockReturnValue(mockElement);
             clickOnElement('ab');
-            sinon.assert.called(querySelectorStub);
+            expect(querySelectorStub).toHaveBeenCalled();
         });
     });
     describe('calculateLeftOffset', () => {

@@ -75,7 +75,7 @@ describe('ExerciseGroupUpdateComponent', () => {
 
     it('Should save exercise group', fakeAsync(() => {
         const responseFakeExerciseGroup = { body: exerciseGroup } as EntityResponseType;
-        sinon.replace(service, 'update', sinon.fake.mockReturnValue(of(responseFakeExerciseGroup)));
+        jest.spyOn(service, 'update').mockReturnValue(of(responseFakeExerciseGroup));
 
         component.save();
 
@@ -88,7 +88,7 @@ describe('ExerciseGroupUpdateComponent', () => {
         component.exerciseGroup.id = undefined;
 
         const responseFakeExerciseGroup = { body: exerciseGroup } as EntityResponseType;
-        sinon.replace(service, 'create', sinon.fake.mockReturnValue(of(responseFakeExerciseGroup)));
+        jest.spyOn(service, 'create').mockReturnValue(of(responseFakeExerciseGroup));
 
         component.save();
 
@@ -103,7 +103,7 @@ describe('ExerciseGroupUpdateComponent', () => {
         const error = { status: 404 };
         component.exerciseGroup.id = undefined;
 
-        sinon.replace(service, 'create', sinon.fake.mockReturnValue(throwError(new HttpErrorResponse(error))));
+        jest.spyOn(service, 'create').mockReturnValue(throwError(new HttpErrorResponse(error)));
 
         component.save();
 

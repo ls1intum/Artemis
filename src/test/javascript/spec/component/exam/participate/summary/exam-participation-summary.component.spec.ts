@@ -167,7 +167,7 @@ describe('ExamParticipationSummaryComponent', () => {
         exportToPDFButton.nativeElement.click();
         expect(component.collapsedExerciseIds).toBeEmpty();
         tick();
-        sinon.assert.called(printWindowStub);
+        expect(printWindowStub).toHaveBeenCalled();
         printWindowStub.mockRestore();
     }));
 });
