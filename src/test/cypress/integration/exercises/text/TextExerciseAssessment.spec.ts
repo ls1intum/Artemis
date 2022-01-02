@@ -61,7 +61,7 @@ describe('Text exercise assessment', () => {
         textAssessment.provideFeedbackOnTextSection(1, tutorTextFeedbackPoints, tutorTextFeedback);
         textAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
         textAssessment.submit().then((request: any) => {
-            expect(request.response.statusCode).to.equal(200);
+            expect(request.response.statusCode).toEqual(200);
         });
     });
 

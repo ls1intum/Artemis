@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import { spy } from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisTestModule } from '../../test.module';
@@ -10,9 +7,6 @@ import { DebugElement } from '@angular/core';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('Feature Overview Component', () => {
     let comp: FeatureOverviewComponent;
@@ -43,8 +37,8 @@ describe('Feature Overview Component', () => {
                 comp.ngOnInit();
 
                 // THEN
-                expect(comp.targetAudience).to.be.equal(TargetAudience.INSTRUCTORS);
-                expect(comp.features.length).to.be.greaterThan(0);
+                expect(comp.targetAudience).toEqual(TargetAudience.INSTRUCTORS);
+                expect(comp.features.length).toBeGreaterThan(0);
             });
 
             it('should ensure all features have unique IDs', function () {
@@ -55,7 +49,7 @@ describe('Feature Overview Component', () => {
                 for (const featureA of comp.features) {
                     for (const featureB of comp.features) {
                         if (featureA !== featureB) {
-                            expect(featureA.id === featureB.id).to.be.false;
+                            expect(featureA.id === featureB.id).toBeFalse();
                         }
                     }
                 }
@@ -64,7 +58,7 @@ describe('Feature Overview Component', () => {
 
         describe('Navigate to Feature Details', () => {
             it('should scroll to the correct feature detail', fakeAsync(() => {
-                const navigateToFeatureSpy = spy(comp, 'navigateToFeature');
+                const navigateToFeatureSpy = jest.spyOn(comp, 'navigateToFeature');
                 // WHEN
                 comp.ngOnInit();
                 fixture.detectChanges();
@@ -75,7 +69,7 @@ describe('Feature Overview Component', () => {
                 featureOverview.nativeElement.click();
 
                 // THEN
-                expect(navigateToFeatureSpy).to.have.been.calledOnceWithExactly(comp.features[0].id);
+                expect(navigateToFeatureSpy).toHaveBeenCalledWith(comp.features[0].id);
             }));
         });
     });

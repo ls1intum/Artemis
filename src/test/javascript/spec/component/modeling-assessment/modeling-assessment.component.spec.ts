@@ -7,16 +7,10 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
-import * as chai from 'chai';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ModelingAssessmentComponent', () => {
     let fixture: ComponentFixture<ModelingAssessmentComponent>;
@@ -107,7 +101,7 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should show  title if any', () => {
@@ -115,7 +109,7 @@ describe('ModelingAssessmentComponent', () => {
         comp.title = title;
         fixture.detectChanges();
         const el = fixture.debugElement.query((de) => de.nativeElement.textContent === title);
-        expect(el).to.exist;
+        expect(el).not.toBeNull();
     });
 
     describe('score display', () => {
@@ -131,16 +125,16 @@ describe('ModelingAssessmentComponent', () => {
             comp.displayPoints = true;
             fixture.detectChanges();
             const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
-            expect(scoreDisplay).to.exist;
-            expect(scoreDisplay.componentInstance.score).to.equal(totalScore);
-            expect(scoreDisplay.componentInstance.maxPoints).to.equal(maxScore);
+            expect(scoreDisplay).not.toBeNull();
+            expect(scoreDisplay.componentInstance.score).toEqual(totalScore);
+            expect(scoreDisplay.componentInstance.maxPoints).toEqual(maxScore);
         });
 
         it('should not display score if displayPoints wrong', () => {
             comp.displayPoints = false;
             fixture.detectChanges();
             const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
-            expect(scoreDisplay).to.not.exist;
+            expect(scoreDisplay).toBeNull();
         });
     });
 
@@ -149,16 +143,16 @@ describe('ModelingAssessmentComponent', () => {
         comp.explanation = explanation;
         fixture.detectChanges();
         const explanationEditor = fixture.debugElement.query(By.directive(ModelingExplanationEditorComponent));
-        expect(explanationEditor).to.exist;
-        expect(explanationEditor.componentInstance.explanation).to.equal(explanation);
-        expect(explanationEditor.componentInstance.readOnly).to.equal(true);
+        expect(explanationEditor).not.toBeNull();
+        expect(explanationEditor.componentInstance.explanation).toEqual(explanation);
+        expect(explanationEditor.componentInstance.readOnly).toEqual(true);
     });
 
     it('should initialize apollon editor', () => {
         comp.umlModel = mockModel;
         comp.diagramType = UMLDiagramType.ClassDiagram;
         fixture.detectChanges();
-        expect(comp.apollonEditor).to.exist;
+        expect(comp.apollonEditor).not.toBeNull();
     });
 
     it('should filter references', () => {
@@ -166,9 +160,9 @@ describe('ModelingAssessmentComponent', () => {
         comp.readOnly = true;
         comp.feedbacks = mockFeedbacks;
         fixture.detectChanges();
-        expect(comp.referencedFeedbacks).to.deep.equal([mockFeedbackWithReference]);
-        expect(comp.unreferencedFeedbacks).to.deep.equal([mockFeedbackWithoutReference]);
-        expect(comp.feedbacks).to.deep.equal(mockFeedbacks);
+        expect(comp.referencedFeedbacks).toEqual([mockFeedbackWithReference]);
+        expect(comp.unreferencedFeedbacks).toEqual([mockFeedbackWithoutReference]);
+        expect(comp.feedbacks).toEqual(mockFeedbacks);
     });
 
     it('should highlight elements', () => {
@@ -178,27 +172,27 @@ describe('ModelingAssessmentComponent', () => {
         comp.umlModel = mockModel;
         comp.highlightedElements = highlightedElements;
         fixture.detectChanges();
-        expect(comp.apollonEditor).to.exist;
+        expect(comp.apollonEditor).not.toBeNull();
         const apollonModel = comp.apollonEditor!.model;
         const elements: UMLElement[] = apollonModel.elements;
         const highlightedElement = elements.find((el) => el.id === 'elementId1');
         const notHighlightedElement = elements.find((el) => el.id === 'elementId2');
         const relationship = apollonModel.relationships[0];
-        expect(highlightedElement).to.exist;
-        expect(highlightedElement!.highlight).to.equal('red');
-        expect(notHighlightedElement).to.exist;
-        expect(notHighlightedElement!.highlight).to.not.exist;
-        expect(relationship).to.exist;
-        expect(relationship!.highlight).to.equal('blue');
+        expect(highlightedElement).not.toBeNull();
+        expect(highlightedElement!.highlight).toEqual('red');
+        expect(notHighlightedElement).not.toBeNull();
+        expect(notHighlightedElement!.highlight).toBeNull();
+        expect(relationship).not.toBeNull();
+        expect(relationship!.highlight).toEqual('blue');
     });
 
     it('should update model', () => {
         const newModel = generateMockModel('newElement1', 'newElement2', 'newRelationship');
         const changes = { model: { currentValue: newModel } as SimpleChange };
         fixture.detectChanges();
-        const apollonSpy = sinon.spy(comp.apollonEditor as ApollonEditor, 'model', ['set']);
+        const apollonSpy = jest.spyOn(comp.apollonEditor as ApollonEditor, 'model', ['set']);
         comp.ngOnChanges(changes);
-        expect(apollonSpy.set).to.have.been.calledWithExactly(newModel);
+        expect(apollonSpy.set).toHaveBeenCalledWith(newModel);
     });
 
     it('should update highlighted elements', () => {
@@ -209,18 +203,18 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         comp.highlightedElements = highlightedElements;
         comp.ngOnChanges(changes);
-        expect(comp.apollonEditor).to.exist;
+        expect(comp.apollonEditor).not.toBeNull();
         const apollonModel = comp.apollonEditor!.model;
         const elements: UMLElement[] = apollonModel.elements;
         const highlightedElement = elements.find((el) => el.id === 'elementId2');
         const notHighlightedElement = elements.find((el) => el.id === 'elementId1');
         const relationship = apollonModel.relationships[0];
-        expect(highlightedElement).to.exist;
-        expect(highlightedElement!.highlight).to.equal('green');
-        expect(notHighlightedElement).to.exist;
-        expect(notHighlightedElement!.highlight).to.not.exist;
-        expect(relationship).to.exist;
-        expect(relationship!.highlight).to.not.exist;
+        expect(highlightedElement).not.toBeNull();
+        expect(highlightedElement!.highlight).toEqual('green');
+        expect(notHighlightedElement).not.toBeNull();
+        expect(notHighlightedElement!.highlight).toBeNull();
+        expect(relationship).not.toBeNull();
+        expect(relationship!.highlight).toBeNull();
     });
 
     it('should update highlighted assessments first round', () => {
@@ -230,16 +224,16 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         comp.feedbacks = [mockFeedbackWithReference];
         comp.referencedFeedbacks = [mockFeedbackWithReference];
-        sinon.stub(translatePipe, 'transform').returns('Second correction round');
+        jest.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
 
         comp.ngOnChanges(changes);
 
-        expect(comp.apollonEditor).to.exist;
+        expect(comp.apollonEditor).not.toBeNull();
         const apollonModel = comp.apollonEditor!.model;
         const assessments: any = apollonModel.assessments;
-        expect(assessments[0].labelColor).to.equal(comp.secondCorrectionRoundColor);
-        expect(assessments[0].label).to.equal('Second correction round');
-        expect(assessments[0].score).to.equal(30);
+        expect(assessments[0].labelColor).toEqual(comp.secondCorrectionRoundColor);
+        expect(assessments[0].label).toEqual('Second correction round');
+        expect(assessments[0].score).toEqual(30);
     });
 
     it('should update highlighted assessments', () => {
@@ -249,16 +243,16 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         comp.feedbacks = [mockFeedbackWithReferenceCopied];
         comp.referencedFeedbacks = [mockFeedbackWithReferenceCopied];
-        sinon.stub(translatePipe, 'transform').returns('First correction round');
+        jest.spyOn(translatePipe, 'transform').mockReturnValue('First correction round');
 
         comp.ngOnChanges(changes);
 
-        expect(comp.apollonEditor).to.exist;
+        expect(comp.apollonEditor).not.toBeNull();
         const apollonModel = comp.apollonEditor!.model;
         const assessments: any = apollonModel.assessments;
-        expect(assessments[0].labelColor).to.equal(comp.firstCorrectionRoundColor);
-        expect(assessments[0].label).to.equal('First correction round');
-        expect(assessments[0].score).to.equal(35);
+        expect(assessments[0].labelColor).toEqual(comp.firstCorrectionRoundColor);
+        expect(assessments[0].label).toEqual('First correction round');
+        expect(assessments[0].score).toEqual(35);
     });
 
     it('should update feedbacks', () => {
@@ -272,7 +266,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         const changes = { feedbacks: { currentValue: newMockFeedbacks } as SimpleChange };
         comp.ngOnChanges(changes);
-        expect(comp.feedbacks).to.deep.equal(newMockFeedbacks);
-        expect(comp.referencedFeedbacks).to.deep.equal([newMockFeedbackWithReference]);
+        expect(comp.feedbacks).toEqual(newMockFeedbacks);
+        expect(comp.referencedFeedbacks).toEqual([newMockFeedbackWithReference]);
     });
 });

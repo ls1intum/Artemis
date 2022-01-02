@@ -17,7 +17,6 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
 import { ArtemisTestModule } from '../../test.module';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -66,7 +65,7 @@ describe('JhiCloneRepoButtonComponent', () => {
                 MockDirective(FeatureToggleDirective),
             ],
             providers: [
-                { provide: AlertService, useClass: MockAlertService },
+                MockProvider(AlertService),
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },

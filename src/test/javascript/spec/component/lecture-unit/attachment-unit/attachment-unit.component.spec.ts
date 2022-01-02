@@ -1,6 +1,3 @@
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-import * as chai from 'chai';
 import dayjs from 'dayjs';
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -14,11 +11,7 @@ import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { FileService } from 'app/shared/http/file.service';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('AttachmentUnitComponent', () => {
-    const sandbox = sinon.createSandbox();
     let attachmentUnit: AttachmentUnit;
     let attachment: Attachment;
 
@@ -62,7 +55,7 @@ describe('AttachmentUnitComponent', () => {
     });
 
     afterEach(function () {
-        sandbox.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -74,22 +67,22 @@ describe('AttachmentUnitComponent', () => {
         attachment.link = '/path/to/file/test.zip';
         attachmentUnitComponentFixture.detectChanges();
         attachment.link = '/path/to/file/test.something';
-        expect(attachmentUnitComponent).to.be.ok;
+        expect(attachmentUnitComponent).not.toBeNull();
     });
 
     it('should calculate correct fileName', () => {
-        const getFileNameSpy = sinon.spy(attachmentUnitComponent, 'getFileName');
+        const getFileNameSpy = jest.spyOn(attachmentUnitComponent, 'getFileName');
         attachmentUnitComponentFixture.detectChanges();
-        expect(getFileNameSpy).to.have.returned('test.pdf');
-        getFileNameSpy.restore();
+        expect(getFileNameSpy).toHaveReturnedWith('test.pdf');
+        getFileNameSpy.mockRestore();
     });
 
     it('should download attachment when clicked', () => {
         const fileService = TestBed.inject(FileService);
-        const downloadFileStub = sandbox.stub(fileService, 'downloadFileWithAccessToken');
+        const downloadFileStub = jest.spyOn(fileService, 'downloadFileWithAccessToken');
         const downloadButton = attachmentUnitComponentFixture.debugElement.nativeElement.querySelector('#downloadButton');
-        expect(downloadButton).to.be.ok;
+        expect(downloadButton).not.toBeNull();
         downloadButton.click();
-        expect(downloadFileStub).to.have.been.calledOnce;
+        expect(downloadFileStub).toHaveBeenCalledTimes(1);
     });
 });

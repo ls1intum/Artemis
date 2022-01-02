@@ -5,13 +5,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
-import sinonChai from 'sinon-chai';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import * as sinon from 'sinon';
-import * as chai from 'chai';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ProgrammingExerciseInstructorExerciseDownloadComponent', () => {
     let component: ProgrammingExerciseInstructorExerciseDownloadComponent;
@@ -32,23 +26,23 @@ describe('ProgrammingExerciseInstructorExerciseDownloadComponent', () => {
 
     afterEach(function () {
         // completely restore all fakes created through the sandbox
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(component).to.be.ok;
+        expect(component).not.toBeNull();
     });
 
     it('should not download when there is no exercise', () => {
-        const spy = sinon.spy(service, 'exportInstructorExercise');
+        const spy = jest.spyOn(service, 'exportInstructorExercise');
         component.exportExercise();
         expect(spy).callCount(0);
         spy.resetHistory();
     });
 
     it('should download the exercise', () => {
-        const spy = sinon.spy(service, 'exportInstructorExercise');
+        const spy = jest.spyOn(service, 'exportInstructorExercise');
         component.exerciseId = 1;
         component.exportExercise();
         expect(spy).callCount(1);

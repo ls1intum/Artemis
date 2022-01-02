@@ -17,9 +17,6 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-import * as chai from 'chai';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Exercise } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
@@ -37,9 +34,6 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('StudentExamDetailComponent', () => {
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
@@ -187,70 +181,70 @@ describe('StudentExamDetailComponent', () => {
             });
     });
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('initialize', () => {
-        const findCourseSpy = sinon.spy(courseManagementService, 'find');
-        const gradeSpy = sinon.spy(gradingSystemService, 'matchPercentageToGradeStepForExam');
+        const findCourseSpy = jest.spyOn(courseManagementService, 'find');
+        const gradeSpy = jest.spyOn(gradingSystemService, 'matchPercentageToGradeStepForExam');
         studentExamDetailComponentFixture.detectChanges();
 
-        expect(findCourseSpy).to.have.been.calledOnce;
-        expect(gradeSpy).to.have.been.calledOnce;
-        expect(course.id).to.equal(1);
-        expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
+        expect(findCourseSpy).toHaveBeenCalledTimes(1);
+        expect(gradeSpy).toHaveBeenCalledTimes(1);
+        expect(course.id).toEqual(1);
+        expect(studentExamDetailComponent.workingTimeForm).not.toBeNull();
+        expect(studentExamDetailComponent.achievedTotalPoints).toEqual(40);
     });
 
     it('should save working time', () => {
-        const studentExamSpy = sinon.spy(studentExamService, 'updateWorkingTime');
+        const studentExamSpy = jest.spyOn(studentExamService, 'updateWorkingTime');
         studentExamDetailComponentFixture.detectChanges();
 
         studentExamDetailComponent.saveWorkingTime();
-        expect(studentExamSpy).to.have.been.calledOnce;
-        expect(studentExamDetailComponent.isSavingWorkingTime).to.equal(false);
-        expect(course.id).to.equal(1);
-        expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
-        expect(studentExamDetailComponent.maxTotalPoints).to.equal(100);
+        expect(studentExamSpy).toHaveBeenCalledTimes(1);
+        expect(studentExamDetailComponent.isSavingWorkingTime).toEqual(false);
+        expect(course.id).toEqual(1);
+        expect(studentExamDetailComponent.workingTimeForm).not.toBeNull();
+        expect(studentExamDetailComponent.achievedTotalPoints).toEqual(40);
+        expect(studentExamDetailComponent.maxTotalPoints).toEqual(100);
     });
 
     it('should not increase points when save working time is called more than once', () => {
-        const studentExamSpy = sinon.spy(studentExamService, 'updateWorkingTime');
+        const studentExamSpy = jest.spyOn(studentExamService, 'updateWorkingTime');
         studentExamDetailComponentFixture.detectChanges();
         studentExamDetailComponent.saveWorkingTime();
         studentExamDetailComponent.saveWorkingTime();
         studentExamDetailComponent.saveWorkingTime();
-        expect(studentExamSpy).to.have.been.calledThrice;
-        expect(studentExamDetailComponent.isSavingWorkingTime).to.equal(false);
-        expect(course.id).to.equal(1);
-        expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
-        expect(studentExamDetailComponent.maxTotalPoints).to.equal(100);
+        expect(studentExamSpy).toHaveBeenCalledTimes(3);
+        expect(studentExamDetailComponent.isSavingWorkingTime).toEqual(false);
+        expect(course.id).toEqual(1);
+        expect(studentExamDetailComponent.workingTimeForm).not.toBeNull();
+        expect(studentExamDetailComponent.achievedTotalPoints).toEqual(40);
+        expect(studentExamDetailComponent.maxTotalPoints).toEqual(100);
     });
 
     it('should get examIsOver', () => {
         studentExamDetailComponent.studentExam = studentExam;
         studentExam.exam!.gracePeriod = 100;
-        expect(studentExamDetailComponent.examIsOver()).to.equal(false);
+        expect(studentExamDetailComponent.examIsOver()).toEqual(false);
         studentExam.exam!.endDate = dayjs().add(-20, 'seconds');
-        expect(studentExamDetailComponent.examIsOver()).to.equal(false);
+        expect(studentExamDetailComponent.examIsOver()).toEqual(false);
         studentExam.exam!.endDate = dayjs().add(-200, 'seconds');
-        expect(studentExamDetailComponent.examIsOver()).to.equal(true);
+        expect(studentExamDetailComponent.examIsOver()).toEqual(true);
         studentExam.exam = undefined;
-        expect(studentExamDetailComponent.examIsOver()).to.equal(false);
+        expect(studentExamDetailComponent.examIsOver()).toEqual(false);
     });
 
     it('should toggle to unsubmitted', () => {
-        const toggleSubmittedStateSpy = sinon.spy(studentExamService, 'toggleSubmittedState');
+        const toggleSubmittedStateSpy = jest.spyOn(studentExamService, 'toggleSubmittedState');
         studentExamDetailComponentFixture.detectChanges();
-        expect(studentExamDetailComponent.studentExam.submitted).to.equal(undefined);
-        expect(studentExamDetailComponent.studentExam.submissionDate).to.equal(undefined);
+        expect(studentExamDetailComponent.studentExam.submitted).toEqual(undefined);
+        expect(studentExamDetailComponent.studentExam.submissionDate).toEqual(undefined);
 
         studentExamDetailComponent.toggle();
 
-        expect(toggleSubmittedStateSpy).to.have.been.calledOnce;
-        expect(studentExamDetailComponent.studentExam.submitted).to.equal(true);
-        expect(studentExamDetailComponent.studentExam.submissionDate).to.not.equal(undefined);
+        expect(toggleSubmittedStateSpy).toHaveBeenCalledTimes(1);
+        expect(studentExamDetailComponent.studentExam.submitted).toEqual(true);
+        expect(studentExamDetailComponent.studentExam.submissionDate).not.toBeUndefined();
     });
 });

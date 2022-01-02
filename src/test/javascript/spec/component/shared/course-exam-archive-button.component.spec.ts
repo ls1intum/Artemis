@@ -12,7 +12,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import dayjs from 'dayjs';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import * as sinon from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -150,7 +149,7 @@ describe('Course Exam Archive Button Component', () => {
         }));
 
         afterEach(function () {
-            sinon.restore();
+            jest.restoreAllMocks();
         });
 
         it('should not display an archive course button', fakeAsync(() => {
@@ -236,7 +235,7 @@ describe('Course Exam Archive Button Component', () => {
         }));
 
         afterEach(function () {
-            sinon.restore();
+            jest.restoreAllMocks();
         });
 
         it('should display an archive button', fakeAsync(() => {

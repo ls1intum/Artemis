@@ -6,8 +6,6 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-detail.component';
 import { By } from '@angular/platform-browser';
-import sinonChai from 'sinon-chai';
-import * as chai from 'chai';
 import { fileUploadExercise, MockFileUploadExerciseService } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AlertService } from 'app/core/util/alert.service';
@@ -23,14 +21,10 @@ import { MockPipe, MockComponent } from 'ng-mocks';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import * as sinon from 'sinon';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { ExerciseDetailsComponent } from 'app/exercises/shared/exercise/exercise-details/exercise-details.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('FileUploadExercise Management Detail Component', () => {
     let comp: FileUploadExerciseDetailComponent;
@@ -64,7 +58,7 @@ describe('FileUploadExercise Management Detail Component', () => {
         numberOfResolvedPosts: 2,
         resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
-    let statisticsServiceStub: sinon.SinonStub;
+    let statisticsServiceStub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -92,11 +86,11 @@ describe('FileUploadExercise Management Detail Component', () => {
         service = fixture.debugElement.injector.get(FileUploadExerciseService);
         statisticsService = fixture.debugElement.injector.get(StatisticsService);
         debugElement = fixture.debugElement;
-        statisticsServiceStub = sinon.stub(statisticsService, 'getExerciseStatistics').returns(of(fileUploadExerciseStatistics));
+        statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(fileUploadExerciseStatistics));
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     describe('Title should contain exercise id and description list', () => {
@@ -113,17 +107,17 @@ describe('FileUploadExercise Management Detail Component', () => {
             comp.ngOnInit();
             tick();
 
-            expect(comp.fileUploadExercise).to.equal(fileUploadExerciseWithCourse);
+            expect(comp.fileUploadExercise).toEqual(fileUploadExerciseWithCourse);
 
             fixture.detectChanges();
 
             const title = debugElement.query(By.css('h2'));
-            expect(title).to.exist;
+            expect(title).not.toBeNull();
             const h2: HTMLElement = title.nativeElement;
-            expect(h2.textContent!.endsWith(fileUploadExerciseWithCourse.id!.toString())).to.be.true;
+            expect(h2.textContent!.endsWith(fileUploadExerciseWithCourse.id!.toString())).toBeTrue();
 
             const descList = debugElement.query(By.css('dl'));
-            expect(descList).to.exist;
+            expect(descList).not.toBeNull();
         }));
     });
 
@@ -148,12 +142,12 @@ describe('FileUploadExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(statisticsServiceStub).to.have.been.called;
-            expect(comp.doughnutStats.participationsInPercent).to.equal(100);
-            expect(comp.doughnutStats.resolvedPostsInPercent).to.equal(50);
-            expect(comp.doughnutStats.absoluteAveragePoints).to.equal(5);
-            expect(comp.isExamExercise).to.be.false;
-            expect(comp.fileUploadExercise).to.equal(fileUploadExerciseWithCourse);
+            expect(statisticsServiceStub).toHaveBeenCalled();
+            expect(comp.doughnutStats.participationsInPercent).toEqual(100);
+            expect(comp.doughnutStats.resolvedPostsInPercent).toEqual(50);
+            expect(comp.doughnutStats.absoluteAveragePoints).toEqual(5);
+            expect(comp.isExamExercise).toBeFalse();
+            expect(comp.fileUploadExercise).toEqual(fileUploadExerciseWithCourse);
         });
     });
 
@@ -180,12 +174,12 @@ describe('FileUploadExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(statisticsServiceStub).to.have.been.called;
-            expect(comp.doughnutStats.participationsInPercent).to.equal(100);
-            expect(comp.doughnutStats.resolvedPostsInPercent).to.equal(50);
-            expect(comp.doughnutStats.absoluteAveragePoints).to.equal(5);
-            expect(comp.isExamExercise).to.be.true;
-            expect(comp.fileUploadExercise).to.equal(fileUploadExerciseWithExerciseGroup);
+            expect(statisticsServiceStub).toHaveBeenCalled();
+            expect(comp.doughnutStats.participationsInPercent).toEqual(100);
+            expect(comp.doughnutStats.resolvedPostsInPercent).toEqual(50);
+            expect(comp.doughnutStats.absoluteAveragePoints).toEqual(5);
+            expect(comp.isExamExercise).toBeTrue();
+            expect(comp.fileUploadExercise).toEqual(fileUploadExerciseWithExerciseGroup);
         });
     });
 });

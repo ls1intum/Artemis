@@ -19,20 +19,14 @@ import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 class MockBreadcrumb {
     label: string;
@@ -43,8 +37,8 @@ class MockBreadcrumb {
 describe('NavbarComponent', () => {
     let fixture: ComponentFixture<NavbarComponent>;
     let component: NavbarComponent;
-    let courseManagementStub: sinon.SinonStub;
-    let exerciseStub: sinon.SinonStub;
+    let courseManagementStub: jest.SpyInstance;
+    let exerciseStub: jest.SpyInstance;
 
     const router = new MockRouter();
     router.setUrl('');
@@ -99,20 +93,20 @@ describe('NavbarComponent', () => {
                 component = fixture.componentInstance;
 
                 const courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
-                courseManagementStub = sinon.stub(courseManagementService, 'getTitle').returns(of({ body: 'Test Course' } as HttpResponse<string>));
+                courseManagementStub = jest.spyOn(courseManagementService, 'getTitle').mockReturnValue(of({ body: 'Test Course' } as HttpResponse<string>));
 
                 const exerciseService = fixture.debugElement.injector.get(ExerciseService);
-                exerciseStub = sinon.stub(exerciseService, 'getTitle').returns(of({ body: 'Test Exercise' } as HttpResponse<string>));
+                exerciseStub = jest.spyOn(exerciseService, 'getTitle').mockReturnValue(of({ body: 'Test Exercise' } as HttpResponse<string>));
             });
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize component', () => {
         fixture.detectChanges();
-        expect(component).to.be.ok;
+        expect(component).not.toBeNull();
     });
 
     it('should not build breadcrumbs for students', () => {
@@ -121,7 +115,7 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs.length).to.equal(0);
+        expect(component.breadcrumbs.length).toEqual(0);
     });
 
     it('should build breadcrumbs for course management', () => {
@@ -130,7 +124,7 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs.length).to.equal(1);
+        expect(component.breadcrumbs.length).toEqual(1);
 
         // Use matching here to ignore non-semantic differences between objects
         sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -142,7 +136,7 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs.length).to.equal(1);
+        expect(component.breadcrumbs.length).toEqual(1);
 
         // Use matching here to ignore non-semantic differences between objects
         sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -154,7 +148,7 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs.length).to.equal(3);
+        expect(component.breadcrumbs.length).toEqual(3);
 
         // Use matching here to ignore non-semantic differences between objects
         const systemBreadcrumb = { label: 'artemisApp.systemNotification.systemNotifications', translate: true, uri: '/admin/system-notification-management/' } as MockBreadcrumb;
@@ -169,7 +163,7 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs.length).to.equal(2);
+        expect(component.breadcrumbs.length).toEqual(2);
 
         // Use matching here to ignore non-semantic differences between objects
         sinon.assert.match(component.breadcrumbs[0], { label: 'userManagement.home.title', translate: true, uri: '/admin/user-management/' } as MockBreadcrumb);
@@ -181,12 +175,12 @@ describe('NavbarComponent', () => {
         router.setUrl(testUrl);
 
         const organizationService = fixture.debugElement.injector.get(OrganizationManagementService);
-        const organizationStub = sinon.stub(organizationService, 'getTitle').returns(of({ body: 'Organization Name' } as HttpResponse<string>));
+        const organizationStub = jest.spyOn(organizationService, 'getTitle').mockReturnValue(of({ body: 'Organization Name' } as HttpResponse<string>));
 
         fixture.detectChanges();
 
-        expect(organizationStub).to.have.been.calledWith(1);
-        expect(component.breadcrumbs.length).to.equal(2);
+        expect(organizationStub).toHaveBeenCalledWith(1);
+        expect(component.breadcrumbs.length).toEqual(2);
 
         // Use matching here to ignore non-semantic differences between objects
         sinon.assert.match(component.breadcrumbs[0], { label: 'organizationManagement.title', translate: true, uri: '/admin/organization-management/' } as MockBreadcrumb);
@@ -199,7 +193,7 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs.length).to.equal(1);
+        expect(component.breadcrumbs.length).toEqual(1);
 
         // Use matching here to ignore non-semantic differences between objects
         sinon.assert.match(component.breadcrumbs[0], { label: 'route-without-translation', translate: false, uri: '/admin/route-without-translation/' } as MockBreadcrumb);
@@ -212,7 +206,7 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).to.have.been.calledWith(1);
+            expect(courseManagementStub).toHaveBeenCalledWith(1);
 
             const importCrumb = {
                 label: 'artemisApp.exercise.import.table.doImport',
@@ -220,7 +214,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/programming-exercises/import/2/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).to.equal(4);
+            expect(component.breadcrumbs.length).toEqual(4);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -235,8 +229,8 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).to.have.been.calledWith(1);
-            expect(exerciseStub).to.have.been.calledWith(2);
+            expect(courseManagementStub).toHaveBeenCalledWith(1);
+            expect(exerciseStub).toHaveBeenCalledWith(2);
 
             const gradingCrumb = {
                 label: 'artemisApp.programmingExercise.configureGrading.shortTitle',
@@ -244,7 +238,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/programming-exercises/2/grading/test-cases/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).to.equal(5);
+            expect(component.breadcrumbs.length).toEqual(5);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -260,8 +254,8 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).to.have.been.calledWith(1);
-            expect(exerciseStub).to.have.been.calledWith(2);
+            expect(courseManagementStub).toHaveBeenCalledWith(1);
+            expect(exerciseStub).toHaveBeenCalledWith(2);
 
             const assessmentCrumb = {
                 label: 'artemisApp.assessment.assessment',
@@ -269,7 +263,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/programming-exercises/2/code-editor/new/assessment/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).to.equal(5);
+            expect(component.breadcrumbs.length).toEqual(5);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -284,13 +278,13 @@ describe('NavbarComponent', () => {
             router.setUrl(testUrl);
 
             const hintService = fixture.debugElement.injector.get(ExerciseHintService);
-            const hintsStub = sinon.stub(hintService, 'getTitle').returns(of({ body: 'Exercise Hint' } as HttpResponse<string>));
+            const hintsStub = jest.spyOn(hintService, 'getTitle').mockReturnValue(of({ body: 'Exercise Hint' } as HttpResponse<string>));
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).to.have.been.calledWith(1);
-            expect(exerciseStub).to.have.been.calledWith(2);
-            expect(hintsStub).to.have.been.calledWith(3);
+            expect(courseManagementStub).toHaveBeenCalledWith(1);
+            expect(exerciseStub).toHaveBeenCalledWith(2);
+            expect(hintsStub).toHaveBeenCalledWith(3);
 
             const hintsCrumb = {
                 label: 'artemisApp.exerciseHint.home.title',
@@ -304,7 +298,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/exercises/2/hints/3/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).to.equal(6);
+            expect(component.breadcrumbs.length).toEqual(6);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -321,8 +315,8 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).to.have.been.calledWith(1);
-            expect(exerciseStub).to.have.been.calledWith(2);
+            expect(courseManagementStub).toHaveBeenCalledWith(1);
+            expect(exerciseStub).toHaveBeenCalledWith(2);
 
             const submissionsCrumb = {
                 label: 'artemisApp.exercise.submissions',
@@ -336,7 +330,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/text-exercises/2/submissions/3/text-feedback-conflict/4/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).to.equal(6);
+            expect(component.breadcrumbs.length).toEqual(6);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -355,10 +349,10 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).to.have.been.calledWith(courseId);
-            expect(exerciseStub).to.have.been.calledWith(exerciseId);
+            expect(courseManagementStub).toHaveBeenCalledWith(courseId);
+            expect(exerciseStub).toHaveBeenCalledWith(exerciseId);
 
-            expect(component.breadcrumbs.length).to.equal(4);
+            expect(component.breadcrumbs.length).toEqual(4);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -381,8 +375,8 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).to.have.been.calledWith(1);
-            expect(exerciseStub).to.have.been.calledWith(2);
+            expect(courseManagementStub).toHaveBeenCalledWith(1);
+            expect(exerciseStub).toHaveBeenCalledWith(2);
 
             const submissionCrumb = {
                 label: 'artemisApp.exampleSubmission.home.title',
@@ -396,7 +390,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/modeling-exercises/2/example-submissions/new/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).to.equal(6);
+            expect(component.breadcrumbs.length).toEqual(6);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -417,8 +411,8 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).to.have.been.calledWith(1);
-            expect(exerciseStub).to.have.been.calledWith(2);
+            expect(courseManagementStub).toHaveBeenCalledWith(1);
+            expect(exerciseStub).toHaveBeenCalledWith(2);
 
             const submissionCrumb = {
                 label: 'artemisApp.exampleSubmission.home.title',
@@ -432,7 +426,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/modeling-exercises/2/example-submissions/3/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).to.equal(6);
+            expect(component.breadcrumbs.length).toEqual(6);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -452,12 +446,12 @@ describe('NavbarComponent', () => {
             router.setUrl(testUrl);
 
             const lectureService = fixture.debugElement.injector.get(LectureService);
-            const lectureStub = sinon.stub(lectureService, 'getTitle').returns(of({ body: 'Test Lecture' } as HttpResponse<string>));
+            const lectureStub = jest.spyOn(lectureService, 'getTitle').mockReturnValue(of({ body: 'Test Lecture' } as HttpResponse<string>));
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).to.have.been.calledWith(1);
-            expect(lectureStub).to.have.been.calledWith(2);
+            expect(courseManagementStub).toHaveBeenCalledWith(1);
+            expect(lectureStub).toHaveBeenCalledWith(2);
 
             const unitManagementCrumb = {
                 label: 'artemisApp.lectureUnit.home.title',
@@ -471,7 +465,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/lectures/2/unit-management/text-units/create/',
             };
 
-            expect(component.breadcrumbs.length).to.equal(6);
+            expect(component.breadcrumbs.length).toEqual(6);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -487,14 +481,14 @@ describe('NavbarComponent', () => {
             router.setUrl(testUrl);
 
             const apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
-            const apollonStub = sinon.stub(apollonDiagramService, 'getTitle').returns(of({ body: 'Apollon Diagram' } as HttpResponse<string>));
+            const apollonStub = jest.spyOn(apollonDiagramService, 'getTitle').mockReturnValue(of({ body: 'Apollon Diagram' } as HttpResponse<string>));
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).to.have.been.calledWith(1);
-            expect(apollonStub).to.have.been.calledWith(2);
+            expect(courseManagementStub).toHaveBeenCalledWith(1);
+            expect(apollonStub).toHaveBeenCalledWith(2);
 
-            expect(component.breadcrumbs.length).to.equal(4);
+            expect(component.breadcrumbs.length).toEqual(4);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -512,12 +506,12 @@ describe('NavbarComponent', () => {
             router.setUrl(testUrl);
 
             const examService = fixture.debugElement.injector.get(ExamManagementService);
-            const examStub = sinon.stub(examService, 'getTitle').returns(of({ body: 'Test Exam' } as HttpResponse<string>));
+            const examStub = jest.spyOn(examService, 'getTitle').mockReturnValue(of({ body: 'Test Exam' } as HttpResponse<string>));
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).to.have.been.calledWith(1);
-            expect(examStub).to.have.been.calledWith(2);
+            expect(courseManagementStub).toHaveBeenCalledWith(1);
+            expect(examStub).toHaveBeenCalledWith(2);
 
             const exerciseGroupsCrumb = {
                 label: 'artemisApp.examManagement.exerciseGroups',
@@ -530,7 +524,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/new/',
             };
 
-            expect(component.breadcrumbs.length).to.equal(6);
+            expect(component.breadcrumbs.length).toEqual(6);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -546,13 +540,13 @@ describe('NavbarComponent', () => {
             router.setUrl(testUrl);
 
             const examService = fixture.debugElement.injector.get(ExamManagementService);
-            const examStub = sinon.stub(examService, 'getTitle').returns(of({ body: 'Test Exam' } as HttpResponse<string>));
+            const examStub = jest.spyOn(examService, 'getTitle').mockReturnValue(of({ body: 'Test Exam' } as HttpResponse<string>));
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).to.have.been.calledWith(1);
-            expect(examStub).to.have.been.calledWith(2);
-            expect(exerciseStub).to.have.been.calledWith(4);
+            expect(courseManagementStub).toHaveBeenCalledWith(1);
+            expect(examStub).toHaveBeenCalledWith(2);
+            expect(exerciseStub).toHaveBeenCalledWith(4);
 
             const exerciseGroupsCrumb = {
                 label: 'artemisApp.examManagement.exerciseGroups',
@@ -570,7 +564,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/4/plagiarism/',
             };
 
-            expect(component.breadcrumbs.length).to.equal(7);
+            expect(component.breadcrumbs.length).toEqual(7);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);

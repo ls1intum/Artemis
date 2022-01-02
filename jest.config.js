@@ -39,7 +39,7 @@ module.exports = {
             lines: 76.5,
         },
     },
-    setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-sinon', 'jest-extended/all'],
+    setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
     resolver: 'jest-preset-angular/build/resolvers/ng-jest-resolver.js',
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],

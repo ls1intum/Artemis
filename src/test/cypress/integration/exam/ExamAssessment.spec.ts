@@ -126,7 +126,7 @@ describe('Exam assessment', () => {
                 modelingAssessment.assessComponent(0, 'Neutral');
                 modelingAssessment.clickNextAssessment();
                 examAssessment.submitModelingAssessment().then((assessmentResponse) => {
-                    expect(assessmentResponse.response?.statusCode).to.equal(200);
+                    expect(assessmentResponse.response?.statusCode).toEqual(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                 cy.contains('4 of 10 points').should('be.visible');
@@ -144,7 +144,7 @@ describe('Exam assessment', () => {
                 cy.contains(exerciseTitle).click();
                 textEditor.typeSubmission(textSubmission.text);
                 textEditor.saveAndContinue().then((submissionResponse) => {
-                    expect(submissionResponse.response?.statusCode).to.equal(200);
+                    expect(submissionResponse.response?.statusCode).toEqual(200);
                 });
                 examNavigation.handInEarly();
                 examStartEnd.finishExam();
@@ -156,7 +156,7 @@ describe('Exam assessment', () => {
                 startAssessing();
                 examAssessment.addNewFeedback(7, 'Good job');
                 examAssessment.submitTextAssessment().then((assessmentResponse) => {
-                    expect(assessmentResponse.response?.statusCode).to.equal(200);
+                    expect(assessmentResponse.response?.statusCode).toEqual(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                 cy.get('.question-options').contains('7 of 10 points').should('be.visible');

@@ -7,13 +7,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from './helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from './helpers/mocks/activated-route/mock-activated-route';
 import { MockRouter } from './helpers/mocks/mock-router';
-import { MockActiveModal } from './helpers/mocks/service/mock-active-modal.service';
-import { MockEventManager } from './helpers/mocks/service/mock-event-manager.service';
 import { FontAwesomeModule, FaIconComponent } from '@fortawesome/angular-fontawesome';
 import locale from '@angular/common/locales/en';
 import dayjs from 'dayjs';
-import { MockComponent } from 'ng-mocks';
-import { MockAlertService } from './helpers/mocks/service/mock-alert.service';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,14 +22,8 @@ import { MockTranslateService } from './helpers/mocks/service/mock-translate.ser
     providers: [
         DatePipe,
         ParseLinks,
-        {
-            provide: EventManager,
-            useClass: MockEventManager,
-        },
-        {
-            provide: NgbActiveModal,
-            useClass: MockActiveModal,
-        },
+        MockProvider(EventManager),
+        MockProvider(NgbActiveModal),
         {
             provide: ActivatedRoute,
             useValue: new MockActivatedRoute({ id: 123 }),
@@ -45,10 +36,7 @@ import { MockTranslateService } from './helpers/mocks/service/mock-translate.ser
             provide: AccountService,
             useClass: MockAccountService,
         },
-        {
-            provide: AlertService,
-            useClass: MockAlertService,
-        },
+        MockProvider(AlertService),
         {
             provide: TranslateService,
             useClass: MockTranslateService,

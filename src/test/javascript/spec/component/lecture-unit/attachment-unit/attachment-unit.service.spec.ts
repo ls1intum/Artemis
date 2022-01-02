@@ -1,8 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { getTestBed, TestBed } from '@angular/core/testing';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
@@ -11,9 +9,6 @@ import dayjs from 'dayjs';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('AttachmentUnitService', () => {
     let injector: TestBed;
@@ -65,7 +60,7 @@ describe('AttachmentUnitService', () => {
             .subscribe((resp) => (expectedResult = resp));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        expect(expectedResult.body).to.deep.equal(elemDefault);
+        expect(expectedResult.body).toEqual(elemDefault);
     });
 
     it('should create an AttachmentUnit', async () => {
@@ -77,7 +72,7 @@ describe('AttachmentUnitService', () => {
             .subscribe((resp) => (expectedResult = resp));
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        expect(expectedResult.body).to.deep.equal(expected);
+        expect(expectedResult.body).toEqual(expected);
     });
 
     it('should update a AttachmentUnit', async () => {
@@ -89,6 +84,6 @@ describe('AttachmentUnitService', () => {
             .subscribe((resp) => (expectedResult = resp));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
-        expect(expectedResult.body).to.deep.equal(expected);
+        expect(expectedResult.body).toEqual(expected);
     });
 });

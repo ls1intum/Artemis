@@ -1,7 +1,6 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
-import * as chai from 'chai';
 import { take } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -12,8 +11,6 @@ import { Lecture } from 'app/entities/lecture.model';
 import dayjs from 'dayjs';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-
-const expect = chai.expect;
 
 describe('Attachment Service', () => {
     let injector: TestBed;
@@ -64,7 +61,7 @@ describe('Attachment Service', () => {
                 method: 'POST',
             });
             req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(expected);
+            expect(expectedResult.body).toEqual(expected);
         });
 
         it('should update an attachment in the database', async () => {
@@ -79,7 +76,7 @@ describe('Attachment Service', () => {
                 method: 'PUT',
             });
             req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(expected);
+            expect(expectedResult.body).toEqual(expected);
         });
 
         it('should find an attachment in the database', async () => {
@@ -95,7 +92,7 @@ describe('Attachment Service', () => {
                 method: 'GET',
             });
             req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(expected);
+            expect(expectedResult.body).toEqual(expected);
         });
 
         it('should invoke query', async () => {
@@ -110,7 +107,7 @@ describe('Attachment Service', () => {
                 method: 'GET',
             });
             req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(expected);
+            expect(expectedResult.body).toEqual(expected);
         });
 
         it('should get all attachments by lectureId', async () => {
@@ -126,7 +123,7 @@ describe('Attachment Service', () => {
                 method: 'GET',
             });
             req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(expected);
+            expect(expectedResult.body).toEqual(expected);
         });
 
         it('should delete an attachment in the database', async () => {
@@ -141,12 +138,12 @@ describe('Attachment Service', () => {
                 method: 'DELETE',
             });
             req.flush(returnedFromService);
-            expect(req.request.method).to.equal('DELETE');
+            expect(req.request.method).toEqual('DELETE');
         });
 
         it('should convert attachment date from server', async () => {
             const results = service.convertAttachmentDateFromServer(elemDefault);
-            expect(results).to.deep.equal(elemDefault);
+            expect(results).toEqual(elemDefault);
         });
     });
 });

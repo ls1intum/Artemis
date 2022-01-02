@@ -1,5 +1,4 @@
 import { Course } from 'app/entities/course.model';
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
@@ -29,7 +28,7 @@ Text.size = () => {
 describe('ApollonDiagramDetail Component', () => {
     let apollonDiagramService: ApollonDiagramService;
     let fixture: ComponentFixture<ApollonDiagramDetailComponent>;
-    const sandbox = sinon.createSandbox();
+
     const course: Course = { id: 123 } as Course;
     const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
     let modalService: NgbModal;
@@ -68,12 +67,12 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     afterEach(function () {
-        sandbox.restore();
+        jest.restoreAllMocks();
     });
 
     it('ngOnInit', () => {
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
-        sandbox.stub(apollonDiagramService, 'find').returns(of(response));
+        jest.spyOn(apollonDiagramService, 'find').mockReturnValue(of(response));
 
         // test
         fixture.componentInstance.ngOnInit();
@@ -84,13 +83,13 @@ describe('ApollonDiagramDetail Component', () => {
         const div = document.createElement('div');
         fixture.componentInstance.editorContainer = new ElementRef(div);
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
-        sandbox.stub(apollonDiagramService, 'find').returns(of(response));
+        jest.spyOn(apollonDiagramService, 'find').mockReturnValue(of(response));
         fixture.componentInstance.ngOnInit();
         // ApollonEditor is the child
         expect(div.children.length).toEqual(1);
 
         // create spy after ngOnInit
-        sandbox.spy(global, 'clearInterval');
+        jest.spyOn(global, 'clearInterval');
 
         // test
         fixture.componentInstance.ngOnDestroy();
@@ -118,7 +117,7 @@ describe('ApollonDiagramDetail Component', () => {
         const div = document.createElement('div');
         fixture.componentInstance.editorContainer = new ElementRef(div);
         const module = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
-        sandbox.stub(module, 'convertRenderedSVGToPNG').returns(new Blob([]));
+        jest.spyOn(module, 'convertRenderedSVGToPNG').mockReturnValue(new Blob([]));
         fixture.componentInstance.apollonDiagram = diagram;
         fixture.componentInstance.initializeApollonEditor(model);
         // ApollonEditor is the child
@@ -139,7 +138,7 @@ describe('ApollonDiagramDetail Component', () => {
     it('save', () => {
         // setup
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
-        const updateStub = sandbox.stub(apollonDiagramService, 'update').returns(of(response));
+        const updateStub = jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
 
         const div = document.createElement('div');
         fixture.componentInstance.editorContainer = new ElementRef(div);
@@ -158,7 +157,7 @@ describe('ApollonDiagramDetail Component', () => {
     it('generateExercise', async () => {
         // setup
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
-        sandbox.stub(apollonDiagramService, 'update').returns(of(response));
+        jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
 
         const div = document.createElement('div');
         fixture.componentInstance.editorContainer = new ElementRef(div);
@@ -171,8 +170,8 @@ describe('ApollonDiagramDetail Component', () => {
         expect(fixture.componentInstance.apollonEditor).toBeTruthy();
 
         const result = new Promise((resolve) => resolve(true));
-        sandbox.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance: fixture.componentInstance, result });
-        const successSpy = sandbox.spy(alertService, 'success');
+        jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance: fixture.componentInstance, result });
+        const successSpy = jest.spyOn(alertService, 'success');
 
         // test
         await fixture.componentInstance.generateExercise();

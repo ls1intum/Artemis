@@ -1,4 +1,3 @@
-import { SinonStub, stub } from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, DebugElement } from '@angular/core';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -43,7 +42,7 @@ describe('CourseExerciseRowComponent', () => {
     let comp: CourseExerciseRowComponent;
     let fixture: ComponentFixture<CourseExerciseRowComponent>;
     let debugElement: DebugElement;
-    let getAllParticipationsStub: SinonStub;
+    let getAllParticipationsStub: jest.SpyInstance;
     let participationWebsocketService: ParticipationWebsocketService;
 
     beforeAll(() => {
@@ -86,7 +85,7 @@ describe('CourseExerciseRowComponent', () => {
                 comp.course = { id: 123, isAtLeastInstructor: true } as Course;
                 debugElement = fixture.debugElement;
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-                getAllParticipationsStub = stub(participationWebsocketService, 'getParticipationForExercise');
+                getAllParticipationsStub = jest.spyOn(participationWebsocketService, 'getParticipationForExercise');
             });
     });
 
@@ -175,7 +174,7 @@ describe('CourseExerciseRowComponent', () => {
         } as StudentParticipation;
         comp.exercise.studentParticipations = [studentParticipation];
 
-        getAllParticipationsStub.returns(studentParticipation);
+        getAllParticipationsStub.mockReturnValue(studentParticipation);
         comp.ngOnInit();
 
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.INITIALIZED);
@@ -190,7 +189,7 @@ describe('CourseExerciseRowComponent', () => {
         } as StudentParticipation;
         comp.exercise.studentParticipations = [studentParticipation];
 
-        getAllParticipationsStub.returns(studentParticipation);
+        getAllParticipationsStub.mockReturnValue(studentParticipation);
         comp.ngOnInit();
 
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.EXERCISE_MISSED);
@@ -226,7 +225,7 @@ describe('CourseExerciseRowComponent', () => {
 
             comp.exercise.studentParticipations = [studentParticipation];
 
-            getAllParticipationsStub.returns(studentParticipation);
+            getAllParticipationsStub.mockReturnValue(studentParticipation);
         }
 
         comp.ngOnInit();
@@ -242,7 +241,7 @@ describe('CourseExerciseRowComponent', () => {
         } as StudentParticipation;
         comp.exercise.studentParticipations = [studentParticipation];
 
-        getAllParticipationsStub.returns(studentParticipation);
+        getAllParticipationsStub.mockReturnValue(studentParticipation);
         comp.ngOnInit();
     };
 

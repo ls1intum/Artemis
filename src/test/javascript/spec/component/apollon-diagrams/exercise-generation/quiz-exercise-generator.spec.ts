@@ -16,7 +16,6 @@ import dayjs from 'dayjs';
 import { MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
-import * as sinon from 'sinon';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
@@ -45,7 +44,6 @@ const quizExercise = {
 describe('QuizExercise Generator', () => {
     let quizExerciseService: QuizExerciseService;
     let fileUploaderService: FileUploaderService;
-    const sandbox = sinon.createSandbox();
 
     const course: Course = { id: 123 } as Course;
 
@@ -75,16 +73,16 @@ describe('QuizExercise Generator', () => {
     });
 
     afterEach(function () {
-        sandbox.restore();
+        jest.restoreAllMocks();
     });
 
     it('generateDragAndDropExercise for Class Diagram', async () => {
         const svgRenderer = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         configureServices();
         const examplePath = '/path/to/file';
-        sandbox.stub(fileUploaderService, 'uploadFile').resolves({ path: examplePath });
-        sandbox.stub(quizExerciseService, 'create').returns(of({ body: quizExercise } as HttpResponse<QuizExercise>));
-        sandbox.stub(svgRenderer, 'convertRenderedSVGToPNG').resolves(new Blob());
+        jest.spyOn(fileUploaderService, 'uploadFile').mockReturnValue({ path: examplePath });
+        jest.spyOn(quizExerciseService, 'create').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(new Blob());
         // @ts-ignore
         const classDiagram: UMLModel = testClassDiagram as UMLModel;
         const interactiveElements: Selection = classDiagram.interactive;

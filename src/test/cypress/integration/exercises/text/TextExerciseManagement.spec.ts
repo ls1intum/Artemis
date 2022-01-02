@@ -63,8 +63,8 @@ describe('Text exercise management', () => {
             .clickCreateNewExampleSubmission()
             .its('response')
             .then((response: any) => {
-                expect(response.statusCode).to.equal(200);
-                expect(response.body.submission.text).to.equal(submission);
+                expect(response.statusCode).toEqual(200);
+                expect(response.body.submission.text).toEqual(submission);
             });
 
         // Make sure text exercise is shown in exercises list

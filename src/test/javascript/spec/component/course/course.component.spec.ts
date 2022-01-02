@@ -18,10 +18,9 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { CoursesComponent } from 'app/overview/courses.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -100,7 +99,7 @@ describe('CoursesComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseRowComponent },
-                { provide: AlertService, useClass: MockAlertService },
+                MockProvider(AlertService),
             ],
         })
             .compileComponents()

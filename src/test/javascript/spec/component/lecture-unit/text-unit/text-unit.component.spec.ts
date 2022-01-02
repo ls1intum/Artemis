@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -9,11 +6,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 describe('TextUnitFormComponent', () => {
-    const sandbox = sinon.createSandbox();
     const exampleName = 'Test';
     const exampleMarkdown = '# Sample Markdown';
     const exampleHTML = '<h3 id="samplemarkdown">Sample Markdown</h3>';
@@ -46,64 +39,64 @@ describe('TextUnitFormComponent', () => {
     });
 
     afterEach(function () {
-        sandbox.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         textUnitComponentFixture.detectChanges();
-        expect(textUnitComponent).to.be.ok;
+        expect(textUnitComponent).not.toBeNull();
     });
 
     it('should convert markdown to html and display it', fakeAsync(() => {
         textUnitComponent.textUnit = textUnit;
         textUnitComponentFixture.detectChanges();
         textUnitComponentFixture.whenStable().then(() => {
-            expect((textUnitComponent.formattedContent as any)?.changingThisBreaksApplicationSecurity).to.equal(exampleHTML);
+            expect((textUnitComponent.formattedContent as any)?.changingThisBreaksApplicationSecurity).toEqual(exampleHTML);
             const markdown = textUnitComponentFixture.debugElement.nativeElement.querySelector('.markdown-preview');
-            expect(markdown).to.be.ok;
-            expect(markdown.innerHTML).to.equal(exampleHTML);
+            expect(markdown).not.toBeNull();
+            expect(markdown.innerHTML).toEqual(exampleHTML);
         });
     }));
 
     it('should collapse unit when header clicked', () => {
         textUnitComponent.textUnit = textUnit;
         textUnitComponentFixture.detectChanges();
-        expect(textUnitComponent.isCollapsed).to.be.true;
-        const handleCollapseSpy = sinon.spy(textUnitComponent, 'handleCollapse');
+        expect(textUnitComponent.isCollapsed).toBeTrue();
+        const handleCollapseSpy = jest.spyOn(textUnitComponent, 'handleCollapse');
 
         const header = textUnitComponentFixture.debugElement.nativeElement.querySelector('.unit-card-header');
-        expect(header).to.be.ok;
+        expect(header).not.toBeNull();
         header.click();
 
         textUnitComponentFixture.whenStable().then(() => {
-            expect(handleCollapseSpy).to.have.been.called;
-            expect(textUnitComponent.isCollapsed).to.be.false;
+            expect(handleCollapseSpy).toHaveBeenCalled();
+            expect(textUnitComponent.isCollapsed).toBeFalse();
         });
 
-        handleCollapseSpy.restore();
+        handleCollapseSpy.mockRestore();
     });
 
     it('should display html in a new window when popup button is clicked', fakeAsync(() => {
         const contentOfNewWindow: string[] = [];
         const innerHtmlCopy = window.document.body.innerHTML;
 
-        const writeStub = sandbox.stub(window.document, 'write').callsFake((content: string) => {
+        const writeStub = jest.spyOn(window.document, 'write').callsFake((content: string) => {
             contentOfNewWindow.push(content);
         });
-        const closeStub = sandbox.stub(window.document, 'close');
-        const focusStub = sandbox.stub(window, 'focus');
-        const openStub = sandbox.stub(window, 'open').returns(window);
+        const closeStub = jest.spyOn(window.document, 'close');
+        const focusStub = jest.spyOn(window, 'focus');
+        const openStub = jest.spyOn(window, 'open').mockReturnValue(window);
 
         textUnitComponent.textUnit = textUnit;
         textUnitComponentFixture.detectChanges();
         const popButton = textUnitComponentFixture.debugElement.nativeElement.querySelector('#popupButton');
         popButton.click();
-        expect(textUnitComponent).to.be.ok;
-        expect(openStub).to.have.been.calledOnce;
-        expect(writeStub).to.have.callCount(4);
-        expect(closeStub).to.have.been.calledOnce;
-        expect(focusStub).to.have.been.calledOnce;
-        expect(window.document.body.innerHTML).to.equal(exampleHTML);
+        expect(textUnitComponent).not.toBeNull();
+        expect(openStub).toHaveBeenCalledTimes(1);
+        expect(writeStub).toHaveBeenCalledTimes(4);
+        expect(closeStub).toHaveBeenCalledTimes(1);
+        expect(focusStub).toHaveBeenCalledTimes(1);
+        expect(window.document.body.innerHTML).toEqual(exampleHTML);
         window.document.body.innerHTML = innerHtmlCopy;
     }));
 });
