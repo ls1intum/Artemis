@@ -71,7 +71,7 @@ describe('Create Test Run Modal Component', () => {
             const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton')).nativeElement;
             createTestRunButton.click();
             expect(closeStub).toHaveBeenCalled();
-            const testRun = closeStub.getCall(0).args[0] as StudentExam;
+            const testRun = closeStub.mock.calls.first.arguments[0] as StudentExam;
             expect(testRun).not.toBeNull();
             expect(testRun.exam).toEqual(exam);
             expect(testRun.exercises).toContain(exercise);

@@ -78,7 +78,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should handle auto-complete for user without login', () => {
-        const callbackSpy = jest.spyOn();
+        const callbackSpy = jest.fn();
         fixture.detectChanges();
 
         component.onAutocompleteSelect(user1, callbackSpy);
@@ -90,7 +90,7 @@ describe('ExamStudentsComponent', () => {
     it('should handle auto-complete for unregistered user', () => {
         const user3 = { id: 3, login: 'user3' } as User;
         const student3 = { login: 'user3', registrationNumber: '1234567' } as StudentDTO;
-        const callbackSpy = jest.spyOn();
+        const callbackSpy = jest.fn();
         const flashSpy = jest.spyOn(component, 'flashRowClass');
         const examServiceStub = jest.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(of(new HttpResponse({ body: student3 })));
         fixture.detectChanges();

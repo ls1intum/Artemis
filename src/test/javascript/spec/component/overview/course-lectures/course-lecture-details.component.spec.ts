@@ -43,6 +43,7 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 describe('CourseLectureDetails', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -120,7 +121,7 @@ describe('CourseLectureDetails', () => {
                 }),
                 MockProvider(AlertService),
                 { provide: FileService, useClass: MockFileService },
-                { provide: Router, useValue: mockRouter },
+                { provide: Router, useValue: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ActivatedRoute,

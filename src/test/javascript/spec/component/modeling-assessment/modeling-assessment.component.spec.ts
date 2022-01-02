@@ -190,9 +190,9 @@ describe('ModelingAssessmentComponent', () => {
         const newModel = generateMockModel('newElement1', 'newElement2', 'newRelationship');
         const changes = { model: { currentValue: newModel } as SimpleChange };
         fixture.detectChanges();
-        const apollonSpy = jest.spyOn(comp.apollonEditor as ApollonEditor, 'model', ['set']);
+        const apollonSpy = jest.spyOn(comp.apollonEditor as ApollonEditor, 'model', 'set');
         comp.ngOnChanges(changes);
-        expect(apollonSpy.set).toHaveBeenCalledWith(newModel);
+        expect(apollonSpy).toHaveBeenCalledWith(newModel);
     });
 
     it('should update highlighted elements', () => {

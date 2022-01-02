@@ -108,8 +108,8 @@ describe('CreateVideoUnitComponent', () => {
         videoUnitForm.formSubmitted.emit(formDate);
 
         createVideoUnitComponentFixture.whenStable().then(() => {
-            const videoUnitCallArgument: VideoUnit = createStub.getCall(0).args[0];
-            const lectureIdCallArgument: number = createStub.getCall(0).args[1];
+            const videoUnitCallArgument: VideoUnit = createStub.mock.calls.first.arguments[0];
+            const lectureIdCallArgument: number = createStub.mock.calls.first.arguments[1];
 
             expect(videoUnitCallArgument.name).toEqual(formDate.name);
             expect(videoUnitCallArgument.description).toEqual(formDate.description);

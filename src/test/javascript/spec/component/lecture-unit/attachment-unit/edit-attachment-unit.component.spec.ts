@@ -222,7 +222,7 @@ describe('EditAttachmentUnitComponent', () => {
         };
 
         const performUpdateSpy = jest.spyOn(editAttachmentUnitComponent, 'performUpdate');
-        uploadFileStub.rejects(new Error('some error'));
+        uploadFileStub.mockReturnValue(new Error('some error'));
         attachmentUnitFormStubComponent.formSubmitted.emit(formData);
         editAttachmentUnitComponentFixture.whenStable().then(() => {
             expect(attachmentUnitFormStubComponent.errorMessage).toEqual('some error');

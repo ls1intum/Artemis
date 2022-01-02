@@ -112,7 +112,7 @@ describe('CreateAttachmentUnitComponent', () => {
         };
 
         const examplePath = '/path/to/file';
-        const uploadFileStub = jest.spyOn(fileUploadService, 'uploadFile').mockReturnValue({ path: examplePath });
+        const uploadFileStub = jest.spyOn(fileUploadService, 'uploadFile').mockReturnValue(Promise.resolve({ path: examplePath }));
 
         const attachmentUnit = new AttachmentUnit();
         attachmentUnit.description = formData.formProperties.description;
@@ -146,7 +146,7 @@ describe('CreateAttachmentUnitComponent', () => {
         createAttachmentUnitComponentFixture.whenStable().then(() => {
             expect(uploadFileStub).toHaveBeenCalledWith(formData.fileProperties.file, formData.fileProperties.fileName, { keepFileName: true });
             expect(createAttachmentUnitStub).toHaveBeenCalledWith(attachmentUnit, 1);
-            const attachmentArgument: Attachment = createAttachmentStub.getCall(0).args[0];
+            const attachmentArgument: Attachment = createAttachmentStub.mock.calls.first.arguments[0];
             expect(attachmentArgument.name).toEqual(attachment.name);
             expect(attachmentArgument.releaseDate).toEqual(attachment.releaseDate);
             expect(attachmentArgument.version).toEqual(attachment.version);
