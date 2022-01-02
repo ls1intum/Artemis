@@ -181,7 +181,7 @@ describe('ModelingAssessmentComponent', () => {
         expect(highlightedElement).not.toBeNull();
         expect(highlightedElement!.highlight).toEqual('red');
         expect(notHighlightedElement).not.toBeNull();
-        expect(notHighlightedElement!.highlight).toBeNull();
+        expect(notHighlightedElement!.highlight).toBeUndefined();
         expect(relationship).not.toBeNull();
         expect(relationship!.highlight).toEqual('blue');
     });
@@ -212,7 +212,7 @@ describe('ModelingAssessmentComponent', () => {
         expect(highlightedElement).not.toBeNull();
         expect(highlightedElement!.highlight).toEqual('green');
         expect(notHighlightedElement).not.toBeNull();
-        expect(notHighlightedElement!.highlight).toBeNull();
+        expect(notHighlightedElement!.highlight).toBeUndefined();
         expect(relationship).not.toBeNull();
         expect(relationship!.highlight).toBeNull();
     });

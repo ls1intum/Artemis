@@ -387,7 +387,7 @@ describe('CourseScoresComponent', () => {
         fixture.detectChanges();
         const exportAsCsvStub = jest.spyOn(component, 'exportAsCsv');
         component.exportResults();
-        const generatedRows = exportAsCsvStub.mock.calls.first.arguments[0];
+        const generatedRows = exportAsCsvStub.mock.calls[0][0];
         const user1Row = generatedRows[0];
         validateUserRow(
             user1Row,

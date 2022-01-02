@@ -178,7 +178,7 @@ describe('ComplaintsForTutorComponent', () => {
         const acceptComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
         acceptComplaintButton.click();
         expect(emitSpy).toHaveBeenCalled();
-        const event = emitSpy.mock.calls.first.arguments.first;
+        const event = emitSpy.mock.calls[0][0];
         expect(event).not.toBeNull();
     });
 

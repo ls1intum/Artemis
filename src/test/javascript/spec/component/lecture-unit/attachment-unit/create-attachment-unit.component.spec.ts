@@ -146,7 +146,7 @@ describe('CreateAttachmentUnitComponent', () => {
         createAttachmentUnitComponentFixture.whenStable().then(() => {
             expect(uploadFileStub).toHaveBeenCalledWith(formData.fileProperties.file, formData.fileProperties.fileName, { keepFileName: true });
             expect(createAttachmentUnitStub).toHaveBeenCalledWith(attachmentUnit, 1);
-            const attachmentArgument: Attachment = createAttachmentStub.mock.calls.first.arguments[0];
+            const attachmentArgument: Attachment = createAttachmentStub.mock.calls[0][0];
             expect(attachmentArgument.name).toEqual(attachment.name);
             expect(attachmentArgument.releaseDate).toEqual(attachment.releaseDate);
             expect(attachmentArgument.version).toEqual(attachment.version);

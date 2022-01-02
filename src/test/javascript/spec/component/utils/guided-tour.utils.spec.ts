@@ -72,41 +72,41 @@ describe('GuidedTourUtils', () => {
         it('should match with empty pageUrl', () => {
             const pageUrl = '';
             const tourStepUrl = '';
-            expect(determineUrlMatching(pageUrl, tourStepUrl)).toEqual(['']);
+            expect(determineUrlMatching(pageUrl, tourStepUrl)!.toString()).toBe('');
         });
         it('should match with empty pageUrl but with params', () => {
             const pageUrl = '?param=true';
             const tourStepUrl = '';
-            expect(determineUrlMatching(pageUrl, tourStepUrl)).toEqual(['']);
+            expect(determineUrlMatching(pageUrl, tourStepUrl)!.toString()).toBe('');
         });
         it('should match empty with pageUrl', () => {
             const pageUrl = '/this/is/some/guided/tour/url?param=true';
             const tourStepUrl = '';
-            expect(determineUrlMatching(pageUrl, tourStepUrl)).toEqual(['']);
+            expect(determineUrlMatching(pageUrl, tourStepUrl)!.toString()).toBe('');
         });
         it('should match', () => {
             const pageUrl = '/this/is/some/guided/tour/url?param=true';
             const tourStepUrl = 'is/some';
-            expect(determineUrlMatching(pageUrl, tourStepUrl)).toEqual(['is/some']);
+            expect(determineUrlMatching(pageUrl, tourStepUrl)!.toString()).toBe('is/some');
         });
         it('should match more', () => {
             const pageUrl = '/this/is/some/guided/tour/url?param=true';
             const tourStepUrl = 'some';
-            expect(determineUrlMatching(pageUrl, tourStepUrl)).toEqual(['some']);
+            expect(determineUrlMatching(pageUrl, tourStepUrl)!.toString()).toBe('some');
         });
         it('should match with params in tourStepUrl', () => {
             const pageUrl = '/this/is/some/guided/tour/url?param=true';
             const tourStepUrl = 'some?param=false';
-            expect(determineUrlMatching(pageUrl, tourStepUrl)).toEqual(['some']);
+            expect(determineUrlMatching(pageUrl, tourStepUrl)!.toString()).toBe('some');
         });
     });
     describe('getUrlParams', () => {
         it('should get params', () => {
-            expect(getUrlParams('some/url/to?withParam=true')).toEqual('?withParam=true');
-            expect(getUrlParams('some/url/to?withParam=true&tea=yes')).toEqual('?withParam=true&tea=yes');
+            expect(getUrlParams('some/url/to?withParam=true')).toBe('?withParam=true');
+            expect(getUrlParams('some/url/to?withParam=true&tea=yes')).toBe('?withParam=true&tea=yes');
         });
         it('should get no params if not existing', () => {
-            expect(getUrlParams('some/url/to')).toEqual('');
+            expect(getUrlParams('some/url/to')).toBe('');
         });
     });
     describe('checkPageUrlEnding', () => {

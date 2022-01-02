@@ -12,6 +12,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
+
 describe('Exam Management Service Tests', () => {
     let service: ExamManagementService;
     let httpMock: HttpTestingController;
@@ -51,7 +52,7 @@ describe('Exam Management Service Tests', () => {
 
         // THEN
         const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exams` });
-        expect(req.request.body).toContain(mockCopyExam);
+        expect(req.request.body).toEqual(mockCopyExam);
 
         // CLEANUP
         req.flush(mockExam);
@@ -68,7 +69,7 @@ describe('Exam Management Service Tests', () => {
 
         // THEN
         const req = httpMock.expectOne({ method: 'PUT', url: `${service.resourceUrl}/${course.id!}/exams` });
-        expect(req.request.body).toContain(mockCopyExam);
+        expect(req.request.body).toEqual(mockCopyExam);
 
         // CLEANUP
         req.flush(mockExam);

@@ -71,12 +71,12 @@ describe('ParticipantScoresAverageTable', () => {
         expect(cellElements.length).toEqual(8);
         expect(cellElements[0].nativeElement.innerHTML).toContain(participantScoreAverageDTO.userName);
         expect(cellElements[1].nativeElement.innerHTML).toContain('');
-        expect(cellElements[2].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageScore);
-        expect(cellElements[3].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averagePoints);
-        expect(cellElements[4].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageRatedScore);
-        expect(cellElements[5].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageRatedPoints);
-        expect(cellElements[6].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageGrade);
-        expect(cellElements[7].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageRatedGrade);
+        expect(cellElements[2].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageScore.toString());
+        expect(cellElements[3].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averagePoints.toString());
+        expect(cellElements[4].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageRatedScore.toString());
+        expect(cellElements[5].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageRatedPoints.toString());
+        expect(cellElements[6].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageGrade.toString());
+        expect(cellElements[7].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageRatedGrade.toString());
     });
 
     it('should extract participant name correctly', () => {
