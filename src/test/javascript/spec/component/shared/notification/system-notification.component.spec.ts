@@ -52,10 +52,10 @@ describe('System Notification Component', () => {
     describe('Load active notification', () => {
         it('should get active system notification with system notification type warning', fakeAsync(() => {
             const notification = createActiveNotification(SystemNotificationType.WARNING);
-            jest.spyOn(systemNotificationService, 'getActiveNotification').mockReturnValue(of(notification));
+            const getActiveNotificationSpy = jest.spyOn(systemNotificationService, 'getActiveNotification').mockReturnValue(of(notification));
             systemNotificationComponent.ngOnInit();
             tick(500);
-            expect(systemNotificationService.getActiveNotification).toHaveBeenCalledTimes(1);
+            expect(getActiveNotificationSpy).toHaveBeenCalledTimes(1);
             expect(systemNotificationComponent.notification).toEqual(notification);
             expect(systemNotificationComponent.alertClass).toEqual('alert-warning');
             expect(systemNotificationComponent.alertIcon).toEqual(faExclamationTriangle);
@@ -63,10 +63,10 @@ describe('System Notification Component', () => {
 
         it('should get active system notification with system notification type info', fakeAsync(() => {
             const notification = createActiveNotification(SystemNotificationType.INFO);
-            jest.spyOn(systemNotificationService, 'getActiveNotification').mockReturnValue(of(notification));
+            const getActiveNotificationSpy = jest.spyOn(systemNotificationService, 'getActiveNotification').mockReturnValue(of(notification));
             systemNotificationComponent.ngOnInit();
             tick(500);
-            expect(systemNotificationService.getActiveNotification).toHaveBeenCalledTimes(1);
+            expect(getActiveNotificationSpy).toHaveBeenCalledTimes(1);
             expect(systemNotificationComponent.notification).toEqual(notification);
             expect(systemNotificationComponent.alertClass).toEqual('alert-info');
             expect(systemNotificationComponent.alertIcon).toEqual(faInfoCircle);
@@ -79,35 +79,35 @@ describe('System Notification Component', () => {
         });
 
         it('should subscribe to socket messages on init', fakeAsync(() => {
-            jest.spyOn(jhiWebsocketService, 'subscribe');
-            jest.spyOn(jhiWebsocketService, 'receive');
+            const subscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
+            const receiveSpy = jest.spyOn(jhiWebsocketService, 'receive');
             systemNotificationComponent.ngOnInit();
             tick(500);
             expect(jhiWebsocketService.bind).toHaveBeenCalledTimes(1);
             expect(systemNotificationComponent.websocketChannel).toEqual('/topic/system-notification');
-            expect(jhiWebsocketService.subscribe).toHaveBeenCalledTimes(1);
-            expect(jhiWebsocketService.receive).toHaveBeenCalledTimes(1);
+            expect(subscribeSpy).toHaveBeenCalledTimes(1);
+            expect(receiveSpy).toHaveBeenCalledTimes(1);
         }));
 
         it('should delete notification when "deleted" is received via websocket', fakeAsync(() => {
-            jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of('deleted'));
-            jest.spyOn(systemNotificationService, 'getActiveNotification').mockReturnValue(of(null));
+            const receiveSpy = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of('deleted'));
+            const getActiveNotificationSpy = jest.spyOn(systemNotificationService, 'getActiveNotification').mockReturnValue(of(null));
             systemNotificationComponent.notification = createActiveNotification(SystemNotificationType.WARNING);
             systemNotificationComponent.ngOnInit();
             tick(500);
-            expect(jhiWebsocketService.receive).toHaveBeenCalledTimes(1);
+            expect(receiveSpy).toHaveBeenCalledTimes(1);
             expect(systemNotificationComponent.notification).toEqual(undefined);
-            expect(systemNotificationService.getActiveNotification).toHaveBeenCalledTimes(2);
+            expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
         }));
 
         it('should add notification when active notification is received via websocket', fakeAsync(() => {
             const notification = createActiveNotification(SystemNotificationType.WARNING);
-            jest.spyOn(jhiWebsocketService, 'subscribe');
-            jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(notification));
+            const subscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
+            const receiveSpy = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(notification));
             systemNotificationComponent.ngOnInit();
             tick(500);
-            expect(jhiWebsocketService.subscribe).toHaveBeenCalledTimes(1);
-            expect(jhiWebsocketService.receive).toHaveBeenCalledTimes(1);
+            expect(subscribeSpy).toHaveBeenCalledTimes(1);
+            expect(receiveSpy).toHaveBeenCalledTimes(1);
             expect(systemNotificationComponent.notification).toEqual(notification);
             expect(systemNotificationComponent.alertClass).toEqual('alert-warning');
             expect(systemNotificationComponent.alertIcon).toEqual(faExclamationTriangle);
@@ -116,14 +116,14 @@ describe('System Notification Component', () => {
         it('should not add notification when non-active notification is received via websocket', fakeAsync(() => {
             const notification = createActiveNotification(SystemNotificationType.WARNING);
             notification.expireDate = dayjs().subtract(5, 'minutes');
-            jest.spyOn(jhiWebsocketService, 'subscribe');
-            jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(notification));
-            jest.spyOn(systemNotificationService, 'getActiveNotification').mockReturnValue(of());
+            const subscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
+            const receiveSpy = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(notification));
+            const getActiveNotificationSpy = jest.spyOn(systemNotificationService, 'getActiveNotification').mockReturnValue(of());
             systemNotificationComponent.ngOnInit();
             tick(500);
-            expect(jhiWebsocketService.subscribe).toHaveBeenCalledTimes(1);
-            expect(jhiWebsocketService.receive).toHaveBeenCalledTimes(1);
-            expect(systemNotificationService.getActiveNotification).toHaveBeenCalledTimes(2);
+            expect(subscribeSpy).toHaveBeenCalledTimes(1);
+            expect(receiveSpy).toHaveBeenCalledTimes(1);
+            expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
             expect(systemNotificationComponent.notification).toEqual(undefined);
             expect(systemNotificationComponent.alertClass).toEqual(undefined);
             expect(systemNotificationComponent.alertIcon).toEqual(undefined);
@@ -132,14 +132,14 @@ describe('System Notification Component', () => {
         it('should update notification when same notification is received via websocket', fakeAsync(() => {
             const notification = createActiveNotification(SystemNotificationType.WARNING);
             const changedNotification = createActiveNotification(SystemNotificationType.INFO);
-            jest.spyOn(jhiWebsocketService, 'subscribe');
-            jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(changedNotification));
-            jest.spyOn(systemNotificationService, 'getActiveNotification').mockReturnValue(of(notification));
+            const subscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
+            const receiveSpy = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(changedNotification));
+            const getActiveNotificationSpy = jest.spyOn(systemNotificationService, 'getActiveNotification').mockReturnValue(of(notification));
             systemNotificationComponent.ngOnInit();
             tick(500);
-            expect(jhiWebsocketService.subscribe).toHaveBeenCalledTimes(1);
-            expect(jhiWebsocketService.receive).toHaveBeenCalledTimes(1);
-            expect(systemNotificationService.getActiveNotification).toHaveBeenCalledTimes(1);
+            expect(subscribeSpy).toHaveBeenCalledTimes(1);
+            expect(receiveSpy).toHaveBeenCalledTimes(1);
+            expect(getActiveNotificationSpy).toHaveBeenCalledTimes(1);
             expect(systemNotificationComponent.notification).toEqual(changedNotification);
         }));
 
@@ -149,14 +149,14 @@ describe('System Notification Component', () => {
             newNotification.id = 2;
             newNotification.notificationDate = dayjs().subtract(2, 'days');
             newNotification.expireDate = dayjs().add(2, 'days');
-            jest.spyOn(jhiWebsocketService, 'subscribe');
-            jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(newNotification));
-            jest.spyOn(systemNotificationService, 'getActiveNotification').mockReturnValue(of(notification));
+            const subscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
+            const receiveSpy = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(newNotification));
+            const getActiveNotificationSpy = jest.spyOn(systemNotificationService, 'getActiveNotification').mockReturnValue(of(notification));
             systemNotificationComponent.ngOnInit();
             tick(500);
-            expect(jhiWebsocketService.subscribe).toHaveBeenCalledTimes(1);
-            expect(jhiWebsocketService.receive).toHaveBeenCalledTimes(1);
-            expect(systemNotificationService.getActiveNotification).toHaveBeenCalledTimes(1);
+            expect(subscribeSpy).toHaveBeenCalledTimes(1);
+            expect(receiveSpy).toHaveBeenCalledTimes(1);
+            expect(getActiveNotificationSpy).toHaveBeenCalledTimes(1);
             expect(systemNotificationComponent.notification).toEqual(newNotification);
         }));
     });
