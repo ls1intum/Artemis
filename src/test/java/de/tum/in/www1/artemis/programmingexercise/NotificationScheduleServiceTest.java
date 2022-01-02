@@ -36,8 +36,16 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @BeforeEach
     public void init() {
+        database.addUsers(1, 1, 1, 1);
         database.addCourseWithFileUploadExercise();
         exercise = exerciseRepository.findAll().get(0);
+        ZonedDateTime exerciseDate = ZonedDateTime.now().plusSeconds(DELAY_IN_SECONDS);
+        exercise.setReleaseDate(exerciseDate);
+        exercise.setAssessmentDueDate(exerciseDate);
+        exerciseRepository.save(exercise);
+
+        SecurityUtils.setAuthorizationObject();
+        assertThat(notificationRepository.count()).isEqualTo(0);
     }
 
     @AfterEach
@@ -48,39 +56,23 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
     @Test
     @Timeout(5)
     void shouldCreateNotificationAtReleaseDate() {
-        SecurityUtils.setAuthorizationObject();
-        ZonedDateTime exerciseReleaseDate = ZonedDateTime.now().plusSeconds(DELAY_IN_SECONDS);
-        exercise.setReleaseDate(exerciseReleaseDate);
-        exerciseRepository.save(exercise);
-
-        assertThat(notificationRepository.count()).isEqualTo(0);
-
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
-
         await().until(() -> notificationRepository.count() > 0);
-
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(exercise);
     }
 
     @Test
     @Timeout(5)
     void shouldCreateNotificationAtAssessmentDueDate() {
-        SecurityUtils.setAuthorizationObject();
-        database.addUsers(1, 1, 1, 1);
-        exercise.setAssessmentDueDate(ZonedDateTime.now().plusSeconds(DELAY_IN_SECONDS));
-        exerciseRepository.save(exercise);
-
         TextSubmission textSubmission = new TextSubmission();
         textSubmission.text("Text");
         textSubmission.submitted(true);
         database.addSubmission(exercise, textSubmission, "student1");
-
-        assertThat(notificationRepository.count()).isEqualTo(0);
+        database.createParticipationSubmissionAndResult(exercise.getId(), database.getUserByLogin("student1"), 10.0, 10.0, 50, true);
 
         instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exercise.getId());
 
         await().until(() -> notificationRepository.count() > 0);
-
         verify(singleUserNotificationService, times(1)).notifyUsersAboutAssessedExerciseSubmission(exercise);
     }
 }
