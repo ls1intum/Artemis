@@ -280,13 +280,12 @@ export class StarRatingComponent {
 
         let hasDecimals: boolean = !!(Number.parseFloat(this.value.toString()) % 1).toString().substring(3, 2);
 
-        let i = 1;
-        this.stars.forEach((star: HTMLElement) => {
+        this.stars.forEach((star: HTMLElement, i: number) => {
             star.className = '';
             this.applyColorStyle(star);
             StarRatingComponent.addDefaultClass(star);
 
-            if (this.value >= i) {
+            if (this.value > i) {
                 // star on
                 StarRatingComponent.addCheckedStarClass(star);
             } else {
@@ -296,7 +295,6 @@ export class StarRatingComponent {
                     hasDecimals = false;
                 }
             }
-            i++;
         });
     }
 }
