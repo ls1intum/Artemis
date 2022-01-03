@@ -1,10 +1,10 @@
 <mat-form-field class="post-tag-list" appearance="outline">
     <mat-chip-list #chipList aria-label="Tag selection">
-        <mat-chip *ngFor="let tag of tags" (removed)="onItemRemove(tag)">
+        <mat-chip *ngFor="let tag of tags" (removed)="onItemRemove(tag)" class="post-tag">
             <div class="custom-tag">
                 {{ tag }}
                 <button matChipRemove>
-                    <fa-icon [icon]="faTimes"></fa-icon>
+                    <fa-icon [icon]="faTimes" class="post-tag-remove"></fa-icon>
                 </button>
             </div>
         </mat-chip>
