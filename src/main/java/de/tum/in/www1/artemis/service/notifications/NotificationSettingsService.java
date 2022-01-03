@@ -60,7 +60,7 @@ public class NotificationSettingsService {
     // this has to match the properties in the notification settings structure file on the client that hides the related UI elements
     public final static Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>(Arrays.asList(
             // weekly summary
-            new NotificationSetting(false, true, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY),
+            new NotificationSetting(false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY),
             // course wide discussion notification setting group
             new NotificationSetting(true, false, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST),
             new NotificationSetting(true, false, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST),
@@ -201,9 +201,7 @@ public class NotificationSettingsService {
      */
     private Set<String> extractSettingsIdsFromNotificationSettingsSet(Set<NotificationSetting> notificationSettings) {
         Set<String> settingsIds = new HashSet<>();
-        notificationSettings.forEach(setting -> {
-            settingsIds.add(setting.getSettingId());
-        });
+        notificationSettings.forEach(setting -> settingsIds.add(setting.getSettingId()));
         return settingsIds;
     }
 
