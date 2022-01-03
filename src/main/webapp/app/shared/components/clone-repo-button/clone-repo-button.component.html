@@ -21,7 +21,7 @@
                 <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button" style="border-top-right-radius: 0; border-bottom-right-radius: 0">
                     {{ useSsh ? 'SSH' : 'HTTPS' }}
                 </button>
-                <div class="dropdown-menu" ngbDropdownMenu style="width: 100%">
+                <div class="dropdown-menu" ngbDropdownMenu style="min-width: 100%">
                     <a (click)="setUseSSH(false)" class="dropdown-item {{ !useSsh ? 'active' : '' }}" id="useHTTPSButton">HTTPS</a>
                     <a (click)="setUseSSH(true)" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
                 </div>
