@@ -443,7 +443,12 @@ public class CourseService {
             int dateWeek = getWeekOfDate(date);
             int startDateWeek = getWeekOfDate(startDate);
             int weeksDifference;
-            weeksDifference = dateWeek < startDateWeek ? dateWeek == startDateWeek - 1 ? 0 : dateWeek + 53 - startDateWeek : dateWeek - startDateWeek;
+            // we need to take into account that years can have 53 or 52 calendar weeks
+            ZonedDateTime firstDateOfStartYear = ZonedDateTime.of(startDate.getYear(), 1, 1, 0, 0, 0, 0, startDate.getZone());
+            ZonedDateTime lastDateOfStartYear = ZonedDateTime.of(startDate.getYear(), 12, 31, 0, 0, 0, 0, startDate.getZone());
+            boolean beginsOrEndsOnThursday = firstDateOfStartYear.getDayOfWeek() == DayOfWeek.THURSDAY || lastDateOfStartYear.getDayOfWeek() == DayOfWeek.THURSDAY;
+            int lastCalendarWeek = beginsOrEndsOnThursday ? 53 : 52;
+            weeksDifference = dateWeek < startDateWeek ? dateWeek == startDateWeek - 1 ? 0 : dateWeek + lastCalendarWeek - startDateWeek : dateWeek - startDateWeek;
             result[weeksDifference] += amount;
         }
         return result;
