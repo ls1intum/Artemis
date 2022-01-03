@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { faFile, faFileArchive, faFileImage, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { FileService } from 'app/shared/http/file.service';
