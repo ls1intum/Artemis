@@ -106,11 +106,13 @@ describe('Course Management Detail Component', () => {
     });
 
     it('should destroy event subscriber onDestroy', () => {
+        const destroySpy = jest.spyOn(eventManager, 'destroy');
         component.ngOnDestroy();
-        expect(eventManager.destroy).toHaveBeenCalled();
+        expect(destroySpy).toHaveBeenCalled();
     });
 
     it('should broadcast course modification on delete', () => {
+        const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
         const deleteStub = jest.spyOn(courseService, 'delete');
         deleteStub.mockReturnValue(of(new HttpResponse<void>()));
 
@@ -118,7 +120,7 @@ describe('Course Management Detail Component', () => {
         component.deleteCourse(courseId);
 
         expect(deleteStub).toHaveBeenCalledWith(courseId);
-        expect(eventManager.broadcast).toHaveBeenCalledWith({
+        expect(broadcastSpy).toHaveBeenCalledWith({
             name: 'courseListModification',
             content: 'Deleted an course',
         });

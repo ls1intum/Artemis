@@ -152,8 +152,8 @@ describe('TutorParticipationGraphComponent', () => {
     });
 
     it('should test ngOnInit', () => {
-        calculatePercentageAssessmentProgressStub = jest.spyOn(comp, 'calculatePercentageAssessmentProgress');
-        calculatePercentageComplaintsProgressStub = jest.spyOn(comp, 'calculatePercentageComplaintsProgress');
+        calculatePercentageAssessmentProgressStub = jest.spyOn(comp, 'calculatePercentageAssessmentProgress').mockImplementation();
+        calculatePercentageComplaintsProgressStub = jest.spyOn(comp, 'calculatePercentageComplaintsProgress').mockImplementation();
         comp.tutorParticipation = {
             id: 1,
             trainedExampleSubmissions: [{ id: 1, usedForTutorial: false, exercise: { id: 1, course: { id: 3 } } }],
@@ -188,8 +188,8 @@ describe('TutorParticipationGraphComponent', () => {
         expect(result).toEqual(7);
     });
     it('should update changes', () => {
-        calculatePercentageAssessmentProgressStub = jest.spyOn(comp, 'calculatePercentageAssessmentProgress');
-        calculatePercentageComplaintsProgressStub = jest.spyOn(comp, 'calculatePercentageComplaintsProgress');
+        calculatePercentageAssessmentProgressStub = jest.spyOn(comp, 'calculatePercentageAssessmentProgress').mockImplementation();
+        calculatePercentageComplaintsProgressStub = jest.spyOn(comp, 'calculatePercentageComplaintsProgress').mockImplementation();
 
         const tutorParticipationStatus = { status: 'COMPLETED' as TutorParticipationStatus };
         const unchangedParticipation = { id: 1, trainedExampleSubmissions: [{ id: 1, usedForTutorial: true }], tutorParticipationStatus } as TutorParticipation;

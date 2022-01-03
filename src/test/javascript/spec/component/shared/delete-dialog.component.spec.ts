@@ -37,6 +37,7 @@ describe('DeleteDialogComponent', () => {
     });
 
     it('Dialog is correctly initialized', fakeAsync(() => {
+        const dismissSyp = jest.spyOn(ngbActiveModal, 'dismiss');
         let inputFormGroup = debugElement.query(By.css('.form-group'));
         expect(inputFormGroup).toBeNull();
 
@@ -51,12 +52,12 @@ describe('DeleteDialogComponent', () => {
         const closeButton = fixture.debugElement.query(By.css('.btn-close'));
         expect(closeButton).not.toBeNull();
         closeButton.nativeElement.click();
-        expect(ngbActiveModal.dismiss).toHaveBeenCalledTimes(1);
+        expect(dismissSyp).toHaveBeenCalledTimes(1);
 
         const cancelButton = fixture.debugElement.query(By.css('.btn.btn-secondary'));
         expect(cancelButton).not.toBeNull();
         cancelButton.nativeElement.click();
-        expect(ngbActiveModal.dismiss).toHaveBeenCalledTimes(2);
+        expect(dismissSyp).toHaveBeenCalledTimes(2);
 
         inputFormGroup = debugElement.query(By.css('.form-group'));
         expect(inputFormGroup).not.toBeNull();

@@ -65,19 +65,19 @@ describe('ParticipantScoresTable', () => {
 
         const cellElements = fixture.debugElement.queryAll(By.css('.datatable-body-cell-label > span'));
         expect(cellElements.length).toEqual(13);
-        expect(cellElements[0].nativeElement.innerHTML).toContain(participantScoreDTO.id);
-        expect(cellElements[1].nativeElement.innerHTML).toContain(participantScoreDTO.userId);
+        expect(cellElements[0].nativeElement.innerHTML).toContain(participantScoreDTO.id.toString());
+        expect(cellElements[1].nativeElement.innerHTML).toContain(participantScoreDTO.userId.toString());
         expect(cellElements[2].nativeElement.innerHTML).toContain(participantScoreDTO.userName);
         expect(cellElements[3].nativeElement.innerHTML).toContain('');
         expect(cellElements[4].nativeElement.innerHTML).toContain('');
-        expect(cellElements[5].nativeElement.innerHTML).toContain(participantScoreDTO.exerciseId);
+        expect(cellElements[5].nativeElement.innerHTML).toContain(participantScoreDTO.exerciseId.toString());
         expect(cellElements[6].nativeElement.innerHTML).toContain(participantScoreDTO.exerciseTitle);
-        expect(cellElements[7].nativeElement.innerHTML).toContain(participantScoreDTO.lastResultId);
-        expect(cellElements[8].nativeElement.innerHTML).toContain(participantScoreDTO.lastResultScore);
-        expect(cellElements[9].nativeElement.innerHTML).toContain(participantScoreDTO.lastPoints);
-        expect(cellElements[10].nativeElement.innerHTML).toContain(participantScoreDTO.lastRatedResultId);
-        expect(cellElements[11].nativeElement.innerHTML).toContain(participantScoreDTO.lastRatedResultScore);
-        expect(cellElements[12].nativeElement.innerHTML).toContain(participantScoreDTO.lastRatedPoints);
+        expect(cellElements[7].nativeElement.innerHTML).toContain(participantScoreDTO.lastResultId.toString());
+        expect(cellElements[8].nativeElement.innerHTML).toContain(participantScoreDTO.lastResultScore.toString());
+        expect(cellElements[9].nativeElement.innerHTML).toContain(participantScoreDTO.lastPoints.toString());
+        expect(cellElements[10].nativeElement.innerHTML).toContain(participantScoreDTO.lastRatedResultId.toString());
+        expect(cellElements[11].nativeElement.innerHTML).toContain(participantScoreDTO.lastRatedResultScore.toString());
+        expect(cellElements[12].nativeElement.innerHTML).toContain(participantScoreDTO.lastRatedPoints.toString());
     });
 
     it('should extract participant name correctly', () => {

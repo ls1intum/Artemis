@@ -25,6 +25,7 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 };
 
+// TODO: we should use a proper enum here
 export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION' | 'TESTS' | 'AUXILIARY';
 
 @Injectable({ providedIn: 'root' })

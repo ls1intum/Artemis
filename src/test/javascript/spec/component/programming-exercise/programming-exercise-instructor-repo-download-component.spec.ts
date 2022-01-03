@@ -41,15 +41,14 @@ describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
     });
 
     it('should download the repos', () => {
-        const spy = jest.spyOn(service, 'exportInstructorRepository');
-
         component.exerciseId = 1;
         const repoTypes: ProgrammingExerciseInstructorRepositoryType[] = ['SOLUTION', 'TEMPLATE', 'TESTS', 'AUXILIARY'];
         repoTypes.forEach((repoType) => {
+            const exportInstructorRepositorySpy = jest.spyOn(service, 'exportInstructorRepository');
             component.repositoryType = repoType;
             component.exportRepository();
-            expect(spy).toHaveBeenCalledTimes(1);
-            spy.mockRestore();
+            expect(exportInstructorRepositorySpy).toHaveBeenCalledTimes(1);
+            exportInstructorRepositorySpy.mockRestore();
         });
     });
 });
