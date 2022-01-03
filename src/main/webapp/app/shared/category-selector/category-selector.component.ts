@@ -13,7 +13,7 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
 @Component({
     selector: 'jhi-category-selector',
     templateUrl: './category-selector.component.html',
-    styleUrls: ['./category-selector.scss'],
+    styleUrls: ['./category-selector.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
 export class CategorySelectorComponent implements OnChanges, OnInit {
