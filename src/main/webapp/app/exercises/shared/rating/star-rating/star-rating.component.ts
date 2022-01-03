@@ -16,8 +16,8 @@ export class StarRatingComponent {
     private _value: number;
     private _size: string;
     private _readOnly = false;
-
     private _totalStars = 5;
+
     private onStarsCountChange: Subject<number>;
     private onValueChange: Subject<number>;
     private onCheckedColorChange: Subject<string>;
