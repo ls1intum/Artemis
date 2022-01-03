@@ -20,7 +20,7 @@ describe('ModelingExplanationEditorComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

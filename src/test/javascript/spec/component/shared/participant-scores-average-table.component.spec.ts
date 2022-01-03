@@ -43,7 +43,7 @@ describe('ParticipantScoresAverageTable', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

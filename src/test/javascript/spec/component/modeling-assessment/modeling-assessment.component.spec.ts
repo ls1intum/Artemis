@@ -100,7 +100,7 @@ describe('ModelingAssessmentComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

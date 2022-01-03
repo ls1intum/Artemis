@@ -50,7 +50,7 @@ describe('ModelingExerciseImportComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

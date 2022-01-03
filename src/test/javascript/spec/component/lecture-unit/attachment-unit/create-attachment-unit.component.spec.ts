@@ -79,7 +79,7 @@ describe('CreateAttachmentUnitComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

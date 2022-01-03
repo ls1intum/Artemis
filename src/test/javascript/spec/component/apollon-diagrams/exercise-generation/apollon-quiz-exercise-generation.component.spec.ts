@@ -73,7 +73,7 @@ describe('ApollonQuizExerciseGeneration Component', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

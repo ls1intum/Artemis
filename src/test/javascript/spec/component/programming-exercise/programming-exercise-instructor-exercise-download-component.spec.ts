@@ -24,7 +24,7 @@ describe('ProgrammingExerciseInstructorExerciseDownloadComponent', () => {
         service = TestBed.inject(ProgrammingExerciseService);
     });
 
-    afterEach(function () {
+    afterEach(() => {
         // completely restore all fakes created through the sandbox
         jest.restoreAllMocks();
     });

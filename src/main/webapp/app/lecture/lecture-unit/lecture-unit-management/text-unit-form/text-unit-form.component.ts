@@ -25,10 +25,8 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
         content: undefined,
     };
 
-    @Input()
-    isEditMode = false;
-    @Output()
-    formSubmitted: EventEmitter<TextUnitFormData> = new EventEmitter<TextUnitFormData>();
+    @Input() isEditMode = false;
+    @Output() formSubmitted: EventEmitter<TextUnitFormData> = new EventEmitter<TextUnitFormData>();
 
     form: FormGroup;
     // not included in reactive form

@@ -44,7 +44,7 @@ describe('VideoUnitComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

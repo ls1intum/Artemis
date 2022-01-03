@@ -43,7 +43,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

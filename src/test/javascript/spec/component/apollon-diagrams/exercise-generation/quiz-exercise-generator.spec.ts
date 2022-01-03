@@ -72,7 +72,7 @@ describe('QuizExercise Generator', () => {
         }).compileComponents();
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

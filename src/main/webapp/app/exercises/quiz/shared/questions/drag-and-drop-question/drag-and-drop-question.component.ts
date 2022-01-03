@@ -22,7 +22,7 @@ polyfill({
     event.preventDefault();
 };
 /* eslint-enable */
-window.addEventListener('touchmove', function () {}, { passive: false });
+window.addEventListener('touchmove', () => {}, { passive: false });
 
 enum MappingResult {
     MAPPED_CORRECT,

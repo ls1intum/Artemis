@@ -203,7 +203,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(component.totalScore).toEqual(42);
     });
 
-    it('should save the assessment with correct parameters', function () {
+    it('should save the assessment with correct parameters', () => {
         textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
         component['setPropertiesFromServerResponse'](participation);
         const handleFeedbackStub = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
@@ -257,7 +257,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.updateAssessmentAfterComplaint(complaintResponse);
         expect(updateAssessmentAfterComplaintStub).toHaveBeenCalled();
     });
-    it('should submit the assessment with correct parameters', function () {
+    it('should submit the assessment with correct parameters', () => {
         textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
         component['setPropertiesFromServerResponse'](participation);
         fixture.detectChanges();

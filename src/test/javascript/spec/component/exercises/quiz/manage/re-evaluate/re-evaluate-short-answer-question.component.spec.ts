@@ -22,7 +22,7 @@ describe('ReEvaluateShortAnswerQuestionComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

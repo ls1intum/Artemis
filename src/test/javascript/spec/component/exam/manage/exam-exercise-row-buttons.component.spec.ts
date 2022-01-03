@@ -146,7 +146,7 @@ describe('Exam Exercise Row Buttons Component', () => {
         comp.exam = exam;
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

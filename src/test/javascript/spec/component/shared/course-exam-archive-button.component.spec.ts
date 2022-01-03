@@ -148,7 +148,7 @@ describe('Course Exam Archive Button Component', () => {
             tick();
         }));
 
-        afterEach(function () {
+        afterEach(() => {
             jest.restoreAllMocks();
         });
 
@@ -234,7 +234,7 @@ describe('Course Exam Archive Button Component', () => {
             tick();
         }));
 
-        afterEach(function () {
+        afterEach(() => {
             jest.restoreAllMocks();
         });
 

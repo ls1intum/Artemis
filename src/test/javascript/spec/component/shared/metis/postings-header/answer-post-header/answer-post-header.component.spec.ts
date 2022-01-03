@@ -71,7 +71,7 @@ describe('AnswerPostHeaderComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

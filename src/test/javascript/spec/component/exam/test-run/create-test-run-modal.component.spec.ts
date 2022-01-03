@@ -80,7 +80,7 @@ describe('Create Test Run Modal Component', () => {
     });
 
     describe('Ignore Exercise groups', () => {
-        it('should ignore exercise groups with no exercises', function () {
+        it('should ignore exercise groups with no exercises', () => {
             comp.exam = exam;
             comp.exam.exerciseGroups = [exerciseGroup1, exerciseGroup2];
             fixture.detectChanges();

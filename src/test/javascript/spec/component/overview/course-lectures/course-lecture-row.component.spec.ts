@@ -56,7 +56,7 @@ describe('CourseLectureRow', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

@@ -71,7 +71,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         fixture.detectChanges();
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

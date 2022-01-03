@@ -32,7 +32,7 @@ describe('MultipleChoiceQuestionComponent', () => {
         artemisMarkdownService = TestBed.inject(ArtemisMarkdownService);
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 
@@ -97,7 +97,7 @@ describe('MultipleChoiceQuestionComponent', () => {
         return safeHtml['changingThisBreaksApplicationSecurity'] ?? '';
     }
 
-    it('should return true is if the answer option was selected', function () {
+    it('should return true is if the answer option was selected', () => {
         const answerOptions: AnswerOption[] = [
             { id: 1, invalid: false },
             { id: 2, invalid: false },
@@ -110,7 +110,7 @@ describe('MultipleChoiceQuestionComponent', () => {
         expect(component.isAnswerOptionSelected(answerOptions[2])).toBeTrue();
     });
 
-    it('should not toggle anything on disabled click', function () {
+    it('should not toggle anything on disabled click', () => {
         const answerOptions: AnswerOption[] = [
             { id: 1, invalid: false },
             { id: 2, invalid: false },
@@ -125,7 +125,7 @@ describe('MultipleChoiceQuestionComponent', () => {
         expect(component.isAnswerOptionSelected(answerOptions[2])).toBeFalse();
     });
 
-    it('should toggle answer options', function () {
+    it('should toggle answer options', () => {
         const answerOptions: AnswerOption[] = [
             { id: 1, invalid: false },
             { id: 2, invalid: false },

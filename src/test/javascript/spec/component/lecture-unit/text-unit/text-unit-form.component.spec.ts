@@ -50,7 +50,7 @@ describe('TextUnitFormComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 
@@ -105,6 +105,7 @@ describe('TextUnitFormComponent', () => {
 
         const submitButton = textUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
+        tick();
 
         textUnitFormComponentFixture.whenStable().then(() => {
             expect(submitFormSpy).toHaveBeenCalled();
@@ -114,9 +115,6 @@ describe('TextUnitFormComponent', () => {
                 content: exampleMarkdown,
             });
         });
-
-        submitFormSpy.mockRestore();
-        submitFormEventSpy.mockRestore();
     }));
 
     it('should be invalid if name is not set and valid if set', fakeAsync(() => {

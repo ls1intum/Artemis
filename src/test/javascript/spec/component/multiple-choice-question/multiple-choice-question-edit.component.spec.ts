@@ -55,7 +55,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         component.question = question;
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

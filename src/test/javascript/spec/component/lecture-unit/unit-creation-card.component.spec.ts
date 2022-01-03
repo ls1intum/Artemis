@@ -21,7 +21,7 @@ describe('UnitCreationCardComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

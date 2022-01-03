@@ -73,7 +73,7 @@ describe('CreateTextUnitComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

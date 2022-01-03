@@ -26,7 +26,7 @@ describe('VideoUnitFormComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

@@ -38,7 +38,7 @@ describe('TextUnitFormComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

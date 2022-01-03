@@ -69,7 +69,7 @@ describe('EditTextUnitComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
     it('should initialize', fakeAsync(() => {

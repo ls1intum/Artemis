@@ -69,7 +69,7 @@ describe('ExerciseGroupUpdateComponent', () => {
         expect(component.exerciseGroup).toEqual(exerciseGroup);
     }));
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

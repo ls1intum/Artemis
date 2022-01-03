@@ -145,7 +145,7 @@ describe('QuizParticipationComponent', () => {
                 });
         });
 
-        afterEach(function () {
+        afterEach(() => {
             httpMock.verify();
             jest.restoreAllMocks();
         });
@@ -375,7 +375,7 @@ describe('QuizParticipationComponent', () => {
                 });
         });
 
-        afterEach(function () {
+        afterEach(() => {
             httpMock.verify();
             jest.restoreAllMocks();
         });
@@ -454,7 +454,7 @@ describe('QuizParticipationComponent', () => {
                 });
         });
 
-        afterEach(function () {
+        afterEach(() => {
             httpMock.verify();
             jest.restoreAllMocks();
         });
@@ -535,7 +535,7 @@ describe('QuizParticipationComponent', () => {
                 });
         });
 
-        afterEach(function () {
+        afterEach(() => {
             jest.restoreAllMocks();
         });
 

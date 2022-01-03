@@ -89,7 +89,7 @@ describe('JhiCloneRepoButtonComponent', () => {
         localStorageUseSshObserveStub.mockReturnValue(localStorageUseSshObserveStubSubject);
     });
 
-    afterEach(function () {
+    afterEach(() => {
         // completely restore all fakes created through the sandbox
         jest.restoreAllMocks();
     });

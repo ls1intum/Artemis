@@ -100,7 +100,7 @@ describe('NavbarComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 
@@ -191,7 +191,7 @@ describe('NavbarComponent', () => {
         expect(component.breadcrumbs[0]).toEqual({ label: 'route-without-translation', translate: false, uri: '/admin/route-without-translation/' } as MockBreadcrumb);
     });
 
-    describe('Special Cases for Breadcrumbs', function () {
+    describe('Special Cases for Breadcrumbs', () => {
         it('programming exercise import', () => {
             const testUrl = '/course-management/1/programming-exercises/import/2';
             router.setUrl(testUrl);

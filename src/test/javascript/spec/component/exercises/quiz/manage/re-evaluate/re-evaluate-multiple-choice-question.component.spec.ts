@@ -61,7 +61,7 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

@@ -9,7 +9,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
-describe('ExamTimerComponent', function () {
+describe('ExamTimerComponent', () => {
     let component: ExamTimerComponent;
     let fixture: ComponentFixture<ExamTimerComponent>;
     let dateService: ArtemisServerDateService;

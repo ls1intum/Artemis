@@ -36,7 +36,7 @@ describe('ParticipantScoresTable', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

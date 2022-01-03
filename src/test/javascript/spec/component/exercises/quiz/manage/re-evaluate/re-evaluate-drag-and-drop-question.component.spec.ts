@@ -22,7 +22,7 @@ describe('ReEvaluateDragAndDropQuestionComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

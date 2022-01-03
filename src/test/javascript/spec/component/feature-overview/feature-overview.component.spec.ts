@@ -13,7 +13,7 @@ describe('Feature Overview Component', () => {
     let fixture: ComponentFixture<FeatureOverviewComponent>;
     let debugElement: DebugElement;
 
-    describe('Target Audience: Instructors', function () {
+    describe('Target Audience: Instructors', () => {
         const route = { snapshot: { url: ['instructors'] } } as any as ActivatedRoute;
 
         beforeEach(() => {
@@ -32,7 +32,7 @@ describe('Feature Overview Component', () => {
         });
 
         describe('onInit', () => {
-            it('should load all features for instructors', function () {
+            it('should load all features for instructors', () => {
                 // WHEN
                 comp.ngOnInit();
 
@@ -41,7 +41,7 @@ describe('Feature Overview Component', () => {
                 expect(comp.features.length).toBeGreaterThan(0);
             });
 
-            it('should ensure all features have unique IDs', function () {
+            it('should ensure all features have unique IDs', () => {
                 // WHEN
                 comp.ngOnInit();
 

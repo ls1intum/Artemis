@@ -106,7 +106,7 @@ describe('CourseLectures', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

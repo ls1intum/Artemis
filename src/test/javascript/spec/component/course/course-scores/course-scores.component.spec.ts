@@ -265,7 +265,7 @@ describe('CourseScoresComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         quizIncludedWith10Points0BonusPoints.title = 'exercise'; // testing duplicated titles
         textIncludedWith10Points10BonusPoints.title = 'exercise'; // testing duplicated titles
         jest.restoreAllMocks();

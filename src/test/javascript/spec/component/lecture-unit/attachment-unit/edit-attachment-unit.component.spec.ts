@@ -118,7 +118,7 @@ describe('EditAttachmentUnitComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

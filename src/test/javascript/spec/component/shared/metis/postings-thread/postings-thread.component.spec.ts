@@ -78,7 +78,7 @@ describe('PostingThreadComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
     it('should be initialized correctly for users that are at least tutors in course', () => {

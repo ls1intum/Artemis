@@ -68,7 +68,7 @@ describe('QuizExercise Statistic Component', () => {
         quizServiceFindSpy.mockClear();
     });
 
-    describe('OnInit', function () {
+    describe('OnInit', () => {
         let loadQuizSuccessSpy: jest.SpyInstance;
         let loadDataSpy: jest.SpyInstance;
 
@@ -117,7 +117,7 @@ describe('QuizExercise Statistic Component', () => {
         }));
     });
 
-    describe('loadQuizSuccess', function () {
+    describe('loadQuizSuccess', () => {
         let loadDataSpy: jest.SpyInstance;
 
         beforeEach(() => {
@@ -160,7 +160,7 @@ describe('QuizExercise Statistic Component', () => {
         });
     });
 
-    describe('calculateMaxScore', function () {
+    describe('calculateMaxScore', () => {
         it('should return MaxScore by looping over scores', () => {
             // setup
             quizExercise.quizQuestions = [
@@ -194,7 +194,7 @@ describe('QuizExercise Statistic Component', () => {
         });
     });
 
-    describe('loadData', function () {
+    describe('loadData', () => {
         beforeEach(() => {
             quizExercise.quizQuestions = [
                 { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },

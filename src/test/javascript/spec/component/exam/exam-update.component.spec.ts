@@ -33,7 +33,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 })
 class DummyComponent {}
 
-describe('Exam Update Component', function () {
+describe('Exam Update Component', () => {
     let component: ExamUpdateComponent;
     let fixture: ComponentFixture<ExamUpdateComponent>;
     let examManagementService: ExamManagementService;

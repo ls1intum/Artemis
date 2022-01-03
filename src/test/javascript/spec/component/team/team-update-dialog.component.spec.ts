@@ -60,21 +60,23 @@ describe('TeamUpdateDialogComponent', () => {
     });
 
     it('Team Update Dialog can be closed and canceled', fakeAsync(() => {
+        const dismissSpy = jest.spyOn(ngbActiveModal, 'dismiss');
         const closeButton = debugElement.query(By.css('button.btn-close'));
         expect(closeButton).not.toBeNull();
         closeButton.nativeElement.click();
-        expect(ngbActiveModal.dismiss).toHaveBeenCalled();
+        expect(dismissSpy).toHaveBeenCalledTimes(1);
 
         const cancelButton = debugElement.query(By.css('button.cancel'));
         expect(cancelButton).not.toBeNull();
         cancelButton.nativeElement.click();
-        expect(ngbActiveModal.dismiss).toHaveBeenCalledTimes(2);
+        expect(dismissSpy).toHaveBeenCalledTimes(2);
 
         fixture.destroy();
         flush();
     }));
 
     it('Team Update Dialog can be used to create team', fakeAsync(() => {
+        const closeSpy = jest.spyOn(ngbActiveModal, 'close');
         comp.team = mockEmptyTeam;
         comp.exercise = mockExercise;
         fixture.detectChanges();
@@ -135,7 +137,7 @@ describe('TeamUpdateDialogComponent', () => {
             // Check that saving worked and that modal was closed
             expect(comp.team).toEqual(comp.pendingTeam);
             expect(comp.isSaving).toBeFalse();
-            expect(ngbActiveModal.close).toHaveBeenCalled();
+            expect(closeSpy).toHaveBeenCalled();
             fixture.destroy();
         });
         discardPeriodicTasks();
@@ -143,6 +145,7 @@ describe('TeamUpdateDialogComponent', () => {
     }));
 
     it('Team Update Dialog can be used to update team', fakeAsync(() => {
+        const closeSpy = jest.spyOn(ngbActiveModal, 'close');
         comp.team = mockTeam;
         comp.exercise = mockExercise;
         fixture.detectChanges();
@@ -196,7 +199,7 @@ describe('TeamUpdateDialogComponent', () => {
         // Check that saving worked and that modal was closed
         expect(comp.team).toEqual(comp.pendingTeam);
         expect(comp.isSaving).toBeFalse();
-        expect(ngbActiveModal.close).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalled();
 
         fixture.destroy();
         flush();

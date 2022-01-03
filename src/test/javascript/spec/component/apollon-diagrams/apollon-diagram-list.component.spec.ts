@@ -54,7 +54,7 @@ describe('ApollonDiagramList Component', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

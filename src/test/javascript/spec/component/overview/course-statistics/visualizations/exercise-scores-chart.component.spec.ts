@@ -59,7 +59,7 @@ describe('ExerciseScoresChartComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

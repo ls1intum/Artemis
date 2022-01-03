@@ -17,7 +17,7 @@ describe('CircularProgressBarComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

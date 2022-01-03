@@ -91,7 +91,7 @@ describe('CreateExerciseUnitComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

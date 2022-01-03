@@ -27,7 +27,7 @@ describe('AboutUsComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

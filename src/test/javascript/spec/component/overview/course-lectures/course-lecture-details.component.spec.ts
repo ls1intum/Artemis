@@ -140,7 +140,7 @@ describe('CourseLectureDetails', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

@@ -123,7 +123,7 @@ const gradeDto = {
     isPassingGrade: true,
 } as GradeDTO;
 
-describe('ExamPointsSummaryComponent', function () {
+describe('ExamPointsSummaryComponent', () => {
     let gradingSystemService: GradingSystemService;
 
     beforeEach(() => {
@@ -174,7 +174,7 @@ describe('ExamPointsSummaryComponent', function () {
         expect(component.hasPassed).toEqual(gradeDto.isPassingGrade);
     });
 
-    it('should initialize and calculate scores correctly', function () {
+    it('should initialize and calculate scores correctly', () => {
         fixture.detectChanges();
         expect(fixture).not.toBeNull();
         expect(component.calculateAchievedPoints(programmingExerciseTwo)).toEqual(0);
@@ -190,7 +190,7 @@ describe('ExamPointsSummaryComponent', function () {
         expect(component.calculateMaxBonusPointsSum()).toEqual(20);
     });
 
-    it('should display 0 if no exercises are present', function () {
+    it('should display 0 if no exercises are present', () => {
         component.exercises = [];
         fixture.detectChanges();
         expect(fixture).not.toBeNull();

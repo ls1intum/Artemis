@@ -46,7 +46,7 @@ describe('ApollonDiagramCreateForm Component', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

@@ -24,7 +24,7 @@ describe('AttachmentUnitFormComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

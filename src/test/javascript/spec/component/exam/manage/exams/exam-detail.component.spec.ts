@@ -117,7 +117,7 @@ describe('ExamDetailComponent', () => {
         examDetailComponent.exam = exam;
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

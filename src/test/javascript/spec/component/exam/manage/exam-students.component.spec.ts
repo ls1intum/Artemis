@@ -64,7 +64,7 @@ describe('ExamStudentsComponent', () => {
         userService = TestBed.inject(UserService);
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
         fixture.destroy();
     });

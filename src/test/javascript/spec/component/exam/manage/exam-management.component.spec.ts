@@ -72,7 +72,7 @@ describe('Exam Management Component', () => {
         eventManager = TestBed.inject(EventManager);
     });
 
-    afterEach(function () {
+    afterEach(() => {
         // completely restore all fakes created through the sandbox
         jest.restoreAllMocks();
     });
