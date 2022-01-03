@@ -27,11 +27,11 @@ public class ModelingExercise extends Exercise {
     @Column(name = "diagram_type")
     private DiagramType diagramType;
 
-    @Column(name = "sample_solution_model")
+    @Column(name = "example_solution_model")
     @Lob
     private String sampleSolutionModel;
 
-    @Column(name = "sample_solution_explanation")
+    @Column(name = "example_solution_explanation")
     @Lob
     private String sampleSolutionExplanation;
 

@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextExercise extends Exercise {
 
-    @Column(name = "sample_solution")
+    @Column(name = "example_solution")
     @Lob
     private String sampleSolution;
 

@@ -90,7 +90,7 @@ public abstract class Exercise extends DomainObject {
     private String gradingInstructions;
 
     @Nullable
-    @Column(name = "sample_solution_publication_date")
+    @Column(name = "example_solution_publication_date")
     private ZonedDateTime sampleSolutionPublicationDate;
 
     @ManyToMany(mappedBy = "exercises")
