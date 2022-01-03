@@ -33,6 +33,11 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span></dt>
                 <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.sampleSolution! | htmlForMarkdown"></dd>
+                <dt><span jhiTranslate="artemisApp.exercise.sampleSolutionPublicationDate">Example Solution Publication Date</span></dt>
+                <dd>
+                    <span *ngIf="fileUploadExercise.sampleSolutionPublicationDate">{{ fileUploadExercise.sampleSolutionPublicationDate | artemisDate }}</span>
+                    <span *ngIf="!fileUploadExercise.sampleSolutionPublicationDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+                </dd>
             </dl>
         </div>
     </div>
