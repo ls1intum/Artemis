@@ -125,9 +125,7 @@ describe('NavbarComponent', () => {
         fixture.detectChanges();
 
         expect(component.breadcrumbs.length).toEqual(1);
-
-        // Use matching here to ignore non-semantic differences between objects
-        sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
+        expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
     });
 
     it('should ignore query parameters', () => {
@@ -137,9 +135,7 @@ describe('NavbarComponent', () => {
         fixture.detectChanges();
 
         expect(component.breadcrumbs.length).toEqual(1);
-
-        // Use matching here to ignore non-semantic differences between objects
-        sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
+        expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
     });
 
     it('should build breadcrumbs for system notification management', () => {
@@ -150,11 +146,10 @@ describe('NavbarComponent', () => {
 
         expect(component.breadcrumbs.length).toEqual(3);
 
-        // Use matching here to ignore non-semantic differences between objects
         const systemBreadcrumb = { label: 'artemisApp.systemNotification.systemNotifications', translate: true, uri: '/admin/system-notification-management/' } as MockBreadcrumb;
-        sinon.assert.match(component.breadcrumbs[0], systemBreadcrumb);
-        sinon.assert.match(component.breadcrumbs[1], { label: '1', translate: false, uri: '/admin/system-notification-management/1/' } as MockBreadcrumb);
-        sinon.assert.match(component.breadcrumbs[2], { label: 'global.generic.edit', translate: true, uri: '/admin/system-notification-management/1/edit/' } as MockBreadcrumb);
+        expect(component.breadcrumbs[0]).toEqual(systemBreadcrumb);
+        expect(component.breadcrumbs[1]).toEqual({ label: '1', translate: false, uri: '/admin/system-notification-management/1/' } as MockBreadcrumb);
+        expect(component.breadcrumbs[2]).toEqual({ label: 'global.generic.edit', translate: true, uri: '/admin/system-notification-management/1/edit/' } as MockBreadcrumb);
     });
 
     it('should build breadcrumbs for user management', () => {
@@ -165,9 +160,8 @@ describe('NavbarComponent', () => {
 
         expect(component.breadcrumbs.length).toEqual(2);
 
-        // Use matching here to ignore non-semantic differences between objects
-        sinon.assert.match(component.breadcrumbs[0], { label: 'userManagement.home.title', translate: true, uri: '/admin/user-management/' } as MockBreadcrumb);
-        sinon.assert.match(component.breadcrumbs[1], { label: 'test_user', translate: false, uri: '/admin/user-management/test_user/' } as MockBreadcrumb);
+        expect(component.breadcrumbs[0]).toEqual({ label: 'userManagement.home.title', translate: true, uri: '/admin/user-management/' } as MockBreadcrumb);
+        expect(component.breadcrumbs[1]).toEqual({ label: 'test_user', translate: false, uri: '/admin/user-management/test_user/' } as MockBreadcrumb);
     });
 
     it('should build breadcrumbs for organization management', () => {
@@ -182,9 +176,8 @@ describe('NavbarComponent', () => {
         expect(organizationStub).toHaveBeenCalledWith(1);
         expect(component.breadcrumbs.length).toEqual(2);
 
-        // Use matching here to ignore non-semantic differences between objects
-        sinon.assert.match(component.breadcrumbs[0], { label: 'organizationManagement.title', translate: true, uri: '/admin/organization-management/' } as MockBreadcrumb);
-        sinon.assert.match(component.breadcrumbs[1], { label: 'Organization Name', translate: false, uri: '/admin/organization-management/1/' } as MockBreadcrumb);
+        expect(component.breadcrumbs[0]).toEqual({ label: 'organizationManagement.title', translate: true, uri: '/admin/organization-management/' } as MockBreadcrumb);
+        expect(component.breadcrumbs[1]).toEqual({ label: 'Organization Name', translate: false, uri: '/admin/organization-management/1/' } as MockBreadcrumb);
     });
 
     it('should not error without translation', () => {
@@ -195,8 +188,7 @@ describe('NavbarComponent', () => {
 
         expect(component.breadcrumbs.length).toEqual(1);
 
-        // Use matching here to ignore non-semantic differences between objects
-        sinon.assert.match(component.breadcrumbs[0], { label: 'route-without-translation', translate: false, uri: '/admin/route-without-translation/' } as MockBreadcrumb);
+        expect(component.breadcrumbs[0]).toEqual({ label: 'route-without-translation', translate: false, uri: '/admin/route-without-translation/' } as MockBreadcrumb);
     });
 
     describe('Special Cases for Breadcrumbs', function () {
@@ -216,11 +208,10 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs.length).toEqual(4);
 
-            // Use matching here to ignore non-semantic differences between objects
-            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
-            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
-            sinon.assert.match(component.breadcrumbs[2], programmingExercisesCrumb);
-            sinon.assert.match(component.breadcrumbs[3], importCrumb);
+            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs[2]).toEqual(programmingExercisesCrumb);
+            expect(component.breadcrumbs[3]).toEqual(importCrumb);
         });
 
         it('programming exercise grading', () => {
@@ -240,12 +231,11 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs.length).toEqual(5);
 
-            // Use matching here to ignore non-semantic differences between objects
-            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
-            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
-            sinon.assert.match(component.breadcrumbs[2], programmingExercisesCrumb);
-            sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exercise', translate: false, uri: '/course-management/1/programming-exercises/2/' } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[4], gradingCrumb);
+            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs[2]).toEqual(programmingExercisesCrumb);
+            expect(component.breadcrumbs[3]).toEqual({ label: 'Test Exercise', translate: false, uri: '/course-management/1/programming-exercises/2/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[4]).toEqual(gradingCrumb);
         });
 
         it('programming exercise new assessment', () => {
@@ -265,12 +255,11 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs.length).toEqual(5);
 
-            // Use matching here to ignore non-semantic differences between objects
-            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
-            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
-            sinon.assert.match(component.breadcrumbs[2], programmingExercisesCrumb);
-            sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exercise', translate: false, uri: '/course-management/1/programming-exercises/2/' } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[4], assessmentCrumb);
+            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs[2]).toEqual(programmingExercisesCrumb);
+            expect(component.breadcrumbs[3]).toEqual({ label: 'Test Exercise', translate: false, uri: '/course-management/1/programming-exercises/2/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[4]).toEqual(assessmentCrumb);
         });
 
         it('programming exercise hints', () => {
@@ -300,13 +289,12 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs.length).toEqual(6);
 
-            // Use matching here to ignore non-semantic differences between objects
-            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
-            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
-            sinon.assert.match(component.breadcrumbs[2], { label: 'artemisApp.course.exercises', translate: true, uri: '/course-management/1/exercises/' } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exercise', translate: false, uri: '/course-management/1/exercises/2/' } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[4], hintsCrumb);
-            sinon.assert.match(component.breadcrumbs[5], hintCrumb);
+            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs[2]).toEqual({ label: 'artemisApp.course.exercises', translate: true, uri: '/course-management/1/exercises/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[3]).toEqual({ label: 'Test Exercise', translate: false, uri: '/course-management/1/exercises/2/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[4]).toEqual(hintsCrumb);
+            expect(component.breadcrumbs[5]).toEqual(hintCrumb);
         });
 
         it('text exercise feedback conflict', () => {
@@ -332,13 +320,12 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs.length).toEqual(6);
 
-            // Use matching here to ignore non-semantic differences between objects
-            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
-            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
-            sinon.assert.match(component.breadcrumbs[2], { label: 'artemisApp.course.exercises', translate: true, uri: '/course-management/1/text-exercises/' } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exercise', translate: false, uri: '/course-management/1/text-exercises/2/' } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[4], submissionsCrumb);
-            sinon.assert.match(component.breadcrumbs[5], conflictCrumb);
+            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs[2]).toEqual({ label: 'artemisApp.course.exercises', translate: true, uri: '/course-management/1/text-exercises/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[3]).toEqual({ label: 'Test Exercise', translate: false, uri: '/course-management/1/text-exercises/2/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[4]).toEqual(submissionsCrumb);
+            expect(component.breadcrumbs[5]).toEqual(conflictCrumb);
         });
 
         it('exercise assessment dashboard', () => {
@@ -354,15 +341,14 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs.length).toEqual(4);
 
-            // Use matching here to ignore non-semantic differences between objects
-            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
-            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
-            sinon.assert.match(component.breadcrumbs[2], {
+            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs[2]).toEqual({
                 label: 'artemisApp.assessmentDashboard.home.title',
                 translate: true,
                 uri: '/course-management/1/assessment-dashboard/',
             } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[3], {
+            expect(component.breadcrumbs[3]).toEqual({
                 label: 'Test Exercise',
                 translate: false,
                 uri: '/course-management/1/assessment-dashboard/2/',
@@ -392,17 +378,16 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs.length).toEqual(6);
 
-            // Use matching here to ignore non-semantic differences between objects
-            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
-            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
-            sinon.assert.match(component.breadcrumbs[2], {
+            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs[2]).toEqual({
                 label: 'artemisApp.course.exercises',
                 translate: true,
                 uri: '/course-management/1/modeling-exercises/',
             } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exercise', translate: false, uri: '/course-management/1/modeling-exercises/2/' } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[4], submissionCrumb);
-            sinon.assert.match(component.breadcrumbs[5], editorSubmissionCrumb);
+            expect(component.breadcrumbs[3]).toEqual({ label: 'Test Exercise', translate: false, uri: '/course-management/1/modeling-exercises/2/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[4]).toEqual(submissionCrumb);
+            expect(component.breadcrumbs[5]).toEqual(editorSubmissionCrumb);
         });
 
         it('modeling exercise example submission', () => {
@@ -428,17 +413,16 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs.length).toEqual(6);
 
-            // Use matching here to ignore non-semantic differences between objects
-            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
-            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
-            sinon.assert.match(component.breadcrumbs[2], {
+            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs[2]).toEqual({
                 label: 'artemisApp.course.exercises',
                 translate: true,
                 uri: '/course-management/1/modeling-exercises/',
             } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exercise', translate: false, uri: '/course-management/1/modeling-exercises/2/' } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[4], submissionCrumb);
-            sinon.assert.match(component.breadcrumbs[5], editorSubmissionCrumb);
+            expect(component.breadcrumbs[3]).toEqual({ label: 'Test Exercise', translate: false, uri: '/course-management/1/modeling-exercises/2/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[4]).toEqual(submissionCrumb);
+            expect(component.breadcrumbs[5]).toEqual(editorSubmissionCrumb);
         });
 
         it('lecture units', () => {
@@ -467,13 +451,12 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs.length).toEqual(6);
 
-            // Use matching here to ignore non-semantic differences between objects
-            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
-            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
-            sinon.assert.match(component.breadcrumbs[2], { label: 'artemisApp.lecture.home.title', translate: true, uri: '/course-management/1/lectures/' } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[3], { label: 'Test Lecture', translate: false, uri: '/course-management/1/lectures/2/' } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[4], unitManagementCrumb);
-            sinon.assert.match(component.breadcrumbs[5], createCrumb);
+            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs[2]).toEqual({ label: 'artemisApp.lecture.home.title', translate: true, uri: '/course-management/1/lectures/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[3]).toEqual({ label: 'Test Lecture', translate: false, uri: '/course-management/1/lectures/2/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[4]).toEqual(unitManagementCrumb);
+            expect(component.breadcrumbs[5]).toEqual(createCrumb);
         });
 
         it('apollon diagrams', () => {
@@ -490,15 +473,14 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs.length).toEqual(4);
 
-            // Use matching here to ignore non-semantic differences between objects
-            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
-            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
-            sinon.assert.match(component.breadcrumbs[2], {
+            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs[2]).toEqual({
                 label: 'artemisApp.apollonDiagram.home.title',
                 translate: true,
                 uri: '/course-management/1/apollon-diagrams/',
             } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[3], { label: 'Apollon Diagram', translate: false, uri: '/course-management/1/apollon-diagrams/2/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[3]).toEqual({ label: 'Apollon Diagram', translate: false, uri: '/course-management/1/apollon-diagrams/2/' } as MockBreadcrumb);
         });
 
         it('exam exercise groups', () => {
@@ -526,13 +508,12 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs.length).toEqual(6);
 
-            // Use matching here to ignore non-semantic differences between objects
-            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
-            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
-            sinon.assert.match(component.breadcrumbs[2], { label: 'artemisApp.examManagement.title', translate: true, uri: '/course-management/1/exams/' } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exam', translate: false, uri: '/course-management/1/exams/2/' } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[4], exerciseGroupsCrumb);
-            sinon.assert.match(component.breadcrumbs[5], createCrumb);
+            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs[2]).toEqual({ label: 'artemisApp.examManagement.title', translate: true, uri: '/course-management/1/exams/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[3]).toEqual({ label: 'Test Exam', translate: false, uri: '/course-management/1/exams/2/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[4]).toEqual(exerciseGroupsCrumb);
+            expect(component.breadcrumbs[5]).toEqual(createCrumb);
         });
 
         it('exam exercise plagiarism', () => {
@@ -566,14 +547,13 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs.length).toEqual(7);
 
-            // Use matching here to ignore non-semantic differences between objects
-            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
-            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
-            sinon.assert.match(component.breadcrumbs[2], { label: 'artemisApp.examManagement.title', translate: true, uri: '/course-management/1/exams/' } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exam', translate: false, uri: '/course-management/1/exams/2/' } as MockBreadcrumb);
-            sinon.assert.match(component.breadcrumbs[4], exerciseGroupsCrumb);
-            sinon.assert.match(component.breadcrumbs[5], exerciseCrumb);
-            sinon.assert.match(component.breadcrumbs[6], plagiarismCrumb);
+            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs[2]).toEqual({ label: 'artemisApp.examManagement.title', translate: true, uri: '/course-management/1/exams/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[3]).toEqual({ label: 'Test Exam', translate: false, uri: '/course-management/1/exams/2/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[4]).toEqual(exerciseGroupsCrumb);
+            expect(component.breadcrumbs[5]).toEqual(exerciseCrumb);
+            expect(component.breadcrumbs[6]).toEqual(plagiarismCrumb);
         });
     });
 });
