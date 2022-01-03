@@ -8,17 +8,14 @@ import { FileService } from 'app/shared/http/file.service';
     templateUrl: './attachment-unit.component.html',
     styleUrls: ['../lecture-unit.component.scss'],
 })
-export class AttachmentUnitComponent implements OnInit {
-    @Input()
-    attachmentUnit: AttachmentUnit;
+export class AttachmentUnitComponent {
+    @Input() attachmentUnit: AttachmentUnit;
 
     isCollapsed = true;
 
     constructor(private fileService: FileService) {}
 
-    ngOnInit(): void {}
-
-    handleCollapse(event: any) {
+    handleCollapse(event: Event) {
         event.stopPropagation();
         this.isCollapsed = !this.isCollapsed;
     }

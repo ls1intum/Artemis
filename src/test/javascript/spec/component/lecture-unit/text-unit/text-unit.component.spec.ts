@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -6,6 +6,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+
 describe('TextUnitFormComponent', () => {
     const exampleName = 'Test';
     const exampleMarkdown = '# Sample Markdown';
@@ -58,7 +59,7 @@ describe('TextUnitFormComponent', () => {
         });
     }));
 
-    it('should collapse unit when header clicked', () => {
+    it('should collapse unit when header clicked', fakeAsync(() => {
         textUnitComponent.textUnit = textUnit;
         textUnitComponentFixture.detectChanges();
         expect(textUnitComponent.isCollapsed).toBeTrue();
@@ -67,24 +68,20 @@ describe('TextUnitFormComponent', () => {
         const header = textUnitComponentFixture.debugElement.nativeElement.querySelector('.unit-card-header');
         expect(header).not.toBeNull();
         header.click();
+        tick(500);
 
         textUnitComponentFixture.whenStable().then(() => {
-            expect(handleCollapseSpy).toHaveBeenCalled();
+            expect(handleCollapseSpy).toHaveBeenCalledTimes(1);
             expect(textUnitComponent.isCollapsed).toBeFalse();
         });
-
-        handleCollapseSpy.mockRestore();
-    });
+    }));
 
     it('should display html in a new window when popup button is clicked', fakeAsync(() => {
-        const contentOfNewWindow: string[] = [];
         const innerHtmlCopy = window.document.body.innerHTML;
 
-        const writeStub = jest.spyOn(window.document, 'write').mockImplementation((content: string) => {
-            contentOfNewWindow.push(content);
-        });
-        const closeStub = jest.spyOn(window.document, 'close');
-        const focusStub = jest.spyOn(window, 'focus');
+        const writeStub = jest.spyOn(window.document, 'write').mockImplementation();
+        const closeStub = jest.spyOn(window.document, 'close').mockImplementation();
+        const focusStub = jest.spyOn(window, 'focus').mockImplementation();
         const openStub = jest.spyOn(window, 'open').mockReturnValue(window);
 
         textUnitComponent.textUnit = textUnit;
