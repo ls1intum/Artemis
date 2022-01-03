@@ -136,9 +136,7 @@ describe('Participation Service', () => {
         expect(mergedParticipation?.id).toEqual(participation1.id);
         expect(mergedParticipation?.results).toEqual([...participation1.results!, ...participation2.results!]);
         expect(mergedParticipation?.submissions).toEqual([...participation1.submissions!, ...participation2.submissions!]);
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
         mergedParticipation?.results?.forEach((result) => expect(result.participation).toMatchObject(mergedParticipation));
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
         mergedParticipation?.submissions?.forEach((submission) => expect(submission.participation).toMatchObject(mergedParticipation));
     }));
 
@@ -163,9 +161,7 @@ describe('Participation Service', () => {
         expect(mergedParticipation?.id).toEqual(participation1.id);
         expect(mergedParticipation?.results).toEqual([...participation1.results!, ...participation2.results!]);
         expect(mergedParticipation?.submissions).toEqual([...participation1.submissions!, ...participation2.submissions!]);
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
         mergedParticipation?.results?.forEach((result) => expect(result.participation).toMatchObject(mergedParticipation));
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
         mergedParticipation?.submissions?.forEach((submission) => expect(submission.participation).toMatchObject(mergedParticipation));
     }));
 

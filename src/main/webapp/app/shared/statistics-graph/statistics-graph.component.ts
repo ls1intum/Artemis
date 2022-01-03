@@ -180,7 +180,6 @@ export class StatisticsGraphComponent implements OnChanges {
     }
 
     public switchTimeSpan(index: boolean): void {
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
         index ? (this.currentPeriod += 1) : (this.currentPeriod -= 1);
         this.initializeChart();
     }

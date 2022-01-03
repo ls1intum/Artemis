@@ -22,10 +22,6 @@ class AttachmentUnitFormStubComponent {
     @Input() isEditMode = false;
     @Input() formData: AttachmentUnitFormData;
     @Output() formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
-
-    setFileUploadError(errorMessage: string) {
-        this.errorMessage = errorMessage;
-    }
 }
 
 @Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content></ng-content>' })

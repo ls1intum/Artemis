@@ -287,7 +287,6 @@ export class TextAssessmentService {
             }
             submissionForSending.atheneTextAssessmentTrackingToken = undefined;
 
-            // eslint-disable-next-line chai-friendly/no-unused-expressions
             submissionForSending.participation?.results!.forEach((result) => {
                 result.participation = undefined;
                 result.submission = undefined;
