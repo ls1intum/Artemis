@@ -6,7 +6,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faArrowLeft, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -40,8 +40,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
      * Sets the status badge and categories of the exercise on changes
      */
     ngOnChanges(): void {
-        this.setExerciseStatusBadge();
-        this.exerciseCategories = this.exercise?.categories || [];
+        this.exerciseCategories = this.exercise.categories || [];
 
         if (this.exercise) {
             this.setIcon(this.exercise.type);
@@ -54,19 +53,21 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
         if (this.exercise && !this.isExamMode) {
             this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
         }
+
+        this.setExerciseStatusBadge();
     }
 
     private setExerciseStatusBadge(): void {
         if (this.exercise) {
-            if (this.isExamMode) {
-                this.exerciseStatusBadge = dayjs().isAfter(dayjs(this.exam?.endDate!)) ? 'bg-danger' : 'bg-success';
+            if (this.exam) {
+                this.exerciseStatusBadge = dayjs().isAfter(dayjs(this.exam.endDate!)) ? 'bg-danger' : 'bg-success';
             } else {
-                this.exerciseStatusBadge = dayjs().isAfter(this.dueDate!) ? 'bg-danger' : 'bg-success';
+                this.exerciseStatusBadge = hasExerciseDueDatePassed(this.exercise, this.studentParticipation) ? 'bg-danger' : 'bg-success';
             }
         }
     }
 
-    setIcon(exerciseType?: ExerciseType) {
+    private setIcon(exerciseType?: ExerciseType) {
         if (exerciseType) {
             this.icon = getIcon(exerciseType) as IconProp;
         }
