@@ -34,6 +34,10 @@ public class NotificationTargetFactory {
 
     public static final String EXAM_ARCHIVE_UPDATED_TEXT = "examArchiveUpdated";
 
+    public static final String PLAGIARISM_TEXT = "plagiarism";
+
+    public static final String PLAGIARISM_DETECTED_TEXT = "plagiarismDetected";
+
     // EXERCISE related targets
 
     /**
@@ -92,6 +96,17 @@ public class NotificationTargetFactory {
      */
     public static NotificationTarget createExerciseTarget(Exercise exercise, String message) {
         return new NotificationTarget(message, exercise.getId(), EXERCISES_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId(), COURSES_TEXT);
+    }
+
+    /**
+     * Create a NotificationTarget for a GroupNotification for a duplicate test case.
+     *
+     * @param exercise with duplicated test cases
+     * @return the final NotificationTarget for this case
+     */
+    public static NotificationTarget createDuplicateTestCaseTarget(Exercise exercise) {
+        return new NotificationTarget(DUPLICATE_TEST_CASE_TEXT, exercise.getId(), PROGRAMMING_EXERCISES_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId(),
+                COURSE_MANAGEMENT_TEXT);
     }
 
     // LECTURE related targets
@@ -166,6 +181,19 @@ public class NotificationTargetFactory {
      */
     public static NotificationTarget createCoursePostTarget(Post post, Course course) {
         return new NotificationTarget(post.getId(), course.getId());
+    }
+
+    // Plagiarism related targets
+
+    /**
+     * Create a NotificationTarget for plagiarism related notifications
+     *
+     * @param plagiarismComparisonId is the id of the PlagiarismComparison
+     * @param courseId of the Course
+     * @return the final NotificationTarget
+     */
+    public static NotificationTarget createPlagiarismCaseTarget(Long plagiarismComparisonId, Long courseId) {
+        return new NotificationTarget(PLAGIARISM_DETECTED_TEXT, plagiarismComparisonId, PLAGIARISM_TEXT, courseId, COURSES_TEXT);
     }
 
     /// URL/Link related methods

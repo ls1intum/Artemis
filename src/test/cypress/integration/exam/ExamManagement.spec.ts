@@ -1,3 +1,6 @@
+import { Interception } from 'cypress/types/net-stubbing';
+import { Exam } from 'app/entities/exam.model';
+import { Course } from 'app/entities/course.model';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
@@ -10,26 +13,26 @@ const users = artemis.users;
 
 // Pageobjects
 const navigationBar = artemis.pageobjects.navigationBar;
-const courseManagement = artemis.pageobjects.courseManagement;
-const examManagement = artemis.pageobjects.examManagement;
-const textCreation = artemis.pageobjects.textExercise.creation;
-const exerciseGroups = artemis.pageobjects.examExerciseGroups;
-const exerciseGroupCreation = artemis.pageobjects.examExerciseGroupCreation;
-const studentExamManagement = artemis.pageobjects.studentExamManagement;
+const courseManagement = artemis.pageobjects.course.management;
+const examManagement = artemis.pageobjects.exam.management;
+const textCreation = artemis.pageobjects.exercise.text.creation;
+const exerciseGroups = artemis.pageobjects.exam.exerciseGroups;
+const exerciseGroupCreation = artemis.pageobjects.exam.exerciseGroupCreation;
+const studentExamManagement = artemis.pageobjects.exam.studentExamManagement;
 
 // Common primitives
 const uid = generateUUID();
 const examTitle = 'exam' + uid;
 
 describe('Exam management', () => {
-    let course: any;
-    let exam: any;
+    let course: Course;
+    let exam: Exam;
 
     before(() => {
         cy.login(users.getAdmin());
         courseManagementRequests.createCourse().then((response) => {
             course = response.body;
-            courseManagementRequests.addStudentToCourse(course.id, users.getStudentOne().username);
+            courseManagementRequests.addStudentToCourse(course.id!, users.getStudentOne().username);
             const examConfig = new CypressExamBuilder(course).title(examTitle).build();
             courseManagementRequests.createExam(examConfig).then((examResponse) => {
                 exam = examResponse.body;
@@ -44,8 +47,8 @@ describe('Exam management', () => {
     it('Adds an exercise group with a text exercise', () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
-        courseManagement.openExamsOfCourse(course.shortName);
-        examManagement.openExerciseGroups(exam.id);
+        courseManagement.openExamsOfCourse(course.shortName!);
+        examManagement.openExerciseGroups(exam.id!);
         exerciseGroups.shouldShowNumberOfExerciseGroups(0);
         exerciseGroups.clickAddExerciseGroup();
         const groupName = 'group 1';
@@ -59,25 +62,23 @@ describe('Exam management', () => {
         textCreation.typeTitle(textExerciseTitle);
         textCreation.typeMaxPoints(10);
         textCreation.create().its('response.statusCode').should('eq', 201);
-        exerciseGroups.visitPageViaUrl(course.id, exam.id);
+        exerciseGroups.visitPageViaUrl(course.id!, exam.id!);
         exerciseGroups.shouldContainExerciseWithTitle(textExerciseTitle);
     });
 
     it('Registers the course students for the exam', () => {
         // We already verified in the previous test that we can navigate here
         cy.visit(`/course-management/${course.id}/exams`);
-        examManagement.openStudentRegistration(exam.id);
-        cy.get('#registered-users').should('contain.text', '0');
-        studentExamManagement.clickRegisterCourseStudents().then((request: any) => {
-            expect(request.response.statusCode).to.eq(200);
+        examManagement.openStudentRegistration(exam.id!);
+        studentExamManagement.clickRegisterCourseStudents().then((request: Interception) => {
+            expect(request.response!.statusCode).to.eq(200);
         });
-        cy.contains(users.getStudentOne().username).should('be.visible');
-        cy.get('#registered-users').should('contain.text', '1');
+        cy.get('#registered-students').contains(users.getStudentOne().username).should('be.visible');
     });
 
     it('Generates student exams', () => {
         cy.visit(`/course-management/${course.id}/exams`);
-        examManagement.openStudenExams(exam.id);
+        examManagement.openStudenExams(exam.id!);
         studentExamManagement.clickGenerateStudentExams();
         cy.get('#generateMissingStudentExamsButton').should('be.disabled');
     });
@@ -85,7 +86,7 @@ describe('Exam management', () => {
     after(() => {
         if (!!course) {
             cy.login(users.getAdmin());
-            courseManagementRequests.deleteCourse(course.id);
+            courseManagementRequests.deleteCourse(course.id!);
         }
     });
 });

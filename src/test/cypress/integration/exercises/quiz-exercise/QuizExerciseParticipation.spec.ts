@@ -1,3 +1,5 @@
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Course } from 'app/entities/course.model';
 import { artemis } from '../../../support/ArtemisTesting';
 import multipleChoiceQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/shortAnswerQuiz_template.json';
@@ -10,28 +12,28 @@ const student = artemis.users.getStudentOne();
 const courseManagementRequest = artemis.requests.courseManagement;
 
 // Page objects
-const multipleChoiceQuiz = artemis.pageobjects.quizExercise.multipleChoice;
-const shortAnswerQuiz = artemis.pageobjects.quizExercise.shortAnswer;
-const quizCreation = artemis.pageobjects.quizExercise.creation;
-const dragAndDropQuiz = artemis.pageobjects.quizExercise.dragAndDrop;
-const courseOverview = artemis.pageobjects.courseOverview;
+const multipleChoiceQuiz = artemis.pageobjects.exercise.quiz.multipleChoice;
+const shortAnswerQuiz = artemis.pageobjects.exercise.quiz.shortAnswer;
+const quizCreation = artemis.pageobjects.exercise.quiz.creation;
+const dragAndDropQuiz = artemis.pageobjects.exercise.quiz.dragAndDrop;
+const courseOverview = artemis.pageobjects.course.overview;
 
 // Common primitives
-let course: any;
-let quizExercise: any;
+let course: Course;
+let quizExercise: QuizExercise;
 
 describe('Quiz Exercise Participation', () => {
     before('Set up course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = response.body;
-            courseManagementRequest.addStudentToCourse(course.id, student.username);
+            courseManagementRequest.addStudentToCourse(course.id!, student.username);
         });
     });
 
     after('Delete Course', () => {
         cy.login(admin);
-        courseManagementRequest.deleteCourse(course.id);
+        courseManagementRequest.deleteCourse(course.id!);
     });
 
     describe('Quiz exercise participation', () => {
@@ -49,17 +51,17 @@ describe('Quiz Exercise Participation', () => {
 
         it('Student can see a visible quiz', () => {
             cy.login(admin);
-            courseManagementRequest.setQuizVisible(quizExercise.id);
+            courseManagementRequest.setQuizVisible(quizExercise.id!);
             cy.login(student, '/courses/' + course.id);
-            courseOverview.openRunningExercise(quizExercise.id);
+            courseOverview.openRunningExercise(quizExercise.id!);
         });
 
         it('Student can participate in MC quiz', () => {
             cy.login(admin);
-            courseManagementRequest.setQuizVisible(quizExercise.id);
-            courseManagementRequest.startQuizNow(quizExercise.id);
+            courseManagementRequest.setQuizVisible(quizExercise.id!);
+            courseManagementRequest.startQuizNow(quizExercise.id!);
             cy.login(student, '/courses/' + course.id);
-            courseOverview.startExercise(quizExercise.id);
+            courseOverview.startExercise(quizExercise.id!);
             multipleChoiceQuiz.tickAnswerOption(0);
             multipleChoiceQuiz.tickAnswerOption(2);
             multipleChoiceQuiz.submit();
@@ -71,15 +73,15 @@ describe('Quiz Exercise Participation', () => {
             cy.login(admin);
             courseManagementRequest.createQuizExercise({ course }, [shortAnswerQuizTemplate]).then((quizResponse) => {
                 quizExercise = quizResponse.body;
-                courseManagementRequest.setQuizVisible(quizExercise.id);
-                courseManagementRequest.startQuizNow(quizExercise.id);
+                courseManagementRequest.setQuizVisible(quizExercise.id!);
+                courseManagementRequest.startQuizNow(quizExercise.id!);
             });
         });
 
         it('Student can participate in SA quiz', () => {
-            const quizQuestionId = quizExercise.quizQuestions[0].id;
+            const quizQuestionId = quizExercise.quizQuestions![0].id!;
             cy.login(student, '/courses/' + course.id);
-            courseOverview.startExercise(quizExercise.id);
+            courseOverview.startExercise(quizExercise.id!);
             shortAnswerQuiz.typeAnswer(0, 1, quizQuestionId, 'give');
             shortAnswerQuiz.typeAnswer(1, 1, quizQuestionId, 'let');
             shortAnswerQuiz.typeAnswer(2, 1, quizQuestionId, 'run');
@@ -98,14 +100,14 @@ describe('Quiz Exercise Participation', () => {
             quizCreation.addDragAndDropQuestion('DnD Quiz');
             quizCreation.saveQuiz().then((quizResponse) => {
                 quizExercise = quizResponse.response?.body;
-                courseManagementRequest.setQuizVisible(quizExercise.id);
-                courseManagementRequest.startQuizNow(quizExercise.id);
+                courseManagementRequest.setQuizVisible(quizExercise.id!);
+                courseManagementRequest.startQuizNow(quizExercise.id!);
             });
         });
 
         it('Student can participate in DnD Quiz', () => {
             cy.login(student, '/courses/' + course.id);
-            courseOverview.startExercise(quizExercise.id);
+            courseOverview.startExercise(quizExercise.id!);
             dragAndDropQuiz.dragItemIntoDragArea(0);
             dragAndDropQuiz.submit();
         });
