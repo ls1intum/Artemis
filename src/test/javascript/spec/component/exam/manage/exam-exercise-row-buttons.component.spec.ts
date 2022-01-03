@@ -91,6 +91,7 @@ describe('Exam Exercise Row Buttons Component', () => {
         numberOfAssessmentsOfCorrectionRounds: [dueDateStat],
     };
     const quizExercise = {
+        title: 'MyQuiz',
         id: 5,
         type: ExerciseType.QUIZ,
         maxPoints: 100,
@@ -217,13 +218,13 @@ describe('Exam Exercise Row Buttons Component', () => {
     describe('check quiz is being exported', () => {
         it('should export quiz exercise by id', () => {
             comp.exercise = quizExercise;
-            const quizExerciseServiceFindStub = jest.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-            const quizExerciseServiceExportQuizStub = jest.spyOn(quizExerciseService, 'exportQuiz');
+            const quizExerciseServiceFindSpy = jest.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+            const quizExerciseServiceExportQuizSpy = jest.spyOn(quizExerciseService, 'exportQuiz');
 
             comp.exportQuizById(true);
 
-            expect(quizExerciseServiceFindStub).toHaveBeenCalledWith(quizExercise.id);
-            expect(quizExerciseServiceExportQuizStub).toHaveBeenCalledWith(quizQuestions, true);
+            expect(quizExerciseServiceFindSpy).toHaveBeenCalledWith(quizExercise.id);
+            expect(quizExerciseServiceExportQuizSpy).toHaveBeenCalledWith(quizQuestions, true, quizExercise.title);
         });
     });
 });
