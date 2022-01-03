@@ -1,7 +1,7 @@
 .group-tag-list {
     width: 100%;
 
-    mat-chip {
+    .group-tag {
         padding: 0 !important;
         height: 30px !important;
         border-radius: 0.25rem !important;
@@ -11,14 +11,14 @@
             padding: 0.15rem 0.45rem;
             background: #0275d8;
             border-radius: 0.25rem;
-            color: #ffffff;
+            color: #fff;
 
             &:hover {
                 opacity: 0.8;
             }
 
-            fa-icon {
-                color: #ffffff;
+            .group-tag-remove {
+                color: #fff;
             }
         }
     }

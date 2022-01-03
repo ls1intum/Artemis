@@ -2,7 +2,7 @@ jhi-category-selector {
     .category-chip-list {
         width: 100%;
 
-        mat-chip {
+        .category-chip {
             padding: 0 !important;
             height: 30px !important;
             border-radius: 0.25rem !important;
@@ -12,14 +12,14 @@ jhi-category-selector {
                 padding: 0.15rem 0.45rem;
                 background: #cccccc;
                 border-radius: 0.25rem;
-                color: #ffffff;
+                color: #fff;
 
                 &:hover {
                     opacity: 0.8;
                 }
 
-                fa-icon {
-                    color: #ffffff;
+                .category-chip-remove {
+                    color: #fff;
                 }
             }
         }
@@ -31,9 +31,9 @@ jhi-category-selector {
 }
 
 .tag-option {
-    background: #ffffff;
+    background: #fff;
 
     &:hover {
-        background: #cccccc;
+        background: #ccc;
     }
 }
