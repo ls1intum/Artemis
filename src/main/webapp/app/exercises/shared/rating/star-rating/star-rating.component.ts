@@ -224,10 +224,12 @@ export class StarRatingComponent {
             if (this.stars.length === 0) {
                 this.setStars();
             }
+
+            const newSize = this.size.match(/\d+/)![0];
+            const halfSize = (parseInt(newSize, 10) * 10) / 24;
+            const halfMargin = 0 - (parseInt(newSize, 10) * 20) / 24;
+
             this.stars.forEach((star: HTMLElement) => {
-                const newSize = this.size.match(/\d+/)![0];
-                const halfSize = (parseInt(newSize, 10) * 10) / 24;
-                const halfMargin = 0 - (parseInt(newSize, 10) * 20) / 24;
                 star.style.setProperty(StarRatingComponent.VAR_SIZE, this.size);
                 if (star.classList.contains(StarRatingComponent.CLS_HALF_STAR)) {
                     star.style.setProperty(StarRatingComponent.VAR_HALF_WIDTH, `${halfSize}px`);
