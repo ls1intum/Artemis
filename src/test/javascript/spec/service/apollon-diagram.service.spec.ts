@@ -1,147 +1,135 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpResponse } from '@angular/common/http';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 const resourceUrl = SERVER_API_URL + 'api';
 
 describe('ApollonDiagramService', () => {
     let courseId: number;
     let apollonDiagram: ApollonDiagram;
+    let apollonDiagramService: ApollonDiagramService;
+    let httpTestingController: HttpTestingController;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
             providers: [ApollonDiagramService],
-        });
+        })
+            .compileComponents()
+            .then(() => {
+                apollonDiagramService = TestBed.inject(ApollonDiagramService);
+                httpTestingController = TestBed.inject(HttpTestingController);
+            });
         courseId = 1;
         apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId);
     });
 
-    it('should be initialized', inject([ApollonDiagramService], (apollonDiagramService: ApollonDiagramService) => {
-        expect(apollonDiagramService).to.be.ok;
+    it('should create a diagram', fakeAsync(() => {
+        // Set up
+        const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
+        const responseObject = apollonDiagram;
+
+        let response: HttpResponse<ApollonDiagram>;
+
+        apollonDiagramService.create(apollonDiagram, courseId).subscribe((receivedResponse: HttpResponse<ApollonDiagram>) => {
+            response = receivedResponse;
+        });
+
+        const requestWrapper = httpTestingController.expectOne({ url });
+        requestWrapper.flush(responseObject);
+
+        tick();
+
+        expect(requestWrapper.request.method).toBe('POST');
+        expect(response!.body).toEqual(responseObject);
+        expect(response!.status).toBe(200);
     }));
 
-    it('should create a diagram', fakeAsync(
-        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, server: HttpTestingController) => {
-            // Set up
-            const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
-            const responseObject = apollonDiagram;
+    it('should update a diagram', fakeAsync(() => {
+        // Set up
+        const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
+        const responseObject = apollonDiagram;
 
-            let response: HttpResponse<ApollonDiagram>;
+        let response: HttpResponse<ApollonDiagram>;
 
-            apollonDiagramService.create(apollonDiagram, courseId).subscribe((receivedResponse: HttpResponse<ApollonDiagram>) => {
-                response = receivedResponse;
-            });
+        apollonDiagramService.update(apollonDiagram, courseId).subscribe((receivedResponse: HttpResponse<ApollonDiagram>) => {
+            response = receivedResponse;
+        });
 
-            const requestWrapper = server.expectOne({ url });
-            requestWrapper.flush(responseObject);
+        const requestWrapper = httpTestingController.expectOne({ url });
+        requestWrapper.flush(responseObject);
 
-            tick();
+        tick();
 
-            expect(requestWrapper.request.method).to.equal('POST');
-            expect(response!.body).to.equal(responseObject);
-            expect(response!.status).to.equal(200);
-        }),
-    ));
+        expect(requestWrapper.request.method).toBe('PUT');
+        expect(response!.body).toEqual(responseObject);
+        expect(response!.status).toBe(200);
+    }));
 
-    it('should update a diagram', fakeAsync(
-        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, server: HttpTestingController) => {
-            // Set up
-            const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
-            const responseObject = apollonDiagram;
+    it('should find a diagram', fakeAsync(() => {
+        // Set up
+        const diagramId = 1;
+        const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
+        const responseObject = apollonDiagram;
 
-            let response: HttpResponse<ApollonDiagram>;
+        let response: HttpResponse<ApollonDiagram>;
 
-            apollonDiagramService.update(apollonDiagram, courseId).subscribe((receivedResponse: HttpResponse<ApollonDiagram>) => {
-                response = receivedResponse;
-            });
+        apollonDiagramService.find(diagramId, courseId).subscribe((receivedResponse: HttpResponse<ApollonDiagram>) => {
+            response = receivedResponse;
+        });
 
-            const requestWrapper = server.expectOne({ url });
-            requestWrapper.flush(responseObject);
+        const requestWrapper = httpTestingController.expectOne({ url });
+        requestWrapper.flush(responseObject);
 
-            tick();
+        tick();
 
-            expect(requestWrapper.request.method).to.equal('PUT');
-            expect(response!.body).to.equal(responseObject);
-            expect(response!.status).to.equal(200);
-        }),
-    ));
+        expect(requestWrapper.request.method).toBe('GET');
+        expect(response!.body).toEqual(responseObject);
+        expect(response!.status).toBe(200);
+    }));
 
-    it('should find a diagram', fakeAsync(
-        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, server: HttpTestingController) => {
-            // Set up
-            const diagramId = 1;
-            const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
-            const responseObject = apollonDiagram;
+    it('should delete a diagram', fakeAsync(() => {
+        // Set up
+        const diagramId = 1;
+        const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
+        const responseObject = apollonDiagram;
 
-            let response: HttpResponse<ApollonDiagram>;
+        let response: HttpResponse<void>;
 
-            apollonDiagramService.find(diagramId, courseId).subscribe((receivedResponse: HttpResponse<ApollonDiagram>) => {
-                response = receivedResponse;
-            });
+        apollonDiagramService.delete(diagramId, courseId).subscribe((receivedResponse: HttpResponse<void>) => {
+            response = receivedResponse;
+        });
 
-            const requestWrapper = server.expectOne({ url });
-            requestWrapper.flush(responseObject);
+        const requestWrapper = httpTestingController.expectOne({ url });
+        requestWrapper.flush(responseObject);
 
-            tick();
+        tick();
 
-            expect(requestWrapper.request.method).to.equal('GET');
-            expect(response!.body).to.equal(responseObject);
-            expect(response!.status).to.equal(200);
-        }),
-    ));
+        expect(requestWrapper.request.method).toBe('DELETE');
+        expect(response!.body).toEqual(responseObject);
+        expect(response!.status).toBe(200);
+    }));
 
-    it('should delete a diagram', fakeAsync(
-        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, server: HttpTestingController) => {
-            // Set up
-            const diagramId = 1;
-            const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
-            const responseObject = apollonDiagram;
+    it('should get diagrams by course', fakeAsync(() => {
+        // Set up
+        const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
+        const responseObject = [apollonDiagram];
 
-            let response: HttpResponse<void>;
+        let response: HttpResponse<ApollonDiagram[]>;
 
-            apollonDiagramService.delete(diagramId, courseId).subscribe((receivedResponse: HttpResponse<void>) => {
-                response = receivedResponse;
-            });
+        apollonDiagramService.getDiagramsByCourse(courseId).subscribe((receivedResponse: HttpResponse<ApollonDiagram[]>) => {
+            response = receivedResponse;
+        });
 
-            const requestWrapper = server.expectOne({ url });
-            requestWrapper.flush(responseObject);
+        const requestWrapper = httpTestingController.expectOne({ url });
+        requestWrapper.flush(responseObject);
 
-            tick();
+        tick();
 
-            expect(requestWrapper.request.method).to.equal('DELETE');
-            expect(response!.body).to.equal(responseObject);
-            expect(response!.status).to.equal(200);
-        }),
-    ));
-
-    it('should get diagrams by course', fakeAsync(
-        inject([ApollonDiagramService, HttpTestingController], (apollonDiagramService: ApollonDiagramService, server: HttpTestingController) => {
-            // Set up
-            const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
-            const responseObject = [apollonDiagram];
-
-            let response: HttpResponse<ApollonDiagram[]>;
-
-            apollonDiagramService.getDiagramsByCourse(courseId).subscribe((receivedResponse: HttpResponse<ApollonDiagram[]>) => {
-                response = receivedResponse;
-            });
-
-            const requestWrapper = server.expectOne({ url });
-            requestWrapper.flush(responseObject);
-
-            tick();
-
-            expect(requestWrapper.request.method).to.equal('GET');
-            expect(response!.body).to.equal(responseObject);
-            expect(response!.status).to.equal(200);
-        }),
-    ));
+        expect(requestWrapper.request.method).toBe('GET');
+        expect(response!.body).toEqual(responseObject);
+        expect(response!.status).toBe(200);
+    }));
 });
