@@ -106,7 +106,7 @@ describe('ModelingExercise Service', () => {
     }));
 
     it('should convert model to pdf', fakeAsync(() => {
-        spyOn(helper, 'downloadStream').and.returnValue({});
+        jest.spyOn(helper, 'downloadStream').mockReturnValue();
         const blob = new Blob(['test'], { type: 'text/html' }) as File;
         service.convertToPdf('model1', 'filename').subscribe((resp) => expect(resp).resolves);
 

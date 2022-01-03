@@ -247,7 +247,7 @@ describe('Participation Service', () => {
         ['', 'artifact'],
         ['filename="FixArtifactDownload-Tests-1.0.jar"', 'FixArtifactDownload-Tests-1.0.jar'],
         ['f="abc"', 'artifact'],
-    ])('%# should download artifact and extract file name: %p', async (headerVal: string, expectedFileName: string, done: jest.DoneCallback) => {
+    ])('%# should download artifact and extract file name: %p', async (headerVal: string, expectedFileName: string) => {
         const expectedBlob = new Blob(['abc', 'cfe'], { type: 'application/java-archive' });
         const headers = new HttpHeaders({ 'content-disposition': headerVal, 'content-type': 'application/java-archive' });
         const response = { body: expectedBlob, headers, status: 200 };
@@ -255,7 +255,6 @@ describe('Participation Service', () => {
         service.downloadArtifact(123).subscribe((resp) => {
             expect(resp.fileName).toBe(expectedFileName);
             expect(resp.fileContent).toBe(expectedBlob);
-            done();
         });
 
         const req = httpMock.expectOne({ method: 'GET' });
