@@ -15,7 +15,6 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 describe('Participation Service', () => {
     let injector: TestBed;

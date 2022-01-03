@@ -1,3 +1,5 @@
+import { Lecture } from 'app/entities/lecture.model';
+import { Course } from 'app/entities/course.model';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
 import dayjs from 'dayjs';
@@ -14,27 +16,27 @@ const lectureManagement = artemis.pageobjects.lecture.management;
 const lectureCreation = artemis.pageobjects.lecture.creation;
 
 describe('Lecture management', () => {
-    let course: any;
-    let lecture: any;
+    let course: Course;
+    let lecture: Lecture | undefined;
 
     before(() => {
         cy.login(admin);
         courseManagementRequests.createCourse().then((response) => {
             course = response.body;
-            courseManagementRequests.addInstructorToCourse(course.id, instructor);
+            courseManagementRequests.addInstructorToCourse(course.id!, instructor);
         });
     });
 
     after(() => {
         if (!!course) {
             cy.login(admin);
-            courseManagementRequests.deleteCourse(course.id);
+            courseManagementRequests.deleteCourse(course.id!);
         }
     });
 
     afterEach('Delete lecture', () => {
         if (lecture) {
-            courseManagementRequests.deleteLecture(lecture.id);
+            courseManagementRequests.deleteLecture(lecture.id!);
         }
     });
 
@@ -64,10 +66,10 @@ describe('Lecture management', () => {
         });
 
         it('Deletes an existing lecture', () => {
-            lectureManagement.deleteLecture(lecture.title, 0).then((resp) => {
+            lectureManagement.deleteLecture(lecture!.title!, 0).then((resp) => {
                 expect(resp.response!.statusCode).to.eq(200);
                 lectureManagement.getLectureContainer().children().should('have.length', 0);
-                lecture = null;
+                lecture = undefined;
             });
         });
 
@@ -83,8 +85,8 @@ describe('Lecture management', () => {
             courseManagementRequests.createModelingExercise({ course }).then((model) => {
                 const exercise = model.body;
                 lectureManagement.openUnitsPage(0);
-                lectureManagement.addExerciseUnit(exercise.id);
-                cy.contains(exercise.title);
+                lectureManagement.addExerciseUnit(exercise.id!);
+                cy.contains(exercise.title!);
             });
         });
     });
