@@ -22,6 +22,10 @@ class AttachmentUnitFormStubComponent {
     @Input() isEditMode = false;
     @Input() formData: AttachmentUnitFormData;
     @Output() formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
+
+    setFileUploadError(errorMessage: string) {
+        this.errorMessage = errorMessage;
+    }
 }
 
 @Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content></ng-content>' })
@@ -38,9 +42,9 @@ describe('EditAttachmentUnitComponent', () => {
     let attachmentService;
     let attachmentUnitService;
     let router: Router;
-    let uploadFileStub: jest.SpyInstance;
-    let updateAttachmentStub: jest.SpyInstance;
-    let updateAttachmentUnitStub: jest.SpyInstance;
+    let uploadFileSpy: jest.SpyInstance;
+    let updateAttachmentSpy: jest.SpyInstance;
+    let updateAttachmentUnitSpy: jest.SpyInstance;
     let attachment: Attachment;
     let attachmentUnit: AttachmentUnit;
 
@@ -112,9 +116,9 @@ describe('EditAttachmentUnitComponent', () => {
                         }),
                     ),
                 );
-                uploadFileStub = jest.spyOn(fileUploadService, 'uploadFile');
-                updateAttachmentUnitStub = jest.spyOn(attachmentUnitService, 'update');
-                updateAttachmentStub = jest.spyOn(attachmentService, 'update');
+                uploadFileSpy = jest.spyOn(fileUploadService, 'uploadFile');
+                updateAttachmentUnitSpy = jest.spyOn(attachmentUnitService, 'update');
+                updateAttachmentSpy = jest.spyOn(attachmentService, 'update');
             });
     });
 
@@ -164,9 +168,9 @@ describe('EditAttachmentUnitComponent', () => {
             },
         };
 
-        uploadFileStub.mockReturnValue({ path: '/path/to/new/file' });
+        uploadFileSpy.mockReturnValue(Promise.resolve({ path: '/path/to/new/file' }));
         attachmentUnitFormStubComponent.formSubmitted.emit(formData);
-        expect(uploadFileStub).toHaveBeenCalledWith(fakeBlob, formData.fileProperties.fileName, { keepFileName: true });
+        expect(uploadFileSpy).toHaveBeenCalledWith(fakeBlob, formData.fileProperties.fileName, { keepFileName: true });
     });
 
     it('should not update file before performing update when file HAS NOT changed', () => {
@@ -192,7 +196,7 @@ describe('EditAttachmentUnitComponent', () => {
         };
 
         attachmentUnitFormStubComponent.formSubmitted.emit(formData);
-        expect(uploadFileStub).toHaveBeenCalledTimes(0);
+        expect(uploadFileSpy).toHaveBeenCalledTimes(0);
     });
 
     it('should set file file upload error on form', fakeAsync(() => {
@@ -218,7 +222,7 @@ describe('EditAttachmentUnitComponent', () => {
         };
 
         const performUpdateSpy = jest.spyOn(editAttachmentUnitComponent, 'performUpdate');
-        uploadFileStub.mockReturnValue(new Error('some error'));
+        uploadFileSpy.mockReturnValue(Promise.reject(new Error('some error')));
         attachmentUnitFormStubComponent.formSubmitted.emit(formData);
         editAttachmentUnitComponentFixture.whenStable().then(() => {
             expect(attachmentUnitFormStubComponent.errorMessage).toEqual('some error');
@@ -249,17 +253,17 @@ describe('EditAttachmentUnitComponent', () => {
             },
         };
 
-        uploadFileStub.mockReturnValue({ path: '/path/to/new/file' });
-        updateAttachmentStub.mockReturnValue(of(new Attachment()));
-        updateAttachmentUnitStub.mockReturnValue(of(new AttachmentUnit()));
+        uploadFileSpy.mockReturnValue(Promise.resolve({ path: '/path/to/new/file' }));
+        updateAttachmentSpy.mockReturnValue(of(new Attachment()));
+        updateAttachmentUnitSpy.mockReturnValue(of(new AttachmentUnit()));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
         attachmentUnitFormStubComponent.formSubmitted.emit(formData);
 
         editAttachmentUnitComponentFixture.whenStable().then(() => {
             expect(navigateSpy).toHaveBeenCalledTimes(1);
-            expect(updateAttachmentUnitStub).toHaveBeenCalledTimes(1);
-            expect(updateAttachmentStub).toHaveBeenCalledTimes(1);
+            expect(updateAttachmentUnitSpy).toHaveBeenCalledTimes(1);
+            expect(updateAttachmentSpy).toHaveBeenCalledTimes(1);
             navigateSpy.mockRestore();
         });
     }));
