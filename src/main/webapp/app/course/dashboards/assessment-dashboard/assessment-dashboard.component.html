@@ -23,6 +23,7 @@
                 <span class="me-2"> {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }} : {{ exam?.publishResultsDate | artemisDate }} </span>
             </h4>
         </div>
+        <jhi-exam-assessment-buttons class="w-25 float-right"></jhi-exam-assessment-buttons>
     </div>
 </div>
 
@@ -61,13 +62,16 @@
             </jhi-assessment-dashboard-information>
         </div>
     </div>
-
     <div class="container-fluid table-responsive">
         <h4 jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></h4>
         <div *ngIf="!isTestRun" class="guided-tour-form-check col-6 align-baseline">
-            <input type="checkbox" name="showFinishedExercise" id="field_showFinishedExercise" [ngModel]="showFinishedExercises" (ngModelChange)="triggerFinishedExercises()" />
-            <label class="form-check-label" for="field_showFinishedExercise">
-                {{ 'artemisApp.assessmentDashboard.showFinishedExercises' | artemisTranslate }}
+            <input type="checkbox" name="hideFinishedExercise" id="field_hideFinishedExercise" [ngModel]="hideFinishedExercises" (ngModelChange)="triggerFinishedExercises()" />
+            <label class="form-check-label" for="field_hideFinishedExercise">
+                {{ 'artemisApp.assessmentDashboard.hideFinishedExercises' | artemisTranslate }}
+            </label>
+            <input type="checkbox" name="hideOptional" id="field_hideOptional" [ngModel]="hideOptional" (ngModelChange)="triggerOptionalExercises()" />
+            <label class="form-check-label" for="field_hideOptional">
+                {{ 'artemisApp.assessmentDashboard.hideOptional' | artemisTranslate }}
             </label>
         </div>
         <table class="table exercise-table guided-tour-exercise-table">
@@ -98,7 +102,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let exercise of exercises">
+                <tr *ngFor="let exercise of currentlyShownExercises">
                     <td>
                         <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
                     </td>

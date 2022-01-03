@@ -14,15 +14,8 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { captureException } from '@sentry/browser';
 import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
+import { ValidationReason } from 'app/entities/exercise.model';
 
-interface Warning {
-    translateKey: string;
-    translateValues: any;
-}
-export interface Reason {
-    translateKey: string;
-    translateValues: any;
-}
 type InvalidFlaggedQuestions = {
     [title: string]: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] | undefined;
 };
@@ -45,8 +38,8 @@ export abstract class QuizExerciseValidationDirective {
     savedEntity: QuizExercise;
     isExamMode: boolean;
 
-    invalidReasons: Reason[];
-    invalidWarnings: Warning[];
+    invalidReasons: ValidationReason[];
+    invalidWarnings: ValidationReason[];
 
     protected invalidFlaggedQuestions: InvalidFlaggedQuestions = {};
     pendingChangesCache: boolean;
@@ -156,7 +149,7 @@ export abstract class QuizExerciseValidationDirective {
      * Get the reasons, why the quiz needs warnings
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
-    computeInvalidWarnings(): Warning[] {
+    computeInvalidWarnings(): ValidationReason[] {
         const invalidWarnings = !this.quizExercise
             ? []
             : this.quizExercise.quizQuestions
@@ -170,15 +163,15 @@ export abstract class QuizExerciseValidationDirective {
                   })
                   .filter(Boolean);
 
-        return invalidWarnings as Warning[];
+        return invalidWarnings as ValidationReason[];
     }
 
     /**
      * Get the reasons, why the quiz is invalid
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
-    computeInvalidReasons(): Reason[] {
-        const invalidReasons = new Array<Reason>();
+    computeInvalidReasons(): ValidationReason[] {
+        const invalidReasons = new Array<ValidationReason>();
         if (!this.quizExercise) {
             return [];
         }
@@ -367,7 +360,7 @@ export abstract class QuizExerciseValidationDirective {
                   })
                   .filter(Boolean);
 
-        return invalidReasons.concat(invalidFlaggedReasons as Reason[]);
+        return invalidReasons.concat(invalidFlaggedReasons as ValidationReason[]);
     }
 
     /**

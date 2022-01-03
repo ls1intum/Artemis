@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.ExerciseScoresChartService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
 
@@ -39,12 +40,15 @@ public class ExerciseScoresChartResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final ExerciseDateService exerciseDateService;
+
     public ExerciseScoresChartResource(ExerciseScoresChartService exerciseScoresChartService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService, ExerciseDateService exerciseDateService) {
         this.exerciseScoresChartService = exerciseScoresChartService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -87,7 +91,7 @@ public class ExerciseScoresChartResource {
         }
 
         // If no assessment due date is set, make sure to only count exercises which have a passed due date
-        return exercise.getDueDate() != null && ZonedDateTime.now().isAfter(exercise.getDueDate());
+        return exerciseDateService.isAfterLatestDueDate(exercise);
     }
 
     public static final class EndpointConstants {

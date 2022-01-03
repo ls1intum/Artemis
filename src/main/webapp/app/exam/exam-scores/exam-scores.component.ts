@@ -35,7 +35,7 @@ import { ScaleType, Color } from '@swimlane/ngx-charts';
     selector: 'jhi-exam-scores',
     templateUrl: './exam-scores.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrls: ['./exam-scores.component.scss'],
+    styleUrls: ['./exam-scores.component.scss', '../../shared/chart/vertical-bar-chart.scss'],
 })
 export class ExamScoresComponent implements OnInit, OnDestroy {
     public examScoreDTO: ExamScoreDTO;

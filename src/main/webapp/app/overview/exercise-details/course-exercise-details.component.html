@@ -3,7 +3,12 @@
         <div [innerHTML]="'artemisApp.exercise.welcome' | artemisTranslate"></div>
     </div>
     <!-- HEADER INFORMATION START -->
-    <jhi-header-exercise-page-with-details [exercise]="exercise" [onBackClick]="backToCourse.bind(this)" [submissionPolicy]="submissionPolicy">
+    <jhi-header-exercise-page-with-details
+        [exercise]="exercise"
+        [studentParticipation]="studentParticipation"
+        [onBackClick]="backToCourse.bind(this)"
+        [submissionPolicy]="submissionPolicy"
+    >
         <span pagetitle>{{ exercise.title }}</span>
     </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->
@@ -114,7 +119,7 @@
                 </jhi-programming-exercise-instructions>
             </div>
             <ng-template #exerciseTemplate>
-                <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement">
+                <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement" id="problem-statement">
                     <div class="col-12 col-md-12 markdown-preview problem-statement">
                         <h3>{{ 'artemisApp.courseOverview.exerciseDetails.problemStatement' | artemisTranslate }}</h3>
                         <p [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></p>

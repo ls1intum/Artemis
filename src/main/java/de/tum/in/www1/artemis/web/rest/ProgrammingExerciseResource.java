@@ -27,6 +27,7 @@ import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.jplag.exceptions.ExitException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -54,7 +55,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
-import jplag.ExitException;
 
 /**
  * REST controller for managing ProgrammingExercise.
@@ -343,7 +343,7 @@ public class ProgrammingExerciseResource {
 
         // Static code analysis max penalty must be positive
         if (programmingExercise.getMaxStaticCodeAnalysisPenalty() != null && programmingExercise.getMaxStaticCodeAnalysisPenalty() < 0) {
-            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", "Exercise", "noParticipationModeAllowed");
+            throw new BadRequestAlertException("The static code analysis penalty must not be negative", "Exercise", "staticCodeAnalysisPenaltyNotNegative");
         }
     }
 
@@ -953,6 +953,7 @@ public class ProgrammingExerciseResource {
         }
 
         if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
+            repositoryExportOptions.setFilterLateSubmissionsIndividualDueDate(true);
             repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
         }
 
@@ -997,6 +998,7 @@ public class ProgrammingExerciseResource {
         }
 
         if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
+            repositoryExportOptions.setFilterLateSubmissionsIndividualDueDate(true);
             repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
         }
 
