@@ -5,6 +5,7 @@
     --halfwidth: 10px;
     --halfmargin: -20px;
 }
+
 .star {
     cursor: pointer;
     color: var(--unCheckedColor);
@@ -18,9 +19,11 @@
         content: '\2605';
     }
 }
+
 .star.on {
     color: var(--checkedColor);
 }
+
 .star.half {
     &:after {
         content: '\2605';
