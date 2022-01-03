@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Complaint entity.
@@ -34,10 +33,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
     Optional<Complaint> findByResultId(Long resultId);
 
-    default Complaint findByResultIdElseThrow(Long resultId) {
-        return findById(resultId).orElseThrow(() -> new EntityNotFoundException("Complaint by ResultId", resultId));
-    }
-
     @Query("""
             SELECT c FROM Complaint c
             LEFT JOIN FETCH c.result r
@@ -45,15 +40,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             WHERE c.id = :#{#complaintId}
             """)
     Optional<Complaint> findByIdWithEagerAssessor(@Param("complaintId") Long complaintId);
-
-    /**
-     * This magic method counts the number of complaints associated to a course id and to the results assessed by a specific user, identified by a tutor id
-     *
-     * @param courseId - the id of the course we want to filter by
-     * @param tutorId  - the id of the tutor we are interested in
-     * @return number of complaints associated to course courseId and tutor tutorId
-     */
-    long countByResult_Participation_Exercise_Course_IdAndResult_Assessor_Id(Long courseId, Long tutorId);
 
     /**
      * This magic method counts the number of complaints by complaint type associated to a course id
@@ -65,7 +51,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     long countByResult_Participation_Exercise_Course_IdAndComplaintType(Long courseId, ComplaintType complaintType);
 
     /**
-     * This magic method counts the number of complaints by complaint type associated to a exam id
+     * This magic method counts the number of complaints by complaint type associated to an exam id
      *
      * @param examId      - the id of the exam we want to filter by
      * @param complaintType - type of complaint we want to filter by
@@ -186,14 +172,14 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     long countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
 
     /**
-     * Delete all complaints that belong to results of a given participation
-     * @param participationId the Id of the participation where the complaints should be deleted
+     * Delete all complaints that belong to the results of a given participation
+     * @param participationId the id of the participation where the complaints should be deleted
      */
     void deleteByResult_Participation_Id(Long participationId);
 
     /**
      * Delete all complaints that belong to the given result
-     * @param resultId the Id of the result where the complaints should be deleted
+     * @param resultId the id of the result where the complaints should be deleted
      */
     void deleteByResult_Id(long resultId);
 
@@ -207,7 +193,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<Complaint> getAllByResult_Assessor_Id(Long assessorId);
 
     /**
-     * Given a exercise id, retrieve all complaints related to that exercise
+     * Given an exercise id, retrieve all complaints related to that exercise
      *
      * @param exerciseId - the id of the exercise
      * @return a list of complaints

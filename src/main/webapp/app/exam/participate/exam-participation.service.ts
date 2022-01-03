@@ -10,8 +10,6 @@ import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash-es';
-import { ParticipationType } from 'app/entities/participation/participation.model';
-import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 @Injectable({ providedIn: 'root' })
@@ -95,7 +93,6 @@ export class ExamParticipationService {
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {
                 const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
-                this.adjustRepositoryUrlsForProgrammingExercises(convertedStudentExam);
                 this.currentlyLoadedStudentExam.next(convertedStudentExam);
                 return convertedStudentExam;
             }),
@@ -107,7 +104,6 @@ export class ExamParticipationService {
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {
                 const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
-                this.adjustRepositoryUrlsForProgrammingExercises(convertedStudentExam);
                 this.currentlyLoadedStudentExam.next(convertedStudentExam);
                 return convertedStudentExam;
             }),
@@ -212,7 +208,6 @@ export class ExamParticipationService {
     private convertStudentExamFromServer(studentExam: StudentExam): StudentExam {
         studentExam.exercises = this.exerciseService.convertExercisesDateFromServer(studentExam.exercises);
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
-        this.adjustRepositoryUrlsForProgrammingExercises(studentExam);
         return studentExam;
     }
 
@@ -231,21 +226,6 @@ export class ExamParticipationService {
     private static convertStudentExamDateFromServer(studentExam: StudentExam): StudentExam {
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
         return studentExam;
-    }
-
-    private adjustRepositoryUrlsForProgrammingExercises(studentExam: StudentExam) {
-        // add user independent repositoryUrl to all student participations
-        if (studentExam.exercises) {
-            studentExam.exercises!.forEach((exercise) => {
-                if (exercise.type === ExerciseType.PROGRAMMING && exercise.studentParticipations) {
-                    exercise.studentParticipations!.forEach((studentParticipation) => {
-                        if (studentParticipation.type === ParticipationType.PROGRAMMING) {
-                            addUserIndependentRepositoryUrl(studentParticipation);
-                        }
-                    });
-                }
-            });
-        }
     }
 
     public static getSubmissionForExercise(exercise: Exercise) {

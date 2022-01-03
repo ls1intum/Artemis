@@ -17,8 +17,6 @@ import { Course } from 'app/entities/course.model';
 import { MockTranslateService, TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
 import { AssessmentObject, GuidedTourAssessmentTask, GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
 import { completedTour } from 'app/guided-tour/tours/general-tour';
-import * as sinon from 'sinon';
-import { SinonStub, stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -186,7 +184,7 @@ describe('GuidedTourService', () => {
                     participationService = TestBed.inject(ParticipationService);
                     courseService = TestBed.inject(CourseManagementService);
 
-                    findParticipationStub = jest.spyOn(participationService, 'findParticipation');
+                    findParticipationStub = jest.spyOn(participationService, 'findParticipationForCurrentUser');
                     deleteParticipationStub = jest.spyOn(participationService, 'deleteForGuidedTour');
                     // @ts-ignore
                     deleteGuidedTourSettingStub = jest.spyOn(guidedTourService, 'deleteGuidedTourSetting');
@@ -571,20 +569,19 @@ describe('GuidedTourService', () => {
         describe('enableUserInteraction', () => {
             const addEventListener = jest.fn();
             const htmlTarget = { addEventListener } as any;
-            let observeMutationsStub: SinonStub;
+            let observeMutationsStub: jest.SpyInstance;
             let handleWaitForSelectorEventSpy: jest.SpyInstance;
             let querySelectorSpy: jest.SpyInstance;
 
             beforeEach(() => {
                 guidedTourService.currentTour = tour;
-                observeMutationsStub = stub(guidedTourService, 'observeMutations');
+                observeMutationsStub = jest.spyOn(guidedTourService, 'observeMutations');
                 handleWaitForSelectorEventSpy = jest.spyOn<any, any>(guidedTourService, 'handleWaitForSelectorEvent');
                 querySelectorSpy = jest.spyOn(document, 'querySelector');
                 querySelectorSpy.mockClear();
             });
             afterEach(() => {
                 jest.clearAllMocks();
-                sinon.restore();
             });
             it('should enableUserInteraction with UserInteractionEvent.WAIT_FOR_SELECTOR', fakeAsync(() => {
                 const userInteractionEvent = UserInteractionEvent.WAIT_FOR_SELECTOR;
@@ -599,13 +596,13 @@ describe('GuidedTourService', () => {
             }));
             it('should enableUserInteraction with UserInteractionEvent.ACE_EDITOR', fakeAsync(() => {
                 const userInteractionEvent = UserInteractionEvent.ACE_EDITOR;
-                observeMutationsStub.returns(of({ addedNodes: { length: 0 } as NodeList, removedNodes: { length: 0 } as NodeList } as MutationRecord));
+                observeMutationsStub.mockReturnValue(of({ addedNodes: { length: 0 } as NodeList, removedNodes: { length: 0 } as NodeList } as MutationRecord));
                 guidedTourService.enableUserInteraction(htmlTarget, userInteractionEvent);
                 expect(querySelectorSpy).toHaveBeenCalledTimes(1);
             }));
             it('should enableUserInteraction with UserInteractionEvent.MODELING', fakeAsync(() => {
                 const userInteractionEvent = UserInteractionEvent.MODELING;
-                observeMutationsStub.returns(of({ addedNodes: { length: 0 } as NodeList, removedNodes: { length: 0 } as NodeList } as MutationRecord));
+                observeMutationsStub.mockReturnValue(of({ addedNodes: { length: 0 } as NodeList, removedNodes: { length: 0 } as NodeList } as MutationRecord));
                 guidedTourService.enableUserInteraction(htmlTarget, userInteractionEvent);
                 expect(querySelectorSpy).toHaveBeenCalledTimes(1);
             }));

@@ -18,7 +18,7 @@ plugins {
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "3.1.4"
     id "com.github.node-gradle.node" version "3.1.1"
-    id "com.diffplug.spotless" version "5.15.0"
+    id "com.diffplug.spotless" version "6.0.5"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.39.0"
     id "com.github.andygoossens.modernizer" version "1.6.1"
@@ -27,7 +27,7 @@ plugins {
 group = "de.tum.in.www1.artemis"
 
 allprojects {
-    version = "5.4.2"
+    version = "5.4.4"
     description = "Interactive Learning with Individual Feedback"
 }
 
@@ -64,7 +64,7 @@ spotless {
             exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/main/java/de/tum/in/www1/artemis/config/SAML2Configuration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**", "**/gateway/**", "**/user-management/**", "**/lecture/**"
         }
         importOrderFile "artemis-spotless.importorder"
-        eclipse().configFile "artemis-spotless-style.xml"
+        eclipse("4.19.0").configFile "artemis-spotless-style.xml"
 
         removeUnusedImports()
     }
@@ -94,7 +94,8 @@ private excludedClassFilesForReport(classDirectories) {
             exclude: [
                 "**/de/tum/in/www1/artemis/domain/**/*_*",
                 "gateway/**", // exclude the gateway project from test coverage report for the moment until it is activated
-                "user-management/**" // exclude the user-management project from test coverage report for the moment until it is activated
+                "user-management/**", // exclude the user-management project from test coverage report for the moment until it is activated
+                "**/de/tum/in/www1/artemis/config/migration/entries/*_*"
             ]
         )
     }))
@@ -180,6 +181,7 @@ dependencies {
 
     implementation "de.tum.in.ase.athene:client:${athene_client_version}"
 
+
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
         exclude group: "javax.ws.rs", module: "jsr311-api"
@@ -194,7 +196,7 @@ task executeTests (type: Exec) {
 
 allprojects {
     wrapper {
-        gradleVersion = "7.3.2"
+        gradleVersion = "7.3.3"
     }
 }
 

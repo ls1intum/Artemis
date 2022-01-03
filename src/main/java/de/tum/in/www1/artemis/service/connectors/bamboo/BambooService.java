@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
@@ -66,10 +67,12 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final UrlService urlService;
 
+    private final ExerciseDateService exerciseDateService;
+
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
-            UrlService urlService, BuildLogEntryService buildLogService) {
+            UrlService urlService, BuildLogEntryService buildLogService, ExerciseDateService exerciseDateService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -77,6 +80,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.mapper = mapper;
         this.urlService = urlService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     @Override
@@ -531,7 +535,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
             newResult.setSubmission(latestSubmission);
 
-            newResult.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), latestSubmission);
+            newResult.setRatedIfNotExceeded(exerciseDateService.getDueDate(participation).orElse(null), latestSubmission);
             return newResult;
         }
         catch (Exception e) {
