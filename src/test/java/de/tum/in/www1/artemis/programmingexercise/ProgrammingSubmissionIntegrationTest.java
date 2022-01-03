@@ -728,7 +728,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
      * Checks that submissions for a participation with an individual due date are not shown to tutors before this due date has passed.
      * @param isIndividualDueDateInFuture if the due date is in the future, the submission should not be shown. Otherwise, it should be shown.
      */
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetProgrammingSubmissionWithoutAssessmentWithIndividualDueDate(boolean isIndividualDueDateInFuture) throws Exception {

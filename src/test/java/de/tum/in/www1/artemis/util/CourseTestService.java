@@ -1822,7 +1822,7 @@ public class CourseTestService {
         // Check results
         assertThat(courseDTO).isNotNull();
 
-        assertThat(courseDTO.getActiveStudents().length).isEqualTo(16);
+        assertThat(courseDTO.getActiveStudents().size()).isEqualTo(16);
 
         // number of users in course
         assertThat(courseDTO.getNumberOfStudentsInCourse()).isEqualTo(8);
