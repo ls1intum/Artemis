@@ -74,8 +74,11 @@ describe('System Notification Component', () => {
     });
 
     describe('Websocket', () => {
+        let bindSpy: jest.SpyInstance;
         beforeEach(() => {
-            jest.spyOn(jhiWebsocketService, 'bind').mockReturnValue();
+            bindSpy = jest.spyOn(jhiWebsocketService, 'bind').mockImplementation((event: string, callback: () => void) => {
+                callback();
+            });
         });
 
         it('should subscribe to socket messages on init', fakeAsync(() => {
@@ -83,7 +86,7 @@ describe('System Notification Component', () => {
             const receiveSpy = jest.spyOn(jhiWebsocketService, 'receive');
             systemNotificationComponent.ngOnInit();
             tick(500);
-            expect(jhiWebsocketService.bind).toHaveBeenCalledTimes(1);
+            expect(bindSpy).toHaveBeenCalledTimes(1);
             expect(systemNotificationComponent.websocketChannel).toEqual('/topic/system-notification');
             expect(subscribeSpy).toHaveBeenCalledTimes(1);
             expect(receiveSpy).toHaveBeenCalledTimes(1);
