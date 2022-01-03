@@ -39,6 +39,7 @@
             },
             "detail": {
                 "feedback": "Feedback",
+                "feedbackWithColon": "Feedback:",
                 "scoreFor": "Bewertung für",
                 "tutorComment": "Kommentar von Tutor:in:"
             },
