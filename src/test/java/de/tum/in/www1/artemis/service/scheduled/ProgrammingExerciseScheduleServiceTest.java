@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
-import de.tum.in.www1.artemis.util.TimeUtilService;
 
 class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -51,9 +50,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
-
-    @Autowired
-    private TimeUtilService timeUtilService;
 
     @Autowired
     private BitbucketRequestMockProvider bitbucketRequestMockProvider;
@@ -88,7 +84,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         // Some futures might already run while all tasks are cancelled. Waiting a bit makes sure the mocks are not called by the futures after the reset.
         // Otherwise, the following test might fail.
-        Thread.sleep(200);  // ok
+        Thread.sleep(500);  // ok
 
         database.resetDatabase();
         bambooRequestMockProvider.reset();
