@@ -63,6 +63,7 @@ describe('ModelingExercise Management Detail Component', () => {
 
     it('Should load exercise on init', fakeAsync(() => {
         // GIVEN
+        const subscribeSpy = jest.spyOn(eventManager, 'subscribe');
         const headers = new HttpHeaders().append('link', 'link;link');
         const findStub = jest.spyOn(modelingExerciseService, 'find').mockReturnValue(
             of(
@@ -84,13 +85,14 @@ describe('ModelingExercise Management Detail Component', () => {
         expect(comp.doughnutStats.participationsInPercent).toEqual(100);
         expect(comp.doughnutStats.resolvedPostsInPercent).toEqual(50);
         expect(comp.doughnutStats.absoluteAveragePoints).toEqual(5);
-        expect(eventManager.subscribe).toHaveBeenCalledWith('modelingExerciseListModification');
+        expect(subscribeSpy).toHaveBeenCalledWith('modelingExerciseListModification', expect.anything());
         tick();
         expect(comp.sampleSolutionUML).toEqual(model);
     }));
 
     it('should destroy event manager on destroy', () => {
+        const destroySpy = jest.spyOn(eventManager, 'destroy');
         comp.ngOnDestroy();
-        expect(eventManager.destroy).toHaveBeenCalled();
+        expect(destroySpy).toHaveBeenCalled();
     });
 });

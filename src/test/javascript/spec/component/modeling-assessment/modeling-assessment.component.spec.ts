@@ -214,7 +214,7 @@ describe('ModelingAssessmentComponent', () => {
         expect(notHighlightedElement).not.toBeNull();
         expect(notHighlightedElement!.highlight).toBeUndefined();
         expect(relationship).not.toBeNull();
-        expect(relationship!.highlight).toBeNull();
+        expect(relationship!.highlight).toBeUndefined();
     });
 
     it('should update highlighted assessments first round', () => {

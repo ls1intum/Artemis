@@ -385,7 +385,7 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         fixture.detectChanges();
-        const exportAsCsvStub = jest.spyOn(component, 'exportAsCsv');
+        const exportAsCsvStub = jest.spyOn(component, 'exportAsCsv').mockImplementation();
         component.exportResults();
         const generatedRows = exportAsCsvStub.mock.calls[0][0];
         const user1Row = generatedRows[0];
