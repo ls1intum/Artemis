@@ -444,6 +444,9 @@ public class CourseService {
             int startDateWeek = getWeekOfDate(startDate);
             int weeksDifference;
             weeksDifference = dateWeek < startDateWeek ? dateWeek == startDateWeek - 1 ? 0 : dateWeek + 53 - startDateWeek : dateWeek - startDateWeek;
+            if (result.length == weeksDifference) {
+                weeksDifference -= 1;
+            }
             result[weeksDifference] += amount;
         }
         return result;
