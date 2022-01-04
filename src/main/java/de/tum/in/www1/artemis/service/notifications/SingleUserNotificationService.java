@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationF
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -83,15 +82,14 @@ public class SingleUserNotificationService {
         // This process can not be replaces via a GroupNotification (can only notify ALL students of the course)
         // because we want to notify only the students that have a valid assessed submission.
 
-        Set<StudentParticipation> relevantParticipationsWithResults = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResult(exercise.getId()).stream()
-                .map(participation -> exercise.findLatestSubmissionWithRatedResultWithCompletionDate(participation, true)).filter(Objects::nonNull)
-                .map(relevantSubmission -> ((StudentParticipation) relevantSubmission.getParticipation())).collect(Collectors.toSet());
+        Set<StudentParticipation> filteredStudentParticipations = Set
+                .copyOf(studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsAndLatestResult(exercise.getId()));
 
         // Load and assign all studentParticipations with results (this information is needed for the emails later)
-        exercise.setStudentParticipations(relevantParticipationsWithResults);
+        exercise.setStudentParticipations(filteredStudentParticipations);
 
         // Find all users that should be notified, i.e. users with an assessed participation
-        Set<User> relevantStudents = relevantParticipationsWithResults.stream().map(participation -> participation.getStudent().orElseThrow()).collect(Collectors.toSet());
+        Set<User> relevantStudents = filteredStudentParticipations.stream().map(participation -> participation.getStudent().orElseThrow()).collect(Collectors.toSet());
 
         // notify all relevant users
         relevantStudents.forEach(student -> notifyUserAboutAssessedExerciseSubmission(exercise, student));
