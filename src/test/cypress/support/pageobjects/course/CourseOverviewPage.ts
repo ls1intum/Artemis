@@ -6,15 +6,15 @@ import { BASE_API, GET } from '../../constants';
 export class CourseOverviewPage {
     readonly participationRequestId = 'participateInExerciseQuery';
 
-    startExercise(exerciseId: string) {
+    startExercise(exerciseId: number) {
         cy.get('#start-exercise-' + exerciseId).click();
     }
 
-    openRunningExercise(exerciseId: string) {
+    openRunningExercise(exerciseId: number) {
         cy.get('#open-exercise-' + exerciseId).click();
     }
 
-    openRunningProgrammingExercise(exerciseId: string) {
+    openRunningProgrammingExercise(exerciseId: number) {
         cy.intercept(GET, BASE_API + 'programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
         this.openRunningExercise(exerciseId);
         cy.wait('@initialQuery');
