@@ -176,7 +176,7 @@ public class TextExerciseResource {
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
 
-        groupNotificationService.checkNotificationForExerciseRelease(textExercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(textExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);

@@ -156,7 +156,7 @@ public class ProgrammingExerciseService {
 
         scheduleOperations(programmingExercise.getId());
 
-        groupNotificationService.checkNotificationForExerciseRelease(programmingExercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(programmingExercise, instanceMessageSendService);
 
         return programmingExercise;
     }

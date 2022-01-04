@@ -187,14 +187,25 @@ public class GroupNotificationService {
     }
 
     /**
+     * Auxiliary method that calls two other methods to check (create/schedule) notifications when a new exercise has been created
+     * E.g. ExerciseReleased notification or AssessedExerciseSubmission notification
+     *
+     * @param exercise
+     * @param instanceMessageSendService
+     */
+    public void checkNotificationsForNewExercise(Exercise exercise, InstanceMessageSendService instanceMessageSendService) {
+        checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
+        checkNotificationForAssessmentDueDate(exercise, instanceMessageSendService);
+    }
+
+    /**
      * Checks if a new exercise-released notification has to be created or even scheduled
      * The exercise update might have changed the release date, so the scheduled notification that informs the users about the release of this exercise has to be updated
-     * Also initiates scheduling process for notifications if the assessment due date is set
      *
-     * @param exercise that is updated
+     * @param exercise that is created or updated
      * @param instanceMessageSendService that will call the service to update the scheduled exercise-created notification
      */
-    public void checkNotificationForExerciseRelease(Exercise exercise, InstanceMessageSendService instanceMessageSendService) {
+    private void checkNotificationForExerciseRelease(Exercise exercise, InstanceMessageSendService instanceMessageSendService) {
         // Only notify students and tutors when the exercise is created for a course
         if (exercise.isCourseExercise()) {
             if (exercise.getReleaseDate() == null || !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
@@ -202,6 +213,21 @@ public class GroupNotificationService {
             }
             else {
                 instanceMessageSendService.sendExerciseReleaseNotificationSchedule(exercise.getId());
+            }
+        }
+    }
+
+    /**
+     * Checks if a new AssessedExerciseSubmission notification has to be created or even scheduled
+     * Used when a new exercise is created.
+     *
+     * @param exercise that is created
+     * @param instanceMessageSendService that will call the service scheduled a notification
+     */
+    private void checkNotificationForAssessmentDueDate(Exercise exercise, InstanceMessageSendService instanceMessageSendService) {
+        if (exercise.isCourseExercise()) {
+            if (exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
+                instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exercise.getId());
             }
         }
     }
