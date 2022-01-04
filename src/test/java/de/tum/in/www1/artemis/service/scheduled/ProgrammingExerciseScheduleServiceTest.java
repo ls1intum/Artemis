@@ -67,7 +67,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @BeforeEach
     void init() throws Exception {
         studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo");
-        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
         database.addUsers(3, 2, 0, 2);
@@ -359,6 +359,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         var studentParticipationsRegularDueDate = getParticipationsWithoutIndividualDueDate();
         assertThat(studentParticipationsRegularDueDate).hasSize(2);
         assertThat(studentParticipationsRegularDueDate).allMatch(participation -> !participation.getStudent().get().getLogin().equals(login));
+
         var studentParticipationIndividualDueDate = getParticipation(login);
         assertThat(studentParticipationIndividualDueDate.getIndividualDueDate()).isNotNull();
         assertThat(studentParticipationIndividualDueDate.getIndividualDueDate()).isNotEqualTo(programmingExercise.getDueDate());
