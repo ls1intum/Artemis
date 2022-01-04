@@ -79,7 +79,7 @@
         "@types/dompurify": "2.3.2",
         "@types/jest": "27.4.0",
         "@types/lodash-es": "4.17.5",
-        "@types/node": "17.0.7",
+        "@types/node": "17.0.8",
         "@types/papaparse": "5.3.1",
         "@types/showdown": "1.9.4",
         "@types/smoothscroll-polyfill": "0.3.1",
