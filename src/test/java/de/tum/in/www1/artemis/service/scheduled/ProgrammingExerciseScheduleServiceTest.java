@@ -346,7 +346,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void scheduleIndividualDueDateNoBuildAndTestDateLock() throws Exception {
         mockStudentRepoLocks();
-        final long delayMS = 200;
+        final long delayMS = 400;
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, delayMS / 2, null);
