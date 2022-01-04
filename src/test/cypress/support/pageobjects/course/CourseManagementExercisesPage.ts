@@ -4,11 +4,11 @@
 export class CourseManagementExercisesPage {
     readonly exerciseCardSelector = '#exercise-card-';
 
-    getExerciseRowRootElement(exerciseId: string) {
+    getExerciseRowRootElement(exerciseId: number) {
         return cy.get(this.exerciseCardSelector + exerciseId);
     }
 
-    clickDeleteExercise(exerciseId: string) {
+    clickDeleteExercise(exerciseId: number) {
         this.getExerciseRowRootElement(exerciseId).find('#delete-exercise').click();
     }
 
