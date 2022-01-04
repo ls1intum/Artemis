@@ -33,12 +33,24 @@
     </div>
 
     <div class="card-body">
+        <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="chart-container" *ngIf="exerciseCount > 0 && (totalReachableScore > 0 || totalAbsoluteScore > 0); else noStatistic">
             <div class="chart-text">
                 <h2 class="text-center">{{ totalRelativeScore }}%</h2>
                 <h5 class="text-center points">{{ totalAbsoluteScore }} / {{ totalReachableScore }} Pts</h5>
             </div>
-            <ngx-charts-pie-chart id="score-chart" [view]="[200, 200]" [results]="ngxDoughnutData" [scheme]="ngxColor" [doughnut]="true" [animations]="false" (select)="onSelect()">
+            <ngx-charts-pie-chart
+                (click)="onSelect()"
+                class="d-inline-flex"
+                style="z-index: 2; cursor: pointer"
+                id="score-chart"
+                [view]="[200, 200]"
+                [results]="ngxDoughnutData"
+                [scheme]="ngxColor"
+                [doughnut]="true"
+                [animations]="false"
+                (select)="onSelect()"
+            >
                 <ng-template #tooltipTemplate let-model="model">
                     <span jhiTranslate="artemisApp.courseOverview.statistics.{{ model.name }}"></span>
                     <span>: {{ model.value }}</span>
