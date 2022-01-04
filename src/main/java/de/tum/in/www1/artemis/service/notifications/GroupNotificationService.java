@@ -225,10 +225,8 @@ public class GroupNotificationService {
      * @param instanceMessageSendService that will call the service scheduled a notification
      */
     private void checkNotificationForAssessmentDueDate(Exercise exercise, InstanceMessageSendService instanceMessageSendService) {
-        if (exercise.isCourseExercise()) {
-            if (exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
-                instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exercise.getId());
-            }
+        if (exercise.isCourseExercise() && exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
+            instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exercise.getId());
         }
     }
 
