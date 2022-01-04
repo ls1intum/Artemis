@@ -230,7 +230,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
 
         singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(testExercise);
 
-        assertThat(notificationRepository.findAll().size()).as("Only one notification should have been created (for the user with a valid paticipation,submission, and result)")
+        assertThat(notificationRepository.findAll().size()).as("Only one notification should have been created (for the user with a valid paticipation, submission, and result)")
                 .isEqualTo(1);
     }
 

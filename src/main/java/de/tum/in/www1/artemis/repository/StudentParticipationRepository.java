@@ -158,9 +158,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH r.submission s
             WHERE p.exercise.id = :#{#exerciseId}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
-                AND (r.id = (
-                    SELECT max(id) FROM p.results)
-                    OR r IS NULL)
+                AND r.id = (SELECT max(id) FROM p.results)
             """)
     List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsAndLatestResult(@Param("exerciseId") Long exerciseId);
 
