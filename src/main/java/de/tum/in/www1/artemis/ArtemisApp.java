@@ -21,7 +21,7 @@ import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
 @SpringBootApplication
-@EnableConfigurationProperties(value = { LiquibaseProperties.class, ProgrammingLanguageConfiguration.class })
+@EnableConfigurationProperties({ LiquibaseProperties.class, ProgrammingLanguageConfiguration.class })
 public class ArtemisApp {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisApp.class);
