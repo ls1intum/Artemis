@@ -9,7 +9,7 @@ import { MockActivatedRoute } from './helpers/mocks/activated-route/mock-activat
 import { MockRouter } from './helpers/mocks/mock-router';
 import { FontAwesomeModule, FaIconComponent } from '@fortawesome/angular-fontawesome';
 import locale from '@angular/common/locales/en';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';

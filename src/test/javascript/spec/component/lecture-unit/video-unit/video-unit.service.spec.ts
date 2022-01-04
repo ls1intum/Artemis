@@ -5,7 +5,7 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 

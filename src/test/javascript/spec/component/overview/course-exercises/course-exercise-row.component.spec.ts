@@ -10,7 +10,7 @@ import { Result } from 'app/entities/result.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockCourseService } from '../../../helpers/mocks/service/mock-course.service';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';

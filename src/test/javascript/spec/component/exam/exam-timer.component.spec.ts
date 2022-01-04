@@ -3,7 +3,7 @@ import { By } from '@angular/platform-browser';
 import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';

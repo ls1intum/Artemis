@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { ArtemisTestModule } from '../../../test.module';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';

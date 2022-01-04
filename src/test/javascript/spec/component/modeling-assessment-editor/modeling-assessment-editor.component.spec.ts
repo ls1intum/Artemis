@@ -42,7 +42,7 @@ import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/asses
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;

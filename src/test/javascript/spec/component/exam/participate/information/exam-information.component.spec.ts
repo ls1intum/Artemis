@@ -7,7 +7,7 @@ import { ExamInformationComponent } from 'app/exam/participate/information/exam-
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockPipe } from 'ng-mocks';
 
 let fixture: ComponentFixture<ExamInformationComponent>;

@@ -10,7 +10,7 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { LectureService } from 'app/lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { Course } from 'app/entities/course.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 describe('Lecture Service', () => {
     let injector: TestBed;

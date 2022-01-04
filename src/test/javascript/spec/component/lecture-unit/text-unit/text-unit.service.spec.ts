@@ -7,7 +7,7 @@ import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-managemen
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 describe('TextUnitService', () => {
     let injector: TestBed;

@@ -16,7 +16,7 @@ import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { ArtemisVersionInterceptor } from 'app/core/interceptor/artemis-version.interceptor';
 import { missingTranslationHandler, translatePartialLoader } from './config/translation.config';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import './config/dayjs';
 import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 
