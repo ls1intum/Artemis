@@ -155,7 +155,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
      */
     onDragDrop(dropLocation: DropLocation | undefined, dragEvent: any) {
         this.drop();
-        const dragItem = dragEvent.dragData;
+        const dragItem = dragEvent.item.data;
 
         if (dropLocation) {
             // check if this mapping is new

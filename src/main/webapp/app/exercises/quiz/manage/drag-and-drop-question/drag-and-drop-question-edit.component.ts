@@ -580,7 +580,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param dragEvent {object} the drag item involved (can be a copy at this point)
      */
     onDragDrop(dropLocation: DropLocation, dragEvent: any): void {
-        let dragItem = dragEvent.dragData;
+        let dragItem = dragEvent.item.data;
         // Replace dragItem with original (because it may be a copy)
         dragItem = this.question.dragItems!.find((originalDragItem) => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID));
 
