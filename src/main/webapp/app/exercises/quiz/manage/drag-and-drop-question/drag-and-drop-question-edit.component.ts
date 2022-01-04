@@ -285,8 +285,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     mouseMove(event: MouseEvent): void {
         // Update mouse x and y value
         const backgroundElement = this.clickLayer.nativeElement;
-        const backgroundOffsetLeft = backgroundElement.offsetLeft;
-        const backgroundOffsetTop = backgroundElement.offsetTop;
+        const backgroundOffsetLeft = backgroundElement.getBoundingClientRect().x + window.pageXOffset;
+        const backgroundOffsetTop = backgroundElement.getBoundingClientRect().y + window.pageYOffset;
         const backgroundWidth = backgroundElement.offsetWidth;
         const backgroundHeight = backgroundElement.offsetHeight;
         this.mouseMoveAction(event, backgroundOffsetLeft, backgroundOffsetTop, backgroundWidth, backgroundHeight);
