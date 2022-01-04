@@ -13,7 +13,7 @@ import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-edi
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { DragDropModule } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { ArtemisTestModule } from '../../test.module';
 import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.module';
 
@@ -191,10 +191,10 @@ describe('DragAndDropQuestionComponent', () => {
         callCount: number,
     ) => {
         comp.mappings = mappings;
-        const dragEvent = { dragData: dragItem };
+        const event = { item: { data: dragItem } } as CdkDragDrop<DragItem, DragItem>;
         const onMappingUpdate = jest.fn();
         comp.onMappingUpdate = onMappingUpdate;
-        comp.onDragDrop(dropLocation, dragEvent);
+        comp.onDragDrop(dropLocation, event);
         expect(comp.mappings).toEqual(expectedMappings);
         expect(onMappingUpdate.mock.calls.length).toBe(callCount);
     };

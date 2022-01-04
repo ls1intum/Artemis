@@ -26,7 +26,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { clone } from 'lodash-es';
-import { DragDropModule } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 
 describe('DragAndDropQuestionEditComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
@@ -429,7 +429,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const alternativeItem = new DragItem();
         alternativeLocation.id = 3;
         alternativeItem.id = 3;
-        const event = { dragData: alternativeItem };
+        const event = { item: { data: alternativeItem } } as CdkDragDrop<DragItem, DragItem>;
         const expectedMapping = new DragAndDropMapping(alternativeItem, alternativeLocation);
         component.question.dragItems = [item, alternativeItem];
 

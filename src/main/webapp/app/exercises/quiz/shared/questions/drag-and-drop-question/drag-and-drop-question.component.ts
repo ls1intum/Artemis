@@ -9,6 +9,8 @@ import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.mode
 import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { faExclamationCircle, faExclamationTriangle, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { DragItem } from 'app/entities/quiz/drag-item.model';
 
 // options are optional ;)
 polyfill({
@@ -151,11 +153,11 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
      *
      * @param dropLocation {object | undefined} the dropLocation that the drag item was dropped on.
      *                     May be undefined if drag item was dragged back to the unassigned items.
-     * @param dragEvent {object} the drag item that was dropped
+     * @param dropEvent {object} an event containing the drag item that was dropped
      */
-    onDragDrop(dropLocation: DropLocation | undefined, dragEvent: any) {
+    onDragDrop(dropLocation: DropLocation | undefined, dropEvent: CdkDragDrop<DragItem, DragItem>) {
         this.drop();
-        const dragItem = dragEvent.item.data;
+        const dragItem = dropEvent.item.data as DragItem;
 
         if (dropLocation) {
             // check if this mapping is new

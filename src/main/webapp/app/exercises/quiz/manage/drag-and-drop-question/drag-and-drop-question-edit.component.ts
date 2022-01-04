@@ -51,6 +51,7 @@ import {
     faUpload,
 } from '@fortawesome/free-solid-svg-icons';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -577,14 +578,16 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     /**
      * React to a drag item being dropped on a drop location
      * @param dropLocation {object} the drop location involved
-     * @param dragEvent {object} the drag item involved (can be a copy at this point)
+     * @param dropEvent {object} an event containing the drag item involved (can be a copy at this point)
      */
-    onDragDrop(dropLocation: DropLocation, dragEvent: any): void {
-        let dragItem = dragEvent.item.data;
+    onDragDrop(dropLocation: DropLocation, dropEvent: CdkDragDrop<DragItem, DragItem>): void {
+        const dragItem = dropEvent.item.data as DragItem;
         // Replace dragItem with original (because it may be a copy)
-        dragItem = this.question.dragItems!.find((originalDragItem) => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID));
+        const questionDragItem = this.question.dragItems!.find((originalDragItem) =>
+            dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID,
+        );
 
-        if (!dragItem) {
+        if (!questionDragItem) {
             // Drag item was not found in question => do nothing
             return;
         }
@@ -598,11 +601,11 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             !this.question.correctMappings.some(
                 (existingMapping) =>
                     this.dragAndDropQuestionUtil.isSameEntityWithTempId(existingMapping.dropLocation, dropLocation) &&
-                    this.dragAndDropQuestionUtil.isSameEntityWithTempId(existingMapping.dragItem, dragItem),
+                    this.dragAndDropQuestionUtil.isSameEntityWithTempId(existingMapping.dragItem, questionDragItem),
             )
         ) {
             // Mapping doesn't exit yet => add this mapping
-            const dndMapping = new DragAndDropMapping(dragItem, dropLocation);
+            const dndMapping = new DragAndDropMapping(questionDragItem, dropLocation);
             this.question.correctMappings.push(dndMapping);
 
             // Notify parent of changes
