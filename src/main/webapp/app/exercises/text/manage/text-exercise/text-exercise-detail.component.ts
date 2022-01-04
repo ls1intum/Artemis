@@ -55,12 +55,12 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Requests the text exercise referenced by the given id.
-     * @param id of the text exercise of type {number}
+     * Requests the text exercise referenced by the given exerciseId.
+     * @param exerciseId of the text exercise of type {number}
      */
-    load(id: number) {
-        // TODO: Use a separate find method for exam exercises containing course, exam, exerciseGroup and exercise id
-        this.textExerciseService.find(id).subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
+    load(exerciseId: number) {
+        // TODO: Use a separate find method for exam exercises containing course, exam, exerciseGroup and exercise exerciseId
+        this.textExerciseService.find(exerciseId).subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
             this.textExercise = textExerciseResponse.body!;
             this.isExamExercise = !!this.textExercise.exerciseGroup;
             this.course = this.isExamExercise ? this.textExercise.exerciseGroup?.exam?.course : this.textExercise.course;
@@ -69,7 +69,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
             this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.problemStatement);
             this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.sampleSolution);
         });
-        this.statisticsService.getExerciseStatistics(id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+        this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
         });
     }

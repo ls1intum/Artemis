@@ -338,7 +338,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     /**
      * Opens modal and executes a consistency check for the given programming exercise
-     * @param exerciseId id of the programming exercise to check
+     * @param exercise the programming exercise to check
      */
     checkConsistencies(exercise: ProgrammingExercise) {
         const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });

@@ -65,8 +65,8 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    load(id: number) {
-        this.modelingExerciseService.find(id).subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
+    load(exerciseId: number) {
+        this.modelingExerciseService.find(exerciseId).subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
             this.modelingExercise = modelingExerciseResponse.body!;
             this.isExamExercise = this.modelingExercise.exerciseGroup !== undefined;
             this.course = this.isExamExercise ? this.modelingExercise.exerciseGroup?.exam?.course : this.modelingExercise.course;
@@ -77,11 +77,11 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.sampleSolutionUML = JSON.parse(this.modelingExercise.sampleSolutionModel);
             }
         });
-        this.statisticsService.getExerciseStatistics(id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+        this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
         });
         if (this.isAdmin) {
-            this.countModelClusters(id);
+            this.countModelClusters(exerciseId);
         }
     }
 

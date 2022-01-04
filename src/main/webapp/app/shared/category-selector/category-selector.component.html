@@ -1,6 +1,6 @@
 <mat-form-field class="category-chip-list" appearance="outline">
     <mat-chip-list #chipList aria-label="Category selection">
-        <mat-chip *ngFor="let category of exerciseCategories" (removed)="onItemRemove(category)" class="category-chip">
+        <mat-chip *ngFor="let category of categories" (removed)="onItemRemove(category)" class="category-chip">
             <div class="custom-tag" [ngStyle]="{ backgroundColor: category.color }">
                 <span class="category-name" (click)="openColorSelector($event, category)">
                     {{ category.category }}
@@ -11,7 +11,7 @@
             </div>
         </mat-chip>
         <input
-            *ngIf="exerciseCategories.length < 2"
+            *ngIf="categories && categories.length < 2"
             class="category-chip-input"
             #categoryInput
             [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"
@@ -23,7 +23,7 @@
         />
     </mat-chip-list>
     <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onItemSelect($event)">
-        <mat-option *ngFor="let category of uniqueCategories | async" [value]="category" class="tag-option">
+        <mat-option *ngFor="let category of uniqueCategoriesForAutocomplete | async" [value]="category" class="tag-option">
             {{ category }}
         </mat-option>
     </mat-autocomplete>
