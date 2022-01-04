@@ -235,7 +235,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.subscribeToWebsocketChannels();
 
         // load the quiz (and existing submission if quiz has started)
-        this.participationService.findParticipation(this.quizId).subscribe(
+        this.participationService.findParticipationForCurrentUser(this.quizId).subscribe(
             (response: HttpResponse<StudentParticipation>) => {
                 this.updateParticipationFromServer(response.body!);
             },

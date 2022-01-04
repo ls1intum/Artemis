@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.extractNotificationUrl;
+
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -25,7 +27,6 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import tech.jhipster.config.JHipsterProperties;
 
@@ -165,7 +166,7 @@ public class MailService {
      */
     private String setPostContextAndSubject(Context context, Object notificationSubject, Locale locale) {
         // posts use a different mechanism for the url
-        context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
+        context.setVariable(NOTIFICATION_URL, extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
 
         // For Announcement Posts
         String newAnnouncementString = locale.toString().equals("en") ? newAnnouncementEN : newAnnouncementDE;
@@ -202,11 +203,11 @@ public class MailService {
 
         if (notificationSubject instanceof Post) {
             // posts use a different mechanism for the url
-            context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
+            context.setVariable(NOTIFICATION_URL, extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
             subject = setPostContextAndSubject(context, notificationSubject, locale);
         }
         else {
-            context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, artemisServerUrl.toString()));
+            context.setVariable(NOTIFICATION_URL, extractNotificationUrl(notification, artemisServerUrl.toString()));
         }
         context.setVariable(BASE_URL, artemisServerUrl);
 
@@ -228,6 +229,7 @@ public class MailService {
             case EXERCISE_PRACTICE -> templateEngine.process("mail/notification/exerciseOpenForPracticeEmail", context);
             case NEW_ANNOUNCEMENT_POST -> templateEngine.process("mail/notification/announcementPostEmail", context);
             case FILE_SUBMISSION_SUCCESSFUL -> templateEngine.process("mail/notification/fileSubmissionSuccessfulEmail", context);
+            case DUPLICATE_TEST_CASE -> templateEngine.process("mail/notification/duplicateTestCasesEmail", context);
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };
     }

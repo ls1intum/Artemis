@@ -1189,6 +1189,14 @@ public class DatabaseUtilService {
         return studentExam;
     }
 
+    public StudentExam addStudentExamWithUser(Exam exam, User user, int additionalWorkingTime) {
+        StudentExam studentExam = ModelFactory.generateStudentExam(exam);
+        studentExam.setUser(user);
+        studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds() + additionalWorkingTime);
+        studentExamRepository.save(studentExam);
+        return studentExam;
+    }
+
     public Exam addExerciseGroupsAndExercisesToExam(Exam exam, boolean withProgrammingExercise) {
         ModelFactory.generateExerciseGroup(true, exam); // text
         ModelFactory.generateExerciseGroup(true, exam); // quiz

@@ -61,13 +61,13 @@ describe('Submission Policy Update Form Component', () => {
         const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
         for (const type of [SubmissionPolicyType.LOCK_REPOSITORY, SubmissionPolicyType.SUBMISSION_PENALTY]) {
             submissionPolicyTypeField.value = type;
-            submissionPolicyTypeField.dispatchEvent(new Event('change'));
+            submissionPolicyTypeField.dispatchEvent(new Event('input'));
             fixture.detectChanges();
             tick();
 
             const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
             component.submissionLimitControl.setValue(10);
-            submissionLimitInputField.dispatchEvent(new Event('change'));
+            submissionLimitInputField.dispatchEvent(new Event('input'));
             tick();
 
             expect(expectedProgrammingExercise.submissionPolicy?.submissionLimit).toBe(10);
@@ -87,7 +87,7 @@ describe('Submission Policy Update Form Component', () => {
 
         const submissionLimitExceededPenaltyInputField = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty');
         component.exceedingPenaltyControl.setValue(73.73);
-        submissionLimitExceededPenaltyInputField.dispatchEvent(new Event('change'));
+        submissionLimitExceededPenaltyInputField.dispatchEvent(new Event('input'));
         tick();
 
         expect(expectedProgrammingExercise.submissionPolicy?.exceedingPenalty).toBe(73.73);

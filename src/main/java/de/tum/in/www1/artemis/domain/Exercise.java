@@ -522,26 +522,6 @@ public abstract class Exercise extends DomainObject {
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-    public Boolean isEnded() {
-        if (getDueDate() == null) {
-            return Boolean.FALSE;
-        }
-        return ZonedDateTime.now().isAfter(getDueDate());
-    }
-
-    /**
-     * Checks if the due date is in the future. Returns true, if no due date is set.
-     *
-     * @return true if the due date is in the future, otherwise false
-     */
-    @JsonIgnore
-    public boolean isBeforeDueDate() {
-        if (dueDate == null) {
-            return true;
-        }
-        return ZonedDateTime.now().isBefore(dueDate);
-    }
-
     public Set<LearningGoal> getLearningGoals() {
         return learningGoals;
     }

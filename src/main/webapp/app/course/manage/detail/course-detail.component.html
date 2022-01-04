@@ -30,7 +30,7 @@
                 <fa-icon [icon]="faGraduationCap"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</span>
             </a>
-            <a *ngIf="course.isAtLeastEditor" [routerLink]="['/course-management', course.id, 'lectures']" class="tab-item btn btn-primary btn-md ms-1">
+            <a *ngIf="course.isAtLeastEditor" [routerLink]="['/course-management', course.id, 'lectures']" class="tab-item btn btn-primary btn-md ms-1" id="lectures">
                 <fa-icon [icon]="faFilePdf"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
             </a>
@@ -57,9 +57,13 @@
                 <fa-icon [icon]="faEye"></fa-icon>
                 <span jhiTranslate="artemisApp.participantScores.pageTitle">Participant Score</span>
             </a>
-            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="tab-item btn btn-info btn-md ms-1">
+            <a *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="tab-item btn btn-info btn-md ms-1">
                 <fa-icon [icon]="faChartBar"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
+            </a>
+            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn btn-info btn-md ms-1">
+                <fa-icon [icon]="faHeartBroken"></fa-icon>
+                <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</span>
             </a>
             <div class="ms-auto">
                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'edit']" class="tab-item btn btn-warning btn-md">

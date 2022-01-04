@@ -25,7 +25,6 @@
             },
             "allowedCommonJsDependencies": [
               "sockjs-client",
-              "chart.js",
               "showdown-highlight",
               "brace/mode/markdown",
               "export-to-csv",
