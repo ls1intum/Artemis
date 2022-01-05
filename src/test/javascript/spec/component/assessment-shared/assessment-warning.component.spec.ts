@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';

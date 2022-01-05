@@ -25,14 +25,9 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import * as chai from 'chai';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockModule, MockProvider } from 'ng-mocks';
 import { MockPipe } from 'ng-mocks';
-import sinonChai from 'sinon-chai';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 const multipleChoiceQuestion = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as MultipleChoiceQuestion;
 const wrongAnswerOption = { id: 1, isCorrect: false, question: multipleChoiceQuestion } as AnswerOption;
@@ -101,19 +96,19 @@ describe('QuizExamSummaryComponent', () => {
     it('should initialize', () => {
         component.exam = { id: 1, publishResultsDate: dayjs().subtract(1, 'hours') } as Exam;
         fixture.detectChanges();
-        expect(component).to.be.ok;
-        expect(component.exam).to.exist;
-        expect(component.showMissingResultsNotice).to.be.true;
+        expect(component).not.toBeNull();
+        expect(component.exam).not.toBeNull();
+        expect(component.showMissingResultsNotice).toBeTrue();
     });
 
     it('should initialize the solution dictionaries correctly', () => {
         component.submission = submissionWithAnswers;
         fixture.detectChanges();
-        expect(component.selectedAnswerOptions.get(1)![0]).to.equal(correctAnswerOption);
-        expect(component.getScoreForQuizQuestion(1)).to.equal(1);
-        expect(component.dragAndDropMappings.get(2)![0]).to.equal(correctDragAndDropMapping);
-        expect(component.getScoreForQuizQuestion(2)).to.equal(1);
-        expect(component.shortAnswerSubmittedTexts.get(3)![0]).to.equal(shortAnswerSubmittedText);
-        expect(component.getScoreForQuizQuestion(3)).to.equal(1);
+        expect(component.selectedAnswerOptions.get(1)![0]).toEqual(correctAnswerOption);
+        expect(component.getScoreForQuizQuestion(1)).toEqual(1);
+        expect(component.dragAndDropMappings.get(2)![0]).toEqual(correctDragAndDropMapping);
+        expect(component.getScoreForQuizQuestion(2)).toEqual(1);
+        expect(component.shortAnswerSubmittedTexts.get(3)![0]).toEqual(shortAnswerSubmittedText);
+        expect(component.getScoreForQuizQuestion(3)).toEqual(1);
     });
 });

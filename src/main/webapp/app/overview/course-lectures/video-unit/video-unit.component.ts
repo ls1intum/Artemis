@@ -1,7 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { faVideo } from '@fortawesome/free-solid-svg-icons';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
-import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import urlParser from 'js-video-url-parser';
 
 @Component({
@@ -10,11 +9,9 @@ import urlParser from 'js-video-url-parser';
     styleUrls: ['../lecture-unit.component.scss'],
 })
 export class VideoUnitComponent implements OnInit {
-    @Input()
-    videoUnit: VideoUnit;
+    @Input() videoUnit: VideoUnit;
 
     videoUrl: string;
-
     isCollapsed = true;
 
     // List of regexes that should not be blocked by js-video-url-parser
@@ -26,7 +23,7 @@ export class VideoUnitComponent implements OnInit {
     // Icons
     faVideo = faVideo;
 
-    constructor(private safeResourceUrlPipe: SafeResourceUrlPipe) {}
+    constructor() {}
 
     ngOnInit() {
         if (this.videoUnit?.source) {
@@ -37,7 +34,7 @@ export class VideoUnitComponent implements OnInit {
         }
     }
 
-    handleCollapse(event: any) {
+    handleCollapse(event: Event) {
         event.stopPropagation();
         this.isCollapsed = !this.isCollapsed;
     }

@@ -2,7 +2,7 @@ import { of, Observable } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise.model';
 import { EntityArrayResponseType, EntityResponseType } from 'app/exercises/shared/exercise/exercise.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 export class MockExerciseService {
     find(exerciseId: number) {
