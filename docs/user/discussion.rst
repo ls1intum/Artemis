@@ -13,7 +13,7 @@ Overview
 Artemis enables students, tutors, and instructors to actively participate in discussions.
 Various discussion features allow students to engage with peers and ask all kinds of questions whereas moderators (e.g., instructors and tutors) can provide general course information and answer content-related questions.
 Discussions can be started in different contexts, namely for lectures, exercises, or courses.
-Below, you find more information on specific features and how to use them.
+Below, you can find more information on specific features and how to use them.
 
 Enabling Discussions
 ^^^^^^^^^^^^^^^^^^^^
@@ -47,11 +47,11 @@ Course-wide Posts & Course Discussion Overview
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Besides lecture or exercise related questions, Artemis offers a third type of posts: posts with course-wide topics, such as ``Organization`` or ``Tech Support``.
-These posts can only be created on the course discussion overview which is showed in the screenshot below.
+These posts can only be created on the course discussion overview which is shown in the screenshot below.
 
 The ``Discussion`` space of an Artemis course serves as overview for *all* posts in a course.
 Hence, course-wide posts as well as exercise posts and lecture posts are listed.
-Here, users can easily query, sort and filter existing posts.
+Here, users can easily query, sort, and filter existing posts.
 
 |course-posts|
 
@@ -78,7 +78,7 @@ Reference Posts
 ^^^^^^^^^^^^^^^
 
 If users want to refer to other posts, they can integrate a simple pattern including the hashtag (``#``) combined with the post identifier.
-A post's identifier is appended to the post title (such as seen in the screenshot).
+A post's identifier is appended to the post title (such as seen in the screenshots above).
 
 When clicking a reference used in a post's text, the user is navigated to the referenced post.
 
@@ -101,7 +101,7 @@ Tag Your Post
 ^^^^^^^^^^^^^
 
 When creating a post, users can choose to add arbitrary tags.
-Tagging a post will further narrow down the post purpose or content in precise and descriptive buzzwords, that might follow a course-specific taxonomy.
+Tagging a post will further narrow down the post purpose or content in precise and descriptive keywords, that might follow a course-specific taxonomy.
 
 Features for Moderators
 -----------------------
