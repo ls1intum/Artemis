@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.service.notifications;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,19 +23,16 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
     private ExerciseRepository exerciseRepository;
 
     @Test
-    void shouldCreateNotificationAtReleaseDate() throws Exception {
+    void shouldCreateNotificationAtReleaseDate() {
         database.addCourseWithFileUploadExercise();
         Exercise exercise = exerciseRepository.findAll().get(0);
-        long delayInSeconds = 1;
-        long timeMultiplicityToReduceTestFlakiness = 2;
-        ZonedDateTime exerciseReleaseDate = ZonedDateTime.now().plusSeconds(delayInSeconds);
+        long delayInMS = 200;
+        ZonedDateTime exerciseReleaseDate = ZonedDateTime.now().plus(delayInMS, ChronoUnit.MILLIS);
         exercise.setReleaseDate(exerciseReleaseDate);
         exerciseRepository.save(exercise);
 
         instanceMessageReceiveService.processScheduleNotification(exercise.getId());
 
-        Thread.sleep(delayInSeconds * timeMultiplicityToReduceTestFlakiness * 1000);
-
-        verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(exercise);
+        verify(groupNotificationService, timeout(5000).times(1)).notifyAllGroupsAboutReleasedExercise(exercise);
     }
 }

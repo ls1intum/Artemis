@@ -17,7 +17,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 import interact from 'interactjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { lastValueFrom } from 'rxjs';
 import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 

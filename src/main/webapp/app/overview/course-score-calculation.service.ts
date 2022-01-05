@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { roundScorePercentSpecifiedByCourseSettings, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';

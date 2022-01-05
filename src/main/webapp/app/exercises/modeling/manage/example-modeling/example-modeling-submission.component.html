@@ -106,7 +106,7 @@
                     <jhi-modeling-assessment
                         class="col-12"
                         *ngIf="assessmentMode && exercise.diagramType"
-                        [model]="umlModel"
+                        [umlModel]="umlModel"
                         [resultFeedbacks]="result?.feedbacks || []"
                         [diagramType]="exercise.diagramType!"
                         [maxScore]="exercise.maxPoints || 0"

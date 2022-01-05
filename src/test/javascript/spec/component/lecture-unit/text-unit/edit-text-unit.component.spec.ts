@@ -1,7 +1,4 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
@@ -16,9 +13,6 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Alert, AlertService } from 'app/core/util/alert.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 @Component({ selector: 'jhi-text-unit-form', template: '' })
 class TextUnitFormStubComponent {
@@ -35,7 +29,6 @@ class LectureUnitLayoutStubComponent {
 describe('EditTextUnitComponent', () => {
     let editTextUnitComponentFixture: ComponentFixture<EditTextUnitComponent>;
     let editTextUnitComponent: EditTextUnitComponent;
-    const sandbox = sinon.createSandbox();
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -72,17 +65,17 @@ describe('EditTextUnitComponent', () => {
                 editTextUnitComponentFixture = TestBed.createComponent(EditTextUnitComponent);
                 editTextUnitComponent = editTextUnitComponentFixture.componentInstance;
                 const alertService = TestBed.inject(AlertService);
-                sinon.stub(alertService, 'error').returns({ message: '' } as Alert);
+                jest.spyOn(alertService, 'error').mockReturnValue({ message: '' } as Alert);
             });
     });
 
-    afterEach(function () {
-        sandbox.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
     it('should initialize', fakeAsync(() => {
         editTextUnitComponentFixture.detectChanges();
         tick();
-        expect(editTextUnitComponent).to.be.ok;
+        expect(editTextUnitComponent).not.toBeNull();
     }));
 
     it('should set form data correctly', () => {
@@ -99,17 +92,17 @@ describe('EditTextUnitComponent', () => {
             status: 200,
         });
 
-        const findByIdStub = sandbox.stub(textUnitService, 'findById').returns(of(response));
+        const findByIdStub = jest.spyOn(textUnitService, 'findById').mockReturnValue(of(response));
 
         const textUnitFormStubComponent: TextUnitFormStubComponent = editTextUnitComponentFixture.debugElement.query(By.directive(TextUnitFormStubComponent)).componentInstance;
 
         editTextUnitComponentFixture.detectChanges();
         editTextUnitComponentFixture.whenStable().then(() => {
-            expect(findByIdStub).to.have.been.calledOnce;
-            expect(editTextUnitComponent.formData.name).to.equal(originalTextUnit.name);
-            expect(editTextUnitComponent.formData.releaseDate).to.equal(originalTextUnit.releaseDate);
-            expect(editTextUnitComponent.formData.content).to.equal(originalTextUnit.content);
-            expect(textUnitFormStubComponent.formData).to.equal(editTextUnitComponent.formData);
+            expect(findByIdStub).toHaveBeenCalledTimes(1);
+            expect(editTextUnitComponent.formData.name).toEqual(originalTextUnit.name);
+            expect(editTextUnitComponent.formData.releaseDate).toEqual(originalTextUnit.releaseDate);
+            expect(editTextUnitComponent.formData.content).toEqual(originalTextUnit.content);
+            expect(textUnitFormStubComponent.formData).toEqual(editTextUnitComponent.formData);
         });
     });
 
@@ -128,7 +121,7 @@ describe('EditTextUnitComponent', () => {
             status: 200,
         });
 
-        const findByIdStub = sandbox.stub(textUnitService, 'findById').returns(of(findByidResponse));
+        const findByIdStub = jest.spyOn(textUnitService, 'findById').mockReturnValue(of(findByidResponse));
 
         const formDate: TextUnitFormData = {
             name: 'CHANGED',
@@ -145,8 +138,8 @@ describe('EditTextUnitComponent', () => {
             body: updatedTextUnit,
             status: 200,
         });
-        const updatedStub = sandbox.stub(textUnitService, 'update').returns(of(updateResponse));
-        const navigateSpy = sinon.spy(router, 'navigate');
+        const updatedStub = jest.spyOn(textUnitService, 'update').mockReturnValue(of(updateResponse));
+        const navigateSpy = jest.spyOn(router, 'navigate');
 
         editTextUnitComponentFixture.detectChanges();
         tick();
@@ -155,10 +148,10 @@ describe('EditTextUnitComponent', () => {
         textUnitForm.formSubmitted.emit(formDate);
 
         editTextUnitComponentFixture.whenStable().then(() => {
-            expect(findByIdStub).to.have.been.calledOnce;
-            expect(updatedStub).to.have.been.calledOnce;
-            expect(navigateSpy).to.have.been.calledOnce;
-            navigateSpy.restore();
+            expect(findByIdStub).toHaveBeenCalledTimes(1);
+            expect(updatedStub).toHaveBeenCalledTimes(1);
+            expect(navigateSpy).toHaveBeenCalledTimes(1);
+            navigateSpy.mockRestore();
         });
     }));
 });

@@ -30,7 +30,7 @@
         [(commitState)]="commitState"
         (onFileChange)="onFileChange($event)"
         (onError)="onError($event)"
-        (onToggleCollapse)="onToggleCollapse($event)"
+        (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
     ></jhi-code-editor-file-browser>
     <jhi-code-editor-ace
         editorCenter
@@ -53,7 +53,7 @@
     <jhi-code-editor-instructions
         *ngIf="showEditorInstructions"
         editorSidebarRight
-        (onToggleCollapse)="onToggleCollapse($event)"
+        (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
         (onError)="onError($event)"
         [isAssessmentMode]="isTutorAssessment"
     >
@@ -65,7 +65,7 @@
         [participation]="participation"
         (onAnnotations)="onAnnotations($event)"
         (onError)="onError($event)"
-        (onToggleCollapse)="onToggleCollapse($event)"
+        (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"
     ></jhi-code-editor-build-output>
     <div *ngIf="isTutorAssessment" editorBottom>
         <ng-content select="[editorBottom]"></ng-content>

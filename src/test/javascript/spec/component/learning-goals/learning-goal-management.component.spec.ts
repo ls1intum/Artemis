@@ -65,7 +65,7 @@ describe('LearningGoalManagementComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

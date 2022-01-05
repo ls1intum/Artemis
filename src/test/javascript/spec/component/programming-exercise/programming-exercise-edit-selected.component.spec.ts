@@ -3,7 +3,7 @@ import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';

@@ -9,7 +9,7 @@ import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-l
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Location } from '@angular/common';
 import { Component } from '@angular/core';
@@ -56,7 +56,7 @@ describe('CourseLectureRow', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 
