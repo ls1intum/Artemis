@@ -5,7 +5,7 @@ import { getExercise, Participation } from 'app/entities/participation/participa
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { SimpleChanges } from '@angular/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 export const setBuildPlanUrlForProgrammingParticipations = (profileInfo: ProfileInfo, participations: ProgrammingExerciseStudentParticipation[], projectKey?: string) => {
     if (!projectKey) {

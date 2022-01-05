@@ -19,7 +19,6 @@ import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.comm
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { DraggableComponent } from 'ng2-dnd';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { ArtemisTestModule } from '../../test.module';
@@ -27,6 +26,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { clone } from 'lodash-es';
+import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 
 describe('DragAndDropQuestionEditComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
@@ -43,7 +43,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, DragDropModule],
             declarations: [
                 DragAndDropQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -53,7 +53,6 @@ describe('DragAndDropQuestionEditComponent', () => {
                 MockComponent(DragAndDropQuestionComponent),
                 MockDirective(NgbCollapse),
                 MockDirective(NgModel),
-                MockComponent(DraggableComponent),
             ],
             providers: [
                 MockProvider(ArtemisMarkdownService),
@@ -155,7 +154,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const event2 = { clientX: -10, clientY: -10 };
 
         // @ts-ignore
-        component['mouseMoveAction'](event1, { left: 0, top: 0 }, 10, 10);
+        component['mouseMoveAction'](event1, 0, 0, 10, 10);
 
         expect(component.mouse.x).toBe(10);
         expect(component.mouse.y).toBe(10);
@@ -165,10 +164,10 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.mouse.offsetY = 15;
         component.draggingState = DragState.MOVE;
         const lengthOfElement = 15;
-        component.currentDropLocation = { posX: 10, posY: 10, width: lengthOfElement, height: lengthOfElement };
+        component.currentDropLocation = { posX: 10, posY: 10, width: lengthOfElement, height: lengthOfElement, invalid: false };
 
         // @ts-ignore
-        component['mouseMoveAction'](event2, { left: 0, top: 0 }, 10, 10);
+        component['mouseMoveAction'](event2, 0, 0, 10, 10);
 
         expect(component.mouse.x).toBe(0);
         expect(component.mouse.y).toBe(0);
@@ -181,7 +180,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.mouse.startY = 10;
 
         // @ts-ignore
-        component['mouseMoveAction'](event2, { left: 0, top: 0 }, 10, 10);
+        component['mouseMoveAction'](event2, 0, 0, 10, 10);
 
         expect(component.mouse.x).toBe(0);
         expect(component.mouse.y).toBe(0);
@@ -194,7 +193,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         fixture.detectChanges();
         // @ts-ignore
-        component['mouseMoveAction'](event2, { left: 0, top: 0 }, 10, 10);
+        component['mouseMoveAction'](event2, 0, 0, 10, 10);
 
         expect(component.currentDropLocation.posX).toBe(0);
         expect(component.currentDropLocation.posY).toBe(0);
@@ -204,7 +203,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.mouse.startY = 10;
 
         // @ts-ignore
-        component['mouseMoveAction'](event2, { left: 0, top: 0 }, 10, 10);
+        component['mouseMoveAction'](event2, 0, 0, 10, 10);
 
         expect(component.currentDropLocation.posX).toBe(0);
         expect(component.currentDropLocation.posY).toBe(0);
@@ -222,8 +221,8 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.draggingState = DragState.CREATE;
         const lengthOfElement = 15;
-        const dropLocation = { posX: 10, posY: 10, width: lengthOfElement, height: lengthOfElement };
-        const alternativeDropLocation = { posX: 15, posY: 15, width: lengthOfElement, height: lengthOfElement };
+        const dropLocation = { posX: 10, posY: 10, width: lengthOfElement, height: lengthOfElement, invalid: false };
+        const alternativeDropLocation = { posX: 15, posY: 15, width: lengthOfElement, height: lengthOfElement, invalid: false };
         component.currentDropLocation = dropLocation;
         component.question.dropLocations = [dropLocation, alternativeDropLocation];
         component.question.correctMappings = undefined;
@@ -430,7 +429,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const alternativeItem = new DragItem();
         alternativeLocation.id = 3;
         alternativeItem.id = 3;
-        const event = { dragData: alternativeItem };
+        const event = { item: { data: alternativeItem } } as CdkDragDrop<DragItem, DragItem>;
         const expectedMapping = new DragAndDropMapping(alternativeItem, alternativeLocation);
         component.question.dragItems = [item, alternativeItem];
 

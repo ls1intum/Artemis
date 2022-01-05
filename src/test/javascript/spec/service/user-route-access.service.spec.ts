@@ -5,12 +5,10 @@ import { ArtemisTestModule } from '../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockCookieService } from '../helpers/mocks/service/mock-cookie.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { RouterTestingModule } from '@angular/router/testing';
-import { CookieService } from 'ngx-cookie-service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Mutable } from '../helpers/mutable';
@@ -41,7 +39,6 @@ describe('UserRouteAccessService', () => {
                 mockedActivatedRouteSnapshot(route),
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: CookieService, useClass: MockCookieService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: DeviceDetectorService },

@@ -145,7 +145,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
         exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
         getProgrammingSubmissionsForExerciseByCorrectionRoundStub.mockReturnValue(of(new HttpResponse({ body: [] })));
         isAtLeastInstructorInCourseStub.mockReturnValue(true);
-        // findExerciseStub.returns(of(new HttpResponse({ body: fileUploadExercise, headers: new HttpHeaders() })));
+        // findExerciseStub.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise, headers: new HttpHeaders() })));
         exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: programmingExercise2, headers: new HttpHeaders() })));
         jest.spyOn<any, any>(component, 'getSubmissions');
         component.exercise = programmingExercise2;
