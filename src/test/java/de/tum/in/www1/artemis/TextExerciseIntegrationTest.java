@@ -1065,7 +1065,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             database.createAndSaveParticipationForExercise(textExercise, username);
         }
 
-        // Test sample solution publication date not set.
+        // Test example solution publication date not set.
         textExercise.setExampleSolutionPublicationDate(null);
         textExerciseRepository.save(textExercise);
 
@@ -1079,7 +1079,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
         }
 
-        // Test sample solution publication date in the past.
+        // Test example solution publication date in the past.
         textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         textExerciseRepository.save(textExercise);
 
@@ -1088,7 +1088,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
 
-        // Test sample solution publication date in the future.
+        // Test example solution publication date in the future.
         textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         textExerciseRepository.save(textExercise);
 

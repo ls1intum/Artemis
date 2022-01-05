@@ -599,7 +599,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
             database.createAndSaveParticipationForExercise(fileUploadExercise, username);
         }
 
-        // Test sample solution publication date not set.
+        // Test example solution publication date not set.
         fileUploadExercise.setExampleSolutionPublicationDate(null);
         fileUploadExerciseRepository.save(fileUploadExercise);
 
@@ -613,7 +613,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
             assertThat(fileUploadExerciseFromApi.getExampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
         }
 
-        // Test sample solution publication date in the past.
+        // Test example solution publication date in the past.
         fileUploadExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         fileUploadExerciseRepository.save(fileUploadExercise);
 
@@ -622,7 +622,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
         assertThat(fileUploadExerciseFromApi.getExampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
 
-        // Test sample solution publication date in the future.
+        // Test example solution publication date in the future.
         fileUploadExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         fileUploadExerciseRepository.save(fileUploadExercise);
 

@@ -742,7 +742,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
             database.createAndSaveParticipationForExercise(classExercise, username);
         }
 
-        // Test sample solution publication date not set.
+        // Test example solution publication date not set.
         classExercise.setExampleSolutionPublicationDate(null);
         modelingExerciseRepository.save(classExercise);
 
@@ -758,7 +758,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
             assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
         }
 
-        // Test sample solution publication date in the past.
+        // Test example solution publication date in the past.
         classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseRepository.save(classExercise);
 
@@ -768,7 +768,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
         assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
 
-        // Test sample solution publication date in the future.
+        // Test example solution publication date in the future.
         classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         modelingExerciseRepository.save(classExercise);
 
