@@ -1132,7 +1132,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void testPerformPutActionAsTutorForbidden() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
         assertThat(course.getExercises()).isNotEmpty();
-        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         assertThat(quizExercise.isIsOpenForPractice()).isFalse();
         // remove instructor rights
         User user = database.getUserByLogin("instructor1");
@@ -1140,7 +1140,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         userRepo.save(user);
 
         request.put("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, HttpStatus.FORBIDDEN);
-        assertThat(quizExerciseRepository.findByCourseId(course.getId()).get(0).isIsOpenForPractice()).isFalse();
+        assertThat(quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0).isIsOpenForPractice()).isFalse();
     }
 
     /**
@@ -1150,7 +1150,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testViewQuizExerciseAsStudentNotVisible() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
-        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         assertThat(quizExercise.isVisibleToStudents()).isFalse();
         // remove instructor rights in course
         User user = database.getUserByLogin("instructor1");
@@ -1166,7 +1166,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteQuizExerciseAsNonInstructor() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
-        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         // remove instructor rights in course
         User user = database.getUserByLogin("instructor1");
         user.setGroups(Collections.emptySet());
@@ -1181,7 +1181,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRecalculateStatisticsAsNonInstructor() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
-        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         // remove instructor rights in course
         User user = database.getUserByLogin("instructor1");
         user.setGroups(Collections.emptySet());
@@ -1196,7 +1196,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetQuizExerciseForStudentNotInCourseForbiden() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
-        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         // remove instructor rights in course
         User user = database.getUserByLogin("student1");
         user.setGroups(Collections.emptySet());

@@ -5,7 +5,7 @@ import { artemis } from '../../../support/ArtemisTesting';
 import { MODELING_EDITOR_CANVAS } from '../../../support/pageobjects/exercises/modeling/ModelingEditor';
 
 // https://day.js.org/docs is a tool for date/time
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 // pageobjects
 const createModelingExercise = artemis.pageobjects.exercise.modeling.creation;

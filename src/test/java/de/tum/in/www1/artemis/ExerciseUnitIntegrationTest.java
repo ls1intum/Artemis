@@ -64,11 +64,11 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().get();
 
-        this.textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
-        this.fileUploadExercise = fileUploadExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
+        this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
+        this.fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
         this.programmingExercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course1).stream().findFirst().get();
-        this.quizExercise = quizExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
-        this.modelingExercise = modelingExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
+        this.quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
+        this.modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
 
         // Add users that are not in the course
         userRepo.save(ModelFactory.generateActivatedUser("student42"));

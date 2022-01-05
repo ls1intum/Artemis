@@ -262,7 +262,7 @@ public class TextExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return forbidden();
         }
-        List<TextExercise> exercises = textExerciseRepository.findByCourseId(courseId);
+        List<TextExercise> exercises = textExerciseRepository.findByCourseIdWithCategories(courseId);
         for (Exercise exercise : exercises) {
             // not required in the returned json body
             exercise.setStudentParticipations(null);

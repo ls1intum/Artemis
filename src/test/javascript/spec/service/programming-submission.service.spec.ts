@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { BehaviorSubject, lastValueFrom, of, Subject } from 'rxjs';
 import { range as _range } from 'lodash-es';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';

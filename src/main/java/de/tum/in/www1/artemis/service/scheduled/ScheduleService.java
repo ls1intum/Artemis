@@ -111,7 +111,7 @@ public class ScheduleService {
         Set<ScheduledFuture<?>> futures = scheduledExerciseTasks.get(taskId);
         if (futures != null) {
             log.debug("Cancelling scheduled task {} for Exercise (#{}).", lifecycle, exerciseId);
-            futures.forEach(future -> future.cancel(false));
+            futures.forEach(future -> future.cancel(true));
             removeScheduledTask(exerciseId, lifecycle);
         }
 
@@ -141,7 +141,7 @@ public class ScheduleService {
         Set<ScheduledFuture<?>> futures = scheduledParticipationTasks.get(taskId);
         if (futures != null) {
             log.debug("Cancelling scheduled task {} for Participation (#{}).", lifecycle, participationId);
-            futures.forEach(future -> future.cancel(false));
+            futures.forEach(future -> future.cancel(true));
             removeScheduledTask(exerciseId, participationId, lifecycle);
         }
     }

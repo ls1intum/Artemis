@@ -4,7 +4,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { flatten, maxBy, sum } from 'lodash-es';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';

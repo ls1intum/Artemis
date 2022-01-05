@@ -20,10 +20,8 @@
             <pre
                 style="flex: 1"
                 [ngStyle]="sshEnabled ? { borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' } : {}"
-                ngxClipboard
-                [cbContent]="getHttpOrSshRepositoryUrl()"
-                (cbOnSuccess)="onCopySuccess()"
-                (cbOnError)="onCopyFailure()"
+                [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl()"
+                (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUrl() }}</pre
             >
             <pre
@@ -39,10 +37,8 @@
             {{ 'artemisApp.exerciseActions.hoverToShow' | artemisTranslate }}
         </p>
         <button
-            ngxClipboard
-            [cbContent]="getHttpOrSshRepositoryUrl()"
-            (cbOnSuccess)="onCopySuccess()"
-            (cbOnError)="onCopyFailure()"
+            [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl()"
+            (cdkCopyToClipboardCopied)="onCopyFinished($event)"
             [class.btn-success]="wasCopied"
             class="btn btn-primary btn-sm me-2"
             type="button"

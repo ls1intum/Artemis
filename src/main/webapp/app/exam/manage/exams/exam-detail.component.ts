@@ -9,7 +9,7 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { faClipboard, faEye, faListAlt, faTable, faThList, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({

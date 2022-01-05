@@ -64,7 +64,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
         quizExercise = { id: 22, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
     });
 
-    describe('OnInit', function () {
+    describe('OnInit', () => {
         it('should call functions on Init', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
@@ -90,7 +90,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
         });
     });
 
-    describe('loadLayout', function () {
+    describe('loadLayout', () => {
         it('should call functions from loadLayout', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const resetLabelsSpy = jest.spyOn(comp, 'resetLabelsColors');
@@ -108,7 +108,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
         });
     });
 
-    describe('loadData', function () {
+    describe('loadData', () => {
         it('should call functions from loadData', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const resetDataSpy = jest.spyOn(comp, 'resetData');
