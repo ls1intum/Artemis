@@ -35,23 +35,23 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the currently logged in user is at least an editor in the course of the given exercise.
+     * Checks if the currently logged-in user is at least an editor in the course of the given exercise.
      * The course is identified from either {@link Exercise#course(Course)} or {@link Exam#getCourse()}
      *
      * @param exercise belongs to a course that will be checked for permission rights
-     * @return true if the currently logged in user is at least an editor (also if the user is instructor or admin), false otherwise
+     * @return true if the currently logged-in user is at least an editor (also if the user is instructor or admin), false otherwise
      */
     public boolean isAtLeastEditorForExercise(@NotNull Exercise exercise) {
         return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), null);
     }
 
     /**
-     * Checks if the currently logged in user is at least an editor in the course of the given exercise.
-     * The course is identified from either exercise.course or exercise.exerciseGroup.exam.course
+     * Checks if the currently logged-in user is at least an editor in the course of the given exercise.
+     * The course is identified from either exercise. Course or exercise.exerciseGroup.exam.course
      *
      * @param exercise belongs to a course that will be checked for permission rights
      * @param user the user whose permissions should be checked
-     * @return true if the currently logged in user is at least an editor, false otherwise
+     * @return true if the currently logged-in user is at least an editor, false otherwise
      */
     public boolean isAtLeastEditorForExercise(@NotNull Exercise exercise, @Nullable User user) {
         return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -88,7 +88,7 @@ public class AuthorizationCheckService {
     /**
      * Given any type of exercise, the method returns if the current user is at least TA for the course the exercise belongs to. If exercise is not present, it will return false,
      * because the optional will be empty, and therefore `isPresent()` will return false This is due how `filter` works: If a value is present, apply the provided mapping function
-     * to it, and if the result is non-null, return an Optional describing the result. Otherwise return an empty Optional.
+     * to it, and if the result is non-null, return an Optional describing the result. Otherwise, return an empty Optional.
      * https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html#filter-java.util.function.Predicate
      *
      * @param exercise the exercise that needs to be checked
@@ -100,11 +100,11 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the currently logged in user is at least a teaching assistant in the course of the given exercise.
+     * Checks if the currently logged-in user is at least a teaching assistant in the course of the given exercise.
      * The course is identified from either {@link Exercise#course(Course)} or {@link Exam#getCourse()}
      *
      * @param exercise belongs to a course that will be checked for permission rights
-     * @return true if the currently logged in user is at least a teaching assistant (also if the user is instructor or admin), false otherwise
+     * @return true if the currently logged-in user is at least a teaching assistant (also if the user is instructor or admin), false otherwise
      */
     public boolean isAtLeastTeachingAssistantForExercise(@NotNull Exercise exercise) {
         return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), null);
@@ -127,21 +127,21 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the currently logged in user is at least a student in the course of the given exercise.
+     * checks if the currently logged-in user is at least a student in the course of the given exercise.
      *
      * @param exercise belongs to a course that will be checked for permission rights
-     * @return true if the currently logged in user is at least a student (also if the user is teaching assistant, instructor or admin), false otherwise
+     * @return true if the currently logged-in user is at least a student (also if the user is teaching assistant, instructor or admin), false otherwise
      */
     public boolean isAtLeastStudentForExercise(@NotNull Exercise exercise) {
         return isAtLeastStudentForExercise(exercise, null);
     }
 
     /**
-     * checks if the currently logged in user is at least a student in the course of the given exercise.
+     * checks if the currently logged-in user is at least a student in the course of the given exercise.
      *
      * @param exercise belongs to a course that will be checked for permission rights
      * @param user the user whose permissions should be checked
-     * @return true if the currently logged in user is at least a student (also if the user is teaching assistant, instructor or admin), false otherwise
+     * @return true if the currently logged-in user is at least a student (also if the user is teaching assistant, instructor or admin), false otherwise
      */
     public boolean isAtLeastStudentForExercise(@NotNull Exercise exercise, @Nullable User user) {
         if (user == null || user.getGroups() == null) {
@@ -209,22 +209,22 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the currently logged in user is at least an instructor in the course of the given exercise.
-     * The course is identified from either exercise.course or exercise.exerciseGroup.exam.course
+     * Checks if the currently logged-in user is at least an instructor in the course of the given exercise.
+     * The course is identified from either exercise. Course or exercise.exerciseGroup.exam.course
      *
      * @param exercise belongs to a course that will be checked for permission rights
      * @param user the user whose permissions should be checked
-     * @return true if the currently logged in user is at least an instructor (or admin), false otherwise
+     * @return true if the currently logged-in user is at least an instructor (or admin), false otherwise
      */
     public boolean isAtLeastInstructorForExercise(@NotNull Exercise exercise, @Nullable User user) {
         return isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
     /**
-     * checks if the currently logged in user is at least an instructor in the course of the given exercise.
+     * checks if the currently logged-in user is at least an instructor in the course of the given exercise.
      *
      * @param exercise belongs to a course that will be checked for permission rights
-     * @return true if the currently logged in user is at least an instructor (or admin), false otherwise
+     * @return true if the currently logged-in user is at least an instructor (or admin), false otherwise
      */
     public boolean isAtLeastInstructorForExercise(@NotNull Exercise exercise) {
         return isAtLeastInstructorForExercise(exercise, null);
@@ -335,7 +335,7 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the currently logged in user is teaching assistant of this course
+     * checks if the currently logged-in user is teaching assistant of this course
      *
      * @param course the course that needs to be checked
      * @param user the user whose permissions should be checked
@@ -350,7 +350,7 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the currently logged in user is only a student of this course. This means the user is NOT a tutor, NOT an editor, NOT an instructor and NOT an ADMIN
+     * checks if the currently logged-in user is only a student of this course. This means the user is NOT a tutor, NOT an editor, NOT an instructor and NOT an ADMIN
      *
      * @param course the course that needs to be checked
      * @param user the user whose permissions should be checked
@@ -365,7 +365,7 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the currently logged in user is student in the given course
+     * checks if the currently logged-in user is student in the given course
      *
      * @param course the course that needs to be checked
      * @param user the user whose permissions should be checked
@@ -380,7 +380,7 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the currently logged in user is owner of the given participation
+     * checks if the currently logged-in user is owner of the given participation
      *
      * @param participation the participation that needs to be checked
      * @return true, if user is student is owner of this participation, otherwise false
@@ -395,7 +395,7 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the currently logged in user is owner of the given participation
+     * checks if the currently logged-in user is owner of the given participation
      *
      * @param participation the participation that needs to be checked
      * @throws AccessForbiddenException if active user isn't owner of participation
@@ -407,7 +407,7 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the currently logged in user is owner of the given participation
+     * checks if the currently logged-in user is owner of the given participation
      *
      * @param participation the participation that needs to be checked
      * @param user the user whose permissions should be checked
@@ -427,7 +427,7 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the currently logged in user is owner of the given team
+     * checks if the currently logged-in user is owner of the given team
      *
      * @param team the team that needs to be checked
      * @param user the user whose permissions should be checked
@@ -438,7 +438,7 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the currently logged in user is student of the given team
+     * checks if the currently logged-in user is student of the given team
      *
      * @param course the course to which the team belongs to (acts as scope for team short name)
      * @param teamShortName the short name of the team that needs to be checked
@@ -489,7 +489,7 @@ public class AuthorizationCheckService {
      * NOTE: this method should only be used in a REST Call context, when the SecurityContext is correctly setup.
      * Preferably use the method isAdmin(user) below
      *
-     * Checks if the currently logged in user is an admin user
+     * Checks if the currently logged-in user is an admin user
      *
      * @return true, if user is admin, otherwise false
      */
@@ -499,7 +499,7 @@ public class AuthorizationCheckService {
 
     /**
      * Checks if the passed user is an admin user
-     * @param user the user with authorities. If the user is null, the currently logged in user will be used.
+     * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
      *
      * @return true, if user is admin, otherwise false
      */
@@ -512,7 +512,7 @@ public class AuthorizationCheckService {
 
     /**
      * Checks if the passed user is an admin user. Throws an AccessForbiddenException in case the user is not an admin
-     * @param user the user with authorities. If the user is null, the currently logged in user will be used.
+     * @param user the user with authorities. If the user is null, the currently logged-in user will be used.
      **/
     public void checkIsAdminElseThrow(@Nullable User user) {
         if (!isAdmin(user)) {
@@ -521,7 +521,7 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the currently logged in user is allowed to retrieve the given result.
+     * Checks if the currently logged-in user is allowed to retrieve the given result.
      * The user is allowed to retrieve the result if (s)he is an instructor of the course, or (s)he is at least a student in the corresponding course, the
      * submission is his/her submission, the assessment due date of the corresponding exercise is in the past (or not set) and the result is finished.
      *

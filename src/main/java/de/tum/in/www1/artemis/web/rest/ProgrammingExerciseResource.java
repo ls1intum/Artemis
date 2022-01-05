@@ -367,7 +367,7 @@ public class ProgrammingExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        exerciseService.validateGeneralSettings(programmingExercise);
+        programmingExercise.validateGeneralSettings();
         validateProgrammingSettings(programmingExercise);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
@@ -501,7 +501,7 @@ public class ProgrammingExerciseResource {
         newExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        exerciseService.validateGeneralSettings(newExercise);
+        newExercise.validateGeneralSettings();
         validateProgrammingSettings(newExercise);
         validateStaticCodeAnalysisSettings(newExercise);
 
