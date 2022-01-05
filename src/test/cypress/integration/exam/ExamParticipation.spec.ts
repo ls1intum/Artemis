@@ -1,9 +1,13 @@
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Exam } from 'app/entities/exam.model';
 import { GET, BASE_API } from '../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import submission from '../../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
+import { Course } from 'app/entities/course.model';
+import { Interception } from 'cypress/types/net-stubbing';
 
 // Requests
 const courseRequests = artemis.requests.courseManagement;
@@ -26,9 +30,9 @@ const textExerciseTitle = 'Cypress text exercise';
 const packageName = 'de.test';
 
 describe('Exam participation', () => {
-    let course: any;
-    let exam: any;
-    let quizExercise: any;
+    let course: Course;
+    let exam: Exam;
+    let quizExercise: QuizExercise;
 
     before(() => {
         cy.login(users.getAdmin());
@@ -80,9 +84,9 @@ describe('Exam participation', () => {
 
     function startParticipation() {
         cy.login(student, '/');
-        courses.openCourse(course.id);
+        courses.openCourse(course.id!);
         courseOverview.openExamsTab();
-        courseOverview.openExam(exam.id);
+        courseOverview.openExam(exam.id!);
         cy.url().should('contain', `/exams/${exam.id}`);
         examStartEnd.startExam();
     }
@@ -128,14 +132,14 @@ describe('Exam participation', () => {
     }
 
     function makeQuizExerciseSubmission() {
-        multipleChoiceQuiz.tickAnswerOption(0, quizExercise.quizQuestions[0].id);
-        multipleChoiceQuiz.tickAnswerOption(2, quizExercise.quizQuestions[0].id);
+        multipleChoiceQuiz.tickAnswerOption(0, quizExercise.quizQuestions![0].id);
+        multipleChoiceQuiz.tickAnswerOption(2, quizExercise.quizQuestions![0].id);
     }
 
     function handInEarly() {
         examNavigation.handInEarly();
-        examStartEnd.finishExam().then((request: any) => {
-            expect(request.response.statusCode).to.eq(200);
+        examStartEnd.finishExam().then((request: Interception) => {
+            expect(request.response!.statusCode).to.eq(200);
         });
     }
 
@@ -149,7 +153,7 @@ describe('Exam participation', () => {
     after(() => {
         if (!!course) {
             cy.login(users.getAdmin());
-            courseRequests.deleteCourse(course.id);
+            courseRequests.deleteCourse(course.id!);
         }
     });
 });

@@ -113,7 +113,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans, true);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {

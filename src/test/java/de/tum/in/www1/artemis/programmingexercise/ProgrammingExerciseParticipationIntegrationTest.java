@@ -162,7 +162,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
         assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetResultWithFeedbacksFilteredBeforeLastDueDate(AssessmentType assessmentType) throws Exception {

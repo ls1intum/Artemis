@@ -1,12 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { CookieService } from 'ngx-cookie-service';
 import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { Result } from 'app/entities/result.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
@@ -31,7 +29,6 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [ProgrammingExerciseInstructorStatusComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip)],
             providers: [
-                { provide: CookieService, useClass: MockCookieService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
             ],

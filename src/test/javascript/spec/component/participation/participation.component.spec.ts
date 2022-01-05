@@ -10,7 +10,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { of } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { Team } from 'app/entities/team.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';

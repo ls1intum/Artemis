@@ -17,7 +17,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 describe('ProgrammingExerciseUtils URL utils', () => {
     let commitHashURLTemplate: string | undefined;

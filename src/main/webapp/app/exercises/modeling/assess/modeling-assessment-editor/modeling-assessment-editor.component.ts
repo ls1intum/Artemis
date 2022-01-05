@@ -7,7 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';

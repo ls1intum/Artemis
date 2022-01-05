@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { getExercise, Participation, ParticipationType } from 'app/entities/participation/participation.model';

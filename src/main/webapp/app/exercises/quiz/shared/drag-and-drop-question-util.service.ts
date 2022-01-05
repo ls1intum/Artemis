@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
-import { DropLocation } from 'app/entities/quiz/drop-location.model';
+import { BaseEntityWithTempId, DropLocation } from 'app/entities/quiz/drop-location.model';
 
 @Injectable({ providedIn: 'root' })
 export class DragAndDropQuestionUtil {
@@ -13,7 +13,7 @@ export class DragAndDropQuestionUtil {
      *
      * @param question {object} the drag and drop question we want to solve
      * @param [mappings] {Array} (optional) the mappings we try to use in the sample solution (this may contain incorrect mappings - they will be filtered out)
-     * @return {Array} array of mappings that would solve this question (may be empty, if question is unsolvable)
+     * @return {Array} array of mappings that would solve this question (can be empty, if question is unsolvable)
      */
     solve(question: DragAndDropQuestion, mappings?: DragAndDropMapping[]) {
         if (!question.correctMappings) {
@@ -26,21 +26,21 @@ export class DragAndDropQuestionUtil {
         // filter out dropLocations that do not need to be mapped
         let remainingDropLocations = question.dropLocations?.filter((dropLocation) => {
             return question.correctMappings?.some((mapping) => {
-                return this.isSameDropLocation(mapping.dropLocation, dropLocation);
+                return this.isSameEntityWithTempId(mapping.dropLocation, dropLocation);
             }, this);
         }, this);
 
         if (mappings) {
             // add mappings that are already correct
             mappings.forEach(function (mapping) {
-                const correctMapping = this.getMapping(question.correctMappings, mapping.dragItem, mapping.dropLocation);
+                const correctMapping = this.getMapping(question.correctMappings!, mapping.dragItem!, mapping.dropLocation!);
                 if (correctMapping) {
                     sampleMappings.push(correctMapping);
                     remainingDropLocations = remainingDropLocations?.filter(function (dropLocation) {
-                        return !this.isSameDropLocation(dropLocation, mapping.dropLocation);
+                        return !this.isSameEntityWithTempId(dropLocation, mapping.dropLocation);
                     }, this);
                     availableDragItems = availableDragItems?.filter(function (dragItem) {
-                        return !this.isSameDragItem(dragItem, mapping.dragItem);
+                        return !this.isSameEntityWithTempId(dragItem, mapping.dragItem);
                     }, this);
                 }
             }, this);
@@ -157,7 +157,7 @@ export class DragAndDropQuestionUtil {
     getMapping(mappings: DragAndDropMapping[], dragItem: DragItem, dropLocation: DropLocation) {
         const that = this;
         return mappings.find(function (mapping: DragAndDropMapping) {
-            return that.isSameDropLocation(dropLocation, mapping.dropLocation!) && that.isSameDragItem(dragItem, mapping.dragItem!);
+            return that.isSameEntityWithTempId(dropLocation, mapping.dropLocation) && that.isSameEntityWithTempId(dragItem, mapping.dragItem);
         }, this);
     }
 
@@ -169,7 +169,7 @@ export class DragAndDropQuestionUtil {
      * @return {Array} the resulting drop locations
      */
     getAllDropLocationsForDragItem(mappings: DragAndDropMapping[], dragItem: DragItem): DropLocation[] {
-        return mappings.filter((mapping) => this.isSameDragItem(mapping.dragItem!, dragItem)).map((mapping) => mapping.dropLocation!);
+        return mappings.filter((mapping) => this.isSameEntityWithTempId(mapping.dragItem, dragItem)).map((mapping) => mapping.dropLocation!);
     }
 
     /**
@@ -189,36 +189,25 @@ export class DragAndDropQuestionUtil {
             // for every element in set1 there has to be an identical element in set2 and vice versa
             set1.every(function (element1: DropLocation) {
                 return set2.some(function (element2: DropLocation) {
-                    return service.isSameDropLocation(element1, element2);
+                    return service.isSameEntityWithTempId(element1, element2);
                 });
             }) &&
             set2.every(function (element2: DropLocation) {
                 return set1.some(function (element1: DropLocation) {
-                    return service.isSameDropLocation(element1, element2);
+                    return service.isSameEntityWithTempId(element1, element2);
                 });
             })
         );
     }
 
     /**
-     * compare if the two objects are drop location
+     * compare if the two objects are the same entities with a temp id
      *
-     * @param a {object} a drop location
-     * @param b {object} another drop location
+     * @param a {object} an entity with a temp id
+     * @param b {object} another entity with a temp id
      * @return {boolean}
      */
-    isSameDropLocation(a?: DropLocation, b?: DropLocation): boolean {
-        return a === b || (a != undefined && b != undefined && ((a.id && b.id && a.id === b.id) || (a.tempID != undefined && b.tempID != undefined && a.tempID === b.tempID)));
-    }
-
-    /**
-     * compare if the two objects are the same drag item
-     *
-     * @param a {object} a drag item
-     * @param b {object} another drag item
-     * @return {boolean}
-     */
-    isSameDragItem(a?: DragItem, b?: DragItem): boolean {
+    isSameEntityWithTempId(a: BaseEntityWithTempId | undefined, b: BaseEntityWithTempId | undefined): boolean {
         return a === b || (a != undefined && b != undefined && ((a.id && b.id && a.id === b.id) || (a.tempID != undefined && b.tempID != undefined && a.tempID === b.tempID)));
     }
 }

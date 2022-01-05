@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
-import { StarRatingComponent } from 'ng-starrating';
+import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { Result } from 'app/entities/result.model';
 import { Rating } from 'app/entities/rating.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

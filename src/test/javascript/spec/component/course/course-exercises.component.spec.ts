@@ -22,7 +22,7 @@ import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';

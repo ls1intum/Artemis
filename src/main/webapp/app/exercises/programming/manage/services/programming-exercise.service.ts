@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -25,6 +25,7 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 };
 
+// TODO: we should use a proper enum here
 export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION' | 'TESTS' | 'AUXILIARY';
 
 @Injectable({ providedIn: 'root' })
@@ -196,11 +197,7 @@ export class ProgrammingExerciseService {
         return this.http.get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-            tap((res: EntityResponseType) => {
-                if (res.body) {
-                    this.accountService.setAccessRightsForExercise(res.body);
-                }
-            }),
+            tap((res: EntityResponseType) => this.exerciseService.checkPermission(res)),
         );
     }
 

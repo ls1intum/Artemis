@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';

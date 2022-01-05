@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
