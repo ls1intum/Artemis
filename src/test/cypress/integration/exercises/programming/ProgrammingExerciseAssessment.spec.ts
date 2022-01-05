@@ -3,7 +3,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CypressAssessmentType } from '../../../support/requests/CourseManagementRequests';
 import { artemis } from 'src/test/cypress/support/ArtemisTesting';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 // The user management object
 const users = artemis.users;

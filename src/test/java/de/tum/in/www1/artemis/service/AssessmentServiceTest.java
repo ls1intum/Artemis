@@ -213,7 +213,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(result.getResultString()).isEqualTo("6 of 7 points");
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRatedAfterSubmitResultWithDueDateEqualsSubmissionDateOfResult(boolean isDueDateIndividual) {

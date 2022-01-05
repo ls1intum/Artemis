@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { HttpClient } from '@angular/common/http';

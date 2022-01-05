@@ -9,7 +9,7 @@ public class CourseManagementOverviewStatisticsDTO {
 
     private Long courseId;
 
-    private Integer[] activeStudents;
+    private List<Integer> activeStudents;
 
     private List<CourseManagementOverviewExerciseStatisticsDTO> exerciseDTOS;
 
@@ -21,11 +21,11 @@ public class CourseManagementOverviewStatisticsDTO {
         this.courseId = courseId;
     }
 
-    public Integer[] getActiveStudents() {
+    public List<Integer> getActiveStudents() {
         return activeStudents;
     }
 
-    public void setActiveStudents(Integer[] activeStudents) {
+    public void setActiveStudents(List<Integer> activeStudents) {
         this.activeStudents = activeStudents;
     }
 

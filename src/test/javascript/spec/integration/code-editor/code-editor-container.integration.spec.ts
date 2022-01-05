@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, of, Subject } from 'rxjs';
@@ -60,10 +60,11 @@ import { CodeEditorFileBrowserCreateNodeComponent } from 'app/exercises/programm
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
-import { TreeviewComponent } from 'ngx-treeview';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
+import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
 
 describe('CodeEditorContainerIntegration', () => {
     // needed to make sure ace is defined
@@ -108,7 +109,8 @@ describe('CodeEditorContainerIntegration', () => {
                 MockComponent(CodeEditorFileBrowserFolderComponent),
                 MockComponent(CodeEditorFileBrowserFileComponent),
                 MockComponent(CodeEditorStatusComponent),
-                MockComponent(TreeviewComponent),
+                TreeviewComponent,
+                TreeviewItemComponent,
                 MockPipe(ArtemisDatePipe),
                 MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
             ],

@@ -6,8 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalField;
-import java.time.temporal.WeekFields;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -80,11 +78,13 @@ public class CourseService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
+    private final StatisticsRepository statisticsRepository;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService, GroupNotificationRepository groupNotificationRepository,
             ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
             GroupNotificationService groupNotificationService, ExamService examService, ExamRepository examRepository, CourseExamExportService courseExamExportService,
-            GradingScaleRepository gradingScaleRepository) {
+            GradingScaleRepository gradingScaleRepository, StatisticsRepository statisticsRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -101,6 +101,7 @@ public class CourseService {
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
         this.gradingScaleRepository = gradingScaleRepository;
+        this.statisticsRepository = statisticsRepository;
     }
 
     /**
@@ -250,7 +251,7 @@ public class CourseService {
 
     /**
      * If the exercise is part of an exam, retrieve the course through ExerciseGroup -> Exam -> Course.
-     * Otherwise the course is already set and the id can be used to retrieve the course from the database.
+     * Otherwise, the course is already set and the id can be used to retrieve the course from the database.
      *
      * @param exercise the Exercise for which the course is retrieved
      * @return the Course of the Exercise
@@ -344,7 +345,7 @@ public class CourseService {
     /**
      * Fetches a list of Courses
      *
-     * @param onlyActive Whether or not to include courses with a past endDate
+     * @param onlyActive Whether to include courses with a past endDate
      * @return A list of Courses for the course management overview
      */
     public List<Course> getAllCoursesForManagementOverview(boolean onlyActive) {
@@ -360,13 +361,13 @@ public class CourseService {
      * @param exerciseIds the ids to get the active students for
      * @param periodIndex the deviation from the current time
      * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 17 for the course detail view
-     * @return An Integer array containing active students for each index. An index corresponds to a week
+     * @param date the date for which the active students' calculation should end (e.g. now)
+     * @return An Integer list containing active students for each index. An index corresponds to a week
      */
-    public Integer[] getActiveStudents(Set<Long> exerciseIds, long periodIndex, int length) {
-        ZonedDateTime now = ZonedDateTime.now();
-        LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
-        LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
-        ZoneId zone = now.getZone();
+    public List<Integer> getActiveStudents(Set<Long> exerciseIds, long periodIndex, int length, ZonedDateTime date) {
+        LocalDateTime localStartDate = date.toLocalDateTime().with(DayOfWeek.MONDAY);
+        LocalDateTime localEndDate = date.toLocalDateTime().with(DayOfWeek.SUNDAY);
+        ZoneId zone = date.getZone();
         // startDate is the starting point of the data collection which is the Monday 3 weeks ago +/- the deviation from the current timeframe
         ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks((length - 1) + (length * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
         // the endDate depends on whether the current week is shown. If it is, the endDate is the Sunday of the current week at 23:59.
@@ -375,7 +376,9 @@ public class CourseService {
                 : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
         List<StatisticsEntry> outcome = courseRepository.getActiveStudents(exerciseIds, startDate, endDate);
         List<StatisticsEntry> distinctOutcome = removeDuplicateActiveUserRows(outcome, startDate);
-        return sortUserIntoWeeks(distinctOutcome, startDate, length);
+        List<Integer> result = new ArrayList<>(Collections.nCopies(length, 0));
+        statisticsRepository.sortDataIntoWeeks(distinctOutcome, result, startDate);
+        return result;
     }
 
     /**
@@ -388,77 +391,28 @@ public class CourseService {
      */
 
     private List<StatisticsEntry> removeDuplicateActiveUserRows(List<StatisticsEntry> activeUserRows, ZonedDateTime startDate) {
-        int startIndex = getWeekOfDate(startDate);
-        Map<Object, List<String>> usersByDate = new HashMap<>();
+        int startIndex = statisticsRepository.getWeekOfDate(startDate);
+        Map<Integer, List<String>> usersByDate = new HashMap<>();
         for (StatisticsEntry listElement : activeUserRows) {
             // listElement.date has the form "2021-05-04", to convert it to ZonedDateTime, it needs a time
             String dateOfElement = listElement.getDate() + " 10:00";
             var zone = startDate.getZone();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
             ZonedDateTime date = LocalDateTime.parse(dateOfElement, formatter).atZone(zone);
-            int index = getWeekOfDate(date);
+            int index = statisticsRepository.getWeekOfDate(date);
             // the database stores entries in UTC, so it can happen that entries have a date one date before the startDate
             index = index == startIndex - 1 ? startIndex : index;
-            String username = listElement.getUsername();
-            List<String> usersInSameSlot = usersByDate.get(index);
-            // if this index is not yet existing in users
-            if (usersInSameSlot == null) {
-                usersInSameSlot = new ArrayList<>();
-                usersInSameSlot.add(username);
-                usersByDate.put(index, usersInSameSlot);
-            }   // if the value of the map for this index does not contain this username
-            else if (!usersInSameSlot.contains(username)) {
-                usersInSameSlot.add(username);
-            }
+            statisticsRepository.addUserToTimeslot(usersByDate, listElement, index);
         }
         List<StatisticsEntry> returnList = new ArrayList<>();
         usersByDate.forEach((date, users) -> {
-            int year = (Integer) date < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
+            int year = date < statisticsRepository.getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
             ZonedDateTime firstDateOfYear = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone());
-            ZonedDateTime start = getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(((Integer) date) - 1) : firstDateOfYear.plusWeeks((Integer) date);
+            ZonedDateTime start = statisticsRepository.getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(date - 1) : firstDateOfYear.plusWeeks(date);
             StatisticsEntry listElement = new StatisticsEntry(start, users.size());
             returnList.add(listElement);
         });
         return returnList;
-    }
-
-    /**
-     * Gets a list of maps as parameter, each map describing an entry in the database. The map has the two keys "day" and "amount",
-     * which map to the date and the amount of the findings. This Map-List is taken and converted into an Integer array,
-     * containing the values for each point of the graph. In the course management overview, we want to display the last
-     * 4 weeks, each week represented by one point in the graph. (Beginning with the current week.) In the course detail view,
-     * we display 16 weeks at once.
-     *
-     * @param outcome A List<StatisticsEntry>, containing the content which should be refactored into an array
-     * @param startDate the startDate
-     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 16 for the courde detail view
-     * @return an array, containing the amount of active users. One entry corresponds to one week
-     */
-    private Integer[] sortUserIntoWeeks(List<StatisticsEntry> outcome, ZonedDateTime startDate, int length) {
-        Integer[] result = new Integer[length];
-        Arrays.fill(result, 0);
-        for (StatisticsEntry map : outcome) {
-            ZonedDateTime date = (ZonedDateTime) map.getDay();
-            int amount = Math.toIntExact(map.getAmount());
-            int dateWeek = getWeekOfDate(date);
-            int startDateWeek = getWeekOfDate(startDate);
-            int weeksDifference;
-            weeksDifference = dateWeek < startDateWeek ? dateWeek == startDateWeek - 1 ? 0 : dateWeek + 53 - startDateWeek : dateWeek - startDateWeek;
-            result[weeksDifference] += amount;
-        }
-        return result;
-    }
-
-    /**
-     * Gets the week of the given date
-     *
-     * @param date the date to get the week for
-     * @return the calendar week of the given date
-     */
-    private Integer getWeekOfDate(ZonedDateTime date) {
-        LocalDate localDate = date.toLocalDate();
-        TemporalField weekOfYear = WeekFields.of(DayOfWeek.MONDAY, 4).weekOfWeekBasedYear();
-        return localDate.get(weekOfYear);
     }
 
     /**
@@ -477,7 +431,7 @@ public class CourseService {
         dto.setNumberOfEditorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getEditorGroupName())));
         dto.setNumberOfInstructorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getInstructorGroupName())));
 
-        dto.setActiveStudents(getActiveStudents(exerciseIds, 0, 17));
+        dto.setActiveStudents(getActiveStudents(exerciseIds, 0, 17, ZonedDateTime.now()));
         return dto;
     }
 
@@ -506,7 +460,7 @@ public class CourseService {
             Files.createDirectories(Path.of(courseArchivesDirPath));
             log.info("Created the course archives directory at {} because it didn't exist.", courseArchivesDirPath);
 
-            // Export the course to the archives directory.
+            // Export the course to the archives' directory.
             var archivedCoursePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
 
             // Attach the path to the archive to the course and save it in the database

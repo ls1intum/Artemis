@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ExerciseType } from 'app/entities/exercise.model';
 
 export class CourseManagementStatisticsModel {

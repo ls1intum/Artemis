@@ -9,7 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { LineChartModule } from '@swimlane/ngx-charts';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -59,7 +59,7 @@ describe('ExerciseScoresChartComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

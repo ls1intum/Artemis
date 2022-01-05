@@ -83,7 +83,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateTextAssessmentKnowledgeIfExerciseIsCreatedFromScratch() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         int count = textAssesmentKnowledgeRepository.findAll().size();
         textExercise.setId(null);
         request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
@@ -99,7 +99,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testReuseTextAssessmentKnowledgeIfExerciseIsImported() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         int exerciseCount = textExerciseRepository.findAll().size();
         int textAssessmentKnowledgeCount = textAssesmentKnowledgeRepository.findAll().size();
         request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
@@ -117,7 +117,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testKeepKnowledgeWhenExerciseIsDeletedIfOtherExercisesUseIt() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
         int exerciseCount = textExerciseRepository.findAll().size();
         int textAssessmentKnowledgeCount = textAssesmentKnowledgeRepository.findAll().size();
@@ -136,7 +136,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteKnowledgeWhenExerciseIsDeletedIfNoOtherExercisesUseIt() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextExercise importedExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
         int exerciseCount = textExerciseRepository.findAll().size();
         int textAssessmentKnowledgeCount = textAssesmentKnowledgeRepository.findAll().size();
@@ -174,7 +174,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testReuseModelAssessmentKnowledgeIfExerciseIsImported() throws Exception {
         final Course course = database.addCourseWithOneReleasedModelExerciseWithKnowledge();
-        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseId(course.getId()).get(0);
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         int exerciseCount = modelingExerciseRepository.findAll().size();
         int modelAssessmentKnowledgeCount = modelAssesmentKnowledgeRepository.findAll().size();
         request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
@@ -192,7 +192,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testKeepModelAssessmentKnowledgeWhenExerciseIsDeletedIfOtherExercisesUseIt() throws Exception {
         final Course course = database.addCourseWithOneReleasedModelExerciseWithKnowledge();
-        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseId(course.getId()).get(0);
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         int exerciseCount = modelingExerciseRepository.findAll().size();
         int modelAssessmentKnowledgeCount = modelAssesmentKnowledgeRepository.findAll().size();
@@ -211,7 +211,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteModelAssessmentKnowledgeWhenExerciseIsDeletedIfNoOtherExercisesUseIt() throws Exception {
         final Course course = database.addCourseWithOneReleasedModelExerciseWithKnowledge();
-        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseId(course.getId()).get(0);
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         ModelingExercise importedExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
                 HttpStatus.CREATED);
         int exerciseCount = modelingExerciseRepository.findAll().size();

@@ -6,7 +6,7 @@ import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.co
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -84,8 +84,10 @@ describe('Course Management Detail Component', () => {
     });
 
     beforeEach(fakeAsync(() => {
-        jest.spyOn(courseService, 'getCourseStatisticsForDetailView').mockReturnValue(of(new HttpResponse({ body: dtoMock })));
-        jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        const statsStub = jest.spyOn(courseService, 'getCourseStatisticsForDetailView');
+        statsStub.mockReturnValue(of(new HttpResponse({ body: dtoMock })));
+        const infoStub = jest.spyOn(courseService, 'find');
+        infoStub.mockReturnValue(of(new HttpResponse({ body: course })));
 
         component.ngOnInit();
         tick();
@@ -106,18 +108,21 @@ describe('Course Management Detail Component', () => {
     });
 
     it('should destroy event subscriber onDestroy', () => {
+        const destroySpy = jest.spyOn(eventManager, 'destroy');
         component.ngOnDestroy();
-        expect(eventManager.destroy).toHaveBeenCalledTimes(1);
+        expect(destroySpy).toHaveBeenCalled();
     });
 
     it('should broadcast course modification on delete', () => {
-        const deleteStub = jest.spyOn(courseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
+        const deleteStub = jest.spyOn(courseService, 'delete');
+        deleteStub.mockReturnValue(of(new HttpResponse<void>()));
 
         const courseId = 444;
         component.deleteCourse(courseId);
 
         expect(deleteStub).toHaveBeenCalledWith(courseId);
-        expect(eventManager.broadcast).toHaveBeenCalledWith({
+        expect(broadcastSpy).toHaveBeenCalledWith({
             name: 'courseListModification',
             content: 'Deleted an course',
         });

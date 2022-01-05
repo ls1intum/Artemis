@@ -7,7 +7,7 @@ import { ExamInformationComponent } from 'app/exam/participate/information/exam-
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockPipe } from 'ng-mocks';
 
 let fixture: ComponentFixture<ExamInformationComponent>;
@@ -27,7 +27,7 @@ let exam = {
 
 let studentExam = { id: 1, exam, user, workingTime: 60 } as StudentExam;
 
-describe('ExamInformationComponent', function () {
+describe('ExamInformationComponent', () => {
     beforeEach(() => {
         exam = { id: 1, title: 'Test Exam', startDate, endDate } as Exam;
         studentExam = { id: 1, exam, user, workingTime: 60 } as StudentExam;
@@ -47,20 +47,20 @@ describe('ExamInformationComponent', function () {
         jest.resetAllMocks();
     });
 
-    it('should initialize', function () {
+    it('should initialize', () => {
         component.exam = exam;
         fixture.detectChanges();
         expect(fixture).not.toBeUndefined();
         expect(component.examEndDate).toEqual(exam.endDate);
     });
 
-    it('should return undefined if the exam is not set', function () {
+    it('should return undefined if the exam is not set', () => {
         fixture.detectChanges();
         expect(fixture).not.toBeUndefined();
         expect(component.examEndDate).toBeUndefined();
     });
 
-    it('should return the start date plus the working time as the student exam end date', function () {
+    it('should return the start date plus the working time as the student exam end date', () => {
         component.exam = exam;
         component.studentExam = studentExam;
         fixture.detectChanges();
@@ -68,7 +68,7 @@ describe('ExamInformationComponent', function () {
         expect(component.examEndDate?.isSame(dayjs(exam.startDate).add(studentExam.workingTime!, 'seconds'))).toEqual(true);
     });
 
-    it('should detect if the end date is on another day', function () {
+    it('should detect if the end date is on another day', () => {
         component.exam = exam;
         exam.endDate = dayjs(exam.startDate).add(2, 'days');
         fixture.detectChanges();
@@ -76,7 +76,7 @@ describe('ExamInformationComponent', function () {
         expect(component.isExamOverMultipleDays).toBe(true);
     });
 
-    it('should detect if the working time extends to another day', function () {
+    it('should detect if the working time extends to another day', () => {
         component.exam = exam;
         component.studentExam = studentExam;
         studentExam.workingTime = 24 * 60 * 60;
@@ -85,7 +85,7 @@ describe('ExamInformationComponent', function () {
         expect(component.isExamOverMultipleDays).toBe(true);
     });
 
-    it('should return false for exams that only last one day', function () {
+    it('should return false for exams that only last one day', () => {
         component.exam = exam;
         fixture.detectChanges();
         expect(fixture).not.toBeUndefined();

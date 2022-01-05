@@ -5,7 +5,7 @@ import { BASE_API } from '../../../support/constants';
 import { DELETE } from '../../../support/constants';
 import { generateUUID } from '../../../support/utils';
 import { artemis } from '../../../support/ArtemisTesting';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 // The user management object
 const users = artemis.users;

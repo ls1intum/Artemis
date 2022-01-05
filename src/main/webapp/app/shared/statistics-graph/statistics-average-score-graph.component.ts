@@ -70,7 +70,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
 
     // handles arrow clicks and updates the exercises which are shown, forward is boolean since it is either forward or backward
     public switchTimeSpan(forward: boolean): void {
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
         this.currentPeriod += forward ? 1 : -1;
         this.initializeChart();
     }
