@@ -1,4 +1,3 @@
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
@@ -203,7 +202,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should open modal when open origin of feedback function is called', () => {
         const modalService: NgbModal = TestBed.inject(NgbModal);
         const content = {};
-        const modalServiceSpy = sinon.spy(modalService, 'open');
+        const modalServiceSpy = jest.spyOn(modalService, 'open');
 
         component.openOriginOfFeedbackModal(content).then(() => {
             expect(modalServiceSpy).toHaveBeenCalledTimes(1);

@@ -2,12 +2,9 @@ import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
-import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
-
-const expect = chai.expect;
 
 describe('TableEditableFieldComponent', () => {
     let comp: TableEditableFieldComponent;
@@ -35,12 +32,12 @@ describe('TableEditableFieldComponent', () => {
         comp.value = value;
         fixture.detectChanges();
         fixture.whenStable().then(() => {
-            expect(comp.inputValue).to.equal(value);
+            expect(comp.inputValue).toEqual(value);
 
             const tableInput = debugElement.query(By.css(tableInputValue));
 
-            expect(tableInput).to.exist;
-            expect(tableInput.nativeElement.value).to.equal(value);
+            expect(tableInput).not.toBeNull();
+            expect(tableInput.nativeElement.value).toEqual(value);
         });
     }));
 
@@ -53,11 +50,11 @@ describe('TableEditableFieldComponent', () => {
         fixture.detectChanges();
         fixture.whenStable().then(() => {
             const tableInput = debugElement.query(By.css(tableInputValue));
-            expect(tableInput).to.exist;
-            expect(tableInput.nativeElement.value).to.equal(value);
+            expect(tableInput).not.toBeNull();
+            expect(tableInput.nativeElement.value).toEqual(value);
 
             tableInput.nativeElement.dispatchEvent(new Event('blur'));
-            expect(fakeUpdateValue.mock.calls.length).to.equal(1);
+            expect(fakeUpdateValue.mock.calls.length).toEqual(1);
         });
     }));
 });

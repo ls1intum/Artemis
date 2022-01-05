@@ -38,7 +38,7 @@ The most basic test looks similar to this:
                 });
         });
 
-        afterEach(function () {
+        afterEach(() => {
             jest.restoreAllMocks();
         });
 

@@ -12,21 +12,21 @@ export const CustomBreakpointNames = {
     providedIn: 'root',
 })
 export class BreakpointsService {
-    breakpoints: object = {
-        '(max-width: 576px)': CustomBreakpointNames.extraSmall,
-        '(min-width: 576px)': CustomBreakpointNames.small,
-        '(min-width: 768px)': CustomBreakpointNames.medium,
-        '(min-width: 992px)': CustomBreakpointNames.large,
-        '(min-width: 1200px)': CustomBreakpointNames.extraLarge,
-    };
+    breakpoints = new Map<string, string>();
 
-    constructor() {}
-
-    getBreakpoints(): string[] {
-        return Object.keys(this.breakpoints);
+    constructor() {
+        this.breakpoints.set('(max-width: 576px)', CustomBreakpointNames.extraSmall);
+        this.breakpoints.set('(min-width: 576px)', CustomBreakpointNames.small);
+        this.breakpoints.set('(min-width: 768px)', CustomBreakpointNames.medium);
+        this.breakpoints.set('(min-width: 992px)', CustomBreakpointNames.large);
+        this.breakpoints.set('(min-width: 1200px)', CustomBreakpointNames.extraLarge);
     }
 
-    getBreakpointName(breakpointValue: string): string {
-        return this.breakpoints[breakpointValue];
+    getBreakpoints(): string[] {
+        return Array.from(this.breakpoints.keys());
+    }
+
+    getBreakpointName(breakpointKey: string): string {
+        return this.breakpoints.get(breakpointKey)!;
     }
 }

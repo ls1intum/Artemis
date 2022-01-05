@@ -2,7 +2,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { Course } from 'app/entities/course.model';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
