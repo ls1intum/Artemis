@@ -928,7 +928,7 @@ public class CourseResource {
             courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
 
             var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, 4));
+            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, 4, ZonedDateTime.now()));
             courseDTOs.add(courseDTO);
         }
 
@@ -1454,10 +1454,10 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/statistics")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Integer[]> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex) {
+    public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 16));
+        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 16, ZonedDateTime.now()));
     }
 
     /**

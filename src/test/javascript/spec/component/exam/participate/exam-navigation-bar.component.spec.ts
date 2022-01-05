@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamSession } from 'app/entities/exam-session.model';

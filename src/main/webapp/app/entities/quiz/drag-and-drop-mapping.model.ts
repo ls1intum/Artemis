@@ -6,10 +6,9 @@ import { CanBecomeInvalid, DropLocation } from 'app/entities/quiz/drop-location.
 
 export class DragAndDropMapping implements BaseEntity, CanBecomeInvalid {
     public id?: number;
-    public tempID?: number;
     public dragItemIndex?: number;
     public dropLocationIndex?: number;
-    public invalid?: boolean;
+    public invalid = false;
     public submittedAnswer?: DragAndDropSubmittedAnswer;
     public question?: DragAndDropQuestion;
     public dragItem?: DragItem;
@@ -18,6 +17,5 @@ export class DragAndDropMapping implements BaseEntity, CanBecomeInvalid {
     constructor(dragItem: DragItem | undefined, dropLocation: DropLocation | undefined) {
         this.dragItem = dragItem;
         this.dropLocation = dropLocation;
-        this.invalid = false; // default value
     }
 }

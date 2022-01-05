@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';

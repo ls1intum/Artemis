@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/entities/exercise.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 

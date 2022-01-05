@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
 import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
 

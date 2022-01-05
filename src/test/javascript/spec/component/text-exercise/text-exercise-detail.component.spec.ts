@@ -14,18 +14,12 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
-import sinonChai from 'sinon-chai';
-import * as chai from 'chai';
-import * as sinon from 'sinon';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ExerciseDetailsComponent } from 'app/exercises/shared/exercise/exercise-details/exercise-details.component';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('TextExercise Management Detail Component', () => {
     let comp: TextExerciseDetailComponent;
@@ -81,7 +75,7 @@ describe('TextExercise Management Detail Component', () => {
         it('Should call load on init and be not in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            const exerciseServiceStub = sinon.stub(exerciseService, 'find').returns(
+            const exerciseServiceStub = jest.spyOn(exerciseService, 'find').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: textExerciseWithCourse,
@@ -89,19 +83,19 @@ describe('TextExercise Management Detail Component', () => {
                     }),
                 ),
             );
-            const statisticsServiceStub = sinon.stub(statisticsService, 'getExerciseStatistics').returns(of(textExerciseStatistics));
+            const statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(textExerciseStatistics));
             // WHEN
             fixture.detectChanges();
             comp.ngOnInit();
 
             // THEN
-            expect(exerciseServiceStub).to.have.been.called;
-            expect(statisticsServiceStub).to.have.been.called;
-            expect(comp.isExamExercise).to.be.false;
-            expect(comp.textExercise).to.deep.equal(textExerciseWithCourse);
-            expect(comp.doughnutStats.participationsInPercent).to.equal(100);
-            expect(comp.doughnutStats.resolvedPostsInPercent).to.equal(50);
-            expect(comp.doughnutStats.absoluteAveragePoints).to.equal(5);
+            expect(exerciseServiceStub).toHaveBeenCalled();
+            expect(statisticsServiceStub).toHaveBeenCalled();
+            expect(comp.isExamExercise).toBeFalse();
+            expect(comp.textExercise).toEqual(textExerciseWithCourse);
+            expect(comp.doughnutStats.participationsInPercent).toEqual(100);
+            expect(comp.doughnutStats.resolvedPostsInPercent).toEqual(50);
+            expect(comp.doughnutStats.absoluteAveragePoints).toEqual(5);
         });
     });
 
@@ -118,7 +112,7 @@ describe('TextExercise Management Detail Component', () => {
         it('Should call load on init and be in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            const exerciseServiceStub = sinon.stub(exerciseService, 'find').returns(
+            const exerciseServiceStub = jest.spyOn(exerciseService, 'find').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: textExerciseWithExerciseGroup,
@@ -126,17 +120,17 @@ describe('TextExercise Management Detail Component', () => {
                     }),
                 ),
             );
-            const statisticsServiceStub = sinon.stub(statisticsService, 'getExerciseStatistics').returns(of(textExerciseStatistics));
+            const statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(textExerciseStatistics));
 
             // WHEN
             fixture.detectChanges();
             comp.ngOnInit();
 
             // THEN
-            expect(exerciseServiceStub).to.have.been.called;
-            expect(statisticsServiceStub).to.have.been.called;
-            expect(comp.isExamExercise).to.be.true;
-            expect(comp.textExercise).to.deep.equal(textExerciseWithExerciseGroup);
+            expect(exerciseServiceStub).toHaveBeenCalled();
+            expect(statisticsServiceStub).toHaveBeenCalled();
+            expect(comp.isExamExercise).toBeTrue();
+            expect(comp.textExercise).toEqual(textExerciseWithExerciseGroup);
         });
     });
 });

@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 export class CourseManagementStatisticsModel {
     public exerciseId: number;
