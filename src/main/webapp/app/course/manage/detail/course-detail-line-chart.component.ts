@@ -167,9 +167,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
      * @private
      */
     private computeAverage(array: number[]): number {
-        let sum = 0;
-
-        array.forEach((number) => (sum += number));
+        const sum = array.reduce((sum, next) => sum + next, 0);
         return sum / array.length;
     }
 
