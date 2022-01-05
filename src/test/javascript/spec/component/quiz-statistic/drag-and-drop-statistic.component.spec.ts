@@ -65,7 +65,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
         quizExercise = { id: 42, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
     });
 
-    describe('OnInit', function () {
+    describe('OnInit', () => {
         it('should call functions on Init', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
@@ -91,7 +91,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
         });
     });
 
-    describe('loadLayout', function () {
+    describe('loadLayout', () => {
         it('should call functions from loadLayout', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const orderDropLocationSpy = jest.spyOn(comp, 'orderDropLocationByPos');
@@ -109,7 +109,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
         });
     });
 
-    describe('loadData', function () {
+    describe('loadData', () => {
         it('should call functions from loadData', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const resetDataSpy = jest.spyOn(comp, 'resetData');

@@ -94,7 +94,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
         } as QuizExercise;
     });
 
-    describe('OnInit', function () {
+    describe('OnInit', () => {
         it('should call functions on Init', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
@@ -120,7 +120,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
         });
     });
 
-    describe('loadQuiz', function () {
+    describe('loadQuiz', () => {
         it('should call functions from loadQuiz', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const generateStructureSpy = jest.spyOn(comp, 'generateShortAnswerStructure');
@@ -140,7 +140,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
         });
     });
 
-    describe('loadLayout', function () {
+    describe('loadLayout', () => {
         it('should call functions from loadLayout', () => {
             const resetLabelsSpy = jest.spyOn(comp, 'resetLabelsColors');
             const addLastBarSpy = jest.spyOn(comp, 'addLastBarLayout');
@@ -155,7 +155,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
         });
     });
 
-    describe('loadData', function () {
+    describe('loadData', () => {
         it('should call functions from loadData', () => {
             const resetDataSpy = jest.spyOn(comp, 'resetData');
             const addDataSpy = jest.spyOn(comp, 'addData');
@@ -170,7 +170,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
         });
     });
 
-    describe('switchSolution', function () {
+    describe('switchSolution', () => {
         it('should call functions and set values from switchSolution', () => {
             const loadDataInDiagramSpy = jest.spyOn(comp, 'loadDataInDiagram');
 
@@ -183,7 +183,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
         });
     });
 
-    describe('switchRated', function () {
+    describe('switchRated', () => {
         it('should call functions and set values from switchRated', () => {
             const loadDataInDiagramSpy = jest.spyOn(comp, 'loadDataInDiagram');
 

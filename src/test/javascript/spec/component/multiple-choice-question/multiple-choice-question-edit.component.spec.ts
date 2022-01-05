@@ -15,32 +15,29 @@ import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommand
 import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { DndModule } from 'ng2-dnd';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ArtemisTestModule } from '../../test.module';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('MultipleChoiceQuestionEditComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
     let component: MultipleChoiceQuestionEditComponent;
 
     const question: MultipleChoiceQuestion = {
+        exportQuiz: false,
+        randomizeOrder: true,
         id: 1,
         text: 'some-text',
         hint: 'some-hint',
         explanation: 'some-explanation',
-        answerOptions: [{ id: 1, explanation: 'answer-explanation', hint: 'answer-hint', text: 'answer-text' }],
+        invalid: false,
+        answerOptions: [{ id: 1, explanation: 'answer-explanation', hint: 'answer-hint', text: 'answer-text', invalid: false }],
     };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, DndModule.forRoot()],
+            imports: [ArtemisTestModule, FormsModule, DragDropModule],
             declarations: [
                 MultipleChoiceQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -58,14 +55,14 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         component.question = question;
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize with question markdown text', () => {
         fixture.detectChanges();
-        expect(component).to.be.ok;
-        expect(component.questionEditorText).eq(
+        expect(component).not.toBeNull();
+        expect(component.questionEditorText).toEqual(
             'some-text\n' + '\t[hint] some-hint\n' + '\t[exp] some-explanation\n' + '\n' + '[wrong] answer-text\n' + '\t[hint] answer-hint\n' + '\t[exp] answer-explanation',
         );
     });
@@ -81,6 +78,9 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
         const expected: MultipleChoiceQuestion = {
             id: question.id,
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
             text: undefined,
             explanation: undefined,
             hint: undefined,
@@ -101,8 +101,8 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             ],
         };
 
-        expect(component.question).to.deep.equal(expected);
-        expect(component.showMultipleChoiceQuestionPreview).to.be.true;
+        expect(component.question).toEqual(expected);
+        expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
     });
 
     it('should parse answer options with question titles ', () => {
@@ -117,6 +117,9 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         const expected: MultipleChoiceQuestion = {
             id: question.id,
             text: undefined,
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
             hint: 'text2',
             explanation: 'text1',
             hasCorrectOption: undefined,
@@ -134,39 +137,39 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             ],
         };
 
-        expect(component.question).to.deep.equal(expected);
-        expect(component.showMultipleChoiceQuestionPreview).to.be.true;
+        expect(component.question).toEqual(expected);
+        expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
     });
 
     it('should find no domain commands', () => {
         component.domainCommandsFound([]);
 
         expectCleanupQuestion();
-        expect(component.showMultipleChoiceQuestionPreview).to.be.true;
+        expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
     });
 
     it('should detect changes in markdown', () => {
-        const spy = sinon.spy(component.questionUpdated, 'emit');
+        const spy = jest.spyOn(component.questionUpdated, 'emit');
 
         fixture.detectChanges();
         component.changesInMarkdown();
 
         expectCleanupQuestion();
-        expect(spy).to.have.been.called;
+        expect(spy).toHaveBeenCalledTimes(1);
     });
 
     function expectCleanupQuestion() {
-        expect(component.question.answerOptions?.length).to.eq(0);
-        expect(component.question.text).to.be.undefined;
-        expect(component.question.explanation).to.be.undefined;
-        expect(component.question.hint).to.be.undefined;
-        expect(component.question.hasCorrectOption).to.be.undefined;
+        expect(component.question.answerOptions?.length).toBe(0);
+        expect(component.question.text).toBeUndefined();
+        expect(component.question.explanation).toBeUndefined();
+        expect(component.question.hint).toBeUndefined();
+        expect(component.question.hasCorrectOption).toBeUndefined();
     }
 
     it('should trigger delete button', () => {
-        const spy = sinon.spy(component, 'deleteQuestion');
+        const spy = jest.spyOn(component, 'deleteQuestion');
         const deleteButton = fixture.debugElement.query(By.css(`.delete-button`));
         deleteButton.nativeElement.click();
-        expect(spy).to.have.been.called;
+        expect(spy).toHaveBeenCalledTimes(1);
     });
 });

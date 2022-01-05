@@ -47,7 +47,7 @@ describe('ExerciseUnitComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
         jest.resetModules();
     });

@@ -1,7 +1,11 @@
+import { Interception } from 'cypress/types/net-stubbing';
+import { Course } from 'app/entities/course.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exam } from 'app/entities/exam.model';
 import { artemis } from '../../support/ArtemisTesting';
 import { CypressAssessmentType, CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs/esm';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
 import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import { makeSubmissionAndVerifyResults } from '../../support/pageobjects/exercises/programming/OnlineEditorPage';
@@ -27,9 +31,9 @@ const examManagement = artemis.pageobjects.exam.management;
 const admin = artemis.users.getAdmin();
 const student = artemis.users.getStudentOne();
 const tutor = artemis.users.getTutor();
-let exam: any;
-let exerciseGroup: any;
-let course: any;
+let exam: Exam;
+let exerciseGroup: ExerciseGroup;
+let course: Course;
 
 // This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
 Cypress.on('uncaught:exception', () => {
@@ -43,7 +47,7 @@ describe('Exam assessment', () => {
         cy.login(admin);
         courseManagementRequests.createCourse(true).then((response) => {
             course = response.body;
-            courseManagementRequests.addStudentToCourse(course.id, artemis.users.getStudentOne().username);
+            courseManagementRequests.addStudentToCourse(course.id!, artemis.users.getStudentOne().username);
             courseManagementRequests.addTutorToCourse(course, artemis.users.getTutor());
         });
     });
@@ -55,7 +59,7 @@ describe('Exam assessment', () => {
 
     after('Delete course', () => {
         cy.login(admin);
-        courseManagementRequests.deleteCourse(course.id);
+        courseManagementRequests.deleteCourse(course.id!);
     });
 
     // For some reason the typing of cypress gets slower the longer the test runs, so we test the programming exercise first
@@ -157,8 +161,8 @@ describe('Exam assessment', () => {
                 examManagement.openAssessmentDashboard(exam.id, 60000);
                 startAssessing();
                 examAssessment.addNewFeedback(7, 'Good job');
-                examAssessment.submitTextAssessment().then((assessmentResponse) => {
-                    expect(assessmentResponse.response?.statusCode).to.equal(200);
+                examAssessment.submitTextAssessment().then((assessmentResponse: Interception) => {
+                    expect(assessmentResponse.response!.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                 cy.get('#result-score').should('contain.text', '7 of 10 points').should('be.visible');

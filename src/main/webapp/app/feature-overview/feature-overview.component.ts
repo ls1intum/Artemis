@@ -307,7 +307,7 @@ export class FeatureOverviewComponent implements OnInit {
         const element = document.getElementById('feature' + featureId);
         if (element) {
             // scroll to correct y
-            const y = element.getBoundingClientRect().top + window.pageYOffset;
+            const y = element.getBoundingClientRect().top + window.scrollY;
             window.scrollTo({ top: y, behavior: 'smooth' });
         }
     }

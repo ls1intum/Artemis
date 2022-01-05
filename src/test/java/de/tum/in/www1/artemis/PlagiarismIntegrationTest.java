@@ -68,7 +68,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updatePlagiarismComparisonFinalStatusForStudentA() throws Exception {
         Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
@@ -94,7 +94,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updatePlagiarismComparisonFinalStatusForStudentB() throws Exception {
         Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
@@ -123,7 +123,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updatePlagiarismComparisonFinalStatusForUnknownStudent() throws Exception {
         Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
@@ -166,7 +166,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getPlagiarismCasesForCourse_instructor() throws Exception {
         Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison1 = new PlagiarismComparison<>();
         plagiarismComparison1.setPlagiarismResult(textPlagiarismResult);
@@ -189,7 +189,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "student1", roles = "USER")
     public void saveStudentStatementForStudentA() throws Exception {
         Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
@@ -213,7 +213,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "student2", roles = "USER")
     public void saveStudentStatementForStudentB() throws Exception {
         Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
@@ -237,7 +237,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "student3", roles = "USER")
     public void saveStudentStatementForUnknownStudent() throws Exception {
         Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
@@ -263,7 +263,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveInstructorStatementForStudentA() throws Exception {
         Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
@@ -286,7 +286,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveInstructorStatementForStudentB() throws Exception {
         Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
@@ -312,7 +312,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveInstructorStatementForUnknownStudent() throws Exception {
         Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
