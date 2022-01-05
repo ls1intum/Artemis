@@ -124,7 +124,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
         notificationSettingRepository.save(new NotificationSetting(user, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST));
         assertThat(notificationRepository.findAll().size()).as("No notifications should be present prior to the method call").isEqualTo(0);
 
-        singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post, course);
+        singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, course);
 
         assertThat(notificationRepository.findAll().size()).as("The notification should have been saved to the DB").isEqualTo(1);
         // no web app notification or email should be sent
