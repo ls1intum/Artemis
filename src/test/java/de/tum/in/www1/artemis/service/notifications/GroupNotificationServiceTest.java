@@ -448,7 +448,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      */
     @Test
     public void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost() {
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(post, answerPost, course);
+        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForCoursePost(post, answerPost, course);
         verifyRepositoryCallWithCorrectNotification(3, NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
 
@@ -457,7 +457,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      */
     @Test
     public void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise() {
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(post, answerPost, course);
+        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForExercise(post, answerPost, course);
         verifyRepositoryCallWithCorrectNotification(3, NEW_REPLY_FOR_EXERCISE_POST_TITLE);
     }
 
@@ -538,5 +538,14 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
     public void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveFailed() {
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, EXAM_ARCHIVE_FAILED, archiveErrors);
         verifyRepositoryCallWithCorrectNotification(1, EXAM_ARCHIVE_FAILED_TITLE);
+    }
+
+    /**
+     * Test for notifyInstructorGroupAboutCourseArchiveState method for the notification type ExamArchiveFinished
+     */
+    @Test
+    public void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveFinished() {
+        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, EXAM_ARCHIVE_FINISHED, archiveErrors);
+        verifyRepositoryCallWithCorrectNotification(1, EXAM_ARCHIVE_FINISHED_TITLE);
     }
 }

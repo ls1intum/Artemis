@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -28,6 +29,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
  * Controller to provides endpoints to query the necessary data for the exercise-scores-chart.component.ts in the client
  */
 @RestController
+@RequestMapping("api/")
 public class ExerciseScoresChartResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseScoresChartResource.class);
@@ -54,7 +56,7 @@ public class ExerciseScoresChartResource {
     /**
      * GET /courses/:courseId/charts/exercise-scores
      * <p>
-     * This call returns the the information used for the exercise-scores-chart. It will get get the score of
+     * This call returns the information used for the exercise-scores-chart. It will get the score of
      * the requesting user,the average score and the best score in course exercises
      * <p>
      * Note: Only released course exercises with assessment due date over are considered!
@@ -63,8 +65,8 @@ public class ExerciseScoresChartResource {
      * @param courseId id of the course for which to get the exercise scores
      * @return the ResponseEntity with status 200 (OK) and with the exercise scores in the body
      */
-    @GetMapping(EndpointConstants.COURSE_EXERCISE_SCORES)
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @GetMapping("courses/{courseId}/charts/exercise-scores")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<ExerciseScoresDTO>> getCourseExerciseScores(@PathVariable Long courseId) {
         log.debug("REST request to get exercise scores for course with id: {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
@@ -76,7 +78,7 @@ public class ExerciseScoresChartResource {
     }
 
     private Set<Exercise> filterExercises(Set<Exercise> exercises) {
-        return exercises.parallelStream().filter(exercise -> isExerciseFinished(exercise)).collect(Collectors.toSet());
+        return exercises.stream().filter(this::isExerciseFinished).collect(Collectors.toSet());
     }
 
     private boolean isExerciseFinished(Exercise exercise) {
@@ -93,17 +95,4 @@ public class ExerciseScoresChartResource {
         // If no assessment due date is set, make sure to only count exercises which have a passed due date
         return exerciseDateService.isAfterLatestDueDate(exercise);
     }
-
-    public static final class EndpointConstants {
-
-        public static final String COURSE_EXERCISE_SCORES = "/api/courses/{courseId}/charts/exercise-scores";
-
-        public static String generateCourseExerciseScoresEndpoint(long courseId) {
-            return COURSE_EXERCISE_SCORES.replaceFirst("\\{courseId\\}", String.valueOf(courseId));
-        }
-
-        private EndpointConstants() {
-        }
-    }
-
 }

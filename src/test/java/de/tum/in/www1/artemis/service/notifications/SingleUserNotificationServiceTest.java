@@ -136,7 +136,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      */
     @Test
     public void testNotifyUserAboutNewAnswerForExercise() {
-        singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post, course);
+        singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, course);
         verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_EXERCISE_POST_TITLE);
     }
 
@@ -145,7 +145,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      */
     @Test
     public void testNotifyUserAboutNewAnswerForLecture() {
-        singleUserNotificationService.notifyUserAboutNewAnswerForLecture(post, course);
+        singleUserNotificationService.notifyUserAboutNewReplyForLecture(post, course);
         verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_LECTURE_POST_TITLE);
     }
 
@@ -154,7 +154,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      */
     @Test
     public void testNotifyUserAboutNewAnswerForCoursePost() {
-        singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post, course);
+        singleUserNotificationService.notifyUserAboutNewReplyForCoursePost(post, course);
         verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
 
