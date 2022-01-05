@@ -17,7 +17,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { FeedbackConflict, FeedbackConflictType } from 'app/entities/feedback-conflict';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';

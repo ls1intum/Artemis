@@ -43,7 +43,7 @@
             [question]="question"
             [mappings]="dragAndDropMappings.get(question.id!)!"
             (mappingsChange)="dragAndDropMappings.set(question.id!, $event)"
-            [fnOnMappingUpdate]="onSelectionChanged.bind(this)"
+            [onMappingUpdate]="onSelectionChanged.bind(this)"
             [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
             [showResult]="showingResult"
             [forceSampleSolution]="mode === 'solution'"

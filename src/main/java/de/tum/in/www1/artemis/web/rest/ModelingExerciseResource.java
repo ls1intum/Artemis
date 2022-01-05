@@ -230,7 +230,7 @@ public class ModelingExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        List<ModelingExercise> exercises = modelingExerciseRepository.findByCourseId(courseId);
+        List<ModelingExercise> exercises = modelingExerciseRepository.findByCourseIdWithCategories(courseId);
         for (Exercise exercise : exercises) {
             // not required in the returned json body
             exercise.setStudentParticipations(null);

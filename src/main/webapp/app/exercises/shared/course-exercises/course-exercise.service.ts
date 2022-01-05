@@ -10,7 +10,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { map, Observable } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {

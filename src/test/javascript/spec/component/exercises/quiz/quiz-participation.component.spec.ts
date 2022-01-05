@@ -23,7 +23,7 @@ import { JhiConnectionStatusComponent } from 'app/shared/connection-status/conne
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
@@ -40,11 +40,11 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 
 // Store a copy of now to avoid timing issues
 const now = dayjs();
-const question1 = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1 } as QuizQuestion;
-const question2 = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [] } as QuizQuestion;
-const question3 = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3 } as QuizQuestion;
+const question1 = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1, dragItems: [], invalid: false, exportQuiz: false, randomizeOrder: true } as QuizQuestion;
+const question2 = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [], invalid: false, exportQuiz: false, randomizeOrder: true } as QuizQuestion;
+const question3 = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3, invalid: false, exportQuiz: false, randomizeOrder: true } as QuizQuestion;
 
-const quizExercise = (<any>{
+const quizExercise = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(2, 'minutes'),
@@ -52,8 +52,8 @@ const quizExercise = (<any>{
     dueDate: dayjs(now).add(2, 'minutes'),
     adjustedDueDate: dayjs(now).add(2, 'minutes'),
     started: true,
-}) as QuizExercise;
-const quizExerciseForPractice = (<any>{
+} as QuizExercise;
+const quizExerciseForPractice = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(4, 'minutes'),
@@ -61,8 +61,8 @@ const quizExerciseForPractice = (<any>{
     dueDate: dayjs(now).subtract(2, 'minutes'),
     adjustedDueDate: dayjs(now).subtract(2, 'minutes'),
     isOpenForPractice: true,
-}) as QuizExercise;
-const quizExerciseForResults = (<any>{
+} as QuizExercise;
+const quizExerciseForResults = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(4, 'minutes'),
@@ -70,8 +70,8 @@ const quizExerciseForResults = (<any>{
     dueDate: dayjs(now).subtract(2, 'minutes'),
     adjustedDueDate: dayjs(now).subtract(2, 'minutes'),
     ended: true,
-}) as QuizExercise;
-const quizExerciseUnreleased = (<any>{
+} as QuizExercise;
+const quizExerciseUnreleased = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).add(2, 'days'),
@@ -79,7 +79,7 @@ const quizExerciseUnreleased = (<any>{
     dueDate: dayjs(now).add(4, 'days'),
     adjustedDueDate: dayjs(now).add(4, 'days'),
     ended: true,
-}) as QuizExercise;
+} as QuizExercise;
 
 const testBedDeclarations = [
     QuizParticipationComponent,
@@ -145,7 +145,7 @@ describe('QuizParticipationComponent', () => {
                 });
         });
 
-        afterEach(function () {
+        afterEach(() => {
             httpMock.verify();
             jest.restoreAllMocks();
         });
@@ -375,7 +375,7 @@ describe('QuizParticipationComponent', () => {
                 });
         });
 
-        afterEach(function () {
+        afterEach(() => {
             httpMock.verify();
             jest.restoreAllMocks();
         });
@@ -454,7 +454,7 @@ describe('QuizParticipationComponent', () => {
                 });
         });
 
-        afterEach(function () {
+        afterEach(() => {
             httpMock.verify();
             jest.restoreAllMocks();
         });
@@ -535,7 +535,7 @@ describe('QuizParticipationComponent', () => {
                 });
         });
 
-        afterEach(function () {
+        afterEach(() => {
             jest.restoreAllMocks();
         });
 
@@ -575,7 +575,7 @@ describe('QuizParticipationComponent', () => {
             component.updateDisplayedTimes();
             fixture.detectChanges();
 
-            expect(component.remainingTimeText).toBe('showStatistic.quizhasEnded');
+            expect(component.remainingTimeText).toBe('showStatistic.quizHasEnded');
             expect(component.timeUntilStart).toBe('showStatistic.now');
         });
     });
