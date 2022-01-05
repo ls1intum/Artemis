@@ -81,7 +81,13 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      * @private
      */
     private determineColor(score: number): string {
-        return score >= 90 ? GraphColors.GREEN : score <= 25 ? GraphColors.RED : GraphColors.DARK_BLUE;
+        if (score >= 90) {
+            return GraphColors.GREEN;
+        } else if (score <= 25) {
+            return GraphColors.RED;
+        } else {
+            return GraphColors.DARK_BLUE;
+        }
     }
 
     /**
