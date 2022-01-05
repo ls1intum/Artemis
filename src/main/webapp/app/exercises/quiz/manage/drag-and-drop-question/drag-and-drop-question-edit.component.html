@@ -188,7 +188,7 @@
                             cdkDropList
                         >
                             <div class="dimensions">{{ dropLocation.width }}x{{ dropLocation.height }}</div>
-                            <div class="d-inline-flex drop-location-buttons">
+                            <div class="drop-location-buttons">
                                 <div class="re-evaluate-button" title="Set invalid" *ngIf="reEvaluationInProgress && !dropLocation.invalid" (click)="dropLocation.invalid = true">
                                     <fa-icon [icon]="faBan" size="lg"></fa-icon>
                                 </div>
@@ -289,7 +289,7 @@
                                 <fa-icon [icon]="faBars" size="lg"></fa-icon>
                             </div>
                             <div *ngIf="dragItem.pictureFilePath" style="max-height: 100%">
-                                <jhi-secured-image style="max-height: 100%" [src]="dragItem.pictureFilePath"></jhi-secured-image>
+                                <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
                             </div>
                             <div *ngIf="!dragItem.pictureFilePath">
                                 <textarea
