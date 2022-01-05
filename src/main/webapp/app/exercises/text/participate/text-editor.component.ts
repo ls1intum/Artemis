@@ -7,7 +7,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { merge, Subject } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

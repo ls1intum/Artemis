@@ -25,10 +25,18 @@
             </div>
         </div>
         <jhi-alert></jhi-alert>
-        <div class="tab-bar tab-bar-course-overview">
+        <div class="tab-bar tab-bar-course-overview" id="tab-bar">
             <div class="col-12" [ngClass]="{ 'no-indent': !controlConfiguration?.useIndentation, 'col-lg-8': controlConfiguration?.useIndentation }">
                 <div>
-                    <div *ngIf="course.exams && hasVisibleExams()" jhiOrionFilter [showInOrionWindow]="false" class="tab-item exams" routerLink="exams" routerLinkActive="active">
+                    <div
+                        id="exam-tab"
+                        *ngIf="course.exams && hasVisibleExams()"
+                        jhiOrionFilter
+                        [showInOrionWindow]="false"
+                        class="tab-item exams"
+                        routerLink="exams"
+                        routerLinkActive="active"
+                    >
                         <b jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</b>
                     </div>
                     <div class="tab-item exercises" routerLink="exercises" routerLinkActive="active">

@@ -1,11 +1,8 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
-import * as chai from 'chai';
 import { QuizParticipationService } from 'app/exercises/quiz/participate/quiz-participation.service';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Result } from 'app/entities/result.model';
-const expect = chai.expect;
-
 describe('Quiz Participation Service', () => {
     let injector: TestBed;
     let service: QuizParticipationService;
@@ -27,8 +24,8 @@ describe('Quiz Participation Service', () => {
         mockResult.id = 1;
         mockResult.score = 10;
         service.submitForPractice(mockSubmission, exerciseId).subscribe((res) => {
-            expect(res.body!.id).to.equal(1);
-            expect(res.body!.score).to.equal(10);
+            expect(res.body!.id).toEqual(1);
+            expect(res.body!.score).toEqual(10);
         });
 
         const req = httpMock.expectOne({ method: 'POST', url: `api/exercises/${exerciseId}/submissions/practice` });
@@ -42,8 +39,8 @@ describe('Quiz Participation Service', () => {
         mockResult.id = 1;
         mockResult.score = 10;
         service.submitForPreview(mockSubmission, exerciseId).subscribe((res) => {
-            expect(res.body!.id).to.equal(1);
-            expect(res.body!.score).to.equal(10);
+            expect(res.body!.id).toEqual(1);
+            expect(res.body!.score).toEqual(10);
         });
 
         const req = httpMock.expectOne({ method: 'POST', url: `api/exercises/${exerciseId}/submissions/preview` });
@@ -56,8 +53,8 @@ describe('Quiz Participation Service', () => {
         mockSubmission.id = 1;
         mockSubmission.scoreInPoints = 10;
         service.submitForLiveMode(mockSubmission, exerciseId).subscribe((res) => {
-            expect(res.body!.id).to.equal(1);
-            expect(res.body!.scoreInPoints).to.equal(10);
+            expect(res.body!.id).toEqual(1);
+            expect(res.body!.scoreInPoints).toEqual(10);
         });
 
         const req = httpMock.expectOne({ method: 'POST', url: `api/exercises/${exerciseId}/submissions/live` });

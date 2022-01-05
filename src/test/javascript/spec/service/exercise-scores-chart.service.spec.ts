@@ -5,13 +5,8 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { take } from 'rxjs/operators';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('Exercise Scores Chart Service', () => {
     let injector: TestBed;
@@ -36,10 +31,6 @@ describe('Exercise Scores Chart Service', () => {
 
     afterEach(() => {
         httpMock.verify();
-    });
-
-    it('should be created', () => {
-        expect(service).to.be.ok;
     });
 
     it('should find all by course id', () => {

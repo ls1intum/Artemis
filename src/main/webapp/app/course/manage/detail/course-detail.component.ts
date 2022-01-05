@@ -21,6 +21,7 @@ import {
     faFilePdf,
     faFlag,
     faGraduationCap,
+    faHeartBroken,
     faListAlt,
     faTable,
     faTimes,
@@ -73,6 +74,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     faComments = faComments;
     faClipboard = faClipboard;
     faGraduationCap = faGraduationCap;
+    faHeartBroken = faHeartBroken;
 
     constructor(
         private eventManager: EventManager,

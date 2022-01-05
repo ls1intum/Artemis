@@ -40,8 +40,6 @@ public class ParticipationService {
 
     private final QuizScheduleService quizScheduleService;
 
-    private final UrlService urlService;
-
     private final ParticipationRepository participationRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -66,12 +64,15 @@ public class ParticipationService {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
-    public ParticipationService(UrlService urlService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+    private final UrlService urlService;
+
+    public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository,
             ComplaintRepository complaintRepository, TeamRepository teamRepository, GitService gitService, QuizScheduleService quizScheduleService,
             ParticipationRepository participationRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository) {
+            Optional<VersionControlService> versionControlService, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository,
+            UrlService urlService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -87,8 +88,8 @@ public class ParticipationService {
         this.versionControlService = versionControlService;
         this.quizScheduleService = quizScheduleService;
         this.ratingRepository = ratingRepository;
-        this.urlService = urlService;
         this.participantScoreRepository = participantScoreRepository;
+        this.urlService = urlService;
     }
 
     /**

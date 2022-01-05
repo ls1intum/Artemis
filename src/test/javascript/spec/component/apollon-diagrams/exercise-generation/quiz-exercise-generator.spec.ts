@@ -12,11 +12,10 @@ import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.
 import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
-import * as sinon from 'sinon';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
@@ -28,11 +27,11 @@ Text.size = () => {
 };
 
 const question1 = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1 } as QuizQuestion;
-const question2 = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [] } as QuizQuestion;
+const question2 = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [], invalid: false, exportQuiz: false, randomizeOrder: true } as QuizQuestion;
 const question3 = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3 } as QuizQuestion;
 const now = dayjs();
 
-const quizExercise = (<any>{
+const quizExercise = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(2, 'minutes'),
@@ -40,12 +39,11 @@ const quizExercise = (<any>{
     dueDate: dayjs(now).add(2, 'minutes'),
     adjustedDueDate: dayjs(now).add(2, 'minutes'),
     started: true,
-}) as QuizExercise;
+} as QuizExercise;
 
 describe('QuizExercise Generator', () => {
     let quizExerciseService: QuizExerciseService;
     let fileUploaderService: FileUploaderService;
-    const sandbox = sinon.createSandbox();
 
     const course: Course = { id: 123 } as Course;
 
@@ -74,17 +72,17 @@ describe('QuizExercise Generator', () => {
         }).compileComponents();
     });
 
-    afterEach(function () {
-        sandbox.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('generateDragAndDropExercise for Class Diagram', async () => {
         const svgRenderer = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         configureServices();
         const examplePath = '/path/to/file';
-        sandbox.stub(fileUploaderService, 'uploadFile').resolves({ path: examplePath });
-        sandbox.stub(quizExerciseService, 'create').returns(of({ body: quizExercise } as HttpResponse<QuizExercise>));
-        sandbox.stub(svgRenderer, 'convertRenderedSVGToPNG').resolves(new Blob());
+        jest.spyOn(fileUploaderService, 'uploadFile').mockReturnValue(Promise.resolve({ path: examplePath }));
+        jest.spyOn(quizExerciseService, 'create').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(new Blob());
         // @ts-ignore
         const classDiagram: UMLModel = testClassDiagram as UMLModel;
         const interactiveElements: Selection = classDiagram.interactive;

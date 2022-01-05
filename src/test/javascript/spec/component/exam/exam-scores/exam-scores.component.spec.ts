@@ -268,7 +268,7 @@ describe('ExamScoresComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

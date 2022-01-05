@@ -1,6 +1,5 @@
 import { Component, ContentChild, HostBinding, Input, TemplateRef } from '@angular/core';
-import dayjs from 'dayjs';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
+import dayjs from 'dayjs/esm';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpClient } from '@angular/common/http';
@@ -15,6 +14,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { finalize } from 'rxjs/operators';
 import { faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -95,7 +95,7 @@ export class ExerciseDetailsStudentActionsComponent {
 
         this.exercise.loading = true;
         this.courseExerciseService
-            .startExercise(this.courseId, this.exercise.id!)
+            .startExercise(this.exercise.id!)
             .pipe(finalize(() => (this.exercise.loading = false)))
             .subscribe(
                 (participation) => {
@@ -123,7 +123,7 @@ export class ExerciseDetailsStudentActionsComponent {
     resumeProgrammingExercise() {
         this.exercise.loading = true;
         this.courseExerciseService
-            .resumeProgrammingExercise(this.courseId, this.exercise.id!)
+            .resumeProgrammingExercise(this.exercise.id!)
             .pipe(finalize(() => (this.exercise.loading = false)))
             .subscribe(
                 (participation: StudentParticipation) => {

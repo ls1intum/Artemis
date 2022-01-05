@@ -535,7 +535,7 @@ public class DatabaseUtilService {
         List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations);
         Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         Lecture lecture1 = course1.getLectures().stream().findFirst().get();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
         VideoUnit videoUnit = createVideoUnit();
         TextUnit textUnit = createTextUnit();
         AttachmentUnit attachmentUnit = createAttachmentUnit();
@@ -1185,6 +1185,14 @@ public class DatabaseUtilService {
 
     public StudentExam addStudentExam(Exam exam) {
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
+        studentExamRepository.save(studentExam);
+        return studentExam;
+    }
+
+    public StudentExam addStudentExamWithUser(Exam exam, User user, int additionalWorkingTime) {
+        StudentExam studentExam = ModelFactory.generateStudentExam(exam);
+        studentExam.setUser(user);
+        studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds() + additionalWorkingTime);
         studentExamRepository.save(studentExam);
         return studentExam;
     }

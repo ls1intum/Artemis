@@ -68,7 +68,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
      *
      * @param invalidPercentage the invalid percentage
      */
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(doubles = { -60, -1.3, -0.0002, 100.2, 150 })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testMatchPercentageToGradeStepInvalidPercentage(double invalidPercentage) {

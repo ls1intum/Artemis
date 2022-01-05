@@ -1,4 +1,3 @@
-import { SinonStub, stub } from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, DebugElement } from '@angular/core';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -11,14 +10,14 @@ import { Result } from 'app/entities/result.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockCourseService } from '../../../helpers/mocks/service/mock-course.service';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/entities/course.model';
@@ -32,6 +31,7 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { RouterTestingModule } from '@angular/router/testing';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 @Component({
     template: '',
@@ -42,7 +42,7 @@ describe('CourseExerciseRowComponent', () => {
     let comp: CourseExerciseRowComponent;
     let fixture: ComponentFixture<CourseExerciseRowComponent>;
     let debugElement: DebugElement;
-    let getAllParticipationsStub: SinonStub;
+    let getAllParticipationsStub: jest.SpyInstance;
     let participationWebsocketService: ParticipationWebsocketService;
 
     beforeAll(() => {
@@ -85,7 +85,7 @@ describe('CourseExerciseRowComponent', () => {
                 comp.course = { id: 123, isAtLeastInstructor: true } as Course;
                 debugElement = fixture.debugElement;
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-                getAllParticipationsStub = stub(participationWebsocketService, 'getParticipationForExercise');
+                getAllParticipationsStub = jest.spyOn(participationWebsocketService, 'getParticipationForExercise');
             });
     });
 
@@ -174,7 +174,7 @@ describe('CourseExerciseRowComponent', () => {
         } as StudentParticipation;
         comp.exercise.studentParticipations = [studentParticipation];
 
-        getAllParticipationsStub.returns(studentParticipation);
+        getAllParticipationsStub.mockReturnValue(studentParticipation);
         comp.ngOnInit();
 
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.INITIALIZED);
@@ -189,7 +189,7 @@ describe('CourseExerciseRowComponent', () => {
         } as StudentParticipation;
         comp.exercise.studentParticipations = [studentParticipation];
 
-        getAllParticipationsStub.returns(studentParticipation);
+        getAllParticipationsStub.mockReturnValue(studentParticipation);
         comp.ngOnInit();
 
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.EXERCISE_MISSED);
@@ -225,7 +225,7 @@ describe('CourseExerciseRowComponent', () => {
 
             comp.exercise.studentParticipations = [studentParticipation];
 
-            getAllParticipationsStub.returns(studentParticipation);
+            getAllParticipationsStub.mockReturnValue(studentParticipation);
         }
 
         comp.ngOnInit();
@@ -241,7 +241,7 @@ describe('CourseExerciseRowComponent', () => {
         } as StudentParticipation;
         comp.exercise.studentParticipations = [studentParticipation];
 
-        getAllParticipationsStub.returns(studentParticipation);
+        getAllParticipationsStub.mockReturnValue(studentParticipation);
         comp.ngOnInit();
     };
 

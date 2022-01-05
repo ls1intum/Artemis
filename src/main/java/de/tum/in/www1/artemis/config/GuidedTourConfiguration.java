@@ -4,32 +4,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Component
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "info.guided-tour")
 public class GuidedTourConfiguration {
 
-    private final Logger log = LoggerFactory.getLogger(GuidedTourConfiguration.class);
-
     private String courseShortName = "";
 
     private List<Map<String, String>> tours = new ArrayList<>();
 
-    public GuidedTourConfiguration() {
-
-    }
-
     /**
-     * Get the list of of the mapping tourKey -> exerciseIdentifier from the info.guided-tour configuration in the application.yml file
+     * Get the list of the mapping tourKey -> exerciseIdentifier from the info.guided-tour configuration in the application.yml file
      * @return List of mappings of tourKey -> exerciseIdentifier
      */
     public List<Map<String, String>> getTours() {
@@ -51,11 +44,12 @@ public class GuidedTourConfiguration {
     /**
      * Helper method to determine if the given exercise mapped to a guided tour
      * based on the info.guided-tour configuration in the application.yml file
+     * Throws an exception if the exercise is not part of a tutorial
      * @param exercise  the exercise for which the configuration has to be determined
-     * @return  true if the exercise is used for a guided tour
      */
-    public boolean isExerciseForTutorial(Exercise exercise) {
-        String exerciseIdentifier = exercise instanceof ProgrammingExercise ? exercise.getShortName() : exercise.getTitle();
-        return tours.stream().flatMap(tour -> tour.values().stream()).anyMatch(tourIdentifier -> tourIdentifier.equals(exerciseIdentifier));
+    public void checkExerciseForTutorialElseThrow(Exercise exercise) {
+        String exerciseId = exercise instanceof ProgrammingExercise ? exercise.getShortName() : exercise.getTitle();
+        tours.stream().flatMap(tour -> tour.values().stream()).filter(tourId -> tourId.equals(exerciseId)).findAny()
+                .orElseThrow(() -> new AccessForbiddenException("Not allowed! This exercise is not part of a tutorial"));
     }
 }

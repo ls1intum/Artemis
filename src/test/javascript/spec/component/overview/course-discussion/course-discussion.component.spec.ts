@@ -25,7 +25,7 @@ import { MockPostService } from '../../../helpers/mocks/service/mock-post.servic
 import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';

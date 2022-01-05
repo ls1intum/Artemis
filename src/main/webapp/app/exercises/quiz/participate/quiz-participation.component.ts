@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -235,7 +235,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.subscribeToWebsocketChannels();
 
         // load the quiz (and existing submission if quiz has started)
-        this.participationService.findParticipation(this.quizId).subscribe(
+        this.participationService.findParticipationForCurrentUser(this.quizId).subscribe(
             (response: HttpResponse<StudentParticipation>) => {
                 this.updateParticipationFromServer(response.body!);
             },
@@ -384,7 +384,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
                 this.remainingTimeSeconds = -1;
-                this.remainingTimeText = this.translateService.instant(translationBasePath + 'quizhasEnded');
+                this.remainingTimeText = this.translateService.instant(translationBasePath + 'quizHasEnded');
             }
         } else {
             // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
