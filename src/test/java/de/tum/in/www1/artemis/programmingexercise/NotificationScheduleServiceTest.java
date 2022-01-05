@@ -9,7 +9,6 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,15 +42,13 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
 
     private User user;
 
-    private static final long DELAY_IN_SECONDS = 1;
-
     @BeforeEach
     public void init() {
         database.addUsers(1, 1, 1, 1);
         user = database.getUserByLogin("student1");
         database.addCourseWithFileUploadExercise();
         exercise = exerciseRepository.findAll().get(0);
-        ZonedDateTime exerciseDate = ZonedDateTime.now().plusSeconds(DELAY_IN_SECONDS);
+        ZonedDateTime exerciseDate = ZonedDateTime.now().plusSeconds(1); // 1 millisecond is not enough
         exercise.setReleaseDate(exerciseDate);
         exercise.setAssessmentDueDate(exerciseDate);
         exerciseRepository.save(exercise);
@@ -72,7 +69,7 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
         await().until(() -> notificationRepository.count() > 0);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(exercise);
-        verify(javaMailSender, timeout(1000).times(1)).createMimeMessage();
+        verify(javaMailSender, timeout(2000).times(1)).createMimeMessage();
     }
 
     @Test
@@ -89,6 +86,6 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
 
         await().until(() -> notificationRepository.count() > 0);
         verify(singleUserNotificationService, times(1)).notifyUsersAboutAssessedExerciseSubmission(exercise);
-        verify(javaMailSender, timeout(1000).times(1)).createMimeMessage();
+        verify(javaMailSender, timeout(2000).times(1)).createMimeMessage();
     }
 }
