@@ -120,9 +120,10 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     private determineChartEntry(name: string, value: number): ExerciseStatisticsEntry | undefined {
         let counter = 0;
         let result;
-        /**
-         * this is not a good solution as neither the name of the exercise nor its average score is necessarily unique.
-         * But as the exercise type is not included in the emitted event, I do not see a better solution.
+        /*
+         * The emitted event only contains the name and the average score of the exercise. Using those values to determine the chart entry
+         * is not an ideal solution as this pair is not necessarily unique.
+         * In practice they most likely are unique, though. Not being able to find the entry in this edge case therefore has negligible impact.
          */
         this.ngxData.forEach((exercise) => {
             if (exercise.name === name && exercise.value === value) {
