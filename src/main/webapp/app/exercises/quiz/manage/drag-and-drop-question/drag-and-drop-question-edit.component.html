@@ -288,7 +288,7 @@
                             <div title="Move">
                                 <fa-icon [icon]="faBars" size="lg"></fa-icon>
                             </div>
-                            <div *ngIf="dragItem.pictureFilePath" style="max-height: 100%">
+                            <div *ngIf="dragItem.pictureFilePath">
                                 <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
                             </div>
                             <div *ngIf="!dragItem.pictureFilePath">
