@@ -720,17 +720,17 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetModelingExercise_asStudent_sampleSolutionVisibility() throws Exception {
-        testGetModelingExercise_sampleSolutionVisibility(true, "student1");
+    public void testGetModelingExercise_asStudent_exampleSolutionVisibility() throws Exception {
+        testGetModelingExercise_exampleSolutionVisibility(true, "student1");
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetModelingExercise_asInstructor_sampleSolutionVisibility() throws Exception {
-        testGetModelingExercise_sampleSolutionVisibility(false, "instructor1");
+    public void testGetModelingExercise_asInstructor_exampleSolutionVisibility() throws Exception {
+        testGetModelingExercise_exampleSolutionVisibility(false, "instructor1");
     }
 
-    private void testGetModelingExercise_sampleSolutionVisibility(boolean isStudent, String username) throws Exception {
+    private void testGetModelingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
         // Utility function to avoid duplication
         Function<Course, ModelingExercise> modelingExerciseGetter = c -> (ModelingExercise) c.getExercises().stream().filter(e -> e.getId().equals(classExercise.getId())).findAny()
                 .get();

@@ -575,19 +575,19 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetFileUploadExercise_asStudent_sampleSolutionVisibility() throws Exception {
-        testGetFileUploadExercise_sampleSolutionVisibility(true, "student1");
+    public void testGetFileUploadExercise_asStudent_exampleSolutionVisibility() throws Exception {
+        testGetFileUploadExercise_exampleSolutionVisibility(true, "student1");
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetFileUploadExercise_asInstructor_sampleSolutionVisibility() throws Exception {
-        testGetFileUploadExercise_sampleSolutionVisibility(false, "instructor1");
+    public void testGetFileUploadExercise_asInstructor_exampleSolutionVisibility() throws Exception {
+        testGetFileUploadExercise_exampleSolutionVisibility(false, "instructor1");
     }
 
-    private void testGetFileUploadExercise_sampleSolutionVisibility(boolean isStudent, String username) throws Exception {
+    private void testGetFileUploadExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
-        final FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseId(course.getId()).get(0);
+        final FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
 
         // Utility function to avoid duplication
         Function<Course, FileUploadExercise> fileUploadExerciseGetter = c -> (FileUploadExercise) c.getExercises().stream()

@@ -1042,19 +1042,19 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetTextExercise_asStudent_sampleSolutionVisibility() throws Exception {
-        testGetTextExercise_sampleSolutionVisibility(true, "student1");
+    public void testGetTextExercise_asStudent_exampleSolutionVisibility() throws Exception {
+        testGetTextExercise_exampleSolutionVisibility(true, "student1");
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetTextExercise_asInstructor_sampleSolutionVisibility() throws Exception {
-        testGetTextExercise_sampleSolutionVisibility(false, "instructor1");
+    public void testGetTextExercise_asInstructor_exampleSolutionVisibility() throws Exception {
+        testGetTextExercise_exampleSolutionVisibility(false, "instructor1");
     }
 
-    private void testGetTextExercise_sampleSolutionVisibility(boolean isStudent, String username) throws Exception {
+    private void testGetTextExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
         Course course = database.addCourseWithOneReleasedTextExercise();
-        final TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        final TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
 
         // Utility function to avoid duplication
         Function<Course, TextExercise> textExerciseGetter = c -> (TextExercise) c.getExercises().stream().filter(e -> e.getId().equals(textExercise.getId())).findAny().get();
