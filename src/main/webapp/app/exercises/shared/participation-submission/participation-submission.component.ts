@@ -11,7 +11,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';

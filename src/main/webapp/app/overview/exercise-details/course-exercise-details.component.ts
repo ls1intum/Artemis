@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';

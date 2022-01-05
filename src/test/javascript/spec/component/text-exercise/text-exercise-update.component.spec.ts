@@ -11,7 +11,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/entities/course.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import { TranslateService } from '@ngx-translate/core';

@@ -218,7 +218,7 @@ public class FileUploadExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        List<FileUploadExercise> exercises = fileUploadExerciseRepository.findByCourseId(courseId);
+        List<FileUploadExercise> exercises = fileUploadExerciseRepository.findByCourseIdWithCategories(courseId);
         for (Exercise exercise : exercises) {
             // not required in the returned json body
             exercise.setStudentParticipations(null);

@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';

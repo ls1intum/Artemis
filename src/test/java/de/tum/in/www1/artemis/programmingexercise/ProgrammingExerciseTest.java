@@ -136,7 +136,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void updateExerciseTestCasesZeroWeight(AssessmentType assessmentType) throws Exception {
@@ -167,7 +167,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void findAppropriateSubmissionRespectingIndividualDueDate(boolean isSubmissionAfterIndividualDueDate) {
