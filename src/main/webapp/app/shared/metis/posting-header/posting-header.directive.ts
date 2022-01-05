@@ -1,6 +1,6 @@
 import { Posting } from 'app/entities/metis/posting.model';
 import { Directive, Input, OnInit } from '@angular/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/shared/metis/metis.service';
 
 @Directive()

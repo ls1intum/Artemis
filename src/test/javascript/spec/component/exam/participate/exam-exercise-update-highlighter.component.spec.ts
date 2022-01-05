@@ -1,15 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import sinonChai from 'sinon-chai';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
 import { MockPipe } from 'ng-mocks';
 import { BehaviorSubject } from 'rxjs';
 import { ExamExerciseUpdate, ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ExamExerciseUpdateHighlighterComponent', () => {
     let fixture: ComponentFixture<ExamExerciseUpdateHighlighterComponent>;
@@ -46,24 +41,24 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
     it('should update problem statement', () => {
         // not component.exercise.problemStatement, due to inserted HTML via Diff-Highlighting
         const result = component.updatedProblemStatement;
-        expect(result).to.equal(updatedProblemStatement);
-        expect(result).not.to.equal(oldProblemStatement);
+        expect(result).toEqual(updatedProblemStatement);
+        expect(result).not.toEqual(oldProblemStatement);
     });
 
     it('should highlight differences', () => {
         const result = component.exercise.problemStatement;
-        expect(result).to.equal(component.updatedProblemStatementWithHighlightedDifferences);
+        expect(result).toEqual(component.updatedProblemStatementWithHighlightedDifferences);
     });
 
     it('should display different problem statement after toggle method is called', () => {
         const problemStatementBeforeClick = component.exercise.problemStatement;
-        expect(problemStatementBeforeClick).to.equal(component.updatedProblemStatementWithHighlightedDifferences);
+        expect(problemStatementBeforeClick).toEqual(component.updatedProblemStatementWithHighlightedDifferences);
 
         component.toggleHighlightedProblemStatement();
 
         const problemStatementAfterClick = component.exercise.problemStatement;
-        expect(problemStatementAfterClick).to.equal(updatedProblemStatement);
-        expect(problemStatementAfterClick).not.to.equal(component.updatedProblemStatementWithHighlightedDifferences);
-        expect(problemStatementAfterClick).not.to.equal(problemStatementBeforeClick);
+        expect(problemStatementAfterClick).toEqual(updatedProblemStatement);
+        expect(problemStatementAfterClick).not.toEqual(component.updatedProblemStatementWithHighlightedDifferences);
+        expect(problemStatementAfterClick).not.toEqual(problemStatementBeforeClick);
     });
 });

@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { RepositoryService } from 'app/exercises/shared/result/repository.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';

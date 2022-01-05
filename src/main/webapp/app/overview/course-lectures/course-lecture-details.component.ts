@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment } from 'app/entities/attachment.model';
