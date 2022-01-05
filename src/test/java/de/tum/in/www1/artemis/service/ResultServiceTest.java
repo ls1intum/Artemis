@@ -191,7 +191,7 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = "student1", roles = "STUDENT")
     public void testGetFeedbacksForResultAsStudentShouldOnlyFilterAutomaticResultBeforeLastDueDate(AssessmentType assessmentType) {
@@ -219,7 +219,7 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = "student1", roles = "STUDENT")
     public void testGetFeedbacksForResultAsStudentShouldNotFilterAfterLatestDueDate(AssessmentType assessmentType) {

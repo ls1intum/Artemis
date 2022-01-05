@@ -12,7 +12,7 @@ import { ExerciseTypePipe } from 'app/shared/pipes/exercise-type.pipe';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 describe('HeaderExercisePageWithDetails', () => {

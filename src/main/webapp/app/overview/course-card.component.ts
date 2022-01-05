@@ -9,7 +9,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 
 @Component({

@@ -16,7 +16,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { By } from '@angular/platform-browser';

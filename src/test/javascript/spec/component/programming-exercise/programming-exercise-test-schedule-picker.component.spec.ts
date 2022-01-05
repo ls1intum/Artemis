@@ -1,6 +1,4 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective } from 'ng-mocks';
@@ -10,9 +8,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
 import { NgModel } from '@angular/forms';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ProgrammingExerciseTestSchedulePickerComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
@@ -44,8 +39,8 @@ describe('ProgrammingExerciseTestSchedulePickerComponent', () => {
         comp.exercise = exercise;
         comp.updateReleaseDate(undefined);
 
-        expect(comp.exercise.dueDate).to.be.equal(nextDueDate);
-        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).to.be.equal(afterDueDate);
+        expect(comp.exercise.dueDate).toEqual(nextDueDate);
+        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
     });
 
     it('should only reset the due date if the release date is between the due date and the after due date', () => {
@@ -53,8 +48,8 @@ describe('ProgrammingExerciseTestSchedulePickerComponent', () => {
         const newRelease = dayjs().add(6, 'days');
         comp.updateReleaseDate(newRelease);
 
-        expect(comp.exercise.dueDate).to.be.equal(newRelease);
-        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).to.be.equal(afterDueDate);
+        expect(comp.exercise.dueDate).toEqual(newRelease);
+        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
     });
 
     it('should reset both the due date and the after due date if the new release is after both dates', () => {
@@ -62,7 +57,7 @@ describe('ProgrammingExerciseTestSchedulePickerComponent', () => {
         const newRelease = dayjs().add(8, 'days');
         comp.updateReleaseDate(newRelease);
 
-        expect(comp.exercise.dueDate).to.be.equal(newRelease);
-        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).to.be.equal(newRelease);
+        expect(comp.exercise.dueDate).toEqual(newRelease);
+        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(newRelease);
     });
 });

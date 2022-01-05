@@ -7,7 +7,7 @@ import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

@@ -21,9 +21,9 @@ plugins {
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "3.1.4"
     id "com.github.node-gradle.node" version "3.1.1"
-    id "com.diffplug.spotless" version "6.0.5"
+    id "com.diffplug.spotless" version "6.1.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-    id "com.github.ben-manes.versions" version "0.39.0"
+    id "com.github.ben-manes.versions" version "0.40.0"
     id "com.github.andygoossens.modernizer" version "1.6.1"
 }
 
@@ -182,7 +182,7 @@ dependencies {
     implementation "org.jsoup:jsoup:1.14.3"
     implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.6.2"
+    implementation "org.springdoc:springdoc-openapi-ui:1.6.3"
 
     // import JHipster dependencies BOM
     implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
@@ -273,7 +273,7 @@ dependencies {
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.21.0"
+    testImplementation "org.assertj:assertj-core:3.22.0"
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-inline:${mockito_version}"

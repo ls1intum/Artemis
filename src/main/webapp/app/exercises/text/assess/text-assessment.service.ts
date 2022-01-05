@@ -3,7 +3,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -287,7 +287,6 @@ export class TextAssessmentService {
             }
             submissionForSending.atheneTextAssessmentTrackingToken = undefined;
 
-            // eslint-disable-next-line chai-friendly/no-unused-expressions
             submissionForSending.participation?.results!.forEach((result) => {
                 result.participation = undefined;
                 result.submission = undefined;

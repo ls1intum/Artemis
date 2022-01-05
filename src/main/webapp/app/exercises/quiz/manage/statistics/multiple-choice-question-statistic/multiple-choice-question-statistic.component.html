@@ -8,7 +8,7 @@
                     <h4 [innerHTML]="questionTextRendered"></h4>
                     <ol type="A" *ngIf="question.answerOptions">
                         <li *ngFor="let answer of question.answerOptions; let i = index">
-                            <span [innerHTML]="answerTextRendered[i]"></span>&nbsp;<span
+                            <span class="d-flex" [innerHTML]="answerTextRendered[i]"></span>&nbsp;<span
                                 class="invalid-question"
                                 *ngIf="answer.invalid"
                                 jhiTranslate="showStatistic.invalid"

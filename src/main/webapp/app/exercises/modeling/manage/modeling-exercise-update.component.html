@@ -18,7 +18,7 @@
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
             <jhi-category-selector
-                [exerciseCategories]="exerciseCategories"
+                [categories]="exerciseCategories"
                 [existingCategories]="existingCategories"
                 (selectedCategories)="updateCategories($event)"
             ></jhi-category-selector>

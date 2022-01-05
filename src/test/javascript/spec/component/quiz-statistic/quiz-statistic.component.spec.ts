@@ -68,7 +68,7 @@ describe('QuizExercise Statistic Component', () => {
         quizServiceFindSpy.mockClear();
     });
 
-    describe('OnInit', function () {
+    describe('OnInit', () => {
         let loadQuizSuccessSpy: jest.SpyInstance;
         let loadDataSpy: jest.SpyInstance;
 
@@ -76,8 +76,8 @@ describe('QuizExercise Statistic Component', () => {
             loadQuizSuccessSpy = jest.spyOn(comp, 'loadQuizSuccess');
             loadDataSpy = jest.spyOn(comp, 'loadData');
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5 },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6 },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
             comp.quizExercise = quizExercise;
@@ -117,14 +117,14 @@ describe('QuizExercise Statistic Component', () => {
         }));
     });
 
-    describe('loadQuizSuccess', function () {
+    describe('loadQuizSuccess', () => {
         let loadDataSpy: jest.SpyInstance;
 
         beforeEach(() => {
             loadDataSpy = jest.spyOn(comp, 'loadData');
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5 },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6 },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
             comp.quizExercise = quizExercise;
@@ -160,10 +160,13 @@ describe('QuizExercise Statistic Component', () => {
         });
     });
 
-    describe('calculateMaxScore', function () {
+    describe('calculateMaxScore', () => {
         it('should return MaxScore by looping over scores', () => {
             // setup
-            quizExercise.quizQuestions = [{ points: 1 }, { points: 2 }];
+            quizExercise.quizQuestions = [
+                { points: 1, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { points: 2, invalid: false, exportQuiz: false, randomizeOrder: true },
+            ];
             comp.quizExercise = quizExercise;
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             jest.spyOn(comp, 'loadData').mockImplementation();
@@ -191,11 +194,11 @@ describe('QuizExercise Statistic Component', () => {
         });
     });
 
-    describe('loadData', function () {
+    describe('loadData', () => {
         beforeEach(() => {
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5 },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6 },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
             comp.quizExercise = quizExercise;

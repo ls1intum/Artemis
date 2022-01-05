@@ -43,7 +43,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { Result } from 'app/entities/result.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 export interface ExampleSubmissionQueryParams {
