@@ -6,16 +6,10 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-export-button.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import * as chai from 'chai';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { restore, SinonStub, stub } from 'sinon';
-import sinonChai from 'sinon-chai';
 import { mockTeams } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('TeamsExportButtonComponent', () => {
     let comp: TeamsExportButtonComponent;
     let fixture: ComponentFixture<TeamsExportButtonComponent>;
@@ -43,18 +37,18 @@ describe('TeamsExportButtonComponent', () => {
     });
 
     describe('exportTeams', () => {
-        let exportTeamsStub: SinonStub;
+        let exportTeamsStub: jest.SpyInstance;
         beforeEach(() => {
             resetComponent();
-            exportTeamsStub = stub(teamService, 'exportTeams');
+            exportTeamsStub = jest.spyOn(teamService, 'exportTeams');
         });
         afterEach(() => {
-            restore();
+            jest.restoreAllMocks();
         });
         it('should call export teams from team service when called', () => {
             const button = debugElement.nativeElement.querySelector('button');
             button.click();
-            expect(exportTeamsStub).to.have.been.called;
+            expect(exportTeamsStub).toHaveBeenCalled();
         });
     });
 });

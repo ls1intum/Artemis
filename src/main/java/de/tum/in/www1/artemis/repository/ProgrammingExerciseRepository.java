@@ -39,7 +39,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return all exercises for the given course with only the latest results for solution and template each (if present).
      */
     @Query("""
-            SELECT pe FROM ProgrammingExercise pe
+            SELECT DISTINCT pe FROM ProgrammingExercise pe
             LEFT JOIN FETCH pe.templateParticipation tp
             LEFT JOIN FETCH pe.solutionParticipation sp
             LEFT JOIN FETCH tp.results tpr
@@ -61,7 +61,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation.submissions.results", "solutionParticipation.submissions.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")

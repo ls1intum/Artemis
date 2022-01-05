@@ -11,7 +11,7 @@ const classMap = {
     table: 'table',
 };
 /**
- * extension to add add css classes to html tags
+ * extension to add css classes to html tags
  * see: https://github.com/showdownjs/showdown/wiki/Add-default-classes-for-each-HTML-element
  */
 export const addCSSClass = Object.keys(classMap).map((key) => ({
@@ -24,7 +24,7 @@ export const addCSSClass = Object.keys(classMap).map((key) => ({
  * Converts markdown into html (string) and sanitizes it. Does NOT declare it as safe to bypass further security
  * Note: If possible, please use safeHtmlForMarkdown
  *
- * @param {string} markdownText the original markdown text
+ * @param {string} markdownText the original Markdown text
  * @param extensions to use for markdown parsing
  * @param {string[]} allowedHtmlTags to allow during sanitization
  * @param {string[]} allowedHtmlAttributes to allow during sanitization

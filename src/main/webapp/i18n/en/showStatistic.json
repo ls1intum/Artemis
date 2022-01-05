@@ -43,7 +43,7 @@
             "hideSampleSolution": "Hide Sample Solution"
         },
         "invalid": "(invalid)",
-        "quizhasEnded": "Quiz has ended!",
+        "quizHasEnded": "Quiz has ended!",
         "now": "Now"
     }
 }

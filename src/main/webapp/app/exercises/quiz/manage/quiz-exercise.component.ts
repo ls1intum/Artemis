@@ -4,7 +4,7 @@ import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model'
 import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute } from '@angular/router';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';

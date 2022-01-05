@@ -1,7 +1,7 @@
 import { isAllowedToModifyFeedback, isAllowedToRespondToComplaintAction } from 'app/assessment/assessment.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Result } from 'app/entities/result.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';

@@ -1,7 +1,7 @@
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { artemis } from '../../../support/ArtemisTesting';
-import day from 'dayjs';
+import day from 'dayjs/esm';
 
 // pageobjects
 const assessmentEditor = artemis.pageobjects.assessment.modeling;
