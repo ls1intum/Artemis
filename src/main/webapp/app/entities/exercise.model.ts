@@ -88,7 +88,7 @@ export abstract class Exercise implements BaseEntity {
     public teamAssignmentConfig?: TeamAssignmentConfig;
     public categories?: ExerciseCategory[];
     public type?: ExerciseType;
-    public sampleSolutionPublicationDate?: dayjs.Dayjs;
+    public exampleSolutionPublicationDate?: dayjs.Dayjs;
 
     public teams?: Team[];
     public studentParticipations?: StudentParticipation[];

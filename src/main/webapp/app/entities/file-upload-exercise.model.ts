@@ -4,7 +4,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 export class FileUploadExercise extends Exercise {
     public filePattern?: string;
-    public sampleSolution?: string;
+    public exampleSolution?: string;
 
     constructor(course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {
         super(ExerciseType.FILE_UPLOAD);

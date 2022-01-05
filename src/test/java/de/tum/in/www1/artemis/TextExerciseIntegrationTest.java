@@ -1059,47 +1059,47 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // Utility function to avoid duplication
         Function<Course, TextExercise> textExerciseGetter = c -> (TextExercise) c.getExercises().stream().filter(e -> e.getId().equals(textExercise.getId())).findAny().get();
 
-        textExercise.setSampleSolution("Sample<br>solution");
+        textExercise.setExampleSolution("Sample<br>solution");
 
         if (isStudent) {
             database.createAndSaveParticipationForExercise(textExercise, username);
         }
 
         // Test sample solution publication date not set.
-        textExercise.setSampleSolutionPublicationDate(null);
+        textExercise.setExampleSolutionPublicationDate(null);
         textExerciseRepository.save(textExercise);
 
         course = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
         TextExercise textExerciseFromApi = textExerciseGetter.apply(course);
 
         if (isStudent) {
-            assertThat(textExerciseFromApi.getSampleSolution()).isNull();
+            assertThat(textExerciseFromApi.getExampleSolution()).isNull();
         }
         else {
-            assertThat(textExerciseFromApi.getSampleSolution()).isEqualTo(textExercise.getSampleSolution());
+            assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
         }
 
         // Test sample solution publication date in the past.
-        textExercise.setSampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
+        textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         textExerciseRepository.save(textExercise);
 
         course = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
         textExerciseFromApi = textExerciseGetter.apply(course);
 
-        assertThat(textExerciseFromApi.getSampleSolution()).isEqualTo(textExercise.getSampleSolution());
+        assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
 
         // Test sample solution publication date in the future.
-        textExercise.setSampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
+        textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         textExerciseRepository.save(textExercise);
 
         course = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
         textExerciseFromApi = textExerciseGetter.apply(course);
 
         if (isStudent) {
-            assertThat(textExerciseFromApi.getSampleSolution()).isNull();
+            assertThat(textExerciseFromApi.getExampleSolution()).isNull();
         }
         else {
-            assertThat(textExerciseFromApi.getSampleSolution()).isEqualTo(textExercise.getSampleSolution());
+            assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
         }
     }
 }

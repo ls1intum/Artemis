@@ -143,12 +143,12 @@
             ></jhi-markdown-editor>
         </div>
         <div class="form-group">
-            <label jhiTranslate="artemisApp.exercise.sampleSolution" for="sampleSolution">Sample Solution</label>
+            <label jhiTranslate="artemisApp.exercise.exampleSolution" for="exampleSolution">Sample Solution</label>
             <jhi-markdown-editor
-                id="sampleSolution"
+                id="exampleSolution"
                 class="markdown-editor"
                 [domainCommands]="domainCommandsSampleSolution"
-                [(markdown)]="textExercise.sampleSolution"
+                [(markdown)]="textExercise.exampleSolution"
                 [editorMode]="EditorMode.LATEX"
                 [shouldDisplayAlert]="false"
                 [enableResize]="true"
@@ -157,9 +157,9 @@
         <div class="form-group" *ngIf="!isExamMode">
             <jhi-date-time-picker
                 class="form-element"
-                name="sampleSolutionPublicationDate"
-                labelName="{{ 'artemisApp.exercise.sampleSolutionPublicationDate' | artemisTranslate }}"
-                [(ngModel)]="textExercise.sampleSolutionPublicationDate"
+                name="exampleSolutionPublicationDate"
+                labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
+                [(ngModel)]="textExercise.exampleSolutionPublicationDate"
             ></jhi-date-time-picker>
         </div>
         <div class="form-group">

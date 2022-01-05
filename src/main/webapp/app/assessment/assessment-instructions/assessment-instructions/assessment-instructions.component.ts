@@ -47,19 +47,19 @@ export class AssessmentInstructionsComponent {
         switch (exercise.type) {
             case ExerciseType.MODELING:
                 const modelingExercise = exercise as ModelingExercise;
-                sampleSolutionMarkdown = modelingExercise.sampleSolutionExplanation;
-                if (modelingExercise.sampleSolutionModel) {
-                    this.sampleSolutionModel = JSON.parse(modelingExercise.sampleSolutionModel);
+                sampleSolutionMarkdown = modelingExercise.exampleSolutionExplanation;
+                if (modelingExercise.exampleSolutionModel) {
+                    this.sampleSolutionModel = JSON.parse(modelingExercise.exampleSolutionModel);
                 }
                 this.sampleSolutionDiagramType = modelingExercise.diagramType;
                 break;
             case ExerciseType.TEXT:
                 const textExercise = exercise as TextExercise;
-                sampleSolutionMarkdown = textExercise.sampleSolution;
+                sampleSolutionMarkdown = textExercise.exampleSolution;
                 break;
             case ExerciseType.FILE_UPLOAD:
                 const fileUploadExercise = exercise as FileUploadExercise;
-                sampleSolutionMarkdown = fileUploadExercise.sampleSolution;
+                sampleSolutionMarkdown = fileUploadExercise.exampleSolution;
                 break;
             case ExerciseType.PROGRAMMING:
                 this.programmingExercise = exercise as ProgrammingExercise;

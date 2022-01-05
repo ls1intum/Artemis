@@ -73,8 +73,8 @@ class ModelingExerciseGatlingTest extends Simulation {
             .body(StringBody("""{
                 "id":null
                 , "diagramType":"CLASS"
-                , "sampleSolutionModel":"SAMPLE_TEXT"
-                , "sampleSolutionExplanation":"SAMPLE_TEXT"
+                , "exampleSolutionModel":"SAMPLE_TEXT"
+                , "exampleSolutionExplanation":"SAMPLE_TEXT"
                 }""")).asJson
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_modelingExercise_url"))).exitHereIfFailed

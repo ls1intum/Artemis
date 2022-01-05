@@ -22,6 +22,6 @@
     "title": "Text Exercise 1",
     "maxPoints": 10,
     "problemStatement": "Cypress Problem Statement",
-    "sampleSolution": "Cypress Example Solution",
+    "exampleSolution": "Cypress Example Solution",
     "gradingInstructions": "Cypress Assessment Instructions"
 }

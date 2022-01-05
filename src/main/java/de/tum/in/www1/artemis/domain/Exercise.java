@@ -91,7 +91,7 @@ public abstract class Exercise extends DomainObject {
 
     @Nullable
     @Column(name = "example_solution_publication_date")
-    private ZonedDateTime sampleSolutionPublicationDate;
+    private ZonedDateTime exampleSolutionPublicationDate;
 
     @ManyToMany(mappedBy = "exercises")
     public Set<LearningGoal> learningGoals = new HashSet<>();
@@ -1010,16 +1010,16 @@ public abstract class Exercise extends DomainObject {
     }
 
     @Nullable
-    public ZonedDateTime getSampleSolutionPublicationDate() {
-        return sampleSolutionPublicationDate;
+    public ZonedDateTime getExampleSolutionPublicationDate() {
+        return exampleSolutionPublicationDate;
     }
 
-    public void setSampleSolutionPublicationDate(@Nullable ZonedDateTime sampleSolutionPublicationDate) {
-        this.sampleSolutionPublicationDate = sampleSolutionPublicationDate;
+    public void setExampleSolutionPublicationDate(@Nullable ZonedDateTime exampleSolutionPublicationDate) {
+        this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
     }
 
-    public boolean isSampleSolutionPublished() {
-        return this.sampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(this.sampleSolutionPublicationDate);
+    public boolean isExampleSolutionPublished() {
+        return this.exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(this.exampleSolutionPublicationDate);
     }
 
     /**

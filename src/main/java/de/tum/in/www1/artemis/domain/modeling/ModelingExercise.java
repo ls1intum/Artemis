@@ -29,11 +29,11 @@ public class ModelingExercise extends Exercise {
 
     @Column(name = "example_solution_model")
     @Lob
-    private String sampleSolutionModel;
+    private String exampleSolutionModel;
 
     @Column(name = "example_solution_explanation")
     @Lob
-    private String sampleSolutionExplanation;
+    private String exampleSolutionExplanation;
 
     @ManyToOne
     @JoinColumn(table = "model_exercise_details")
@@ -51,20 +51,20 @@ public class ModelingExercise extends Exercise {
         this.diagramType = diagramType;
     }
 
-    public String getSampleSolutionModel() {
-        return sampleSolutionModel;
+    public String getExampleSolutionModel() {
+        return exampleSolutionModel;
     }
 
-    public void setSampleSolutionModel(String sampleSolutionModel) {
-        this.sampleSolutionModel = sampleSolutionModel;
+    public void setExampleSolutionModel(String exampleSolutionModel) {
+        this.exampleSolutionModel = exampleSolutionModel;
     }
 
-    public String getSampleSolutionExplanation() {
-        return sampleSolutionExplanation;
+    public String getExampleSolutionExplanation() {
+        return exampleSolutionExplanation;
     }
 
-    public void setSampleSolutionExplanation(String sampleSolutionExplanation) {
-        this.sampleSolutionExplanation = sampleSolutionExplanation;
+    public void setExampleSolutionExplanation(String exampleSolutionExplanation) {
+        this.exampleSolutionExplanation = exampleSolutionExplanation;
     }
 
     public ZonedDateTime getClusterBuildDate() {
@@ -88,9 +88,9 @@ public class ModelingExercise extends Exercise {
      */
     @Override
     public void filterSensitiveInformation() {
-        if (!isSampleSolutionPublished()) {
-            setSampleSolutionModel(null);
-            setSampleSolutionExplanation(null);
+        if (!isExampleSolutionPublished()) {
+            setExampleSolutionModel(null);
+            setExampleSolutionExplanation(null);
         }
         super.filterSensitiveInformation();
     }
@@ -102,8 +102,8 @@ public class ModelingExercise extends Exercise {
 
     @Override
     public String toString() {
-        return "ModelingExercise{" + "id=" + getId() + ", maxPoints='" + getMaxPoints() + "'" + ", diagramType='" + getDiagramType() + "'" + ", sampleSolutionModel='"
-                + getSampleSolutionModel() + "'" + ", sampleSolutionExplanation='" + getSampleSolutionExplanation() + "'" + "}";
+        return "ModelingExercise{" + "id=" + getId() + ", maxPoints='" + getMaxPoints() + "'" + ", diagramType='" + getDiagramType() + "'" + ", exampleSolutionModel='"
+                + getExampleSolutionModel() + "'" + ", exampleSolutionExplanation='" + getExampleSolutionExplanation() + "'" + "}";
     }
 
 }

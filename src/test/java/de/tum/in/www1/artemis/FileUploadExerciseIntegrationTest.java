@@ -593,47 +593,47 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         Function<Course, FileUploadExercise> fileUploadExerciseGetter = c -> (FileUploadExercise) c.getExercises().stream()
                 .filter(e -> e.getId().equals(fileUploadExercise.getId())).findAny().get();
 
-        fileUploadExercise.setSampleSolution("Sample<br>solution");
+        fileUploadExercise.setExampleSolution("Sample<br>solution");
 
         if (isStudent) {
             database.createAndSaveParticipationForExercise(fileUploadExercise, username);
         }
 
         // Test sample solution publication date not set.
-        fileUploadExercise.setSampleSolutionPublicationDate(null);
+        fileUploadExercise.setExampleSolutionPublicationDate(null);
         fileUploadExerciseRepository.save(fileUploadExercise);
 
         course = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
         FileUploadExercise fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
 
         if (isStudent) {
-            assertThat(fileUploadExerciseFromApi.getSampleSolution()).isNull();
+            assertThat(fileUploadExerciseFromApi.getExampleSolution()).isNull();
         }
         else {
-            assertThat(fileUploadExerciseFromApi.getSampleSolution()).isEqualTo(fileUploadExercise.getSampleSolution());
+            assertThat(fileUploadExerciseFromApi.getExampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
         }
 
         // Test sample solution publication date in the past.
-        fileUploadExercise.setSampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
+        fileUploadExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         fileUploadExerciseRepository.save(fileUploadExercise);
 
         course = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
         fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
 
-        assertThat(fileUploadExerciseFromApi.getSampleSolution()).isEqualTo(fileUploadExercise.getSampleSolution());
+        assertThat(fileUploadExerciseFromApi.getExampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
 
         // Test sample solution publication date in the future.
-        fileUploadExercise.setSampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
+        fileUploadExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         fileUploadExerciseRepository.save(fileUploadExercise);
 
         course = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
         fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
 
         if (isStudent) {
-            assertThat(fileUploadExerciseFromApi.getSampleSolution()).isNull();
+            assertThat(fileUploadExerciseFromApi.getExampleSolution()).isNull();
         }
         else {
-            assertThat(fileUploadExerciseFromApi.getSampleSolution()).isEqualTo(fileUploadExercise.getSampleSolution());
+            assertThat(fileUploadExerciseFromApi.getExampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
         }
     }
 }

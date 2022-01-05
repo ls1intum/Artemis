@@ -61,7 +61,7 @@ public class TextExerciseImportService extends ExerciseImportService {
         TextExercise newExercise = new TextExercise();
 
         super.copyExerciseBasis(newExercise, importedExercise);
-        newExercise.setSampleSolution(importedExercise.getSampleSolution());
+        newExercise.setExampleSolution(importedExercise.getExampleSolution());
         return newExercise;
     }
 

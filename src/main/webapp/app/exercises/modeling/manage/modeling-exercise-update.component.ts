@@ -93,8 +93,8 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ modelingExercise }) => {
             this.modelingExercise = modelingExercise;
 
-            if (this.modelingExercise.sampleSolutionModel != undefined) {
-                this.exampleSolution = JSON.parse(this.modelingExercise.sampleSolutionModel);
+            if (this.modelingExercise.exampleSolutionModel != undefined) {
+                this.exampleSolution = JSON.parse(this.modelingExercise.exampleSolutionModel);
             }
 
             this.backupExercise = cloneDeep(this.modelingExercise);
@@ -175,7 +175,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     save() {
-        this.modelingExercise.sampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
+        this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
         this.isSaving = true;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType)

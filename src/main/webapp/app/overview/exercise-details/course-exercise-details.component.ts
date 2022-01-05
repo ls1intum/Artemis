@@ -93,8 +93,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     submissionPolicy: SubmissionPolicy;
 
     public modelingExercise?: ModelingExercise;
-    public sampleSolution?: SafeHtml;
-    public sampleSolutionUML?: UMLModel;
+    public exampleSolution?: SafeHtml;
+    public exampleSolutionUML?: UMLModel;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
@@ -226,7 +226,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
         }
 
-        this.showIfSampleSolutionPresent(newExercise);
+        this.showIfExampleSolutionPresent(newExercise);
 
         // This is only needed in the local environment
         if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && (<ProgrammingExercise>this.exercise).isLocalSimulation) {
@@ -248,21 +248,21 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
     }
 
-    showIfSampleSolutionPresent(newExercise: Exercise) {
+    showIfExampleSolutionPresent(newExercise: Exercise) {
         // Clear fields below to avoid displaying old data if this method is called more than once.
         this.modelingExercise = undefined;
-        this.sampleSolution = undefined;
-        this.sampleSolutionUML = undefined;
+        this.exampleSolution = undefined;
+        this.exampleSolutionUML = undefined;
 
         if (newExercise.type === ExerciseType.MODELING) {
             this.modelingExercise = newExercise as ModelingExercise;
-            if (this.modelingExercise.sampleSolutionModel) {
-                this.sampleSolutionUML = JSON.parse(this.modelingExercise.sampleSolutionModel);
+            if (this.modelingExercise.exampleSolutionModel) {
+                this.exampleSolutionUML = JSON.parse(this.modelingExercise.exampleSolutionModel);
             }
         } else if (newExercise.type === ExerciseType.TEXT || newExercise.type === ExerciseType.FILE_UPLOAD) {
             const exercise = newExercise as TextExercise & FileUploadExercise;
-            if (exercise.sampleSolution) {
-                this.sampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(exercise.sampleSolution);
+            if (exercise.exampleSolution) {
+                this.exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(exercise.exampleSolution);
             }
         }
     }
