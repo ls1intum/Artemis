@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { Reaction } from 'app/entities/metis/reaction.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 type EntityResponseType = HttpResponse<Reaction>;
 

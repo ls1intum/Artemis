@@ -63,7 +63,7 @@ describe('CourseParticipantScores', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

@@ -66,33 +66,33 @@ public class SingleUserNotificationService {
     }
 
     /**
-     * Notify author of a post for an exercise that there is a new answer.
+     * Notify author of a post for an exercise that there is a new reply.
      *
-     * @param post that is answered
+     * @param post that is replied
      * @param course that the post belongs to
      */
-    public void notifyUserAboutNewAnswerForExercise(Post post, Course course) {
+    public void notifyUserAboutNewReplyForExercise(Post post, Course course) {
         notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_EXERCISE_POST, course, post.getAuthor());
     }
 
     /**
-     * Notify author of a post for a lecture that there is a new answer.
+     * Notify author of a post for a lecture that there is a new reply.
      *
-     * @param post that is answered
+     * @param post that is replied
      * @param course that the post belongs to
      */
-    public void notifyUserAboutNewAnswerForLecture(Post post, Course course) {
+    public void notifyUserAboutNewReplyForLecture(Post post, Course course) {
         notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_LECTURE_POST, course, post.getAuthor());
     }
 
     /**
-     * Notify author of a course-wide that there is a new answer.
+     * Notify author of a course-wide that there is a new reply.
      * Also creates and sends an email.
      *
-     * @param post that is answered
+     * @param post that is replied
      * @param course that the post belongs to
      */
-    public void notifyUserAboutNewAnswerForCoursePost(Post post, Course course) {
+    public void notifyUserAboutNewReplyForCoursePost(Post post, Course course) {
         notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_COURSE_POST, course, post.getAuthor());
     }
 

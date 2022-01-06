@@ -7,9 +7,6 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-import * as chai from 'chai';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
@@ -28,9 +25,6 @@ import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directiv
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faCheckDouble, faFileUpload, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('StudentExamDetailTableRowComponent', () => {
     let studentExamDetailTableRowComponentFixture: ComponentFixture<StudentExamDetailTableRowComponent>;
@@ -69,25 +63,25 @@ describe('StudentExamDetailTableRowComponent', () => {
             });
     });
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should return the right icon based on exercise type', () => {
         exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, new ExerciseGroup());
-        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).to.equal(faProjectDiagram);
+        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).toEqual(faProjectDiagram);
 
         exercise = new ProgrammingExercise(course, new ExerciseGroup());
-        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).to.equal(faKeyboard);
+        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).toEqual(faKeyboard);
 
         exercise = new QuizExercise(course, new ExerciseGroup());
-        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).to.equal(faCheckDouble);
+        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).toEqual(faCheckDouble);
 
         exercise = new FileUploadExercise(course, new ExerciseGroup());
-        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).to.equal(faFileUpload);
+        expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).toEqual(faFileUpload);
     });
 
     it('should route to programming submission dashboard', () => {
-        const getAssessmentLinkSpy = sinon.spy(studentExamDetailTableRowComponent, 'getAssessmentLink');
+        const getAssessmentLinkSpy = jest.spyOn(studentExamDetailTableRowComponent, 'getAssessmentLink');
         studentExamDetailTableRowComponentFixture.detectChanges();
         studentExamDetailTableRowComponent.courseId = 23;
         studentExamDetailTableRowComponent.examId = exam1.id!;
@@ -101,12 +95,12 @@ describe('StudentExamDetailTableRowComponent', () => {
             type: ExerciseType.PROGRAMMING,
         };
         const route = studentExamDetailTableRowComponent.getAssessmentLink(programmingExercise);
-        expect(getAssessmentLinkSpy).to.have.been.calledOnce;
-        expect(route).to.deep.equal(['/course-management', '23', 'exams', '1', 'exercise-groups', '13', 'programming-exercises', '12', 'submissions']);
+        expect(getAssessmentLinkSpy).toHaveBeenCalledTimes(1);
+        expect(route).toEqual(['/course-management', '23', 'exams', '1', 'exercise-groups', '13', 'programming-exercises', '12', 'submissions']);
     });
 
     it('should route to modeling submission', () => {
-        const getAssessmentLinkSpy = sinon.spy(studentExamDetailTableRowComponent, 'getAssessmentLink');
+        const getAssessmentLinkSpy = jest.spyOn(studentExamDetailTableRowComponent, 'getAssessmentLink');
         studentExamDetailTableRowComponentFixture.detectChanges();
         studentExamDetailTableRowComponent.courseId = 23;
         studentExamDetailTableRowComponent.examId = exam1.id!;
@@ -120,7 +114,7 @@ describe('StudentExamDetailTableRowComponent', () => {
         };
         const submission = { id: 14 };
         const route = studentExamDetailTableRowComponent.getAssessmentLink(modelingExercise, submission);
-        expect(getAssessmentLinkSpy).to.have.been.calledOnce;
-        expect(route).to.deep.equal(['/course-management', '23', 'exams', '1', 'exercise-groups', '12', 'modeling-exercises', '12', 'submissions', '14', 'assessment']);
+        expect(getAssessmentLinkSpy).toHaveBeenCalledTimes(1);
+        expect(route).toEqual(['/course-management', '23', 'exams', '1', 'exercise-groups', '12', 'modeling-exercises', '12', 'submissions', '14', 'assessment']);
     });
 });
