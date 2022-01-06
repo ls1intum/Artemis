@@ -91,7 +91,7 @@ public class ScoreService {
         }
         else {
             ParticipantScore updatedParticipantScore = participantScoreRepository.saveAndFlush(associatedParticipantScore);
-            logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + updatedParticipantScore.toString());
+            logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + updatedParticipantScore);
         }
     }
 
@@ -147,7 +147,7 @@ public class ScoreService {
         if (existingParticipationScoreForExerciseAndParticipant != null) {
             updateExistingParticipantScore(existingParticipationScoreForExerciseAndParticipant, createdOrUpdatedResult, exercise);
         }
-        else { // there does not already exists a participant score -> we need to create it
+        else { // there does not already exist a participant score -> we need to create it
             createNewParticipantScore(createdOrUpdatedResult, studentParticipation, exercise);
         }
     }
@@ -222,7 +222,7 @@ public class ScoreService {
             setLastRatedAttributes(newStudentScore, newResult, exercise);
         }
         StudentScore studentScore = studentScoreRepository.saveAndFlush(newStudentScore);
-        logger.info("Saved a new student score: " + studentScore.toString());
+        logger.info("Saved a new student score: " + studentScore);
     }
 
     private void createNewTeamScore(Result newResult, StudentParticipation studentParticipation, Exercise exercise) {
@@ -234,7 +234,7 @@ public class ScoreService {
             setLastRatedAttributes(newTeamScore, newResult, exercise);
         }
         TeamScore teamScore = teamScoreRepository.saveAndFlush(newTeamScore);
-        logger.info("Saved a new team score: " + teamScore.toString());
+        logger.info("Saved a new team score: " + teamScore);
     }
 
     /**
@@ -247,23 +247,22 @@ public class ScoreService {
     private void updateExistingParticipantScore(ParticipantScore participantScore, Result updatedOrNewlyCreatedResult, Exercise exercise) {
         String originalParticipantScoreStructure = participantScore.toString();
 
-        ParticipantScore participantScoreToSave = participantScore;
         // update the last result and last score if either it has not been set previously or new result is either the old one (=) or newer (>)
-        if (participantScoreToSave.getLastResult() == null || updatedOrNewlyCreatedResult.getId() >= participantScoreToSave.getLastResult().getId()) {
-            setLastAttributes(participantScoreToSave, updatedOrNewlyCreatedResult, exercise);
+        if (participantScore.getLastResult() == null || updatedOrNewlyCreatedResult.getId() >= participantScore.getLastResult().getId()) {
+            setLastAttributes(participantScore, updatedOrNewlyCreatedResult, exercise);
         }
         // update the last rated result and last rated score if either it has not been set previously or new rated result is either the old one (=) or newer (>)
         if (updatedOrNewlyCreatedResult.isRated() != null && updatedOrNewlyCreatedResult.isRated()
-                && (participantScoreToSave.getLastRatedResult() == null || updatedOrNewlyCreatedResult.getId() >= participantScoreToSave.getLastRatedResult().getId())) {
-            setLastRatedAttributes(participantScoreToSave, updatedOrNewlyCreatedResult, exercise);
+                && (participantScore.getLastRatedResult() == null || updatedOrNewlyCreatedResult.getId() >= participantScore.getLastRatedResult().getId())) {
+            setLastRatedAttributes(participantScore, updatedOrNewlyCreatedResult, exercise);
         }
         // Edge Case: if the result is now unrated but is equal to the current last rated result we have to set these to null (result was switched from rated to unrated)
         if ((updatedOrNewlyCreatedResult.isRated() == null || !updatedOrNewlyCreatedResult.isRated())
-                && updatedOrNewlyCreatedResult.equals(participantScoreToSave.getLastRatedResult())) {
-            setLastRatedAttributes(participantScoreToSave, null, exercise);
+                && updatedOrNewlyCreatedResult.equals(participantScore.getLastRatedResult())) {
+            setLastRatedAttributes(participantScore, null, exercise);
         }
-        participantScoreRepository.saveAndFlush(participantScoreToSave);
-        logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + participantScoreToSave.toString());
+        participantScoreRepository.saveAndFlush(participantScore);
+        logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + participantScore);
     }
 
     /**
@@ -286,7 +285,7 @@ public class ScoreService {
                     .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
                     .filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
         }
-        // the new last result (result with highest id of submission with highest id) will be at the beginning of the list
+        // the new last result (result with the highest id of submission with the highest id) will be at the beginning of the list
         return resultOrdered.isEmpty() ? Optional.empty() : Optional.of(resultOrdered.get(0));
 
     }
@@ -311,7 +310,7 @@ public class ScoreService {
                     .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
                     .filter(r -> !participantScore.getLastRatedResult().equals(r)).collect(Collectors.toList());
         }
-        // the new last rated result (rated result with highest id of submission with highest id) will be at the beginning of the list
+        // the new last rated result (rated result with the highest id of submission with the highest id) will be at the beginning of the list
         return ratedResultsOrdered.isEmpty() ? Optional.empty() : Optional.of(ratedResultsOrdered.get(0));
 
     }
