@@ -12,10 +12,12 @@
     font-size: var(--size);
     width: var(--size);
     display: inline-block;
+
     &:last-child {
         margin-right: 0;
     }
-    &:before {
+
+    &::before {
         content: '\2605';
     }
 }
@@ -25,7 +27,7 @@
 }
 
 .star.half {
-    &:after {
+    &::after {
         content: '\2605';
         color: var(--checkedColor);
         position: absolute;

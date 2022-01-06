@@ -86,11 +86,19 @@ export class StarRatingComponent {
         }
     }
 
+    get checkedColor(): string {
+        return this._checkedColor;
+    }
+
     @Input() set uncheckedColor(value: string) {
         this._unCheckedColor = value;
         if (this._unCheckedColor) {
             this.onUnCheckedColorChange.next(this._unCheckedColor);
         }
+    }
+
+    get uncheckedColor(): string {
+        return this._unCheckedColor;
     }
 
     @Input() set value(value: number) {
@@ -101,10 +109,18 @@ export class StarRatingComponent {
         }
     }
 
+    get value(): number {
+        return this._value;
+    }
+
     @Input() set size(value: string) {
         value = !value || value === '0px' ? '24px' : value;
         this._size = value;
         this.onSizeChange.next(this._size);
+    }
+
+    get size(): string {
+        return this._size.concat(!this._size.includes('px') ? 'px' : '');
     }
 
     @Input() set readOnly(value: boolean) {
@@ -112,9 +128,17 @@ export class StarRatingComponent {
         this.onReadOnlyChange.next(value);
     }
 
+    get readonly(): boolean {
+        return String(this._readOnly) === 'true';
+    }
+
     @Input() set totalStars(value: number) {
         this._totalStars = value <= 0 ? 5 : Math.round(value);
         this.onStarsCountChange.next(this._totalStars);
+    }
+
+    get totalStars(): number {
+        return this._totalStars;
     }
 
     private makeEditable() {

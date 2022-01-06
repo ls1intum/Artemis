@@ -67,7 +67,7 @@ public class MailService {
 
     private static final String EXERCISE_TYPE = "exerciseType";
 
-    // Translation that can not be done via i18n Recource Bundle (for Thymeleaf) but has to be set in this service via Java
+    // Translation that can not be done via i18n Resource Bundle (for Thymeleaf) but has to be set in this service via Java
     private final String newAnnouncementEN = "New announcement \"%s\" in course \"%s\"";
 
     private final String newAnnouncementDE = "Neue Ankündigung \"%s\" im Kurs \"%s\"";
@@ -120,7 +120,6 @@ public class MailService {
      * @param templateName The name of the template
      * @param titleKey The key mapping the title for the subject of the mail
      */
-    @Async
     public void sendEmailFromTemplate(User user, String templateName, String titleKey) {
         Locale locale = Locale.forLanguageTag(user.getLangKey());
         Context context = new Context(locale);
@@ -131,25 +130,16 @@ public class MailService {
         sendEmail(user, subject, content, false, true);
     }
 
-    @Async
     public void sendActivationEmail(User user) {
         log.debug("Sending activation email to '{}'", user.getEmail());
         sendEmailFromTemplate(user, "mail/activationEmail", "email.activation.title");
     }
 
-    @Async
-    public void sendCreationEmail(User user) {
-        log.debug("Sending creation email to '{}'", user.getEmail());
-        sendEmailFromTemplate(user, "mail/creationEmail", "email.activation.title");
-    }
-
-    @Async
     public void sendPasswordResetMail(User user) {
         log.debug("Sending password reset email to '{}'", user.getEmail());
         sendEmailFromTemplate(user, "mail/passwordResetEmail", "email.reset.title");
     }
 
-    @Async
     public void sendSAML2SetPasswordMail(User user) {
         log.debug("Sending SAML2 set password email to '{}'", user.getEmail());
         sendEmailFromTemplate(user, "mail/samlSetPasswordEmail", "email.saml.title");
@@ -182,7 +172,6 @@ public class MailService {
      * @param user who should be contacted
      * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
      */
-    @Async
     public void sendNotificationEmail(Notification notification, User user, Object notificationSubject) {
         NotificationType notificationType = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
         log.debug("Sending \"{}\" notification email to '{}'", notificationType.name(), user.getEmail());
@@ -234,7 +223,6 @@ public class MailService {
         };
     }
 
-    @Async
     public void sendNotificationEmailForMultipleUsers(GroupNotification notification, List<User> users, Object notificationSubject) {
         users.forEach(user -> sendNotificationEmail(notification, user, notificationSubject));
     }
