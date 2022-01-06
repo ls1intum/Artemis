@@ -10,6 +10,8 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 
+import javax.mail.internet.MimeMessage;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,6 +57,8 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
 
         SecurityUtils.setAuthorizationObject();
         assertThat(notificationRepository.count()).isEqualTo(0);
+
+        doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
     @AfterEach
