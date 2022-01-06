@@ -1,7 +1,4 @@
 import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
@@ -16,9 +13,6 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { By } from '@angular/platform-browser';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ComplaintsForTutorComponent', () => {
     let complaintsForTutorComponent: ComplaintsForTutorComponent;
@@ -40,12 +34,12 @@ describe('ComplaintsForTutorComponent', () => {
     }));
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should instantiate', () => {
         complaintForTutorComponentFixture.detectChanges();
-        expect(complaintsForTutorComponent).to.be.ok;
+        expect(complaintsForTutorComponent).not.toBeNull();
     });
 
     it('should just display an already handled complaint', fakeAsync(() => {
@@ -65,11 +59,11 @@ describe('ComplaintsForTutorComponent', () => {
 
         const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
         const complainTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#complaintTextArea')).nativeElement;
-        expect(responseTextArea.value).to.equal(handledComplaint.complaintResponse.responseText);
-        expect(responseTextArea.disabled).to.be.true;
-        expect(responseTextArea.readOnly).to.be.true;
-        expect(complainTextArea.readOnly).to.be.true;
-        expect(complainTextArea.value).to.equal(handledComplaint.complaintText);
+        expect(responseTextArea.value).toEqual(handledComplaint.complaintResponse.responseText);
+        expect(responseTextArea.disabled).toBeTrue();
+        expect(responseTextArea.readOnly).toBeTrue();
+        expect(complainTextArea.readOnly).toBeTrue();
+        expect(complainTextArea.value).toEqual(handledComplaint.complaintText);
     }));
 
     it('should create a new complaint response for a unhandled complaint without a connected complaint response', fakeAsync(() => {
@@ -85,7 +79,7 @@ describe('ComplaintsForTutorComponent', () => {
         freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
         freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
 
-        const createLockStub = sinon.stub(injectedComplaintResponseService, 'createLock').returns(
+        const createLockStub = jest.spyOn(injectedComplaintResponseService, 'createLock').mockReturnValue(
             of(
                 new HttpResponse({
                     body: freshlyCreatedComplaintResponse,
@@ -100,19 +94,19 @@ describe('ComplaintsForTutorComponent', () => {
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
 
-        expect(createLockStub).to.have.been.called;
-        expect(complaintsForTutorComponent.complaint).to.deep.equal(freshlyCreatedComplaintResponse.complaint);
-        expect(complaintsForTutorComponent.complaintResponse).to.deep.equal(freshlyCreatedComplaintResponse);
+        expect(createLockStub).toHaveBeenCalled();
+        expect(complaintsForTutorComponent.complaint).toEqual(freshlyCreatedComplaintResponse.complaint);
+        expect(complaintsForTutorComponent.complaintResponse).toEqual(freshlyCreatedComplaintResponse);
         const lockButton = complaintForTutorComponentFixture.debugElement.query(By.css('#lockButton')).nativeElement;
         const lockDuration = complaintForTutorComponentFixture.debugElement.query(By.css('#lockDuration')).nativeElement;
 
-        expect(lockButton).to.be.ok;
-        expect(lockDuration).to.be.ok;
+        expect(lockButton).not.toBeNull();
+        expect(lockDuration).not.toBeNull();
 
         // now we test if we can give up the lock
-        const removeLockStub = sinon.stub(injectedComplaintResponseService, 'removeLock').returns(of());
+        const removeLockStub = jest.spyOn(injectedComplaintResponseService, 'removeLock').mockReturnValue(of());
         lockButton.click();
-        expect(removeLockStub).to.have.been.called;
+        expect(removeLockStub).toHaveBeenCalled();
     }));
 
     it('should refresh a complaint response for a unhandled complaint with a connected complaint response', fakeAsync(() => {
@@ -124,14 +118,14 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.complaintResponse = new ComplaintResponse();
         unhandledComplaint.complaintResponse.id = 1;
         unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
-        sinon.stub(injectedComplaintResponseService, 'isComplaintResponseLockedForLoggedInUser').returns(false);
+        jest.spyOn(injectedComplaintResponseService, 'isComplaintResponseLockedForLoggedInUser').mockReturnValue(false);
 
         const freshlyCreatedComplaintResponse = new ComplaintResponse();
         freshlyCreatedComplaintResponse.id = 1;
         freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
         freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
 
-        const createLockStub = sinon.stub(injectedComplaintResponseService, 'refreshLock').returns(
+        const createLockStub = jest.spyOn(injectedComplaintResponseService, 'refreshLock').mockReturnValue(
             of(
                 new HttpResponse({
                     body: freshlyCreatedComplaintResponse,
@@ -146,19 +140,19 @@ describe('ComplaintsForTutorComponent', () => {
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
 
-        expect(createLockStub).to.have.been.called;
-        expect(complaintsForTutorComponent.complaint).to.deep.equal(freshlyCreatedComplaintResponse.complaint);
-        expect(complaintsForTutorComponent.complaintResponse).to.deep.equal(freshlyCreatedComplaintResponse);
+        expect(createLockStub).toHaveBeenCalled();
+        expect(complaintsForTutorComponent.complaint).toEqual(freshlyCreatedComplaintResponse.complaint);
+        expect(complaintsForTutorComponent.complaintResponse).toEqual(freshlyCreatedComplaintResponse);
         const lockButton = complaintForTutorComponentFixture.debugElement.query(By.css('#lockButton')).nativeElement;
         const lockDuration = complaintForTutorComponentFixture.debugElement.query(By.css('#lockDuration')).nativeElement;
 
-        expect(lockButton).to.be.ok;
-        expect(lockDuration).to.be.ok;
+        expect(lockButton).not.toBeNull();
+        expect(lockDuration).not.toBeNull();
 
         // now we test if we can give up the lock
-        const removeLockStub = sinon.stub(injectedComplaintResponseService, 'removeLock').returns(of());
+        const removeLockStub = jest.spyOn(injectedComplaintResponseService, 'removeLock').mockReturnValue(of());
         lockButton.click();
-        expect(removeLockStub).to.have.been.called;
+        expect(removeLockStub).toHaveBeenCalled();
     }));
 
     it('should send event when accepting a complaint', () => {
@@ -177,15 +171,15 @@ describe('ComplaintsForTutorComponent', () => {
         complaintsForTutorComponent.complaintResponse = unhandledComplaint.complaintResponse;
         complaintsForTutorComponent.complaint = unhandledComplaint;
 
-        const emitSpy = sinon.spy(complaintsForTutorComponent.updateAssessmentAfterComplaint, 'emit');
+        const emitSpy = jest.spyOn(complaintsForTutorComponent.updateAssessmentAfterComplaint, 'emit');
 
         complaintForTutorComponentFixture.detectChanges();
 
         const acceptComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
         acceptComplaintButton.click();
-        expect(emitSpy).to.have.been.called;
-        const event = emitSpy.getCalls()[0].args[0];
-        expect(event).to.be.ok;
+        expect(emitSpy).toHaveBeenCalled();
+        const event = emitSpy.mock.calls[0][0];
+        expect(event).not.toBeNull();
     });
 
     it('should directly resolve when rejecting a complaint', () => {
@@ -209,7 +203,7 @@ describe('ComplaintsForTutorComponent', () => {
         freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
         freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
 
-        const resolveStub = sinon.stub(injectedComplaintResponseService, 'resolveComplaint').returns(
+        const resolveStub = jest.spyOn(injectedComplaintResponseService, 'resolveComplaint').mockReturnValue(
             of(
                 new HttpResponse({
                     body: freshlyCreatedComplaintResponse,
@@ -223,6 +217,6 @@ describe('ComplaintsForTutorComponent', () => {
         const rejectComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
         rejectComplaintButton.click();
 
-        expect(resolveStub).to.have.been.called;
+        expect(resolveStub).toHaveBeenCalled();
     });
 });

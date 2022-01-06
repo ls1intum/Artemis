@@ -1,9 +1,9 @@
 require('jest-preset-angular/ngcc-jest-processor');
 
-const esModules = ['ngx-treeview', 'lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collapse-white-space', '@angular/animations', '@angular/common',
+const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collapse-white-space', '@angular/animations', '@angular/common', '@ls1intum/apollon',
     '@angular/compiler', '@angular/core', '@angular/forms', '@angular/localize', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router',
-    '@ngx-translate/core', '@ngx-translate/http-loader', 'ngx-cookie-service', '@fortawesome/angular-fontawesome', '@angular/cdk',
-    'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-clipboard', 'ngx-device-detector', 'ngx-window-token'].join('|');
+    '@ngx-translate/core', '@ngx-translate/http-loader', '@fortawesome/angular-fontawesome', '@angular/cdk', '@angular/material', '@angular/cdk', 'dayjs/esm',
+    'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-device-detector'].join('|');
 
 const {
     compilerOptions: { paths = {}, baseUrl = './' },
@@ -22,7 +22,6 @@ module.exports = {
             },
         },
     },
-    testRunner: "jest-jasmine2",
     roots: ['<rootDir>', `<rootDir>/${baseUrl}`],
     modulePaths: [`<rootDir>/${baseUrl}`],
     setupFiles: ['jest-date-mock'],
@@ -33,13 +32,13 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should be increase to at least 80%
-            statements: 78.2,
-            branches: 66.1,
-            functions: 69.5,
-            lines: 77.9,
+            statements: 77.1,
+            branches: 65.1,
+            functions: 68.8,
+            lines: 76.7,
         },
     },
-    setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-sinon', 'jest-extended/all'],
+    setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
     resolver: 'jest-preset-angular/build/resolvers/ng-jest-resolver.js',
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
@@ -49,12 +48,12 @@ module.exports = {
     modulePathIgnorePatterns: [],
     testTimeout: 2000,
     testMatch: [
-        '<rootDir>/src/test/javascript/spec/component/**/*.ts',
-        '<rootDir>/src/test/javascript/spec/directive/**/*.ts',
-        '<rootDir>/src/test/javascript/spec/integration/**/*.ts',
-        '<rootDir>/src/test/javascript/spec/pipe/**/*.ts',
-        '<rootDir>/src/test/javascript/spec/service/**/*.ts',
-        '<rootDir>/src/test/javascript/spec/util/**/*.ts',
+        '<rootDir>/src/test/javascript/spec/component/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/directive/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/integration/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/pipe/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/service/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/util/**/*.spec.ts',
     ],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',

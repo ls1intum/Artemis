@@ -2,7 +2,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
 

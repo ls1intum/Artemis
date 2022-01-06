@@ -33,7 +33,7 @@ import { TextSubmissionService } from 'app/exercises/text/participate/text-submi
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockProvider, MockPipe } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';

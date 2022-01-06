@@ -65,12 +65,12 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
     }
 
     /**
-     * Finds the text exercise of the given id.
-     * @param id of text exercise of type {number}
+     * Finds the text exercise of the given exerciseId.
+     * @param exerciseId of text exercise of type {number}
      */
-    find(id: number): Observable<EntityResponseType> {
+    find(exerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<TextExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .get<TextExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

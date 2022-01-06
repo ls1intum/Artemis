@@ -13,7 +13,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';

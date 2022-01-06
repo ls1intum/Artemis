@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -24,6 +24,7 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 };
 
+// TODO: we should use a proper enum here
 export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION' | 'TESTS' | 'AUXILIARY';
 
 @Injectable({ providedIn: 'root' })

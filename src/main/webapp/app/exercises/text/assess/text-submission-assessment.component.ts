@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -274,7 +274,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         super.handleSaveOrSubmitSuccessWithAlert(response, translationKey);
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
         response.body!.feedbacks?.forEach((newFeedback) => {
             newFeedback.conflictingTextAssessments = this.result?.feedbacks?.find((feedback) => feedback.id === newFeedback.id)?.conflictingTextAssessments;
         });

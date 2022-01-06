@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import java.util.List;
+
 public class CourseManagementDetailViewDTO {
 
     private Integer numberOfStudentsInCourse;
@@ -38,7 +40,7 @@ public class CourseManagementDetailViewDTO {
 
     private Double currentMaxAverageScore;
 
-    private Integer[] activeStudents;
+    private List<Integer> activeStudents;
 
     public Integer getNumberOfStudentsInCourse() {
         return numberOfStudentsInCourse;
@@ -168,11 +170,11 @@ public class CourseManagementDetailViewDTO {
         this.currentMaxAverageScore = currentMaxAverageScore;
     }
 
-    public Integer[] getActiveStudents() {
+    public List<Integer> getActiveStudents() {
         return activeStudents;
     }
 
-    public void setActiveStudents(Integer[] activeStudents) {
+    public void setActiveStudents(List<Integer> activeStudents) {
         this.activeStudents = activeStudents;
     }
 }
