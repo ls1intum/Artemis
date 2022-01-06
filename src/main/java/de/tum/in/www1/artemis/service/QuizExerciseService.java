@@ -373,13 +373,13 @@ public class QuizExerciseService {
 
     /**
      * Reset a QuizExercise to its original state, delete statistics and cleanup the schedule service.
-     * @param exerciseId Id of the exercise to reset
+     * @param exerciseId id of the exercise to reset
      */
     public void resetExercise(Long exerciseId) {
         // fetch exercise again to make sure we have an updated version
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
 
-        // for quizzes we need to delete the statistics and we need to reset the quiz to its original state
+        // for quizzes, we need to delete the statistics, and we need to reset the quiz to its original state
         quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);
         quizExercise.setIsPlannedToStart(Boolean.FALSE);
         quizExercise.setAllowedNumberOfAttempts(null);
@@ -388,7 +388,7 @@ public class QuizExerciseService {
 
         quizExercise = save(quizExercise);
 
-        // in case the quiz has not yet started or the quiz is currently running, we have to cleanup
+        // in case the quiz has not yet started or the quiz is currently running, we have to clean up
         quizScheduleService.cancelScheduledQuizStart(quizExercise.getId());
         quizScheduleService.clearQuizData(quizExercise.getId());
 

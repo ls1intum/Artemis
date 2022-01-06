@@ -8,6 +8,8 @@ import static org.mockito.Mockito.*;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import javax.mail.internet.MimeMessage;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,10 +20,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -83,19 +85,21 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
         post.setAuthor(user);
         post.setCourse(course);
 
-        PlagiarismSubmission plagiarismSubmission = new PlagiarismSubmission();
+        PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission = new PlagiarismSubmission<>();
         plagiarismSubmission.setStudentLogin(user.getLogin());
 
-        PlagiarismResult plagiarismResult = new TextPlagiarismResult();
+        TextPlagiarismResult plagiarismResult = new TextPlagiarismResult();
         plagiarismResult.setExercise(exercise);
 
-        plagiarismComparison = new PlagiarismComparison();
+        plagiarismComparison = new PlagiarismComparison<>();
         plagiarismComparison.setSubmissionA(plagiarismSubmission);
         plagiarismComparison.setPlagiarismResult(plagiarismResult);
 
         result = new Result();
         result.setScore(1D);
         result.setCompletionDate(ZonedDateTime.now().minusMinutes(1));
+
+        doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
     @AfterEach
@@ -109,7 +113,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      * @param expectedNotificationTitle is the title (NotificationTitleTypeConstants) of the expected notification
      */
     private void verifyRepositoryCallWithCorrectNotification(String expectedNotificationTitle) {
-        capturedNotification = notificationRepository.findAll().get(0);
+        Notification capturedNotification = notificationRepository.findAll().get(0);
         assertThat(capturedNotification.getTitle()).as("Title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
     }
 

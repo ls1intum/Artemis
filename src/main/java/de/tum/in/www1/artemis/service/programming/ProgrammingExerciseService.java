@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -19,25 +20,33 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.connectors.CIPermission;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 @Service
 public class ProgrammingExerciseService {
@@ -121,7 +130,7 @@ public class ProgrammingExerciseService {
      * </ol>
      *
      * @param programmingExercise The programmingExercise that should be setup
-     * @return The newly setup exercise
+     * @return The new setup exercise
      * @throws InterruptedException If something during the communication with the remote Git repository went wrong
      * @throws GitAPIException      If something during the communication with the remote Git repository went wrong
      * @throws IOException          If the template files couldn't be read
@@ -175,7 +184,7 @@ public class ProgrammingExerciseService {
      * 2. Create template and solution build plan in this project
      * 3. Configure CI permissions
      *
-     * @param programmingExercise Programming exercise for the the build plans should be generated. The programming
+     * @param programmingExercise Programming exercise for the build plans should be generated. The programming
      *                            exercise should contain a fully initialized template and solution participation.
      */
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
@@ -303,7 +312,7 @@ public class ProgrammingExerciseService {
             testPath = programmingLanguageProjectTypePath + "/test/**/*.*";
 
             if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
-                // For Xcode we don't share source code, so we only copy files once
+                // For Xcode, we don't share source code, so we only copy files once
                 exercisePrefix = projectTypePrefix + "/exercise";
                 testPrefix = projectTypePrefix + "/test";
                 solutionPrefix = projectTypePrefix + "/solution";
@@ -326,7 +335,7 @@ public class ProgrammingExerciseService {
         try {
             setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, projectTypeExerciseResources, projectTypeExercisePrefix, "Exercise", programmingExercise,
                     exerciseCreator);
-            // The template repo can be re-written so we can unprotect the default branch.
+            // The template repo can be re-written, so we can unprotect the default branch.
             var templateVcsRepositoryUrl = programmingExercise.getVcsTemplateRepositoryUrl();
             String templateVcsRepositoryDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(templateVcsRepositoryUrl);
             versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryDefaultBranch);
@@ -399,7 +408,7 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * This methods sets the values (initialization date and initialization state) of the template and solution participation.
+     * These methods set the values (initialization date and initialization state) of the template and solution participation.
      * If either participation is null, a new one will be created.
      *
      * @param programmingExercise The programming exercise
@@ -453,7 +462,7 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Set up the test repository. This method differentiates non sequential and sequential test repositories (more than 1 test job).
+     * Set up the test repository. This method differentiates non-sequential and sequential test repositories (more than 1 test job).
      *
      * @param repository          The repository to be set up
      * @param resources           The resources which should get added to the template
@@ -669,7 +678,7 @@ public class ProgrammingExerciseService {
         programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, null,
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText,
                 instanceMessageSendService);
 
         return savedProgrammingExercise;
@@ -701,8 +710,8 @@ public class ProgrammingExerciseService {
      *
      * @param solutionRepoURL The URL of the solution repository.
      * @param exerciseRepoURL The URL of the exercise repository.
-     * @param testRepoURL     The URL of the tests repository.
-     * @param testsPath       The path to the tests folder, e.g. the path inside the repository where the structure oracle file will be saved in.
+     * @param testRepoURL     The URL of the tests' repository.
+     * @param testsPath       The path to the tests' folder, e.g. the path inside the repository where the structure oracle file will be saved in.
      * @param user            The user who has initiated the action
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
      * @throws IOException          If the URLs cannot be converted to actual {@link Path paths}
@@ -786,7 +795,7 @@ public class ProgrammingExerciseService {
         final var solutionRepositoryUrlAsUrl = programmingExercise.getVcsSolutionRepositoryUrl();
         final var testRepositoryUrlAsUrl = programmingExercise.getVcsTestRepositoryUrl();
 
-        // This cancels scheduled tasks (like locking/unlocking repositories)
+        // This cancels the scheduled tasks (like locking/unlocking repositories)
         // As the programming exercise might already be deleted once the scheduling node receives the message, only the
         // id is used to cancel the scheduling. No interaction with the database is required.
         cancelScheduledOperations(programmingExercise.getId());
@@ -868,15 +877,13 @@ public class ProgrammingExerciseService {
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
-        var sorting = Sort.by(Exercise.ExerciseSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
-        sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
-        final var sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
+        final var pageable = PageUtil.createPageRequest(search);
         final var searchTerm = search.getSearchTerm();
 
         final var exercisePage = authCheckService.isAdmin(user)
                 ? programmingExerciseRepository.findByTitleIgnoreCaseContainingAndShortNameNotNullOrCourse_TitleIgnoreCaseContainingAndShortNameNotNull(searchTerm, searchTerm,
-                        sorted)
-                : programmingExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), sorted);
+                        pageable)
+                : programmingExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
 
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
