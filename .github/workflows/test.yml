@@ -171,4 +171,4 @@ jobs:
     - name: Install Dependencies
       run: npm install
     - name: Check Leaks
-      run: test:leaks
+      run: npm run test:leaks
