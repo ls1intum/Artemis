@@ -108,9 +108,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "hide_notifications_until")
     private ZonedDateTime hideNotificationsUntil = null;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "user_type")
-    private UserType userType;
+    @Column(name = "is_internal")
+    private boolean isInternal;
+
+    @Column(name = "is_lti")
+    private boolean isLTI;
 
     @Column(name = "initialize")
     private boolean initialize;
@@ -354,11 +356,19 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.initialize = initialize;
     }
 
-    public UserType getUserType() {
-        return userType;
+    public boolean isInternal() {
+        return isInternal;
     }
 
-    public void setUserType(UserType userType) {
-        this.userType = userType;
+    public void setInternal(boolean internal) {
+        isInternal = internal;
+    }
+
+    public boolean isLTI() {
+        return isLTI;
+    }
+
+    public void setLTI(boolean LTI) {
+        isLTI = LTI;
     }
 }

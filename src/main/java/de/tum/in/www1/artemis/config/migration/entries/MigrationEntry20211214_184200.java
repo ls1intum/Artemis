@@ -1,16 +1,16 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.UserType;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
+@Component
 public class MigrationEntry20211214_184200 extends MigrationEntry {
 
     private final UserRepository userRepository;
@@ -18,10 +18,10 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
     private final PasswordService passwordService;
 
     @Value("${artemis.lti.user-group-name-edx:#{null}}")
-    private Optional<String> USER_GROUP_NAME_EDX;
+    private String USER_GROUP_NAME_EDX;
 
     @Value("${artemis.lti.user-group-name-u4i:#{null}}")
-    private Optional<String> USER_GROUP_NAME_U4I;
+    private String USER_GROUP_NAME_U4I;
 
     public MigrationEntry20211214_184200(UserRepository userRepository, PasswordService passwordService) {
         this.userRepository = userRepository;
@@ -48,16 +48,10 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
     private void setUserType(List<User> userList) {
         userList = userList.stream().peek(user -> {
             String password = passwordService.decryptPassword(user);
-            if (password.isEmpty()) {
-                user.setUserType(UserType.LDAP);
-            }
-            else if ((USER_GROUP_NAME_EDX.isPresent() && user.getGroups().contains(USER_GROUP_NAME_EDX.get()))
-                    || (USER_GROUP_NAME_U4I.isPresent() && user.getGroups().contains(USER_GROUP_NAME_U4I.get()))) {
-                user.setUserType(UserType.LTI);
-            }
-            else {
-                user.setUserType(UserType.INTERNAL);
-            }
+            boolean isLTI = (USER_GROUP_NAME_EDX != null && user.getGroups().contains(USER_GROUP_NAME_EDX))
+                    || (USER_GROUP_NAME_U4I != null && user.getGroups().contains(USER_GROUP_NAME_U4I));
+            user.setLTI(isLTI);
+            user.setInternal(!password.isEmpty());
         }).toList();
 
         userRepository.saveAll(userList);

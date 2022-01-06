@@ -25,7 +25,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.UserType;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
@@ -309,7 +308,7 @@ public class UserResource {
         if (!user.isInitialize()) {
             return ResponseEntity.ok().body(new UserInitializationDTO());
         }
-        if (!user.getUserType().equals(UserType.LTI)) {
+        if (!user.isLTI()) {
             user.setInitialize(false);
             userRepository.save(user);
             return ResponseEntity.ok().body(new UserInitializationDTO());

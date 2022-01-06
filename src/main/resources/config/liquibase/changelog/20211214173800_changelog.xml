@@ -5,7 +5,12 @@
         <column name="initialize" type="bit">
             <constraints nullable="false"/>
         </column>
-        <column name="user_type" type="VARCHAR(8)"/>
+        <column name="is_internal" type="bit" defaultValue="1">
+            <constraints nullable="false"/>
+        </column>
+        <column name="is_lit" type="bit" defaultValue="0">
+            <constraints nullable="false"/>
+        </column>
     </addColumn>
 </changeSet>
 </databaseChangeLog>

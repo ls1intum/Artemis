@@ -156,7 +156,7 @@ public class LtiServiceTest {
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
         when(userRepository.findOneByLogin(username)).thenReturn(Optional.empty());
         when(userCreationService.createInternalUser(username, null, groups, "", launchRequest.getLis_person_sourcedid(), launchRequest.getLis_person_contact_email_primary(), null,
-                null, "en", UserType.LTI, true)).thenReturn(user);
+                null, "en", true, true, true)).thenReturn(user);
 
         onSuccessfulAuthenticationSetup(user, ltiUserId);
         ltiService.handleLaunchRequest(launchRequest, exercise);
@@ -179,7 +179,7 @@ public class LtiServiceTest {
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
         when(userRepository.findOneByLogin(username)).thenReturn(Optional.empty());
         when(userCreationService.createInternalUser(username, null, groups, "", launchRequest.getLis_person_sourcedid(), launchRequest.getLis_person_contact_email_primary(), null,
-                null, "en", UserType.LTI, true)).thenReturn(user);
+                null, "en", true, true, true)).thenReturn(user);
 
         onSuccessfulAuthenticationSetup(user, ltiUserId);
         launchRequest.setContext_label("TUMx");
