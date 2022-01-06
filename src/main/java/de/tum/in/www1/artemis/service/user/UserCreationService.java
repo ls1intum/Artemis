@@ -95,12 +95,11 @@ public class UserCreationService {
      * @param imageUrl           user image url
      * @param langKey            user language
      * @param isInternal         true if the actual password gets saved in the database
-     * @param isLTI              true if the user is an LTI user
      * @param initialize         true if the user should be initialized on the first visit
      * @return newly created user
      */
     public User createInternalUser(String login, @Nullable String password, @Nullable Set<String> groups, String firstName, String lastName, String email,
-            String registrationNumber, String imageUrl, String langKey, boolean isInternal, boolean isLTI, boolean initialize) {
+            String registrationNumber, String imageUrl, String langKey, boolean isInternal, boolean initialize) {
         User newUser = new User();
 
         // Set random password for null passwords
@@ -125,7 +124,6 @@ public class UserCreationService {
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
         newUser.setInternal(isInternal);
-        newUser.setLTI(isLTI);
         newUser.setInitialize(initialize);
 
         final var authority = authorityRepository.findById(STUDENT.getAuthority()).get();

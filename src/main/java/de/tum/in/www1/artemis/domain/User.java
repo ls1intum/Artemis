@@ -111,9 +111,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "is_internal")
     private boolean isInternal;
 
-    @Column(name = "is_lti")
-    private boolean isLTI;
-
     @Column(name = "initialize")
     private boolean initialize;
 
@@ -362,13 +359,5 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setInternal(boolean internal) {
         isInternal = internal;
-    }
-
-    public boolean isLTI() {
-        return isLTI;
-    }
-
-    public void setLTI(boolean LTI) {
-        isLTI = LTI;
     }
 }

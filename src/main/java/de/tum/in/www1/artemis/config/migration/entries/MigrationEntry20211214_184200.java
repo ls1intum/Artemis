@@ -37,20 +37,17 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
         int listCount = (int) Math.floor(users.size() / 100f);
         for (int i = 0; i < listCount - 1; i++) {
             List<User> sublist = users.subList(i * listSize, (i + 1) * listSize);
-            setUserType(sublist);
+            setInternalStatus(sublist);
         }
         if (restCount > 0) {
             List<User> sublist = users.subList(listCount * listSize, (listCount * listSize) + restCount);
-            setUserType(sublist);
+            setInternalStatus(sublist);
         }
     }
 
-    private void setUserType(List<User> userList) {
+    private void setInternalStatus(List<User> userList) {
         userList = userList.stream().peek(user -> {
             String password = passwordService.decryptPassword(user);
-            boolean isLTI = (USER_GROUP_NAME_EDX != null && user.getGroups().contains(USER_GROUP_NAME_EDX))
-                    || (USER_GROUP_NAME_U4I != null && user.getGroups().contains(USER_GROUP_NAME_U4I));
-            user.setLTI(isLTI);
             user.setInternal(!password.isEmpty());
         }).toList();
 

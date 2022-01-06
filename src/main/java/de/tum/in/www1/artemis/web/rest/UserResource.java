@@ -26,9 +26,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
@@ -81,16 +81,16 @@ public class UserResource {
 
     private final AuthorityRepository authorityRepository;
 
-    private final LtiService ltiService;
+    private final LtiUserIdRepository ltiUserIdRepository;
 
     public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository, LtiService ltiService) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository, LtiUserIdRepository ltiUserIdRepository) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.authorityRepository = authorityRepository;
-        this.ltiService = ltiService;
+        this.ltiUserIdRepository = ltiUserIdRepository;
     }
 
     private static void checkUsernameAndPasswordValidity(String username, String password) {
@@ -308,7 +308,7 @@ public class UserResource {
         if (!user.isInitialize()) {
             return ResponseEntity.ok().body(new UserInitializationDTO());
         }
-        if (!user.isLTI()) {
+        if (ltiUserIdRepository.findByUser(user).isEmpty()) {
             user.setInitialize(false);
             userRepository.save(user);
             return ResponseEntity.ok().body(new UserInitializationDTO());

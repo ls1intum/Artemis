@@ -8,9 +8,6 @@
         <column name="is_internal" type="bit" defaultValue="1">
             <constraints nullable="false"/>
         </column>
-        <column name="is_lit" type="bit" defaultValue="0">
-            <constraints nullable="false"/>
-        </column>
     </addColumn>
 </changeSet>
 </databaseChangeLog>
