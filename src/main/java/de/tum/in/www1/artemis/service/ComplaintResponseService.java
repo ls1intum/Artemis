@@ -43,7 +43,7 @@ public class ComplaintResponseService {
      * Removes the empty complaint response and thus the lock for a given complaint
      *
      * The empty complaint response acts as a lock. Only the reviewer of the empty complaint response and instructors can resolve the complaint as long as the lock
-     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. This methods removes the current empty complaint response thus removing the lock
+     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods remove the current empty complaint response thus removing the lock
      *
      * @param complaint the complaint for which to remove the empty response for
      */
@@ -82,7 +82,7 @@ public class ComplaintResponseService {
      * Refreshes the empty complaint response for a given complaint that acts a lock
      *
      * The empty complaint response acts as a lock. Only the reviewer of the empty complaint response and instructors can resolve the complaint as long as the lock
-     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. This methods exchanges the current empty complaint response to a new one
+     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods exchange the current empty complaint response to a new one
      * thus updating the lock.
      *
      * This is possible in two cases:
@@ -156,7 +156,7 @@ public class ComplaintResponseService {
      * Resolves a complaint by filling in the empty complaint response attached to it
      *
      * The empty complaint response acts as a lock. Only the creator of the empty complaint response and instructors can resolve empty complaint response as long as the lock
-     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. This methods fill in the initial complaint response and either accepts
+     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods fill in the initial complaint response and either accepts
      * or denies the associated complaint, thus resolving the complaint
      *
      * @param updatedComplaintResponse complaint response containing the information necessary for resolving the complaint
@@ -206,7 +206,7 @@ public class ComplaintResponseService {
     }
 
     /**
-     * Checks if an user is blocked by a complaintResponse representing a lock
+     * Checks if a user is blocked by a complaintResponse representing a lock
      * @param complaintResponseRepresentingLock the complaintResponse representing a lock
      * @param user user to check
      * @return true if blocked by lock, false otherwise

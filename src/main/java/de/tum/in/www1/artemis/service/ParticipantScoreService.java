@@ -43,7 +43,7 @@ public class ParticipantScoreService {
     /**
      * This method represents a server based way to calculate a students achieved points / score in an exam.
      * <p>
-     * Currently both this server based calculation method and the traditional client side calculation method is used
+     * Currently, both this server based calculation method and the traditional client side calculation method is used
      * side-by-side in exam-scores.component.ts.
      * <p>
      * The goal is to switch completely to this much faster server based calculation if the {@link de.tum.in.www1.artemis.service.listeners.ResultListener}
@@ -67,7 +67,7 @@ public class ParticipantScoreService {
     /**
      * This method represents a server based way to calculate a students achieved points / score in a course.
      * <p>
-     * Currently both this server based calculation method and the traditional client side calculation method is used
+     * Currently, both this server based calculation method and the traditional client side calculation method is used
      * side-by-side in course-scores.component.ts.
      * <p>
      * The goal is to switch completely to this much faster server based calculation if the {@link de.tum.in.www1.artemis.service.listeners.ResultListener}
@@ -142,7 +142,7 @@ public class ParticipantScoreService {
         // calculating achieved score
         for (ScoreDTO scoreDTO : userIdToScores.values()) {
             scoreDTO.scoreAchieved = roundScoreSpecifiedByCourseSettings((scoreDTO.pointsAchieved / scoreCalculationDenominator) * 100.0, course);
-            // sending this for debugging purposes to find out why the scores calculation could be wrong
+            // sending this for debugging purposes to find out why the scores' calculation could be wrong
             scoreDTO.regularPointsAchievable = scoreCalculationDenominator;
         }
 
@@ -162,16 +162,16 @@ public class ParticipantScoreService {
         Set<Exercise> teamExercisesOfCourse = exercises.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.TEAM)).collect(Collectors.toSet());
 
         List<ParticipantScoreDTO> resultsIndividualExercises = studentScoreRepository.findAllByExerciseIn(individualExercisesOfCourse, pageable).stream()
-                .map(ParticipantScoreDTO::generateFromParticipantScore).collect(Collectors.toList());
+                .map(ParticipantScoreDTO::generateFromParticipantScore).toList();
         List<ParticipantScoreDTO> resultsTeamExercises = teamScoreRepository.findAllByExerciseIn(teamExercisesOfCourse, pageable).stream()
-                .map(ParticipantScoreDTO::generateFromParticipantScore).collect(Collectors.toList());
+                .map(ParticipantScoreDTO::generateFromParticipantScore).toList();
         return Stream.concat(resultsIndividualExercises.stream(), resultsTeamExercises.stream()).collect(Collectors.toList());
     }
 
     /**
      * Calculates various average statistics for every user / team that participated in the given exercises
      *
-     * @param exercises exercises for which to calcualte the statistics
+     * @param exercises exercises for which to calculate the statistics
      * @return DTOs containing the statistics for every user / team
      */
     public List<ParticipantScoreAverageDTO> getParticipantScoreAverageDTOs(Set<Exercise> exercises) {
