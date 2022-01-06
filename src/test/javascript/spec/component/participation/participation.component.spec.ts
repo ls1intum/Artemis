@@ -10,7 +10,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { of } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { Team } from 'app/entities/team.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
@@ -268,7 +268,7 @@ describe('ParticipationComponent', () => {
         tick();
 
         expect(updateDueDateStub).toHaveBeenCalledTimes(1);
-        expect(updateDueDateStub).toHaveBeenCalledWith(20, expectedSent);
+        expect(updateDueDateStub).toHaveBeenCalledWith(component.exercise, expectedSent);
         expect(component.participations).toEqual(expectedSent);
         expect(component.participationsChangedDueDate).toEqual(new Map());
         expect(component.isSaving).toBe(false);
@@ -351,7 +351,7 @@ describe('ParticipationComponent', () => {
             tick();
 
             expect(updateStub).toHaveBeenCalledTimes(1);
-            expect(updateStub).toHaveBeenCalledWith(exercise.id, participation);
+            expect(updateStub).toHaveBeenCalledWith(exercise1, participation);
         }));
 
         it('should not add a presentation score if the feature is disabled', fakeAsync(() => {
@@ -372,7 +372,7 @@ describe('ParticipationComponent', () => {
             tick();
 
             expect(updateStub).toHaveBeenCalledTimes(1);
-            expect(updateStub).toHaveBeenCalledWith(exercise.id, participation);
+            expect(updateStub).toHaveBeenCalledWith(exercise1, participation);
         }));
 
         it('should do nothing on removal of a presentation score if the feature is disabled', fakeAsync(() => {

@@ -4,17 +4,17 @@ import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { RepositoryService } from 'app/exercises/shared/result/repository.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { hasParticipationChanged } from 'app/overview/participation.utils';
 import { Result } from 'app/entities/result.model';
 import { MissingResultInfo } from 'app/exercises/shared/result/result.component';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged in user.

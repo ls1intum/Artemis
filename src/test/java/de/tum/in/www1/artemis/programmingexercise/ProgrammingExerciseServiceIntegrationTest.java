@@ -174,7 +174,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testAdminGetsResultsFromAllCourses() throws Exception {
         database.addCourseInOtherInstructionGroupAndExercise("Programming");
         final var search = database.configureSearch("Programming");

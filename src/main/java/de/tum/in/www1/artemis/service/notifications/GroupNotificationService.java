@@ -20,8 +20,8 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.notification.ExamNotificationTargetWithoutProblemStatement;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
@@ -229,7 +229,7 @@ public class GroupNotificationService {
 
     /**
      * Notify all groups but tutors about an exercise update.
-     * Tutors will only work on the exercise during the assesment therefore it is not urgent to inform them about changes beforehand.
+     * Tutors will only work on the exercise during the assessment therefore it is not urgent to inform them about changes beforehand.
      * Students, instructors, and editors should be notified about changed as quickly as possible.
      *
      * @param exercise         that has been updated
@@ -324,24 +324,24 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify tutor, editor and instructor groups about a new answer post for an exercise.
+     * Notify tutor, editor and instructor groups about a new reply post for an exercise.
      *
      * @param post that has been answered
      * @param answerPost that has been created
      * @param course that the post belongs to
      */
-    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost(Post post, AnswerPost answerPost, Course course) {
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewReplyForCoursePost(Post post, AnswerPost answerPost, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_COURSE_POST, post, course, answerPost.getAuthor());
     }
 
     /**
-     * Notify tutor, editor and instructor groups about a new answer post for an exercise.
+     * Notify tutor, editor and instructor groups about a new reply post for an exercise.
      *
      * @param post that has been answered
      * @param answerPost that has been created
      * @param course that the post belongs to
      */
-    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(Post post, AnswerPost answerPost, Course course) {
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewReplyForExercise(Post post, AnswerPost answerPost, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_EXERCISE_POST, post, course, answerPost.getAuthor());
     }
 
@@ -419,8 +419,9 @@ public class GroupNotificationService {
      */
     private void saveExamNotification(GroupNotification notification) {
         String originalTarget = notification.getTarget();
-        String targetWithoutProblemStatement = ExamNotificationTargetWithoutProblemStatement.getTargetWithoutProblemStatement(notification.getTarget());
-        notification.setTarget(targetWithoutProblemStatement);
+        NotificationTarget targetWithoutProblemStatement = notification.getTargetTransient();
+        targetWithoutProblemStatement.setProblemStatement(null);
+        notification.setTarget(targetWithoutProblemStatement.toJsonString());
         groupNotificationRepository.save(notification);
         notification.setTarget(originalTarget);
     }

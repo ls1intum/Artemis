@@ -537,7 +537,7 @@ public class CourseResource {
 
         List<Course> allCoursesToRegister = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations();
         return allCoursesToRegister.stream().filter(course -> {
-            // further check if course has been assigned to any organization and if yes,
+            // further, check if the course has been assigned to any organization and if yes,
             // check if user is member of at least one of them
             if (course.getOrganizations() != null && course.getOrganizations().size() > 0) {
                 return checkIfUserIsMemberOfCourseOrganizations(user, course);
@@ -545,7 +545,7 @@ public class CourseResource {
             else {
                 return true;
             }
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
     /**
@@ -928,7 +928,7 @@ public class CourseResource {
             courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
 
             var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, 4));
+            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, 4, ZonedDateTime.now()));
             courseDTOs.add(courseDTO);
         }
 
@@ -1454,10 +1454,10 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/statistics")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Integer[]> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex) {
+    public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 16));
+        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 16, ZonedDateTime.now()));
     }
 
     /**
@@ -1470,7 +1470,7 @@ public class CourseResource {
      *
      * @param courseId      the id of the course
      * @param studentDtos   the list of students (with at least registration number) who should get access to the course
-     * @param courseGroup   the group, the user has to be added to
+     * @param courseGroup   the group, the user has to be added to, either 'students', 'tutors', 'instructors' or 'editors'
      * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     @PostMapping("courses/{courseId}/{courseGroup}")

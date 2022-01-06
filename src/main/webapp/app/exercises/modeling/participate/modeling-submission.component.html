@@ -54,7 +54,7 @@
                 <div *ngIf="(!isActive || result) && modelingExercise && (!isLate || submission.submitted)" class="col-9">
                     <div class="flex flex-column h-100">
                         <jhi-modeling-assessment
-                            [model]="umlModel"
+                            [umlModel]="umlModel"
                             [resultFeedbacks]="assessmentResult?.feedbacks || []"
                             [diagramType]="modelingExercise.diagramType!"
                             [maxScore]="modelingExercise.maxPoints || 0"

@@ -114,15 +114,15 @@ public class AssessmentService {
      * @param exercise the exercise to which the submission and result belong and which potentially includes an assessment due date
      * @param user the user who initiates a request
      * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
-     * @param participation the participation to which the submission and result belongs to
-     * @return true of the the given user can override a potentially existing result
+     * @param participation the participation to which the submission and result belong to
+     * @return true if the given user can override a potentially existing result
      */
     public boolean isAllowedToCreateOrOverrideResult(Result existingResult, Exercise exercise, StudentParticipation participation, User user, boolean isAtLeastInstructor) {
 
         final boolean isExamMode = exercise.isExamExercise();
         ZonedDateTime assessmentDueDate;
 
-        // For exam exercises, tutors cannot override submissions when the publish result date is in the past (assessmentDueDate)
+        // For exam exercises, tutors cannot override submissions when the publishing result date is in the past (assessmentDueDate)
         if (isExamMode) {
             assessmentDueDate = exercise.getExerciseGroup().getExam().getPublishResultsDate();
         }
@@ -134,7 +134,7 @@ public class AssessmentService {
         // TODO make sure that tutors cannot assess the first assessment after the assessmentDueDate/publish result date (post). This is currently just used in the put request.
         // Check if no result is available (first assessment)
         if (existingResult == null) {
-            // Tutors can assess exam exercises only after the last student has finished the exam and before the publish result date
+            // Tutors can assess exam exercises only after the last student has finished the exam and before the publishing result date
             if (isExamMode && !isAtLeastInstructor) {
                 final Exam exam = exercise.getExerciseGroup().getExam();
                 ZonedDateTime latestExamDueDate = examDateService.getLatestIndividualExamEndDate(exam.getId());

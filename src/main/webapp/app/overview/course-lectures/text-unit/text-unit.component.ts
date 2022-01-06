@@ -11,8 +11,7 @@ import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
     styleUrls: ['../lecture-unit.component.scss'],
 })
 export class TextUnitComponent implements OnInit {
-    @Input()
-    textUnit: TextUnit;
+    @Input() textUnit: TextUnit;
     isCollapsed = true;
 
     formattedContent?: SafeHtml;
@@ -29,21 +28,21 @@ export class TextUnitComponent implements OnInit {
         }
     }
 
-    handleCollapse(event: any) {
+    handleCollapse(event: Event) {
         event.stopPropagation();
         this.isCollapsed = !this.isCollapsed;
     }
 
-    openPopup(event: any) {
+    openPopup(event: Event) {
         event.stopPropagation();
 
-        const win = window.open('about:blank', '_blank');
-        win!.document.write(`<html><head><title>${this.textUnit.name}</title>`);
-        win!.document.write(`<link rel="stylesheet" href="${SERVER_API_URL}public/content/github-markdown.css">`);
-        win!.document.write('</head><body class="markdown-body">');
-        win!.document.write('</body></html>');
-        win!.document.close();
-        win!.document.body.innerHTML = htmlForMarkdown(this.textUnit.content, []);
-        win!.focus();
+        const win = window.open('about:blank', '_blank')!;
+        win.document.write(`<html><head><title>${this.textUnit.name}</title>`);
+        win.document.write(`<link rel="stylesheet" href="${SERVER_API_URL}public/content/github-markdown.css">`);
+        win.document.write('</head><body class="markdown-body">');
+        win.document.write('</body></html>');
+        win.document.close();
+        win.document.body.innerHTML = htmlForMarkdown(this.textUnit.content, []);
+        win.focus();
     }
 }

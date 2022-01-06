@@ -1007,6 +1007,38 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
+     * Validates score settings
+     * 1. The maxScore needs to be greater than 0
+     * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
+     *
+     */
+    public void validateScoreSettings() {
+        // Check if max score is set
+        if (getMaxPoints() == null || getMaxPoints() <= 0) {
+            throw new BadRequestAlertException("The max score needs to be greater than 0", "Exercise", "maxScoreInvalid");
+        }
+
+        if (getBonusPoints() == null) {
+            // make sure the default value is set properly
+            setBonusPoints(0.0);
+        }
+
+        // Check IncludedInOverallScore
+        if (getIncludedInOverallScore() == null) {
+            throw new BadRequestAlertException("The IncludedInOverallScore-property must be set", "Exercise", "includedInOverallScoreNotSet");
+        }
+
+        if (!getIncludedInOverallScore().validateBonusPoints(getBonusPoints())) {
+            throw new BadRequestAlertException("The provided bonus points are not allowed", "Exercise", "bonusPointsInvalid");
+        }
+    }
+
+    public void validateGeneralSettings() {
+        validateScoreSettings();
+        validateDates();
+    }
+
+    /**
      * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
      * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
      */

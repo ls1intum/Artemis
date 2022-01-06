@@ -104,7 +104,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateQuizExercise() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
@@ -175,7 +175,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateQuizExerciseForExam() throws Exception {
         quizExercise = createQuizOnServerForExam();
 
@@ -245,7 +245,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createQuizExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
@@ -254,7 +254,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createQuizExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(null);
         request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
@@ -289,7 +289,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testEditQuizExercise() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
@@ -366,7 +366,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testEditQuizExerciseForExam() throws Exception {
         quizExercise = createQuizOnServerForExam();
 
@@ -443,7 +443,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateQuizExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
@@ -453,7 +453,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateQuizExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
         quizExercise.setCourse(null);
@@ -462,7 +462,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateQuizExercise_convertFromCourseToExamExercise_badRequest() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
@@ -474,7 +474,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateQuizExercise_convertFromExamToCourseExercise_badRequest() throws Exception {
         Course course = database.addEmptyCourse();
         database.addExerciseGroupWithExamAndCourse(true);
@@ -549,7 +549,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteQuizExercise() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
@@ -559,7 +559,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteQuizExerciseWithSubmittedAnswers() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1));
 
@@ -586,7 +586,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateNotExistingQuizExercise() throws Exception {
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null);
@@ -599,7 +599,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateRunningQuizExercise() throws Exception {
         Course course = database.createCourse();
         // create QuizExercise that already started
@@ -616,7 +616,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateExistingQuizExercise() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
@@ -625,7 +625,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetQuizExercise() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
@@ -640,7 +640,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetQuizExercise_asStudent() throws Exception {
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null);
@@ -674,7 +674,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetQuizExercisesForExam() throws Exception {
         quizExercise = createQuizOnServerForExam();
         var examId = quizExercise.getExerciseGroup().getExam().getId();
@@ -685,7 +685,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExamQuizExercise() throws Exception {
         quizExercise = createQuizOnServerForExam();
 
@@ -698,7 +698,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetExamQuizExercise_asTutor_forbidden() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         quizExercise = database.createQuizForExam(exerciseGroup);
@@ -707,7 +707,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRecalculateStatistics() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
@@ -784,7 +784,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testReevaluateStatistics() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null);
 
@@ -893,7 +893,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testReevaluateStatistics_Practice() throws Exception {
 
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null);
@@ -1012,7 +1012,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testReEvaluateQuizQuestionWithMoreSolutions() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2));
         QuizQuestion question = quizExercise.getQuizQuestions().get(2);
@@ -1049,7 +1049,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testPerformStartNow() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
@@ -1062,7 +1062,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testPerformSetVisible() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
@@ -1076,7 +1076,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testPerformOpenForPractice() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
@@ -1095,7 +1095,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test non instructors cant create quiz exercises
      * */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateQuizExerciseAsTutorForbidden() throws Exception {
         final Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), ZonedDateTime.now().plusHours(5));
@@ -1111,7 +1111,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test non instructors cant get all quiz exercises
      * */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllQuizExercisesAsStudentForbidden() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise("Titel");
         assertThat(course.getExercises()).isNotEmpty();
@@ -1128,11 +1128,11 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test non instructors cant perform start-now, set-visible or open-for-practice on quiz exercises
      * */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testPerformPutActionAsTutorForbidden() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
         assertThat(course.getExercises()).isNotEmpty();
-        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         assertThat(quizExercise.isIsOpenForPractice()).isFalse();
         // remove instructor rights
         User user = database.getUserByLogin("instructor1");
@@ -1140,17 +1140,17 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         userRepo.save(user);
 
         request.put("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, HttpStatus.FORBIDDEN);
-        assertThat(quizExerciseRepository.findByCourseId(course.getId()).get(0).isIsOpenForPractice()).isFalse();
+        assertThat(quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0).isIsOpenForPractice()).isFalse();
     }
 
     /**
      * test non instructors cant see the exercise if it is not set to visible
      * */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testViewQuizExerciseAsStudentNotVisible() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
-        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         assertThat(quizExercise.isVisibleToStudents()).isFalse();
         // remove instructor rights in course
         User user = database.getUserByLogin("instructor1");
@@ -1163,10 +1163,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test non instructors cant delete an exercise
      * */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteQuizExerciseAsNonInstructor() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
-        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         // remove instructor rights in course
         User user = database.getUserByLogin("instructor1");
         user.setGroups(Collections.emptySet());
@@ -1178,10 +1178,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test non tutors cant recalculate quiz exercise statistics
      * */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRecalculateStatisticsAsNonInstructor() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
-        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         // remove instructor rights in course
         User user = database.getUserByLogin("instructor1");
         user.setGroups(Collections.emptySet());
@@ -1193,10 +1193,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test students not in course cant get quiz exercises
      * */
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetQuizExerciseForStudentNotInCourseForbiden() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
-        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         // remove instructor rights in course
         User user = database.getUserByLogin("student1");
         user.setGroups(Collections.emptySet());
@@ -1208,7 +1208,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test non instructors in this course cant re-evaluate quiz exercises
      * */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testReEvaluateQuizAsNonInstructorForbidden() throws Exception {
         final Course course = database.createCourse();
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1));
@@ -1232,7 +1232,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test unfinished exam cannot be re-evaluated
      * */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUnfinishedExamReEvaluateBadRequest() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         quizExercise = database.createQuizForExam(exerciseGroup);
@@ -1247,7 +1247,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test non editor cant update quiz exercise
      * */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateQuizExerciseAsNonEditorForbidden() throws Exception {
         final Course course = database.createCourse();
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1));
@@ -1273,7 +1273,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test quiz exercise cant be edited to be invalid
      * */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateQuizExerciseInvalidBadRequest() throws Exception {
         final Course course = database.createCourse();
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1));
@@ -1295,7 +1295,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test update quiz exercise with notificationText
      * */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateQuizExerciseWithNotificationText() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
@@ -1324,7 +1324,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test redundant actions performed on quiz exercises will result in bad request
      * */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRedundantActionsBadRequest() throws Exception {
         // set-visible
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
@@ -1347,7 +1347,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test that a quiz question with an explanation within valid length can be created
      */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testMultipleChoiceQuizExplanationLength_Valid() throws Exception {
         int validityThreshold = 500;
 
@@ -1363,7 +1363,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test that a quiz question with an explanation without valid length can't be created
      */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testMultipleChoiceQuizExplanationLength_Invalid() throws Exception {
         int validityThreshold = 500;
 
@@ -1378,7 +1378,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test that a quiz question with an option with an explanation with valid length can be created
      */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testMultipleChoiceQuizOptionExplanationLength_Valid() throws Exception {
         int validityThreshold = 500;
 
@@ -1394,7 +1394,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * test that a quiz question with an option with an explanation without valid length can't be created
      */
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testMultipleChoiceQuizOptionExplanationLength_Inalid() throws Exception {
         int validityThreshold = 500;
 

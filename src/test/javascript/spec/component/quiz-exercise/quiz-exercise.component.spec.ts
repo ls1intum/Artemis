@@ -14,7 +14,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { AlertService } from 'app/core/util/alert.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 describe('QuizExercise Management Component', () => {
     let comp: QuizExerciseComponent;

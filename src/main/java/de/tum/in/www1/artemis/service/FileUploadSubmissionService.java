@@ -127,7 +127,7 @@ public class FileUploadSubmissionService extends SubmissionService {
 
         // Note: we can only delete the file, if the file name was changed (i.e. the new file name is different), otherwise this will cause issues
         if (oldFilePath != null) {
-            // check if we already had file associated with this submission
+            // check if we already had a file associated with this submission
             if (!oldFilePath.equals(newFilePath)) { // different name
                 // IMPORTANT: only delete the file when it has changed the name
                 fileUploadSubmission.onDelete();
@@ -173,7 +173,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         final var submissionId = submission.getId();
         var filename = file.getOriginalFilename();
         if (filename.contains("\\")) {
-            // this can happen on windows computers, then we want to take the last element of the file path
+            // this can happen on Windows computers, then we want to take the last element of the file path
             var components = filename.split("\\\\");
             filename = components[components.length - 1];
         }
@@ -207,7 +207,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @return the locked file upload submission
      */
     public FileUploadSubmission lockAndGetFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise, int correctionRound) {
-        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository.findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
+        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(submissionId);
 
         if (fileUploadSubmission.getLatestResult() == null || fileUploadSubmission.getLatestResult().getAssessor() == null) {
             checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());

@@ -7,10 +7,7 @@ import { Course } from 'app/entities/course.model';
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { MockTranslateService, TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../../test.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
@@ -26,9 +23,6 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('FileUploadExamSubmissionComponent', () => {
     let fixture: ComponentFixture<FileUploadExamSubmissionComponent>;
@@ -82,14 +76,14 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
         it('should initialize', () => {
             fixture.detectChanges();
-            expect(FileUploadExamSubmissionComponent).to.be.ok;
+            expect(FileUploadExamSubmissionComponent).not.toBeNull();
         });
 
         it('should show exercise title if any', () => {
             comp.exercise.title = 'Test Title';
             fixture.detectChanges();
             const el = fixture.debugElement.query((de) => de.nativeElement.textContent === comp.exercise.title);
-            expect(el).to.exist;
+            expect(el).not.toBeNull();
         });
 
         it('should show exercise max score if any', () => {
@@ -97,7 +91,7 @@ describe('FileUploadExamSubmissionComponent', () => {
             comp.exercise.maxPoints = maxScore;
             fixture.detectChanges();
             const el = fixture.debugElement.query((de) => de.nativeElement.textContent.includes(`[${maxScore} artemisApp.examParticipation.points]`));
-            expect(el).to.exist;
+            expect(el).not.toBeNull();
         });
 
         it('should show exercise bonus score if any', () => {
@@ -109,12 +103,12 @@ describe('FileUploadExamSubmissionComponent', () => {
             const el = fixture.debugElement.query((de) =>
                 de.nativeElement.textContent.includes(`[${maxScore} artemisApp.examParticipation.points, ${bonusPoints} artemisApp.examParticipation.bonus]`),
             );
-            expect(el).to.exist;
+            expect(el).not.toBeNull();
         });
         it('should show problem statement if there is any', () => {
             fixture.detectChanges();
             const el = fixture.debugElement.query((de) => de.nativeElement.textContent === mockExercise.problemStatement);
-            expect(el).to.exist;
+            expect(el).not.toBeNull();
         });
     });
 
@@ -123,12 +117,12 @@ describe('FileUploadExamSubmissionComponent', () => {
             resetComponent();
         });
         afterEach(() => {
-            sinon.restore();
+            jest.restoreAllMocks();
         });
         it('should call updateViewFromSubmission', () => {
-            const updateViewStub = sinon.stub(comp, 'updateViewFromSubmission');
+            const updateViewStub = jest.spyOn(comp, 'updateViewFromSubmission');
             comp.ngOnInit();
-            expect(updateViewStub).to.have.been.called;
+            expect(updateViewStub).toHaveBeenCalled();
         });
     });
 
@@ -137,7 +131,7 @@ describe('FileUploadExamSubmissionComponent', () => {
             resetComponent();
         });
         it('should return student submission', () => {
-            expect(comp.getSubmission()).to.deep.equal(mockSubmission);
+            expect(comp.getSubmission()).toEqual(mockSubmission);
         });
     });
 
@@ -146,7 +140,7 @@ describe('FileUploadExamSubmissionComponent', () => {
             resetComponent();
         });
         it('should return exercise', () => {
-            expect(comp.getExercise()).to.deep.equal(mockExercise);
+            expect(comp.getExercise()).toEqual(mockExercise);
         });
     });
 
@@ -157,7 +151,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         it('should update problem statement', () => {
             const newProblemStatement = 'new problem statement';
             comp.updateProblemStatement(newProblemStatement);
-            expect(comp.getExercise().problemStatement).to.equal(newProblemStatement);
+            expect(comp.getExercise().problemStatement).toEqual(newProblemStatement);
         });
     });
 
@@ -167,12 +161,12 @@ describe('FileUploadExamSubmissionComponent', () => {
             fixture.detectChanges();
         });
         afterEach(() => {
-            sinon.restore();
+            jest.restoreAllMocks();
         });
         it('should do nothing', () => {
             const jsonOfComponent = stringifyCircular(comp);
             comp.updateSubmissionFromView();
-            expect(stringifyCircular(comp)).to.deep.equal(jsonOfComponent);
+            expect(stringifyCircular(comp)).toEqual(jsonOfComponent);
         });
     });
 
@@ -182,11 +176,11 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
         it('should return true if isSynced false', () => {
             comp.studentSubmission.isSynced = false;
-            expect(comp.hasUnsavedChanges()).to.equal(true);
+            expect(comp.hasUnsavedChanges()).toEqual(true);
         });
         it('should return false if isSynced true', () => {
             comp.studentSubmission.isSynced = true;
-            expect(comp.hasUnsavedChanges()).to.equal(false);
+            expect(comp.hasUnsavedChanges()).toEqual(false);
         });
     });
 
@@ -196,21 +190,21 @@ describe('FileUploadExamSubmissionComponent', () => {
             fixture.detectChanges();
         });
         afterEach(() => {
-            sinon.restore();
+            jest.restoreAllMocks();
         });
         it('should do nothing if isSynced is false', () => {
             comp.studentSubmission.isSynced = false;
             comp.submissionFile = new File([], 'file2');
             comp.updateViewFromSubmission();
-            expect(comp.submissionFile).to.not.equal(undefined);
+            expect(comp.submissionFile).not.toBeUndefined();
         });
         it('should set submitted filename and file extension', () => {
             comp.studentSubmission.isSynced = true;
             comp.submissionFile = new File([], 'file2');
             comp.updateViewFromSubmission();
-            expect(comp.submittedFileName).to.equal('file1.png');
-            expect(comp.submittedFileExtension).to.equal('png');
-            expect(comp.submissionFile).to.equal(undefined);
+            expect(comp.submittedFileName).toEqual('file1.png');
+            expect(comp.submittedFileExtension).toEqual('png');
+            expect(comp.submissionFile).toEqual(undefined);
         });
     });
 
@@ -224,22 +218,22 @@ describe('FileUploadExamSubmissionComponent', () => {
         const submissionFile = new File([''], 'exampleSubmission.png');
         Object.defineProperty(submissionFile, 'size', { value: MAX_SUBMISSION_FILE_SIZE + 1, writable: false });
         comp.studentSubmission = createFileUploadSubmission();
-        const jhiErrorSpy = sinon.spy(alertService, 'error');
+        const jhiErrorSpy = jest.spyOn(alertService, 'error');
         const event = { target: { files: [submissionFile] } };
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
 
         // check that properties are set properly
-        expect(jhiErrorSpy.callCount).to.be.equal(1);
-        expect(comp.submissionFile).to.be.undefined;
-        expect(comp.studentSubmission!.filePath).to.be.undefined;
+        expect(jhiErrorSpy).toHaveBeenCalledTimes(1);
+        expect(comp.submissionFile).toBeUndefined();
+        expect(comp.studentSubmission!.filePath).toBeUndefined();
 
         // check if fileUploadInput is available
         const fileUploadInput = fixture.debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).to.exist;
-        expect(fileUploadInput.nativeElement.disabled).to.be.false;
-        expect(fileUploadInput.nativeElement.value).to.be.equal('');
-        sinon.restore();
+        expect(fileUploadInput).not.toBeNull();
+        expect(fileUploadInput.nativeElement.disabled).toBeFalse();
+        expect(fileUploadInput.nativeElement.value).toEqual('');
+        jest.restoreAllMocks();
     }));
 
     it('Incorrect file type can not be submitted', fakeAsync(() => {
@@ -252,26 +246,26 @@ describe('FileUploadExamSubmissionComponent', () => {
         // Only png and pdf types are allowed
         const submissionFile = new File([''], 'exampleSubmission.jpg');
         comp.studentSubmission = createFileUploadSubmission();
-        const jhiErrorSpy = sinon.spy(alertService, 'error');
+        const jhiErrorSpy = jest.spyOn(alertService, 'error');
         const event = { target: { files: [submissionFile] } };
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
 
         // check that properties are set properly
-        expect(jhiErrorSpy.callCount).to.be.equal(1);
-        expect(comp.submissionFile).to.be.undefined;
-        expect(comp.studentSubmission!.filePath).to.be.undefined;
+        expect(jhiErrorSpy).toHaveBeenCalledTimes(1);
+        expect(comp.submissionFile).toBeUndefined();
+        expect(comp.studentSubmission!.filePath).toBeUndefined();
 
         // check if fileUploadInput is available
         const fileUploadInput = fixture.debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).to.exist;
-        expect(fileUploadInput.nativeElement.disabled).to.be.false;
-        expect(fileUploadInput.nativeElement.value).to.be.equal('');
+        expect(fileUploadInput).not.toBeNull();
+        expect(fileUploadInput.nativeElement.disabled).toBeFalse();
+        expect(fileUploadInput.nativeElement.value).toEqual('');
 
         tick();
         fixture.destroy();
         flush();
-        sinon.restore();
+        jest.restoreAllMocks();
     }));
 
     describe('saveUploadedFile', () => {
@@ -280,22 +274,22 @@ describe('FileUploadExamSubmissionComponent', () => {
             fixture.detectChanges();
         });
         afterEach(() => {
-            sinon.restore();
+            jest.restoreAllMocks();
         });
         it('should just return if submissionFile is undefined', () => {
-            const updateStub = sinon.stub(fileUploadSubmissionService, 'update');
+            const updateStub = jest.spyOn(fileUploadSubmissionService, 'update');
             comp.saveUploadedFile();
-            expect(updateStub).to.not.have.been.called;
+            expect(updateStub).toHaveBeenCalledTimes(0);
         });
 
         it('should save if submissionFile is defined', () => {
             const newFilePath = 'new/path/image.png';
-            const updateStub = sinon.stub(fileUploadSubmissionService, 'update').returns(of(new HttpResponse({ body: { id: 1, filePath: newFilePath } })));
+            const updateStub = jest.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: { id: 1, filePath: newFilePath } })));
             comp.submissionFile = new File([], 'name.png');
-            expect(comp.studentSubmission.filePath).to.not.equal(newFilePath);
+            expect(comp.studentSubmission.filePath).not.toEqual(newFilePath);
             comp.saveUploadedFile();
-            expect(updateStub).to.have.been.called;
-            expect(comp.studentSubmission.filePath).to.deep.equal(newFilePath);
+            expect(updateStub).toHaveBeenCalled();
+            expect(comp.studentSubmission.filePath).toEqual(newFilePath);
         });
     });
 });
