@@ -10,6 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.mail.internet.MimeMessage;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -111,6 +113,8 @@ public class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitb
                 notificationSettingRepository.save(new NotificationSetting(user, false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY));
             });
         }
+
+        doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
     @AfterEach
