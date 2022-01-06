@@ -37,9 +37,7 @@ public class OrganizationService {
      */
     public void index(final Organization organization) {
         log.debug("Start indexing for organization: {}", organization.getName());
-        organization.getUsers().forEach(user -> {
-            userRepository.removeOrganizationFromUser(user.getId(), organization);
-        });
+        organization.getUsers().forEach(user -> userRepository.removeOrganizationFromUser(user.getId(), organization));
         userRepository.findAllMatchingEmailPattern(organization.getEmailPattern()).forEach(user -> {
             log.debug("User {} matches {} email pattern. Adding", user.getLogin(), organization.getName());
             userRepository.addOrganizationToUser(user.getId(), organization);

@@ -10,6 +10,8 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.mail.internet.MimeMessage;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -79,8 +81,6 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
 
     private List<String> archiveErrors;
 
-    private final static Long EXAM_ID = 42L;
-
     private final static String NOTIFICATION_TEXT = "notificationText";
 
     private final static ZonedDateTime FUTURISTIC_TIME = ZonedDateTime.now().plusHours(2);
@@ -146,6 +146,8 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
 
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         database.changeUser("instructor1");
+
+        doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
     @AfterEach
@@ -305,9 +307,10 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
 
     /**
      * Checks if an email was created and send
+     * @param times how often the email should have been sent
      */
-    private void verifyEmail() {
-        verify(javaMailSender, timeout(1000).times(1)).createMimeMessage();
+    private void verifyEmail(int times) {
+        verify(javaMailSender, timeout(1500).times(times)).createMimeMessage();
     }
 
     /**
@@ -336,7 +339,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
         groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotification(1, ATTACHMENT_CHANGE_TITLE);
 
-        verifyEmail();
+        verifyEmail(1);
     }
 
     /**
@@ -347,7 +350,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
         prepareNotificationSettingForTest(student, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
         groupNotificationService.notifyStudentGroupAboutExercisePractice(exercise);
         verifyRepositoryCallWithCorrectNotification(1, EXERCISE_PRACTICE_TITLE);
-        verifyEmail();
+        verifyEmail(1);
     }
 
     /**
@@ -376,7 +379,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
         prepareNotificationSettingForTest(student, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED);
         groupNotificationService.notifyAllGroupsAboutReleasedExercise(exercise);
         verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, EXERCISE_RELEASED_TITLE);
-        verifyEmail();
+        verifyEmail(1);
     }
 
     /**
@@ -459,7 +462,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
         prepareNotificationSettingForTest(student, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST);
         groupNotificationService.notifyAllGroupsAboutNewAnnouncement(post, course);
         verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_ANNOUNCEMENT_POST_TITLE);
-        verifyEmail();
+        verifyEmail(2);
     }
 
     /**
