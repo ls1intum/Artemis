@@ -14,7 +14,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -203,7 +203,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             return;
         }
         participation.presentationScore = 1;
-        this.participationService.update(this.exercise.id!, participation).subscribe({
+        this.participationService.update(this.exercise, participation).subscribe({
             error: () => this.alertService.error('artemisApp.participation.addPresentation.error'),
         });
     }
@@ -213,7 +213,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             return;
         }
         participation.presentationScore = 0;
-        this.participationService.update(this.exercise.id!, participation).subscribe({
+        this.participationService.update(this.exercise, participation).subscribe({
             error: () => this.alertService.error('artemisApp.participation.removePresentation.error'),
         });
     }
@@ -253,7 +253,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.isSaving = true;
 
         const changedParticipations = Array.from(this.participationsChangedDueDate.values());
-        this.participationService.updateIndividualDueDates(this.exercise.id!, changedParticipations).subscribe({
+        this.participationService.updateIndividualDueDates(this.exercise, changedParticipations).subscribe({
             next: (response) => {
                 response.body!.forEach((updatedParticipation) => {
                     const changedIndex = this.participations.findIndex((participation) => participation.id! === updatedParticipation.id!);

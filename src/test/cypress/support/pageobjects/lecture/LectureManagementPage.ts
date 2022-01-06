@@ -1,5 +1,5 @@
 import { BASE_API, DELETE, POST } from '../../constants';
-import day from 'dayjs';
+import day from 'dayjs/esm';
 
 export class LectureManagementPage {
     clickCreateLecture() {

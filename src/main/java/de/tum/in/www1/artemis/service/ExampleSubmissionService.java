@@ -122,7 +122,6 @@ public class ExampleSubmissionService {
      *
      * @param originalExerciseId        given exercise id in the request
      * @param exerciseIdInSubmission    exercise id in submission participation
-     * @throws BadRequestAlertException
      */
     public void checkGivenExerciseIdSameForSubmissionParticipation(long originalExerciseId, long exerciseIdInSubmission) {
         if (!Objects.equals(originalExerciseId, exerciseIdInSubmission)) {

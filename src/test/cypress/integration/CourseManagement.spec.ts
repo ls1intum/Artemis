@@ -1,3 +1,4 @@
+import { Interception } from 'cypress/types/net-stubbing';
 import { COURSE_BASE } from './../support/requests/CourseManagementRequests';
 import { GET, BASE_API, POST } from './../support/constants';
 import { artemis } from '../support/ArtemisTesting';
@@ -5,6 +6,7 @@ import { CourseManagementPage } from '../support/pageobjects/course/CourseManage
 import { NavigationBar } from '../support/pageobjects/NavigationBar';
 import { ArtemisRequests } from '../support/requests/ArtemisRequests';
 import { generateUUID } from '../support/utils';
+import { Course } from 'app/entities/course.model';
 
 // Requests
 const artemisRequests: ArtemisRequests = new ArtemisRequests();
@@ -32,13 +34,9 @@ describe('Course management', () => {
         let courseId: number;
 
         beforeEach(() => {
-            artemisRequests.courseManagement
-                .createCourse(false, courseName, courseShortName)
-                .its('body')
-                .then((body) => {
-                    expect(body).property('id').to.be.a('number');
-                    courseId = body.id;
-                });
+            artemisRequests.courseManagement.createCourse(false, courseName, courseShortName).then((response: Cypress.Response<Course>) => {
+                courseId = response.body!.id!;
+            });
         });
 
         it('Adds a student manually to the course', () => {
@@ -76,12 +74,9 @@ describe('Course management', () => {
             cy.get('#field_customizeGroupNamesEnabled').uncheck();
             cy.intercept(POST, BASE_API + 'courses').as('createCourseQuery');
             cy.get('#save-entity').click();
-            cy.wait('@createCourseQuery')
-                .its('response.body')
-                .then((body) => {
-                    expect(body).property('id').to.be.a('number');
-                    courseId = body.id;
-                });
+            cy.wait('@createCourseQuery').then((request: Interception) => {
+                courseId = request.response!.body.id!;
+            });
             courseManagementPage.getCourseCard(courseShortName).should('be.visible');
         });
 

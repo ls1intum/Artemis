@@ -6,13 +6,12 @@ import { HttpClient } from '@angular/common/http';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { getExercise, Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
-import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/overview/participation.utils';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { Result } from 'app/entities/result.model';
@@ -23,6 +22,7 @@ import { captureException } from '@sentry/browser';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faCircleNotch, faExclamationCircle, faFile } from '@fortawesome/free-solid-svg-icons';
 import { faCheckCircle, faCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercises/shared/participation/participation.utils';
 
 /**
  * Enumeration object representing the possible options that

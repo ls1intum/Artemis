@@ -40,6 +40,7 @@
             },
             "detail": {
                 "feedback": "Feedback",
+                "feedbackWithColon": "Feedback:",
                 "scoreFor": "Assessment for",
                 "tutorComment": "Tutor Comment:"
             },

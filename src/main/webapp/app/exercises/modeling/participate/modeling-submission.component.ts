@@ -29,7 +29,7 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
 import { Subject, Subscription } from 'rxjs';
 import { omit } from 'lodash-es';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';

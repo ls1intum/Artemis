@@ -16,7 +16,7 @@ export class LayoutService {
         return this.breakpointObserver.observe(this.breakpointService.getBreakpoints()).pipe(map((observeResponse) => this.parseBreakpointsResponse(observeResponse.breakpoints)));
     }
 
-    parseBreakpointsResponse(breakpoints: { [p: string]: boolean }): string[] {
+    parseBreakpointsResponse(breakpoints: { [key: string]: boolean }): string[] {
         this.activeBreakpoints = [];
 
         Object.keys(breakpoints).map((key) => {

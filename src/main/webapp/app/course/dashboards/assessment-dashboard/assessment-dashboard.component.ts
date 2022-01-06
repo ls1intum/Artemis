@@ -118,7 +118,6 @@ export class AssessmentDashboardComponent implements OnInit {
 
                 // get all exercises
                 const exercises: Exercise[] = [];
-                // eslint-disable-next-line chai-friendly/no-unused-expressions
                 this.exam.exerciseGroups!.forEach((exerciseGroup) => {
                     if (exerciseGroup.exercises) {
                         exercises.push(...exerciseGroup.exercises);

@@ -1,17 +1,17 @@
 import { SimpleChanges } from '@angular/core';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { hasResults } from 'app/overview/participation.utils';
 import { Observable, of, from } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseServicable } from 'app/exercises/shared/exercise/exercise.service';
 import { map, mergeWith, mergeMap, takeUntil } from 'rxjs/operators';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
+import { hasResults } from 'app/exercises/shared/participation/participation.utils';
 
 export enum EditType {
     IMPORT,

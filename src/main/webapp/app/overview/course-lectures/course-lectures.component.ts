@@ -4,7 +4,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
