@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +35,7 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
 
     @BeforeEach
     public void setup() {
-        startDate = ZonedDateTime.parse("2007-12-03T10:15:30+01:00[Europe/Paris]");
+        startDate = ZonedDateTime.of(2021, 11, 15, 0, 0, 0, 0, ZonedDateTime.now().getZone());
     }
 
     /**
@@ -47,43 +48,40 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
         // we need an authorization object for the database queries
         SecurityUtils.setAuthorizationObject();
         // end date for the method call
-        var endDate = spanType == SpanType.WEEK ? startDate.plusDays(7) : startDate.plusYears(1);
+        var endDate = spanType == SpanType.WEEK ? ZonedDateTime.of(2021, 11, 21, 23, 59, 59, 0, startDate.getZone())
+                : ZonedDateTime.of(2022, 2, 6, 23, 59, 59, 0, startDate.getZone());
         // we need to add users in order to get non-empty results returned
         database.addUsers(2, 0, 0, 0);
         // the persistentEvents simulate a log in of a student
-        // here we simulate that student1 logged in on 03.12.07
+        // here we simulate that student1 logged in on 15.11.21
         var persistentEventStudent1 = setupPersistentEvent("student1", startDate);
-        // here we simulate student1 logged in again on 07.12.07 for the weekly view and for the quarter view a login on 03.02.08
+        // here we simulate student1 logged in again on 19.11.21 for the weekly view and for the quarter view a login on 15.01.22
         var persistentEventStudent1Later = spanType == SpanType.WEEK ? setupPersistentEvent("student1", startDate.plusDays(4))
                 : setupPersistentEvent("student1", startDate.plusMonths(2));
-        // here we simulate that student2 logged in on 07.12.07
+        // here we simulate that student2 logged in on 19.11.21
         var persistentEventStudent2 = setupPersistentEvent("student2", startDate.plusDays(4));
         // we simulate the same case again in order to have duplication in the result of the query
         var persistentEventStudent2Duplicate = setupPersistentEvent("student2", startDate.plusDays(4).plusHours(2));
         // save the events
         persistenceAuditEventRepository.saveAll(List.of(persistentEventStudent1, persistentEventStudent1Later, persistentEventStudent2, persistentEventStudent2Duplicate));
         // this is the entry that should be returned by both span types
-        StatisticsEntry entry031207 = new StatisticsEntry();
-        entry031207.setDay(ZonedDateTime.parse("2007-12-03T00:00:00+01:00[Europe/Paris]"));
+        StatisticsEntry entry191121 = new StatisticsEntry(ZonedDateTime.of(2021, 11, 19, 0, 0, 0, 0, startDate.getZone()), 2);
 
         // needed as entry method due to private
-        List<StatisticsEntry> entryList = statisticsRepository.getNumberOfEntriesPerTimeSlot(spanType, startDate, endDate, GraphType.LOGGED_IN_USERS, StatisticsView.ARTEMIS, null);
+        List<StatisticsEntry> entryList = statisticsRepository.getNumberOfEntriesPerTimeSlot(GraphType.LOGGED_IN_USERS, spanType, startDate, endDate, StatisticsView.ARTEMIS, null);
 
         if (spanType == SpanType.WEEK) {
-            StatisticsEntry entry071207 = new StatisticsEntry(ZonedDateTime.parse("2007-12-07T00:00:00+01:00[Europe/Paris]"), 2);
-            entry031207.setAmount(1);
-
-            assertThat(entryList).as("Result contains the entry for 07.12.07").anyMatch((entry) -> compareStatisticsEntries(entry, entry071207));
+            StatisticsEntry entry151121 = new StatisticsEntry(startDate, 1);
+            assertThat(entryList).as("Result contains the entry for 15.11.21").anyMatch((entry) -> compareStatisticsEntries(entry, entry151121));
         }
         else {
-            entry031207.setAmount(2);
-            StatisticsEntry entry290108 = new StatisticsEntry(ZonedDateTime.parse("2008-01-29T00:00+01:00[Europe/Paris]"), 1);
+            StatisticsEntry entry150122 = new StatisticsEntry(ZonedDateTime.of(2022, 1, 15, 0, 0, 0, 0, startDate.getZone()), 1);
+            assertThat(entryList).as("Result contains the entry for 15.01.22").anyMatch((entry) -> compareStatisticsEntries(entry, entry150122));
 
-            assertThat(entryList).as("Result contains the entry for 29.01.08").anyMatch((entry) -> compareStatisticsEntries(entry, entry290108));
         }
 
         assertThat(entryList).as("Result has 2 entries for two time slots").hasSize(2);
-        assertThat(entryList).as("Result contains the entry for 03.12.07").anyMatch((entry) -> compareStatisticsEntries(entry, entry031207));
+        assertThat(entryList).as("Result contains the entry for 19.11.21").anyMatch((entry) -> compareStatisticsEntries(entry, entry191121));
 
         database.resetDatabase();
         persistenceAuditEventRepository.deleteAll();
@@ -101,42 +99,41 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
 
         // depending on the graph type, we inject the view that is not supported for it
         StatisticsView view = graphType == GraphType.POSTS || graphType == GraphType.RESOLVED_POSTS ? StatisticsView.ARTEMIS : StatisticsView.EXERCISE;
-        assertThrows(UnsupportedOperationException.class, () -> statisticsRepository.getNumberOfEntriesPerTimeSlot(SpanType.WEEK, startDate, endDate, graphType, view, null));
+        assertThrows(UnsupportedOperationException.class, () -> statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, SpanType.WEEK, startDate, endDate, view, null));
     }
 
     /**
      * Tests mergeResultsIntoArrayForYear() if start date is in a different year than the statistics entry date
      */
     @Test
-    public void testMergeResultsIntoArrayForYear_differentYear_and_differentQuarter() {
+    public void testDSortDataIntoMonths_differentYear() {
         List<StatisticsEntry> outcome = setupStatisticsEntryList();
         // the start time is in a different year
-        ZonedDateTime startDate = ZonedDateTime.parse("2020-12-03T10:15:30+01:00[Europe/Paris]");
-        Integer[] resultYear = { 0, 0, 0, 0, 42, 0, 0, 0, 0, 0, 0, 0 };
-        Integer[] expectedResultYear = { 0, 0, 0, 0, 42, 0, 0, 0, 0, 0, 0, 123 };
-        Integer[] returnedResultYear = statisticsRepository.mergeResultsIntoArrayForYear(outcome, resultYear, startDate);
+        ZonedDateTime date = ZonedDateTime.of(2021, 12, 1, 0, 0, 0, 0, startDate.getZone());
+        List<Integer> resultYear = Arrays.asList(0, 0, 0, 0, 42, 0, 0, 0, 0, 0, 0, 0);
+        List<Integer> expectedResultYear = Arrays.asList(0, 0, 0, 123, 42, 0, 0, 0, 0, 0, 0, 0);
+        statisticsRepository.sortDataIntoMonths(outcome, resultYear, date);
 
-        assertThat(returnedResultYear).as("Bucket 11 now has value for the entry date (123)").isEqualTo(expectedResultYear);
+        assertThat(resultYear).as("Bucket 4 now has value for the entry date (123)").isEqualTo(expectedResultYear);
     }
 
     /**
      * Tests mergeResultsIntoArrayForQuarter() if start date is in a different year than the statistics entry date
      */
     @Test
-    public void testMergeResultsIntoArrayForQuarter_differentYear() {
-        startDate.plusYears(13);
-        List<StatisticsEntry> outcome = setupStatisticsEntryList();
+    public void testSortDataIntoWeeks_differentYear() {
         // the start time is in a different year
-        Integer[] resultQuarter = new Integer[53];
-        Integer[] expectedResultQuarter = new Integer[53];
+        List<StatisticsEntry> outcome = setupStatisticsEntryList();
+        List<Integer> resultYear = new ArrayList<>();
+        List<Integer> expectedResultYear = new ArrayList<>();
         for (int i = 0; i < 53; i++) {
-            resultQuarter[i] = 0;
-            expectedResultQuarter[i] = i != 48 ? 0 : 123;
+            resultYear.add(0);
+            expectedResultYear.add(i != 15 ? 0 : 123);
         }
 
-        Integer[] returnedResultQuarter = statisticsRepository.mergeResultsIntoArrayForQuarter(outcome, resultQuarter, startDate);
+        statisticsRepository.sortDataIntoWeeks(outcome, resultYear, startDate);
 
-        assertThat(returnedResultQuarter).as("Bucket 48 now has value for the entry date (123)").isEqualTo(expectedResultQuarter);
+        assertThat(resultYear).as("Bucket 15 now has value for the entry date (123)").isEqualTo(expectedResultYear);
     }
 
     /**
@@ -146,6 +143,7 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
      * @return true if both entries contain the same day and amount, false otherwise
      */
     private boolean compareStatisticsEntries(StatisticsEntry entry1, StatisticsEntry entry2) {
+        printEntry(entry1, entry2);
         return entry1.getDay().toString().equals(entry2.getDay().toString()) && entry1.getAmount() == entry2.getAmount();
     }
 
@@ -155,7 +153,7 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
      */
     private List<StatisticsEntry> setupStatisticsEntryList() {
         StatisticsEntry entry = new StatisticsEntry();
-        ZonedDateTime date = ZonedDateTime.parse("2021-11-03T10:15:30+01:00[Europe/Paris]");
+        ZonedDateTime date = ZonedDateTime.of(2022, 3, 4, 23, 59, 59, 0, startDate.getZone());
         entry.setDay(date);
         entry.setAmount(123);
         var list = new ArrayList<StatisticsEntry>();
@@ -177,5 +175,9 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
         persistentEvent.setAuditEventDate(Instant.from(date));
 
         return persistentEvent;
+    }
+
+    private void printEntry(StatisticsEntry entry1, StatisticsEntry entry2) {
+        System.out.println(entry1.getDay().toString() + ": " + entry1.getAmount() + " - expected: " + entry2.getDay().toString() + ": " + entry2.getAmount());
     }
 }
