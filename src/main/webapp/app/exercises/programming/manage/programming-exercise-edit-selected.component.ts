@@ -4,7 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
@@ -32,7 +31,6 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
         private translateService: TranslateService,
         private alertService: AlertService,
         private programmingExerciseService: ProgrammingExerciseService,
-        private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
     ) {}
 
     ngOnInit(): void {
