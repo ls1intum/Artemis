@@ -168,38 +168,12 @@ describe('ModelingAssessmentEditorComponent', () => {
             const response = new HttpErrorResponse({ status: 403 });
             modelingSubmissionSpy.mockReturnValue(throwError(response));
 
-            const accountSpy = jest.spyOn(mockAuth, 'hasAnyAuthorityDirect');
-            accountSpy.mockReturnValue(true);
-
             component.ngOnInit();
             tick(500);
             expect(modelingSubmissionSpy).toHaveBeenCalledTimes(1);
-            expect(accountSpy).toHaveBeenCalledTimes(2);
             modelingSubmissionSpy.mockRestore();
-            accountSpy.mockRestore();
         }));
     });
-
-    it('should propagate isAtLeastInstructor', fakeAsync(() => {
-        const course = new Course();
-        course.isAtLeastInstructor = true;
-        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-        mockAuth.isAtLeastInstructorInCourse(course);
-        component['checkPermissions']();
-        fixture.detectChanges();
-        expect(component.isAtLeastInstructor).toBeTrue();
-
-        let assessmentLayoutComponent: AssessmentHeaderComponent = fixture.debugElement.query(By.directive(AssessmentLayoutComponent)).componentInstance;
-        expect(assessmentLayoutComponent.isAtLeastInstructor).toBeTrue();
-
-        course.isAtLeastInstructor = false;
-        mockAuth.isAtLeastInstructorInCourse(course);
-        component['checkPermissions']();
-        fixture.detectChanges();
-        expect(component.isAtLeastInstructor).toBeFalse();
-        assessmentLayoutComponent = fixture.debugElement.query(By.directive(AssessmentLayoutComponent)).componentInstance;
-        expect(assessmentLayoutComponent.isAtLeastInstructor).toBeFalse();
-    }));
 
     describe('should test the overwrite access rights and return true', () => {
         it('tests the method with instructor rights', fakeAsync(() => {
@@ -207,6 +181,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.ngOnInit();
             tick(500);
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+            component.modelingExercise.isAtLeastInstructor = true;
             expect(component.canOverride).toBeTrue();
         }));
 
