@@ -271,4 +271,21 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     default Course findByIdWithExercisesAndLecturesElseThrow(long courseId) {
         return findWithEagerExercisesAndLecturesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
+
+    /**
+     * Utility method used to check whether a user is member of at least one organization of a given course
+     * @param user the user to check
+     * @param course the course to check
+     * @return true if the user is member of at least one organization of the course. false otherwise
+     */
+    default boolean checkIfUserIsMemberOfCourseOrganizations(User user, Course course) {
+        boolean isMember = false;
+        for (Organization organization : findWithEagerOrganizationsElseThrow(course.getId()).getOrganizations()) {
+            if (user.getOrganizations().contains(organization)) {
+                isMember = true;
+                break;
+            }
+        }
+        return isMember;
+    }
 }
