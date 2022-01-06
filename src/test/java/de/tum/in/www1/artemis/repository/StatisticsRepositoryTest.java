@@ -143,7 +143,6 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
      * @return true if both entries contain the same day and amount, false otherwise
      */
     private boolean compareStatisticsEntries(StatisticsEntry entry1, StatisticsEntry entry2) {
-        printEntry(entry1, entry2);
         return entry1.getDay().toString().equals(entry2.getDay().toString()) && entry1.getAmount() == entry2.getAmount();
     }
 
@@ -175,9 +174,5 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
         persistentEvent.setAuditEventDate(Instant.from(date));
 
         return persistentEvent;
-    }
-
-    private void printEntry(StatisticsEntry entry1, StatisticsEntry entry2) {
-        System.out.println(entry1.getDay().toString() + ": " + entry1.getAmount() + " - expected: " + entry2.getDay().toString() + ": " + entry2.getAmount());
     }
 }
