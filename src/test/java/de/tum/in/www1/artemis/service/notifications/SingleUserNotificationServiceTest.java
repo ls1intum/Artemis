@@ -22,8 +22,8 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
-import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -41,8 +41,6 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
     @Autowired
     private ExerciseRepository exerciseRepository;
 
-    private Notification capturedNotification;
-
     private User user;
 
     private FileUploadExercise fileUploadExercise;
@@ -53,7 +51,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
 
     private Exercise exercise;
 
-    private PlagiarismComparison plagiarismComparison;
+    private PlagiarismComparison<TextSubmissionElement> plagiarismComparison;
 
     private Result result;
 
