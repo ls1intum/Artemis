@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
@@ -31,7 +30,6 @@ import de.jplag.exceptions.ExitException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -200,157 +198,19 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * Validates the course and programming exercise short name.
-     * 1. Check presence and length of exercise short name
-     * 2. Check presence and length of course short name
-     * 3. Find forbidden patterns in exercise short name
-     * 4. Check that the short name doesn't already exist withing course or exam exercises
-     *
-     * @param programmingExercise Programming exercise to be validated
-     * @param course              Course of the programming exercise
-     */
-    private void validateCourseAndExerciseShortName(ProgrammingExercise programmingExercise, Course course) {
-        // Check if exercise shortname is set
-        if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
-            throw new BadRequestAlertException("The shortname of the programming exercise is not set or too short", "Exercise", "programmingExerciseShortnameInvalid");
-        }
-
-        // Check if course shortname is set
-        if (course.getShortName() == null || course.getShortName().length() < 3) {
-            throw new BadRequestAlertException("The shortname of the course is not set or too short", "Exercise", "courseShortnameInvalid");
-        }
-
-        // Check if exercise shortname matches regex
-        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
-        if (!shortNameMatcher.matches()) {
-            throw new BadRequestAlertException("The shortname is invalid", "Exercise", "shortnameInvalid");
-        }
-
-        // NOTE: we have to cover two cases here: exercises directly stored in the course and exercises indirectly stored in the course (exercise -> exerciseGroup -> exam ->
-        // course)
-        long numberOfProgrammingExercisesWithSameShortName = programmingExerciseRepository.countByShortNameAndCourse(programmingExercise.getShortName(), course)
-                + programmingExerciseRepository.countByShortNameAndExerciseGroupExamCourse(programmingExercise.getShortName(), course);
-        if (numberOfProgrammingExercisesWithSameShortName > 0) {
-            throw new BadRequestAlertException("A programming exercise with the same short name already exists. Please choose a different short name.", "Exercise",
-                    "shortnameAlreadyExists");
-        }
-    }
-
-    /**
-     * Validate the general course settings.
-     * 1. Validate the title
-     * 2. Validate the course and programming exercise short name.
-     *
-     * @param programmingExercise Programming exercise to be validated
-     * @param course              Course of the programming exercise
-     */
-    private void validateCourseSettings(ProgrammingExercise programmingExercise, Course course) {
-        validateTitle(programmingExercise, course);
-        validateCourseAndExerciseShortName(programmingExercise, course);
-    }
-
-    /**
-     * Validate the programming exercise title.
-     * 1. Check presence and length of exercise title
-     * 2. Find forbidden patterns in exercise title
-     *
-     * @param programmingExercise Programming exercise to be validated
-     * @param course              Course of the programming exercise
-     */
-    private void validateTitle(ProgrammingExercise programmingExercise, Course course) {
-        // Check if exercise title is set
-        if (programmingExercise.getTitle() == null || programmingExercise.getTitle().length() < 3) {
-            throw new BadRequestAlertException("The title of the programming exercise is too short", "Exercise", "programmingExerciseTitleInvalid");
-        }
-
-        // Check if the exercise title matches regex
-        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(programmingExercise.getTitle());
-        if (!titleMatcher.matches()) {
-            throw new BadRequestAlertException("The title is invalid", "Exercise", "titleInvalid");
-        }
-
-        // Check that the exercise title is unique among all programming exercises in the course, otherwise the corresponding project in the VCS system cannot be generated
-        long numberOfProgrammingExercisesWithSameTitle = programmingExerciseRepository.countByTitleAndCourse(programmingExercise.getTitle(), course)
-                + programmingExerciseRepository.countByTitleAndExerciseGroupExamCourse(programmingExercise.getTitle(), course);
-        if (numberOfProgrammingExercisesWithSameTitle > 0) {
-            throw new BadRequestAlertException("A programming exercise with the same title already exists. Please choose a different title.", "Exercise", "titleAlreadyExists");
-        }
-    }
-
-    /**
-     * Validates general programming exercise settings
-     * 1. Validates the programming language
-     *
-     * @param programmingExercise exercise to validate
-     */
-    private void validateProgrammingSettings(ProgrammingExercise programmingExercise) {
-
-        // Check if a participation mode was selected
-        if (!Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(programmingExercise.isAllowOfflineIde())) {
-            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", "Exercise", "noParticipationModeAllowed");
-        }
-
-        // Check if Xcode has no online code editor enabled
-        if (ProjectType.XCODE.equals(programmingExercise.getProjectType()) && Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor())) {
-            throw new BadRequestAlertException("The online editor is not allowed for Xcode programming exercises", "Exercise", "noParticipationModeAllowed");
-        }
-
-        // Check if programming language is set
-        if (programmingExercise.getProgrammingLanguage() == null) {
-            throw new BadRequestAlertException("No programming language was specified", "Exercise", "programmingLanguageNotSet");
-        }
-    }
-
-    /**
      * Validates static code analysis settings
-     * 1. The flag staticCodeAnalysisEnabled must not be null
-     * 2. Static code analysis and sequential test runs can't be active at the same time
-     * 3. Static code analysis can only be enabled for supported programming languages
-     * 4. Static code analysis max penalty must only be set if static code analysis is enabled
-     * 5. Static code analysis max penalty must be positive
      *
      * @param programmingExercise exercise to validate
      */
     private void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-
-        // Check if the static code analysis flag was set
-        if (programmingExercise.isStaticCodeAnalysisEnabled() == null) {
-            throw new BadRequestAlertException("The static code analysis flag must be set to true or false", "Exercise", "staticCodeAnalysisFlagNotSet");
-        }
-
-        // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
-        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && programmingExercise.hasSequentialTestRuns()) {
-            throw new BadRequestAlertException("The static code analysis with sequential test runs is not supported at the moment", "Exercise", "staticCodeAnalysisAndSequential");
-        }
-
-        // Check if the programming language supports static code analysis
-        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.isStaticCodeAnalysis()) {
-            throw new BadRequestAlertException("The static code analysis is not supported for this programming language", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
-        }
-
-        // Check that Xcode has no SCA enabled
-        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
-            throw new BadRequestAlertException("The static code analysis is not supported for Xcode programming exercises", "Exercise",
-                    "staticCodeAnalysisNotSupportedForLanguage");
-        }
-
-        // Static code analysis max penalty must only be set if static code analysis is enabled
-        if (Boolean.FALSE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && programmingExercise.getMaxStaticCodeAnalysisPenalty() != null) {
-            throw new BadRequestAlertException("Max static code analysis penalty must only be set if static code analysis is enabled", "Exercise",
-                    "staticCodeAnalysisDisabledButPenaltySet");
-        }
-
-        // Static code analysis max penalty must be positive
-        if (programmingExercise.getMaxStaticCodeAnalysisPenalty() != null && programmingExercise.getMaxStaticCodeAnalysisPenalty() < 0) {
-            throw new BadRequestAlertException("The static code analysis penalty must not be negative", "Exercise", "staticCodeAnalysisPenaltyNotNegative");
-        }
+        programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
     }
 
     /**
-     * POST /programming-exercises/setup : Setup a new programmingExercise (with all needed repositories etc.)
+     * POST /programming-exercises/setup : Set up a new programmingExercise (with all needed repositories etc.)
      *
-     * @param programmingExercise the programmingExercise to setup
+     * @param programmingExercise the programmingExercise to set up
      * @return the ResponseEntity with status 201 (Created) and with body the new programmingExercise, or with status 400 (Bad Request) if the parameters are invalid
      */
     @PostMapping(Endpoints.SETUP)
@@ -368,7 +228,7 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         programmingExercise.validateGeneralSettings();
-        validateProgrammingSettings(programmingExercise);
+        programmingExercise.validateProgrammingSettings();
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
@@ -416,7 +276,7 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
 
-        validateCourseSettings(programmingExercise, course);
+        programmingExerciseRepository.validateCourseSettings(programmingExercise, course);
         validateStaticCodeAnalysisSettings(programmingExercise);
 
         programmingExercise.generateAndSetProjectKey();
@@ -502,7 +362,7 @@ public class ProgrammingExerciseResource {
 
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         newExercise.validateGeneralSettings();
-        validateProgrammingSettings(newExercise);
+        newExercise.validateProgrammingSettings();
         validateStaticCodeAnalysisSettings(newExercise);
 
         final var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -510,7 +370,7 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         // Validate course settings
-        validateCourseSettings(newExercise, course);
+        programmingExerciseRepository.validateCourseSettings(newExercise, course);
 
         final var optionalOriginalProgrammingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(sourceExerciseId);
@@ -979,7 +839,7 @@ public class ProgrammingExerciseResource {
      * POST /programming-exercises/:exerciseId/export-repos-by-participation-ids/:participationIds : sends all submissions from participation ids as zip
      *
      * @param exerciseId              the id of the exercise to get the repos from
-     * @param participationIds        the participationIds seperated via semicolon to get their submissions (used for double blind assessment)
+     * @param participationIds        the participationIds seperated via semicolon to get their submissions (used for double-blind assessment)
      * @param repositoryExportOptions the options that should be used for the export. Export all students is not supported here!
      * @return ResponseEntity with status
      * @throws IOException if submissions can't be zippedRequestBody
@@ -1299,7 +1159,7 @@ public class ProgrammingExerciseResource {
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);
 
-        // check that the exercise is exist for given id
+        // check that the exercise exists for given id
         programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, programmingExercise);
