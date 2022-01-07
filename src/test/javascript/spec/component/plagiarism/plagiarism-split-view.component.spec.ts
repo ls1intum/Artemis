@@ -100,14 +100,13 @@ describe('Plagiarism Split View Component', () => {
         expect(comp.parseTextMatches).toHaveBeenCalledTimes(1);
     });
 
-    // TODO: for some reason this test does not work
-    // it('should subscribe to the split control subject', () => {
-    //     comp.exercise = textExercise;
-    //     jest.spyOn(splitControlSubject, 'subscribe');
-    //
-    //     fixture.detectChanges();
-    //     expect(comp.splitControlSubject.subscribe).toHaveBeenCalled();
-    // });
+    it('should subscribe to the split control subject', () => {
+        comp.exercise = textExercise;
+        jest.spyOn(splitControlSubject, 'subscribe');
+
+        comp.ngOnInit();
+        expect(comp.splitControlSubject.subscribe).toHaveBeenCalled();
+    });
 
     it('should collapse the left pane', () => {
         comp.exercise = textExercise;
@@ -172,12 +171,31 @@ describe('Plagiarism Split View Component', () => {
 
     it('should map matches to elements', () => {
         const matches = [
-            { start: 0, length: 5 },
-            { start: 10, length: 20 },
+            { start: 0, length: 2 },
+            { start: 0, length: 0 },
+            { start: 3, length: 3 },
         ];
+        const textSubmissionElements = [
+            { file: '', column: 1, line: 1 },
+            { file: '', column: 2, line: 2 },
+            { file: '', column: 3, line: 3 },
+            { file: '', column: 4, line: 4 },
+            { file: '', column: 5, line: 5 },
+            { file: '', column: 6, line: 6 },
+            { file: '', column: 7, line: 7 },
+            { file: '', column: 8, line: 8 },
+            { file: '', column: 9, line: 9 },
+            { file: '', column: 10, line: 10 },
+        ] as TextSubmissionElement[];
+        submissionA.elements = textSubmissionElements;
+        const mappedElements = new Map();
+        mappedElements.set('none', [
+            { from: { file: '', column: 1, line: 1 }, to: { file: '', column: 2, line: 2 } },
+            { from: { file: '', column: 4, line: 4 }, to: { file: '', column: 6, line: 6 } },
+        ]);
 
-        // const result = comp.mapMatchesToElements(matches, submissionA);
+        const result = comp.mapMatchesToElements(matches, submissionA);
 
-        // console.log('heyheyhey', result);
+        expect(result).toEqual(mappedElements);
     });
 });
