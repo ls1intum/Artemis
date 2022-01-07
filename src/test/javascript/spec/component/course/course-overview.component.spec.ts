@@ -1,7 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { stub } from 'sinon';
 import { of, Subject } from 'rxjs';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -11,7 +7,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -20,11 +16,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
-import { CourseOverviewComponent } from 'app/overview/course-overview.component';
+import { BarControlConfiguration, BarControlConfigurationProvider, CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import dayjs from 'dayjs';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -40,9 +35,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { AlertService } from 'app/core/util/alert.service';
+import { AfterViewInit, Component, TemplateRef, ViewChild } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { TeamAssignmentPayload } from 'app/entities/team.model';
 
-chai.use(sinonChai);
-const expect = chai.expect;
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
 const dueDateStat1: DueDateStat = { inTime: 1, late: 0, total: 1 };
@@ -69,6 +65,21 @@ const exam2 = { id: 4, course: courseEmpty };
 const exams = [exam1, exam2];
 const course1 = { id: 1, exams, exercises: [exercise1], description: 'description of course 1' };
 const course2 = { id: 2, exercises: [exercise2], exams: [exam2], description: 'description of course 2', shortName: 'shortName1' };
+
+@Component({
+    template: '<ng-template #controls><button id="test-button">TestButton</button></ng-template>',
+})
+class ControlsTestingComponent implements BarControlConfigurationProvider, AfterViewInit {
+    @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
+    public readonly controlConfiguration: BarControlConfiguration = {
+        subject: new Subject<TemplateRef<any>>(),
+        useIndentation: true,
+    };
+
+    ngAfterViewInit(): void {
+        this.controlConfiguration.subject!.next(this.controls);
+    }
+}
 
 describe('CourseOverviewComponent', () => {
     let component: CourseOverviewComponent;
@@ -108,7 +119,7 @@ describe('CourseOverviewComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseRowComponent },
-                { provide: AlertService, useClass: MockAlertService },
+                MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
             ],
         })
@@ -125,40 +136,42 @@ describe('CourseOverviewComponent', () => {
 
     afterEach(() => {
         component.ngOnDestroy();
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('Should call all methods on init', async () => {
-        const getCourseStub = stub(courseScoreCalculationService, 'getCourse');
-        const subscribeToTeamAssignmentUpdatesStub = stub(component, 'subscribeToTeamAssignmentUpdates');
-        const subscribeForQuizChangesStub = stub(component, 'subscribeForQuizChanges');
-        const adjustCourseDescriptionStub = stub(component, 'adjustCourseDescription');
-        const findOneForDashboardStub = stub(courseService, 'findOneForDashboard');
-        findOneForDashboardStub.returns(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
-        getCourseStub.returns(course1);
+        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
+        const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
+        const adjustCourseDescriptionStub = jest.spyOn(component, 'adjustCourseDescription');
+        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
+        jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(new TeamAssignmentPayload())));
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+        getCourseStub.mockReturnValue(course1);
 
         await component.ngOnInit();
 
-        expect(getCourseStub).to.have.been.called;
-        expect(adjustCourseDescriptionStub).to.have.been.called;
-        expect(subscribeForQuizChangesStub).to.have.been.called;
-        expect(subscribeToTeamAssignmentUpdatesStub).to.have.been.called;
+        expect(getCourseStub).toHaveBeenCalled();
+        expect(adjustCourseDescriptionStub).toHaveBeenCalled();
+        expect(subscribeForQuizChangesStub).toHaveBeenCalled();
+        expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalled();
     });
 
     it('Should call load Course methods on init', async () => {
-        const getCourseStub = stub(courseScoreCalculationService, 'getCourse');
-        const subscribeToTeamAssignmentUpdatesStub = stub(component, 'subscribeToTeamAssignmentUpdates');
-        const subscribeForQuizChangesStub = stub(component, 'subscribeForQuizChanges');
-        const adjustCourseDescriptionStub = stub(component, 'adjustCourseDescription');
-        const findOneForDashboardStub = stub(courseService, 'findOneForDashboard');
-        findOneForDashboardStub.returns(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
+        const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
+        const adjustCourseDescriptionStub = jest.spyOn(component, 'adjustCourseDescription');
+        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+        jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(new TeamAssignmentPayload())));
 
         await component.ngOnInit();
 
-        expect(getCourseStub).to.have.been.called;
-        expect(adjustCourseDescriptionStub).to.have.been.called;
-        expect(subscribeForQuizChangesStub).to.have.been.called;
-        expect(subscribeToTeamAssignmentUpdatesStub).to.have.been.called;
+        expect(getCourseStub).toHaveBeenCalled();
+        expect(adjustCourseDescriptionStub).toHaveBeenCalled();
+        expect(subscribeForQuizChangesStub).toHaveBeenCalled();
+        expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalled();
     });
 
     it('should set Long Description', () => {
@@ -166,58 +179,58 @@ describe('CourseOverviewComponent', () => {
 
         component.showLongDescription();
 
-        expect(component.courseDescription).to.equal('');
-        expect(component.longTextShown).to.equal(true);
+        expect(component.courseDescription).toBe('');
+        expect(component.longTextShown).toBe(true);
     });
 
     it('should set short Description', () => {
         component.longTextShown = true;
-        const findOneForDashboardStub = stub(courseService, 'findOneForDashboard');
-        const getCourseStub = stub(courseScoreCalculationService, 'getCourse');
-        getCourseStub.returns(course1);
-        findOneForDashboardStub.returns(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
+        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        getCourseStub.mockReturnValue(course1);
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 
         component.ngOnInit();
 
         component.showShortDescription();
 
-        expect(component.courseDescription).to.equal('description of course 1...');
-        expect(component.longTextShown).to.equal(false);
+        expect(component.courseDescription).toBe('description of course 1...');
+        expect(component.longTextShown).toBe(false);
     });
 
     it('should have visible exams', () => {
-        const findOneForDashboardStub = stub(courseService, 'findOneForDashboard');
-        const getCourseStub = stub(courseScoreCalculationService, 'getCourse');
-        getCourseStub.returns(course1);
-        findOneForDashboardStub.returns(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
+        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        getCourseStub.mockReturnValue(course1);
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 
         component.ngOnInit();
 
         const bool = component.hasVisibleExams();
 
-        expect(bool).to.equal(true);
+        expect(bool).toBe(true);
     });
 
     it('should not have visible exams', () => {
-        const findOneForDashboardStub = stub(courseService, 'findOneForDashboard');
-        const getCourseStub = stub(courseScoreCalculationService, 'getCourse');
-        getCourseStub.returns(course2);
-        findOneForDashboardStub.returns(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
+        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
+        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        getCourseStub.mockReturnValue(course2);
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 
         component.ngOnInit();
 
         const bool = component.hasVisibleExams();
 
-        expect(bool).to.equal(false);
+        expect(bool).toBe(false);
     });
 
     it('should subscribeToTeamAssignmentUpdates', () => {
-        const findOneForDashboardStub = stub(courseService, 'findOneForDashboard');
-        const getCourseStub = stub(courseScoreCalculationService, 'getCourse');
-        const teamAssignmentUpdatesStub = stub(teamService, 'teamAssignmentUpdates');
-        getCourseStub.returns(course2);
-        teamAssignmentUpdatesStub.returns(Promise.resolve(of({ exerciseId: 6, teamId: 1, studentParticipations: [] })));
-        findOneForDashboardStub.returns(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
+        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
+        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const teamAssignmentUpdatesStub = jest.spyOn(teamService, 'teamAssignmentUpdates', 'get');
+        getCourseStub.mockReturnValue(course2);
+        teamAssignmentUpdatesStub.mockReturnValue(Promise.resolve(of({ exerciseId: 6, teamId: 1, studentParticipations: [] })));
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 
         component.ngOnInit();
 
@@ -225,43 +238,59 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should adjustCourseDescription', () => {
-        const findOneForDashboardStub = stub(courseService, 'findOneForDashboard');
-        const getCourseStub = stub(courseScoreCalculationService, 'getCourse');
-        getCourseStub.returns(course2);
-        findOneForDashboardStub.returns(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
-        const showLongDescriptionStub = stub(component, 'showLongDescription');
+        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
+        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        getCourseStub.mockReturnValue(course2);
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
+        const showLongDescriptionStub = jest.spyOn(component, 'showLongDescription');
         component.enableShowMore = true;
 
         component.ngOnInit();
         component.adjustCourseDescription();
 
-        expect(component.enableShowMore).to.equal(false);
-        expect(showLongDescriptionStub).to.have.been.called;
-        expect(localStorage.getItem('isDescriptionReadshortName1')).to.equal('true');
+        expect(component.enableShowMore).toBe(false);
+        expect(showLongDescriptionStub).toHaveBeenCalled();
+        expect(localStorage.getItem('isDescriptionReadshortName1')).toBe('true');
     });
     it('should subscribeForQuizChanges', () => {
-        const findOneForDashboardStub = stub(courseService, 'findOneForDashboard');
-        const getCourseStub = stub(courseScoreCalculationService, 'getCourse');
-        const jhiWebsocketServiceReceiveStub = stub(jhiWebsocketService, 'receive');
-        jhiWebsocketServiceReceiveStub.returns(of(quizExercise));
-        const jhiWebsocketServiceSubscribeStub = stub(jhiWebsocketService, 'subscribe');
-        getCourseStub.returns(course2);
-        findOneForDashboardStub.returns(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
+        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
+        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive');
+        jhiWebsocketServiceReceiveStub.mockReturnValue(of(quizExercise));
+        const jhiWebsocketServiceSubscribeStub = jest.spyOn(jhiWebsocketService, 'subscribe');
+        getCourseStub.mockReturnValue(course2);
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 
         component.ngOnInit();
         component.subscribeForQuizChanges();
 
-        expect(jhiWebsocketServiceSubscribeStub).to.have.been.called;
-        expect(jhiWebsocketServiceReceiveStub).to.have.been.called;
+        expect(jhiWebsocketServiceSubscribeStub).toHaveBeenCalled();
+        expect(jhiWebsocketServiceReceiveStub).toHaveBeenCalled();
     });
 
     it('should do ngOnDestroy', () => {
-        const jhiWebsocketServiceStub = stub(jhiWebsocketService, 'unsubscribe');
+        const jhiWebsocketServiceStub = jest.spyOn(jhiWebsocketService, 'unsubscribe');
 
         component.ngOnInit();
         component.subscribeForQuizChanges(); // to have quizExercisesChannel set
         component.ngOnDestroy();
 
-        expect(jhiWebsocketServiceStub).to.have.been.called;
+        expect(jhiWebsocketServiceStub).toHaveBeenCalled();
+    });
+
+    it('should render controls if child has configuration', () => {
+        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
+        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        getCourseStub.mockReturnValue(course2);
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
+
+        const stubSubComponent = TestBed.createComponent(ControlsTestingComponent);
+        component.onSubRouteActivate(stubSubComponent.componentInstance);
+        fixture.detectChanges();
+        stubSubComponent.detectChanges();
+
+        const expectedButton = fixture.debugElement.query(By.css('#test-button'));
+        expect(expectedButton).not.toBe(null);
+        expect(expectedButton.nativeElement.innerHTML).toBe('TestButton');
     });
 });

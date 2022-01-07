@@ -39,7 +39,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return all exercises for the given course with only the latest results for solution and template each (if present).
      */
     @Query("""
-            SELECT pe FROM ProgrammingExercise pe
+            SELECT DISTINCT pe FROM ProgrammingExercise pe
             LEFT JOIN FETCH pe.templateParticipation tp
             LEFT JOIN FETCH pe.solutionParticipation sp
             LEFT JOIN FETCH tp.results tpr
@@ -61,7 +61,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation.submissions.results", "solutionParticipation.submissions.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")
@@ -100,20 +100,23 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
-     * <ol>
-     * <li>The release date is in the future --> Schedule combine template commits</li>
+     * <ul>
+     * <li>The release date is in the future → Schedule combine template commits</li>
      * <li>The build and test student submissions after deadline date is in the future</li>
      * <li>Manual assessment is enabled and the due date is in the future</li>
-     * </ol>
+     * <li>There are participations in the exercise with individual due dates in the future</li>
+     * </ul>
      *
      * @param now the current time
      * @return List of the exercises that should be scheduled
      */
     @Query("""
             select distinct pe from ProgrammingExercise pe
+            left join pe.studentParticipations participation
             where pe.releaseDate > :#{#now}
                 or pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#now}
                 or (pe.assessmentType <> 'AUTOMATIC' and pe.dueDate > :#{#now})
+                or (participation.individualDueDate is not null and participation.individualDueDate > :#{#now})
             """)
     List<ProgrammingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
@@ -382,8 +385,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * We therefore have to check here if any submission of the student was submitted before the deadline.
      *
      * @param examId the exam id we are interested in
-     * @return the number of latest submissions belonging to a participation belonging to the exam id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
-     *         due date at all (only exercises with manual or semi automatic correction are considered)
+     * @return the number of the latest submissions belonging to a participation belonging to the exam id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
+     *         due date at all (only exercises with manual or semi-automatic correction are considered)
      */
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
@@ -399,26 +402,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
      * We therefore have to check here if any submission of the student was submitted before the deadline.
      *
-     * @param courseId the course id we are interested in
-     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
-     *         due date at all (only exercises with manual or semi automatic correction are considered)
-     */
-    @Query("""
-            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
-            JOIN p.submissions s
-            WHERE p.exercise.assessmentType <> 'AUTOMATIC'
-                AND p.exercise.course.id = :#{#courseId}
-                AND s.submitted = TRUE
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
-            """)
-    long countLegalSubmissionsByCourseIdSubmitted(@Param("courseId") Long courseId);
-
-    /**
-     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here if any submission of the student was submitted before the deadline.
-     *
      * @param exerciseIds the exercise ids of the course we are interested in
-     * @return the number of submissions belonging to the course id, which have the submitted flag set to true (only exercises with manual or semi automatic correction are considered)
+     * @return the number of submissions belonging to the course id, which have the submitted flag set to true (only exercises with manual or semi-automatic correction are considered)
      */
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
@@ -456,14 +441,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 OR ex.course = :#{#course}
             """)
     List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
-
-    @Query("""
-            SELECT pe FROM ProgrammingExercise pe
-            LEFT JOIN FETCH pe.templateParticipation tp
-            LEFT JOIN FETCH pe.solutionParticipation sp
-            WHERE pe.course.id = :#{#courseId}
-            """)
-    List<ProgrammingExercise> findAllByCourseWithTemplateAndSolutionParticipation(@Param("courseId") Long courseId);
 
     long countByShortNameAndCourse(String shortName, Course course);
 

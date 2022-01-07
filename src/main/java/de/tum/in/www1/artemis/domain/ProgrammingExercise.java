@@ -5,8 +5,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.PROGRAMMING
 import java.net.MalformedURLException;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -149,11 +147,6 @@ public class ProgrammingExercise extends Exercise {
         }
     }
 
-    @JsonIgnore
-    public String getTemplateRepositoryName() {
-        return getRepositoryNameFor(getTemplateRepositoryUrl(), RepositoryType.TEMPLATE);
-    }
-
     /**
      * Convenience getter. The actual URL is stored in the {@link SolutionProgrammingExerciseParticipation}
      *
@@ -173,46 +166,12 @@ public class ProgrammingExercise extends Exercise {
         }
     }
 
-    @JsonIgnore
-    public String getSolutionRepositoryName() {
-        return getRepositoryNameFor(getSolutionRepositoryUrl(), RepositoryType.SOLUTION);
-    }
-
     public void setTestRepositoryUrl(String testRepositoryUrl) {
         this.testRepositoryUrl = testRepositoryUrl;
     }
 
     public String getTestRepositoryUrl() {
         return testRepositoryUrl;
-    }
-
-    /**
-     * Returns the test repository name of the exercise. Test test repository name is extracted from the test repository url.
-     *
-     * @return the test repository name if a valid test repository url is set. Otherwise returns null!
-     */
-    public String getTestRepositoryName() {
-        return getRepositoryNameFor(getTestRepositoryUrl(), RepositoryType.TESTS);
-    }
-
-    /**
-     * Get the repository name for any stored repository, i.e. the slug of the repository.
-     *
-     * @param repoUrl The full URL of the repository
-     * @param repoType The repository type, meaning one of the base repositories (template, solution, test)
-     * @return The full repository slug for the given URL
-     */
-    private String getRepositoryNameFor(final String repoUrl, final RepositoryType repoType) {
-        if (repoUrl == null) {
-            return null;
-        }
-
-        Pattern pattern = Pattern.compile(".*/(.*-" + repoType.getName() + ")\\.git");
-        Matcher matcher = pattern.matcher(repoUrl);
-        if (!matcher.matches() || matcher.groupCount() != 1)
-            return null;
-
-        return matcher.group(1);
     }
 
     public List<AuxiliaryRepository> getAuxiliaryRepositories() {
@@ -358,7 +317,8 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * Get the latest (potentially) graded submission for a programming exercise.
-     * Programming submissions work differently in this regard as a submission without a result does not mean it is not rated/assessed, but that e.g. the CI system failed to deliver the build results.
+     * Programming submissions work differently in this regard as a submission without a result does not mean it is not rated/assessed,
+     * but that e.g. the CI system failed to deliver the build results.
      *
      * @param submissions Submissions for the given student.
      * @return the latest graded submission.
@@ -371,9 +331,18 @@ public class ProgrammingExercise extends Exercise {
             if (result != null) {
                 return checkForRatedAndAssessedResult(result);
             }
-            return this.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
-                    || submission.getSubmissionDate().isBefore(this.getDueDate());
+            return this.getDueDate() == null || SubmissionType.INSTRUCTOR.equals(submission.getType()) || SubmissionType.TEST.equals(submission.getType())
+                    || submission.getSubmissionDate().isBefore(getRelevantDueDateForSubmission(submission));
         }).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+    }
+
+    private ZonedDateTime getRelevantDueDateForSubmission(Submission submission) {
+        if (submission.getParticipation().getIndividualDueDate() != null) {
+            return submission.getParticipation().getIndividualDueDate();
+        }
+        else {
+            return this.getDueDate();
+        }
     }
 
     @Override
@@ -508,7 +477,7 @@ public class ProgrammingExercise extends Exercise {
             case TEMPLATE -> this.getVcsTemplateRepositoryUrl();
             case SOLUTION -> this.getVcsSolutionRepositoryUrl();
             case TESTS -> this.getVcsTestRepositoryUrl();
-            default -> throw new UnsupportedOperationException("Can retrieve URL for repositorytype " + repositoryType);
+            default -> throw new UnsupportedOperationException("Can retrieve URL for repository type " + repositoryType);
         };
     }
 
@@ -559,10 +528,7 @@ public class ProgrammingExercise extends Exercise {
 
     @JsonProperty("sequentialTestRuns")
     public boolean hasSequentialTestRuns() {
-        if (sequentialTestRuns == null) {
-            return false;
-        }
-        return sequentialTestRuns;
+        return Objects.requireNonNullElse(sequentialTestRuns, false);
     }
 
     public void setSequentialTestRuns(Boolean sequentialTestRuns) {
@@ -587,10 +553,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean getTestCasesChanged() {
-        if (testCasesChanged == null) {
-            return false;
-        }
-        return testCasesChanged;
+        return Objects.requireNonNullElse(testCasesChanged, false);
     }
 
     public void setTestCasesChanged(boolean testCasesChanged) {
@@ -639,7 +602,7 @@ public class ProgrammingExercise extends Exercise {
      */
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        return participation.getResults().stream().filter(result -> checkForAssessedResult(result)).collect(Collectors.toSet());
+        return participation.getResults().stream().filter(this::checkForAssessedResult).collect(Collectors.toSet());
     }
 
     /**
@@ -666,7 +629,7 @@ public class ProgrammingExercise extends Exercise {
      * This checks if the current result has a completion date and if the assessment is over
      *
      * @param result The current result
-     * @return true if the result is manual and the assessment is over or it is an automatic result, false otherwise
+     * @return true if the result is manual and the assessment is over, or it is an automatic result, false otherwise
      */
     private boolean checkForAssessedResult(Result result) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());

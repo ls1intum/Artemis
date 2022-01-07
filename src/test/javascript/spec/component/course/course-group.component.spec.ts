@@ -17,7 +17,7 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable, of, throwError } from 'rxjs';

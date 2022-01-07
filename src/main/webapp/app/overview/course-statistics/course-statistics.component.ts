@@ -1,11 +1,11 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
@@ -15,6 +15,7 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradeDTO } from 'app/entities/grade-step.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faClipboard, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -40,7 +41,7 @@ enum ChartBarTitle {
     templateUrl: './course-statistics.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseStatisticsComponent implements OnInit, OnDestroy {
+export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
     courseId: number;
     private courseExercises: Exercise[];
     private paramSubscription?: Subscription;
@@ -156,6 +157,14 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     faQuestionCircle = faQuestionCircle;
     faClipboard = faClipboard;
 
+    // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
+    @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
+    // Provides the control configuration to be read and used by "CourseOverviewComponent"
+    public readonly controlConfiguration: BarControlConfiguration = {
+        subject: new Subject<TemplateRef<any>>(),
+        useIndentation: false,
+    };
+
     constructor(
         private courseService: CourseManagementService,
         private courseCalculationService: CourseScoreCalculationService,
@@ -207,6 +216,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         });
 
         this.calculateCourseGrade();
+    }
+
+    ngAfterViewInit() {
+        // Send our controls template to parent so it will be rendered in the top bar
+        if (this.controls) {
+            this.controlConfiguration.subject!.next(this.controls);
+        }
     }
 
     ngOnDestroy() {

@@ -183,7 +183,7 @@ public class ProgrammingExerciseResultTestService {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).usingElementComparatorIgnoringFields("exercise", "id").containsExactlyInAnyOrderElementsOf(expectedTestCases);
+        assertThat(testCases).usingElementComparatorIgnoringFields("exercise", "id", "tasks", "solutionEntries").containsExactlyInAnyOrderElementsOf(expectedTestCases);
         assertThat(optionalResult).isPresent();
         if (withFailedTest) {
             assertThat(optionalResult.get().getScore()).isEqualTo(75L);
@@ -202,7 +202,7 @@ public class ProgrammingExerciseResultTestService {
     // Test
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification, ProgrammingLanguage programmingLanguage) {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
-        final var savedResult = resultRepository.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
+        final var savedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(optionalResult.get().getId());
 
         // Should be one because programmingExerciseStudentParticipationStaticCodeAnalysis doesn't have a submission
         var submissions = programmingSubmissionRepository.findAll();
