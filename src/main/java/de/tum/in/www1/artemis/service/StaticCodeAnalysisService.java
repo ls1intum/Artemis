@@ -166,7 +166,7 @@ public class StaticCodeAnalysisService {
     }
 
     /**
-     * Sets the category for each feedback and removes feedback with no or an inactive category.
+     * Sets the category for each feedback and removes feedback with no category or an inactive one.
      * The feedback is removed permanently, which has the advantage that the server or client doesn't have to filter out
      * invisible feedback every time it is requested. The drawback is that the re-evaluate functionality can't take
      * the removed feedback into account.
@@ -216,7 +216,7 @@ public class StaticCodeAnalysisService {
             }
 
             if (category.isEmpty() || category.get().getState().equals(CategoryState.INACTIVE)) {
-                // remove feedback in no or inactive category
+                // remove feedback in no category or an inactive one
                 result.removeFeedback(feedback);
                 return false; // filter this feedback
             }
