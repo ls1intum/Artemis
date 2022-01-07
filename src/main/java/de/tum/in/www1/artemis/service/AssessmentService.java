@@ -122,7 +122,7 @@ public class AssessmentService {
         final boolean isExamMode = exercise.isExamExercise();
         ZonedDateTime assessmentDueDate;
 
-        // For exam exercises, tutors cannot override submissions when the publish result date is in the past (assessmentDueDate)
+        // For exam exercises, tutors cannot override submissions when the publishing result date is in the past (assessmentDueDate)
         if (isExamMode) {
             assessmentDueDate = exercise.getExerciseGroup().getExam().getPublishResultsDate();
         }
@@ -134,7 +134,7 @@ public class AssessmentService {
         // TODO make sure that tutors cannot assess the first assessment after the assessmentDueDate/publish result date (post). This is currently just used in the put request.
         // Check if no result is available (first assessment)
         if (existingResult == null) {
-            // Tutors can assess exam exercises only after the last student has finished the exam and before the publish result date
+            // Tutors can assess exam exercises only after the last student has finished the exam and before the publishing result date
             if (isExamMode && !isAtLeastInstructor) {
                 final Exam exam = exercise.getExerciseGroup().getExam();
                 ZonedDateTime latestExamDueDate = examDateService.getLatestIndividualExamEndDate(exam.getId());

@@ -13,6 +13,7 @@
             <jhi-user-import-button class="ms-4" [courseId]="courseId" [exam]="exam" (finish)="reloadExamWithRegisteredUsers()"></jhi-user-import-button>
             <button
                 class="btn btn btn-primary ms-auto"
+                id="register-course-students"
                 (click)="registerAllStudentsFromCourse()"
                 title="{{ 'artemisApp.examManagement.examStudents.registerAllFromCourseTooltip' | artemisTranslate }}"
             >
