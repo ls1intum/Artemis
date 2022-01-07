@@ -260,7 +260,7 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/details : sends exercise details including all results for the currently logged in user
+     * GET /exercises/:exerciseId/details : sends exercise details including all results for the currently logged-in user
      *
      * @param exerciseId the exerciseId of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
