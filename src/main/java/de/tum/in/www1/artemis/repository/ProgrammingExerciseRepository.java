@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -23,6 +26,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -634,5 +638,80 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             participation.setProgrammingExercise(optionalProgrammingExercise.get());
         }
         return participation.getProgrammingExercise();
+    }
+
+    /**
+     * Validate the programming exercise title.
+     * 1. Check presence and length of exercise title
+     * 2. Find forbidden patterns in exercise title
+     *  @param programmingExercise Programming exercise to be validated
+     * @param course              Course of the programming exercise
+     */
+    default void validateTitle(ProgrammingExercise programmingExercise, Course course) {
+        // Check if exercise title is set
+        if (programmingExercise.getTitle() == null || programmingExercise.getTitle().length() < 3) {
+            throw new BadRequestAlertException("The title of the programming exercise is too short", "Exercise", "programmingExerciseTitleInvalid");
+        }
+
+        // Check if the exercise title matches regex
+        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(programmingExercise.getTitle());
+        if (!titleMatcher.matches()) {
+            throw new BadRequestAlertException("The title is invalid", "Exercise", "titleInvalid");
+        }
+
+        // Check that the exercise title is unique among all programming exercises in the course, otherwise the corresponding project in the VCS system cannot be generated
+        long numberOfProgrammingExercisesWithSameTitle = countByTitleAndCourse(programmingExercise.getTitle(), course)
+                + countByTitleAndExerciseGroupExamCourse(programmingExercise.getTitle(), course);
+        if (numberOfProgrammingExercisesWithSameTitle > 0) {
+            throw new BadRequestAlertException("A programming exercise with the same title already exists. Please choose a different title.", "Exercise", "titleAlreadyExists");
+        }
+    }
+
+    /**
+     * Validates the course and programming exercise short name.
+     * 1. Check presence and length of exercise short name
+     * 2. Check presence and length of course short name
+     * 3. Find forbidden patterns in exercise short name
+     * 4. Check that the short name doesn't already exist withing course or exam exercises
+     *  @param programmingExercise Programming exercise to be validated
+     * @param course              Course of the programming exercise
+     */
+    default void validateCourseAndExerciseShortName(ProgrammingExercise programmingExercise, Course course) {
+        // Check if exercise shortname is set
+        if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
+            throw new BadRequestAlertException("The shortname of the programming exercise is not set or too short", "Exercise", "programmingExerciseShortnameInvalid");
+        }
+
+        // Check if the course shortname is set
+        if (course.getShortName() == null || course.getShortName().length() < 3) {
+            throw new BadRequestAlertException("The shortname of the course is not set or too short", "Exercise", "courseShortnameInvalid");
+        }
+
+        // Check if exercise shortname matches regex
+        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
+        if (!shortNameMatcher.matches()) {
+            throw new BadRequestAlertException("The shortname is invalid", "Exercise", "shortnameInvalid");
+        }
+
+        // NOTE: we have to cover two cases here: exercises directly stored in the course and exercises indirectly stored in the course (exercise -> exerciseGroup -> exam ->
+        // course)
+        long numberOfProgrammingExercisesWithSameShortName = countByShortNameAndCourse(programmingExercise.getShortName(), course)
+                + countByShortNameAndExerciseGroupExamCourse(programmingExercise.getShortName(), course);
+        if (numberOfProgrammingExercisesWithSameShortName > 0) {
+            throw new BadRequestAlertException("A programming exercise with the same short name already exists. Please choose a different short name.", "Exercise",
+                    "shortnameAlreadyExists");
+        }
+    }
+
+    /**
+     * Validate the general course settings.
+     * 1. Validate the title
+     * 2. Validate the course and programming exercise short name.
+     *  @param programmingExercise Programming exercise to be validated
+     * @param course              Course of the programming exercise
+     */
+    default void validateCourseSettings(ProgrammingExercise programmingExercise, Course course) {
+        validateTitle(programmingExercise, course);
+        validateCourseAndExerciseShortName(programmingExercise, course);
     }
 }
