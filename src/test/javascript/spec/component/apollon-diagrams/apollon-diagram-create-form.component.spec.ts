@@ -1,4 +1,3 @@
-import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -19,7 +18,7 @@ describe('ApollonDiagramCreateForm Component', () => {
     let apollonDiagramService: ApollonDiagramService;
     let ngbModal: NgbActiveModal;
     let fixture: ComponentFixture<ApollonDiagramCreateFormComponent>;
-    const sandbox = sinon.createSandbox();
+
     const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, 123);
 
     beforeEach(() => {
@@ -47,14 +46,14 @@ describe('ApollonDiagramCreateForm Component', () => {
             });
     });
 
-    afterEach(function () {
-        sandbox.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('save', fakeAsync(() => {
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
-        sandbox.stub(apollonDiagramService, 'create').returns(of(response));
-        const ngbModalSpy = sandbox.spy(ngbModal, 'dismiss');
+        jest.spyOn(apollonDiagramService, 'create').mockReturnValue(of(response));
+        const ngbModalSpy = jest.spyOn(ngbModal, 'dismiss');
         fixture.componentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, 999);
 
         // test

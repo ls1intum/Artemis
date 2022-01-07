@@ -1,11 +1,9 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, Observer, Subscription } from 'rxjs';
-
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
-
-import { Client, ConnectionHeaders, over, Subscription as StompSubscription } from 'webstomp-client';
 import SockJS from 'sockjs-client';
+import Stomp, { Client, ConnectionHeaders, Subscription as StompSubscription } from 'webstomp-client';
 
 export interface IWebsocketService {
     /**
@@ -14,7 +12,7 @@ export interface IWebsocketService {
     stompFailureCallback(): void;
 
     /**
-     * Setup the websocket connection.
+     * Set up the websocket connection.
      */
     connect(): void;
 
@@ -132,7 +130,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * Setup the websocket connection.
+     * Set up the websocket connection.
      */
     connect() {
         if ((this.stompClient && this.stompClient.connected) || this.connecting) {
@@ -148,14 +146,14 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             url += '?access_token=' + authToken;
         }
         // NOTE: only support real websockets transports and disable http poll, http stream and other exotic workarounds.
-        // nowadays all modern browsers support websockets and workarounds are not necessary any more and might only lead to problems
+        // nowadays, all modern browsers support websockets and workarounds are not necessary anymore and might only lead to problems
         this.socket = new SockJS(url, undefined, { transports: 'websocket' });
         const options = {
             heartbeat: { outgoing: 10000, incoming: 10000 },
             debug: false,
             protocols: ['v12.stomp'],
         };
-        this.stompClient = over(this.socket, options);
+        this.stompClient = Stomp.over(this.socket, options);
         // Note: at the moment, debugging is deactivated to prevent console log statements
         this.stompClient.debug = function () {};
         const headers = <ConnectionHeaders>{};
@@ -251,7 +249,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                     channel,
                     (data) => {
                         if (this.listenerObservers.has(channel)) {
-                            this.listenerObservers.get(channel)!.next(this.parseJSON(data.body));
+                            this.listenerObservers.get(channel)!.next(JhiWebsocketService.parseJSON(data.body));
                         }
                     },
                     {
@@ -356,7 +354,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         this.disconnect();
     }
 
-    private parseJSON(response: any): any {
+    private static parseJSON(response: any): any {
         try {
             return JSON.parse(response);
         } catch {
