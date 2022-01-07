@@ -40,16 +40,15 @@
                 <h5 class="text-center points">{{ totalAbsoluteScore }} / {{ totalReachableScore }} Pts</h5>
             </div>
             <ngx-charts-pie-chart
-                (click)="onSelect()"
-                class="d-inline-flex"
-                style="z-index: 2; cursor: pointer"
                 id="score-chart"
+                class="chart-level"
                 [view]="[200, 200]"
                 [results]="ngxDoughnutData"
                 [scheme]="ngxColor"
                 [doughnut]="true"
                 [animations]="false"
                 (select)="onSelect()"
+                (click)="onSelect()"
             >
                 <ng-template #tooltipTemplate let-model="model">
                     <span jhiTranslate="artemisApp.courseOverview.statistics.{{ model.name }}"></span>
