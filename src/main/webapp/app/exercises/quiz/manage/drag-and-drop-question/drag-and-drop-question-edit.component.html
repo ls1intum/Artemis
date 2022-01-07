@@ -188,17 +188,19 @@
                             cdkDropList
                         >
                             <div class="dimensions">{{ dropLocation.width }}x{{ dropLocation.height }}</div>
-                            <div class="re-evaluate-button" title="Set invalid" *ngIf="reEvaluationInProgress && !dropLocation.invalid" (click)="dropLocation.invalid = true">
-                                <fa-icon [icon]="faBan" size="lg"></fa-icon>
-                            </div>
-                            <div class="re-evaluate-button" title="Reset" (click)="resetDropLocation(dropLocation)" *ngIf="reEvaluationInProgress">
-                                <fa-icon [icon]="faUndo" size="lg"></fa-icon>
-                            </div>
-                            <div class="duplicate-button" title="Duplicate" (click)="duplicateDropLocation(dropLocation)" *ngIf="!reEvaluationInProgress">
-                                <fa-icon [icon]="faCopy" size="lg"></fa-icon>
-                            </div>
-                            <div [ngClass]="reEvaluationInProgress ? 're-evaluate-button' : 'delete-button'" title="Delete" (click)="deleteDropLocation(dropLocation)">
-                                <fa-icon [icon]="faTrash" size="lg"></fa-icon>
+                            <div class="drop-location-buttons">
+                                <div class="re-evaluate-button" title="Set invalid" *ngIf="reEvaluationInProgress && !dropLocation.invalid" (click)="dropLocation.invalid = true">
+                                    <fa-icon [icon]="faBan" size="lg"></fa-icon>
+                                </div>
+                                <div class="re-evaluate-button" title="Reset" (click)="resetDropLocation(dropLocation)" *ngIf="reEvaluationInProgress">
+                                    <fa-icon [icon]="faUndo" size="lg"></fa-icon>
+                                </div>
+                                <div class="duplicate-button" title="Duplicate" (click)="duplicateDropLocation(dropLocation)" *ngIf="!reEvaluationInProgress">
+                                    <fa-icon [icon]="faCopy" size="lg"></fa-icon>
+                                </div>
+                                <div [ngClass]="reEvaluationInProgress ? 're-evaluate-button' : 'delete-button'" title="Delete" (click)="deleteDropLocation(dropLocation)">
+                                    <fa-icon [icon]="faTrash" size="lg"></fa-icon>
+                                </div>
                             </div>
                             <div class="resize top left" (mousedown)="resizeMouseDown(dropLocation, 'top', 'left')"></div>
                             <div class="resize top center" (mousedown)="resizeMouseDown(dropLocation, 'top', 'center')"></div>
@@ -228,7 +230,7 @@
             <div *ngIf="question.dragItems && question.dragItems.length" class="dnd-instructions">
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
             </div>
-            <div cdkDropList class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
+            <div cdkDropList cdkDropListOrientation="horizontal" class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
                 <div class="drag-item" id="drag-item-{{ i }}" *ngFor="let dragItem of question.dragItems; let i = index" cdkDrag [cdkDragDisabled]="false" [cdkDragData]="dragItem">
                     <div *ngIf="dragItem.pictureFilePath">
                         <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
@@ -275,6 +277,31 @@
                             </div>
                         </div>
                     </div>
+                    <div class="placeholder-dnd" *cdkDragPreview matchSize>
+                        <ng-template *ngTemplateOutlet="preview"></ng-template>
+                    </div>
+                    <div class="placeholder-dnd" *cdkDragPlaceholder>
+                        <ng-template *ngTemplateOutlet="preview"></ng-template>
+                    </div>
+                    <ng-template #preview>
+                        <div style="border: 1px solid; background: #fafafa; padding: 4px 2px 2px 2px">
+                            <div title="Move">
+                                <fa-icon [icon]="faBars" size="lg"></fa-icon>
+                            </div>
+                            <div *ngIf="dragItem.pictureFilePath">
+                                <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
+                            </div>
+                            <div *ngIf="!dragItem.pictureFilePath">
+                                <textarea
+                                    disabled
+                                    style="text-align: center; border: none; resize: none"
+                                    id="drag-item-{{ i }}-text-preview"
+                                    [(ngModel)]="dragItem.text"
+                                    (ngModelChange)="questionUpdated.emit()"
+                                ></textarea>
+                            </div>
+                        </div>
+                    </ng-template>
                 </div>
             </div>
         </div>

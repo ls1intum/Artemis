@@ -288,14 +288,14 @@ public class Feedback extends DomainObject {
      *  This function sets the described parameters and then returns the current instance with the updated references.
      *
      * @param suggestedFeedbackOriginBlockReference - Block reference of the suggested (automatic) feedback
-     * @param submissionReference - Submission reference where the suggested feedback was generated from
-     * @param suggestedFeedbackParticipationReference - respective participation reference
+     * @param submissionId - Submission reference where the suggested feedback was generated from
+     * @param suggestedFeedbackParticipationId - respective participation reference
      * @return updated Feedback
      */
-    public Feedback suggestedFeedbackOrigin(String suggestedFeedbackOriginBlockReference, Long submissionReference, Long suggestedFeedbackParticipationReference) {
+    public Feedback suggestedFeedbackOrigin(String suggestedFeedbackOriginBlockReference, Long submissionId, Long suggestedFeedbackParticipationId) {
         this.suggestedFeedbackReference = suggestedFeedbackOriginBlockReference;
-        this.suggestedFeedbackOriginSubmissionReference = submissionReference;
-        this.suggestedFeedbackParticipationReference = suggestedFeedbackParticipationReference;
+        this.suggestedFeedbackOriginSubmissionReference = submissionId;
+        this.suggestedFeedbackParticipationReference = suggestedFeedbackParticipationId;
         return this;
     }
 
@@ -317,7 +317,7 @@ public class Feedback extends DomainObject {
 
     /**
      * Checks whether the feedback was created by static code analysis
-     * @return true if the it is static code analysis feedback else false
+     * @return true if it is static code analysis feedback else false
      */
     @JsonIgnore
     public boolean isStaticCodeAnalysisFeedback() {
@@ -336,19 +336,6 @@ public class Feedback extends DomainObject {
             return this.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
         }
         return "";
-    }
-
-    /**
-     * Checks whether the feedback was created by a submission policy
-     * @return true if the it is submission policy feedback else false
-     */
-    @JsonIgnore
-    public boolean isSubmissionPolicyFeedback() {
-        return this.text != null && this.text.startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
-    }
-
-    public boolean referenceEquals(Feedback otherFeedback) {
-        return reference.equals(otherFeedback.reference);
     }
 
     /**
@@ -389,11 +376,11 @@ public class Feedback extends DomainObject {
             var encounters = gradingInstructions.get(getGradingInstruction().getId());
             if (maxCount > 0) {
                 if (encounters >= maxCount) {
-                    // the structured grading instruction was applied on assessment models more often that the usageCount limit allows so we don't sum the feedback credit
+                    // the structured grading instruction was applied on assessment models more often that the usageCount limit allows, so we don't sum the feedback credit
                     gradingInstructions.put(getGradingInstruction().getId(), encounters + 1);
                 }
                 else {
-                    // the usageCount limit was not exceeded yet so we add the credit and increase the nrOfEncounters counter
+                    // the usageCount limit was not exceeded yet, so we add the credit and increase the nrOfEncounters counter
                     gradingInstructions.put(getGradingInstruction().getId(), encounters + 1);
                     totalScore += getGradingInstruction().getCredits();
                 }
