@@ -18,7 +18,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Submission } from 'app/entities/submission.model';
@@ -338,7 +338,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     /**
      * Opens modal and executes a consistency check for the given programming exercise
-     * @param exerciseId id of the programming exercise to check
+     * @param exercise the programming exercise to check
      */
     checkConsistencies(exercise: ProgrammingExercise) {
         const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });

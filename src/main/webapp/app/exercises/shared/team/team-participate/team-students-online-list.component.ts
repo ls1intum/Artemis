@@ -5,7 +5,7 @@ import { User } from 'app/core/user/user.model';
 import { orderBy } from 'lodash-es';
 import { Observable } from 'rxjs';
 import { map, throttleTime } from 'rxjs/operators';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';

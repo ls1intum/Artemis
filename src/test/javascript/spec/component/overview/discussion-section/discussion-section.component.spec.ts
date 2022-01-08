@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Post } from 'app/entities/metis/post.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';

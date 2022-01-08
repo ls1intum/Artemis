@@ -39,13 +39,13 @@ jacocoTestCoverageVerification {
             limit {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
-                minimum = 0.90
+                minimum = 0.902
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 20
-                maximum = 27
+                maximum = 25
             }
         }
     }

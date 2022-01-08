@@ -5,13 +5,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
-import sinonChai from 'sinon-chai';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import * as sinon from 'sinon';
-import * as chai from 'chai';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
     let component: ProgrammingExerciseInstructorRepoDownloadComponent;
@@ -30,32 +24,31 @@ describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
         service = TestBed.inject(ProgrammingExerciseService);
     });
 
-    afterEach(function () {
+    afterEach(() => {
         // completely restore all fakes created through the sandbox
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(component).to.be.ok;
+        expect(component).not.toBeNull();
     });
 
     it('should not download when there is no exercise', () => {
-        const spy = sinon.spy(service, 'exportInstructorRepository');
+        const spy = jest.spyOn(service, 'exportInstructorRepository');
         component.exportRepository();
-        expect(spy).callCount(0);
+        expect(spy).toHaveBeenCalledTimes(0);
     });
 
     it('should download the repos', () => {
-        const spy = sinon.spy(service, 'exportInstructorRepository');
-
         component.exerciseId = 1;
         const repoTypes: ProgrammingExerciseInstructorRepositoryType[] = ['SOLUTION', 'TEMPLATE', 'TESTS', 'AUXILIARY'];
         repoTypes.forEach((repoType) => {
+            const exportInstructorRepositorySpy = jest.spyOn(service, 'exportInstructorRepository');
             component.repositoryType = repoType;
             component.exportRepository();
-            expect(spy).callCount(1);
-            spy.resetHistory();
+            expect(exportInstructorRepositorySpy).toHaveBeenCalledTimes(1);
+            exportInstructorRepositorySpy.mockRestore();
         });
     });
 });

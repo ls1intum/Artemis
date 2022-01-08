@@ -12,7 +12,7 @@
     <ng-container *ngSwitchCase="ResultTemplateStatus.HAS_RESULT">
         <ng-container *ngIf="result"
             ><!-- we need to make sure that result is not null, otherwise the compiler complains below -->
-            <span [ngClass]="textColorClass" class="guided-tour">
+            <span [ngClass]="textColorClass" class="guided-tour" id="result-score">
                 <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
                 <span class="score" *ngIf="exercise">
                     <span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score</span>

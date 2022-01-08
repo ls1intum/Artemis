@@ -72,8 +72,8 @@ export class CloneRepoButtonComponent implements OnInit {
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
     }
 
-    public toggleUseSsh(): void {
-        this.useSsh = !this.useSsh;
+    public setUseSSH(useSsh: boolean): void {
+        this.useSsh = useSsh;
         this.localStorage.store('useSsh', this.useSsh);
     }
 
@@ -89,9 +89,9 @@ export class CloneRepoButtonComponent implements OnInit {
         });
     }
 
-    getHttpOrSshRepositoryUrl() {
+    getHttpOrSshRepositoryUrl(): string {
         if (this.useSsh) {
-            return this.getSshCloneUrl(this.repositoryUrl);
+            return this.getSshCloneUrl(this.repositoryUrl) || this.repositoryUrl;
         }
 
         if (this.isTeamParticipation) {
@@ -102,7 +102,7 @@ export class CloneRepoButtonComponent implements OnInit {
     }
 
     /**
-     * The user info part of the repository url of a team participation has to be be added with the current user's login.
+     * The user info part of the repository url of a team participation has to be added with the current user's login.
      *
      * @return repository url with username of current user inserted
      */
@@ -112,7 +112,7 @@ export class CloneRepoButtonComponent implements OnInit {
     }
 
     /**
-     * Transforms the repository url to a ssh url
+     * Transforms the repository url to an ssh clone url
      */
     getSshCloneUrl(url?: string) {
         return url?.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, this.sshTemplateUrl + '$2');
@@ -128,17 +128,14 @@ export class CloneRepoButtonComponent implements OnInit {
     /**
      * set wasCopied for 3 seconds on success
      */
-    onCopySuccess() {
-        this.wasCopied = true;
-        setTimeout(() => {
-            this.wasCopied = false;
-        }, 3000);
+    onCopyFinished(successful: boolean) {
+        if (successful) {
+            this.wasCopied = true;
+            setTimeout(() => {
+                this.wasCopied = false;
+            }, 3000);
+        }
     }
-
-    /**
-     * console log if copy fails
-     */
-    onCopyFailure() {}
 
     /**
      * build the sourceTreeUrl from the repository url

@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { CourseManagementService } from '../course-management.service';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';

@@ -1155,3 +1155,12 @@ Course Info Bar
     overflow: scroll;
     padding: 0 0.5rem;
 }
+
+.mat-autocomplete-panel.mat-autocomplete-visible {
+    box-shadow: 3px 3px 6px rgb(100 100 100);
+}
+
+.mat-form-field-outline {
+    top: -0.1em !important;
+    color: #ccc;
+}

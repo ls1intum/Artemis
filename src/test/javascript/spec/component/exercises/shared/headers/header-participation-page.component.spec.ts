@@ -13,7 +13,7 @@ import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 describe('HeaderParticipationPage', () => {
     let component: HeaderParticipationPageComponent;

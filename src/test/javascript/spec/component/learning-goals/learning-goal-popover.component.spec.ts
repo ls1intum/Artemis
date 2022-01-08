@@ -44,7 +44,7 @@ describe('LearningGoalPopoverComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 
