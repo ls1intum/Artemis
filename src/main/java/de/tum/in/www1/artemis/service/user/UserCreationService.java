@@ -183,6 +183,7 @@ public class UserCreationService {
         }
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
+        user.setInternal(true);
         user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         saveUser(user);
 
@@ -277,7 +278,8 @@ public class UserCreationService {
 
     public String setRandomPasswordAndReturn(User user) {
         String newPassword = RandomUtil.generatePassword();
-        user.setPassword(passwordService.decryptPassword(user));
+        user.setPassword(passwordService.encryptPassword(newPassword));
+        user.setInitialize(false);
         userRepository.save(user);
 
         optionalCIUserManagementService.ifPresent(service -> {
