@@ -146,9 +146,7 @@ dependencies {
     implementation "org.springframework.retry:spring-retry"
     implementation "org.springframework.cloud:spring-cloud-starter-bootstrap"
     implementation "org.springframework.data:spring-data-jpa"
-    implementation "io.springfox:springfox-bean-validators:3.0.0"
 
-    implementation("io.springfox:springfox-oas")
     annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}")
 
     developmentOnly "org.springframework.boot:spring-boot-devtools:${spring_boot_version}"
