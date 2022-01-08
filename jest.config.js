@@ -46,7 +46,7 @@ module.exports = {
         '^.+\\.(ts|js|mjs|html|svg)$': 'jest-preset-angular',
     },
     modulePathIgnorePatterns: [],
-    testTimeout: 2000,
+    testTimeout: 3000,
     testMatch: [
         '<rootDir>/src/test/javascript/spec/component/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/directive/**/*.spec.ts',
