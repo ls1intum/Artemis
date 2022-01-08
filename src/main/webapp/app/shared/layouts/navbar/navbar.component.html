@@ -225,9 +225,10 @@
 <div class="breadcrumb-container">
     <div *ngIf="breadcrumbs && breadcrumbs.length > 0">
         <ol class="breadcrumb" *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']">
-            <li *ngFor="let breadcrumb of breadcrumbs" class="breadcrumb-item">
+            <li *ngFor="let breadcrumb of breadcrumbs; let i = index" class="breadcrumb-item">
                 <a
                     class="breadcrumb-link"
+                    id="bread-crumb-{{ i }}"
                     [routerLink]="breadcrumb.uri"
                     routerLinkActive="active"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -236,6 +237,7 @@
                 >
                 <a
                     class="breadcrumb-link"
+                    id="bread-crumb-plain-{{ i }}"
                     [routerLink]="breadcrumb.uri"
                     routerLinkActive="active"
                     [routerLinkActiveOptions]="{ exact: true }"
