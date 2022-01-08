@@ -1,30 +1,24 @@
 <div class="d-flex justify-content-center">
     <h3>{{ 'artemisApp.exercise-scores-chart.title' | artemisTranslate }}</h3>
-    <div style="margin-bottom: 0.5rem; margin-left: 10px" aria-label="Filter Dropdown" ngbDropdown>
+    <div *ngIf="typeSet.size > 0" style="margin-bottom: 0.5rem; margin-left: 10px" aria-label="Filter Dropdown" ngbDropdown>
         <button class="btn" [ngClass]="{ 'btn-secondary': numberOfActiveFilters === 0, 'btn-success': numberOfActiveFilters > 0 }" ngbDropdownToggle id="filter-dropdown-button">
             <fa-icon [icon]="faFilter"></fa-icon>
             <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: numberOfActiveFilters } }}</span>
         </button>
         <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
-            <li *ngFor="let type of exerciseTypes">
-                <label *ngIf="exercisesOfTypeAvailable.get(type)">
-                    <input class="ms-2" (change)="toggleExerciseType(type)" [checked]="chartFilter.get(type)" type="checkbox" />
-                    <span class="ms-2">Include {{ type }}</span>
+            <li *ngFor="let type of typeSet">
+                <label>
+                    <input class="ms-2" (change)="toggleExerciseType(type)" [checked]="chartFilter.get(type.toLowerCase().replace('_', '-'))" type="checkbox" />
+                    <span class="ms-2"
+                        >{{ 'artemisApp.exercise-scores-chart.includeType' | artemisTranslate
+                        }}{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase() + 'Plural' | artemisTranslate }}</span
+                    >
                 </label>
             </li>
         </ul>
     </div>
 </div>
 <div class="row chart-wrapper mx-auto">
-    <!--<div class="col-1" id="filters">
-        <h6>Filter options:</h6>
-        <div *ngFor="let type of exerciseTypes">
-            <label *ngIf="exercisesOfTypeAvailable.get(type)">
-                <input type="checkbox" [checked]="chartFilter.get(type)" (change)="toggleExerciseType(type)" />
-                <span class="ms-2">Include {{type}}</span>
-            </label>
-        </div>
-    </div>-->
     <div #containerRef class="col-11">
         <ngx-charts-line-chart
             [view]="[containerRef.offsetWidth, 350]"
@@ -44,19 +38,18 @@
             (select)="onSelect($event)"
         >
             <ng-template #tooltipTemplate let-model="model">
-                <h6>{{ model.name }}</h6>
+                <b>{{ model.name }}</b> <br />
                 <span>{{ model.series }}: {{ Math.max(model.value - 1, 0) }} %</span>
             </ng-template>
             <ng-template #seriesTooltipTemplate let-model="model">
                 <h6>{{ model[0].name }}</h6>
-                <span> {{ model[0].series }}: {{ Math.max(model[0].value - 1, 0) }} %</span><br />
-                <span> {{ model[1].series }}: {{ Math.max(model[1].value - 1, 0) }} %</span><br />
-                <span> {{ model[2].series }}: {{ Math.max(model[2].value - 1, 0) }} %</span><br />
-                <span
-                    style="font-weight: bold"
-                    jhiTranslate="artemisApp.exercise-scores-chart.exerciseType"
-                    [translateValues]="{ type: model[0].exerciseType.toLowerCase().replace('_', '-') }"
-                ></span>
+                <span> {{ model[0].series }}: {{ Math.max(model[0].value - 1, 0) }}%</span><br />
+                <span> {{ model[1].series }}: {{ Math.max(model[1].value - 1, 0) }}%</span><br />
+                <span> {{ model[2].series }}: {{ Math.max(model[2].value - 1, 0) }}%</span><br />
+                <b>
+                    {{ 'artemisApp.exercise-scores-chart.exerciseType' | artemisTranslate }}
+                    {{ 'artemisApp.exercise-scores-chart.' + model[0].exerciseType.toLowerCase() | artemisTranslate }}</b
+                >
             </ng-template>
         </ngx-charts-line-chart>
     </div>

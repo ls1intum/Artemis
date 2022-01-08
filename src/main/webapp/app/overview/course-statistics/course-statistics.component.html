@@ -9,9 +9,6 @@
 
 <div *ngIf="course">
     <div class="row" *ngIf="course.exercises && course.exercises.length > 0 && ngxExerciseGroups.length > 0; else noStatistics">
-        <!-- Make sure that the doughnut chart does not move to the right of the screen by occupying the last 4 col spaces-->
-        <div class="col-4"></div>
-
         <div class="co-12 col-md-4 statistic-summary">
             <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate }}</h2>
             <div class="chart-container">
@@ -93,6 +90,7 @@
                         [yAxis]="true"
                         [xScaleMax]="exerciseGroup[0].xScaleMax"
                         [barPadding]="exerciseGroup[0].barPadding"
+                        (select)="onSelect($event)"
                     >
                         <!-- This template is managing the tooltip content depending of the bar that is selected by the user and the properties of the corresponding exercise-->
                         <ng-template #tooltipTemplate let-model="model">

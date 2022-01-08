@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash-es';
@@ -16,6 +16,7 @@ import { GradeDTO } from 'app/entities/grade-step.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faClipboard, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -48,6 +49,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
     course?: Course;
+    categoires: Set<ExerciseCategory>;
 
     private courseExercisesNotIncludedInScore: Exercise[];
     currentlyHidingNotIncludedInScoreExercises = true;
@@ -171,6 +173,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         private translateService: TranslateService,
         private route: ActivatedRoute,
         private gradingSystemService: GradingSystemService,
+        private router: Router,
     ) {}
 
     ngOnInit() {
@@ -291,6 +294,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                     series[5].afterDueDate = false;
                     series[5].notParticipated = true;
                     series[5].exerciseTitle = exercise.title;
+                    series[5].exerciseId = exercise.id;
                     this.pushToData(exercise, series);
                 } else {
                     exercise.studentParticipations.forEach((participation) => {
@@ -302,11 +306,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                                 const missedScore = 100 - cappedParticipationScore;
                                 const replaced = participationResult.resultString!.replace(',', '.');
                                 const split = replaced.split(' ');
-                                const missedPoints = Math.min(parseFloat(split[2]) - parseFloat(split[0]), 0);
+                                const missedPoints = Math.max(parseFloat(split[2]) - parseFloat(split[0]), 0);
                                 series[5].value = missedScore;
                                 series[5].absoluteValue = missedPoints;
                                 series[5].afterDueDate = false;
                                 series[5].notParticipated = false;
+                                series[5].exerciseId = exercise.id;
 
                                 this.identifyBar(exercise, series, roundedParticipationScore, parseFloat(split[0]));
                                 this.pushToData(exercise, series);
@@ -318,11 +323,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                             ) {
                                 series[4].value = 100;
                                 series[4].exerciseTitle = exercise.title;
+                                series[4].exerciseId = exercise.id;
                                 this.pushToData(exercise, series);
                             } else {
                                 series[5].value = 100;
                                 series[5].afterDueDate = true;
                                 series[5].exerciseTitle = exercise.title;
+                                series[5].exerciseId = exercise.id;
                                 this.pushToData(exercise, series);
                             }
                         }
@@ -355,12 +362,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      */
     private static generateDefaultSeries(): any[] {
         return [
-            { name: ChartBarTitle.NO_DUE_DATE, value: 0, absoluteValue: 0 },
-            { name: ChartBarTitle.INCLUDED, value: 0, absoluteValue: 0 },
-            { name: ChartBarTitle.NOT_INCLUDED, value: 0, absoluteValue: 0 },
-            { name: ChartBarTitle.BONUS, value: 0, absoluteValue: 0 },
-            { name: ChartBarTitle.NOT_GRADED, value: 0, exerciseTitle: '' },
-            { name: ChartBarTitle.MISSED, value: 0, absoluteValue: 0, afterDueDate: false, notParticipated: false, exerciseTitle: '' },
+            { name: ChartBarTitle.NO_DUE_DATE, value: 0, absoluteValue: 0, exerciseId: 0 },
+            { name: ChartBarTitle.INCLUDED, value: 0, absoluteValue: 0, exerciseId: 0 },
+            { name: ChartBarTitle.NOT_INCLUDED, value: 0, absoluteValue: 0, exerciseId: 0 },
+            { name: ChartBarTitle.BONUS, value: 0, absoluteValue: 0, exerciseId: 0 },
+            { name: ChartBarTitle.NOT_GRADED, value: 0, exerciseTitle: '', exerciseId: 0 },
+            { name: ChartBarTitle.MISSED, value: 0, absoluteValue: 0, afterDueDate: false, notParticipated: false, exerciseTitle: '', exerciseId: 0 },
         ];
     }
 
@@ -541,6 +548,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.courseExercisesNotIncludedInScore = this.courseExercises.filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED);
         this.courseExercises = this.courseExercises.filter((exercise) => !this.courseExercisesNotIncludedInScore.includes(exercise));
         this.filteredExerciseIDs = this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!);
+        const exerciseCategories = this.courseExercises.filter((exercise) => exercise.categories).flatMap((exercise) => exercise.categories!);
+        this.categoires = new Set(exerciseCategories);
     }
 
     /**
@@ -659,25 +668,23 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @private
      */
     private identifyBar(exercise: Exercise, series: any[], roundedParticipationScore: number, split: number): void {
-        if (!exercise.dueDate) {
-            series[0].value = roundedParticipationScore;
-            series[0].absoluteValue = split;
-        } else {
+        let position = 0;
+        if (exercise.dueDate) {
             switch (exercise.includedInOverallScore) {
                 case IncludedInOverallScore.INCLUDED_COMPLETELY:
-                    series[1].value = roundedParticipationScore;
-                    series[1].absoluteValue = split;
+                    position = 1;
                     break;
                 case IncludedInOverallScore.NOT_INCLUDED:
-                    series[2].value = roundedParticipationScore;
-                    series[2].absoluteValue = split;
+                    position = 2;
                     break;
                 case IncludedInOverallScore.INCLUDED_AS_BONUS:
-                    series[3].value = roundedParticipationScore;
-                    series[3].absoluteValue = split;
+                    position = 3;
                     break;
             }
         }
+        series[position].value = roundedParticipationScore;
+        series[position].absoluteValue = split;
+        series[position].exerciseId = exercise.id;
     }
 
     /**
@@ -693,5 +700,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             xScaleMax = xScaleMax > maxScore ? xScaleMax : Math.ceil(maxScore);
         });
         return xScaleMax;
+    }
+
+    onSelect(event: any) {
+        this.router.navigate(['courses', this.course!.id!, 'exercises', event.exerciseId]);
     }
 }
