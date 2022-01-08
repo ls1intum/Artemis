@@ -85,6 +85,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     isExamExercise: boolean;
     hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
+    initializeUser = false;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
@@ -142,16 +143,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
             if (didExerciseChange || didCourseChange) {
                 this.loadExercise();
-            }
-        });
-
-        this.route.queryParams.subscribe((queryParams) => {
-            if (queryParams['welcome'] !== undefined) {
-                setTimeout(() => {
-                    this.showWelcomeAlert = true;
-                }, 500);
-            }
-            if (queryParams['initialize'] !== undefined) {
             }
         });
 
