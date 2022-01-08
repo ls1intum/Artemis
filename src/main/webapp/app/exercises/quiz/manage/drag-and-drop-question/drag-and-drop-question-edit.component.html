@@ -280,11 +280,9 @@
                     <div class="placeholder-dnd" *cdkDragPreview matchSize>
                         <ng-template *ngTemplateOutlet="preview"></ng-template>
                     </div>
-                    <div class="placeholder-dnd" *cdkDragPlaceholder>
-                        <ng-template *ngTemplateOutlet="preview"></ng-template>
-                    </div>
+                    <div *cdkDragPlaceholder></div>
                     <ng-template #preview>
-                        <div style="border: 1px solid; background: #fafafa; padding: 4px 2px 2px 2px">
+                        <div style="border: 1px solid; background: #fafafa !important; padding: 4px 2px 2px 2px">
                             <div title="Move">
                                 <fa-icon [icon]="faBars" size="lg"></fa-icon>
                             </div>
