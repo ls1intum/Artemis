@@ -222,7 +222,7 @@ public abstract class Exercise extends DomainObject {
      * Sets the title of the exercise
      * all consecutive, trailing or preceding whitespaces are replaced with a single space.
      *
-     * @param title the new (unsanitized) title to be set
+     * @param title the new (non-sanitized) title to be set
      */
     public void setTitle(String title) {
         this.title = title != null ? title.strip().replaceAll("\\s+", " ") : null;
@@ -657,7 +657,7 @@ public abstract class Exercise extends DomainObject {
      * Find the latest (rated or unrated result) of the given participation. Returns null, if there are no results. Please beware: In many cases you might only want to show rated
      * results.
      *
-     * @param participation to find latest result for.
+     * @param participation to find the latest result for.
      * @return latest result or null
      */
     public Result findLatestResultWithCompletionDate(Participation participation) {
@@ -699,7 +699,7 @@ public abstract class Exercise extends DomainObject {
      * Filter for appropriate submission. Relevance in the following order:
      * - submission with rated result
      * - submission with unrated result (late submission)
-     * - no submission with any result > latest submission
+     * - no submission with any result > the latest submission
      *
      * @param submissions that need to be filtered
      * @return filtered submission
@@ -880,11 +880,12 @@ public abstract class Exercise extends DomainObject {
         this.numberOfRatingsTransient = numberOfRatings;
     }
 
+    @Nullable
     public Boolean getPresentationScoreEnabled() {
         return presentationScoreEnabled;
     }
 
-    public void setPresentationScoreEnabled(Boolean presentationScoreEnabled) {
+    public void setPresentationScoreEnabled(@Nullable Boolean presentationScoreEnabled) {
         this.presentationScoreEnabled = presentationScoreEnabled;
     }
 
@@ -928,7 +929,7 @@ public abstract class Exercise extends DomainObject {
      * Check whether the exercise has either a course or an exerciseGroup.
      *
      * @param entityName name of the entity
-     * @throws BadRequestAlertException if course and exerciseGroup are set or course and exerciseGroup are not set
+     * @throws BadRequestAlertException if the course and exerciseGroup are set or course and exerciseGroup are not set
      */
     public void checkCourseAndExerciseGroupExclusivity(String entityName) throws BadRequestAlertException {
         if (isCourseExercise() == isExamExercise()) {
@@ -1077,7 +1078,7 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
-     * This method is used to validate the assesmentDueDate of an exercise. An assessmentDueDate is valid if it is after the releaseDate and dueDate. A given assesmentDueDate is invalid without an according dueDate
+     * This method is used to validate the assessmentDueDate of an exercise. An assessmentDueDate is valid if it is after the releaseDate and dueDate. A given assessmentDueDate is invalid without an according dueDate
      * @return true if there is no assessmentDueDateError
      */
     private static boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
