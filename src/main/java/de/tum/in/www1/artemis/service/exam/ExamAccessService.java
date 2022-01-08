@@ -23,6 +23,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ExamAccessService {
 
+    private static final String ENTITY_NAME = "exam";
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final UserRepository userRepository;
@@ -59,7 +61,7 @@ public class ExamAccessService {
         // Check that the exam exists
         Optional<StudentExam> studentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId());
         if (studentExam.isEmpty()) {
-            throw new EntityNotFoundException("exam", examId);
+            throw new EntityNotFoundException(ENTITY_NAME, examId);
         }
 
         Exam exam = studentExam.get().getExam();
@@ -67,12 +69,12 @@ public class ExamAccessService {
 
         // Check that the current user is registered for the exam
         if (!examRepository.isUserRegisteredForExam(examId, currentUser.getId())) {
-            throw new AccessForbiddenException("exam", examId);
+            throw new AccessForbiddenException(ENTITY_NAME, examId);
         }
 
         // Check that the exam is visible
         if (exam.getVisibleDate() != null && exam.getVisibleDate().isAfter(ZonedDateTime.now())) {
-            throw new AccessForbiddenException("exam", examId);
+            throw new AccessForbiddenException(ENTITY_NAME, examId);
         }
 
         return studentExam.get();
@@ -165,7 +167,7 @@ public class ExamAccessService {
     private void checkExamBelongsToCourseElseThrow(Long courseId, Long examId) {
         Optional<Exam> exam = examRepository.findById(examId);
         if (exam.isEmpty()) {
-            throw new EntityNotFoundException("exam", examId);
+            throw new EntityNotFoundException(ENTITY_NAME, examId);
         }
         else {
             checkExamBelongsToCourseElseThrow(courseId, exam.get());
@@ -174,7 +176,7 @@ public class ExamAccessService {
 
     private void checkExamBelongsToCourseElseThrow(Long courseId, Exam exam) {
         if (!exam.getCourse().getId().equals(courseId)) {
-            throw new ConflictException();
+            throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
         }
     }
 
@@ -191,12 +193,12 @@ public class ExamAccessService {
         switch (role) {
             case INSTRUCTOR -> checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
             case EDITOR -> checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
-            default -> throw new AccessForbiddenException("exam", examId);
+            default -> throw new AccessForbiddenException(ENTITY_NAME, examId);
         }
 
         Exam exam = exerciseGroup.getExam();
         if (exam == null || !exam.getId().equals(examId)) {
-            throw new ConflictException();
+            throw new ConflictException("Invalid exam id", ENTITY_NAME, "noIdMatch");
         }
         checkExamBelongsToCourseElseThrow(courseId, exam);
     }
@@ -214,10 +216,10 @@ public class ExamAccessService {
 
         Optional<StudentExam> studentExam = studentExamRepository.findById(studentExamId);
         if (studentExam.isEmpty()) {
-            throw new EntityNotFoundException("exam", examId);
+            throw new EntityNotFoundException(ENTITY_NAME, examId);
         }
         if (!studentExam.get().getExam().getId().equals(examId)) {
-            throw new ConflictException();
+            throw new ConflictException("Invalid exam id", ENTITY_NAME, "noIdMatch");
         }
     }
 }

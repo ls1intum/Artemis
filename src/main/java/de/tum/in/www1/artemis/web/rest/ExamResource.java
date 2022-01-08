@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.time.ZonedDateTime.now;
 
 import java.io.File;
@@ -122,14 +121,11 @@ public class ExamResource {
         }
 
         checkForExamConflictsElseThrow(courseId, exam);
+        checkExamPointsElseThrow(exam);
 
         // Check that exerciseGroups are not set to prevent manipulation of associated exerciseGroups
         if (!exam.getExerciseGroups().isEmpty()) {
-            throw new ConflictException("A new exam cannot have exercise groups yet!");
-        }
-
-        if (exam.getMaxPoints() <= 0) {
-            throw new ConflictException();
+            throw new ConflictException("A new exam cannot have exercise groups yet", ENTITY_NAME, "groupsExist");
         }
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
@@ -157,10 +153,7 @@ public class ExamResource {
         }
 
         checkForExamConflictsElseThrow(courseId, updatedExam);
-
-        if (updatedExam.getMaxPoints() <= 0) {
-            throw new ConflictException();
-        }
+        checkExamPointsElseThrow(updatedExam);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, updatedExam.getId());
 
@@ -181,8 +174,8 @@ public class ExamResource {
             // get all exercises
             Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(result.getId());
             // for all programming exercises in the exam, send their ids for scheduling
-            examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(exercise -> exercise instanceof ProgrammingExercise)
-                    .map(Exercise::getId).forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
+            examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
+                    .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
         }
 
         if (comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0) {
@@ -201,16 +194,26 @@ public class ExamResource {
      */
     private void checkForExamConflictsElseThrow(Long courseId, Exam exam) {
         if (exam.getCourse() == null) {
-            throw new ConflictException();
+            throw new ConflictException("An exam has to belong to a course.", ENTITY_NAME, "noCourse");
         }
 
-        if (!exam.getCourse().getId().equals(courseId)) {
-            throw new ConflictException();
-        }
+        checkExamCourseIdElseThrow(courseId, exam);
 
         if (exam.getVisibleDate() == null || exam.getStartDate() == null || exam.getEndDate() == null || !exam.getVisibleDate().isBefore(exam.getStartDate())
                 || !exam.getStartDate().isBefore(exam.getEndDate())) {
-            throw new ConflictException();
+            throw new ConflictException("An exam has to have times when it becomes visible, starts, and ends.", ENTITY_NAME, "examTimes");
+        }
+    }
+
+    private void checkExamPointsElseThrow(Exam exam) {
+        if (exam.getMaxPoints() <= 0) {
+            throw new BadRequestAlertException("An exam cannot have negative points.", ENTITY_NAME, "negativePoints");
+        }
+    }
+
+    private void checkExamCourseIdElseThrow(Long courseId, Exam exam) {
+        if (!exam.getCourse().getId().equals(courseId)) {
+            throw new ConflictException("The course id does not match the id of the course connected to the exam.", ENTITY_NAME, "wrongCourseId");
         }
     }
 
@@ -323,9 +326,7 @@ public class ExamResource {
 
         Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
         Course course = exam.getCourse();
-        if (!course.getId().equals(courseId)) {
-            throw new ConflictException();
-        }
+        checkExamCourseIdElseThrow(courseId, exam);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
@@ -362,9 +363,7 @@ public class ExamResource {
 
         Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
         Course course = exam.getCourse();
-        if (!course.getId().equals(courseId)) {
-            throw new ConflictException();
-        }
+        checkExamCourseIdElseThrow(courseId, exam);
 
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
@@ -515,7 +514,7 @@ public class ExamResource {
                 .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + studentLogin + "\" does not exist"));
 
         if (student.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authCheckService.isAdmin(student)) {
-            return forbidden("exam", "cannotRegisterInstructor", "You cannot register instructors or administrators to exams.");
+            throw new AccessForbiddenException("You cannot register instructors or administrators to exams.");
         }
 
         examRegistrationService.registerStudentToExam(course, exam, student);
@@ -608,9 +607,7 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         if (examDateService.getLatestIndividualExamEndDate(examId).isAfter(ZonedDateTime.now())) {
-            // Quizzes should only be evaluated if no exams are running
-            return forbidden(applicationName, ENTITY_NAME, "quizevaluationPendingExams",
-                    "There are still exams running, quizzes can only be evaluated once all exams are finished.");
+            throw new AccessForbiddenException("There are still exams running, quizzes can only be evaluated once all exams are finished.");
         }
 
         Integer numOfEvaluatedExercises = examService.evaluateQuizExercises(examId);

@@ -82,11 +82,11 @@ public class ExerciseGroupResource {
         }
 
         if (exerciseGroup.getExam() == null) {
-            throw new ConflictException();
+            throw new ConflictException("The exercise group has to belong no an exam.", ENTITY_NAME, "missingExam");
         }
 
         if (!exerciseGroup.getExam().getId().equals(examId)) {
-            throw new ConflictException();
+            throw new ConflictException("The exam connected to this group does not have the given exam id.", ENTITY_NAME, "wrongExamId");
         }
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
@@ -120,7 +120,7 @@ public class ExerciseGroupResource {
         }
 
         if (updatedExerciseGroup.getExam() == null) {
-            throw new ConflictException();
+            throw new ConflictException("The exercise group has to belong to an exam.", ENTITY_NAME, "missingExam");
         }
 
         examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, courseId, examId, updatedExerciseGroup);
