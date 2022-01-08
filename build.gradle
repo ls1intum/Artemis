@@ -21,14 +21,14 @@ plugins {
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "3.1.4"
     id "com.github.node-gradle.node" version "3.1.1"
-    id "com.diffplug.spotless" version "6.1.0"
+    id "com.diffplug.spotless" version "6.1.2"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-    id "com.github.ben-manes.versions" version "0.40.0"
+    id "com.github.ben-manes.versions" version "0.41.0"
     id "com.github.andygoossens.modernizer" version "1.6.1"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.4.4"
+version = "5.5.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=16
@@ -134,13 +134,13 @@ jacocoTestCoverageVerification {
             limit {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
-                minimum = 0.90
+                minimum = 0.902
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 20
-                maximum = 27
+                maximum = 25
             }
         }
     }
@@ -182,7 +182,7 @@ dependencies {
     implementation "org.jsoup:jsoup:1.14.3"
     implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.6.3"
+    implementation "org.springdoc:springdoc-openapi-ui:1.6.4"
 
     // import JHipster dependencies BOM
     implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
@@ -255,7 +255,7 @@ dependencies {
     implementation "com.github.seancfoley:ipaddress:5.3.3"
     implementation "org.apache.maven:maven-model:3.8.4"
     implementation "org.apache.pdfbox:pdfbox:2.0.25"
-    implementation "com.google.protobuf:protobuf-java:3.19.1"
+    implementation "com.google.protobuf:protobuf-java:3.19.2"
     implementation "org.commonmark:commonmark:0.18.1"
     implementation "de.tum.in.ase.athene:client:0.0.2"
 
@@ -391,3 +391,4 @@ tasks.named("dependencyUpdates").configure {
 // 7) Generate Liquibase diff:                      ./gradlew liquibaseDiffChangelog
 // 8) Clear Liquibase checksums:                    ./gradlew liquibaseClearChecksums
 // 9) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
+// 10) Detects uses of legacy code:                 ./gradlew modernizer -x webapp
