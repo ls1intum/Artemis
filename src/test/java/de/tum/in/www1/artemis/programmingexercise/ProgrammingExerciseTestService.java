@@ -1540,7 +1540,7 @@ public class ProgrammingExerciseTestService {
 
     private ProgrammingExerciseStudentParticipation createProgrammingParticipationWithSubmissionAndResult(ProgrammingExercise exercise, String studentLogin, double score,
             ZonedDateTime submissionDate, boolean withResult) {
-        var programmingSubmission = ModelFactory.generateProgrammingSubmission(true, "abcde", SubmissionType.MANUAL, submissionDate);
+        var programmingSubmission = ModelFactory.generateProgrammingSubmission(true, "abcde", SubmissionType.MANUAL);
         programmingSubmission = database.addProgrammingSubmission(exercise, programmingSubmission, studentLogin);
         if (withResult) {
             database.addResultToParticipation(AssessmentType.AUTOMATIC, submissionDate, programmingSubmission.getParticipation(), score >= 100D, true, 100D);

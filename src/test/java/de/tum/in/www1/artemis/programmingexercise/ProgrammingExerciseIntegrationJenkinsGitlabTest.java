@@ -22,15 +22,11 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 
 public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ProgrammingExerciseIntegrationTestService programmingExerciseIntegrationTestService;
-
-    @Autowired
-    private ProgrammingExerciseResource programmingExerciseResource;
 
     @Autowired
     private ProgrammingExerciseService programmingExerciseService;
