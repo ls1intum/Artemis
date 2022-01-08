@@ -3,7 +3,7 @@ require('jest-preset-angular/ngcc-jest-processor');
 const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collapse-white-space', '@angular/animations', '@angular/common', '@ls1intum/apollon',
     '@angular/compiler', '@angular/core', '@angular/forms', '@angular/localize', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router',
     '@ngx-translate/core', '@ngx-translate/http-loader', '@fortawesome/angular-fontawesome', '@angular/cdk', '@angular/material', '@angular/cdk', 'dayjs/esm',
-    'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-device-detector'].join('|');
+    'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-device-detector', '@swimlane/ngx-charts'].join('|');
 
 const {
     compilerOptions: { paths = {}, baseUrl = './' },
@@ -46,7 +46,7 @@ module.exports = {
         '^.+\\.(ts|js|mjs|html|svg)$': 'jest-preset-angular',
     },
     modulePathIgnorePatterns: [],
-    testTimeout: 2000,
+    testTimeout: 3000,
     testMatch: [
         '<rootDir>/src/test/javascript/spec/component/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/directive/**/*.spec.ts',

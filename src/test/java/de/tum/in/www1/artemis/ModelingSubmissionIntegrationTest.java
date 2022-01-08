@@ -219,7 +219,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "student1")
     public void saveAndSubmitModelingSubmission_isTeamMode() throws Exception {
-        exerciseRepo.save(useCaseExercise.mode(ExerciseMode.TEAM));
+        useCaseExercise.setMode(ExerciseMode.TEAM);
+        exerciseRepo.save(useCaseExercise);
         Team team = new Team();
         team.setName("Team");
         team.setShortName("team");

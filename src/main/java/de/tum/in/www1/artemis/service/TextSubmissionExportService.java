@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 import org.springframework.stereotype.Service;
 
@@ -24,7 +25,7 @@ public class TextSubmissionExportService extends SubmissionExportService {
             }
         }
         else {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8));
             writer.write(((TextSubmission) submission).getText());
             writer.close();
         }
@@ -46,7 +47,7 @@ public class TextSubmissionExportService extends SubmissionExportService {
             submissionExportFile.createNewFile();
         }
 
-        BufferedWriter writer = new BufferedWriter(new FileWriter(submissionExportFile));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(submissionExportFile, StandardCharsets.UTF_8));
         writer.write(submission.getText());
         writer.close();
     }

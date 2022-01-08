@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -131,7 +132,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
 
     private RSAPrivateKey readPrivateKey(String file) throws IOException {
         // Read PKCS#8 File!
-        try (FileReader keyReader = new FileReader(file)) {
+        try (FileReader keyReader = new FileReader(file, StandardCharsets.UTF_8)) {
             PEMParser pemParser = new PEMParser(keyReader);
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
             PrivateKeyInfo privateKeyInfo = PrivateKeyInfo.getInstance(pemParser.readObject());
