@@ -522,26 +522,6 @@ public abstract class Exercise extends DomainObject {
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-    public Boolean isEnded() {
-        if (getDueDate() == null) {
-            return Boolean.FALSE;
-        }
-        return ZonedDateTime.now().isAfter(getDueDate());
-    }
-
-    /**
-     * Checks if the due date is in the future. Returns true, if no due date is set.
-     *
-     * @return true if the due date is in the future, otherwise false
-     */
-    @JsonIgnore
-    public boolean isBeforeDueDate() {
-        if (dueDate == null) {
-            return true;
-        }
-        return ZonedDateTime.now().isBefore(dueDate);
-    }
-
     public Set<LearningGoal> getLearningGoals() {
         return learningGoals;
     }
@@ -1023,6 +1003,38 @@ public abstract class Exercise extends DomainObject {
             newGradingInstructions.add(newGradingInstruction);
         }
         return newGradingInstructions;
+    }
+
+    /**
+     * Validates score settings
+     * 1. The maxScore needs to be greater than 0
+     * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
+     *
+     */
+    public void validateScoreSettings() {
+        // Check if max score is set
+        if (getMaxPoints() == null || getMaxPoints() <= 0) {
+            throw new BadRequestAlertException("The max score needs to be greater than 0", "Exercise", "maxScoreInvalid");
+        }
+
+        if (getBonusPoints() == null) {
+            // make sure the default value is set properly
+            setBonusPoints(0.0);
+        }
+
+        // Check IncludedInOverallScore
+        if (getIncludedInOverallScore() == null) {
+            throw new BadRequestAlertException("The IncludedInOverallScore-property must be set", "Exercise", "includedInOverallScoreNotSet");
+        }
+
+        if (!getIncludedInOverallScore().validateBonusPoints(getBonusPoints())) {
+            throw new BadRequestAlertException("The provided bonus points are not allowed", "Exercise", "bonusPointsInvalid");
+        }
+    }
+
+    public void validateGeneralSettings() {
+        validateScoreSettings();
+        validateDates();
     }
 
     /**

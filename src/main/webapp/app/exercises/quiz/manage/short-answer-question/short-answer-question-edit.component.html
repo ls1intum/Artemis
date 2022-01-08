@@ -191,8 +191,10 @@
                             <div *ngIf="shortAnswerQuestionUtil.isInputField(element || '')" class="short-answer-question-container">
                                 <div
                                     class="short-answer-question-container__div-input"
-                                    dnd-droppable
-                                    (onDropSuccess)="onDragDrop(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion), $event)"
+                                    cdkDropList
+                                    (cdkDropListDropped)="
+                                        onDragDrop(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion), $event)
+                                    "
                                 ></div>
                                 <div style="position: absolute; top: -8px; right: -4px; display: inline-flex" *ngIf="reEvaluationInProgress">
                                     <div
@@ -241,7 +243,7 @@
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
             </div>
             <div class="drag-items" *ngIf="shortAnswerQuestion.solutions && shortAnswerQuestion.solutions.length">
-                <div class="drag-item" *ngFor="let solution of shortAnswerQuestion.solutions" dnd-draggable [dragEnabled]="true" [dragData]="solution">
+                <div class="drag-item" *ngFor="let solution of shortAnswerQuestion.solutions" cdkDrag [cdkDragDisabled]="false" [cdkDragData]="solution">
                     <div>
                         <textarea [(ngModel)]="solution.text" (ngModelChange)="questionUpdated.emit()"></textarea>
                     </div>
@@ -280,12 +282,12 @@
         <div *ngIf="!showVisualMode && !reEvaluationInProgress" class="toolbar">
             <div class="btn-group">
                 <div class="btn btn-outline-secondary active" jhiTranslate="artemisApp.shortAnswerQuestion.editor.text"></div>
-                <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.visual" (click)="togglePreview()"></div>
+                <div class="btn btn-outline-secondary" id="short-answer-show-visual" jhiTranslate="artemisApp.shortAnswerQuestion.editor.visual" (click)="togglePreview()"></div>
             </div>
         </div>
         <div *ngIf="showVisualMode && !reEvaluationInProgress" class="toolbar">
             <div class="btn-group">
-                <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.text" (click)="togglePreview()"></div>
+                <div class="btn btn-outline-secondary" id="short-answer-show-text" jhiTranslate="artemisApp.shortAnswerQuestion.editor.text" (click)="togglePreview()"></div>
                 <div class="btn btn-outline-secondary active" jhiTranslate="artemisApp.shortAnswerQuestion.editor.visual"></div>
             </div>
         </div>

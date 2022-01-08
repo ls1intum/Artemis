@@ -12,7 +12,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faClipboard, faEye, faListAlt, faPlus, faSort, faThList, faTimes, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 

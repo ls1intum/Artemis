@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 /**
@@ -411,6 +413,9 @@ public class UserTestService {
 
     // Test
     public void createUserWithGroups() throws Exception {
+        assertThrows(EntityNotFoundException.class, () -> userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(Long.MAX_VALUE));
+        assertThrows(EntityNotFoundException.class, () -> userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
+
         var course = database.addEmptyCourse();
         database.addProgrammingExerciseToCourse(course, false);
         course = database.addEmptyCourse();

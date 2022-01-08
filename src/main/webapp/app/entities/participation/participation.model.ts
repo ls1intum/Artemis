@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -32,6 +32,7 @@ export abstract class Participation implements BaseEntity {
 
     public initializationState?: InitializationState;
     public initializationDate?: dayjs.Dayjs;
+    public individualDueDate?: dayjs.Dayjs;
     public presentationScore?: number;
     public results?: Result[];
     public submissions?: Submission[];

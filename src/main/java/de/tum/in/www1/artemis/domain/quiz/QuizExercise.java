@@ -199,7 +199,6 @@ public class QuizExercise extends Exercise {
      * @return true if quiz has ended, false otherwise
      */
     @JsonView(QuizView.Before.class)
-    @Override
     public Boolean isEnded() {
         return isStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS <= 0;
     }
@@ -431,7 +430,7 @@ public class QuizExercise extends Exercise {
     }
 
     /**
-     * undo all changes which are not allowed after the dueDate ( dueDate, releaseDate, question.points, adding Questions and Answers)
+     * undo all changes which are not allowed after the dueDate ( dueDate, releaseDate, 'question.points', adding Questions and Answers)
      *
      * @param originalQuizExercise the original QuizExercise object, which will be compared with this quizExercise
      */
@@ -450,7 +449,7 @@ public class QuizExercise extends Exercise {
             if (originalQuizExercise.getQuizQuestions().contains(quizQuestion)) {
                 // find original unchanged quizQuestion
                 QuizQuestion originalQuizQuestion = originalQuizExercise.findQuestionById(quizQuestion.getId());
-                // reset score (not allowed to change)
+                // reset score (not allowed changing)
                 quizQuestion.setPoints(originalQuizQuestion.getPoints());
                 // correct invalid = null to invalid = false
                 if (quizQuestion.isInvalid() == null) {
@@ -498,7 +497,7 @@ public class QuizExercise extends Exercise {
                 updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary || quizQuestion.isUpdateOfResultsAndStatisticsNecessary(originalQuizQuestion);
             }
         }
-        // check if an question was deleted (not allowed added quistions are not relevant)
+        // check if a question was deleted (not allowed added questions are not relevant)
         // if true an update of the Statistics and Results is necessary
         if (quizQuestions.size() != originalQuizExercise.getQuizQuestions().size()) {
             updateOfResultsAndStatisticsNecessary = true;
@@ -692,7 +691,7 @@ public class QuizExercise extends Exercise {
     public void removeResultFromAllStatistics(Result result) {
         // update QuizPointStatistic with the result
         if (result != null) {
-            // check if result contains a quizSubmission if true -> a it's not necessary to fetch it from the database
+            // check if result contains a quizSubmission if true -> it's not necessary to fetch it from the database
             QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
             getQuizPointStatistic().removeOldResult(result.getScore(), result.isRated());
             for (QuizQuestion quizQuestion : getQuizQuestions()) {

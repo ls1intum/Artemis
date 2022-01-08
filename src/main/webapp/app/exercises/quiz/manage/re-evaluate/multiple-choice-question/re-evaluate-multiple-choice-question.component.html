@@ -87,10 +87,10 @@
             </div>
         </div>
     </div>
-    <div class="answer-border" dnd-sortable-container [sortableData]="question.answerOptions || []">
-        <div class="answer-border" *ngFor="let answer of question.answerOptions; let i = index" dnd-sortable [sortableIndex]="i">
+    <div class="answer-border" cdkDropList (cdkDropListDropped)="onReorderAnswerOptionDrop($event)">
+        <div class="answer-border" *ngFor="let answer of question.answerOptions" cdkDrag>
             <div class="question-options">
-                <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%" dnd-sortable-handle>
+                <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%">
                     <fa-icon [icon]="faArrowsAltV" size="2x"></fa-icon>
                 </span>
                 <jhi-markdown-editor

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
@@ -12,6 +12,8 @@ import { LtiConfiguration } from 'app/entities/lti-configuration.model';
 import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exercise-statistics-dto.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { User } from 'app/core/user/user.model';
+import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -177,10 +179,11 @@ export class ExerciseService {
 
     /**
      * Returns an active quiz, a visible quiz or an exercise due in delayInHours or 12 hours if not specified
-     * @param { Exercise[] } exercises - Considered exercises
-     * @param { number} delayInHours - If set, amount of hours that are considered
+     * @param exercises - Considered exercises
+     * @param delayInHours - If set, amount of hours that are considered
+     * @param student - Needed when individual due dates for course exercises should be considered
      */
-    getNextExerciseForHours(exercises?: Exercise[], delayInHours = 12) {
+    getNextExerciseForHours(exercises?: Exercise[], delayInHours = 12, student?: User) {
         // check for quiz exercise in order to prioritize before other exercise types
         const nextQuizExercises = exercises?.filter((exercise: QuizExercise) => exercise.type === ExerciseType.QUIZ && !exercise.ended);
         return (
@@ -190,7 +193,8 @@ export class ExerciseService {
             nextQuizExercises?.find((exercise: QuizExercise) => exercise.isVisibleBeforeStart) ||
             // 3rd priority is the next due exercise
             exercises?.find((exercise) => {
-                const dueDate = exercise.dueDate!;
+                const studentParticipation = student ? exercise.studentParticipations?.find((participation) => participation.student?.id === student?.id) : undefined;
+                const dueDate = getExerciseDueDate(exercise, studentParticipation);
                 return dayjs().isBefore(dueDate) && dayjs().add(delayInHours, 'hours').isSameOrAfter(dueDate);
             })
         );
