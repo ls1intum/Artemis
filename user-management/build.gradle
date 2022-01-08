@@ -118,6 +118,7 @@ sourceSets {
             include 'de/tum/in/www1/artemis/service/listeners/**'
             include 'de/tum/in/www1/artemis/service/ldap/**'
             include 'de/tum/in/www1/artemis/service/user/PasswordService.*'
+            include 'de/tum/in/www1/artemis/service/programming/ProgrammingLanguageFeature.*'
 
             include 'de/tum/in/www1/artemis/service/connectors/bamboo/BambooAuthorizationInterceptor.*' // needed from RestTemplateConfiguration
             include 'de/tum/in/www1/artemis/service/connectors/bitbucket/BitbucketAuthorizationInterceptor.*' // needed from RestTemplateConfiguration

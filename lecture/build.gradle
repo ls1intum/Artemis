@@ -108,6 +108,7 @@ sourceSets {
             include 'de/tum/in/www1/artemis/service/dto/**'
             include 'de/tum/in/www1/artemis/service/util/**'
             include 'de/tum/in/www1/artemis/service/listeners/**'
+            include 'de/tum/in/www1/artemis/service/programming/ProgrammingLanguageFeature.*'
 
             // Include all DB entities. repositories and exceptions
             include 'de/tum/in/www1/artemis/domain/**'
