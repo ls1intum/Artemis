@@ -54,10 +54,12 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         Course course = database.addCourseWithModelingAndTextExercise();
         for (Exercise exercise : course.getExercises()) {
             if (exercise instanceof ModelingExercise) {
-                modelingExercise = (ModelingExercise) exerciseRepo.save(exercise.mode(ExerciseMode.TEAM));
+                exercise.setMode(ExerciseMode.TEAM);
+                modelingExercise = (ModelingExercise) exerciseRepo.save(exercise);
             }
             if (exercise instanceof TextExercise) {
-                textExercise = (TextExercise) exerciseRepo.save(exercise.mode(ExerciseMode.TEAM));
+                exercise.setMode(ExerciseMode.TEAM);
+                textExercise = (TextExercise) exerciseRepo.save(exercise);
             }
         }
         assertThat(modelingExercise).isNotNull();
