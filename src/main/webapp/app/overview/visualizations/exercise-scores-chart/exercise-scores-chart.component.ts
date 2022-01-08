@@ -9,6 +9,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { cloneDeep, sortBy } from 'lodash-es';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { round } from 'app/shared/util/utils';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { faFilter } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-scores-chart',
@@ -23,8 +25,17 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     isLoading = false;
     exerciseScores: ExerciseScoresDTO[] = [];
     excludedExerciseScores: ExerciseScoresDTO[] = [];
+    visibleExerciseScores: ExerciseScoresDTO[] = [];
+    chartFilter: Map<string, boolean> = new Map();
+    exercisesOfTypeAvailable: Map<string, boolean> = new Map();
+    numberOfActiveFilters = 0;
+    exerciseTypes = [ExerciseType.PROGRAMMING, ExerciseType.QUIZ, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
 
     readonly Math = Math;
+    readonly ExerciseType = ExerciseType;
+
+    // Icons
+    faFilter = faFilter;
 
     // ngx
     ngxData: any[] = [];
@@ -83,9 +94,11 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     }
 
     private initializeChart(): void {
+        this.initializeFilterOptions();
         this.exerciseScores = this.exerciseScores.concat(this.excludedExerciseScores);
         this.excludedExerciseScores = this.exerciseScores.filter((score) => this.filteredExerciseIDs.includes(score.exerciseId!));
         this.exerciseScores = this.exerciseScores.filter((score) => !this.filteredExerciseIDs.includes(score.exerciseId!));
+        this.visibleExerciseScores = Array.of(...this.exerciseScores);
         // we show all the exercises ordered by their release data
         const sortedExerciseScores = sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
         this.addData(sortedExerciseScores);
@@ -172,5 +185,25 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
      */
     navigateToExercise(exerciseId: number): void {
         this.router.navigate(['courses', this.courseId, 'exercises', exerciseId]);
+    }
+
+    private initializeFilterOptions(): void {
+        this.exerciseTypes.forEach((type) => {
+            this.chartFilter.set(type, true);
+            const typeAvailable = this.exerciseScores.findIndex((score) => score.exerciseType!.toLowerCase().replace('_', '-') === type) !== -1 ?? false;
+            this.exercisesOfTypeAvailable.set(type, typeAvailable);
+        });
+        this.exercisesOfTypeAvailable.forEach((value) => (this.numberOfActiveFilters += value ? 1 : 0));
+    }
+
+    toggleExerciseType(type: ExerciseType): void {
+        const isIncluded = this.chartFilter.get(type);
+        this.chartFilter.set(type, !isIncluded);
+        this.visibleExerciseScores = this.exerciseScores.filter((score) => this.chartFilter.get(score.exerciseType.toLowerCase().replace('_', '-')));
+        this.numberOfActiveFilters = 0;
+        this.exercisesOfTypeAvailable.forEach((value, key) => (this.numberOfActiveFilters += value && this.chartFilter.get(key) ? 1 : 0));
+        // we show all the exercises ordered by their release data
+        const sortedExerciseScores = sortBy(this.visibleExerciseScores, (exerciseScore) => exerciseScore.releaseDate);
+        this.addData(sortedExerciseScores);
     }
 }
