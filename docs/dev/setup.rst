@@ -90,11 +90,9 @@ You can override the following configuration options in this file.
            use-external: true
            password-reset:
                 credential-provider: <provider> # The credential provider which users can log in though (e.g. TUMOnline)
-                # The password reset links for different languages
-                link: '{
-                    en: "<link>",
-                    de: "<link>"
-                }'
+                links: # The password reset links for different languages
+                    en: '<link>'
+                    de: '<link>'
            external:
                url: https://jira.ase.in.tum.de
                user: <username>    # e.g. ga12abc
