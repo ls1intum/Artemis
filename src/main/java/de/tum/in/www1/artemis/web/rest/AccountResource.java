@@ -72,6 +72,7 @@ public class AccountResource {
     /**
      * the registration is only enabled when the configuration artemis.user-management.registration.enabled is set to true.
      * A non existing entry or false mean that the registration is not enabled
+     *
      * @return whether the registration is enabled or not
      */
     private boolean isRegistrationDisabled() {
@@ -91,7 +92,7 @@ public class AccountResource {
      * {@code POST  /register} : register the user.
      *
      * @param managedUserVM the managed user View Model.
-     * @throws InvalidPasswordException {@code 400 (Bad Request)} if the password is incorrect.
+     * @throws InvalidPasswordException  {@code 400 (Bad Request)} if the password is incorrect.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws LoginAlreadyUsedException {@code 400 (Bad Request)} if the login is already used.
      */
@@ -182,7 +183,7 @@ public class AccountResource {
      *
      * @param userDTO the current user information.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
-     * @throws RuntimeException {@code 500 (Internal Server Error)} if the user login wasn't found.
+     * @throws RuntimeException          {@code 500 (Internal Server Error)} if the user login wasn't found.
      */
     @PutMapping("/account")
     public void saveAccount(@Valid @RequestBody UserDTO userDTO) {
@@ -225,12 +226,14 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/reset-password/init")
     public void requestPasswordReset(@RequestBody String mail) {
-        if (isRegistrationDisabled() && isSAML2Disabled()) {
-            throw new AccessForbiddenException("User Registration is disabled");
-        }
         Optional<User> user = userService.requestPasswordReset(mail);
         if (user.isPresent()) {
-            mailService.sendPasswordResetMail(user.get());
+            if (!user.get().isInternal()) {
+                throw new BadRequestAlertException("The user is handled externally. The password can't be reset within Artemis.", "Account", "externalUser");
+            }
+            else {
+                mailService.sendPasswordResetMail(user.get());
+            }
         }
         else {
             // Pretend the request has been successful to prevent checking which emails really exist
@@ -244,7 +247,7 @@ public class AccountResource {
      *
      * @param keyAndPassword the generated key and the new password.
      * @throws InvalidPasswordException {@code 400 (Bad Request)} if the password is incorrect.
-     * @throws RuntimeException {@code 500 (Internal Server Error)} if the password could not be reset.
+     * @throws RuntimeException         {@code 500 (Internal Server Error)} if the password could not be reset.
      */
     @PostMapping(path = "/account/reset-password/finish")
     public void finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
