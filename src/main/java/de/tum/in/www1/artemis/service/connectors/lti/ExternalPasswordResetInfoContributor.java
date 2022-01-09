@@ -18,8 +18,8 @@ public class ExternalPasswordResetInfoContributor implements InfoContributor {
     @Value("#{${artemis.user-management.password-reset.link}}")
     private Map<String, String> linkMap;
 
-    @Value("${artemis.user-management.use-external")
-    private boolean useExternal;
+    @Value("${artemis.user-management.use-external}")
+    private String useExternal;
 
     /**
      * Contributes additional details using the specified {@link Info.Builder Builder}.
@@ -30,6 +30,6 @@ public class ExternalPasswordResetInfoContributor implements InfoContributor {
     public void contribute(Info.Builder builder) {
         builder.withDetail(Constants.EXTERNAL_CREDENTIAL_PROVIDER, credentialProvider);
         builder.withDetail(Constants.EXTERNAL_PASSWORD_RESET_LINK_MAP, linkMap);
-        builder.withDetail(Constants.USE_EXTERNAL, useExternal);
+        builder.withDetail(Constants.USE_EXTERNAL, useExternal.equals("true"));
     }
 }

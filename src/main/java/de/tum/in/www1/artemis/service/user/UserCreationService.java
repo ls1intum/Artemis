@@ -276,6 +276,13 @@ public class UserCreationService {
         return userRepository.save(user);
     }
 
+    /**
+     * Sets for the provided user a random password and ends the initialization process.
+     * Updates the password on CI and VCS systems
+     *
+     * @param user the user to update
+     * @return the newly created password
+     */
     public String setRandomPasswordAndReturn(User user) {
         String newPassword = RandomUtil.generatePassword();
         user.setPassword(passwordService.encryptPassword(newPassword));

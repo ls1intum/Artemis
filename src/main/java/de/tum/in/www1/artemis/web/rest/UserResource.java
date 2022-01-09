@@ -301,6 +301,11 @@ public class UserResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Initialises users that are flagged as such and are LTI users by setting a new password that gets returned
+     *
+     * @return The ResponseEntity with a status 200 (Ok) and either an empty password or the newly created password
+     */
     @PutMapping("users/initialize")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<UserInitializationDTO> initializeUser() {
