@@ -10,7 +10,7 @@
                 "success": "Check your email for details on how to reset your password.",
                 "notfound": "<strong>Email address isn't registered!</strong> Please check and try again"
             },
-            "ldap": {
+            "external": {
                 "explanation": "Your account credentials are not with Artemis but {{provider}}.",
                 "noLink": "The password reset links for {{provider}} are not provided. Please notify the administrator. If you know how to reset your password for {{provider}} you can do it yourself.",
                 "hint": "Please reset your password using this link:",
