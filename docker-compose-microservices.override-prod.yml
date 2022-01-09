@@ -165,7 +165,6 @@ services:
             - SPRING_PROFILES_ACTIVE=prod
             - SPRING_CLOUD_CONFIG_NAME=gateway
             - SERVER_PORT=8089
-            # common environment variables, excluding the database variables
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
             - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
             - SPRING_DEVTOOLS_RESTART_ENABLED=true
