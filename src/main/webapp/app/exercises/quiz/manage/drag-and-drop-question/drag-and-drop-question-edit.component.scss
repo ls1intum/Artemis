@@ -2,6 +2,7 @@
 
 .edit-dnd-question {
     .drag-items {
+        background: white !important;
         .drag-item {
             img {
                 max-height: 100%;
@@ -15,17 +16,6 @@
                 left: 50%;
             }
         }
-    }
-
-    /* highlight drop location in light blue when selecting a drag item */
-    .drop-allowed {
-        background: rgba(173, 216, 230, 0.8) !important;
-    }
-
-    /* change highlight color to light green when dragging the item above a drop location */
-    .drop-hover,
-    .dnd-drag-over {
-        background: rgb(144, 238, 144) !important;
     }
 
     .resize {
@@ -140,4 +130,15 @@
             width: 100%;
         }
     }
+}
+
+/* highlight drop location in light blue when selecting a drag item */
+.cdk-drop-list-receiving {
+    background: rgba(173, 216, 230, 0.8) !important;
+}
+
+/* change highlight color to light green when dragging the item above a drop location */
+.cdk-drop-list-dragging {
+    background: rgb(144, 238, 144) !important;
+    cursor: pointer;
 }
