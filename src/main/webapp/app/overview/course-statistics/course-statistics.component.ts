@@ -14,7 +14,7 @@ import { GradeType } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeDTO } from 'app/entities/grade-step.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { faClipboard, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
@@ -49,11 +49,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
     course?: Course;
-    categoires: Set<ExerciseCategory>;
+    exerciseCategories: Set<ExerciseCategory>;
+    exerciseCategoryFilters: Map<ExerciseCategory, boolean>;
 
     private courseExercisesNotIncludedInScore: Exercise[];
     currentlyHidingNotIncludedInScoreExercises = true;
     filteredExerciseIDs: number[];
+    private allExercises: Exercise[];
+
+    // Icons
+    faFilter = faFilter;
 
     // TODO: improve the types here and use maps instead of java script objects, also avoid the use of 'any'
 
@@ -545,11 +550,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     calculateAndFilterNotIncludedInScore() {
+        this.allExercises = this.courseExercises;
         this.courseExercisesNotIncludedInScore = this.courseExercises.filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED);
         this.courseExercises = this.courseExercises.filter((exercise) => !this.courseExercisesNotIncludedInScore.includes(exercise));
         this.filteredExerciseIDs = this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!);
-        const exerciseCategories = this.courseExercises.filter((exercise) => exercise.categories).flatMap((exercise) => exercise.categories!);
-        this.categoires = new Set(exerciseCategories);
+        const exerciseCategories = this.allExercises.filter((exercise) => exercise.categories).flatMap((exercise) => exercise.categories!);
+        this.exerciseCategories = new Set(exerciseCategories);
     }
 
     /**
@@ -702,7 +708,27 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         return xScaleMax;
     }
 
+    /**
+     * Handles the event fired if the user clicks on an arbitrary bar in the vertical bar charts.
+     * Delegates the user to the corresponding exercise detail page
+     * @param event the event that is fired by ngx-charts
+     */
     onSelect(event: any) {
         this.router.navigate(['courses', this.course!.id!, 'exercises', event.exerciseId]);
+    }
+
+    toggleCategory(category: ExerciseCategory) {
+        const isIncluded = this.exerciseCategoryFilters.get(category);
+        this.exerciseCategoryFilters.set(category, !isIncluded);
+        const currentlyVisibleExercises = this.courseExercises.filter((exercise) => {
+            let include = false;
+            exercise.categories?.forEach((exerciseCategory) => (include = include || this.exerciseCategoryFilters.get(exerciseCategory)!));
+            return include;
+        });
+        this.groupExercisesByType(currentlyVisibleExercises);
+    }
+
+    private setupCategoryFilter() {
+        this.exerciseCategories.forEach((category) => this.exerciseCategoryFilters.set(category, true));
     }
 }

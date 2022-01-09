@@ -1,9 +1,28 @@
 <ng-template #controls>
-    <div class="course-overview-controls">
-        <label class="d-flex align-items-center mb-0 me-2">
+    <div class="d-flex row course-overview-controls justify-content-between">
+        <label class="col d-flex align-items-center mb-0 me-2">
             <input type="checkbox" [checked]="currentlyHidingNotIncludedInScoreExercises" (change)="toggleNotIncludedInScoreExercises()" />
             <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.hideNotIncludedInScoreExercises">Hide Optional</span>
         </label>
+        <div class="col" *ngIf="exerciseCategories.size > 0" aria-label="Filter Dropdown" ngbDropdown>
+            <button
+                class="btn"
+                [ngClass]="{ 'btn-secondary': exerciseCategories.size === 0, 'btn-success': exerciseCategories.size > 0 }"
+                ngbDropdownToggle
+                id="filter-dropdown-button"
+            >
+                <fa-icon [icon]="faFilter"></fa-icon>
+                <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: exerciseCategories.size } }}</span>
+            </button>
+            <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                <li *ngFor="let category of exerciseCategories">
+                    <label>
+                        <input class="ms-2" [checked]="true" type="checkbox" />
+                        <span class="ms-2">Include category: {{ category.category }}</span>
+                    </label>
+                </li>
+            </ul>
+        </div>
     </div>
 </ng-template>
 
