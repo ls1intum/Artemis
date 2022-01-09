@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise.simulation;
 
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.ROOT;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseSimulationResource.Endpoints.EXERCISES_SIMULATION;
 import static org.assertj.core.api.Assertions.assertThat;
 
