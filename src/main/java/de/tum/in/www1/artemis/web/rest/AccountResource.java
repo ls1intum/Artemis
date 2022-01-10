@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,8 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -162,20 +158,6 @@ public class AccountResource {
         UserDTO userDTO = new UserDTO(user);
         log.info("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
         return userDTO;
-    }
-
-    /**
-     * GET /account/password : get the current users password.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the current user password in body, or status 500 (Internal Server Error) if the user couldn't be returned
-     */
-    @GetMapping(value = "/account/password", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getPassword() {
-        // This method is used to show the password for users that have been generated automatically based on LTI
-        // It only allows to decrypt and return the password of internal users and only of the currently logged in user
-        Map<String, String> body = new HashMap<>();
-        body.put("password", passwordService.decryptPasswordOfCurrentUser());
-        return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
     /**

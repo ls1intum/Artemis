@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
-import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -243,20 +242,6 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     public void getAccountWithoutLoggedInUser() throws Exception {
         UserDTO user = request.get("/api/account", HttpStatus.UNAUTHORIZED, UserDTO.class);
         assertThat(user).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "authenticateduser")
-    public void getPassword() throws Exception {
-        // create user in repo
-        User user = ModelFactory.generateActivatedUser("authenticateduser");
-        userCreationService.createUser(new ManagedUserVM(user));
-
-        // make request
-        @SuppressWarnings("rawtypes")
-        Map response = request.get("/api/account/password", HttpStatus.OK, Map.class);
-        assertThat(response.get("password")).isNotNull();
-        assertThat(response.get("password")).isNotEqualTo("");
     }
 
     @Test
