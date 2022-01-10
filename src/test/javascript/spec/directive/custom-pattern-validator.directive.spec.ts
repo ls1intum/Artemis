@@ -1,5 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
@@ -7,9 +5,6 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { ArtemisTestModule } from '../test.module';
 import { By } from '@angular/platform-browser';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 @Component({
     template: '<form name="editForm" #editForm="ngForm">' + '<input type="text" name="pattern" validPattern #patternModel="ngModel" [(ngModel)]="pattern"/>' + '</form>',
@@ -44,7 +39,7 @@ describe('CustomPatternValidatorDirective', () => {
 
             const patternEl = fixture.debugElement.query(By.css('input[name=pattern]')).references['patternModel'];
 
-            expect(patternEl.errors).to.be.null;
+            expect(patternEl.errors).toBe(null);
         });
     }));
 
@@ -58,7 +53,7 @@ describe('CustomPatternValidatorDirective', () => {
 
             const patternEl = fixture.debugElement.query(By.css('input[name=pattern]')).references['patternModel'];
 
-            expect(patternEl.errors.validPattern).to.be.true;
+            expect(patternEl.errors.validPattern).toBe(true);
         });
     }));
 });

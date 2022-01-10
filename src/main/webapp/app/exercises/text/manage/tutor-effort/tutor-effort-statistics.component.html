@@ -19,8 +19,22 @@
             </tr>
             <tr>
                 <td colspan="3">
-                    <div class="col-9 justify-content-center">
-                        <canvas baseChart [datasets]="chartDataSets" [labels]="chartLabels" [chartType]="chartType" [options]="chartOptions" [legend]="false"></canvas>
+                    <div #containerRef class="col-9 justify-content-center">
+                        <h3 jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title">Tutor Effort Statistics</h3>
+                        <ngx-charts-bar-vertical
+                            [view]="[containerRef.offsetWidth, 600]"
+                            [scheme]="ngxColor"
+                            [results]="ngxData"
+                            [xAxis]="true"
+                            [yAxis]="true"
+                            [showXAxisLabel]="true"
+                            [showYAxisLabel]="true"
+                            [xAxisLabel]="xAxisLabel"
+                            [yAxisLabel]="yAxisLabel"
+                            [yAxisTickFormatting]="yAxisTickFormatting"
+                            [yScaleMax]="yScaleMax"
+                        >
+                        </ngx-charts-bar-vertical>
                     </div>
                 </td>
             </tr>

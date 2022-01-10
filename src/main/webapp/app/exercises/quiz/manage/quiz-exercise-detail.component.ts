@@ -10,12 +10,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { Duration, Option } from './quiz-exercise-interfaces';
 import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities/exercise.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -42,11 +42,6 @@ import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
 import { faExclamationCircle, faPlus } from '@fortawesome/free-solid-svg-icons';
-
-export interface Reason {
-    translateKey: string;
-    translateValues: any;
-}
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -925,8 +920,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.cacheValidation();
     }
 
-    computeInvalidReasons(): Reason[] {
-        const invalidReasons = new Array<Reason>();
+    computeInvalidReasons(): ValidationReason[] {
+        const invalidReasons = new Array<ValidationReason>();
         if (!this.quizExercise) {
             return [];
         }

@@ -45,14 +45,14 @@ public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void guidedTourSettingsIsInitiallyNull() throws Exception {
         User user = request.get("/api/account", HttpStatus.OK, User.class);
         assertThat(user.getGuidedTourSettings().isEmpty()).isTrue();
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void updateGuidedTourSettings() throws Exception {
         Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
         Set serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
@@ -67,7 +67,7 @@ public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(username = "student1")
     public void deleteGuidedTourSetting() throws Exception {
         Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
         request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);

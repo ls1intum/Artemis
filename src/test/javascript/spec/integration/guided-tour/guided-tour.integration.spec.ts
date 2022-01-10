@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
-import { CookieService } from 'ngx-cookie-service';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
@@ -11,7 +10,6 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { AccountService } from 'app/core/auth/account.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { CoursesComponent } from 'app/overview/courses.component';
@@ -36,7 +34,6 @@ import { CourseRegistrationComponent } from 'app/overview/course-registration/co
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { ChartsModule } from 'ng2-charts';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -61,7 +58,6 @@ describe('Guided tour integration', () => {
         TestBed.configureTestingModule({
             imports: [
                 ArtemisTestModule,
-                MockModule(ChartsModule),
                 RouterTestingModule.withRoutes([
                     {
                         path: 'courses',
@@ -96,7 +92,6 @@ describe('Guided tour integration', () => {
             ],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: CookieService, useClass: MockCookieService },
                 { provide: DeviceDetectorService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

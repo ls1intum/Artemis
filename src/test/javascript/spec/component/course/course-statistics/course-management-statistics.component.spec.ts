@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
@@ -17,9 +14,6 @@ import { CourseManagementStatisticsComponent } from 'app/course/manage/course-ma
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { of } from 'rxjs';
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('CourseManagementStatisticsComponent', () => {
     let fixture: ComponentFixture<CourseManagementStatisticsComponent>;
@@ -66,20 +60,20 @@ describe('CourseManagementStatisticsComponent', () => {
     it('should initialize', () => {
         jest.spyOn(service, 'getCourseStatistics').mockReturnValue(of(returnValue));
         fixture.detectChanges();
-        expect(component).to.be.ok;
+        expect(component).not.toBeNull();
     });
 
     it('should trigger when tab changed', fakeAsync(() => {
         jest.spyOn(service, 'getCourseStatistics').mockReturnValue(of(returnValue));
-        const tabSpy = sinon.spy(component, 'onTabChanged');
+        const tabSpy = jest.spyOn(component, 'onTabChanged');
         fixture.detectChanges();
 
         const button = fixture.debugElement.nativeElement.querySelector('#option3');
         button.click();
 
         tick();
-        expect(tabSpy).to.have.been.calledOnce;
-        expect(component.currentSpan).to.be.equal(SpanType.MONTH);
-        tabSpy.restore();
+        expect(tabSpy).toHaveBeenCalledTimes(1);
+        expect(component.currentSpan).toEqual(SpanType.MONTH);
+        tabSpy.mockRestore();
     }));
 });

@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.*;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
@@ -61,7 +62,7 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.util.*;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -186,7 +187,7 @@ public class ProgrammingExerciseIntegrationTestService {
         var testjsonFilePath = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
         gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath);
         // create two empty commits
-        localGit.commit().setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
+        localGit.commit().setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
         localGit.push().call();
 
         // we use the temp repository as remote origin for all repositories that are created during the
@@ -364,10 +365,7 @@ public class ProgrammingExerciseIntegrationTestService {
         downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
-        // Recursively unzip the exported file, to make sure there is no erroneous content
-        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
-        Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
-        List<Path> entries = Files.walk(extractedZipDir).collect(Collectors.toList());
+        List<Path> entries = unzipExportedFile();
 
         // Make sure both repositories are present
         assertThat(entries.stream().anyMatch(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString()))).isTrue();
@@ -397,10 +395,7 @@ public class ProgrammingExerciseIntegrationTestService {
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
-        // Recursively unzip the exported file, to make sure there is no erroneous content
-        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
-        Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
-        List<Path> entries = Files.walk(extractedZipDir).collect(Collectors.toList());
+        List<Path> entries = unzipExportedFile();
 
         // Checks
         assertThat(entries.stream().anyMatch(entry -> entry.endsWith("Test.java"))).isTrue();
@@ -411,6 +406,17 @@ public class ProgrammingExerciseIntegrationTestService {
             assertThat(commit.getAuthorIdent().getName().equals("student")).isTrue();
             assertThat(commit.getFullMessage().equals("All student changes in one commit")).isTrue();
         }
+    }
+
+    /**
+     * Recursively unzips the exported file.
+     *
+     * @return the list of files that the {@code downloadedFile} contained.
+     */
+    private List<Path> unzipExportedFile() throws Exception {
+        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
+        Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
+        return Files.walk(extractedZipDir).collect(Collectors.toList());
     }
 
     public void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
@@ -761,6 +767,53 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put(ROOT + PROGRAMMING_EXERCISES, newProgrammingExercise, HttpStatus.CONFLICT);
     }
 
+    public void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+            participations.get(1).setIndividualDueDate(individualDueDate);
+            programmingExerciseStudentParticipationRepository.saveAll(participations);
+        }
+
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(12));
+        request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.OK);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            final var withNoIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+            assertThat(withNoIndividualDueDate).hasSize(1);
+
+            final var withIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() != null).toList();
+            assertThat(withIndividualDueDate).hasSize(1);
+            assertThat(withIndividualDueDate.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(individualDueDate);
+        }
+    }
+
+    public void updateExerciseRemoveDueDate() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            assertThat(participations).hasSize(2);
+            participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+            participations.get(1).setIndividualDueDate(ZonedDateTime.now().plusHours(20));
+            programmingExerciseStudentParticipationRepository.saveAll(participations);
+        }
+
+        programmingExercise.setDueDate(null);
+        request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.OK);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            final var withNoIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+            assertThat(withNoIndividualDueDate).hasSize(2);
+        }
+    }
+
     public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         final var endpoint = "/api" + TIMELINE;
@@ -786,13 +839,13 @@ public class ProgrammingExerciseIntegrationTestService {
 
     public void updateProblemStatement_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
-        final var endpoint = "/api" + ProgrammingExerciseResource.Endpoints.PROBLEM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/api" + ProgrammingExerciseResourceEndpoints.PROBLEM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.FORBIDDEN, MediaType.TEXT_PLAIN);
     }
 
     public void updateProblemStatement_invalidId_notFound() throws Exception {
         programmingExercise.setId(20L);
-        final var endpoint = "/api" + ProgrammingExerciseResource.Endpoints.PROBLEM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = "/api" + ProgrammingExerciseResourceEndpoints.PROBLEM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.NOT_FOUND, MediaType.TEXT_PLAIN);
     }
 
@@ -1412,12 +1465,12 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     public void lockAllRepositories_asStudent_forbidden() throws Exception {
-        final var endpoint = ProgrammingExerciseResource.Endpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
     public void lockAllRepositories_asTutor_forbidden() throws Exception {
-        final var endpoint = ProgrammingExerciseResource.Endpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
@@ -1425,7 +1478,7 @@ public class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation1.getStudents());
         mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation2.getStudents());
 
-        final var endpoint = ProgrammingExerciseResource.Endpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.OK);
 
         verify(versionControlService, times(1)).setRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
@@ -1442,12 +1495,12 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     public void unlockAllRepositories_asStudent_forbidden() throws Exception {
-        final var endpoint = ProgrammingExerciseResource.Endpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
     public void unlockAllRepositories_asTutor_forbidden() throws Exception {
-        final var endpoint = ProgrammingExerciseResource.Endpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
@@ -1456,7 +1509,7 @@ public class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockConfigureRepository(programmingExercise, participation2.getParticipantIdentifier(), participation2.getStudents(), false);
         mockDelegate.mockDefaultBranch(programmingExercise);
 
-        final var endpoint = ProgrammingExerciseResource.Endpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.OK);
 
         verify(versionControlService, times(1)).configureRepository(programmingExercise, participation1.getVcsRepositoryUrl(), participation1.getStudents(), true);
@@ -1508,8 +1561,12 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private void prepareTwoRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, InterruptedException, GitAPIException {
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        var participationStudent1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        var participationStudent2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        var submissionStudent1 = database.createProgrammingSubmission(participationStudent1, false);
+        var submissionStudent2 = database.createProgrammingSubmission(participationStudent2, false);
+        database.addResultToSubmission(submissionStudent1, AssessmentType.AUTOMATIC, null);
+        database.addResultToSubmission(submissionStudent2, AssessmentType.AUTOMATIC, null);
 
         var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos").toString();
         var projectKey = programmingExercise.getProjectKey();
@@ -1743,15 +1800,15 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private String defaultRecreateBuildPlanEndpoint(Long exerciseId) {
-        return ROOT + RECREATE_BUILD_PLANS.replace("{exerciseId}", "" + exerciseId);
+        return ROOT + RECREATE_BUILD_PLANS.replace("{exerciseId}", exerciseId.toString());
     }
 
     private String defaultGetAuxReposEndpoint(Long exerciseId) {
-        return ROOT + AUXILIARY_REPOSITORY.replace("{exerciseId}", "" + exerciseId);
+        return ROOT + AUXILIARY_REPOSITORY.replace("{exerciseId}", exerciseId.toString());
     }
 
     private String defaultExportInstructorAuxiliaryRepository(Long exerciseId, Long repositoryId) {
-        return ROOT + EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY.replace("{exerciseId}", "" + exerciseId).replace("{repositoryId}", "" + repositoryId);
+        return ROOT + EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY.replace("{exerciseId}", exerciseId.toString()).replace("{repositoryId}", repositoryId.toString());
     }
 
     private void testAuxRepo(AuxiliaryRepositoryBuilder body, HttpStatus expectedStatus) throws Exception {
@@ -1759,7 +1816,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private void testAuxRepo(List<AuxiliaryRepository> body, HttpStatus expectedStatus) throws Exception {
-        String uniqueExerciseTitle = "Title" + System.nanoTime() + "" + new Random().nextInt(100);
+        String uniqueExerciseTitle = String.format("Title%d%d", System.nanoTime(), ThreadLocalRandom.current().nextInt(100));
         programmingExercise.setAuxiliaryRepositories(body);
         programmingExercise.setId(null);
         programmingExercise.setSolutionParticipation(null);

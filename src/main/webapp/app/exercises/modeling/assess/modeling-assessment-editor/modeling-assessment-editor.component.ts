@@ -7,7 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -547,9 +547,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     /**
-     * Invokes exampleSubmissionService when importExampleSubmission is emitted in assessment-layout
+     * Invokes exampleSubmissionService when useAsExampleSubmission is emitted in assessment-layout
      */
-    importStudentSubmissionAsExampleSubmission(): void {
+    useStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.modelingExercise) {
             this.exampleSubmissionService.import(this.submission.id!, this.modelingExercise.id!).subscribe(
                 () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),

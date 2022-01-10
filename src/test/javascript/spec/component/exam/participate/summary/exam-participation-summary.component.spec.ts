@@ -1,7 +1,4 @@
-import * as sinon from 'sinon';
-import * as chai from 'chai';
-import dayjs from 'dayjs';
-import sinonChai from 'sinon-chai';
+import dayjs from 'dayjs/esm';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -43,9 +40,6 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 let fixture: ComponentFixture<ExamParticipationSummaryComponent>;
 let component: ExamParticipationSummaryComponent;
@@ -143,7 +137,7 @@ function sharedSetup(url: string[]) {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 }
 
@@ -151,29 +145,29 @@ describe('ExamParticipationSummaryComponent', () => {
     sharedSetup(['', '']);
 
     it('should expand all exercises and call print when Export PDF is clicked', fakeAsync(() => {
-        const printWindowStub = sinon.stub(global.window, 'print').returns();
+        const printWindowStub = jest.spyOn(global.window, 'print').mockReturnValue();
         fixture.detectChanges();
         const exportToPDFButton = fixture.debugElement.query(By.css('#exportToPDFButton'));
         const toggleCollapseExerciseButtonOne = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-0'));
         const toggleCollapseExerciseButtonTwo = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-1'));
         const toggleCollapseExerciseButtonThree = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-2'));
         const toggleCollapseExerciseButtonFour = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-3'));
-        expect(exportToPDFButton).to.exist;
-        expect(toggleCollapseExerciseButtonOne).to.exist;
-        expect(toggleCollapseExerciseButtonTwo).to.exist;
-        expect(toggleCollapseExerciseButtonThree).to.exist;
-        expect(toggleCollapseExerciseButtonFour).to.exist;
+        expect(exportToPDFButton).not.toBeNull();
+        expect(toggleCollapseExerciseButtonOne).not.toBeNull();
+        expect(toggleCollapseExerciseButtonTwo).not.toBeNull();
+        expect(toggleCollapseExerciseButtonThree).not.toBeNull();
+        expect(toggleCollapseExerciseButtonFour).not.toBeNull();
 
         toggleCollapseExerciseButtonOne.nativeElement.click();
         toggleCollapseExerciseButtonTwo.nativeElement.click();
         toggleCollapseExerciseButtonThree.nativeElement.click();
         toggleCollapseExerciseButtonFour.nativeElement.click();
-        expect(component.collapsedExerciseIds.length).to.equal(4);
+        expect(component.collapsedExerciseIds.length).toEqual(4);
 
         exportToPDFButton.nativeElement.click();
-        expect(component.collapsedExerciseIds).to.be.empty;
+        expect(component.collapsedExerciseIds).toBeEmpty();
         tick();
-        sinon.assert.called(printWindowStub);
-        printWindowStub.restore();
+        expect(printWindowStub).toHaveBeenCalled();
+        printWindowStub.mockRestore();
     }));
 });
