@@ -233,9 +233,6 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/reset-password/finish")
     public void finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
-        if (isRegistrationDisabled() && isSAML2Disabled()) {
-            throw new AccessForbiddenException("User Registration is disabled");
-        }
         if (isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {
             throw new InvalidPasswordException();
         }

@@ -443,30 +443,18 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void passwordResetInitRegistrationDisabled() throws Throwable {
-        testWithRegistrationDisabled(() -> {
-            // attempt password reset
-            request.postWithoutLocation("/api/account/reset-password/init", "", HttpStatus.FORBIDDEN, null);
-        });
-    }
+    public void passwordResetInitUserExternal() throws Throwable {
+        String login = "testLogin";
+        String email = "test@mail.com";
+        User user = new User();
+        user.setLogin(login);
+        user.setEmail(email);
+        user.setInternal(false);
+        userRepository.saveAndFlush(user);
 
-    @Test
-    public void passwordResetInitSaml2Disabled() throws Throwable {
-        testWithRegistrationDisabled(() -> {
-            ConfigUtil.testWithChangedConfig(accountResource, "saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
-                // attempt password reset
-                request.postWithoutLocation("/api/account/reset-password/init", "", HttpStatus.FORBIDDEN, null);
-            });
-        });
-    }
-
-    @Test
-    @WithMockUser("authenticateduser")
-    public void passwordResetFinishRegistrationDisabled() throws Throwable {
-        testWithRegistrationDisabled(() -> {
-            KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
-            request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
-        });
+        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(email);
+        request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
+        ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
     }
 
     @Test
