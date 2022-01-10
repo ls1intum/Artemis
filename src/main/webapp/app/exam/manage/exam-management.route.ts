@@ -73,7 +73,7 @@ export class ExamResolve implements Resolve<Exam> {
     constructor(private examManagementService: ExamManagementService) {}
 
     /**
-     * Resolves the route by extracting the examId and returns the exam with that Id if it exists
+     * Resolves the route by extracting the examId and returns the exam with that id if it exists
      * or creates a new exam otherwise.
      * @param route Contains the information about the route to be resolved
      */

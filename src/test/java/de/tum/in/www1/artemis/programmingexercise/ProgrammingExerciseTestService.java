@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RES
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.*;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
 import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.*;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
@@ -1541,7 +1541,7 @@ public class ProgrammingExerciseTestService {
 
     private ProgrammingExerciseStudentParticipation createProgrammingParticipationWithSubmissionAndResult(ProgrammingExercise exercise, String studentLogin, double score,
             ZonedDateTime submissionDate, boolean withResult) {
-        var programmingSubmission = ModelFactory.generateProgrammingSubmission(true, "abcde", SubmissionType.MANUAL, submissionDate);
+        var programmingSubmission = ModelFactory.generateProgrammingSubmission(true, "abcde", SubmissionType.MANUAL);
         programmingSubmission = database.addProgrammingSubmission(exercise, programmingSubmission, studentLogin);
         if (withResult) {
             database.addResultToParticipation(AssessmentType.AUTOMATIC, submissionDate, programmingSubmission.getParticipation(), score >= 100D, true, 100D);

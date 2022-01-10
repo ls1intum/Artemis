@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
+import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
 
 import javax.persistence.*;
 
@@ -20,6 +22,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * A Course.
@@ -29,6 +32,8 @@ import de.tum.in.www1.artemis.service.FileService;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Course extends DomainObject {
+
+    public static final String ENTITY_NAME = "course";
 
     @Transient
     private transient FileService fileService = new FileService();
@@ -464,7 +469,7 @@ public class Course extends DomainObject {
         this.organizations = organizations;
     }
     /*
-     * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding course is deleted or it is replaced
+     * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding course is deleted, or it is replaced
      * by another file. The workflow is as follows 1. user uploads a file -> this is a temporary file, because at this point the corresponding course might not exist yet. 2. user
      * saves the course -> now we move the temporary file which is addressed in courseIcon to a permanent location and update the value in courseIcon accordingly. => This happens
      * in @PrePersist and @PostPersist 3. user might upload another file to replace the existing file -> this new file is a temporary file at first 4. user saves changes (with the
@@ -596,5 +601,95 @@ public class Course extends DomainObject {
 
     public void setAccuracyOfScores(Integer accuracyOfScores) {
         this.accuracyOfScores = accuracyOfScores;
+    }
+
+    public void validateOnlineCourseAndRegistrationEnabled() {
+        if (isOnlineCourse() && isRegistrationEnabled()) {
+            throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
+                    true);
+        }
+    }
+
+    /**
+     * Validates that the accuracy of the scores is between 0 and 5
+     */
+    public void validateAccuracyOfScores() {
+        if (getAccuracyOfScores() == null) {
+            throw new BadRequestAlertException("The course needs to specify the accuracy of scores", ENTITY_NAME, "accuracyOfScoresNotSet", true);
+        }
+        if (getAccuracyOfScores() < 0 || getAccuracyOfScores() > 5) {
+            throw new BadRequestAlertException("The accuracy of scores defined for the course is either negative or uses too many decimal places (more than five)", ENTITY_NAME,
+                    "accuracyOfScoresInvalid", true);
+        }
+    }
+
+    /**
+     * Validates that the short name of the course follows SHORT_NAME_PATTERN
+     */
+    public void validateShortName() {
+        // Check if the course shortname matches regex
+        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(getShortName());
+        if (!shortNameMatcher.matches()) {
+            throw new BadRequestAlertException("The shortname is invalid", ENTITY_NAME, "shortnameInvalid", true);
+        }
+    }
+
+    /**
+     * validates that the configuration for complaints and more feedback requests is correct
+     */
+    public void validateComplaintsAndRequestMoreFeedbackConfig() {
+        if (getMaxComplaints() == null) {
+            // set the default value to prevent null pointer exceptions
+            setMaxComplaints(3);
+        }
+        if (getMaxTeamComplaints() == null) {
+            // set the default value to prevent null pointer exceptions
+            setMaxTeamComplaints(3);
+        }
+        if (getMaxComplaints() < 0) {
+            throw new BadRequestAlertException("Max Complaints cannot be negative", ENTITY_NAME, "maxComplaintsInvalid", true);
+        }
+        if (getMaxTeamComplaints() < 0) {
+            throw new BadRequestAlertException("Max Team Complaints cannot be negative", ENTITY_NAME, "maxTeamComplaintsInvalid", true);
+        }
+        if (getMaxComplaintTimeDays() < 0) {
+            throw new BadRequestAlertException("Max Complaint Days cannot be negative", ENTITY_NAME, "maxComplaintDaysInvalid", true);
+        }
+        if (getMaxRequestMoreFeedbackTimeDays() < 0) {
+            throw new BadRequestAlertException("Max Request More Feedback Days cannot be negative", ENTITY_NAME, "maxRequestMoreFeedbackDaysInvalid", true);
+        }
+        if (getMaxComplaintTimeDays() == 0 && (getMaxComplaints() != 0 || getMaxTeamComplaints() != 0)) {
+            throw new BadRequestAlertException("If complaints or more feedback requests are allowed, the complaint time in days must be positive.", ENTITY_NAME,
+                    "complaintsConfigInvalid", true);
+        }
+        if (getMaxComplaintTimeDays() != 0 && getMaxComplaints() == 0 && getMaxTeamComplaints() == 0) {
+            throw new BadRequestAlertException("If no complaints or more feedback requests are allowed, the complaint time in days should be set to zero.", ENTITY_NAME,
+                    "complaintsConfigInvalid", true);
+        }
+    }
+
+    public void validateRegistrationConfirmationMessage() {
+        if (getRegistrationConfirmationMessage() != null && getRegistrationConfirmationMessage().length() > 2000) {
+            throw new BadRequestAlertException("Confirmation registration message must be shorter than 2000 characters", ENTITY_NAME, "confirmationRegistrationMessageInvalid",
+                    true);
+        }
+    }
+
+    /**
+     * We want to add users to a group, however different courses might have different courseGroupNames, therefore we
+     * use this method to return the customized courseGroup name
+     *
+     * @param courseGroup the courseGroup we want to add the user to
+     *
+     * @return the customized userGroupName
+     */
+    public String defineCourseGroupName(String courseGroup) {
+        return switch (courseGroup) {
+            case "students" -> getStudentGroupName();
+            case "tutors" -> getTeachingAssistantGroupName();
+            case "instructors" -> getInstructorGroupName();
+            case "editors" -> getEditorGroupName();
+            default -> throw new IllegalArgumentException("The course group does not exist");
+        };
     }
 }

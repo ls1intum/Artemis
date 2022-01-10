@@ -417,8 +417,8 @@ public class FileService implements DisposableBean {
         BufferedWriter writer;
 
         try {
-            fr = new FileReader(file);
-            fw = new FileWriter(tempFile);
+            fr = new FileReader(file, StandardCharsets.UTF_8);
+            fw = new FileWriter(tempFile, StandardCharsets.UTF_8);
         }
         catch (IOException ex) {
             throw new FilePathParsingException("File " + filePath + " should be updated but does not exist.");

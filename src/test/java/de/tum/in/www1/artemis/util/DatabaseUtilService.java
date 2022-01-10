@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.fail;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -3601,7 +3602,7 @@ public class DatabaseUtilService {
     }
 
     public List<String[]> loadPercentagesAndGrades(String path) throws Exception {
-        try (CSVReader reader = new CSVReader(new FileReader(ResourceUtils.getFile("classpath:" + path)))) {
+        try (CSVReader reader = new CSVReader(new FileReader(ResourceUtils.getFile("classpath:" + path), StandardCharsets.UTF_8))) {
             List<String[]> rows = reader.readAll();
             // delete first row with column headers
             rows.remove(0);
