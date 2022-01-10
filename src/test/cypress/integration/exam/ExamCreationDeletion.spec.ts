@@ -1,7 +1,7 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { Course } from 'app/entities/course.model';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
 

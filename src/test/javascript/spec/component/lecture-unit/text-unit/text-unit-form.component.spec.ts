@@ -7,15 +7,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -26,20 +20,20 @@ class MarkdownEditorStubComponent {
 
 describe('TextUnitFormComponent', () => {
     let store = {};
-    const sandbox = sinon.createSandbox();
+
     let textUnitFormComponentFixture: ComponentFixture<TextUnitFormComponent>;
     let textUnitFormComponent: TextUnitFormComponent;
     beforeEach(() => {
         // mocking router
         // mocking the local storage for cache testing
         store = {};
-        sandbox.stub(localStorage, 'getItem').callsFake((key: string) => {
+        jest.spyOn(localStorage, 'getItem').mockImplementation((key: string) => {
             return store[key] || null;
         });
-        sandbox.stub(localStorage, 'removeItem').callsFake((key: string) => {
+        jest.spyOn(localStorage, 'removeItem').mockImplementation((key: string) => {
             delete store[key];
         });
-        sandbox.stub(localStorage, 'setItem').callsFake((key: string, value: string) => {
+        jest.spyOn(localStorage, 'setItem').mockImplementation((key: string, value: string) => {
             return (store[key] = <string>value);
         });
 
@@ -56,13 +50,13 @@ describe('TextUnitFormComponent', () => {
             });
     });
 
-    afterEach(function () {
-        sandbox.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         textUnitFormComponentFixture.detectChanges();
-        expect(textUnitFormComponent).to.be.ok;
+        expect(textUnitFormComponent).not.toBeNull();
     });
 
     it('should take markdown from cache', fakeAsync(() => {
@@ -76,18 +70,18 @@ describe('TextUnitFormComponent', () => {
         };
         store[fakeUrl] = JSON.stringify(cache);
 
-        sandbox.stub(window, 'confirm').callsFake(() => {
+        jest.spyOn(window, 'confirm').mockImplementation(() => {
             return true;
         });
 
         const translateService = TestBed.inject(TranslateService);
-        sandbox.stub(translateService, 'instant').callsFake(() => {
+        jest.spyOn(translateService, 'instant').mockImplementation(() => {
             return '';
         });
         textUnitFormComponentFixture.detectChanges(); // ngOnInit
         tick();
 
-        expect(textUnitFormComponent.content).to.equal(cache.markdown);
+        expect(textUnitFormComponent.content).toEqual(cache.markdown);
     }));
 
     it('should submit valid form', fakeAsync(() => {
@@ -104,36 +98,34 @@ describe('TextUnitFormComponent', () => {
 
         textUnitFormComponentFixture.detectChanges();
         tick(500);
-        expect(textUnitFormComponent.form.valid).to.be.true;
+        expect(textUnitFormComponent.form.valid).toBeTrue();
 
-        const submitFormSpy = sinon.spy(textUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = sinon.spy(textUnitFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = jest.spyOn(textUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(textUnitFormComponent.formSubmitted, 'emit');
 
         const submitButton = textUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
+        tick();
 
         textUnitFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).to.have.been.called;
-            expect(submitFormEventSpy).to.have.been.calledWith({
+            expect(submitFormSpy).toHaveBeenCalled();
+            expect(submitFormEventSpy).toHaveBeenCalledWith({
                 name: 'Test',
                 releaseDate: null,
                 content: exampleMarkdown,
             });
         });
-
-        submitFormSpy.restore();
-        submitFormEventSpy.restore();
     }));
 
     it('should be invalid if name is not set and valid if set', fakeAsync(() => {
         textUnitFormComponentFixture.detectChanges(); // ngOnInit
         tick();
-        expect(textUnitFormComponent.form.invalid).to.be.true;
+        expect(textUnitFormComponent.form.invalid).toBeTrue();
         const name = textUnitFormComponent.form.get('name');
         name!.setValue('');
-        expect(textUnitFormComponent.form.invalid).to.be.true;
+        expect(textUnitFormComponent.form.invalid).toBeTrue();
         name!.setValue('test');
-        expect(textUnitFormComponent.form.invalid).to.be.false;
+        expect(textUnitFormComponent.form.invalid).toBeFalse();
     }));
 
     it('should update local storage on markdown change', fakeAsync(() => {
@@ -149,9 +141,9 @@ describe('TextUnitFormComponent', () => {
         markdownEditor.markdownChange.emit(exampleMarkdown);
         tick(500);
         const savedCache = JSON.parse(store[fakeUrl]);
-        expect(savedCache).to.be.ok;
-        expect(savedCache.markdown).to.equal(exampleMarkdown);
-        expect(textUnitFormComponent.content).to.equal(exampleMarkdown);
+        expect(savedCache).not.toBeNull();
+        expect(savedCache.markdown).toEqual(exampleMarkdown);
+        expect(textUnitFormComponent.content).toEqual(exampleMarkdown);
     }));
 
     it('should correctly set form values in edit mode', fakeAsync(() => {
@@ -171,10 +163,10 @@ describe('TextUnitFormComponent', () => {
         textUnitFormComponent.ngOnChanges(); // ngOnChanges
         textUnitFormComponentFixture.detectChanges();
 
-        expect(textUnitFormComponent.nameControl!.value).to.equal(formData.name);
-        expect(textUnitFormComponent.releaseDateControl!.value).to.equal(formData.releaseDate);
-        expect(textUnitFormComponent.content).to.equal(formData.content);
+        expect(textUnitFormComponent.nameControl!.value).toEqual(formData.name);
+        expect(textUnitFormComponent.releaseDateControl!.value).toEqual(formData.releaseDate);
+        expect(textUnitFormComponent.content).toEqual(formData.content);
         const markdownEditor: MarkdownEditorStubComponent = textUnitFormComponentFixture.debugElement.query(By.directive(MarkdownEditorStubComponent)).componentInstance;
-        expect(markdownEditor.markdown).to.equal(formData.content);
+        expect(markdownEditor.markdown).toEqual(formData.content);
     }));
 });

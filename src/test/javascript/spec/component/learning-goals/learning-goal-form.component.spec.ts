@@ -32,7 +32,7 @@ describe('LearningGoalFormComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

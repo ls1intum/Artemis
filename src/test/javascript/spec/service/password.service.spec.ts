@@ -3,7 +3,7 @@ import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { PasswordService } from 'app/account/password/password.service';
 import { HttpClient } from '@angular/common/http';
 
-describe('ActivateService', () => {
+describe('PasswordService', () => {
     let passwordService: PasswordService;
     let httpService: HttpClient;
     let postStub: jest.SpyInstance;

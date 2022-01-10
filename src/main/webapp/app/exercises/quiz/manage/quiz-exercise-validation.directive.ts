@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Directive } from '@angular/core';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -118,7 +118,7 @@ export abstract class QuizExerciseValidationDirective {
                         shortAnswerQuestion.correctMappings &&
                         shortAnswerQuestion.correctMappings.length > 0 &&
                         this.shortAnswerQuestionUtil.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion) &&
-                        this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots) &&
+                        this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots!) &&
                         this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
                         shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim() === '').length === 0 &&
                         shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim().length >= this.maxLengthThreshold).length === 0 &&
@@ -309,13 +309,13 @@ export abstract class QuizExerciseValidationDirective {
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (!this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots)) {
+                if (!this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings!, shortAnswerQuestion.spots!)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEverySpotHasASolution',
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (!this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings)) {
+                if (!this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings!)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEveryMappedSolutionHasASpot',
                         translateValues: { index: index + 1 },
@@ -333,7 +333,7 @@ export abstract class QuizExerciseValidationDirective {
                         translateValues: { index: index + 1, threshold: this.maxLengthThreshold },
                     });
                 }
-                if (this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings)) {
+                if (this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings!)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionDuplicateMapping',
                         translateValues: { index: index + 1 },

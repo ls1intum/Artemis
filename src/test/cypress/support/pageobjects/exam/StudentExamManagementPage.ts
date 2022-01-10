@@ -12,7 +12,7 @@ export class StudentExamManagementPage {
 
     clickRegisterCourseStudents() {
         cy.intercept(POST, COURSE_BASE + '*/exams/*/register-course-students').as('registerCourseStudents');
-        cy.get('[jhitranslate="artemisApp.examManagement.examStudents.registerAllFromCourse"]').click();
+        cy.get('#register-course-students').click();
         return cy.wait('@registerCourseStudents');
     }
 }

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe, GERMAN_SHORT_DATE_FORMAT } from 'app/shared/pipes/artemis-date.pipe';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 

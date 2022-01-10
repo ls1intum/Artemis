@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { HttpClient } from '@angular/common/http';
 
 export interface ServerDateService {
