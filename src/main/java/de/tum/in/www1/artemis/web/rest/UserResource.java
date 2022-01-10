@@ -313,7 +313,7 @@ public class UserResource {
         if (!user.isInitialize()) {
             return ResponseEntity.ok().body(new UserInitializationDTO());
         }
-        if (ltiUserIdRepository.findByUser(user).isEmpty()) {
+        if (ltiUserIdRepository.findByUser(user).isEmpty() || !user.isInternal()) {
             user.setInitialize(false);
             userRepository.save(user);
             return ResponseEntity.ok().body(new UserInitializationDTO());

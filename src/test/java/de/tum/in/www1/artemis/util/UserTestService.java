@@ -16,13 +16,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.domain.LtiUserId;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -55,6 +60,15 @@ public class UserTestService {
 
     @Autowired
     protected RequestUtilService request;
+
+    @Autowired
+    private LtiUserIdRepository ltiUserIdRepository;
+
+    @Autowired
+    private Optional<VcsUserManagementService> optionalVcsUserManagementService;
+
+    @Autowired
+    private Optional<CIUserManagementService> optionalCIUserManagementService;
 
     private MockDelegate mockDelegate;
 
@@ -537,6 +551,100 @@ public class UserTestService {
         User userInDB = userRepository.findOneByLogin("student1").get();
         assertThat(userInDB.getHideNotificationsUntil()).isNotNull();
         assertThat(userInDB.getHideNotificationsUntil()).isStrictlyBetween(ZonedDateTime.now().minusSeconds(1), ZonedDateTime.now().plusSeconds(1));
+    }
+
+    // Test
+    public void initializeUser() throws Exception {
+        String password = passwordService.encryptPassword("ThisIsAPassword");
+        User repoUser = userRepository.findOneByLogin("student1").get();
+        repoUser.setPassword(password);
+        repoUser.setInternal(true);
+        repoUser.setInitialize(true);
+        final User user = userRepository.save(repoUser);
+        LtiUserId ltiUserId = new LtiUserId();
+        ltiUserId.setLtiUserId("1234");
+        ltiUserId.setUser(repoUser);
+        ltiUserIdRepository.save(ltiUserId);
+
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user));
+
+        UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+
+        assertThat(dto.getPassword()).isNotEmpty();
+
+        User currentUser = userRepository.findOneByLogin("student1").get();
+
+        assertThat(passwordService.decryptPassword(currentUser.getPassword())).isEqualTo(dto.getPassword()).isNotEqualTo(password);
+        assertThat(currentUser.isInitialize()).isFalse();
+        assertThat(currentUser.isInternal()).isTrue();
+    }
+
+    // Test
+    public void initializeUserWithoutFlag() throws Exception {
+        String password = passwordService.encryptPassword("ThisIsAPassword");
+        User user = userRepository.findOneByLogin("student1").get();
+        user.setPassword(password);
+        user.setInternal(true);
+        user.setInitialize(false);
+        user = userRepository.save(user);
+        LtiUserId ltiUserId = new LtiUserId();
+        ltiUserId.setLtiUserId("1234");
+        ltiUserId.setUser(user);
+        ltiUserIdRepository.save(ltiUserId);
+
+        UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+
+        assertThat(dto.getPassword()).isNull();
+
+        User currentUser = userRepository.findOneByLogin("student1").get();
+
+        assertThat(currentUser.getPassword()).isEqualTo(password);
+        assertThat(currentUser.isInitialize()).isFalse();
+        assertThat(currentUser.isInternal()).isTrue();
+    }
+
+    // Test
+    public void initializeUserNonLTI() throws Exception {
+        String password = passwordService.encryptPassword("ThisIsAPassword");
+        User user = userRepository.findOneByLogin("student1").get();
+        user.setPassword(password);
+        user.setInternal(true);
+        user.setInitialize(true);
+        userRepository.save(user);
+
+        UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+        assertThat(dto.getPassword()).isNull();
+
+        User currentUser = userRepository.findOneByLogin("student1").get();
+
+        assertThat(currentUser.getPassword()).isEqualTo(password);
+        assertThat(currentUser.isInitialize()).isFalse();
+        assertThat(currentUser.isInternal()).isTrue();
+    }
+
+    // Test
+    public void initializeUserExternal() throws Exception {
+        String password = passwordService.encryptPassword("ThisIsAPassword");
+        User user = userRepository.findOneByLogin("student1").get();
+        user.setPassword(password);
+        user.setInternal(false);
+        user.setInitialize(true);
+        user = userRepository.save(user);
+        LtiUserId ltiUserId = new LtiUserId();
+        ltiUserId.setLtiUserId("1234");
+        ltiUserId.setUser(user);
+        ltiUserIdRepository.save(ltiUserId);
+
+        UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+
+        assertThat(dto.getPassword()).isNull();
+
+        User currentUser = userRepository.findOneByLogin("student1").get();
+
+        assertThat(currentUser.getPassword()).isEqualTo(password);
+        assertThat(currentUser.isInitialize()).isFalse();
+        assertThat(currentUser.isInternal()).isFalse();
     }
 
     public UserRepository getUserRepository() {

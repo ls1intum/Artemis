@@ -103,8 +103,20 @@ public class LtiServiceTest {
     public void handleLaunchRequest_InvalidContextLabel() {
         launchRequest.setContext_label("randomLabel");
         var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
-        String expectedMessage = "Unknown context_label sent in LTI Launch Request: " + launchRequest.toString();
+        String expectedMessage = "Unknown context_label sent in LTI Launch Request: " + launchRequest;
         assertThat(exception.getMessage()).isEqualTo(expectedMessage);
+    }
+
+    @Test
+    public void handleLaunchRequest_NoContactEmail() {
+        String expectedMessage = "No email address sent by launch request. Please make sure the user has an accessible email address.";
+        launchRequest.setLis_person_contact_email_primary(null);
+        var exceptionNull = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
+        launchRequest.setLis_person_contact_email_primary("");
+        var exceptionEmpty = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
+
+        assertThat(exceptionNull.getMessage()).isEqualTo(expectedMessage);
+        assertThat(exceptionEmpty.getMessage()).isEqualTo(expectedMessage);
     }
 
     @Test
