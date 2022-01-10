@@ -1,11 +1,11 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-interface Duration {
+type Duration = {
     days: number;
     hours: number;
     minutes: number;
     seconds: number;
-}
+};
 
 @Pipe({ name: 'artemisDurationFromSeconds' })
 export class ArtemisDurationFromSecondsPipe implements PipeTransform {
