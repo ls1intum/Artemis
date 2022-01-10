@@ -533,7 +533,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // reschedule
         log.debug("// Rescheduling the quiz for another 2s into the future");
         releaseDate = releaseDate.plus(2000, ChronoUnit.MILLIS);
-        quizExercise.releaseDate(releaseDate);
+        quizExercise.setReleaseDate(releaseDate);
         quizExercise = quizExerciseService.save(quizExercise);
 
         // wait for the old release date to pass

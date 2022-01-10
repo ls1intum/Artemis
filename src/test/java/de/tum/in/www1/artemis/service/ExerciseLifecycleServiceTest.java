@@ -27,8 +27,11 @@ public class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambo
     public void testScheduleExerciseOnReleaseTask() {
         final ZonedDateTime now = ZonedDateTime.now();
 
-        Exercise exercise = new TextExercise().title("ExerciseLifecycleServiceTest:testScheduleExerciseOnReleaseTask").releaseDate(now.plus(200, ChronoUnit.MILLIS))
-                .dueDate(now.plus(400, ChronoUnit.MILLIS)).assessmentDueDate(now.plus(600, ChronoUnit.MILLIS));
+        Exercise exercise = new TextExercise();
+        exercise.setTitle("ExerciseLifecycleServiceTest:testScheduleExerciseOnReleaseTask");
+        exercise.setReleaseDate(now.plus(200, ChronoUnit.MILLIS));
+        exercise.setDueDate(now.plus(400, ChronoUnit.MILLIS));
+        exercise.setAssessmentDueDate(now.plus(600, ChronoUnit.MILLIS));
 
         MutableBoolean releaseTrigger = new MutableBoolean(false);
         MutableBoolean dueTrigger = new MutableBoolean(false);
@@ -79,7 +82,9 @@ public class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambo
 
     @Test
     public void testCancellationOfScheduledTask() {
-        Exercise exercise = new TextExercise().title("ExerciseLifecycleServiceTest:testCancellationOfScheduledTask").dueDate(ZonedDateTime.now().plus(200, ChronoUnit.MILLIS));
+        Exercise exercise = new TextExercise();
+        exercise.setTitle("ExerciseLifecycleServiceTest:testCancellationOfScheduledTask");
+        exercise.setDueDate(ZonedDateTime.now().plus(200, ChronoUnit.MILLIS));
         MutableBoolean trigger = new MutableBoolean(false);
 
         final ScheduledFuture<?> future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, trigger::setTrue);
