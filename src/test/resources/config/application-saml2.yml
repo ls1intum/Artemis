@@ -21,7 +21,7 @@ saml2:
     first-name-pattern: '{first_name}'
     last-name-pattern: '{last_name}'
     email-pattern: '{email}'
-    registration-number-pattern: '{uid}'
+    registration-number-pattern: '{registration_number}'
     lang-key-pattern: 'en' # can be a pattern or fixed to en/de
     # A list of identity provides (IdP). Metadata location can be a local path (or classpath) or url.
     # If your IdP does not publish its metadata you can generate it here: https://www.samltool.com/idp_metadata.php
@@ -35,6 +35,9 @@ saml2:
         # - metadata: <URL>
         #   registrationid: <id>
         #   entityid: <id>
+
+saml2.registration-number-extraction-key-pattern: 'registration_number'
+saml2.registration-number-extraction-value-pattern: 'somePrefix(?<regNum>.+)someSuffix'
 
 # String used for the SAML2 login button. E.g. 'Shibboleth Login'
 info.saml2.button-label: 'SAML2 Login'

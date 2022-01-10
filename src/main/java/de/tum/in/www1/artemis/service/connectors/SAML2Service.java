@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -29,13 +30,13 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 /**
  * This class describes a service for SAML2 authentication.
- * 
+ *
  * The main method is {@link #handleAuthentication(Saml2AuthenticatedPrincipal)}. The service extracts the user information
- * from the {@link Saml2AuthenticatedPrincipal} and creates the user, if it does not exist already. 
- * 
+ * from the {@link Saml2AuthenticatedPrincipal} and creates the user, if it does not exist already.
+ *
  * When the user gets created, the SAML2 attributes can be used to fill in user information. The configuration happens
  * via patterns for every field in the SAML2 configuration.
- * 
+ *
  * The service creates a {@link UsernamePasswordAuthenticationToken} which can then be used by the client to authenticate.
  * This is needed, since the client "does not know" that he is already authenticated via SAML2.
  */
@@ -58,6 +59,10 @@ public class SAML2Service {
 
     private final MailService mailService;
 
+    private final Optional<Pattern> registrationNumberExtractionKeyPattern;
+
+    private final Optional<Pattern> registrationNumberExtractionValuePattern;
+
     /**
      * Constructs a new instance.
      *
@@ -72,11 +77,14 @@ public class SAML2Service {
         this.userCreationService = userCreationService;
         this.mailService = mailService;
         this.userService = userService;
+
+        this.registrationNumberExtractionKeyPattern = properties.getRegistrationNumberExtractionKeyPattern().map(Pattern::compile);
+        this.registrationNumberExtractionValuePattern = properties.getRegistrationNumberExtractionValuePattern().map(Pattern::compile);
     }
 
     /**
      * Handles an authentication via SAML2.
-     * 
+     *
      * Registers new users and returns a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user.
      *
      * @param principal the principal, containing the user information
@@ -139,13 +147,43 @@ public class SAML2Service {
         return authorities.stream().map(Authority::getName).map(SimpleGrantedAuthority::new).collect(Collectors.toSet());
     }
 
-    private static String substituteAttributes(final String input, final Saml2AuthenticatedPrincipal principal) {
+    private String substituteAttributes(final String input, final Saml2AuthenticatedPrincipal principal) {
         String output = input;
         for (String key : principal.getAttributes().keySet()) {
             final String escapedKey = Pattern.quote(key);
-            output = output.replaceAll("\\{" + escapedKey + "\\}", principal.getFirstAttribute(key));
+            output = output.replaceAll("\\{" + escapedKey + "\\}", getAttributeValue(principal, key));
         }
         return output.replaceAll("\\{[^\\}]*?\\}", "");
     }
 
+    /**
+     * Gets the value associated with the given key from the principal.
+     *
+     * If the key is the one of the registration number, the relevant part of the value is extracted using {@link #registrationNumberExtractionValuePattern} if defined.
+     * @param principal containing the user information.
+     * @param key of the attribute that should be extracted.
+     * @return the value associated with the given key.
+     */
+    private String getAttributeValue(final Saml2AuthenticatedPrincipal principal, final String key) {
+        final String value = principal.getFirstAttribute(key);
+        if (value == null) {
+            return null;
+        }
+
+        boolean keyMatches = registrationNumberExtractionKeyPattern.map(pattern -> pattern.matcher(key).matches()).orElse(false);
+        if (keyMatches) {
+            return registrationNumberExtractionValuePattern.flatMap(pattern -> {
+                Matcher matcher = pattern.matcher(value);
+                if (matcher.matches()) {
+                    return Optional.of(matcher.group(SAML2Properties.REGISTRATION_NUMBER_EXTRACTION_GROUP_NAME));
+                }
+                else {
+                    return Optional.empty();
+                }
+            }).orElse(value);
+        }
+        else {
+            return value;
+        }
+    }
 }

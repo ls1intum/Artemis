@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.config;
 
 import java.util.List;
+import java.util.Optional;
 
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +15,11 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties("saml2")
 public class SAML2Properties {
+
+    /**
+     * The name of the capture group that is used to extract the registration number from the value of the SAML2 attribute defined by {@link #getRegistrationNumberPattern()}.
+     */
+    public static final String REGISTRATION_NUMBER_EXTRACTION_GROUP_NAME = "regNum";
 
     private String usernamePattern;
 
@@ -24,7 +33,36 @@ public class SAML2Properties {
 
     private String langKeyPattern;
 
+    private Optional<String> registrationNumberExtractionKeyPattern = Optional.empty();
+
+    private Optional<String> registrationNumberExtractionValuePattern = Optional.empty();
+
     private List<RelyingPartyProperties> identityProviders;
+
+    @PostConstruct
+    private void init() {
+        if (isAtLeastOneExtractionPatternPresent() && !areBothExtractionPatternsPresent()) {
+            throw new BeanInitializationException(
+                    "Options 'saml2.registration-number-extraction-key-pattern' and 'saml2.registration-number-extraction-value-pattern' need to be present at the same time!");
+        }
+
+        registrationNumberExtractionValuePattern.ifPresent(pattern -> {
+            if (!pattern.contains(String.format("(?<%s>", REGISTRATION_NUMBER_EXTRACTION_GROUP_NAME))) {
+                String message = String.format(
+                        "The regex that should be used to extract the registration number from the SAML2 attribute has to contain a named capture group '%s'!",
+                        REGISTRATION_NUMBER_EXTRACTION_GROUP_NAME);
+                throw new BeanInitializationException(message);
+            }
+        });
+    }
+
+    private boolean isAtLeastOneExtractionPatternPresent() {
+        return registrationNumberExtractionKeyPattern.isPresent() || registrationNumberExtractionValuePattern.isPresent();
+    }
+
+    private boolean areBothExtractionPatternsPresent() {
+        return registrationNumberExtractionKeyPattern.isPresent() && registrationNumberExtractionValuePattern.isPresent();
+    }
 
     /**
      * Gets the username pattern.
@@ -132,6 +170,40 @@ public class SAML2Properties {
      */
     public void setLangKeyPattern(String langKeyPattern) {
         this.langKeyPattern = langKeyPattern;
+    }
+
+    /**
+     * Gets the regular expression that defines how the attribute is named where the registration number has to be extracted with {@link #getRegistrationNumberExtractionValuePattern()}.
+     * @return The regular expression the attribute key should match.
+     */
+    public Optional<String> getRegistrationNumberExtractionKeyPattern() {
+        return registrationNumberExtractionKeyPattern;
+    }
+
+    /**
+     * Sets the regular expression that defines how the attribute is named where the registration number has to be extracted with {@link #getRegistrationNumberExtractionValuePattern()}.
+     * @param registrationNumberExtractionKeyPattern The regular expression of the attribute key containing the registration number.
+     */
+    public void setRegistrationNumberExtractionKeyPattern(Optional<String> registrationNumberExtractionKeyPattern) {
+        this.registrationNumberExtractionKeyPattern = registrationNumberExtractionKeyPattern;
+    }
+
+    /**
+     * Gets the regular expression that should be used to extract the registration number from the value of the SAML2 attribute {@link #getRegistrationNumberPattern()}.
+     * @return The regular expression to be used for the extraction.
+     */
+    public Optional<String> getRegistrationNumberExtractionValuePattern() {
+        return registrationNumberExtractionValuePattern;
+    }
+
+    /**
+     * Gets the regular expression that should be used to extract the registration number from the SAML2 attribute.
+     *
+     * The pattern has to contain a capture group named {@link #REGISTRATION_NUMBER_EXTRACTION_GROUP_NAME}.
+     * @param registrationNumberExtractionValuePattern The regular expression to be used for the extraction.
+     */
+    public void setRegistrationNumberExtractionValuePattern(Optional<String> registrationNumberExtractionValuePattern) {
+        this.registrationNumberExtractionValuePattern = registrationNumberExtractionValuePattern;
     }
 
     /**
