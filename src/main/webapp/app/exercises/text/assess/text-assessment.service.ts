@@ -232,6 +232,9 @@ export class TextAssessmentService {
             if (result.participation.initializationDate) {
                 result.participation.initializationDate = dayjs(result.participation.initializationDate);
             }
+            if (result.participation.individualDueDate) {
+                result.participation.individualDueDate = dayjs(result.participation.individualDueDate);
+            }
             if (result.participation.exercise) {
                 this.accountService.setAccessRightsForExercise(result.participation.exercise);
             }
