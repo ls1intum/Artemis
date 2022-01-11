@@ -64,6 +64,15 @@ You can see the structure of the saml2 configuration in the following:
 			#   registrationid: <id>
 			#   entityid: <id>
 
+	# The special extraction of registration numbers from attribute values as explained below is only applied to keys matching this regular expression. (optional)
+	# saml2.registration-number-extraction-key-pattern: 'uid'
+
+	# This regular expression is used to extract the registration number from an attribute value. (optional; required when 'registration-number-extraction-key-pattern' is configured)
+	# It has to contain the named capture group 'regNum'.
+	# In the example below, only the digits between 'somePrefix' and 'someSuffix' would be part of the registration number that is saved in Artemis.
+	# saml2.registration-number-extraction-value-pattern: 'somePrefix(?<regNum>\d+)someSuffix'
+
+
 	# String used for the SAML2 login button. E.g. 'Shibboleth Login'
 	info.saml2.button-label: 'SAML2 Login'
 	# Sends a e-mail to the new user with a link to set the Artemis password. This password allows login to Artemis and its
