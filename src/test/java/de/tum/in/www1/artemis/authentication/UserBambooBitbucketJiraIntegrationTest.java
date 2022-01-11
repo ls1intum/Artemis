@@ -211,7 +211,7 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void initializeUser() throws Exception {
-        userTestService.initializeUser();
+        userTestService.initializeUser(false);
     }
 
     @Test

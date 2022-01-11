@@ -555,7 +555,7 @@ public class UserTestService {
     }
 
     // Test
-    public void initializeUser() throws Exception {
+    public void initializeUser(boolean mock) throws Exception {
         String password = passwordService.encryptPassword("ThisIsAPassword");
         User repoUser = userRepository.findOneByLogin("student1").get();
         repoUser.setPassword(password);
@@ -568,9 +568,11 @@ public class UserTestService {
         ltiUserId.setUser(repoUser);
         ltiUserIdRepository.save(ltiUserId);
 
-        // Mock user creation and update calls to prevent issues in GitLab/Jenkins tests
-        mockDelegate.mockCreateUserInUserManagement(user, false);
-        mockDelegate.mockUpdateUserInUserManagement(user.getLogin(), user, new HashSet<>());
+        if (mock) {
+            // Mock user creation and update calls to prevent issues in GitLab/Jenkins tests
+            mockDelegate.mockCreateUserInUserManagement(user, false);
+            mockDelegate.mockUpdateUserInUserManagement(user.getLogin(), user, new HashSet<>());
+        }
 
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user));
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user));
