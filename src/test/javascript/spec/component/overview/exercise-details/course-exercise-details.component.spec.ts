@@ -62,7 +62,6 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { expect as jestExpect } from '@jest/globals';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -278,31 +277,31 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should fill & empty sample modeling solution', () => {
         comp.showIfExampleSolutionPresent({ ...modelingExercise });
-        jestExpect(comp.exampleSolution).toBe(undefined);
-        jestExpect(comp.exampleSolutionUML).not.toBe(undefined);
+        expect(comp.exampleSolution).toBe(undefined);
+        expect(comp.exampleSolutionUML).not.toBe(undefined);
 
-        comp.showIfExampleSolutionPresent({ ...exercise });
-        jestExpect(comp.exampleSolution).toBe(undefined);
-        jestExpect(comp.exampleSolutionUML).toBe(undefined);
+        comp.sfExampleSolutionPresent({ ...exercise });
+        expect(comp.exampleSolution).toBe(undefined);
+        expect(comp.exampleSolutionUML).toBe(undefined);
     });
 
-    it('should fill & empty sample text solution', () => {
-        comp.showIfExampleSolutionPresent({ ...textExercise });
-        jestExpect(comp.exampleSolution).not.toBe(undefined);
-        jestExpect(comp.exampleSolutionUML).toBe(undefined);
+    it('shouldl & empty sample text solution', () => {
+        comp.sfExampleSolutionPresent({ ...textExercise });
+        expect(comp.exampleSolution).not.toBe(undefined);
+        expect(comp.exampleSolutionUML).toBe(undefined);
 
-        comp.showIfExampleSolutionPresent({ ...exercise });
-        jestExpect(comp.exampleSolution).toBe(undefined);
-        jestExpect(comp.exampleSolutionUML).toBe(undefined);
+        comp.sfExampleSolutionPresent({ ...exercise });
+        expect(comp.exampleSolution).toBe(undefined);
+        expect(comp.exampleSolutionUML).toBe(undefined);
     });
 
-    it('should fill & empty sample file upload solution', () => {
-        comp.showIfExampleSolutionPresent({ ...fileUploadExercise });
-        jestExpect(comp.exampleSolution).not.toBe(undefined);
-        jestExpect(comp.exampleSolutionUML).toBe(undefined);
+    it('shouldl & empty sample file upload solution', () => {
+        comp.sfExampleSolutionPresent({ ...fileUploadExercise });
+        expect(comp.exampleSolution).not.toBe(undefined);
+        expect(comp.exampleSolutionUML).toBe(undefined);
 
-        comp.showIfExampleSolutionPresent({ ...exercise });
-        jestExpect(comp.exampleSolution).toBe(undefined);
-        jestExpect(comp.exampleSolutionUML).toBe(undefined);
+        comp.sfExampleSolutionPresent({ ...exercise });
+        expect(comp.exampleSolution).toBe(undefined);
+        expect(comp.exampleSolutionUML).toBe(undefined);
     });
 });
