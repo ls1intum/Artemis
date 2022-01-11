@@ -57,4 +57,12 @@ export class MockExerciseService {
     static stringifyExerciseCategories(exercise: Exercise) {
         return exercise;
     }
+
+    processExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
+        return exerciseRes;
+    }
+
+    processExerciseEntityArrayResponse(exerciseResArray: EntityArrayResponseType): EntityArrayResponseType {
+        return exerciseResArray;
+    }
 }

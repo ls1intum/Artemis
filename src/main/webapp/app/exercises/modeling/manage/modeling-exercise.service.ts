@@ -24,10 +24,9 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
         let copy = ExerciseService.convertDateFromClient(modelingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
-        return this.http.post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => ExerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => ExerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     update(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
@@ -35,18 +34,15 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
         let copy = ExerciseService.convertDateFromClient(modelingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
-        return this.http.put<ModelingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' }).pipe(
-            map((res: EntityResponseType) => ExerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => ExerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .put<ModelingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     find(modelingExerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => ExerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => ExerciseService.convertExerciseCategoriesFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.checkPermission(res)),
-        );
+        return this.http
+            .get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     delete(modelingExerciseId: number): Observable<HttpResponse<{}>> {
@@ -64,10 +60,9 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
         let copy = ExerciseService.convertDateFromClient(adaptedSourceModelingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
-        return this.http.post<ModelingExercise>(`${this.resourceUrl}/import/${adaptedSourceModelingExercise.id}`, copy, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => ExerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => ExerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .post<ModelingExercise>(`${this.resourceUrl}/import/${adaptedSourceModelingExercise.id}`, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -138,9 +133,8 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
         let copy = ExerciseService.convertDateFromClient(modelingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
-        return this.http.put<ModelingExercise>(`${this.resourceUrl}/${modelingExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' }).pipe(
-            map((res: EntityResponseType) => ExerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => ExerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .put<ModelingExercise>(`${this.resourceUrl}/${modelingExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 }

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -500,7 +501,7 @@ public class CourseExamExportService {
      */
     private Path writeFile(List<String> data, Path outputDir, String fileName) throws IOException {
         Path outputFile = outputDir.resolve(fileName);
-        try (FileWriter writer = new FileWriter(outputFile.toFile())) {
+        try (FileWriter writer = new FileWriter(outputFile.toFile(), StandardCharsets.UTF_8)) {
             for (String line : data) {
                 writer.write(line);
                 writer.write(System.lineSeparator());

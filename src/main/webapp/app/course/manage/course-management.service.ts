@@ -4,7 +4,6 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
 import { Course, CourseGroup } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { User } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -166,7 +165,12 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     findAllResultsOfCourseForExerciseAndCurrentUser(courseId: number): Observable<Course> {
-        return this.http.get<Course>(`${this.resourceUrl}/${courseId}/results`).pipe(map((res: Course) => this.setAccessRightsCourse(res)));
+        return this.http.get<Course>(`${this.resourceUrl}/${courseId}/results`).pipe(
+            map((res: Course) => {
+                this.accountService.setAccessRightsForCourseAndReferencedExercises(res);
+                return res;
+            }),
+        );
     }
 
     /**
@@ -358,7 +362,7 @@ export class CourseManagementService {
 
     /**
      * Add users to the registered users for a course.
-     * @param courseId The course id.
+     * @param courseId to which the users shall be added.
      * @param studentDtos Student DTOs of users to add to the course.
      * @param courseGroup the course group into which the user should be added
      * @return studentDtos of users that were not found in the system.
@@ -490,7 +494,7 @@ export class CourseManagementService {
     private setAccessRightsCourseEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((course: Course) => {
-                this.setAccessRightsCourse(course);
+                this.accountService.setAccessRightsForCourseAndReferencedExercises(course);
             });
         }
         return res;
@@ -498,30 +502,9 @@ export class CourseManagementService {
 
     private setAccessRightsCourseEntityResponseType(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.setAccessRightsCourse(res.body);
+            this.accountService.setAccessRightsForCourseAndReferencedExercises(res.body);
         }
         return res;
-    }
-
-    /**
-     * To reduce the error proneness the access rights for exercises and their
-     * referenced course are set in addition to the course access rights itself.
-     * @param course the course for which the access rights are set
-     * @private
-     */
-    private setAccessRightsCourse(course: Course): Course {
-        if (course) {
-            this.accountService.setAccessRightsForCourse(course);
-            if (course.exercises) {
-                course.exercises.forEach((exercise: Exercise) => {
-                    this.accountService.setAccessRightsForExercise(exercise);
-                    if (exercise.course) {
-                        this.accountService.setAccessRightsForCourse(exercise.course);
-                    }
-                });
-            }
-        }
-        return course;
     }
 
     private setParticipationStatusForExercisesInCourse(res: EntityResponseType): EntityResponseType {

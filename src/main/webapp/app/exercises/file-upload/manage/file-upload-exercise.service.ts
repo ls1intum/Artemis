@@ -25,10 +25,9 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
         copy = FileUploadExerciseService.formatFilePattern(copy);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
-        return this.http.post<FileUploadExercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => ExerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => ExerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .post<FileUploadExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -42,10 +41,9 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
         copy = FileUploadExerciseService.formatFilePattern(copy);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
-        return this.http.put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id!}`, copy, { params: options, observe: 'response' }).pipe(
-            map((res: EntityResponseType) => ExerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => ExerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id!}`, copy, { params: options, observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -53,11 +51,9 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      * @param exerciseId id of the exercise
      */
     find(exerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<FileUploadExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => ExerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => ExerciseService.convertExerciseCategoriesFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.checkPermission(res)),
-        );
+        return this.http
+            .get<FileUploadExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -66,10 +62,9 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      */
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
-        return this.http.get<FileUploadExercise[]>(this.resourceUrl, { params: options, observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => ExerciseService.convertDateArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => ExerciseService.convertExerciseCategoryArrayFromServer(res)),
-        );
+        return this.http
+            .get<FileUploadExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
     }
 
     /**
@@ -91,10 +86,9 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
         let copy = ExerciseService.convertDateFromClient(fileUploadExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
-        return this.http.put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' }).pipe(
-            map((res: EntityResponseType) => ExerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => ExerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     private static formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {
