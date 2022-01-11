@@ -215,6 +215,7 @@ export class ProgrammingExerciseService {
                     this.reconnectSubmissionAndResult(templateSubmissions);
                     const solutionSubmissions = res.body.solutionParticipation?.submissions;
                     this.reconnectSubmissionAndResult(solutionSubmissions);
+
                     this.processProgrammingExerciseEntityResponse(res);
                 }
                 return res;
