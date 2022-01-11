@@ -82,13 +82,14 @@ public class SingleUserNotificationService {
         // This process can not be replaces via a GroupNotification (can only notify ALL students of the course)
         // because we want to notify only the students that have a valid assessed submission.
 
+        // Find student participations with eager legal submissions and latest results that have a completion date
         Set<StudentParticipation> filteredStudentParticipations = Set
-                .copyOf(studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsAndLatestResult(exercise.getId()));
+                .copyOf(studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsAndLatestResultWithCompletionDate(exercise.getId()));
 
         // Load and assign all studentParticipations with results (this information is needed for the emails later)
         exercise.setStudentParticipations(filteredStudentParticipations);
 
-        // Find all users that should be notified, i.e. users with an assessed participation
+        // Extract all users that should be notified from the previously loaded student participations
         Set<User> relevantStudents = filteredStudentParticipations.stream().map(participation -> participation.getStudent().orElseThrow()).collect(Collectors.toSet());
 
         // notify all relevant users

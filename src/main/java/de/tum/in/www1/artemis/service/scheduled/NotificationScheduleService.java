@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import tech.jhipster.config.JHipsterConstants;
 
 @Service
@@ -101,10 +100,7 @@ public class NotificationScheduleService {
             checkSecurityUtils();
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, () -> {
                 checkSecurityUtils();
-                Exercise foundCurrentVersionOfScheduledExercise = findCurrentVersionOfScheduledExercise(exercise);
-                if (foundCurrentVersionOfScheduledExercise == null) {
-                    return;
-                }
+                Exercise foundCurrentVersionOfScheduledExercise = exerciseRepository.findByIdElseThrow(exercise.getId());
                 if (checkIfTimeIsCorrectForScheduledTask(foundCurrentVersionOfScheduledExercise.getReleaseDate())) {
                     groupNotificationService.notifyAllGroupsAboutReleasedExercise(foundCurrentVersionOfScheduledExercise);
                 }
@@ -143,10 +139,7 @@ public class NotificationScheduleService {
             checkSecurityUtils();
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.ASSESSMENT_DUE, () -> {
                 checkSecurityUtils();
-                Exercise foundCurrentVersionOfScheduledExercise = findCurrentVersionOfScheduledExercise(exercise);
-                if (foundCurrentVersionOfScheduledExercise == null) {
-                    return;
-                }
+                Exercise foundCurrentVersionOfScheduledExercise = exerciseRepository.findByIdElseThrow(exercise.getId());
                 if (checkIfTimeIsCorrectForScheduledTask(foundCurrentVersionOfScheduledExercise.getAssessmentDueDate())) {
                     singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(foundCurrentVersionOfScheduledExercise);
                 }
@@ -156,22 +149,6 @@ public class NotificationScheduleService {
         }
         catch (Exception exception) {
             log.error("Failed to schedule notification for exercise " + exercise.getId(), exception);
-        }
-    }
-
-    /**
-     * If the exercise has been updated in the meantime the scheduled immutable exercise is outdated and has to be replaced by the current one in the DB
-     *
-     * @param exercise that has to be checked
-     * @return the newest version of the exercise or null if none was found
-     */
-    private Exercise findCurrentVersionOfScheduledExercise(Exercise exercise) {
-        try {
-            return exerciseRepository.findByIdElseThrow(exercise.getId());
-        }
-        catch (EntityNotFoundException entityNotFoundException) {
-            log.debug("Exercise is no longer in the database " + exercise.getId());
-            return null;
         }
     }
 
