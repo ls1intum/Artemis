@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -560,11 +561,16 @@ public class UserTestService {
         repoUser.setPassword(password);
         repoUser.setInternal(true);
         repoUser.setInitialize(true);
+        repoUser.setGroups(new HashSet<>());
         final User user = userRepository.save(repoUser);
         LtiUserId ltiUserId = new LtiUserId();
         ltiUserId.setLtiUserId("1234");
         ltiUserId.setUser(repoUser);
         ltiUserIdRepository.save(ltiUserId);
+
+        // Mock user creation and update calls to prevent issues in GitLab/Jenkins tests
+        mockDelegate.mockCreateUserInUserManagement(user, false);
+        mockDelegate.mockUpdateUserInUserManagement(user.getLogin(), user, new HashSet<>());
 
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user));
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user));
