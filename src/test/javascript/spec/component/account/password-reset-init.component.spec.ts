@@ -77,5 +77,24 @@ describe('PasswordResetInitComponent', () => {
 
         expect(service.save).toHaveBeenCalledWith('user@domain.com');
         expect(comp.success).toBe(false);
+        expect(comp.externalResetModalRef).toBe(undefined);
+    }));
+
+    it('no notification of success upon external user error response', inject([PasswordResetInitService], (service: PasswordResetInitService) => {
+        jest.spyOn(service, 'save').mockReturnValue(
+            throwError({
+                status: 400,
+                error: { errorKey: 'externalUser' },
+            }),
+        );
+        comp.useExternal = true;
+        comp.resetRequestForm.patchValue({
+            email: 'user@domain.com',
+        });
+        comp.requestReset();
+
+        expect(service.save).toHaveBeenCalledWith('user@domain.com');
+        expect(comp.success).toBe(false);
+        expect(comp.externalResetModalRef).not.toBe(undefined); // External reference
     }));
 });
