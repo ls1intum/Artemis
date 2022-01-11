@@ -12,6 +12,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/quiz-statistics.directive';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-quiz-statistic',
@@ -126,8 +127,8 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
 
         // add data for the last bar (Average)
         this.backgroundColor.push('#1e3368');
-        this.ratedData.push(this.ratedAverage / this.maxScore);
-        this.unratedData.push(this.unratedAverage / this.maxScore);
+        this.ratedData.push(round(this.ratedAverage / this.maxScore, 2));
+        this.unratedData.push(round(this.unratedAverage / this.maxScore, 2));
 
         // add Text for last label based on the language
         const lastLabel = this.translateService.instant('showStatistic.quizStatistic.average');
