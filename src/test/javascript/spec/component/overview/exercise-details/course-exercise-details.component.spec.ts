@@ -278,7 +278,7 @@ describe('CourseExerciseDetailsComponent', () => {
     it('should fill & empty sample modeling solution', () => {
         comp.showIfExampleSolutionPresent({ ...modelingExercise });
         expect(comp.exampleSolution).toBe(undefined);
-        expect(comp.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel));
+        expect(comp.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel!));
 
         comp.showIfExampleSolutionPresent({ ...exercise });
         expect(comp.exampleSolution).toBe(undefined);
@@ -287,7 +287,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should fill & empty sample text solution', () => {
         comp.showIfExampleSolutionPresent({ ...textExercise });
-        expect(comp.exampleSolution).toEqual(comp.artemisMarkdown.safeHtmlForMarkdown(textExercise.exampleSolution));
+        expect(comp.exampleSolution.changingThisBreaksApplicationSecurity.length).toBeGreaterThan(1);
         expect(comp.exampleSolutionUML).toBe(undefined);
 
         comp.showIfExampleSolutionPresent({ ...exercise });
@@ -297,7 +297,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should fill & empty sample file upload solution', () => {
         comp.showIfExampleSolutionPresent({ ...fileUploadExercise });
-        expect(comp.exampleSolution).toEqual(comp.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.exampleSolution));
+        expect(comp.exampleSolution.changingThisBreaksApplicationSecurity.length).toBeGreaterThan(1);
         expect(comp.exampleSolutionUML).toBe(undefined);
 
         comp.showIfExampleSolutionPresent({ ...exercise });
