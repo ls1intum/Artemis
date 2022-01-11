@@ -278,29 +278,29 @@ describe('CourseExerciseDetailsComponent', () => {
     it('should fill & empty sample modeling solution', () => {
         comp.showIfExampleSolutionPresent({ ...modelingExercise });
         expect(comp.exampleSolution).toBe(undefined);
-        expect(comp.exampleSolutionUML).not.toBe(undefined);
+        expect(comp.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel));
 
-        comp.sfExampleSolutionPresent({ ...exercise });
+        comp.showIfExampleSolutionPresent({ ...exercise });
         expect(comp.exampleSolution).toBe(undefined);
         expect(comp.exampleSolutionUML).toBe(undefined);
     });
 
-    it('shouldl & empty sample text solution', () => {
-        comp.sfExampleSolutionPresent({ ...textExercise });
-        expect(comp.exampleSolution).not.toBe(undefined);
+    it('should fill & empty sample text solution', () => {
+        comp.showIfExampleSolutionPresent({ ...textExercise });
+        expect(comp.exampleSolution).toEqual(comp.artemisMarkdown.safeHtmlForMarkdown(textExercise.exampleSolution));
         expect(comp.exampleSolutionUML).toBe(undefined);
 
-        comp.sfExampleSolutionPresent({ ...exercise });
+        comp.showIfExampleSolutionPresent({ ...exercise });
         expect(comp.exampleSolution).toBe(undefined);
         expect(comp.exampleSolutionUML).toBe(undefined);
     });
 
-    it('shouldl & empty sample file upload solution', () => {
-        comp.sfExampleSolutionPresent({ ...fileUploadExercise });
-        expect(comp.exampleSolution).not.toBe(undefined);
+    it('should fill & empty sample file upload solution', () => {
+        comp.showIfExampleSolutionPresent({ ...fileUploadExercise });
+        expect(comp.exampleSolution).toEqual(comp.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.exampleSolution));
         expect(comp.exampleSolutionUML).toBe(undefined);
 
-        comp.sfExampleSolutionPresent({ ...exercise });
+        comp.showIfExampleSolutionPresent({ ...exercise });
         expect(comp.exampleSolution).toBe(undefined);
         expect(comp.exampleSolutionUML).toBe(undefined);
     });
