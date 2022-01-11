@@ -282,7 +282,7 @@
                     </div>
                     <div *cdkDragPlaceholder></div>
                     <ng-template #preview>
-                        <div style="border: 1px solid; background: #fafafa; padding: 4px 2px 2px 2px">
+                        <div>
                             <div title="Move">
                                 <fa-icon [icon]="faBars" size="lg"></fa-icon>
                             </div>
@@ -290,13 +290,7 @@
                                 <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
                             </div>
                             <div *ngIf="!dragItem.pictureFilePath">
-                                <textarea
-                                    disabled
-                                    style="text-align: center; border: none; resize: none"
-                                    id="drag-item-{{ i }}-text-preview"
-                                    [(ngModel)]="dragItem.text"
-                                    (ngModelChange)="questionUpdated.emit()"
-                                ></textarea>
+                                <textarea disabled [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
                             </div>
                         </div>
                     </ng-template>

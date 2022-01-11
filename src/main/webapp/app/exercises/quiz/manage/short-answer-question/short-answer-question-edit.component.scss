@@ -27,6 +27,16 @@
                 width: 170px;
                 height: 40px;
             }
+            /* highlight drop location in light blue when selecting a drag item */
+            .cdk-drop-list-receiving {
+                background: rgba(173, 216, 230, 0.8) !important;
+            }
+
+            /* change highlight color to light green when dragging the item above a drop location */
+            .cdk-drop-list-dragging {
+                background: rgb(144, 238, 144) !important;
+                cursor: pointer !important;
+            }
         }
     }
 
@@ -64,5 +74,26 @@
                 }
             }
         }
+    }
+}
+
+.cdk-drag-preview {
+    border: 1px solid #696969;
+    background: #fafafa;
+    height: 160px;
+    min-width: 160px;
+    max-width: 360px;
+    margin: 10px 4px;
+
+    textarea {
+        position: absolute;
+        left: 0;
+        top: 30px;
+        width: 158px;
+        height: 98px;
+        padding: 0 14px;
+        text-align: center;
+        border: none;
+        resize: none;
     }
 }

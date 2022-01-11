@@ -16,6 +16,7 @@
         justify-content: space-evenly;
         margin: 6px 0;
         width: 100%;
+        background: white !important;
 
         /* The drag item component is not used here but a modified one that is why we have to define these styles here */
         .drag-item {
@@ -65,7 +66,7 @@
                 position: absolute;
                 top: 4px;
                 left: 2px;
-                cursor: move;
+                cursor: pointer;
                 display: flex;
                 align-items: center;
                 padding: 4px;

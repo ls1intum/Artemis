@@ -158,7 +158,7 @@
                 </jhi-ace-editor>
             </div>
         </div>
-        <div class="edit-sa-question" style="padding: 20px" *ngIf="showVisualMode || reEvaluationInProgress">
+        <div class="edit-sa-question" style="padding: 20px" *ngIf="showVisualMode || reEvaluationInProgress" cdkDropListGroup>
             <h4 jhiTranslate="artemisApp.shortAnswerQuestion.editor.visualModeHeadline"></h4>
             <span *ngIf="!reEvaluationInProgress" jhiTranslate="artemisApp.shortAnswerQuestion.editor.visualModeExplanation"></span>
             <hr />
@@ -242,7 +242,7 @@
             <div *ngIf="shortAnswerQuestion.solutions && shortAnswerQuestion.solutions.length" class="dnd-instructions">
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
             </div>
-            <div class="drag-items" *ngIf="shortAnswerQuestion.solutions && shortAnswerQuestion.solutions.length">
+            <div class="drag-items" *ngIf="shortAnswerQuestion.solutions && shortAnswerQuestion.solutions.length" cdkDropList cdkDropListOrientation="horizontal">
                 <div class="drag-item" *ngFor="let solution of shortAnswerQuestion.solutions" cdkDrag [cdkDragDisabled]="false" [cdkDragData]="solution">
                     <div>
                         <textarea [(ngModel)]="solution.text" (ngModelChange)="questionUpdated.emit()"></textarea>
@@ -261,6 +261,15 @@
                                     <fa-icon [icon]="faUnlink" size="lg"></fa-icon>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    <div *cdkDragPlaceholder></div>
+                    <div *cdkDragPreview>
+                        <div title="Move">
+                            <fa-icon [icon]="faBars" class="drag-handle" size="lg"></fa-icon>
+                        </div>
+                        <div>
+                            <textarea disabled [(ngModel)]="solution.text" (ngModelChange)="questionUpdated.emit()"></textarea>
                         </div>
                     </div>
                 </div>
