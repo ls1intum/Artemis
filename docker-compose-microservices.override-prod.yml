@@ -219,8 +219,8 @@ services:
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes
             - MYSQL_ROOT_PASSWORD=
             - MYSQL_DATABASE=Artemis
-        ports:
-            - 3306:3306
+        expose:
+            - "3306"
         command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
         networks:
             - artemis

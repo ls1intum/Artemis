@@ -21,6 +21,8 @@ services:
         depends_on:
             - artemis-mysql
             - jhipster-registry
+        volumes:
+            - ./artemis:/artemis
     usermanagement-app:
         image: ghcr.io/ls1intum/artemis-usermanagement-service:${TAG:-latest}
         build:
@@ -42,6 +44,8 @@ services:
         depends_on:
             - artemis-mysql
             - jhipster-registry
+        volumes:
+            - ./usermanagement:/usermanagement
     lecture-app:
         image: ghcr.io/ls1intum/artemis-lecture-service:${TAG:-latest}
         build:
@@ -63,6 +67,8 @@ services:
         depends_on:
             - artemis-mysql
             - jhipster-registry
+        volumes:
+            - ./lecture:/lecture
     gateway-app:
         image: ghcr.io/ls1intum/artemis-gateway:${TAG:-latest}
         build:
@@ -107,6 +113,8 @@ services:
         command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
         networks:
             - artemis
+        volumes:
+            - ./db/:/var/lib/mysql/
     activemq-broker:
         image: vromero/activemq-artemis:latest
         environment:
@@ -126,3 +134,9 @@ services:
 networks:
     artemis:
         driver: "bridge"
+
+volumes:
+    db:
+    artemis:
+    usermanagement:
+    lecture:
