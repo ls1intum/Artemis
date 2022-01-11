@@ -1,24 +1,36 @@
 <ng-template #controls>
-    <div class="d-flex row course-overview-controls justify-content-between">
-        <label class="col d-flex align-items-center mb-0 me-2">
-            <input type="checkbox" [checked]="currentlyHidingNotIncludedInScoreExercises" (change)="toggleNotIncludedInScoreExercises()" />
-            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.hideNotIncludedInScoreExercises">Hide Optional</span>
-        </label>
+    <div class="d-flex row course-overview-controls justify-content-end">
         <div class="col" *ngIf="exerciseCategories.size > 0" aria-label="Filter Dropdown" ngbDropdown>
             <button
                 class="btn"
-                [ngClass]="{ 'btn-secondary': exerciseCategories.size === 0, 'btn-success': exerciseCategories.size > 0 }"
+                [ngClass]="{ 'btn-secondary': numberOfAppliedFilters === 0, 'btn-success': numberOfAppliedFilters > 0 }"
                 ngbDropdownToggle
                 id="filter-dropdown-button"
             >
                 <fa-icon [icon]="faFilter"></fa-icon>
-                <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: exerciseCategories.size } }}</span>
+                <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: numberOfAppliedFilters } }}</span>
             </button>
             <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                <li class="mb-1">
+                    <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeStandardCategories' | artemisTranslate }}</b>
+                </li>
+                <li>
+                    <input class="ms-2" (change)="toggleNotIncludedInScoreExercises()" [checked]="currentlyHidingNotIncludedInScoreExercises" type="checkbox" />
+                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.hideNotIncludedInScoreExercises">Hide Optional</span>
+                </li>
+                <li class="mt-1 mb-1">
+                    <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeIndividualCategories' | artemisTranslate }}</b>
+                </li>
+                <li>
+                    <label>
+                        <input class="ms-2" (change)="selectAllCategories()" [checked]="allCategoriesSelected" type="checkbox" />
+                        <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeAllCategories' | artemisTranslate }}</b>
+                    </label>
+                </li>
                 <li *ngFor="let category of exerciseCategories">
                     <label>
-                        <input class="ms-2" [checked]="true" type="checkbox" />
-                        <span class="ms-2">Include category: {{ category.category }}</span>
+                        <input class="ms-2" (change)="toggleCategory(category)" [checked]="exerciseCategoryFilters.get(category)" type="checkbox" />
+                        <span class="ms-2">{{ category }}</span>
                     </label>
                 </li>
             </ul>

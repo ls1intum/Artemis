@@ -13,7 +13,7 @@
             "programming": "Programmieraufgabe",
             "modeling": "Modellierungsaufgabe",
             "quiz": "Quizaufgabe",
-            "includeType": "Zeige ",
+            "includeType": "Zeige Aufgabentyp:",
             "textPlural": "Textaufgaben",
             "file_uploadPlural": "Dateiupload-Aufgaben",
             "programmingPlural": "Programmieraufgaben",

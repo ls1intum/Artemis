@@ -16,7 +16,6 @@ import { GradeDTO } from 'app/entities/grade-step.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -49,13 +48,15 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
     course?: Course;
-    exerciseCategories: Set<ExerciseCategory>;
-    exerciseCategoryFilters: Map<ExerciseCategory, boolean>;
+    exerciseCategories: Set<string> = new Set();
+    exerciseCategoryFilters: Map<string, boolean> = new Map();
+    numberOfAppliedFilters: number;
+    allCategoriesSelected = true;
 
+    allCourseExercises: Exercise[];
     private courseExercisesNotIncludedInScore: Exercise[];
     currentlyHidingNotIncludedInScoreExercises = true;
     filteredExerciseIDs: number[];
-    private allExercises: Exercise[];
 
     // Icons
     faFilter = faFilter;
@@ -356,6 +357,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.filteredExerciseIDs = this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!);
         }
         this.currentlyHidingNotIncludedInScoreExercises = !this.currentlyHidingNotIncludedInScoreExercises;
+        this.determineDisplayableCategories();
 
         this.groupExercisesByType(this.courseExercises);
     }
@@ -550,12 +552,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     calculateAndFilterNotIncludedInScore() {
-        this.allExercises = this.courseExercises;
+        this.allCourseExercises = this.courseExercises;
         this.courseExercisesNotIncludedInScore = this.courseExercises.filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED);
         this.courseExercises = this.courseExercises.filter((exercise) => !this.courseExercisesNotIncludedInScore.includes(exercise));
         this.filteredExerciseIDs = this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!);
-        const exerciseCategories = this.allExercises.filter((exercise) => exercise.categories).flatMap((exercise) => exercise.categories!);
-        this.exerciseCategories = new Set(exerciseCategories);
+        this.determineDisplayableCategories();
     }
 
     /**
@@ -717,18 +718,61 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.router.navigate(['courses', this.course!.id!, 'exercises', event.exerciseId]);
     }
 
-    toggleCategory(category: ExerciseCategory) {
+    toggleCategory(category: string) {
         const isIncluded = this.exerciseCategoryFilters.get(category);
         this.exerciseCategoryFilters.set(category, !isIncluded);
-        const currentlyVisibleExercises = this.courseExercises.filter((exercise) => {
-            let include = false;
-            exercise.categories?.forEach((exerciseCategory) => (include = include || this.exerciseCategoryFilters.get(exerciseCategory)!));
-            return include;
-        });
+        this.numberOfAppliedFilters += !isIncluded ? 1 : -1;
+        const currentlyVisibleExercises = this.applyFilter();
+        if (isIncluded) {
+            this.allCategoriesSelected = false;
+            this.filteredExerciseIDs = this.courseExercises.filter((exercise) => !currentlyVisibleExercises.includes(exercise)).map((exercise) => exercise.id!);
+        } else {
+            this.allCategoriesSelected = true;
+            this.exerciseCategoryFilters.forEach((value) => (this.allCategoriesSelected = value && this.allCategoriesSelected));
+            this.filteredExerciseIDs = this.filteredExerciseIDs.filter((id) => !currentlyVisibleExercises.find((exercise) => exercise.id === id));
+        }
+        this.filteredExerciseIDs = [...this.filteredExerciseIDs];
         this.groupExercisesByType(currentlyVisibleExercises);
     }
 
     private setupCategoryFilter() {
         this.exerciseCategories.forEach((category) => this.exerciseCategoryFilters.set(category, true));
+        this.allCategoriesSelected = true;
+        this.numberOfAppliedFilters = this.exerciseCategories.size + (this.currentlyHidingNotIncludedInScoreExercises ? 1 : 0);
+    }
+
+    private determineDisplayableCategories(): void {
+        const exerciseCategories = this.courseExercises
+            .filter((exercise) => exercise.categories)
+            .flatMap((exercise) => exercise.categories!)
+            .map((category) => category.category!);
+        this.exerciseCategories = new Set(exerciseCategories);
+        this.setupCategoryFilter();
+    }
+
+    selectAllCategories(): void {
+        if (!this.allCategoriesSelected) {
+            this.setupCategoryFilter();
+        } else {
+            this.exerciseCategories.forEach((category) => this.exerciseCategoryFilters.set(category, false));
+            this.numberOfAppliedFilters -= this.exerciseCategories.size;
+            this.allCategoriesSelected = !this.allCategoriesSelected;
+        }
+        const currentlyVisibleExercises = this.applyFilter();
+        this.filteredExerciseIDs = this.filteredExerciseIDs.filter((id) => !currentlyVisibleExercises.find((exercise) => exercise.id === id));
+        this.numberOfAppliedFilters = this.exerciseCategories.size + (this.currentlyHidingNotIncludedInScoreExercises ? 1 : 0);
+        this.groupExercisesByType(currentlyVisibleExercises);
+    }
+
+    private applyFilter(): Exercise[] {
+        const currentlyVisibleExercises = this.courseExercises.filter((exercise) => {
+            if (!exercise.categories) {
+                return true;
+            }
+            let include = false;
+            exercise.categories?.forEach((exerciseCategory) => (include = include || this.exerciseCategoryFilters.get(exerciseCategory.category!)!));
+            return include;
+        });
+        return currentlyVisibleExercises;
     }
 }

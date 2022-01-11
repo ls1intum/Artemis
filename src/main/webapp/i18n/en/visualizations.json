@@ -13,7 +13,7 @@
             "programming": "Programming Exercise",
             "modeling": "Modelling Exercise",
             "quiz": "Quiz Exercise",
-            "includeType": "Include ",
+            "includeType": "Include exercise type:",
             "textPlural": "text exercises",
             "file_uploadPlural": "file upload exercises",
             "programmingPlural": "programming exercises",

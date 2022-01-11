@@ -6,13 +6,13 @@
             <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: numberOfActiveFilters } }}</span>
         </button>
         <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+            <li>
+                <b class="ms-2">{{ 'artemisApp.exercise-scores-chart.includeType' | artemisTranslate }}</b>
+            </li>
             <li *ngFor="let type of typeSet">
                 <label>
                     <input class="ms-2" (change)="toggleExerciseType(type)" [checked]="chartFilter.get(type.toLowerCase().replace('_', '-'))" type="checkbox" />
-                    <span class="ms-2"
-                        >{{ 'artemisApp.exercise-scores-chart.includeType' | artemisTranslate
-                        }}{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase() + 'Plural' | artemisTranslate }}</span
-                    >
+                    <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase() + 'Plural' | artemisTranslate }}</span>
                 </label>
             </li>
         </ul>
