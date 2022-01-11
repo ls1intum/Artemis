@@ -51,6 +51,17 @@ You can see the structure of the saml2 configuration in the following:
         email-pattern: '{email}'
         registration-number-pattern: '{uid}'
         lang-key-pattern: 'en' # can be a pattern or fixed to en/de
+        # It is also possible to only extract parts of the attribute values.
+        # For each attribute key exactly one regular expression can optionally be defined that is used to extract only parts
+        # of the received value. The regular expression must match the whole value. It also has to contain a named capture
+        # group with the name 'value'.
+        # E.g. when receiving 'pre1234post' from the SAML2 service in the 'uid'-example below, only '1234' will be used when
+        # replacing '{uid}' in one of the user attributes defined above.
+        value-extraction-patterns:
+            #- key: 'registration_number'
+            #  value_pattern: 'somePrefix(?<value>.+)someSuffix'
+            #- key: 'uid'
+            #  value_pattern: 'pre(?<value>\d+)post'
         # A list of identity provides (IdP). Metadata location can be a local path (or classpath) or url.
         # If your IdP does not publish its metadata you can generate it here: https://www.samltool.com/idp_metadata.php
         identity-providers:
@@ -63,14 +74,6 @@ You can see the structure of the saml2 configuration in the following:
             # - metadata: <URL>
             #   registrationid: <id>
             #   entityid: <id>
-
-    # The special extraction of registration numbers from attribute values as explained below is only applied to keys matching this regular expression. (optional)
-    # saml2.registration-number-extraction-key-pattern: 'uid'
-
-    # This regular expression is used to extract the registration number from an attribute value. (optional; required when 'registration-number-extraction-key-pattern' is configured)
-    # It has to contain the named capture group 'regNum'.
-    # In the example below, only the digits between 'somePrefix' and 'someSuffix' would be part of the registration number that is saved in Artemis.
-    # saml2.registration-number-extraction-value-pattern: 'somePrefix(?<regNum>\d+)someSuffix'
 
     # String used for the SAML2 login button. E.g. 'Shibboleth Login'
     info.saml2.button-label: 'SAML2 Login'

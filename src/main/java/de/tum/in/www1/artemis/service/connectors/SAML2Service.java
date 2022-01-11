@@ -59,9 +59,7 @@ public class SAML2Service {
 
     private final MailService mailService;
 
-    private final Optional<Pattern> registrationNumberExtractionKeyPattern;
-
-    private final Optional<Pattern> registrationNumberExtractionValuePattern;
+    private final Map<String, Pattern> extractionPatterns;
 
     /**
      * Constructs a new instance.
@@ -78,8 +76,12 @@ public class SAML2Service {
         this.mailService = mailService;
         this.userService = userService;
 
-        this.registrationNumberExtractionKeyPattern = properties.getRegistrationNumberExtractionKeyPattern().map(Pattern::compile);
-        this.registrationNumberExtractionValuePattern = properties.getRegistrationNumberExtractionValuePattern().map(Pattern::compile);
+        this.extractionPatterns = generateExtractionPatterns(properties);
+    }
+
+    private Map<String, Pattern> generateExtractionPatterns(final SAML2Properties properties) {
+        return properties.getValueExtractionPatterns().stream()
+                .collect(Collectors.toMap(SAML2Properties.ExtractionPattern::getKey, pattern -> Pattern.compile(pattern.getValuePattern())));
     }
 
     /**
@@ -159,7 +161,6 @@ public class SAML2Service {
     /**
      * Gets the value associated with the given key from the principal.
      *
-     * If the key is the one of the registration number, the relevant part of the value is extracted using {@link #registrationNumberExtractionValuePattern} if defined.
      * @param principal containing the user information.
      * @param key of the attribute that should be extracted.
      * @return the value associated with the given key.
@@ -167,20 +168,17 @@ public class SAML2Service {
     private String getAttributeValue(final Saml2AuthenticatedPrincipal principal, final String key) {
         final String value = principal.getFirstAttribute(key);
         if (value == null) {
-            return null;
+            return "";
         }
 
-        boolean keyMatches = registrationNumberExtractionKeyPattern.map(pattern -> pattern.matcher(key).matches()).orElse(false);
-        if (keyMatches) {
-            return registrationNumberExtractionValuePattern.flatMap(pattern -> {
-                Matcher matcher = pattern.matcher(value);
-                if (matcher.matches()) {
-                    return Optional.of(matcher.group(SAML2Properties.REGISTRATION_NUMBER_EXTRACTION_GROUP_NAME));
-                }
-                else {
-                    return Optional.empty();
-                }
-            }).orElse(value);
+        final Pattern extractionPattern = extractionPatterns.get(key);
+        if (extractionPattern == null) {
+            return value;
+        }
+
+        final Matcher matcher = extractionPattern.matcher(value);
+        if (matcher.matches()) {
+            return matcher.group(SAML2Properties.ATTRIBUTE_VALUE_EXTRACTION_GROUP_NAME);
         }
         else {
             return value;

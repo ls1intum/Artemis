@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.config;
 
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
@@ -17,9 +18,9 @@ import org.springframework.stereotype.Component;
 public class SAML2Properties {
 
     /**
-     * The name of the capture group that is used to extract the registration number from the value of the SAML2 attribute defined by {@link #getRegistrationNumberPattern()}.
+     * The name of the regular expression capture group which should match the actual value.
      */
-    public static final String REGISTRATION_NUMBER_EXTRACTION_GROUP_NAME = "regNum";
+    public static final String ATTRIBUTE_VALUE_EXTRACTION_GROUP_NAME = "value";
 
     private String usernamePattern;
 
@@ -33,35 +34,28 @@ public class SAML2Properties {
 
     private String langKeyPattern;
 
-    private Optional<String> registrationNumberExtractionKeyPattern = Optional.empty();
-
-    private Optional<String> registrationNumberExtractionValuePattern = Optional.empty();
-
     private List<RelyingPartyProperties> identityProviders;
+
+    private Set<ExtractionPattern> valueExtractionPatterns = Set.of();
 
     @PostConstruct
     private void init() {
-        if (isAtLeastOneExtractionPatternPresent() && !areBothExtractionPatternsPresent()) {
-            throw new BeanInitializationException(
-                    "Options 'saml2.registration-number-extraction-key-pattern' and 'saml2.registration-number-extraction-value-pattern' need to be present at the same time!");
-        }
+        final Set<String> extractionKeys = new HashSet<>();
 
-        registrationNumberExtractionValuePattern.ifPresent(pattern -> {
-            if (!pattern.contains(String.format("(?<%s>", REGISTRATION_NUMBER_EXTRACTION_GROUP_NAME))) {
-                String message = String.format(
-                        "The regex that should be used to extract the registration number from the SAML2 attribute has to contain a named capture group '%s'!",
-                        REGISTRATION_NUMBER_EXTRACTION_GROUP_NAME);
+        for (ExtractionPattern pattern : valueExtractionPatterns) {
+            final String key = pattern.getKey();
+
+            if (!pattern.isValidPattern()) {
+                String message = String.format("The extraction pattern for key '%s' does not contain a capture group with name '%s'!", key, ATTRIBUTE_VALUE_EXTRACTION_GROUP_NAME);
                 throw new BeanInitializationException(message);
             }
-        });
-    }
 
-    private boolean isAtLeastOneExtractionPatternPresent() {
-        return registrationNumberExtractionKeyPattern.isPresent() || registrationNumberExtractionValuePattern.isPresent();
-    }
+            if (extractionKeys.contains(key)) {
+                throw new BeanInitializationException(String.format("The attribute key '%s' cannot have more than one extraction pattern!", key));
+            }
 
-    private boolean areBothExtractionPatternsPresent() {
-        return registrationNumberExtractionKeyPattern.isPresent() && registrationNumberExtractionValuePattern.isPresent();
+            extractionKeys.add(key);
+        }
     }
 
     /**
@@ -173,40 +167,6 @@ public class SAML2Properties {
     }
 
     /**
-     * Gets the regular expression that defines how the attribute is named where the registration number has to be extracted with {@link #getRegistrationNumberExtractionValuePattern()}.
-     * @return The regular expression the attribute key should match.
-     */
-    public Optional<String> getRegistrationNumberExtractionKeyPattern() {
-        return registrationNumberExtractionKeyPattern;
-    }
-
-    /**
-     * Sets the regular expression that defines how the attribute is named where the registration number has to be extracted with {@link #getRegistrationNumberExtractionValuePattern()}.
-     * @param registrationNumberExtractionKeyPattern The regular expression of the attribute key containing the registration number.
-     */
-    public void setRegistrationNumberExtractionKeyPattern(Optional<String> registrationNumberExtractionKeyPattern) {
-        this.registrationNumberExtractionKeyPattern = registrationNumberExtractionKeyPattern;
-    }
-
-    /**
-     * Gets the regular expression that should be used to extract the registration number from the value of the SAML2 attribute {@link #getRegistrationNumberPattern()}.
-     * @return The regular expression to be used for the extraction.
-     */
-    public Optional<String> getRegistrationNumberExtractionValuePattern() {
-        return registrationNumberExtractionValuePattern;
-    }
-
-    /**
-     * Gets the regular expression that should be used to extract the registration number from the SAML2 attribute.
-     *
-     * The pattern has to contain a capture group named {@link #REGISTRATION_NUMBER_EXTRACTION_GROUP_NAME}.
-     * @param registrationNumberExtractionValuePattern The regular expression to be used for the extraction.
-     */
-    public void setRegistrationNumberExtractionValuePattern(Optional<String> registrationNumberExtractionValuePattern) {
-        this.registrationNumberExtractionValuePattern = registrationNumberExtractionValuePattern;
-    }
-
-    /**
      * Gets the identity providers.
      *
      * @return the identity providers.
@@ -222,6 +182,24 @@ public class SAML2Properties {
      */
     public void setIdentityProviders(List<RelyingPartyProperties> identityProviders) {
         this.identityProviders = identityProviders;
+    }
+
+    /**
+     * Gets the extraction patterns.
+     *
+     * @return The extraction patterns.
+     */
+    public Set<ExtractionPattern> getValueExtractionPatterns() {
+        return valueExtractionPatterns;
+    }
+
+    /**
+     * Sets the extraction patterns.
+     *
+     * @param valueExtractionPatterns The extraction patterns.
+     */
+    public void setValueExtractionPatterns(Set<ExtractionPattern> valueExtractionPatterns) {
+        this.valueExtractionPatterns = valueExtractionPatterns;
     }
 
     /**
@@ -327,6 +305,61 @@ public class SAML2Properties {
          */
         public void setKeyFile(String keyFile) {
             this.keyFile = keyFile;
+        }
+    }
+
+    /**
+     * Used to define a regular expression with which only a part of an attribute value is extracted.
+     */
+    public static class ExtractionPattern {
+
+        private String key;
+
+        private String valuePattern;
+
+        /**
+         * Checks that this pattern contains a correctly named capture group.
+         *
+         * @return true, if the pattern can be used to extract parts from attribute values.
+         */
+        protected boolean isValidPattern() {
+            return this.valuePattern.contains(String.format("(?<%s>", ATTRIBUTE_VALUE_EXTRACTION_GROUP_NAME));
+        }
+
+        /**
+         * Gets the key for which the value extraction should be applied.
+         *
+         * @return The key for which the value extraction should be applied.
+         */
+        public String getKey() {
+            return key;
+        }
+
+        /**
+         * Sets the key for which the value extraction should be applied.
+         *
+         * @param key The key for which the value extraction should be applied.
+         */
+        public void setKey(String key) {
+            this.key = key;
+        }
+
+        /**
+         * Gets the pattern that defines which part of the value should be extracted.
+         *
+         * @return The pattern that defines which part of the value should be extracted.
+         */
+        public String getValuePattern() {
+            return valuePattern;
+        }
+
+        /**
+         * Sets the pattern that defines which part of the value should be extracted.
+         *
+         * @param valuePattern The pattern that defines which part of the value should be extracted.
+         */
+        public void setValuePattern(String valuePattern) {
+            this.valuePattern = valuePattern;
         }
     }
 }
