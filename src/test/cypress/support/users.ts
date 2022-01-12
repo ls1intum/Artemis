@@ -1,3 +1,6 @@
+import { Authority } from './../../../main/webapp/app/shared/constants/authority.constants';
+import { User } from './../../../main/webapp/app/core/user/user.model';
+import { CourseManagementRequests } from './requests/CourseManagementRequests';
 import { BASE_API, GET, USER_ID_SELECTOR } from './constants';
 
 /**
@@ -17,35 +20,35 @@ export class CypressUserManagement {
      * @returns the first testing account with student rights.
      */
     public getStudentOne(): CypressCredentials {
-        return this.getUserWithId('100');
+        return this.getUserWithId('0');
     }
 
     /**
      * @returns the second testing account with student rights.
      */
     public getStudentTwo(): CypressCredentials {
-        return this.getUserWithId('102');
+        return this.getUserWithId('1');
     }
 
     /**
      * @returns the third testing account with student rights.
      */
     public getStudentThree(): CypressCredentials {
-        return this.getUserWithId('104');
+        return this.getUserWithId('2');
     }
 
     /**
      * @returns an instructor account.
      */
     public getInstructor(): CypressCredentials {
-        return this.getUserWithId('103');
+        return this.getUserWithId('3');
     }
 
     /**
      * @returns a tutor account.
      */
     public getTutor(): CypressCredentials {
-        return this.getUserWithId('101');
+        return this.getUserWithId('4');
     }
 
     private getUserWithId(id: string): CypressCredentials {
@@ -76,6 +79,50 @@ export class CypressUserManagement {
         cy.request({ method: GET, url: BASE_API + 'account', log: false }).then((response) => {
             func(response.body);
         });
+    }
+
+    public createRequiredUsers(requests: CourseManagementRequests) {
+        this.createUser(0, Authority.USER, requests);
+        this.createUser(1, Authority.USER, requests);
+        this.createUser(2, Authority.USER, requests);
+        this.createUser(3, Authority.INSTRUCTOR, requests);
+        this.createUser(4, Authority.TA, requests);
+    }
+
+    private createUser(id: number, role: Authority, requests: CourseManagementRequests) {
+        const user = this.generateUserWithId(id, role);
+        requests.createUser(user).then((request: any) => {
+            if (request.status == 400) {
+                expect(request.body.errorKey).to.eq('userexists');
+            } else {
+                expect(request.status).to.eq(201);
+            }
+        });
+    }
+
+    private generateUserWithId(id: number, role: Authority): User {
+        const cred = this.getUserWithId(id.toString());
+        const firstName = `tester_${id}`;
+        const lastName = 'cypress';
+        const email = `${firstName}@in.tum.de`;
+        return new User(
+            undefined,
+            cred.username,
+            firstName,
+            lastName,
+            email,
+            true,
+            undefined,
+            [role],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            cred.password,
+        );
     }
 }
 

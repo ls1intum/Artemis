@@ -1,3 +1,4 @@
+import { User } from 'app/core/user/user.model';
 import { BASE_API, DELETE, POST, PUT, GET } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
@@ -485,6 +486,16 @@ export class CourseManagementRequests {
             url: `${BASE_API}lectures`,
             method: POST,
             body: lecture,
+        });
+    }
+
+    createUser(user: User) {
+        return cy.request({
+            url: `${BASE_API}users`,
+            method: POST,
+            body: user,
+            log: false,
+            failOnStatusCode: false,
         });
     }
 }
