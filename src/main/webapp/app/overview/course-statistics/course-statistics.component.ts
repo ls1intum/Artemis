@@ -718,11 +718,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.router.navigate(['courses', this.course!.id!, 'exercises', event.exerciseId]);
     }
 
+    /**
+     * Handles the selection or deselection of a specific category and configures the filter accordingly
+     * @param category
+     */
     toggleCategory(category: string) {
         const isIncluded = this.exerciseCategoryFilters.get(category);
         this.exerciseCategoryFilters.set(category, !isIncluded);
         this.numberOfAppliedFilters += !isIncluded ? 1 : -1;
-        const currentlyVisibleExercises = this.applyFilter();
+        const currentlyVisibleExercises = this.applyCategoryFilter();
+
         if (isIncluded) {
             this.allCategoriesSelected = false;
             this.filteredExerciseIDs = this.courseExercises.filter((exercise) => !currentlyVisibleExercises.includes(exercise)).map((exercise) => exercise.id!);
@@ -735,12 +740,20 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.groupExercisesByType(currentlyVisibleExercises);
     }
 
+    /**
+     * Creates an initial filter setting by including all categories
+     * @private
+     */
     private setupCategoryFilter() {
         this.exerciseCategories.forEach((category) => this.exerciseCategoryFilters.set(category, true));
         this.allCategoriesSelected = true;
         this.numberOfAppliedFilters = this.exerciseCategories.size + (this.currentlyHidingNotIncludedInScoreExercises ? 1 : 0);
     }
 
+    /**
+     * Collects all categories from the currently visible exercises (included or excluded the optional exercises depending on the prior state)
+     * @private
+     */
     private determineDisplayableCategories(): void {
         const exerciseCategories = this.courseExercises
             .filter((exercise) => exercise.categories)
@@ -750,6 +763,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.setupCategoryFilter();
     }
 
+    /**
+     * Handles the use case when the user selects or deselects the option "select all categories"
+     */
     selectAllCategories(): void {
         if (!this.allCategoriesSelected) {
             this.setupCategoryFilter();
@@ -758,14 +774,22 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.numberOfAppliedFilters -= this.exerciseCategories.size;
             this.allCategoriesSelected = !this.allCategoriesSelected;
         }
-        const currentlyVisibleExercises = this.applyFilter();
+        const currentlyVisibleExercises = this.applyCategoryFilter();
         this.filteredExerciseIDs = this.filteredExerciseIDs.filter((id) => !currentlyVisibleExercises.find((exercise) => exercise.id === id));
         this.numberOfAppliedFilters = this.exerciseCategories.size + (this.currentlyHidingNotIncludedInScoreExercises ? 1 : 0);
         this.groupExercisesByType(currentlyVisibleExercises);
     }
 
-    private applyFilter(): Exercise[] {
-        const currentlyVisibleExercises = this.courseExercises.filter((exercise) => {
+    /**
+     * Auxiliary method in order to reduce code duplication
+     * Takes the currently configured exerciseCategoryFilters and applies it to the course exercises
+     *
+     * Important note: As exercises can have multiple categories, the filter is designed to be non-exclusive. This means
+     * as long as an exercise has no or at least one of the selected categories, it is displayed.
+     * @returns array containing all exercises that satisfy the current filter
+     */
+    private applyCategoryFilter(): Exercise[] {
+        return this.courseExercises.filter((exercise) => {
             if (!exercise.categories) {
                 return true;
             }
@@ -773,6 +797,5 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             exercise.categories?.forEach((exerciseCategory) => (include = include || this.exerciseCategoryFilters.get(exerciseCategory.category!)!));
             return include;
         });
-        return currentlyVisibleExercises;
     }
 }
