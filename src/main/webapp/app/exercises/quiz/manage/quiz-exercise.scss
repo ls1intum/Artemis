@@ -166,9 +166,10 @@
 }
 
 .cdk-drag-preview {
-    border: 1px solid;
-    background: #fafafa;
-    padding: 4px 2px 2px 2px;
+    img {
+        max-height: 158px;
+        max-width: 160px;
+    }
 
     textarea {
         text-align: center;
