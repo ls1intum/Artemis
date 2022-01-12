@@ -520,6 +520,25 @@ describe('ProgrammingExercise Management Update Component', () => {
             });
         });
 
+        it('no package name related validation error for programming languages without package name', () => {
+            const programmingLanguagesWithoutPackageName = [
+                ProgrammingLanguage.C,
+                ProgrammingLanguage.EMPTY,
+                ProgrammingLanguage.PYTHON,
+                ProgrammingLanguage.ASSEMBLER,
+                ProgrammingLanguage.OCAML,
+                ProgrammingLanguage.VHDL,
+            ];
+
+            for (const language of programmingLanguagesWithoutPackageName) {
+                comp.programmingExercise.programmingLanguage = language;
+                expect(comp.getInvalidReasons()).not.toContainEqual({
+                    translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                    translateValues: {},
+                });
+            }
+        });
+
         it('find validation errors for invalid auxiliary repositories', () => {
             comp.auxiliaryRepositoriesValid = false;
             expect(comp.getInvalidReasons()).toContainEqual({
