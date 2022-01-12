@@ -164,3 +164,30 @@
         background: #2c3e50;
     }
 }
+
+.cdk-drag-preview {
+    border: 1px solid;
+    background: #fafafa;
+    padding: 4px 2px 2px 2px;
+
+    textarea {
+        text-align: center;
+        border: none;
+        resize: none;
+    }
+}
+
+/* highlight drop location in light blue when selecting a drag item */
+.cdk-drop-list-receiving {
+    background: rgba(173, 216, 230, 0.8) !important;
+}
+
+/* change highlight color to light green when dragging the item above a drop location */
+.cdk-drop-list-dragging {
+    background: rgb(144, 238, 144) !important;
+    cursor: pointer !important;
+}
+
+.cdk-drag {
+    cursor: pointer;
+}
