@@ -306,7 +306,7 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
         request.put(requestUrl() + activate(true), SubmissionPolicyBuilder.any(), HttpStatus.BAD_REQUEST);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_toggleSubmissionPolicy_badRequest_policyActiveStatusMatchesRequest(boolean activate) throws Exception {
@@ -314,7 +314,7 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
         request.put(requestUrl() + activate(activate), SubmissionPolicyBuilder.any(), HttpStatus.BAD_REQUEST);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_toggleSubmissionPolicy_ok_lockRepositoryPolicy(boolean activate) throws Exception {
@@ -323,7 +323,7 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
         assertThat(updatedExercise().getSubmissionPolicy().isActive()).isEqualTo(!activate);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_toggleSubmissionPolicy_ok_submissionPenaltyPolicy(boolean activate) throws Exception {
@@ -383,7 +383,7 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
         POLICY_NULL, POLICY_ACTIVE, POLICY_INACTIVE
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(EnforcePolicyTestType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_enforceLockRepositoryPolicyOnStudentParticipation(EnforcePolicyTestType type) throws Exception {
@@ -417,7 +417,7 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(EnforcePolicyTestType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void test_enforceSubmissionPenaltyPolicyOnStudentParticipation(EnforcePolicyTestType type) throws Exception {

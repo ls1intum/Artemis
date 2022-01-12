@@ -1,6 +1,9 @@
+import { Interception } from 'cypress/types/net-stubbing';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Course } from 'app/entities/course.model';
 import { CypressAssessmentType } from '../../../support/requests/CourseManagementRequests';
 import { artemis } from 'src/test/cypress/support/ArtemisTesting';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 // The user management object
 const users = artemis.users;
@@ -13,17 +16,17 @@ const instructor = users.getInstructor();
 const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
-const coursesPage = artemis.pageobjects.courseManagement;
+const coursesPage = artemis.pageobjects.course.management;
 const courseAssessment = artemis.pageobjects.assessment.course;
 const exerciseAssessment = artemis.pageobjects.assessment.exercise;
 const programmingAssessment = artemis.pageobjects.assessment.programming;
-const exerciseResult = artemis.pageobjects.exerciseResult;
-const programmingFeedback = artemis.pageobjects.programmingExercise.feedback;
-const onlineEditor = artemis.pageobjects.programmingExercise.editor;
+const exerciseResult = artemis.pageobjects.exercise.result;
+const programmingFeedback = artemis.pageobjects.exercise.programming.feedback;
+const onlineEditor = artemis.pageobjects.exercise.programming.editor;
 
 describe('Programming exercise assessment', () => {
-    let course: any;
-    let exercise: any;
+    let course: Course;
+    let exercise: ProgrammingExercise;
     const tutorFeedback = 'You are missing some classes! The classes, which you implemented look good though.';
     const tutorFeedbackPoints = 5;
     const tutorCodeFeedback = 'The input parameter should be mentioned in javadoc!';
@@ -47,21 +50,21 @@ describe('Programming exercise assessment', () => {
     after(() => {
         if (!!course) {
             cy.login(users.getAdmin());
-            courseManagement.deleteCourse(course.id);
+            courseManagement.deleteCourse(course.id!);
         }
     });
 
     function assessSubmission() {
         cy.login(tutor, '/course-management');
-        coursesPage.openAssessmentDashboardOfCourse(course.shortName);
+        coursesPage.openAssessmentDashboardOfCourse(course.shortName!);
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
         exerciseAssessment.clickStartNewAssessment();
         onlineEditor.openFileWithName('BubbleSort.java');
         programmingAssessment.provideFeedbackOnCodeLine(9, tutorCodeFeedbackPoints, tutorCodeFeedback);
         programmingAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
-        programmingAssessment.submit().then((request: any) => {
-            expect(request.response.statusCode).to.eq(200);
+        programmingAssessment.submit().then((request: Interception) => {
+            expect(request.response!.statusCode).to.eq(200);
             // Wait until the assessment due date is over
             const now = dayjs();
             if (now.isBefore(assessmentDueDate)) {
@@ -74,19 +77,19 @@ describe('Programming exercise assessment', () => {
         cy.login(student, `/courses/${course.id}/exercises/${exercise.id}`);
         const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
         const percentage = totalPoints * 10;
-        exerciseResult.shouldShowExerciseTitle(exercise.title);
+        exerciseResult.shouldShowExerciseTitle(exercise.title!);
         programmingFeedback.complain(complaint);
-        exerciseResult.clickOpenCodeEditor(exercise.id);
+        exerciseResult.clickOpenCodeEditor(exercise.id!);
         programmingFeedback.shouldShowRepositoryLockedWarning();
         programmingFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
-        programmingFeedback.shouldShowScore(totalPoints, exercise.maxPoints, percentage);
+        programmingFeedback.shouldShowScore(totalPoints, exercise.maxPoints!, percentage);
         programmingFeedback.shouldShowCodeFeedback('BubbleSort.java', tutorCodeFeedback, '-2', onlineEditor);
     }
 
     function acceptComplaintAsInstructor() {
         cy.login(instructor, `/course-management/${course.id}/complaints`);
-        programmingAssessment.acceptComplaint('Makes sense').then((request: any) => {
-            expect(request.response.statusCode).to.equal(200);
+        programmingAssessment.acceptComplaint('Makes sense').then((request: Interception) => {
+            expect(request.response!.statusCode).to.equal(200);
         });
     }
 
@@ -94,9 +97,9 @@ describe('Programming exercise assessment', () => {
         cy.login(admin);
         return courseManagement.createCourse(true).then((response) => {
             course = response.body;
-            courseManagement.addStudentToCourse(course.id, student.username);
+            courseManagement.addStudentToCourse(course.id!, student.username);
             courseManagement.addTutorToCourse(course, tutor);
-            courseManagement.addInstructorToCourse(course.id, instructor);
+            courseManagement.addInstructorToCourse(course.id!, instructor);
             dueDate = dayjs().add(25, 'seconds');
             assessmentDueDate = dueDate.add(30, 'seconds');
             courseManagement
@@ -110,7 +113,7 @@ describe('Programming exercise assessment', () => {
     function makeProgrammingSubmissionAsStudent() {
         cy.login(student);
         courseManagement
-            .startExerciseParticipation(exercise.id)
+            .startExerciseParticipation(exercise.id!)
             .its('body.id')
             .then((participationId) => {
                 courseManagement.makeProgrammingExerciseSubmission(participationId);

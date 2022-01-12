@@ -3,6 +3,7 @@
     "include": ["**/**/**/*.ts"],
     "exclude": ["node_modules"],
     "compilerOptions": {
+        "target": "es2019",
         "sourceMap": false,
         "types": ["cypress", "@4tw/cypress-drag-drop", "node", "cypress-wait-until", "cypress-file-upload"]
     }

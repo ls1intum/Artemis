@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -49,14 +51,14 @@ public class StatisticsResource {
     /**
      * GET management/statistics/data : get the graph data in the last "span" days in the given period.
      *
-     * @param span        the spantime of which the amount should be calculated
+     * @param span        the spanTime of which the amount should be calculated
      * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      * @param graphType   the type of graph the data should be fetched
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("management/statistics/data")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Integer[]> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType) {
+    public ResponseEntity<List<Integer>> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType) {
         log.debug("REST request to get graph data");
         return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType, StatisticsView.ARTEMIS, null));
     }
@@ -65,7 +67,7 @@ public class StatisticsResource {
      * GET management/statistics/data-for-content : get the graph data in the last "span" days in the given period for a specific entity, like course,
      *                                              exercise or exam.
      *
-     * @param span        the spantime of which the amount should be calculated
+     * @param span        the spanTime of which the amount should be calculated
      * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      * @param graphType   the type of graph the data should be fetched
      * @param view        the view in which the data will be displayed (Artemis, Course, Exercise)
@@ -74,13 +76,13 @@ public class StatisticsResource {
      */
     @GetMapping("management/statistics/data-for-content")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Integer[]> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType,
+    public ResponseEntity<List<Integer>> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType,
             @RequestParam StatisticsView view, @RequestParam Long entityId) {
         var courseId = 0L;
         switch (view) {
             case COURSE -> courseId = entityId;
             case EXERCISE -> courseId = exerciseRepository.findByIdElseThrow(entityId).getCourseViaExerciseGroupOrCourseMember().getId();
-            default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+            case ARTEMIS -> throw new UnsupportedOperationException("Unsupported view: " + view);
         }
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {

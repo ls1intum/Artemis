@@ -650,21 +650,21 @@ public class CourseTestService {
     // Test
     public void testGetCoursesToRegisterAndAccurateTimeZoneEvaluation() throws Exception {
         Course courseActiveRegistrationEnabled = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
-                "tumuser", "tutor", "editor", "instructor");
+                "testuser", "tutor", "editor", "instructor");
         courseActiveRegistrationEnabled.setRegistrationEnabled(true);
         Course courseActiveRegistrationDisabled = ModelFactory.generateCourse(2L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
-                "tumuser", "tutor", "editor", "instructor");
+                "testuser", "tutor", "editor", "instructor");
         courseActiveRegistrationDisabled.setRegistrationEnabled(false);
-        Course courseNotActivePast = ModelFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "tumuser", "tutor",
+        Course courseNotActivePast = ModelFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "testuser", "tutor",
                 "editor", "instructor");
-        Course courseNotActiveFuture = ModelFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "tumuser", "tutor",
+        Course courseNotActiveFuture = ModelFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "testuser", "tutor",
                 "editor", "instructor");
         courseRepo.save(courseActiveRegistrationEnabled);
         courseRepo.save(courseActiveRegistrationDisabled);
         courseRepo.save(courseNotActivePast);
         courseRepo.save(courseNotActiveFuture);
 
-        List<Course> courses = request.getList("/api/courses/to-register", HttpStatus.OK, Course.class);
+        List<Course> courses = request.getList("/api/courses/for-registration", HttpStatus.OK, Course.class);
         assertThat(courses.size()).as("Exactly one course is available to register").isEqualTo(1);
         courses.get(0).setId(courseActiveRegistrationEnabled.getId());
         assertThat(courses.get(0)).as("Only active course is returned").isEqualTo(courseActiveRegistrationEnabled);
@@ -1262,7 +1262,7 @@ public class CourseTestService {
     // Test
     public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise() throws Exception {
         Course course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
-        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findByCourseId(course.getId()).stream().findFirst();
+        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst();
         assertThat(modelingExercise).isPresent();
         archiveCourseAndAssertExerciseDoesntExist(course, modelingExercise.get());
     }
@@ -1270,7 +1270,7 @@ public class CourseTestService {
     // Test
     public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportTextExercise() throws Exception {
         Course course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
-        Optional<TextExercise> textExercise = textExerciseRepository.findByCourseId(course.getId()).stream().findFirst();
+        Optional<TextExercise> textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst();
         assertThat(textExercise).isPresent();
         archiveCourseAndAssertExerciseDoesntExist(course, textExercise.get());
     }
@@ -1278,7 +1278,7 @@ public class CourseTestService {
     // Test
     public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportFileUploadExercise() throws Exception {
         Course course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
-        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findByCourseId(course.getId()).stream().findFirst();
+        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst();
         assertThat(fileUploadExercise).isPresent();
         archiveCourseAndAssertExerciseDoesntExist(course, fileUploadExercise.get());
     }
@@ -1822,7 +1822,7 @@ public class CourseTestService {
         // Check results
         assertThat(courseDTO).isNotNull();
 
-        assertThat(courseDTO.getActiveStudents().length).isEqualTo(16);
+        assertThat(courseDTO.getActiveStudents().size()).isEqualTo(16);
 
         // number of users in course
         assertThat(courseDTO.getNumberOfStudentsInCourse()).isEqualTo(8);

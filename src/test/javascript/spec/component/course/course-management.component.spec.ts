@@ -1,7 +1,4 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementComponent } from 'app/course/manage/course-management.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -27,9 +24,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/entities/exercise.model';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('CourseManagementComponent', () => {
     let fixture: ComponentFixture<CourseManagementComponent>;
@@ -119,22 +113,22 @@ describe('CourseManagementComponent', () => {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
-        sinon.stub(service, 'getCourseOverview').returns(of(new HttpResponse({ body: [courseDetails187, courseDetails188] })));
-        sinon.stub(service, 'getExercisesForManagementOverview').returns(of(new HttpResponse({ body: [courseWithExercises187, courseWithExercises188] })));
-        sinon.stub(service, 'getStatsForManagementOverview').returns(of(new HttpResponse({ body: [] })));
-        sinon.stub(service, 'getWithUserStats').returns(of(new HttpResponse({ body: [course187, course188] })));
-        sinon.stub(guidedTourService, 'enableTourForCourseOverview').returns(course187);
+        jest.spyOn(service, 'getCourseOverview').mockReturnValue(of(new HttpResponse({ body: [courseDetails187, courseDetails188] })));
+        jest.spyOn(service, 'getExercisesForManagementOverview').mockReturnValue(of(new HttpResponse({ body: [courseWithExercises187, courseWithExercises188] })));
+        jest.spyOn(service, 'getStatsForManagementOverview').mockReturnValue(of(new HttpResponse({ body: [] })));
+        jest.spyOn(service, 'getWithUserStats').mockReturnValue(of(new HttpResponse({ body: [course187, course188] })));
+        jest.spyOn(guidedTourService, 'enableTourForCourseOverview').mockReturnValue(course187);
 
         fixture.detectChanges();
-        expect(component).to.be.ok;
-        expect(component.showOnlyActive).to.be.true;
+        expect(component).not.toBeNull();
+        expect(component.showOnlyActive).toBeTrue();
         component.toggleShowOnlyActive();
-        expect(component.showOnlyActive).to.be.false;
+        expect(component.showOnlyActive).toBeFalse();
         fixture.detectChanges();
-        expect(component).to.be.ok;
+        expect(component).not.toBeNull();
     });
 });

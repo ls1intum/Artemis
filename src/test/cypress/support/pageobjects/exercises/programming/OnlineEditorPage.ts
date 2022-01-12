@@ -1,6 +1,5 @@
 import { DELETE } from './../../../constants';
 import { artemis } from './../../../ArtemisTesting';
-import { CypressExerciseType } from '../../../requests/CourseManagementRequests';
 import { GET, BASE_API, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 
@@ -103,7 +102,7 @@ export class OnlineEditorPage {
         const postRequestId = 'createFile' + fileName;
         const getRequestId = 'getFile' + fileName;
         const requestPath = BASE_API + 'repository/*/file?file=' + filePath;
-        cy.get('#file-browser-folder-create-file').click().wait(500);
+        cy.get('[id="file-browser-folder-create-file"]').eq(2).click().wait(500);
         cy.intercept(POST, requestPath).as(postRequestId);
         cy.intercept(GET, requestPath).as(getRequestId);
         cy.get('#file-browser-create-node').type(fileName).wait(500).type('{enter}');
@@ -129,14 +128,18 @@ export class OnlineEditorPage {
     getBuildOutput() {
         return cy.get('#cardBuildOutput');
     }
+
+    toggleCompressFileTree() {
+        return cy.get('#compress_tree').click();
+    }
 }
 
 /**
  * General method for entering, submitting and verifying something in the online editor.
  */
 export function makeSubmissionAndVerifyResults(editorPage: OnlineEditorPage, packageName: string, submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
-    // We create an empty file so that the file browser does not create an extra subfolder when all files are deleted
-    editorPage.createFileInRootPackage('placeholderFile', packageName);
+    // Decompress the file tree to access the parent folder
+    editorPage.toggleCompressFileTree();
     // We delete all existing files, so we can create new files and don't have to delete their already existing content
     editorPage.deleteFile('Client.java');
     editorPage.deleteFile('BubbleSort.java');
@@ -149,15 +152,15 @@ export function makeSubmissionAndVerifyResults(editorPage: OnlineEditorPage, pac
 /**
  * Starts the participation in the test programming exercise.
  */
-export function startParticipationInProgrammingExercise(courseId: string, exerciseId: string, credentials: CypressCredentials) {
-    const courseOverview = artemis.pageobjects.courseOverview;
-    const courses = artemis.pageobjects.courses;
+export function startParticipationInProgrammingExercise(courseId: number, exerciseId: number, credentials: CypressCredentials) {
+    const courseOverview = artemis.pageobjects.course.overview;
+    const courses = artemis.pageobjects.course.list;
     cy.login(credentials, '/');
     cy.url().should('include', '/courses');
     cy.log('Participating in the programming exercise as a student...');
-    courses.openCourse(courseId);
+    courses.openCourse(courseId!);
     cy.url().should('include', '/exercises');
-    courseOverview.startExercise(exerciseId, CypressExerciseType.PROGRAMMING);
+    courseOverview.startExercise(exerciseId);
     courseOverview.openRunningProgrammingExercise(exerciseId);
 }
 

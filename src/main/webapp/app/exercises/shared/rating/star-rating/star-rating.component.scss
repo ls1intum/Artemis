@@ -1,0 +1,38 @@
+:root {
+    --checkedcolor: gold;
+    --uncheckedcolor: gray;
+    --size: 24px;
+    --halfwidth: 10px;
+    --halfmargin: -20px;
+}
+
+.star {
+    cursor: pointer;
+    color: var(--unCheckedColor);
+    font-size: var(--size);
+    width: var(--size);
+    display: inline-block;
+
+    &:last-child {
+        margin-right: 0;
+    }
+
+    &::before {
+        content: '\2605';
+    }
+}
+
+.star.on {
+    color: var(--checkedColor);
+}
+
+.star.half {
+    &::after {
+        content: '\2605';
+        color: var(--checkedColor);
+        position: absolute;
+        margin-left: var(--halfMargin);
+        width: var(--halfWidth);
+        overflow: hidden;
+    }
+}
