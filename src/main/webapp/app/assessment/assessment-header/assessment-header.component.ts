@@ -30,7 +30,6 @@ export class AssessmentHeaderComponent {
 
     @Input() isTeamMode: boolean;
     @Input() isAssessor: boolean;
-    @Input() isAtLeastInstructor: boolean;
     @Input() isTestRun = false;
     @Input() exerciseDashboardLink: string[];
     @Input() canOverride: boolean;

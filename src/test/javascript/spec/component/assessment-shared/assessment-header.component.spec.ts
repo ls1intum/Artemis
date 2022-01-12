@@ -238,7 +238,7 @@ describe('AssessmentHeaderComponent', () => {
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeFalsy();
 
-        component.isAtLeastInstructor = true;
+        component.exercise.isAtLeastInstructor = true;
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeTruthy();
@@ -248,7 +248,7 @@ describe('AssessmentHeaderComponent', () => {
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeTruthy();
 
-        component.isAtLeastInstructor = false;
+        component.exercise.isAtLeastInstructor = false;
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeTruthy();
