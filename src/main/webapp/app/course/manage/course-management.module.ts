@@ -54,6 +54,7 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
+import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 
 @NgModule({
     imports: [
@@ -66,6 +67,7 @@ import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.modul
         MatChipsModule,
         ArtemisExerciseModule,
         ArtemisLectureModule,
+        ArtemisFullscreenModule,
         ArtemisCourseScoresModule,
         ArtemisLearningGoalsModule,
         ArtemisExerciseScoresModule,
