@@ -20,7 +20,6 @@ services:
             spring.datasource.url: "${DATASOURCE_URL}"
             spring.datasource.username: root
             spring.datasource.password: ""
-            artemis.user-management.external.use-external: "true"
             artemis.user-management.external.url: "${UM_URL}"
             artemis.user-management.external.user: "${UM_USER}"
             artemis.user-management.external.password: "${UM_PASSWORD}"
