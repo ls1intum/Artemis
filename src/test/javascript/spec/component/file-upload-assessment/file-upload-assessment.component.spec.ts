@@ -139,7 +139,6 @@ describe('FileUploadAssessmentComponent', () => {
             comp.submission.participation!.submissions = [comp.submission];
             comp.submission.participation!.results = [comp.submission.latestResult!];
             comp.isAssessor = true;
-            comp.isAtLeastInstructor = true;
             comp.assessmentsAreValid = true;
             comp.isLoading = false;
 
@@ -161,7 +160,6 @@ describe('FileUploadAssessmentComponent', () => {
             comp.submission.participation!.submissions = [comp.submission];
             comp.submission.participation!.results = [comp.submission.latestResult!];
             comp.isAssessor = true;
-            comp.isAtLeastInstructor = true;
             comp.assessmentsAreValid = true;
             comp.isLoading = false;
 
@@ -547,14 +545,12 @@ describe('FileUploadAssessmentComponent', () => {
 
     describe('canOverride', () => {
         it('should not be able to override if tutor is assessor and result has a complaint', () => {
-            comp.isAtLeastInstructor = false;
             comp.complaint = { id: 3 };
             comp.isAssessor = true;
             expect(comp.canOverride).toEqual(false);
         });
 
         it('should not be able to override if tutor is assessor and result has a complaint', () => {
-            comp.isAtLeastInstructor = false;
             comp.exercise!.assessmentDueDate = dayjs().add(-100, 'seconds');
             expect(comp.canOverride).toEqual(false);
         });

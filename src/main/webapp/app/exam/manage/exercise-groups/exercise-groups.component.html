@@ -176,7 +176,7 @@
                             </th>
                         </ng-container>
                         <th *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.QUIZ)">
-                            <span>{{ 'artemisApp.quizExercise.numberOfPosts' | artemisTranslate }}</span>
+                            <span>{{ 'artemisApp.quizExercise.numberOfQuestions' | artemisTranslate }}</span>
                         </th>
                         <th *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING)">
                             <span>{{ 'artemisApp.modelingExercise.diagramType' | artemisTranslate }}</span>

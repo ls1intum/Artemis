@@ -9,6 +9,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
@@ -22,7 +23,7 @@ export type BuildArtifact = {
 export class ParticipationService {
     public resourceUrl = SERVER_API_URL + 'api/participations';
 
-    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
+    constructor(private http: HttpClient, private submissionService: SubmissionService, private accountService: AccountService) {}
 
     update(exercise: Exercise, participation: StudentParticipation): Observable<EntityResponseType> {
         // make sure participation and exercise are connected, because this is expected by the server
@@ -30,7 +31,7 @@ export class ParticipationService {
         const copy = this.convertDateFromClient(participation);
         return this.http
             .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exercise.id}/participations`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     updateIndividualDueDates(exercise: Exercise, participations: StudentParticipation[]): Observable<EntityArrayResponseType> {
@@ -41,19 +42,19 @@ export class ParticipationService {
         });
         return this.http
             .put<StudentParticipation[]>(SERVER_API_URL + `api/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
     }
 
     find(participationId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/${participationId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     findWithLatestResult(participationId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/${participationId}/withLatestResult`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     /*
@@ -62,7 +63,7 @@ export class ParticipationService {
     findParticipationForCurrentUser(exerciseId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participation`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     findAllParticipationsByExercise(exerciseId: number, withLatestResult = false): Observable<EntityArrayResponseType> {
@@ -72,7 +73,7 @@ export class ParticipationService {
                 params: options,
                 observe: 'response',
             })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
     }
 
     delete(participationId: number, req?: any): Observable<HttpResponse<any>> {
@@ -225,5 +226,45 @@ export class ParticipationService {
                 submission.participation = combinedParticipation;
             });
         }
+    }
+
+    /**
+     * This method bundles recurring conversion steps for Participation EntityArrayResponses.
+     * @param participationRes
+     * @private
+     */
+    private processParticipationEntityArrayResponseType(participationRes: EntityArrayResponseType): EntityArrayResponseType {
+        this.convertDateArrayFromServer(participationRes);
+        this.setAccessRightsParticipationEntityArrayResponseType(participationRes);
+        return participationRes;
+    }
+
+    /**
+     * This method bundles recurring conversion steps for Participation EntityResponses.
+     * @param participationRes
+     * @private
+     */
+    private processParticipationEntityResponseType(participationRes: EntityResponseType): EntityResponseType {
+        this.convertDateFromServer(participationRes);
+        this.setAccessRightsParticipationEntityResponseType(participationRes);
+        return participationRes;
+    }
+
+    private setAccessRightsParticipationEntityResponseType(res: EntityResponseType): EntityResponseType {
+        if (res.body?.exercise) {
+            this.accountService.setAccessRightsForExercise(res.body.exercise);
+        }
+        return res;
+    }
+
+    private setAccessRightsParticipationEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((participation) => {
+                if (participation.exercise) {
+                    this.accountService.setAccessRightsForExercise(participation.exercise as Exercise);
+                }
+            });
+        }
+        return res;
     }
 }
