@@ -287,7 +287,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should fill & empty sample text solution', () => {
         comp.showIfExampleSolutionPresent({ ...textExercise });
-        expect(comp.exampleSolution.changingThisBreaksApplicationSecurity.length).toBeGreaterThan(1);
+        expect(comp.exampleSolution).not.toBe(undefined);
         expect(comp.exampleSolutionUML).toBe(undefined);
 
         comp.showIfExampleSolutionPresent({ ...exercise });
@@ -297,7 +297,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should fill & empty sample file upload solution', () => {
         comp.showIfExampleSolutionPresent({ ...fileUploadExercise });
-        expect(comp.exampleSolution.changingThisBreaksApplicationSecurity.length).toBeGreaterThan(1);
+        expect(comp.exampleSolution).not.toBe(undefined);
         expect(comp.exampleSolutionUML).toBe(undefined);
 
         comp.showIfExampleSolutionPresent({ ...exercise });
