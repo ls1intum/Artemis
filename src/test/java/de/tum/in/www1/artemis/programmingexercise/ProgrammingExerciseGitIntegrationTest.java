@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.GitUtilService;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -117,8 +117,8 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
         assertThat(getAllCommits(localGit).size()).isEqualTo(3);
         assertThat(getAllCommits(remoteGit).size()).isEqualTo(3);
 
-        final var path = ProgrammingExerciseResource.Endpoints.ROOT
-                + ProgrammingExerciseResource.Endpoints.COMBINE_COMMITS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var path = ProgrammingExerciseResourceEndpoints.ROOT
+                + ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(path, Void.class, HttpStatus.OK);
         assertThat(getAllCommits(localGit).size()).isEqualTo(1);
         assertThat(getAllCommits(remoteGit).size()).isEqualTo(1);
@@ -128,8 +128,8 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testCombineTemplateRepositoryCommits_invalidId_notFound() throws Exception {
         programmingExercise.setId(20L);
-        final var path = ProgrammingExerciseResource.Endpoints.ROOT
-                + ProgrammingExerciseResource.Endpoints.COMBINE_COMMITS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var path = ProgrammingExerciseResourceEndpoints.ROOT
+                + ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(path, Void.class, HttpStatus.NOT_FOUND);
     }
 
@@ -137,8 +137,8 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     void testCombineTemplateRepositoryCommits_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
-        final var path = ProgrammingExerciseResource.Endpoints.ROOT
-                + ProgrammingExerciseResource.Endpoints.COMBINE_COMMITS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var path = ProgrammingExerciseResourceEndpoints.ROOT
+                + ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(path, Void.class, HttpStatus.FORBIDDEN);
     }
 
