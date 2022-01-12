@@ -617,7 +617,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return validationErrorReasons;
     }
 
-    validateExerciseTitle(validationErrorReasons: ValidationReason[]): void {
+    private validateExerciseTitle(validationErrorReasons: ValidationReason[]): void {
         if (this.programmingExercise.title === undefined || this.programmingExercise.title === '') {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.undefined',
@@ -631,7 +631,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    validateExerciseShortName(validationErrorReasons: ValidationReason[]): void {
+    private validateExerciseShortName(validationErrorReasons: ValidationReason[]): void {
         if (this.programmingExercise.shortName === undefined || this.programmingExercise.shortName === '') {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.shortName.undefined',
@@ -654,7 +654,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    validateExercisePoints(validationErrorReasons: ValidationReason[]): void {
+    private validateExercisePoints(validationErrorReasons: ValidationReason[]): void {
         if (this.programmingExercise.maxPoints === undefined) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.points.undefined',
@@ -673,7 +673,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    validateExerciseBonusPoints(validationErrorReasons: ValidationReason[]) {
+    private validateExerciseBonusPoints(validationErrorReasons: ValidationReason[]) {
         if (this.programmingExercise.bonusPoints === undefined || typeof this.programmingExercise.bonusPoints !== 'number') {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.bonusPoints.undefined',
@@ -692,7 +692,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    validateExerciseSCAMaxPenalty(validationErrorReasons: ValidationReason[]) {
+    private validateExerciseSCAMaxPenalty(validationErrorReasons: ValidationReason[]) {
         const maxStaticCodeAnalysisPenaltyPatternMatch = this.programmingExercise.maxStaticCodeAnalysisPenalty?.toString().match(this.maxPenaltyPattern);
         if (maxStaticCodeAnalysisPenaltyPatternMatch === null || maxStaticCodeAnalysisPenaltyPatternMatch?.length === 0) {
             validationErrorReasons.push({
@@ -702,7 +702,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    validateExercisePackageName(validationErrorReasons: ValidationReason[]): void {
+    private validateExercisePackageName(validationErrorReasons: ValidationReason[]): void {
         // validation on package name has only to be performed for Java, Kotlin and Swift
         if (
             this.programmingExercise.programmingLanguage !== ProgrammingLanguage.JAVA &&
@@ -720,7 +720,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         } else {
             const patternMatchJavaKotlin: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.packageNamePatternForJavaKotlin);
             const patternMatchSwift: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.appNamePatternForSwift);
-            // window.alert(patternMatchJavaKotlin + ' ; ' + patternMatchSwift);
             if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)) {
                 validationErrorReasons.push({
                     translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA',
@@ -740,7 +739,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    validateExerciseSubmissionLimit(validationErrorReasons: ValidationReason[]): void {
+    private validateExerciseSubmissionLimit(validationErrorReasons: ValidationReason[]): void {
         // verifying submission limit value
         if (this.programmingExercise.submissionPolicy !== undefined && this.programmingExercise.submissionPolicy !== SubmissionPolicyType.NONE) {
             const submissionLimit = this.programmingExercise.submissionPolicy?.submissionLimit;
@@ -774,7 +773,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    validateExerciseAuxiliryRepositories(validationErrorReasons: ValidationReason[]): void {
+    private validateExerciseAuxiliryRepositories(validationErrorReasons: ValidationReason[]): void {
         if (!this.auxiliaryRepositoriesValid) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.auxiliaryRepository.error',
@@ -783,7 +782,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    validateExerciseIdeSelection(validationErrorReasons: ValidationReason[]): void {
+    private validateExerciseIdeSelection(validationErrorReasons: ValidationReason[]): void {
         if (!this.validIdeSelection()) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
