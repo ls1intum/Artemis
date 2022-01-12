@@ -677,11 +677,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             });
         }
 
-        // validation on package name has not to be performed for languages Empty, C and Python
+        // validation on package name has only to be performed for Java, Kotlin and Swift
         if (
-            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.C &&
-            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.PYTHON &&
-            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.EMPTY
+            this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA ||
+            this.programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN ||
+            this.programmingExercise.programmingLanguage === ProgrammingLanguage.SWIFT
         ) {
             if (this.programmingExercise.packageName === undefined || this.programmingExercise.packageName === '') {
                 result.push({
