@@ -94,8 +94,10 @@ export class CypressUserManagement {
         requests.createUser(user).then((request: any) => {
             if (request.status == 400) {
                 expect(request.body.errorKey).to.eq('userexists');
+                cy.task('debug', 'Cypress user already exists. Skipping user creation!');
             } else {
                 expect(request.status).to.eq(201);
+                cy.task('debug', 'Created new cypress user!');
             }
         });
     }
