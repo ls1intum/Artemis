@@ -499,7 +499,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param dragEvent {object} the solution involved (may be a copy at this point)
      */
     onDragDrop(spot: ShortAnswerSpot, dragEvent: any): void {
-        let dragItem = dragEvent.dragData;
+        let dragItem = dragEvent.item.data;
         // Replace dragItem with original (because it may be a copy)
         dragItem = this.shortAnswerQuestion.solutions?.find((originalDragItem) =>
             dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID,
