@@ -520,23 +520,52 @@ describe('ProgrammingExercise Management Update Component', () => {
             });
         });
 
-        it('no package name related validation error for programming languages without package name', () => {
-            const programmingLanguagesWithoutPackageName = [
-                ProgrammingLanguage.C,
-                ProgrammingLanguage.EMPTY,
-                ProgrammingLanguage.PYTHON,
-                ProgrammingLanguage.ASSEMBLER,
-                ProgrammingLanguage.OCAML,
-                ProgrammingLanguage.VHDL,
-            ];
+        it('check no package name related validation error for language C', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.C;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
 
-            for (const language of programmingLanguagesWithoutPackageName) {
-                comp.programmingExercise.programmingLanguage = language;
-                expect(comp.getInvalidReasons()).not.toContainEqual({
-                    translateKey: 'artemisApp.exercise.form.packageName.undefined',
-                    translateValues: {},
-                });
-            }
+        it('check no package name related validation error for language Empty', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.EMPTY;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('check no package name related validation error for language Python', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.PYTHON;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('check no package name related validation error for language Assembler', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.ASSEMBLER;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('check no package name related validation error for language OCAML', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.OCAML;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('check no package name related validation error for language VHDL', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.VHDL;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
         });
 
         it('find validation errors for invalid auxiliary repositories', () => {
