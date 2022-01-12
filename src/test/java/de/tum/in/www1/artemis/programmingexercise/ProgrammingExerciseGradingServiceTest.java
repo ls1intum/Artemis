@@ -756,8 +756,8 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         assertThat(updatedStudentResults).hasSize(5);
 
         for (final var result : updatedStudentResults) {
-            final var automaticPositiveFeedbacks = result.getFeedbacks().stream().filter(Feedback::isPositive).filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType()))
-                    .toList();
+            final var automaticPositiveFeedbacks = result.getFeedbacks().stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive()))
+                    .filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType())).toList();
             for (final var feedback : automaticPositiveFeedbacks) {
                 double bonusPoints = testCases.get(feedback.getText()).getBonusPoints();
                 assertThat(feedback.getCredits()).isEqualTo(bonusPoints);

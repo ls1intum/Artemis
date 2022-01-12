@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_C
 
 import java.util.*;
 
-import javax.annotation.Nonnull;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
@@ -185,9 +184,16 @@ public class Feedback extends DomainObject {
         this.credits = credits;
     }
 
-    @Nonnull
+    /**
+     * Returns if this is a positive feedback.
+     *
+     * This value can actually be {@code null} for feedbacks that are neither positive nor negative, e.g. when this is a
+     * feedback for a programming exercise test case that has not been executed for the submission.
+     *
+     * @return true, if this is a positive feedback.
+     */
     public Boolean isPositive() {
-        return Boolean.TRUE.equals(positive);
+        return positive;
     }
 
     public Feedback positive(Boolean positive) {

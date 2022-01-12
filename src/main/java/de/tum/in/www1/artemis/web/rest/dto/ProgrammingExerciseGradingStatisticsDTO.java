@@ -72,7 +72,7 @@ public class ProgrammingExerciseGradingStatisticsDTO {
          * @param feedback that should be considered in the statistics.
          */
         public void updateWithFeedback(final Feedback feedback) {
-            if (feedback.isPositive()) {
+            if (Boolean.TRUE.equals(feedback.isPositive())) {
                 numPassed++;
             }
             else {
