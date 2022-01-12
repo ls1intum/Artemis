@@ -520,7 +520,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             });
         });
 
-        it('check no package name related validation error for language C', () => {
+        it('Check that no package name related validation error occurs for language C', () => {
             comp.programmingExercise.programmingLanguage = ProgrammingLanguage.C;
             expect(comp.getInvalidReasons()).not.toContainEqual({
                 translateKey: 'artemisApp.exercise.form.packageName.undefined',
@@ -528,7 +528,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             });
         });
 
-        it('check no package name related validation error for language Empty', () => {
+        it('Check that no package name related validation error occurs for language Empty', () => {
             comp.programmingExercise.programmingLanguage = ProgrammingLanguage.EMPTY;
             expect(comp.getInvalidReasons()).not.toContainEqual({
                 translateKey: 'artemisApp.exercise.form.packageName.undefined',
@@ -536,7 +536,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             });
         });
 
-        it('check no package name related validation error for language Python', () => {
+        it('Check that no package name related validation error occurs for language Python', () => {
             comp.programmingExercise.programmingLanguage = ProgrammingLanguage.PYTHON;
             expect(comp.getInvalidReasons()).not.toContainEqual({
                 translateKey: 'artemisApp.exercise.form.packageName.undefined',
@@ -544,7 +544,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             });
         });
 
-        it('check no package name related validation error for language Assembler', () => {
+        it('Check that no package name related validation error occurs for language Assembler', () => {
             comp.programmingExercise.programmingLanguage = ProgrammingLanguage.ASSEMBLER;
             expect(comp.getInvalidReasons()).not.toContainEqual({
                 translateKey: 'artemisApp.exercise.form.packageName.undefined',
@@ -552,7 +552,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             });
         });
 
-        it('check no package name related validation error for language OCAML', () => {
+        it('Check that no package name related validation error occurs for language OCAML', () => {
             comp.programmingExercise.programmingLanguage = ProgrammingLanguage.OCAML;
             expect(comp.getInvalidReasons()).not.toContainEqual({
                 translateKey: 'artemisApp.exercise.form.packageName.undefined',
@@ -560,7 +560,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             });
         });
 
-        it('check no package name related validation error for language VHDL', () => {
+        it('Check that no package name related validation error occurs for language VHDL', () => {
             comp.programmingExercise.programmingLanguage = ProgrammingLanguage.VHDL;
             expect(comp.getInvalidReasons()).not.toContainEqual({
                 translateKey: 'artemisApp.exercise.form.packageName.undefined',
