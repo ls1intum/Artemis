@@ -27,15 +27,15 @@ import { hasParticipationChanged } from 'app/exercises/shared/participation/part
     providers: [ResultService, RepositoryService],
 })
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
-    /**
-     * @property personal Whether the participation belongs to the user (by being a student) or not (by being an instructor)
-     */
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
     @Input() short = false;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge: boolean;
     @Input() showTestNames = false;
+    /**
+     * @property personalParticipation Whether the participation belongs to the user (by being a student) or not (by being an instructor)
+     */
     @Input() personalParticipation = true;
 
     result?: Result;
