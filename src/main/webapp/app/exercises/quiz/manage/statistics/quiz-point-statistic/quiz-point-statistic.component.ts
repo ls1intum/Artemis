@@ -206,8 +206,10 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
         this.ratedData = [];
         this.unratedData = [];
         // set data based on the pointCounters
-        this.order(this.quizPointStatistic.pointCounters!).forEach((pointCounter) => {
-            this.label.push(pointCounter.points!.toString());
+        this.order(this.quizPointStatistic.pointCounters!).forEach((pointCounter, index) => {
+            let label = '[' + Math.max(pointCounter.points! - 0.5, 0) + ' - ' + Math.min(pointCounter.points! + 0.5, this.maxScore);
+            label += index !== this.quizPointStatistic.pointCounters!.length - 1 ? ')' : ']';
+            this.label.push(label);
             this.ratedData.push(pointCounter.ratedCounter!);
             this.unratedData.push(pointCounter.unRatedCounter!);
             this.backgroundColor.push(blueColor);
