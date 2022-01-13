@@ -26,6 +26,13 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     exerciseScores: ExerciseScoresDTO[] = [];
     excludedExerciseScores: ExerciseScoresDTO[] = [];
     visibleExerciseScores: ExerciseScoresDTO[] = [];
+
+    // Ideally I would design the filter as map from ExerciseType to boolean.
+    // But I observed some unexpected casting of the ExerciseType in the ExerciseDTO
+    // that leads to the following situation: When trying to look up a value given an ExerciseType in a map with structure: ExerciseType -> boolean
+    // instead of comparing the string value of the enum, the enum key was taken as string and then used as key for the map
+    // E.g. ExerciseType.PROGRAMMING would lead to chartFilter.get('PROGRAMMING') instead of chartFilter.get('programming')
+    // This way, never a value was returned as the map did not contain such key
     chartFilter: Map<string, boolean> = new Map();
     numberOfActiveFilters = 0;
     typeSet: Set<ExerciseType>;
@@ -97,7 +104,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     }
 
     private initializeChart(): void {
-        this.initializeFilterOptions();
         this.setTranslations();
         this.exerciseScores = this.exerciseScores.concat(this.excludedExerciseScores);
         this.excludedExerciseScores = this.exerciseScores.filter((score) => this.filteredExerciseIDs.includes(score.exerciseId!));
@@ -105,6 +111,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
         this.visibleExerciseScores = Array.of(...this.exerciseScores);
         // we show all the exercises ordered by their release data
         const sortedExerciseScores = sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
+        this.initializeFilterOptions();
         this.addData(sortedExerciseScores);
     }
 
@@ -191,6 +198,10 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
         this.router.navigate(['courses', this.courseId, 'exercises', exerciseId]);
     }
 
+    /**
+     * Set up initial filter for the line chart
+     * @private
+     */
     private initializeFilterOptions(): void {
         this.typeSet = new Set(this.exerciseScores.map((score) => score.exerciseType));
         this.typeSet.forEach((type) => {
@@ -199,6 +210,10 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
         this.numberOfActiveFilters = this.typeSet.size;
     }
 
+    /**
+     * Handles selection or deselection of specific exercise type
+     * @param type the ExerciseType the user changed the filter for
+     */
     toggleExerciseType(type: ExerciseType): void {
         const convertedType = type.toLowerCase().replace('_', '-');
         const isIncluded = this.chartFilter.get(convertedType);
@@ -210,6 +225,11 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
         this.addData(sortedExerciseScores);
     }
 
+    /**
+     * Auxiliary method that instantiated the translations for the exercise.
+     * As we subscribe to language changes, this ensures that the chart is translated instantly if the user changes the language
+     * @private
+     */
     private setTranslations(): void {
         this.xAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.xAxis');
         this.yAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.yAxis');

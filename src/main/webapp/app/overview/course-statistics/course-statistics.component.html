@@ -22,9 +22,15 @@
                     <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeIndividualCategories' | artemisTranslate }}</b>
                 </li>
                 <li>
-                    <label>
+                    <label class="mb-1">
                         <input class="ms-2" (change)="selectAllCategories()" [checked]="allCategoriesSelected" type="checkbox" />
                         <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeAllCategories' | artemisTranslate }}</b>
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input class="ms-2" (change)="toggleExercisesWithNoCategory()" [checked]="includeExercisesWithNoCategory" type="checkbox" />
+                        <span class="ms-2">{{ 'artemisApp.courseOverview.statistics.exercisesWithNoCategories' | artemisTranslate }}</span>
                     </label>
                 </li>
                 <li *ngFor="let category of exerciseCategories">
