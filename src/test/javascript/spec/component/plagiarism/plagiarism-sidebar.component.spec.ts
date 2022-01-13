@@ -5,6 +5,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
+import { SimpleChange } from '@angular/core';
 
 describe('Plagiarism Sidebar Component', () => {
     let comp: PlagiarismSidebarComponent;
@@ -80,5 +81,16 @@ describe('Plagiarism Sidebar Component', () => {
         comp.handlePageRight();
 
         expect(comp.currentPage).toEqual(3);
+    });
+
+    it('should handle changes correctly', () => {
+        comp.comparisons = [];
+        comp.ngOnChanges({
+            comparisons: { currentValue: [] } as SimpleChange,
+        });
+
+        expect(comp.currentPage).toBe(0);
+        expect(comp.numberOfPages).toBe(0);
+        expect(comp.pagedComparisons).toEqual([]);
     });
 });
