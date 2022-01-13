@@ -11,12 +11,12 @@ services:
             context: ../../../..
             dockerfile: src/main/docker/Dockerfile
         volumes:
-            - ../../resources/config/application-dev.yml:/home/artemis/application-dev.yml:ro
-            - ../../resources/config/application-artemis.yml:/home/artemis/application-artemis.yml:ro
+            - ../../resources/config:/home/artemis:ro
+            # - ../../resources/config/application-artemis.yml:/home/artemis/application-artemis.yml:ro
         environment:
             _JAVA_OPTIONS: "-Xmx5120m -Xms2560m"
             JHIPSTER_SLEEP: 30 # gives time for other services to boot before the application
-            spring.profiles.active: "dev,bamboo,bitbucket,jira,artemis,scheduling,athene"
+            spring.profiles.active: "prod,bamboo,bitbucket,jira,artemis"
             spring.datasource.url: "${DATASOURCE_URL}"
             spring.datasource.username: root
             spring.datasource.password: ""
@@ -30,6 +30,7 @@ services:
             artemis.continuous-integration.url: "${CI_URL}"
             artemis.continuous-integration.user: "${CI_USER}"
             artemis.continuous-integration.password: "${CI_PASSWORD}"
+            info.test-server: "true"
         ports:
             - 8080:8080
         networks:
