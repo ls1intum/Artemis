@@ -73,18 +73,21 @@ export class TeamParticipationTableComponent implements OnInit {
      */
     loadAll() {
         this.isLoading = true;
-        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course, this.team).subscribe((courseResponse) => {
-            this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
-                return {
-                    ...exercise,
-                    isAtLeastTutor: this.accountService.isAtLeastTutorInCourse(exercise.course!),
-                    isAtLeastEditor: this.accountService.isAtLeastEditorInCourse(exercise.course!),
-                    isAtLeastInstructor: this.accountService.isAtLeastInstructorInCourse(exercise.course!),
-                };
-            });
-            this.submissions = this.exercises.filter((exercise) => exercise.submission).map((exercise) => exercise.submission!);
-            this.isLoading = false;
-        }, this.onError);
+        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course, this.team).subscribe({
+            next: (courseResponse) => {
+                this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
+                    return {
+                        ...exercise,
+                        isAtLeastTutor: this.accountService.isAtLeastTutorInCourse(exercise.course),
+                        isAtLeastEditor: this.accountService.isAtLeastEditorInCourse(exercise.course),
+                        isAtLeastInstructor: this.accountService.isAtLeastInstructorInCourse(exercise.course),
+                    };
+                });
+                this.submissions = this.exercises.filter((exercise) => exercise.submission).map((exercise) => exercise.submission!);
+                this.isLoading = false;
+            },
+            error: (error) => this.onError(error),
+        });
     }
 
     /**
