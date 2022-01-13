@@ -15,3 +15,7 @@ If you set up your Artemis instance with the `Ansible Role (>=v0.1.1) <https://g
    proxy_read_timeout: "900s"
    fastcgi_send_timeout: "900s"
    fastcgi_read_timeout: "900s"
+
+If you conrigured the ngnix reverse proxy by hand, you have to adapt the following variables in your nginx configurations: 
+- https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout
+- https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout
