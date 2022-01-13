@@ -146,7 +146,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             url += '?access_token=' + authToken;
         }
         // NOTE: only support real websockets transports and disable http poll, http stream and other exotic workarounds.
-        // Nowadays, all modern browsers support websockets and workarounds are not necessary anymore and might only lead to problems
         // nowadays, all modern browsers support websockets and workarounds are not necessary anymore and might only lead to problems
         this.socket = new SockJS(url, undefined, { transports: 'websocket' });
         const options = {
