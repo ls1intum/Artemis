@@ -14,11 +14,11 @@
                 "registerSuccessful": "Registration successful",
                 "signUpForCourse": "Register",
                 "cancel": "Cancel",
-                "noCourse": "No courses available to register for",
+                "noCourse": "No courses available for registration",
                 "courseLoading": "Courses are loading...",
-                "pleaseSelectCourse": "# Select a course",
                 "courseSignupConfirmationTitle": "Confirm Course Registration"
-            }
+            },
+            "course": "Course"
         },
         "courseOverview": {
             "noDescription": "No description available",

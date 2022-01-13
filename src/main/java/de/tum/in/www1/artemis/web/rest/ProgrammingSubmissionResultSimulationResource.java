@@ -151,6 +151,8 @@ public class ProgrammingSubmissionResultSimulationResource {
 
         public static final String RESULTS_SIMULATION = "/exercises/{exerciseId}/results/no-vcs-and-ci-available";
 
+        private Endpoints() {
+        }
     }
 
 }
