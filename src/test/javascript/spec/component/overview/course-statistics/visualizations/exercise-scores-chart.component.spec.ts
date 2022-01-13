@@ -14,6 +14,7 @@ import { HttpResponse } from '@angular/common/http';
 import { LineChartModule } from '@swimlane/ngx-charts';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 
 class MockActivatedRoute {
     parent: any;
@@ -43,7 +44,7 @@ describe('ExerciseScoresChartComponent', () => {
             declarations: [ExerciseScoresChartComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(TranslateService),
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ExerciseScoresChartService),
 
                 {

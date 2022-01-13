@@ -35,7 +35,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     // This way, never a value was returned as the map did not contain such key
     chartFilter: Map<string, boolean> = new Map();
     numberOfActiveFilters = 0;
-    typeSet: Set<ExerciseType>;
+    typeSet: Set<ExerciseType> = new Set();
 
     readonly Math = Math;
     readonly ExerciseType = ExerciseType;
