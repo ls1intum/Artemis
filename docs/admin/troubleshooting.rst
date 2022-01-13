@@ -7,8 +7,7 @@ Repository download  of large courses fails
 
 The most likely issue is that the configured timeouts on the reverse proxy are too low. 
 
-If you set up your Artemis instance with the `Ansible Role (>=v0.1.1) <https://github.com/ls1intum/artemis-ansible-collection>`__, 
-you can set the timeout values with the following varaibles:
+If you set up your Artemis instance with the `Ansible Role (>=v0.1.1) <https://github.com/ls1intum/artemis-ansible-collection>`__, you can set the timeout values with the following variables:
 
 .. code:: yaml
 
