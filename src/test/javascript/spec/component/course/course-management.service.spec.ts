@@ -225,7 +225,7 @@ describe('Course Management Service', () => {
             .findAllToRegister()
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/to-register`, returnedFromService, course);
+        requestAndExpectDateConversion('GET', `${resourceUrl}/for-registration`, returnedFromService, course);
         tick();
     }));
 
