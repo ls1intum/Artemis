@@ -56,7 +56,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
      * Tells the service worker to check for updates and display an update alert if an update is available.
      * This is either exactly if
      * - the service worker detects an update right now, or
-     * - the first conditions was ever true since the app loaded (aka last reload)
+     * - the first condition was ever true since the app loaded (aka last reload)
      *
      * We need to have this second option because the "checkForUpdate()" call sometimes starts to return false after a while, even though we didn't reload / update yet.
      *
