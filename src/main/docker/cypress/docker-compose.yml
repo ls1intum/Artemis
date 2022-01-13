@@ -31,7 +31,7 @@ services:
             artemis.continuous-integration.user: "${CI_USER}"
             artemis.continuous-integration.password: "${CI_PASSWORD}"
             info.test-server: "true"
-            server.url: "${SERVER_URL}"
+            SERVER_URL: "${SERVER_URL}"
         ports:
             - 8080:8080
         networks:
