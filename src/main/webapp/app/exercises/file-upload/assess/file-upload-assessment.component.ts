@@ -24,7 +24,6 @@ import { Result } from 'app/entities/result.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
@@ -53,7 +52,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     assessmentsAreValid: boolean;
     invalidError?: string;
     isAssessor = true;
-    isAtLeastInstructor = false;
     busy = true;
     showResult = true;
     complaint: Complaint;
@@ -111,7 +109,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
             if (queryParams.get('correction-round')) {
@@ -198,6 +195,15 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.submission = submission;
         this.participation = this.submission.participation as StudentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
+        /**
+         * CARE: Setting access rights for exercises should not happen this way and is a workaround.
+         *       The access rights should always be set when loading the exercise/course in the service!
+         * Problem: For a reason, which I do not understand, the exercise is undefined when the exercise is loaded
+         *       leading to {@link AccountService#setAccessRightsForExerciseAndReferencedCourse} skipping setting the
+         *       access rights.
+         *       This problem reoccurs in {@link CodeEditorTutorAssessmentContainerComponent#handleReceivedSubmission}
+         */
+        this.accountService.setAccessRightsForExercise(this.exercise);
         this.course = getCourseFromExercise(this.exercise);
         this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && dayjs(this.exercise.assessmentDueDate).isBefore(dayjs());
         if (this.resultId > 0) {
@@ -409,9 +415,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     private checkPermissions() {
         this.isAssessor = this.result?.assessor?.id === this.userId;
-        if (this.exercise) {
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(getCourseFromExercise(this.exercise));
-        }
     }
 
     /**
@@ -423,7 +426,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
      */
     get canOverride(): boolean {
         if (this.exercise) {
-            if (this.isAtLeastInstructor) {
+            if (this.exercise.isAtLeastInstructor) {
                 // Instructors can override any assessment at any time.
                 return true;
             }
@@ -478,7 +481,15 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     get readOnly(): boolean {
-        return !isAllowedToModifyFeedback(this.isAtLeastInstructor, this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.result, this.complaint, this.exercise);
+        return !isAllowedToModifyFeedback(
+            this.exercise?.isAtLeastInstructor ?? false,
+            this.isTestRun,
+            this.isAssessor,
+            this.hasAssessmentDueDatePassed,
+            this.result,
+            this.complaint,
+            this.exercise,
+        );
     }
 
     private onError(error: string) {

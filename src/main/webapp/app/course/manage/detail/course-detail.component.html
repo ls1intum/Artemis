@@ -130,12 +130,14 @@
                     ></jhi-course-detail-doughnut-chart>
                 </div>
             </div>
-            <jhi-course-detail-line-chart
-                class="col-md-8"
-                [course]="course"
-                [numberOfStudentsInCourse]="course.numberOfStudents!"
-                [initialStats]="activeStudents"
-            ></jhi-course-detail-line-chart>
+            <jhi-fullscreen class="col-md-8 fullscreen align-items-center">
+                <jhi-course-detail-line-chart
+                    class="col-12"
+                    [course]="course"
+                    [numberOfStudentsInCourse]="course.numberOfStudents!"
+                    [initialStats]="activeStudents"
+                ></jhi-course-detail-line-chart>
+            </jhi-fullscreen>
         </div>
         <hr />
         <div>
@@ -156,19 +158,23 @@
             <div *ngIf="course.isAtLeastInstructor">
                 <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
                 <dd>
-                    <a [routerLink]="['/course-management', course.id, 'groups', 'students']"> {{ course.studentGroupName }} ({{ course.numberOfStudents }})</a>
+                    <a [routerLink]="['/course-management', course.id, 'groups', 'students']" id="add-students"> {{ course.studentGroupName }} ({{ course.numberOfStudents }})</a>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></dt>
                 <dd>
-                    <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']"> {{ course.teachingAssistantGroupName }} ({{ course.numberOfTeachingAssistants }})</a>
+                    <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" id="add-tutors">
+                        {{ course.teachingAssistantGroupName }} ({{ course.numberOfTeachingAssistants }})</a
+                    >
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.editorGroupName">Editor Group Name</span></dt>
                 <dd>
-                    <a [routerLink]="['/course-management', course.id, 'groups', 'editors']"> {{ course.editorGroupName }} ({{ course.numberOfEditors }})</a>
+                    <a [routerLink]="['/course-management', course.id, 'groups', 'editors']" id="add-editors"> {{ course.editorGroupName }} ({{ course.numberOfEditors }})</a>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
                 <dd>
-                    <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']"> {{ course.instructorGroupName }} ({{ course.numberOfInstructors }})</a>
+                    <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" id="add-instructors">
+                        {{ course.instructorGroupName }} ({{ course.numberOfInstructors }})</a
+                    >
                 </dd>
             </div>
             <div *ngIf="!course.isAtLeastInstructor">

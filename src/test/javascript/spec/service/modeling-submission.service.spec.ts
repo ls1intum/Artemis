@@ -3,6 +3,8 @@ import { getTestBed, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { take } from 'rxjs/operators';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 
 describe('ModelingSubmission Service', () => {
     let injector: TestBed;
@@ -13,6 +15,7 @@ describe('ModelingSubmission Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
+            providers: [{ provide: AccountService, useClass: MockAccountService }],
         });
         injector = getTestBed();
         service = injector.get(ModelingSubmissionService);
