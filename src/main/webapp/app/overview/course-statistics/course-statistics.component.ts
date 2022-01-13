@@ -761,7 +761,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     /**
      * Handles the use case when the user selects or deselects the option "select all categories"
      */
-    selectAllCategories(): void {
+    toggleAllCategories(): void {
         if (!this.allCategoriesSelected) {
             this.setupCategoryFilter();
             this.includeExercisesWithNoCategory = true;
