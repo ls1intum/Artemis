@@ -2,8 +2,8 @@ Troubleshooting
 ===============
 
 
-Repository download  of large courses fails
--------------------------------------------
+Repository download of large courses fails
+------------------------------------------
 
 The most likely issue is that the configured timeouts on the reverse proxy are too low. 
 
