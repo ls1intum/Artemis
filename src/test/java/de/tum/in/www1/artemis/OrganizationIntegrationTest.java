@@ -79,7 +79,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course1.getStudentGroupName()));
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course2.getStudentGroupName()));
 
-        List<Course> coursesToRegister = request.getList("/api/courses/to-register", HttpStatus.OK, Course.class);
+        List<Course> coursesToRegister = request.getList("/api/courses/for-registration", HttpStatus.OK, Course.class);
         assertThat(coursesToRegister).contains(course1);
         assertThat(coursesToRegister).contains(course2);
     }

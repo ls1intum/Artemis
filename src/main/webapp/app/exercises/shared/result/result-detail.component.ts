@@ -256,12 +256,14 @@ export class ResultDetailComponent implements OnInit {
                 } else if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
                     const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
                     const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
+                    const text = this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message;
+                    const scaPreviewText = ResultDetailComponent.computeFeedbackPreviewText(text);
                     return {
                         type: FeedbackItemType.Issue,
                         category: 'Code Issue',
                         title: `${scaCategory} Issue in file ${this.getIssueLocation(scaIssue)}`.trim(),
-                        text: this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message,
-                        previewText,
+                        text,
+                        previewText: scaPreviewText,
                         positive: false,
                         credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
                         appliedCredits: feedback.credits,

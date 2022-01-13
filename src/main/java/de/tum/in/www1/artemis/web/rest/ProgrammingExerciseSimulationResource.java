@@ -107,5 +107,7 @@ public class ProgrammingExerciseSimulationResource {
 
         public static final String EXERCISES_SIMULATION = PROGRAMMING_EXERCISES + "/no-vcs-and-ci-available";
 
+        private Endpoints() {
+        }
     }
 }

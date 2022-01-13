@@ -34,7 +34,6 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
@@ -83,7 +82,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
     isExamMode = false;
-    isAtLeastInstructor = false;
 
     private get referencedFeedback(): Feedback[] {
         return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
@@ -151,7 +149,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             this.isTestRun = queryParams.get('testRun') === 'true';
             this.correctionRound = Number(queryParams.get('correction-round'));
         });
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
 
         this.activatedRoute.paramMap.subscribe((paramMap) => {
             this.exerciseId = Number(paramMap.get('exerciseId'));
@@ -455,7 +452,15 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     get readOnly(): boolean {
-        return !isAllowedToModifyFeedback(this.isAtLeastInstructor, this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.result, this.complaint, this.exercise);
+        return !isAllowedToModifyFeedback(
+            this.exercise?.isAtLeastInstructor ?? false,
+            this.isTestRun,
+            this.isAssessor,
+            this.hasAssessmentDueDatePassed,
+            this.result,
+            this.complaint,
+            this.exercise,
+        );
     }
 
     protected handleError(error: HttpErrorResponse): void {
