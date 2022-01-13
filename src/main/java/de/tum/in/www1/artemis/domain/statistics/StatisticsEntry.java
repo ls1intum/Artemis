@@ -4,7 +4,7 @@ import java.time.temporal.TemporalAccessor;
 
 /**
  * A data entry used by the statistics pages to calculate the graph data
- * day is the the timeslot in which the data is created
+ * day is the timeslot in which the data is created
  * amount is the number of entries in the same timeslot
  * username is for specific purposes (Logged-in users, active user, active tutors) where duplicated user entries need to
  * be filtered out in java and therefore not the amount is needed, but the name so the amount can be calculated afterwards
@@ -37,6 +37,7 @@ public class StatisticsEntry {
         this.username = username;
     }
 
+    // empty constructor
     public StatisticsEntry() {
         this.amount = 0L;
         this.username = "";

@@ -17,6 +17,8 @@ import { DragAndDropQuestionStatisticComponent } from 'app/exercises/quiz/manage
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DragAndDropQuestionStatistic } from 'app/entities/quiz/drag-and-drop-question-statistic.model';
 import { DropLocationCounter } from 'app/entities/quiz/drop-location-counter.model';
+import { MockProvider } from 'ng-mocks';
+import { ChangeDetectorRef } from '@angular/core';
 
 const route = { params: of({ courseId: 2, exerciseId: 42, questionId: 1 }) };
 const dropLocation1 = { posX: 5, invalid: false, tempID: 1 } as DropLocation;
@@ -45,6 +47,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                MockProvider(ChangeDetectorRef),
             ],
         })
             .overrideTemplate(DragAndDropQuestionStatisticComponent, '')
@@ -62,7 +65,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
         quizExercise = { id: 42, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
     });
 
-    describe('OnInit', function () {
+    describe('OnInit', () => {
         it('should call functions on Init', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
@@ -88,7 +91,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
         });
     });
 
-    describe('loadLayout', function () {
+    describe('loadLayout', () => {
         it('should call functions from loadLayout', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const orderDropLocationSpy = jest.spyOn(comp, 'orderDropLocationByPos');
@@ -106,7 +109,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
         });
     });
 
-    describe('loadData', function () {
+    describe('loadData', () => {
         it('should call functions from loadData', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const resetDataSpy = jest.spyOn(comp, 'resetData');

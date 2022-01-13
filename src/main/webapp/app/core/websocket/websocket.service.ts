@@ -1,11 +1,9 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, Observer, Subscription } from 'rxjs';
-
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
-
-import { Client, ConnectionHeaders, over, Subscription as StompSubscription } from 'webstomp-client';
 import SockJS from 'sockjs-client';
+import Stomp, { Client, ConnectionHeaders, Subscription as StompSubscription } from 'webstomp-client';
 
 export interface IWebsocketService {
     /**
@@ -149,13 +147,14 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         }
         // NOTE: only support real websockets transports and disable http poll, http stream and other exotic workarounds.
         // Nowadays, all modern browsers support websockets and workarounds are not necessary anymore and might only lead to problems
+        // nowadays, all modern browsers support websockets and workarounds are not necessary anymore and might only lead to problems
         this.socket = new SockJS(url, undefined, { transports: 'websocket' });
         const options = {
             heartbeat: { outgoing: 10000, incoming: 10000 },
             debug: false,
             protocols: ['v12.stomp'],
         };
-        this.stompClient = over(this.socket, options);
+        this.stompClient = Stomp.over(this.socket, options);
         // Note: at the moment, debugging is deactivated to prevent console log statements
         this.stompClient.debug = function () {};
         const headers = <ConnectionHeaders>{};
@@ -356,7 +355,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         this.disconnect();
     }
 
-    private static parseJSON(response: string): any {
+    private static parseJSON(response: any): any {
         try {
             return JSON.parse(response);
         } catch {

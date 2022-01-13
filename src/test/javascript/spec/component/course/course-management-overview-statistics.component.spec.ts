@@ -6,6 +6,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LineChartModule } from '@swimlane/ngx-charts';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+
 describe('CourseManagementOverviewStatisticsComponent', () => {
     let fixture: ComponentFixture<CourseManagementOverviewStatisticsComponent>;
     let component: CourseManagementOverviewStatisticsComponent;
@@ -16,7 +18,13 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MockModule(LineChartModule)],
-            declarations: [CourseManagementOverviewStatisticsComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
+            declarations: [
+                CourseManagementOverviewStatisticsComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FaIconComponent),
+                MockDirective(TranslateDirective),
+                MockComponent(HelpIconComponent),
+            ],
             providers: [MockProvider(TranslateService)],
         })
             .compileComponents()

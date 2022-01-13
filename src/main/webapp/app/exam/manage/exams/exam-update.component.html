@@ -165,7 +165,7 @@
                 <button type="button" class="btn btn-secondary" (click)="previousState()">
                     <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"> Cancel</span>
                 </button>
-                <button type="submit" [disabled]="editForm.form.invalid || !isValidConfiguration || isSaving" class="btn btn-primary">
+                <button id="save-exam" type="submit" [disabled]="editForm.form.invalid || !isValidConfiguration || isSaving" class="btn btn-primary">
                     <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                 </button>
                 <ng-template #renderedWarning>

@@ -43,32 +43,49 @@ import { StudentExamManagementPage } from './exam/StudentExamManagementPage';
  */
 export class ArtemisPageobjects {
     login = new LoginPage();
-    courseManagement = new CourseManagementPage();
-    courses = new CoursesPage();
-    courseOverview = new CourseOverviewPage();
-    courseManagementExercises = new CourseManagementExercisesPage();
     navigationBar = new NavigationBar();
-    examCreation = new ExamCreationPage();
-    examManagement = new ExamManagementPage();
-    examStartEnd = new ExamStartEndPage();
-    examNavigationBar = new ExamNavigationBar();
-    exerciseResult = new ExerciseResultPage();
-    examExerciseGroups = new ExamExerciseGroupsPage();
-    examExerciseGroupCreation = new ExamExerciseGroupCreationPage();
-    studentExamManagement = new StudentExamManagementPage();
-    programmingExercise = {
-        editor: new OnlineEditorPage(),
-        creation: new ProgrammingExerciseCreationPage(),
-        feedback: new ProgrammingExerciseFeedbackPage(),
-        scaConfiguration: new CodeAnalysisGradingPage(),
-        scaFeedback: new ScaFeedbackModal(),
+    course = {
+        management: new CourseManagementPage(),
+        managementExercises: new CourseManagementExercisesPage(),
+        list: new CoursesPage(),
+        overview: new CourseOverviewPage(),
     };
-    textExercise = {
-        creation: new TextExerciseCreationPage(),
-        exampleSubmissions: new TextExerciseExampleSubmissionsPage(),
-        exampleSubmissionCreation: new TextExerciseExampleSubmissionCreationPage(),
-        editor: new TextEditorPage(),
-        feedback: new TextExerciseFeedbackPage(),
+    exam = {
+        creation: new ExamCreationPage(),
+        management: new ExamManagementPage(),
+        startEnd: new ExamStartEndPage(),
+        navigationBar: new ExamNavigationBar(),
+        exerciseGroups: new ExamExerciseGroupsPage(),
+        exerciseGroupCreation: new ExamExerciseGroupCreationPage(),
+        studentExamManagement: new StudentExamManagementPage(),
+    };
+    exercise = {
+        result: new ExerciseResultPage(),
+        programming: {
+            editor: new OnlineEditorPage(),
+            creation: new ProgrammingExerciseCreationPage(),
+            feedback: new ProgrammingExerciseFeedbackPage(),
+            scaConfiguration: new CodeAnalysisGradingPage(),
+            scaFeedback: new ScaFeedbackModal(),
+        },
+        text: {
+            creation: new TextExerciseCreationPage(),
+            exampleSubmissions: new TextExerciseExampleSubmissionsPage(),
+            exampleSubmissionCreation: new TextExerciseExampleSubmissionCreationPage(),
+            editor: new TextEditorPage(),
+            feedback: new TextExerciseFeedbackPage(),
+        },
+        modeling: {
+            creation: new CreateModelingExercisePage(),
+            editor: new ModelingEditor(),
+            feedback: new ModelingExerciseFeedbackPage(),
+        },
+        quiz: {
+            creation: new QuizExerciseCreationPage(),
+            multipleChoice: new MultipleChoiceQuiz(),
+            shortAnswer: new ShortAnswerQuiz(),
+            dragAndDrop: new DragAndDropQuiz(),
+        },
     };
     assessment = {
         exam: new ExamAssessmentPage(),
@@ -76,18 +93,7 @@ export class ArtemisPageobjects {
         exercise: new ExerciseAssessmentDashboardPage(),
         text: new TextExerciseAssessmentPage(),
         programming: new ProgrammingExerciseAssessmentPage(),
-    };
-    modelingExercise = {
-        creation: new CreateModelingExercisePage(),
-        assessmentEditor: new ModelingExerciseAssessmentEditor(),
-        editor: new ModelingEditor(),
-        feedback: new ModelingExerciseFeedbackPage(),
-    };
-    quizExercise = {
-        creation: new QuizExerciseCreationPage(),
-        multipleChoice: new MultipleChoiceQuiz(),
-        shortAnswer: new ShortAnswerQuiz(),
-        dragAndDrop: new DragAndDropQuiz(),
+        modeling: new ModelingExerciseAssessmentEditor(),
     };
     lecture = {
         management: new LectureManagementPage(),

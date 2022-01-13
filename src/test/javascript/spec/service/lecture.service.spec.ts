@@ -1,7 +1,6 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
-import * as chai from 'chai';
 import { take } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -11,9 +10,7 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { LectureService } from 'app/lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { Course } from 'app/entities/course.model';
-import dayjs from 'dayjs';
-
-const expect = chai.expect;
+import dayjs from 'dayjs/esm';
 
 describe('Lecture Service', () => {
     let injector: TestBed;
@@ -64,7 +61,7 @@ describe('Lecture Service', () => {
                 method: 'POST',
             });
             req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(expected);
+            expect(expectedResult.body).toEqual(expected);
         });
 
         it('should update a lecture in the database', async () => {
@@ -79,7 +76,7 @@ describe('Lecture Service', () => {
                 method: 'PUT',
             });
             req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(expected);
+            expect(expectedResult.body).toEqual(expected);
         });
 
         it('should find a lecture with details in the database', async () => {
@@ -95,7 +92,7 @@ describe('Lecture Service', () => {
                 method: 'GET',
             });
             req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(expected);
+            expect(expectedResult.body).toEqual(expected);
         });
 
         it('should find a lecture in the database', async () => {
@@ -111,7 +108,7 @@ describe('Lecture Service', () => {
                 method: 'GET',
             });
             req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(expected);
+            expect(expectedResult.body).toEqual(expected);
         });
 
         it('should invoke query', async () => {
@@ -126,7 +123,7 @@ describe('Lecture Service', () => {
                 method: 'GET',
             });
             req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(expected);
+            expect(expectedResult.body).toEqual(expected);
         });
 
         it('should get all lectures by courseId', async () => {
@@ -142,7 +139,7 @@ describe('Lecture Service', () => {
                 method: 'GET',
             });
             req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(expected);
+            expect(expectedResult.body).toEqual(expected);
         });
 
         it('should delete a lecture in the database', async () => {
@@ -157,12 +154,12 @@ describe('Lecture Service', () => {
                 method: 'DELETE',
             });
             req.flush(returnedFromService);
-            expect(req.request.method).to.equal('DELETE');
+            expect(req.request.method).toEqual('DELETE');
         });
 
         it('should convert Dates from server', async () => {
             const results = service.convertDatesForLecturesFromServer([elemDefault, elemDefault]);
-            expect(results).to.deep.equal([elemDefault, elemDefault]);
+            expect(results).toEqual([elemDefault, elemDefault]);
         });
     });
 });

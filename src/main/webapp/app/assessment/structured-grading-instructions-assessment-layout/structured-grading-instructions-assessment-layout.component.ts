@@ -6,6 +6,7 @@ import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-structured-grading-instructions-assessment-layout',
     templateUrl: './structured-grading-instructions-assessment-layout.component.html',
+    styleUrls: ['./structured-grading-instructions-assessment-layout.component.scss'],
 })
 export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit {
     @Input() public criteria: GradingCriterion[];

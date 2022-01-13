@@ -71,41 +71,4 @@ describe('ArtemisDurationFromSecondsPipe', () => {
             expect(localizedDuration).toBe('0min 21s');
         });
     });
-
-    describe('HHmm Notation', () => {
-        it('Should return correct format for negative seconds', () => {
-            const localizedDuration = pipe.toHHmmNotation(-10);
-            expect(localizedDuration).toBe('00:00');
-        });
-
-        it('Should return correct format for more than 100 hours', () => {
-            const localizedDuration = pipe.toHHmmNotation(1299751);
-            expect(localizedDuration).toBe('361:02');
-        });
-
-        it('Should return correct format for more than 10 hours', () => {
-            const localizedDuration = pipe.toHHmmNotation(84427);
-            expect(localizedDuration).toBe('23:27');
-        });
-
-        it('Should return correct format for more than 1 hour', () => {
-            const localizedDuration = pipe.toHHmmNotation(4257);
-            expect(localizedDuration).toBe('01:10');
-        });
-
-        it('Should return correct format for over 10 minutes', () => {
-            const localizedDuration = pipe.toHHmmNotation(2534);
-            expect(localizedDuration).toBe('00:42');
-        });
-
-        it('Should return correct format for under 10 minutes', () => {
-            const localizedDuration = pipe.toHHmmNotation(421);
-            expect(localizedDuration).toBe('00:07');
-        });
-
-        it('Should return correct format for under one minute', () => {
-            const localizedDuration = pipe.toHHmmNotation(21);
-            expect(localizedDuration).toBe('00:00');
-        });
-    });
 });

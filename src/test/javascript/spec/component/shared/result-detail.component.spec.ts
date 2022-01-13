@@ -14,7 +14,6 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ChartComponent } from 'app/shared/chart/chart.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
@@ -153,14 +152,7 @@ describe('ResultDetailComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(BarChartModule)],
-            declarations: [
-                ResultDetailComponent,
-                TranslatePipeMock,
-                MockPipe(ArtemisDatePipe),
-                MockComponent(ChartComponent),
-                MockComponent(FeedbackCollapseComponent),
-                MockDirective(NgbTooltip),
-            ],
+            declarations: [ResultDetailComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockComponent(FeedbackCollapseComponent), MockDirective(NgbTooltip)],
             providers: [MockProvider(NgbActiveModal), MockProvider(ResultService), MockProvider(BuildLogService), MockProvider(ProfileService)],
         })
             .compileComponents()

@@ -5,13 +5,15 @@
             <span class="text-muted">({{ exam.title }})</span>
         </h3>
         <div>
-            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span><span>: {{ allRegisteredUsers.length }}</span>
+            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span
+            ><span id="#registered-users">: {{ allRegisteredUsers.length }}</span>
             <span *ngIf="filteredUsersSize < allRegisteredUsers.length" class="text-muted">
                 (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize }})
             </span>
             <jhi-user-import-button class="ms-4" [courseId]="courseId" [exam]="exam" (finish)="reloadExamWithRegisteredUsers()"></jhi-user-import-button>
             <button
                 class="btn btn btn-primary ms-auto"
+                id="register-course-students"
                 (click)="registerAllStudentsFromCourse()"
                 title="{{ 'artemisApp.examManagement.examStudents.registerAllFromCourseTooltip' | artemisTranslate }}"
             >
@@ -61,6 +63,7 @@
     >
         <ng-template let-settings="settings" let-controls="controls">
             <ngx-datatable
+                id="registered-students"
                 class="bootstrap"
                 [limit]="settings.limit"
                 [sortType]="settings.sortType"

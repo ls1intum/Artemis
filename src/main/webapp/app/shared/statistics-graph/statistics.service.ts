@@ -6,7 +6,7 @@ import { CourseManagementStatisticsDTO } from 'app/course/manage/course-manageme
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { map } from 'rxjs/operators';
 import { round } from 'app/shared/util/utils';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
