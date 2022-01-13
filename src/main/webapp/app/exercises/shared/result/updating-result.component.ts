@@ -126,7 +126,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                         !this.exercise.dueDate ||
                         submission.type === SubmissionType.INSTRUCTOR ||
                         submission.type === SubmissionType.TEST ||
-                        hasExerciseDueDatePassed(this.exercise, this.participation),
+                        !hasExerciseDueDatePassed(this.exercise, this.participation),
                 ),
                 tap(({ submissionState }) => {
                     this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
