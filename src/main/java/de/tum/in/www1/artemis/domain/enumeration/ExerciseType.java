@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.enumeration;
 
-import java.util.Locale;
-
 public enum ExerciseType {
 
     TEXT, PROGRAMMING, MODELING, FILE_UPLOAD, QUIZ;
@@ -11,6 +9,6 @@ public enum ExerciseType {
      * @return the exercise type as a lower case String without any special characters (e.g. FILE_UPLOAD -> "file upload")
      */
     public String getExerciseTypeAsReadableString() {
-        return this.toString().toLowerCase(Locale.ROOT).replace('_', ' ');
+        return this.toString().toLowerCase().replace('_', ' ');
     }
 }
