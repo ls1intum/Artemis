@@ -2,9 +2,9 @@
     id="inline-feedback"
     class="border rounded"
     [style.max-width]="'780px'"
-    [class.alert-success]="feedback.credits! > 0"
-    [class.alert-danger]="feedback.credits! < 0"
-    [class.alert-warning]="!feedback.credits"
+    [class.alert-success]="feedback.credits! > 0 && feedback.isSubsequent === undefined"
+    [class.alert-danger]="feedback.credits! < 0 && feedback.isSubsequent === undefined"
+    [class.alert-warning]="!feedback.credits && feedback.isSubsequent === undefined"
     [class.alert-secondary]="readOnly && feedback.isSubsequent"
 >
     <div *ngIf="!viewOnly; else readOnlyFeedback" class="m-2" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
@@ -73,9 +73,9 @@
                 <h5 class="d-inline">
                     <span
                         class="badge"
-                        [class.bg-success]="feedback.credits! > 0"
-                        [class.bg-danger]="feedback.credits! < 0"
-                        [class.bg-warning]="feedback.credits === 0"
+                        [class.bg-success]="feedback.credits! > 0 && feedback.isSubsequent === undefined"
+                        [class.bg-danger]="feedback.credits! < 0 && feedback.isSubsequent === undefined"
+                        [class.bg-warning]="feedback.credits === 0 && feedback.isSubsequent === undefined"
                         [class.bg-secondary]="readOnly && feedback.isSubsequent"
                         >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, course) + 'P' }}</span
                     >
