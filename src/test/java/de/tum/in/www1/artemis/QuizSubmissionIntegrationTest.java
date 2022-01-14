@@ -249,14 +249,18 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(quizExerciseWithStatistic).isNotNull();
 
         for (var pointCounter : quizPointStatistic.getPointCounters()) {
+            assertThat(pointCounter.getUnRatedCounter()).as("Unrated counter is always 0").isEqualTo(0);
             if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 1 submission -> 0.33 points").isEqualTo(1);
+                assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 1 rated submission -> 0.33 points").isEqualTo(1);
             }
             else if (pointCounter.getPoints() == 1.0) {
                 assertThat(pointCounter.getRatedCounter()).as("Bucket 1.0 contains 1 submission -> 0.83 points").isEqualTo(1);
             }
             else if (pointCounter.getPoints() == 6.0) {
                 assertThat(pointCounter.getRatedCounter()).as("Bucket 6.0 contains 1 submission -> 6 points").isEqualTo(1);
+            }
+            else {
+                assertThat(pointCounter.getRatedCounter()).as("All other buckets contain 0 submissions").isEqualTo(0);
             }
 
         }
