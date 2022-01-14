@@ -98,8 +98,8 @@ public class UserCreationService {
      * @param initialize         true if the user should be initialized on the first visit
      * @return newly created user
      */
-    public User createInternalUser(String login, @Nullable String password, @Nullable Set<String> groups, String firstName, String lastName, String email,
-            String registrationNumber, String imageUrl, String langKey, boolean isInternal, boolean initialize) {
+    public User createUser(String login, @Nullable String password, @Nullable Set<String> groups, String firstName, String lastName, String email, String registrationNumber,
+            String imageUrl, String langKey, boolean isInternal, boolean initialize) {
         User newUser = new User();
 
         // Set random password for null passwords

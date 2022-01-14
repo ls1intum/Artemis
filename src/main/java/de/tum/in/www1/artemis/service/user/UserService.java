@@ -351,7 +351,7 @@ public class UserService {
                 }
 
                 // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
-                User user = userCreationService.createInternalUser(ldapUser.getUsername(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
+                User user = userCreationService.createUser(ldapUser.getUsername(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
                         registrationNumber, null, "en", false, false);
                 if (useExternalUserManagement) {
                     artemisAuthenticationProvider.createUserInExternalUserManagement(user);

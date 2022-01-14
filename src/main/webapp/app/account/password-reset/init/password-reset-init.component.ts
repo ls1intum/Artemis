@@ -61,12 +61,12 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     }
 
     requestReset(): void {
-        this.passwordResetInitService.save(this.resetRequestForm.get(['email'])!.value).subscribe(
-            () => {
+        this.passwordResetInitService.save(this.resetRequestForm.get(['email'])!.value).subscribe({
+            next: () => {
                 this.alertService.success('reset.request.messages.success');
                 this.success = true;
             },
-            (err: HttpErrorResponse) => {
+            error: (err: HttpErrorResponse) => {
                 if (this.useExternal && err?.error?.errorKey === 'externalUser') {
                     this.externalResetModalRef = this.modalService.open(ExternalUserPasswordResetModalComponent, { size: 'lg', backdrop: 'static' });
                     this.externalResetModalRef.componentInstance.externalCredentialProvider = this.externalCredentialProvider;
@@ -75,6 +75,6 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
                     onError(this.alertService, err);
                 }
             },
-        );
+        });
     }
 }
