@@ -45,8 +45,8 @@ describe('ComplaintService', () => {
         })
             .compileComponents()
             .then(() => {
-                complaintService = TestBed.get(ComplaintService);
-                accountService = TestBed.get(AccountService);
+                complaintService = TestBed.inject(ComplaintService);
+                accountService = TestBed.inject(AccountService);
                 httpMock = TestBed.inject(HttpTestingController);
             });
     });
