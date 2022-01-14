@@ -26,11 +26,11 @@ export class ListOfComplaintsComponent implements OnInit {
     public complaintType: ComplaintType;
     ComplaintType = ComplaintType;
 
-    private courseId: number;
-    private exerciseId: number;
-    private tutorId: number;
-    private examId?: number;
-    private correctionRound?: number;
+    courseId: number;
+    exerciseId: number;
+    tutorId: number;
+    examId?: number;
+    correctionRound?: number;
     complaintsSortingPredicate = 'id';
     complaintsReverseOrder = false;
     complaintsToShow: Complaint[] = [];
@@ -93,7 +93,7 @@ export class ListOfComplaintsComponent implements OnInit {
                 this.complaints = res.body!;
                 this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
 
-                if (this.complaints.length > 0 && this.complaints[0].student) {
+                if (this.complaints.some((complaint) => complaint.student)) {
                     this.hasStudentInformation = true;
                 }
             },

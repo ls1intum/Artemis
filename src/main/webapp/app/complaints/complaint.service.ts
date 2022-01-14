@@ -13,9 +13,19 @@ export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
 
 export interface IComplaintService {
+    isComplaintLockedForLoggedInUser: (complaint: Complaint, exercise: Exercise) => boolean | undefined;
+    isComplaintLockedByLoggedInUser: (complaint: Complaint) => boolean | undefined;
+    isComplaintLocked: (complaint: Complaint) => boolean | undefined;
     create: (complaint: Complaint, examId: number) => Observable<EntityResponseType>;
     findBySubmissionId: (participationId: number) => Observable<EntityResponseType>;
+    getComplaintsForTestRun: (exerciseId: number) => Observable<EntityResponseTypeArray>;
+    getMoreFeedbackRequestsForTutor: (exerciseId: number) => Observable<EntityResponseTypeArray>;
     getNumberOfAllowedComplaintsInCourse: (courseId: number) => Observable<number>;
+    findAllByTutorIdForCourseId: (tutorId: number, courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findAllByTutorIdForExerciseId: (tutorId: number, exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findAllByCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findAllByCourseIdAndExamId: (courseId: number, examId: number) => Observable<EntityResponseTypeArray>;
+    findAllByExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -71,7 +81,7 @@ export class ComplaintService implements IComplaintService {
      * @param examId the id of the exam
      */
     create(complaint: Complaint, examId?: number): Observable<EntityResponseType> {
-        const copy = ComplaintService.convertDateFromClient(complaint);
+        const copy = this.convertDateFromClient(complaint);
         if (examId) {
             return this.http
                 .post<Complaint>(`${this.resourceUrl}/exam/${examId}`, copy, { observe: 'response' })
@@ -175,7 +185,7 @@ export class ComplaintService implements IComplaintService {
         return this.http.get<Complaint[]>(url, { observe: 'response' }).pipe(map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res)));
     }
 
-    private static convertDateFromClient(complaint: Complaint): Complaint {
+    private convertDateFromClient(complaint: Complaint): Complaint {
         return Object.assign({}, complaint, {
             submittedTime: complaint.submittedTime && dayjs(complaint.submittedTime).isValid ? complaint.submittedTime.toJSON() : undefined,
         });
