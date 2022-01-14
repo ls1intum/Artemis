@@ -304,7 +304,8 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void submitExercise_beforeDueDate_isTeamMode() throws Exception {
-        exerciseRepo.save(releasedTextExercise.mode(ExerciseMode.TEAM));
+        releasedTextExercise.setMode(ExerciseMode.TEAM);
+        exerciseRepo.save(releasedTextExercise);
         Team team = new Team();
         team.setName("Team");
         team.setShortName("team");

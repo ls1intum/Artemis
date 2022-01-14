@@ -70,6 +70,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             """)
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingReleaseDate(@Param("now") ZonedDateTime now);
 
+    @Query("""
+            SELECT e FROM Exercise e
+            WHERE e.course.testCourse = FALSE
+            	AND e.assessmentDueDate >= :#{#now}
+            ORDER BY e.dueDate ASC
+            """)
+    Set<Exercise> findAllExercisesWithCurrentOrUpcomingAssessmentDueDate(@Param("now") ZonedDateTime now);
+
     /**
      * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)
      * @param courseId the id of the course
