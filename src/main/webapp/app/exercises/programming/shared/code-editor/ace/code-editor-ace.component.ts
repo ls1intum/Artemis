@@ -25,7 +25,7 @@ import { RepositoryFileService } from 'app/exercises/shared/result/repository.se
 import { TextChange } from 'app/entities/text-change.model';
 import { LocalStorageService } from 'ngx-webstorage';
 import { fromPairs, pickBy } from 'lodash-es';
-import { Feedback } from 'app/entities/feedback.model';
+import { checkSubsequentFeedbackInAssessment, Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
@@ -202,6 +202,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 if (!this.feedbacks) {
                     this.feedbacks = [];
                 }
+                checkSubsequentFeedbackInAssessment(this.feedbacks);
                 this.fileFeedbacks = this.feedbacks.filter((feedback) => feedback.reference && feedback.reference.includes(this.selectedFile));
                 this.fileFeedbackPerLine = {};
                 this.fileFeedbacks.forEach((feedback) => {

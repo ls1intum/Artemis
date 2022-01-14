@@ -12,7 +12,7 @@ import { ExerciseType, getCourseFromExercise, IncludedInOverallScore } from 'app
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
@@ -187,7 +187,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
      * Check whether or not a latestResult exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] {
-        if (this.latestResult) {
+        if (this.latestResult && this.latestResult.feedbacks) {
+            checkSubsequentFeedbackInAssessment(this.latestResult.feedbacks);
             return getUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
         }
         return [];
