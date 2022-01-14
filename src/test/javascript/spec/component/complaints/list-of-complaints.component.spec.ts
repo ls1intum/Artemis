@@ -24,6 +24,7 @@ describe('ListOfComplaintsComponent', () => {
     let comp: ListOfComplaintsComponent;
 
     let complaintService: IComplaintService;
+    let activatedRoute: MockActivatedRoute;
 
     let findAllByTutorIdForExerciseIdStub: jest.SpyInstance;
     let findAllByTutorIdForCourseIdStub: jest.SpyInstance;
@@ -73,6 +74,7 @@ describe('ListOfComplaintsComponent', () => {
                 comp = fixture.componentInstance;
 
                 complaintService = fixture.debugElement.injector.get(ComplaintService);
+                activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
 
                 findAllByTutorIdForExerciseIdStub = jest.spyOn(complaintService, 'findAllByTutorIdForExerciseId');
                 findAllByTutorIdForCourseIdStub = jest.spyOn(complaintService, 'findAllByTutorIdForCourseId');
@@ -88,42 +90,35 @@ describe('ListOfComplaintsComponent', () => {
 
     describe('loadComplaints', () => {
         it('find for tutor by exercise', () => {
-            comp.tutorId = 12;
-            comp.courseId = 34;
-            comp.exerciseId = 56;
-            comp.complaintType = ComplaintType.MORE_FEEDBACK;
-            comp.loadComplaints();
+            activatedRoute.setParameters({ tutorId: 12, courseId: 34, exerciseId: 56, complaintType: ComplaintType.MORE_FEEDBACK });
+            comp.ngOnInit();
+
             expect(findAllByTutorIdForExerciseIdStub).toHaveBeenCalledTimes(1);
             expect(findAllByTutorIdForExerciseIdStub).toHaveBeenCalledWith(12, 56, ComplaintType.MORE_FEEDBACK);
             verifyNotCalled(findAllByTutorIdForCourseIdStub, findAllByExerciseIdStub, findAllByCourseIdAndExamIdStub, findAllByCourseIdStub);
         });
 
         it('find for tutor by exam', () => {
-            comp.tutorId = 12;
-            comp.courseId = 34;
-            comp.examId = 56;
-            comp.complaintType = ComplaintType.MORE_FEEDBACK;
-            comp.loadComplaints();
+            activatedRoute.setParameters({ tutorId: 12, courseId: 34, examId: 56, complaintType: ComplaintType.MORE_FEEDBACK });
+            comp.ngOnInit();
+
             expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledTimes(1);
             expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledWith(12, 34, ComplaintType.MORE_FEEDBACK);
             verifyNotCalled(findAllByTutorIdForExerciseIdStub, findAllByExerciseIdStub, findAllByCourseIdAndExamIdStub, findAllByCourseIdStub);
         });
 
         it('find for tutor by course', () => {
-            comp.tutorId = 12;
-            comp.courseId = 34;
-            comp.complaintType = ComplaintType.MORE_FEEDBACK;
-            comp.loadComplaints();
+            activatedRoute.setParameters({ tutorId: 12, courseId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
+            comp.ngOnInit();
+
             expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledTimes(1);
             expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledWith(12, 34, ComplaintType.MORE_FEEDBACK);
             verifyNotCalled(findAllByTutorIdForExerciseIdStub, findAllByExerciseIdStub, findAllByCourseIdAndExamIdStub, findAllByCourseIdStub);
         });
 
         it('find general by exercise', () => {
-            comp.courseId = 12;
-            comp.exerciseId = 34;
-            comp.complaintType = ComplaintType.MORE_FEEDBACK;
-            comp.loadComplaints();
+            activatedRoute.setParameters({ courseId: 12, exerciseId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
+            comp.ngOnInit();
 
             expect(findAllByExerciseIdStub).toHaveBeenCalledTimes(1);
             expect(findAllByExerciseIdStub).toHaveBeenCalledWith(34, ComplaintType.MORE_FEEDBACK);
@@ -131,10 +126,8 @@ describe('ListOfComplaintsComponent', () => {
         });
 
         it('find general by exam', () => {
-            comp.courseId = 12;
-            comp.examId = 34;
-            comp.complaintType = ComplaintType.MORE_FEEDBACK;
-            comp.loadComplaints();
+            activatedRoute.setParameters({ courseId: 12, examId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
+            comp.ngOnInit();
 
             expect(findAllByCourseIdAndExamIdStub).toHaveBeenCalledTimes(1);
             expect(findAllByCourseIdAndExamIdStub).toHaveBeenCalledWith(12, 34);
@@ -142,9 +135,8 @@ describe('ListOfComplaintsComponent', () => {
         });
 
         it('find general by course', () => {
-            comp.courseId = 12;
-            comp.complaintType = ComplaintType.MORE_FEEDBACK;
-            comp.loadComplaints();
+            activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.MORE_FEEDBACK });
+            comp.ngOnInit();
 
             expect(findAllByCourseIdStub).toHaveBeenCalledTimes(1);
             expect(findAllByCourseIdStub).toHaveBeenCalledWith(12, ComplaintType.MORE_FEEDBACK);
@@ -153,7 +145,6 @@ describe('ListOfComplaintsComponent', () => {
 
         it('process complaints without student information', () => {
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3] } as EntityResponseTypeArray));
-
             comp.loadComplaints();
 
             expect(comp.complaintsToShow).toIncludeSameMembers([complaint3]);
@@ -162,14 +153,12 @@ describe('ListOfComplaintsComponent', () => {
 
         it('process complaints with student information', () => {
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3, complaint4] } as EntityResponseTypeArray));
-
             comp.loadComplaints();
 
             expect(comp.complaintsToShow).toIncludeSameMembers([complaint3, complaint4]);
             expect(comp.hasStudentInformation).toBe(true);
 
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3, complaint5] } as EntityResponseTypeArray));
-
             comp.loadComplaints();
 
             expect(comp.complaintsToShow).toIncludeSameMembers([complaint3]);
@@ -211,6 +200,25 @@ describe('ListOfComplaintsComponent', () => {
 
             expect(result).toBe(true);
         });
+    });
+
+    it('triggerAddressedComplaints', () => {
+        const complaints = [complaint1, complaint2, complaint3, complaint4, complaint5];
+        const freeComplaints = [complaint3, complaint4];
+        findAllByCourseIdStub.mockReturnValue(of({ body: complaints } as EntityResponseTypeArray));
+        comp.loadComplaints();
+        expect(comp.showAddressedComplaints).toBe(false);
+        expect(comp.complaintsToShow).toIncludeSameMembers(freeComplaints);
+
+        comp.triggerAddressedComplaints();
+
+        expect(comp.showAddressedComplaints).toBe(true);
+        expect(comp.complaintsToShow).toIncludeSameMembers(complaints);
+
+        comp.triggerAddressedComplaints();
+
+        expect(comp.showAddressedComplaints).toBe(false);
+        expect(comp.complaintsToShow).toIncludeSameMembers(freeComplaints);
     });
 
     function verifyNotCalled(...instances: jest.SpyInstance[]) {

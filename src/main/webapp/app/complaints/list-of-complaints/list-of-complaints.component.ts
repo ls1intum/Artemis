@@ -26,10 +26,10 @@ export class ListOfComplaintsComponent implements OnInit {
     public complaintType: ComplaintType;
     ComplaintType = ComplaintType;
 
-    courseId: number;
-    exerciseId: number;
-    tutorId: number;
-    examId?: number;
+    private courseId: number;
+    private exerciseId: number;
+    private tutorId: number;
+    private examId?: number;
     correctionRound?: number;
     complaintsSortingPredicate = 'id';
     complaintsReverseOrder = false;
