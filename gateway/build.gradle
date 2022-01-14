@@ -58,6 +58,7 @@ sourceSets {
             include 'de/tum/in/www1/artemis/security/Role.*'
             include 'de/tum/in/www1/artemis/security/jwt/TokenProvider.*'
             include 'de/tum/in/www1/artemis/management/SecurityMetersService.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/HttpStatusException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/BadRequestAlertException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/FieldErrorVM.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/ErrorConstants.*'
