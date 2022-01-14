@@ -16,6 +16,11 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/utils/icons.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { ExportToCsv } from 'export-to-csv';
+
+export const NAME_KEY = 'Name';
+export const USERNAME_KEY = 'Username';
+export const EMAIL_KEY = 'Email';
 
 const cssClasses = {
     alreadyMember: 'already-member',
@@ -39,6 +44,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     allCourseGroupUsers: User[] = [];
     filteredUsersSize = 0;
     paramSub: Subscription;
+    exportReady = true;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -268,4 +274,31 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
         this.rowClass = className;
         setTimeout(() => (this.rowClass = undefined));
     };
+    exportResults() {
+        if (this.exportReady && this.allCourseGroupUsers.length > 0) {
+            const rows: any[] = this.allCourseGroupUsers.map((user: User) => {
+                const data = {};
+                data[NAME_KEY] = user.name!.trim();
+                data[USERNAME_KEY] = user.login!.trim();
+                data[EMAIL_KEY] = user.email!.trim();
+                return data;
+            });
+            const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY];
+            this.exportAsCsv(rows, keys);
+        }
+    }
+    exportAsCsv(rows: any[], keys: string[]) {
+        const options = {
+            fieldSeparator: ';', // TODO: allow user to customize
+            quoteStrings: '"',
+            showLabels: true,
+            showTitle: false,
+            filename: 'Artemis Course Students' + this.course.title + ' Scores',
+            useTextFile: false,
+            useBom: true,
+            headers: keys,
+        };
+        const csvExporter = new ExportToCsv(options);
+        csvExporter.generateCsv(rows);
+    }
 }
