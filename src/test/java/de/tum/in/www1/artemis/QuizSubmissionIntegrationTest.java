@@ -216,13 +216,13 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         submissions.add(student2Submission);
 
         QuizSubmission student3Submission = new QuizSubmission();
-        var firstCorrectAnswerOption = mcQuestion.getAnswerOptions().stream().filter(AnswerOption::isIsCorrect).findFirst().get();
+        var correctAnswerOption = mcQuestion.getAnswerOptions().stream().filter(AnswerOption::isIsCorrect).findFirst().get();
 
         MultipleChoiceSubmittedAnswer student3mcAnswer = new MultipleChoiceSubmittedAnswer();
         student3mcAnswer.setQuizQuestion(mcQuestion);
-        student3mcAnswer.addSelectedOptions(firstCorrectAnswerOption);
+        student3mcAnswer.addSelectedOptions(correctAnswerOption);
 
-        // student 3 achieves 1/4 point for the MC question
+        // student 3 achieves 4 points for the MC question
         student3Submission.addSubmittedAnswers(student3mcAnswer);
 
         // and 1 point for the DnD question
