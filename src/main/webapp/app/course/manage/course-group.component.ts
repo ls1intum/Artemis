@@ -274,6 +274,9 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
         this.rowClass = className;
         setTimeout(() => (this.rowClass = undefined));
     };
+    /**
+     * Method for exporting the csv with the needed data
+     */
     exportResults() {
         if (this.exportReady && this.allCourseGroupUsers.length > 0) {
             const rows: any[] = this.allCourseGroupUsers.map((user: User) => {
