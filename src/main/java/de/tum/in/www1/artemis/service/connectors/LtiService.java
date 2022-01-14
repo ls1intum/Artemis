@@ -243,27 +243,24 @@ public class LtiService {
             final var groups = new HashSet<String>();
             if (TUMX.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_EDX.isPresent()) {
                 groups.add(USER_GROUP_NAME_EDX.get());
-                newUser = userCreationService.createUser(username, null, groups, USER_GROUP_NAME_EDX.get(), fullname, email, null, null, "en", true, true);
+                newUser = userCreationService.createUser(username, null, groups, USER_GROUP_NAME_EDX.get(), fullname, email, null, null, "en", true);
             }
             else if (U4I.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_U4I.isPresent()) {
                 groups.add(USER_GROUP_NAME_U4I.get());
-                newUser = userCreationService.createUser(username, null, groups, USER_GROUP_NAME_U4I.get(), fullname, email, null, null, "en", true, true);
+                newUser = userCreationService.createUser(username, null, groups, USER_GROUP_NAME_U4I.get(), fullname, email, null, null, "en", true);
             }
             else {
                 String message = "User group not activated or unknown context_label sent in LTI Launch Request: " + launchRequest;
                 log.error(message);
                 throw new InternalAuthenticationServiceException(message);
             }
+            newUser.setActivationKey(null);
+            userRepository.save(newUser);
             log.info("Created new user {}", newUser);
             return newUser;
         });
 
         log.info("createNewUserFromLaunchRequest: {}", user);
-
-        // Make sure the user is activated
-        if (!user.getActivated()) {
-            userCreationService.activateUser(user);
-        }
 
         log.info("Signing in as {}", username);
         return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));

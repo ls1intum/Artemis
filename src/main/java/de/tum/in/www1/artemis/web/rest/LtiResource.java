@@ -160,7 +160,7 @@ public class LtiResource {
 
         User user = userRepository.getUser();
 
-        if (user.isInitialize()) {
+        if (!user.getActivated()) {
             redirectUrlComponentsBuilder.queryParam("initialize", "");
         }
         if (!SecurityUtils.isAuthenticated()) {

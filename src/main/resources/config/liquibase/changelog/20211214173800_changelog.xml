@@ -2,9 +2,6 @@
     <property name="autoIncrement" value="true"/>
 <changeSet id="20211214173800" author="julian-christl">
     <addColumn tableName="jhi_user">
-        <column name="initialize" type="bit">
-            <constraints nullable="false"/>
-        </column>
         <column name="is_internal" type="bit" defaultValue="1">
             <constraints nullable="false"/>
         </column>

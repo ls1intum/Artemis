@@ -310,11 +310,11 @@ public class UserResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<UserInitializationDTO> initializeUser() {
         User user = userRepository.getUser();
-        if (!user.isInitialize()) {
+        if (user.getActivated()) {
             return ResponseEntity.ok().body(new UserInitializationDTO());
         }
         if (ltiUserIdRepository.findByUser(user).isEmpty() || !user.isInternal()) {
-            user.setInitialize(false);
+            user.setActivated(true);
             userRepository.save(user);
             return ResponseEntity.ok().body(new UserInitializationDTO());
         }

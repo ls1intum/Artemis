@@ -111,9 +111,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "is_internal")
     private boolean isInternal;
 
-    @Column(name = "initialize")
-    private boolean initialize;
-
     /**
      * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
      * Workaround: Annotation @Column(name = "`groups`") escapes this word using backticks.
@@ -344,15 +341,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     public String toDatabaseString() {
         return "Student: login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber + '\'';
     }
-
-    public boolean isInitialize() {
-        return initialize;
-    }
-
-    public void setInitialize(boolean initialize) {
-        this.initialize = initialize;
-    }
-
+    
     public boolean isInternal() {
         return isInternal;
     }

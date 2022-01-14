@@ -560,7 +560,7 @@ public class UserTestService {
         User repoUser = userRepository.findOneByLogin("student1").get();
         repoUser.setPassword(password);
         repoUser.setInternal(true);
-        repoUser.setInitialize(true);
+        repoUser.setActivated(false);
         repoUser.setGroups(new HashSet<>());
         final User user = userRepository.save(repoUser);
         LtiUserId ltiUserId = new LtiUserId();
@@ -584,7 +584,7 @@ public class UserTestService {
         User currentUser = userRepository.findOneByLogin("student1").get();
 
         assertThat(passwordService.decryptPassword(currentUser.getPassword())).isEqualTo(dto.getPassword()).isNotEqualTo(password);
-        assertThat(currentUser.isInitialize()).isFalse();
+        assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
     }
 
@@ -594,7 +594,7 @@ public class UserTestService {
         User user = userRepository.findOneByLogin("student1").get();
         user.setPassword(password);
         user.setInternal(true);
-        user.setInitialize(false);
+        user.setActivated(true);
         user = userRepository.save(user);
         LtiUserId ltiUserId = new LtiUserId();
         ltiUserId.setLtiUserId("1234");
@@ -608,7 +608,7 @@ public class UserTestService {
         User currentUser = userRepository.findOneByLogin("student1").get();
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
-        assertThat(currentUser.isInitialize()).isFalse();
+        assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
     }
 
@@ -618,7 +618,7 @@ public class UserTestService {
         User user = userRepository.findOneByLogin("student1").get();
         user.setPassword(password);
         user.setInternal(true);
-        user.setInitialize(true);
+        user.setActivated(false);
         userRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
@@ -627,7 +627,7 @@ public class UserTestService {
         User currentUser = userRepository.findOneByLogin("student1").get();
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
-        assertThat(currentUser.isInitialize()).isFalse();
+        assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
     }
 
@@ -637,7 +637,7 @@ public class UserTestService {
         User user = userRepository.findOneByLogin("student1").get();
         user.setPassword(password);
         user.setInternal(false);
-        user.setInitialize(true);
+        user.setActivated(false);
         user = userRepository.save(user);
         LtiUserId ltiUserId = new LtiUserId();
         ltiUserId.setLtiUserId("1234");
@@ -651,7 +651,7 @@ public class UserTestService {
         User currentUser = userRepository.findOneByLogin("student1").get();
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
-        assertThat(currentUser.isInitialize()).isFalse();
+        assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isFalse();
     }
 
