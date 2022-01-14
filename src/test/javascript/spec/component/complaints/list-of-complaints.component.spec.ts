@@ -17,7 +17,14 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { of } from 'rxjs';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import dayjs from 'dayjs';
+import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { Result } from 'app/entities/result.model';
+import { User } from 'app/core/user/user.model';
+import dayjs from 'dayjs/esm';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { Course } from 'app/entities/course.model';
 
 describe('ListOfComplaintsComponent', () => {
     let fixture: ComponentFixture<ListOfComplaintsComponent>;
@@ -25,6 +32,8 @@ describe('ListOfComplaintsComponent', () => {
 
     let complaintService: IComplaintService;
     let activatedRoute: MockActivatedRoute;
+    let translateService: TranslateService;
+    let router: Router;
 
     let findAllByTutorIdForExerciseIdStub: jest.SpyInstance;
     let findAllByTutorIdForCourseIdStub: jest.SpyInstance;
@@ -74,7 +83,9 @@ describe('ListOfComplaintsComponent', () => {
                 comp = fixture.componentInstance;
 
                 complaintService = fixture.debugElement.injector.get(ComplaintService);
+                translateService = fixture.debugElement.injector.get(TranslateService);
                 activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
+                router = fixture.debugElement.injector.get(Router);
 
                 findAllByTutorIdForExerciseIdStub = jest.spyOn(complaintService, 'findAllByTutorIdForExerciseId');
                 findAllByTutorIdForCourseIdStub = jest.spyOn(complaintService, 'findAllByTutorIdForCourseId');
@@ -219,6 +230,104 @@ describe('ListOfComplaintsComponent', () => {
 
         expect(comp.showAddressedComplaints).toBe(false);
         expect(comp.complaintsToShow).toIncludeSameMembers(freeComplaints);
+    });
+
+    describe('calculateComplaintLockStatus', () => {
+        it('complaint unlocked', () => {
+            const complaint = new Complaint();
+            complaint.id = 42;
+            complaint.result = new Result();
+            complaint.complaintText = 'Test text';
+            complaint.complaintType = ComplaintType.MORE_FEEDBACK;
+            jest.spyOn(translateService, 'instant');
+
+            comp.calculateComplaintLockStatus(complaint);
+
+            expect(translateService.instant).toHaveBeenCalledTimes(1);
+            expect(translateService.instant).toHaveBeenCalledWith('artemisApp.locks.notUnlocked');
+        });
+
+        it('complaint locked by the current user', () => {
+            const userLogin = 'user';
+            const endDate = dayjs().add(2, 'days');
+            const complaint = new Complaint();
+            complaint.id = 42;
+            complaint.result = new Result();
+            complaint.complaintText = 'Test text';
+            complaint.complaintType = ComplaintType.MORE_FEEDBACK;
+            complaint.complaintResponse = new ComplaintResponse();
+            complaint.complaintResponse.isCurrentlyLocked = true;
+            complaint.complaintResponse.reviewer = { login: userLogin } as User;
+            complaint.complaintResponse.lockEndDate = endDate;
+            jest.spyOn(complaintService, 'isComplaintLockedByLoggedInUser').mockReturnValue(true);
+            jest.spyOn(complaintService, 'isComplaintLocked').mockReturnValue(true);
+            jest.spyOn(translateService, 'instant');
+
+            comp.calculateComplaintLockStatus(complaint);
+
+            expect(translateService.instant).toHaveBeenCalledTimes(1);
+            expect(translateService.instant).toHaveBeenCalledWith('artemisApp.locks.lockInformationYou', { endDate: `${endDate.valueOf()}` });
+        });
+
+        it('complaint locked by another user', () => {
+            const reviewLogin = 'review';
+            const endDate = dayjs().add(2, 'days');
+            const complaint = new Complaint();
+            complaint.id = 42;
+            complaint.result = new Result();
+            complaint.complaintText = 'Test text';
+            complaint.complaintType = ComplaintType.MORE_FEEDBACK;
+            complaint.complaintResponse = new ComplaintResponse();
+            complaint.complaintResponse.isCurrentlyLocked = true;
+            complaint.complaintResponse.reviewer = { login: reviewLogin } as User;
+            complaint.complaintResponse.lockEndDate = endDate;
+            jest.spyOn(complaintService, 'isComplaintLockedByLoggedInUser').mockReturnValue(false);
+            jest.spyOn(complaintService, 'isComplaintLocked').mockReturnValue(true);
+            jest.spyOn(translateService, 'instant');
+
+            comp.calculateComplaintLockStatus(complaint);
+
+            expect(translateService.instant).toHaveBeenCalledTimes(1);
+            expect(translateService.instant).toHaveBeenCalledWith('artemisApp.locks.lockInformation', { endDate: `${endDate.valueOf()}`, user: reviewLogin });
+        });
+    });
+
+    it('navigate for openAssessmentEditor', () => {
+        const userLogin = 'user';
+        const endDate = dayjs().add(2, 'days');
+        const submissionId = 13;
+        const participationId = 69;
+        const exerciseId = 1337;
+        const courseId = 77;
+        const course = new Course();
+        course.id = courseId;
+        const complaint = new Complaint();
+        complaint.id = 42;
+        complaint.result = new Result();
+        complaint.result.submission = new TextSubmission();
+        complaint.result.submission.id = submissionId;
+        complaint.result.participation = new StudentParticipation();
+        complaint.result.participation.id = participationId;
+        complaint.result.participation.exercise = new TextExercise(course, undefined);
+        complaint.result.participation.exercise.id = exerciseId;
+        complaint.complaintText = 'Test text';
+        complaint.complaintType = ComplaintType.MORE_FEEDBACK;
+        complaint.complaintResponse = new ComplaintResponse();
+        complaint.complaintResponse.isCurrentlyLocked = true;
+        complaint.complaintResponse.reviewer = { login: userLogin } as User;
+        complaint.complaintResponse.lockEndDate = endDate;
+        jest.spyOn(router, 'navigate');
+        activatedRoute.setParameters({ courseId });
+
+        comp.ngOnInit();
+        comp.openAssessmentEditor(complaint);
+
+        expect(comp.correctionRound).toBe(0);
+        expect(router.navigate).toHaveBeenCalledTimes(1);
+        expect(router.navigate).toHaveBeenCalledWith(
+            ['/course-management', `${courseId}`, 'text-exercises', `${exerciseId}`, 'participations', `${participationId}`, 'submissions', `${submissionId}`, 'assessment'],
+            { queryParams: { 'correction-round': 0 } },
+        );
     });
 
     function verifyNotCalled(...instances: jest.SpyInstance[]) {
