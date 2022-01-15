@@ -13,7 +13,7 @@ describe('TableEditableFieldComponent', () => {
 
     const tableCheckbox = '.table-editable-field__checkbox';
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisTableModule],
         })
