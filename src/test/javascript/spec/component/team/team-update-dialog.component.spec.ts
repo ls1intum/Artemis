@@ -29,7 +29,7 @@ describe('TeamUpdateDialogComponent', () => {
     let debugElement: DebugElement;
     let ngbActiveModal: NgbActiveModal;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
             declarations: [

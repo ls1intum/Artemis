@@ -43,7 +43,7 @@ describe('ShortAnswerQuestionUtil', () => {
         }
     };
 
-    beforeEach(async () => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule],
         });
