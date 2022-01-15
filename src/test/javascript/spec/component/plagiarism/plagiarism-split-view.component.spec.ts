@@ -164,9 +164,21 @@ describe('Plagiarism Split View Component', () => {
         ];
         comp.parseTextMatches({ submissionA, submissionB, matches } as PlagiarismComparison<TextSubmissionElement>);
 
-        expect(comp.matchesA).toBeDefined();
-        expect(comp.matchesB).toBeDefined();
         expect(comp.mapMatchesToElements).toHaveBeenCalledTimes(2);
+        expect(comp.mapMatchesToElements).toHaveBeenCalledWith(
+            [
+                { start: 0, length: 5 },
+                { start: 10, length: 20 },
+            ],
+            submissionA,
+        );
+        expect(comp.mapMatchesToElements).toHaveBeenCalledWith(
+            [
+                { start: 0, length: 5 },
+                { start: 10, length: 20 },
+            ],
+            submissionB,
+        );
     });
 
     it('should map matches to elements', () => {
