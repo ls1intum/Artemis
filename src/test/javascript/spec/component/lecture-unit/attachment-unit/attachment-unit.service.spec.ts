@@ -1,22 +1,16 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { getTestBed, TestBed } from '@angular/core/testing';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
+import { TestBed } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('AttachmentUnitService', () => {
-    let injector: TestBed;
     let service: AttachmentUnitService;
     let httpMock: HttpTestingController;
     let elemDefault: AttachmentUnit;
@@ -34,9 +28,8 @@ describe('AttachmentUnitService', () => {
             ],
         });
         expectedResult = {} as HttpResponse<AttachmentUnit>;
-        injector = getTestBed();
-        service = injector.get(AttachmentUnitService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(AttachmentUnitService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         const attachment = new Attachment();
         attachment.id = 0;
@@ -65,7 +58,7 @@ describe('AttachmentUnitService', () => {
             .subscribe((resp) => (expectedResult = resp));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        expect(expectedResult.body).to.deep.equal(elemDefault);
+        expect(expectedResult.body).toEqual(elemDefault);
     });
 
     it('should create an AttachmentUnit', async () => {
@@ -77,7 +70,7 @@ describe('AttachmentUnitService', () => {
             .subscribe((resp) => (expectedResult = resp));
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        expect(expectedResult.body).to.deep.equal(expected);
+        expect(expectedResult.body).toEqual(expected);
     });
 
     it('should update a AttachmentUnit', async () => {
@@ -89,6 +82,6 @@ describe('AttachmentUnitService', () => {
             .subscribe((resp) => (expectedResult = resp));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
-        expect(expectedResult.body).to.deep.equal(expected);
+        expect(expectedResult.body).toEqual(expected);
     });
 });

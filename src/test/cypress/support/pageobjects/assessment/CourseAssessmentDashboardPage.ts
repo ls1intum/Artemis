@@ -12,17 +12,13 @@ export class CourseAssessmentDashboardPage {
     }
 
     showTheComplaint() {
-        cy.get('.btn-primary').should('contain.text', 'Show the complaint').click();
+        cy.get('#show-complaint').click();
     }
 
     clickExerciseDashboardButton() {
         // Sometimes the page does not load properly, so we reload it if the button is not found
         cy.reloadUntilFound(this.exerciseDashboardButtonSelector);
         cy.get(this.exerciseDashboardButtonSelector).click();
-    }
-
-    checkShowFinishedExercises() {
-        cy.get('#field_showFinishedExercise').check();
     }
 
     clickEvaluateQuizzes() {

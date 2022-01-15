@@ -1,6 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 
@@ -15,9 +13,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationCountDto } from 'app/admin/organization-management/organization-count-dto.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('OrganizationManagementComponent', () => {
     let component: OrganizationManagementComponent;
@@ -43,7 +38,7 @@ describe('OrganizationManagementComponent', () => {
         organizationService = TestBed.inject(OrganizationManagementService);
     });
 
-    afterEach(async () => {
+    beforeEach(() => {
         jest.clearAllMocks();
     });
 
@@ -71,12 +66,12 @@ describe('OrganizationManagementComponent', () => {
         jest.spyOn(organizationService, 'getNumberOfUsersAndCoursesOfOrganizations').mockReturnValue(of(numOfUsersAndCoursesOfOrganizations));
 
         fixture.detectChanges();
-        expect(component).to.be.ok;
-        expect(component.organizations.length).to.be.eq(2);
-        expect(component.organizations[0].numberOfUsers).to.be.eq(1);
-        expect(component.organizations[0].numberOfCourses).to.be.eq(1);
-        expect(component.organizations[1].numberOfUsers).to.be.eq(2);
-        expect(component.organizations[1].numberOfCourses).to.be.eq(2);
+        expect(component).not.toBeNull();
+        expect(component.organizations.length).toBe(2);
+        expect(component.organizations[0].numberOfUsers).toBe(1);
+        expect(component.organizations[0].numberOfCourses).toBe(1);
+        expect(component.organizations[1].numberOfUsers).toBe(2);
+        expect(component.organizations[1].numberOfCourses).toBe(2);
     }));
 
     it('should delete an organization', fakeAsync(() => {
@@ -90,8 +85,8 @@ describe('OrganizationManagementComponent', () => {
         component.deleteOrganization(5);
         fixture.detectChanges();
         tick();
-        expect(component).to.be.ok;
-        expect(component.organizations.length).to.be.equal(0);
+        expect(component).not.toBeNull();
+        expect(component.organizations.length).toEqual(0);
     }));
 
     it('should track id', fakeAsync(() => {
@@ -99,6 +94,6 @@ describe('OrganizationManagementComponent', () => {
         organization1.id = 5;
         organization1.name = 'orgOne';
 
-        expect(component.trackIdentity(0, organization1)).to.equal(5);
+        expect(component.trackIdentity(0, organization1)).toEqual(5);
     }));
 });

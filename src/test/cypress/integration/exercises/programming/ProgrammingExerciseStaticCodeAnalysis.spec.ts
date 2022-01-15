@@ -1,3 +1,5 @@
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Course } from 'app/entities/course.model';
 import scaSubmission from '../../../fixtures/programming_exercise_submissions/static_code_analysis/submission.json';
 import { artemis } from '../../../support/ArtemisTesting';
 import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
@@ -9,13 +11,13 @@ const users = artemis.users;
 const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
-const editorPage = artemis.pageobjects.programmingExercise.editor;
-const scaConfig = artemis.pageobjects.programmingExercise.scaConfiguration;
-const scaFeedback = artemis.pageobjects.programmingExercise.scaFeedback;
+const editorPage = artemis.pageobjects.exercise.programming.editor;
+const scaConfig = artemis.pageobjects.exercise.programming.scaConfiguration;
+const scaFeedback = artemis.pageobjects.exercise.programming.scaFeedback;
 
 describe('Static code analysis tests', () => {
-    let course: any;
-    let exercise: any;
+    let course: Course;
+    let exercise: ProgrammingExercise;
 
     before(() => {
         setupCourseAndProgrammingExercise();
@@ -23,14 +25,14 @@ describe('Static code analysis tests', () => {
 
     it('Configures SCA grading and makes a successful submission with SCA errors', () => {
         configureStaticCodeAnalysisGrading();
-        startParticipationInProgrammingExercise(course.title, exercise.id, users.getStudentOne());
+        startParticipationInProgrammingExercise(course.id!, exercise.id!, users.getStudentOne());
         makeSuccessfulSubmissionWithScaErrors();
     });
 
     after(() => {
         if (!!course) {
             cy.login(users.getAdmin());
-            courseManagement.deleteCourse(course.id);
+            courseManagement.deleteCourse(course.id!);
         }
     });
 
@@ -41,7 +43,7 @@ describe('Static code analysis tests', () => {
         cy.login(users.getAdmin());
         courseManagement.createCourse(true).then((response) => {
             course = response.body;
-            courseManagement.addStudentToCourse(course.id, users.getStudentOne().username);
+            courseManagement.addStudentToCourse(course.id!, users.getStudentOne().username);
             courseManagement.createProgrammingExercise({ course }, 50).then((dto) => {
                 exercise = dto.body;
             });
@@ -52,7 +54,7 @@ describe('Static code analysis tests', () => {
      * Makes a submission, which passes all tests, but has some static code analysis issues.
      */
     function makeSuccessfulSubmissionWithScaErrors() {
-        makeSubmissionAndVerifyResults(editorPage, exercise.packageName, scaSubmission, () => {
+        makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, scaSubmission, () => {
             editorPage.getResultPanel().contains('50%').should('be.visible');
             editorPage.getResultPanel().contains('13 of 13 passed').click();
             scaFeedback.shouldShowPointChart();
@@ -72,7 +74,7 @@ describe('Static code analysis tests', () => {
      */
     function configureStaticCodeAnalysisGrading() {
         cy.login(users.getAdmin());
-        scaConfig.visit(course.id, exercise.id);
+        scaConfig.visit(course.id!, exercise.id!);
         scaConfig.makeEveryScaCategoryInfluenceGrading();
         scaConfig.saveChanges();
     }

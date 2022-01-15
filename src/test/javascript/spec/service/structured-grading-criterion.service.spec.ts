@@ -1,14 +1,10 @@
-import { getTestBed, TestBed, tick, fakeAsync } from '@angular/core/testing';
+import { TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import * as chai from 'chai';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
-const expect = chai.expect;
-
 describe('Structured Grading Criteria Service', () => {
-    let injector: TestBed;
     let service: StructuredGradingCriterionService;
     let httpMock: HttpTestingController;
     let feedbacks: Feedback[];
@@ -17,9 +13,8 @@ describe('Structured Grading Criteria Service', () => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
         });
-        injector = getTestBed();
-        service = injector.get(StructuredGradingCriterionService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(StructuredGradingCriterionService);
+        httpMock = TestBed.inject(HttpTestingController);
     });
 
     describe('Service methods', () => {
@@ -48,7 +43,7 @@ describe('Structured Grading Criteria Service', () => {
 
             const returnedFromService = Object.assign([], feedbacks);
             const totalScore = service.computeTotalScore(returnedFromService);
-            expect(totalScore).to.deep.equal(5.0);
+            expect(totalScore).toEqual(5.0);
             tick();
         }));
         it('should calculate the total score', fakeAsync(() => {
@@ -76,7 +71,7 @@ describe('Structured Grading Criteria Service', () => {
 
             const returnedFromService = Object.assign([], feedbacks);
             const totalScore = service.computeTotalScore(returnedFromService);
-            expect(totalScore).to.deep.equal(2.5);
+            expect(totalScore).toEqual(2.5);
             tick();
         }));
     });

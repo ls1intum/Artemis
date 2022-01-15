@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { Duration, Option } from './quiz-exercise-interfaces';
 import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -562,7 +562,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                 reasonString += res + '   -   ';
             });
         }
-        return reasonString.substr(0, reasonString.length - 5);
+        return reasonString.slice(0, reasonString.length - 5);
     }
 
     /**

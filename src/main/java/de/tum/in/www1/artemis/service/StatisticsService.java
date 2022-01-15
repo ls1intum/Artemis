@@ -7,6 +7,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -61,66 +63,61 @@ public class StatisticsService {
      * @param entityId the entityId. Only set if we fetch value for the course statistics
      * @return an array, containing the values for each bar in the graph
      */
-    public Integer[] getChartData(SpanType span, Integer periodIndex, GraphType graphType, StatisticsView view, Long entityId) {
+    public List<Integer> getChartData(SpanType span, Integer periodIndex, GraphType graphType, StatisticsView view, @Nullable Long entityId) {
         ZonedDateTime startDate;
         ZonedDateTime endDate;
         List<StatisticsEntry> outcome;
-        Integer[] result = new Integer[0];
+        List<Integer> result = null;
         ZonedDateTime now = ZonedDateTime.now();
         int lengthOfMonth;
         if (span != SpanType.MONTH) {
-            result = new Integer[createSpanMap().get(span)];
-            Arrays.fill(result, 0);
+            result = new ArrayList<>(Collections.nCopies(spanMap.get(span), 0));
         }
         switch (span) {
-            case DAY:
+            case DAY -> {
                 startDate = now.minusDays(-periodIndex).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusDays(-periodIndex).withHour(23).withMinute(59).withSecond(59);
-                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(span, startDate, endDate, graphType, view, entityId);
-                return this.statisticsRepository.mergeResultsIntoArrayForDay(outcome, result);
-            case WEEK:
+                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate, endDate, view, entityId);
+                this.statisticsRepository.sortDataIntoHours(outcome, result);
+            }
+            case WEEK -> {
                 startDate = now.minusWeeks(-periodIndex).minusDays(6).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusWeeks(-periodIndex).withHour(23).withMinute(59).withSecond(59);
-                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(span, startDate, endDate, graphType, view, entityId);
-                return this.statisticsRepository.mergeResultsIntoArrayForWeek(outcome, result, startDate);
-            case MONTH:
+                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate, endDate, view, entityId);
+                this.statisticsRepository.sortDataIntoDays(outcome, result, startDate);
+            }
+            case MONTH -> {
                 startDate = now.minusMonths(1 - periodIndex).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusMonths(-periodIndex).withHour(23).withMinute(59).withSecond(59);
-                result = new Integer[(int) ChronoUnit.DAYS.between(startDate, endDate)];
-                Arrays.fill(result, 0);
-                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(span, startDate.plusDays(1), endDate, graphType, view, entityId);
-                return this.statisticsRepository.mergeResultsIntoArrayForMonth(outcome, result, startDate.plusDays(1));
-            case QUARTER:
+                result = new ArrayList<>(Collections.nCopies((int) ChronoUnit.DAYS.between(startDate, endDate), 0));
+                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate.plusDays(1), endDate, view, entityId);
+                this.statisticsRepository.sortDataIntoDays(outcome, result, startDate.plusDays(1));
+            }
+            case QUARTER -> {
                 LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
                 LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
                 ZoneId zone = now.getZone();
-                startDate = localStartDate.atZone(zone).minusWeeks(11 + (12 * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
-                endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(12 * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
+                startDate = localStartDate.atZone(zone).minusWeeks(11 + (12L * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
+                endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(12L * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
                         : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
-                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(span, startDate, endDate, graphType, view, entityId);
-                return this.statisticsRepository.mergeResultsIntoArrayForQuarter(outcome, result, startDate);
-            case YEAR:
+                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate, endDate, view, entityId);
+                this.statisticsRepository.sortDataIntoWeeks(outcome, result, startDate);
+            }
+            case YEAR -> {
                 startDate = now.minusYears(1 - periodIndex).plusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 lengthOfMonth = YearMonth.of(now.minusYears(-periodIndex).getYear(), now.minusYears(-periodIndex).getMonth()).lengthOfMonth();
                 endDate = now.minusYears(-periodIndex).withDayOfMonth(lengthOfMonth).withHour(23).withMinute(59).withSecond(59);
-                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(span, startDate, endDate, graphType, view, entityId);
-                return this.statisticsRepository.mergeResultsIntoArrayForYear(outcome, result, startDate);
-            default:
-                return null;
+                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate, endDate, view, entityId);
+                this.statisticsRepository.sortDataIntoMonths(outcome, result, startDate);
+            }
         }
+        return result;
     }
 
     /**
      * A map to manage the spanTypes and the corresponding array length of the result
      */
-    private Map<SpanType, Integer> createSpanMap() {
-        Map<SpanType, Integer> spanMap = new HashMap<>();
-        spanMap.put(SpanType.DAY, 24);
-        spanMap.put(SpanType.WEEK, 7);
-        spanMap.put(SpanType.QUARTER, 12);
-        spanMap.put(SpanType.YEAR, 12);
-        return spanMap;
-    }
+    private static final Map<SpanType, Integer> spanMap = Map.of(SpanType.DAY, 24, SpanType.WEEK, 7, SpanType.QUARTER, 12, SpanType.YEAR, 12);
 
     /**
      * Get the average score of the course and all exercises for the course statistics
@@ -141,6 +138,8 @@ public class StatisticsService {
         averageScoreForExercises.forEach(exercise -> {
             var roundedAverageScore = roundScoreSpecifiedByCourseSettings(exercise.getAverageScore(), course);
             exercise.setAverageScore(roundedAverageScore);
+            var fittingExercise = includedExercises.stream().filter(includedExercise -> includedExercise.getId() == exercise.getExerciseId()).findAny().get();
+            exercise.setExerciseType(fittingExercise.getExerciseType());
         });
 
         if (averageScoreForCourse != null && averageScoreForCourse > 0) {
@@ -196,12 +195,7 @@ public class StatisticsService {
 
         // average score & max points
         Double maxPoints = exercise.getMaxPoints();
-        if (maxPoints != null) {
-            exerciseManagementStatisticsDTO.setMaxPointsOfExercise(maxPoints);
-        }
-        else {
-            exerciseManagementStatisticsDTO.setMaxPointsOfExercise(0);
-        }
+        exerciseManagementStatisticsDTO.setMaxPointsOfExercise(Objects.requireNonNullElse(maxPoints, 0D));
         Double averageScore = participantScoreRepository.findAvgScore(Set.of(exercise));
         double averageScoreForExercise = averageScore != null ? roundScoreSpecifiedByCourseSettings(averageScore, course) : 0.0;
         exerciseManagementStatisticsDTO.setAverageScoreOfExercise(averageScoreForExercise);

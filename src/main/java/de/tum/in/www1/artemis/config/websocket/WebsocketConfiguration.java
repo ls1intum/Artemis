@@ -41,7 +41,7 @@ import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -105,7 +105,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             config
                     // Enable the relay for "/topic"
                     .enableStompBrokerRelay("/topic")
-                    // Messages that could not be sent to an user (as he is not connected to this server) will be forwarded to "/topic/unresolved-user"
+                    // Messages that could not be sent to a user (as he is not connected to this server) will be forwarded to "/topic/unresolved-user"
                     .setUserDestinationBroadcast("/topic/unresolved-user")
                     // Information about connected users will be sent to "/topic/user-registry"
                     .setUserRegistryBroadcast("/topic/user-registry")
@@ -128,17 +128,16 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      * If the last broker goes down, the first one is retried.
      * Also see https://github.com/spring-projects/spring-framework/issues/17057 and
      * https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#websocket-stomp-handle-broker-relay-configure
-     * @return a TCP client with a round robin use
+     * @return a TCP client with a round-robin use
      */
     private ReactorNettyTcpClient<byte[]> createTcpClient() {
         final List<InetSocketAddress> brokerAddressList = brokerAddresses.stream().map(InetSocketAddressValidator::getValidAddress).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toList());
 
-        // Return null if no valid addresses can be found. This is e.g. due to a invalid config or a development setup without a broker.
+        // Return null if no valid addresses can be found. This is e.g. due to an invalid config or a development setup without a broker.
         if (!brokerAddressList.isEmpty()) {
-            // This provides a round-robin use of the brokers, we only want to fail over to the fallback broker if the primary broker fails, so we have the same order of brokers in
-            // all nodes
-            Iterator<InetSocketAddress> addressIterator = Iterables.cycle(brokerAddressList).iterator();
+            // This provides a round-robin use of brokers, we only want to use the fallback broker if the primary broker fails, so we have the same order of brokers in all nodes
+            var addressIterator = Iterators.cycle(brokerAddressList);
             return new ReactorNettyTcpClient<>(client -> client.remoteAddress(addressIterator::next), new StompReactorNettyCodec());
         }
         return null;
@@ -148,7 +147,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         DefaultHandshakeHandler handshakeHandler = defaultHandshakeHandler();
         // NOTE: by setting a WebSocketTransportHandler we disable http poll, http stream and other exotic workarounds and only support real websocket connections.
-        // nowadays all modern browsers support websockets and workarounds are not necessary any more and might only lead to problems
+        // nowadays, all modern browsers support websockets and workarounds are not necessary anymore and might only lead to problems
         WebSocketTransportHandler webSocketTransportHandler = new WebSocketTransportHandler(handshakeHandler);
         registry.addEndpoint("/websocket/tracker").setAllowedOriginPatterns("*").withSockJS().setTransportHandlers(webSocketTransportHandler)
                 .setInterceptors(httpSessionHandshakeInterceptor());
@@ -164,7 +163,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     protected MappingJackson2MessageConverter createJacksonConverter() {
         // NOTE: We need to adapt the default messageConverter for WebSocket messages
         // with a messageConverter that uses the same ObjectMapper that our REST endpoints use.
-        // This gives us consistency in how specific datatypes are serialized (e.g. timestamps)
+        // This gives us consistency in how specific data types are serialized (e.g. timestamps)
         MappingJackson2MessageConverter converter = super.createJacksonConverter();
         converter.setObjectMapper(objectMapper);
         return converter;
@@ -219,7 +218,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          *
          * @param message Message that the websocket client is sending (e.g. SUBSCRIBE, MESSAGE, UNSUBSCRIBE)
          * @param channel Current message channel
-         * @return message that gets passed along further
+         * @return message that gets sent along further
          */
         @Override
         public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {

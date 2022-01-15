@@ -5,7 +5,7 @@ import { CypressCredentials } from '../../users';
  */
 export class CourseManagementPage {
     openCourseCreation() {
-        return cy.get('.create-course').click();
+        return cy.get('#create-course').click();
     }
 
     /**
@@ -45,7 +45,7 @@ export class CourseManagementPage {
      * @param credentials the user that gets added to the student group of the course
      * */
     addStudentToCourse(credentials: CypressCredentials) {
-        cy.get('.row-md > :nth-child(5) > :nth-child(2) >').click();
+        cy.get('#add-students').click();
         this.confirmUserIntoGroup(credentials);
     }
 
@@ -54,7 +54,7 @@ export class CourseManagementPage {
      * @param credentials the user that gets added to the tutor group of the course
      * */
     addTutorToCourse(credentials: CypressCredentials) {
-        cy.get('.row-md > :nth-child(5) > :nth-child(4) >').click();
+        cy.get('#add-tutors').click();
         this.confirmUserIntoGroup(credentials);
     }
 
@@ -63,7 +63,7 @@ export class CourseManagementPage {
      * @param credentials the user that gets added to the editor group of the course
      * */
     addEditorToCourse(credentials: CypressCredentials) {
-        cy.get('.row-md > :nth-child(5) > :nth-child(6) >').click();
+        cy.get('#add-editors').click();
         this.confirmUserIntoGroup(credentials);
     }
 
@@ -72,7 +72,7 @@ export class CourseManagementPage {
      * @param credentials the user that gets added to the instructor group of the course
      * */
     addInstructorToCourse(credentials: CypressCredentials) {
-        cy.get('.row-md > :nth-child(5) > :nth-child(8) >').click();
+        cy.get('#add-instructors').click();
         this.confirmUserIntoGroup(credentials);
     }
 
@@ -81,8 +81,8 @@ export class CourseManagementPage {
      * */
     private confirmUserIntoGroup(credentials: CypressCredentials) {
         cy.get('#typeahead-basic ').type(credentials.username).type('{enter}');
-        cy.get('ngb-highlight').contains(credentials.username).click();
-        cy.get('.breadcrumb > :nth-child(2)').click();
+        cy.get('#ngb-typeahead-0-0').contains(credentials.username).click();
+        cy.get('#bread-crumb-2').click();
     }
 
     /**

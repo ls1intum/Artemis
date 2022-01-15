@@ -174,7 +174,7 @@ export class ResultDetailComponent implements OnInit {
                 this.isLoading = false;
             });
 
-        this.commitHash = this.getCommitHash().substr(0, 11);
+        this.commitHash = this.getCommitHash().slice(0, 11);
 
         // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
         this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
@@ -218,14 +218,14 @@ export class ResultDetailComponent implements OnInit {
         if (text) {
             if (text.includes('\n')) {
                 // if there are multiple lines, only use the first one
-                const firstLine = text.substr(0, text.indexOf('\n'));
+                const firstLine = text.slice(0, text.indexOf('\n'));
                 if (firstLine.length > feedbackPreviewCharacterLimit) {
-                    return firstLine.substr(0, feedbackPreviewCharacterLimit);
+                    return firstLine.slice(0, feedbackPreviewCharacterLimit);
                 } else {
                     return firstLine;
                 }
             } else if (text.length > feedbackPreviewCharacterLimit) {
-                return text.substr(0, feedbackPreviewCharacterLimit);
+                return text.slice(0, feedbackPreviewCharacterLimit);
             }
         }
         // for all other cases
@@ -256,12 +256,14 @@ export class ResultDetailComponent implements OnInit {
                 } else if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
                     const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
                     const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
+                    const text = this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message;
+                    const scaPreviewText = ResultDetailComponent.computeFeedbackPreviewText(text);
                     return {
                         type: FeedbackItemType.Issue,
                         category: 'Code Issue',
                         title: `${scaCategory} Issue in file ${this.getIssueLocation(scaIssue)}`.trim(),
-                        text: this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message,
-                        previewText,
+                        text,
+                        previewText: scaPreviewText,
                         positive: false,
                         credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
                         appliedCredits: feedback.credits,

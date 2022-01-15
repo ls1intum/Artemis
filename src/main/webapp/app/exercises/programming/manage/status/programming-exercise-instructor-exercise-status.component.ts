@@ -4,9 +4,9 @@ import { filter, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { hasSolutionParticipationChanged, hasTemplateParticipationChanged } from 'app/overview/participation.utils';
 import { findLatestResult } from 'app/shared/util/utils';
 import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { hasSolutionParticipationChanged, hasTemplateParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 
 /**
  * Describes programming exercise issues

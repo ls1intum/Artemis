@@ -3,7 +3,7 @@ import { DebugElement } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -516,6 +516,54 @@ describe('ProgrammingExercise Management Update Component', () => {
             comp.programmingExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
             expect(comp.getInvalidReasons()).toContainEqual({
                 translateKey: 'artemisApp.exercise.form.packageName.pattern.KOTLIN',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language C', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.C;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language Empty', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.EMPTY;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language Python', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.PYTHON;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language Assembler', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.ASSEMBLER;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language OCAML', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.OCAML;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language VHDL', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.VHDL;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
                 translateValues: {},
             });
         });

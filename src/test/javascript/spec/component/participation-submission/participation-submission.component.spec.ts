@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -191,8 +191,8 @@ describe('ParticipationSubmissionComponent', () => {
     }));
 
     it('Template Submission is correctly loaded', fakeAsync(() => {
-        TestBed.get(ActivatedRoute).params = of({ participationId: 2, exerciseId: 42 });
-        TestBed.get(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
+        TestBed.inject(ActivatedRoute).params = of({ participationId: 2, exerciseId: 42 });
+        TestBed.inject(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
         const templateParticipation = new TemplateProgrammingExerciseParticipation();
         templateParticipation.id = 2;
         templateParticipation.submissions = [
@@ -228,8 +228,8 @@ describe('ParticipationSubmissionComponent', () => {
     }));
 
     it('Solution Submission is correctly loaded', fakeAsync(() => {
-        TestBed.get(ActivatedRoute).params = of({ participationId: 3, exerciseId: 42 });
-        TestBed.get(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
+        TestBed.inject(ActivatedRoute).params = of({ participationId: 3, exerciseId: 42 });
+        TestBed.inject(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
         const solutionParticipation = new SolutionProgrammingExerciseParticipation();
         solutionParticipation.id = 3;
         solutionParticipation.submissions = [

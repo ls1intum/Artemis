@@ -1,144 +1,135 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeAll;
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import javax.mail.internet.MimeMessage;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
-import de.tum.in.www1.artemis.service.MailService;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class SingleUserNotificationServiceTest {
+public class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    private static SingleUserNotificationService singleUserNotificationService;
+    private SingleUserNotificationService singleUserNotificationService;
 
-    @Captor
-    private static ArgumentCaptor<Notification> notificationCaptor;
+    @Autowired
+    private NotificationRepository notificationRepository;
 
-    private Notification capturedNotification;
+    @Autowired
+    private NotificationSettingRepository notificationSettingRepository;
 
-    @Mock
-    private static User user;
+    @Autowired
+    private ExerciseRepository exerciseRepository;
 
-    @Mock
-    private static Exercise exercise;
+    private User user;
 
-    @Mock
-    private static FileUploadExercise fileUploadExercise;
+    private FileUploadExercise fileUploadExercise;
 
-    @Mock
-    private static SingleUserNotificationRepository singleUserNotificationRepository;
+    private Post post;
 
-    @Mock
-    private static SimpMessageSendingOperations messagingTemplate;
+    private Course course;
 
-    @Mock
-    private static MailService mailService;
+    private Exercise exercise;
 
-    @Mock
-    private static NotificationSettingsService notificationSettingsService;
+    private PlagiarismComparison<TextSubmissionElement> plagiarismComparison;
 
-    @Mock
-    private static Post post;
-
-    @Mock
-    private static Lecture lecture;
-
-    @Mock
-    private static Course course;
-
-    private final static Long COURSE_ID = 27L;
+    private Result result;
 
     /**
-     * Sets up all needed mocks and their wanted behavior once for all test cases.
-     * These are the common mocks and structures which behavior is fixed and will not change
-     */
-    @BeforeAll
-    public static void setUp() {
-        mailService = mock(MailService.class);
-        doNothing().when(mailService).sendNotificationEmailForMultipleUsers(any(), any(), any());
-
-        course = mock(Course.class);
-        when(course.getId()).thenReturn(COURSE_ID);
-
-        notificationCaptor = ArgumentCaptor.forClass(Notification.class);
-
-        messagingTemplate = mock(SimpMessageSendingOperations.class);
-
-        notificationSettingsService = mock(NotificationSettingsService.class);
-
-        singleUserNotificationRepository = mock(SingleUserNotificationRepository.class);
-
-        singleUserNotificationService = spy(new SingleUserNotificationService(singleUserNotificationRepository, messagingTemplate, mailService, notificationSettingsService));
-
-        exercise = mock(Exercise.class);
-
-        fileUploadExercise = mock(FileUploadExercise.class);
-        when(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
-
-        user = mock(User.class);
-
-        lecture = mock(Lecture.class);
-        when(lecture.getCourse()).thenReturn(course);
-
-        post = mock(Post.class);
-        when(post.getExercise()).thenReturn(exercise);
-        when(post.getLecture()).thenReturn(lecture);
-        when(post.getAuthor()).thenReturn(user);
-        when(post.getCourse()).thenReturn(course);
-    }
-
-    /**
-     * Prepares and cleans the mocks that are modified during the tests
+     * Sets up all needed mocks and their wanted behavior
      */
     @BeforeEach
-    public void cleanMocks() {
-        reset(exercise);
-        when(exercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
+    public void setUp() {
+        SecurityUtils.setAuthorizationObject();
 
-        reset(singleUserNotificationService);
+        course = database.createCourse();
 
-        reset(notificationSettingsService);
+        List<User> users = database.addUsers(3, 0, 0, 0);
+        user = users.get(0);
 
-        reset(singleUserNotificationRepository);
-        when(singleUserNotificationRepository.save(any())).thenReturn(null);
+        exercise = new TextExercise();
+        exercise.setCourse(course);
+        exercise.setMaxPoints(10D);
 
-        reset(messagingTemplate);
+        fileUploadExercise = new FileUploadExercise();
+        fileUploadExercise.setCourse(course);
+
+        Lecture lecture = new Lecture();
+        lecture.setCourse(course);
+
+        post = new Post();
+        post.setExercise(exercise);
+        post.setLecture(lecture);
+        post.setAuthor(user);
+        post.setCourse(course);
+
+        PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission = new PlagiarismSubmission<>();
+        plagiarismSubmission.setStudentLogin(user.getLogin());
+
+        TextPlagiarismResult plagiarismResult = new TextPlagiarismResult();
+        plagiarismResult.setExercise(exercise);
+
+        plagiarismComparison = new PlagiarismComparison<>();
+        plagiarismComparison.setSubmissionA(plagiarismSubmission);
+        plagiarismComparison.setPlagiarismResult(plagiarismResult);
+
+        result = new Result();
+        result.setScore(1D);
+        result.setCompletionDate(ZonedDateTime.now().minusMinutes(1));
+
+        doNothing().when(javaMailSender).send(any(MimeMessage.class));
+    }
+
+    @AfterEach
+    public void resetDatabase() {
+        database.resetDatabase();
     }
 
     /**
      * Auxiliary method that checks if the groupNotificationRepository was called once successfully with the correct notification (type)
+     *
      * @param expectedNotificationTitle is the title (NotificationTitleTypeConstants) of the expected notification
      */
     private void verifyRepositoryCallWithCorrectNotification(String expectedNotificationTitle) {
-        verify(singleUserNotificationRepository, times(1)).save(notificationCaptor.capture());
-        capturedNotification = notificationCaptor.getValue();
-        assertThat(capturedNotification.getTitle()).isEqualTo(expectedNotificationTitle);
+        Notification capturedNotification = notificationRepository.findAll().get(0);
+        assertThat(capturedNotification.getTitle()).as("Title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
     }
 
     /// General notify Tests
 
     /**
-     * Tests if no notification (or email) is send if the settings are deactivated
+     * Tests if no notification (or email) is sent if the settings are deactivated
      * However, the notification has to be saved to the DB
      */
     @Test
     public void testSendNoNotificationOrEmailWhenSettingsAreDeactivated() {
-        when(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any())).thenReturn(false);
-        singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post, course);
-        verify(singleUserNotificationRepository, times(1)).save(notificationCaptor.capture());
+        notificationSettingRepository.save(new NotificationSetting(user, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST));
+        assertThat(notificationRepository.findAll().size()).as("No notifications should be present prior to the method call").isEqualTo(0);
+
+        singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, course);
+
+        assertThat(notificationRepository.findAll().size()).as("The notification should have been saved to the DB").isEqualTo(1);
+        // no web app notification or email should be sent
         verify(messagingTemplate, times(0)).convertAndSend(any());
     }
 
@@ -147,7 +138,7 @@ public class SingleUserNotificationServiceTest {
      */
     @Test
     public void testNotifyUserAboutNewAnswerForExercise() {
-        singleUserNotificationService.notifyUserAboutNewAnswerForExercise(post, course);
+        singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, course);
         verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_EXERCISE_POST_TITLE);
     }
 
@@ -156,7 +147,7 @@ public class SingleUserNotificationServiceTest {
      */
     @Test
     public void testNotifyUserAboutNewAnswerForLecture() {
-        singleUserNotificationService.notifyUserAboutNewAnswerForLecture(post, course);
+        singleUserNotificationService.notifyUserAboutNewReplyForLecture(post, course);
         verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_LECTURE_POST_TITLE);
     }
 
@@ -165,7 +156,7 @@ public class SingleUserNotificationServiceTest {
      */
     @Test
     public void testNotifyUserAboutNewAnswerForCoursePost() {
-        singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post, course);
+        singleUserNotificationService.notifyUserAboutNewReplyForCoursePost(post, course);
         verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
 
@@ -174,30 +165,105 @@ public class SingleUserNotificationServiceTest {
      */
     @Test
     public void testNotifyUserAboutSuccessfulFileUploadSubmission() {
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL));
         singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(fileUploadExercise, user);
         verifyRepositoryCallWithCorrectNotification(FILE_SUBMISSION_SUCCESSFUL_TITLE);
+        verifyEmail();
     }
 
-    /// Save & Send related Tests
+    // AssessedExerciseSubmission related
 
     /**
-     * Test for saveAndSend method for an exam exercise update (notification)
-     * Checks if the notification target contains the problem statement for transmitting it to the user via WebSocket
+     * Test for notifyUserAboutAssessedExerciseSubmission method
      */
     @Test
-    public void testSaveAndSend_CourseRelatedNotifications() {
-        when(notificationSettingsService.checkNotificationTypeForEmailSupport(any())).thenReturn(true);
-        when(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any())).thenReturn(true);
+    public void testNotifyUserAboutAssessedExerciseSubmission() {
+        NotificationSetting notificationSetting = new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED);
+        notificationSettingRepository.save(notificationSetting);
 
-        singleUserNotificationService.notifyUserAboutNewAnswerForCoursePost(post, course);
+        singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
 
-        // inside public saveAndSend method
-        verify(singleUserNotificationRepository, times(1)).save(any());
-        verify(messagingTemplate, times(1)).convertAndSend(any(), (Notification) any());
+        verifyRepositoryCallWithCorrectNotification(EXERCISE_SUBMISSION_ASSESSED_TITLE);
+        verifyEmail();
+    }
 
-        // inside private prepareSingleUserNotificationEmail method
-        verify(notificationSettingsService, times(1)).checkNotificationTypeForEmailSupport(any());
-        verify(notificationSettingsService, times(2)).checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(any(), any(), any()); // 2 because we check once for webapp & email
-        verify(mailService, times(1)).sendNotificationEmail(any(), any(), any());
+    /**
+     * Test for checkNotificationForAssessmentExerciseSubmission method with an undefined release date
+     */
+    @Test
+    public void testCheckNotificationForAssessmentExerciseSubmission_undefinedAssessmentDueDate() {
+        exercise = ModelFactory.generateTextExercise(null, null, null, course);
+        singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
+        verify(singleUserNotificationService, times(1)).checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
+    }
+
+    /**
+     * Test for checkNotificationForExerciseRelease method with a current or past release date
+     */
+    @Test
+    public void testCheckNotificationForAssessmentExerciseSubmission_currentOrPastAssessmentDueDate() {
+        exercise = ModelFactory.generateTextExercise(null, null, ZonedDateTime.now(), course);
+        singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
+        assertThat(notificationRepository.findAll().size()).as("One new notification should have been created").isEqualTo(1);
+    }
+
+    /**
+     * Test for checkNotificationForExerciseRelease method with a future release date
+     */
+    @Test
+    public void testCheckNotificationForAssessmentExerciseSubmission_futureAssessmentDueDate() {
+        exercise = ModelFactory.generateTextExercise(null, null, ZonedDateTime.now().plusHours(1), course);
+        singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
+        assertThat(notificationRepository.findAll().size()).as("No new notification should have been created").isEqualTo(0);
+    }
+
+    @Test
+    public void testNotifyUsersAboutAssessedExerciseSubmission() {
+        Course testCourse = database.addCourseWithFileUploadExercise();
+        Exercise testExercise = testCourse.getExercises().iterator().next();
+
+        User studentWithParticipationAndSubmissionAndResult = database.getUserByLogin("student1");
+        User studentWithParticipationButWithoutSubmission = database.getUserByLogin("student2");
+
+        database.createParticipationSubmissionAndResult(testExercise.getId(), studentWithParticipationAndSubmissionAndResult, 10.0, 10.0, 50, true);
+        database.createAndSaveParticipationForExercise(testExercise, studentWithParticipationButWithoutSubmission.getLogin());
+
+        testExercise = exerciseRepository.findAllExercisesByCourseId(testCourse.getId()).iterator().next();
+
+        singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(testExercise);
+
+        assertThat(notificationRepository.findAll().size()).as("Only one notification should have been created (for the user with a valid paticipation, submission, and result)")
+                .isEqualTo(1);
+    }
+
+    // Plagiarism related
+
+    /**
+     * Test for notifyUserAboutNewPossiblePlagiarismCase method
+     */
+    @Test
+    public void testNotifyUserAboutNewPossiblePlagiarismCase() {
+        // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
+        database.changeUser("student1");
+        singleUserNotificationService.notifyUserAboutNewPossiblePlagiarismCase(plagiarismComparison, user);
+        verifyRepositoryCallWithCorrectNotification(NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE);
+    }
+
+    /**
+     * Test for notifyUserAboutFinalPlagiarismState method
+     */
+    @Test
+    public void testNotifyUserAboutFinalPlagiarismState() {
+        // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
+        database.changeUser("student1");
+        singleUserNotificationService.notifyUserAboutFinalPlagiarismState(plagiarismComparison, user);
+        verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE);
+    }
+
+    /**
+     * Checks if an email was created and send
+     */
+    private void verifyEmail() {
+        verify(javaMailSender, timeout(1000).times(1)).createMimeMessage();
     }
 }

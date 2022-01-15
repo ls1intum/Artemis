@@ -7,7 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -21,7 +21,6 @@ import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/fee
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
@@ -58,7 +57,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     exerciseDashboardLink: string[];
     userId: number;
     isAssessor = false;
-    isAtLeastInstructor = false;
     hideBackButton: boolean;
     complaint: Complaint;
     ComplaintType = ComplaintType;
@@ -103,7 +101,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
 
         this.route.queryParamMap.subscribe((queryParams) => {
             this.hideBackButton = queryParams.get('hideBackButton') === 'true';
@@ -244,9 +241,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private checkPermissions(): void {
         this.isAssessor = this.result?.assessor?.id === this.userId;
-        if (this.modelingExercise) {
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course || this.modelingExercise.exerciseGroup!.exam!.course);
-        }
     }
 
     /**
@@ -258,7 +252,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      */
     get canOverride(): boolean {
         if (this.modelingExercise) {
-            if (this.isAtLeastInstructor) {
+            if (this.modelingExercise.isAtLeastInstructor) {
                 // Instructors can override any assessment at any time.
                 return true;
             }
@@ -279,7 +273,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     get readOnly(): boolean {
         return !isAllowedToModifyFeedback(
-            this.isAtLeastInstructor,
+            this.modelingExercise?.isAtLeastInstructor ?? false,
             this.isTestRun,
             this.isAssessor,
             this.hasAssessmentDueDatePassed,
@@ -307,7 +301,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     onError(): void {
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.submission = undefined;
         this.modelingExercise = undefined;
         this.result = undefined;

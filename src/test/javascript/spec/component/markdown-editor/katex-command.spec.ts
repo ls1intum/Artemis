@@ -1,7 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -9,14 +7,11 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ArtemisTestModule } from '../../test.module';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('KatexCommand', () => {
     let comp: MarkdownEditorComponent;
     let fixture: ComponentFixture<MarkdownEditorComponent>;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
         })
@@ -33,6 +28,6 @@ describe('KatexCommand', () => {
         comp.ngAfterViewInit();
 
         katexCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).to.equal('$$ e^{\\frac{1}{4} y^2} $$');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('$$ e^{\\frac{1}{4} y^2} $$');
     });
 });
