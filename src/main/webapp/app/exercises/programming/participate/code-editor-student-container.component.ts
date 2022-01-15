@@ -99,6 +99,9 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exercise.id!).subscribe((submissionPolicy) => {
                             this.exercise.submissionPolicy = submissionPolicy;
                         });
+                        if (this.participation.results && this.participation.results[0] && this.participation.results[0].feedbacks) {
+                            checkSubsequentFeedbackInAssessment(this.participation.results[0].feedbacks);
+                        }
                     }),
                     switchMap(() => {
                         return this.loadExerciseHints();
