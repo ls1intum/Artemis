@@ -94,7 +94,7 @@ describe('ComplaintsComponent', () => {
     });
 
     it('should throw unknown error after complaint creation', () => {
-        const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError({ status: 500 }));
+        const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError(() => ({ status: 500 })));
         const submitSpy = jest.spyOn(component.submit, 'emit');
         const errorSpy = jest.spyOn(alertService, 'error');
         component.createComplaint();
@@ -105,7 +105,7 @@ describe('ComplaintsComponent', () => {
 
     it('should throw known error after complaint creation', () => {
         const error = { error: { errorKey: 'tooManyComplaints' } } as HttpErrorResponse;
-        const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError(error));
+        const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError(() => error));
         const submitSpy = jest.spyOn(component.submit, 'emit');
         const errorSpy = jest.spyOn(alertService, 'error');
         const numberOfComplaints = 42;

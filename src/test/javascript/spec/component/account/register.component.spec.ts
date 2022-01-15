@@ -85,10 +85,10 @@ describe('Component Tests', () => {
             [RegisterService],
             fakeAsync((service: RegisterService) => {
                 jest.spyOn(service, 'save').mockReturnValue(
-                    throwError({
+                    throwError(() => ({
                         status: 400,
                         error: { type: LOGIN_ALREADY_USED_TYPE },
-                    }),
+                    })),
                 );
                 comp.registerForm.patchValue({
                     password: 'password',
@@ -108,10 +108,10 @@ describe('Component Tests', () => {
             [RegisterService],
             fakeAsync((service: RegisterService) => {
                 jest.spyOn(service, 'save').mockReturnValue(
-                    throwError({
+                    throwError(() => ({
                         status: 400,
                         error: { type: EMAIL_ALREADY_USED_TYPE },
-                    }),
+                    })),
                 );
                 comp.registerForm.patchValue({
                     password: 'password',
@@ -131,9 +131,9 @@ describe('Component Tests', () => {
             [RegisterService],
             fakeAsync((service: RegisterService) => {
                 jest.spyOn(service, 'save').mockReturnValue(
-                    throwError({
+                    throwError(() => ({
                         status: 503,
-                    }),
+                    })),
                 );
                 comp.registerForm.patchValue({
                     password: 'password',

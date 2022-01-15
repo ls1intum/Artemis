@@ -313,10 +313,10 @@ describe('ParticipationSubmissionComponent', () => {
     describe('should handle failed delete', () => {
         beforeEach(() => {
             const error = { message: '400 error', error: { message: 'error.hasComplaint' } } as HttpErrorResponse;
-            deleteFileUploadAssessmentStub.mockReturnValue(throwError(error));
-            deleteProgrammingAssessmentStub.mockReturnValue(throwError(error));
-            deleteModelingAssessmentStub.mockReturnValue(throwError(error));
-            deleteTextAssessmentStub.mockReturnValue(throwError(error));
+            deleteFileUploadAssessmentStub.mockReturnValue(throwError(() => error));
+            deleteProgrammingAssessmentStub.mockReturnValue(throwError(() => error));
+            deleteModelingAssessmentStub.mockReturnValue(throwError(() => error));
+            deleteTextAssessmentStub.mockReturnValue(throwError(() => error));
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submissionWithTwoResults2] }));
             jest.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
         });
@@ -329,7 +329,7 @@ describe('ParticipationSubmissionComponent', () => {
 
         it('should not delete result of fileUploadSubmission because of server error', fakeAsync(() => {
             const error2 = { message: '403 error', error: { message: 'error.badAuthentication' } } as HttpErrorResponse;
-            deleteFileUploadAssessmentStub.mockReturnValue(throwError(error2));
+            deleteFileUploadAssessmentStub.mockReturnValue(throwError(() => error2));
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();

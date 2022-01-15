@@ -103,7 +103,7 @@ describe('SettingsComponent', () => {
         fakeAsync((service: AccountService) => {
             // GIVEN
             jest.spyOn(service, 'identity').mockReturnValue(Promise.resolve(accountValues));
-            jest.spyOn(service, 'save').mockReturnValue(throwError('ERROR'));
+            jest.spyOn(service, 'save').mockReturnValue(throwError(() => 'ERROR'));
 
             // WHEN
             comp.ngOnInit();
