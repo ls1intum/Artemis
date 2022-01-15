@@ -76,11 +76,11 @@
             "production": {
               "optimization": {
                 "scripts": true,
-                  "styles": {
-                    "minify": true,
-                    "inlineCritical": false
-                  },
-                  "fonts": true
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
               },
               "outputHashing": "all",
               "sourceMap": true,
