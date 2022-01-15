@@ -64,7 +64,7 @@ describe('Notification Popup Component', () => {
                 notificationService = TestBed.inject(NotificationService);
                 accountService = TestBed.inject(AccountService);
                 examExerciseUpdateService = TestBed.inject(ExamExerciseUpdateService);
-                router = TestBed.get(Router);
+                router = TestBed.inject(Router);
             });
     });
 
