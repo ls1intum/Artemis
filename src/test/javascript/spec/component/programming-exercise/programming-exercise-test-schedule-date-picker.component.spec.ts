@@ -3,8 +3,8 @@ import { NgModel } from '@angular/forms';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockDirective, MockPipe, MockModule } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -23,7 +23,7 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OwlNativeDateTimeModule, OwlDateTimeModule],
+            imports: [ArtemisTestModule, MockModule(OwlDateTimeModule)],
             declarations: [
                 ProgrammingExerciseTestScheduleDatePickerComponent,
                 MockDirective(NgModel),
