@@ -24,6 +24,8 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * A ProgrammingExercise.
@@ -652,6 +654,73 @@ public class ProgrammingExercise extends Exercise {
     public void checksAndSetsIfProgrammingExerciseIsLocalSimulation() {
         if (getTestRepositoryUrl().contains("artemislocalhost")) {
             setIsLocalSimulation(true);
+        }
+    }
+
+    /**
+     * Validates general programming exercise settings
+     * 1. Validates the programming language
+     *
+     */
+    public void validateProgrammingSettings() {
+
+        // Check if a participation mode was selected
+        if (!Boolean.TRUE.equals(isAllowOnlineEditor()) && !Boolean.TRUE.equals(isAllowOfflineIde())) {
+            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", "Exercise", "noParticipationModeAllowed");
+        }
+
+        // Check if Xcode has no online code editor enabled
+        if (ProjectType.XCODE.equals(getProjectType()) && Boolean.TRUE.equals(isAllowOnlineEditor())) {
+            throw new BadRequestAlertException("The online editor is not allowed for Xcode programming exercises", "Exercise", "noParticipationModeAllowed");
+        }
+
+        // Check if programming language is set
+        if (getProgrammingLanguage() == null) {
+            throw new BadRequestAlertException("No programming language was specified", "Exercise", "programmingLanguageNotSet");
+        }
+    }
+
+    /**
+     * Validates the static code analysis settings of the programming exercise
+     * 1. The flag staticCodeAnalysisEnabled must not be null
+     * 2. Static code analysis and sequential test runs can't be active at the same time
+     * 3. Static code analysis can only be enabled for supported programming languages
+     * 4. Static code analysis max penalty must only be set if static code analysis is enabled
+     * 5. Static code analysis max penalty must be positive
+     *
+     * @param programmingLanguageFeature describes the features available for the programming language of the programming exercise
+     */
+    public void validateStaticCodeAnalysisSettings(ProgrammingLanguageFeature programmingLanguageFeature) {
+        // Check if the static code analysis flag was set
+        if (isStaticCodeAnalysisEnabled() == null) {
+            throw new BadRequestAlertException("The static code analysis flag must be set to true or false", "Exercise", "staticCodeAnalysisFlagNotSet");
+        }
+
+        // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && hasSequentialTestRuns()) {
+            throw new BadRequestAlertException("The static code analysis with sequential test runs is not supported at the moment", "Exercise", "staticCodeAnalysisAndSequential");
+        }
+
+        // Check if the programming language supports static code analysis
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.isStaticCodeAnalysis()) {
+            throw new BadRequestAlertException("The static code analysis is not supported for this programming language", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
+        }
+
+        // Check that Xcode has no SCA enabled
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && ProjectType.XCODE.equals(getProjectType())) {
+            throw new BadRequestAlertException("The static code analysis is not supported for Xcode programming exercises", "Exercise",
+                    "staticCodeAnalysisNotSupportedForLanguage");
+        }
+
+        // Static code analysis max penalty must only be set if static code analysis is enabled
+        if (Boolean.FALSE.equals(isStaticCodeAnalysisEnabled()) && getMaxStaticCodeAnalysisPenalty() != null) {
+            throw new BadRequestAlertException("Max static code analysis penalty must only be set if static code analysis is enabled", "Exercise",
+                    "staticCodeAnalysisDisabledButPenaltySet");
+        }
+
+        // Static code analysis max penalty must be positive
+        if (getMaxStaticCodeAnalysisPenalty() != null && getMaxStaticCodeAnalysisPenalty() < 0) {
+            throw new BadRequestAlertException("The static code analysis penalty must not be negative", "Exercise", "staticCodeAnalysisPenaltyNotNegative");
         }
     }
 }

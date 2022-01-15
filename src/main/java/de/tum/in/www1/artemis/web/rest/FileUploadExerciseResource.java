@@ -103,7 +103,7 @@ public class FileUploadExerciseResource {
         }
 
         // validates general settings: points, dates
-        exerciseService.validateGeneralSettings(fileUploadExercise);
+        fileUploadExercise.validateGeneralSettings();
 
         // Validate the new file upload exercise
         validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
@@ -119,7 +119,7 @@ public class FileUploadExerciseResource {
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
 
-        groupNotificationService.checkNotificationForExerciseRelease(fileUploadExercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(fileUploadExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -176,7 +176,7 @@ public class FileUploadExerciseResource {
         // Validate the updated file upload exercise
         validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
         // validates general settings: points, dates
-        exerciseService.validateGeneralSettings(fileUploadExercise);
+        fileUploadExercise.validateGeneralSettings();
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);

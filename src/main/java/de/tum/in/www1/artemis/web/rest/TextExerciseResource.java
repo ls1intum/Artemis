@@ -152,7 +152,7 @@ public class TextExerciseResource {
             throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
         }
         // validates general settings: points, dates
-        exerciseService.validateGeneralSettings(textExercise);
+        textExercise.validateGeneralSettings();
 
         if (textExercise.getDueDate() == null && textExercise.getAssessmentDueDate() != null) {
             throw new BadRequestAlertException("If you set an assessmentDueDate, then you need to add also a dueDate", ENTITY_NAME, "dueDate");
@@ -176,7 +176,7 @@ public class TextExerciseResource {
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
 
-        groupNotificationService.checkNotificationForExerciseRelease(textExercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(textExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -203,7 +203,7 @@ public class TextExerciseResource {
         }
 
         // validates general settings: points, dates
-        exerciseService.validateGeneralSettings(textExercise);
+        textExercise.validateGeneralSettings();
 
         // Valid exercises have set either a course or an exerciseGroup
         textExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);

@@ -241,7 +241,7 @@ public class ParticipationResource {
             throw new BadRequestAlertException("The participation needs to be connected to an exercise", ENTITY_NAME, "exerciseidmissing");
         }
         if (participation.getExercise().getId() != exerciseId) {
-            throw new ConflictException("The exercise of the participation does not match the exercise id in the URL");
+            throw new ConflictException("The exercise of the participation does not match the exercise id in the URL", ENTITY_NAME, "noidmatch");
         }
         var originalParticipation = studentParticipationRepository.findByIdElseThrow(participation.getId());
         var user = userRepository.getUserWithGroupsAndAuthorities();

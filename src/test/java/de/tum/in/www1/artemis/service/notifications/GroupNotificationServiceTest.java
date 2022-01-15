@@ -10,6 +10,8 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.mail.internet.MimeMessage;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -79,8 +81,6 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
 
     private List<String> archiveErrors;
 
-    private final static Long EXAM_ID = 42L;
-
     private final static String NOTIFICATION_TEXT = "notificationText";
 
     private final static ZonedDateTime FUTURISTIC_TIME = ZonedDateTime.now().plusHours(2);
@@ -146,6 +146,8 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
 
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         database.changeUser("instructor1");
+
+        doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
     @AfterEach
@@ -172,8 +174,8 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
     // NotifyAboutExerciseUpdate
 
     /**
-    * Test for notifyAboutExerciseUpdate method with an undefined release date
-    */
+     * Test for notifyAboutExerciseUpdate method with an undefined release date
+     */
     @Test
     public void testNotifyAboutExerciseUpdate_undefinedReleaseDate() {
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
@@ -181,8 +183,8 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
     }
 
     /**
-    * Test for notifyAboutExerciseUpdate method with a future release date
-    */
+     * Test for notifyAboutExerciseUpdate method with a future release date
+     */
     @Test
     public void testNotifyAboutExerciseUpdate_futureReleaseDate() {
         exercise.setReleaseDate(FUTURE_TIME);
@@ -191,8 +193,8 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
     }
 
     /**
-    * Test for notifyAboutExerciseUpdate method with a correct release date (now) for exam exercises
-    */
+     * Test for notifyAboutExerciseUpdate method with a correct release date (now) for exam exercises
+     */
     @Test
     public void testNotifyAboutExerciseUpdate_correctReleaseDate_examExercise() {
         examExercise.setReleaseDate(CURRENT_TIME);
@@ -201,8 +203,8 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
     }
 
     /**
-    * Test for notifyAboutExerciseUpdate method with a correct release date (now) for course exercises
-    */
+     * Test for notifyAboutExerciseUpdate method with a correct release date (now) for course exercises
+     */
     @Test
     public void testNotifyAboutExerciseUpdate_correctReleaseDate_courseExercise() {
         exercise.setReleaseDate(CURRENT_TIME);
@@ -215,31 +217,31 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
     /// CheckNotificationForExerciseRelease
 
     /**
-    * Test for checkNotificationForExerciseRelease method with an undefined release date
-    */
+     * Test for checkNotificationForExerciseRelease method with an undefined release date
+     */
     @Test
     public void testCheckNotificationForExerciseRelease_undefinedReleaseDate() {
-        groupNotificationService.checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(exercise, instanceMessageSendService);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
     /**
-    * Test for checkNotificationForExerciseRelease method with a current or past release date
-    */
+     * Test for checkNotificationForExerciseRelease method with a current or past release date
+     */
     @Test
     public void testCheckNotificationForExerciseRelease_currentOrPastReleaseDate() {
         exercise.setReleaseDate(CURRENT_TIME);
-        groupNotificationService.checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(exercise, instanceMessageSendService);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
     /**
-    * Test for checkNotificationForExerciseRelease method with a future release date
-    */
+     * Test for checkNotificationForExerciseRelease method with a future release date
+     */
     @Test
     public void testCheckNotificationForExerciseRelease_futureReleaseDate() {
         exercise.setReleaseDate(FUTURE_TIME);
-        groupNotificationService.checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(exercise, instanceMessageSendService);
         verify(instanceMessageSendService, times(1)).sendExerciseReleaseNotificationSchedule(any());
     }
 
@@ -248,46 +250,58 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
     /**
      * Auxiliary method to set the needed mocks and testing utilities for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method
      */
-    private void testCheckNotificationForExerciseReleaseHelper(ZonedDateTime dueDateOfInitialExercise, ZonedDateTime dueDateOfUpdatedExercise,
-            boolean expectNotifyAboutExerciseRelease) {
-        exercise.setReleaseDate(dueDateOfInitialExercise);
-        updatedExercise.setReleaseDate(dueDateOfUpdatedExercise);
+    private void testCheckNotificationForExerciseReleaseHelper(ZonedDateTime dateOfInitialExercise, ZonedDateTime dateOfUpdatedExercise,
+            boolean expectNotifyAboutExerciseReleaseNow, boolean expectSchedulingAtRelease, boolean expectNotifyUsersAboutAssessedExerciseSubmissionNow,
+            boolean expectSchedulingAtAssessmentDueDate) {
+        exercise.setReleaseDate(dateOfInitialExercise);
+        exercise.setAssessmentDueDate(dateOfInitialExercise);
+        updatedExercise.setReleaseDate(dateOfUpdatedExercise);
+        updatedExercise.setAssessmentDueDate(dateOfUpdatedExercise);
 
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exercise, updatedExercise, NOTIFICATION_TEXT, instanceMessageSendService);
 
         verify(groupNotificationService, times(1)).notifyAboutExerciseUpdate(any(), any());
-        verify(groupNotificationService, times(expectNotifyAboutExerciseRelease ? 1 : 0)).checkNotificationForExerciseRelease(any(), any());
+
+        // Exercise Released Notifications
+        verify(groupNotificationService, times(expectNotifyAboutExerciseReleaseNow ? 1 : 0)).notifyAllGroupsAboutReleasedExercise(any());
+        verify(instanceMessageSendService, times(expectSchedulingAtRelease ? 1 : 0)).sendExerciseReleaseNotificationSchedule(any());
+
+        // Assessed Exercise Submitted Notifications
+        verify(singleUserNotificationService, times(expectNotifyUsersAboutAssessedExerciseSubmissionNow ? 1 : 0)).notifyUsersAboutAssessedExerciseSubmission(any());
+        verify(instanceMessageSendService, times(expectSchedulingAtAssessmentDueDate ? 1 : 0)).sendAssessedExerciseSubmissionNotificationSchedule(any());
 
         // needed to reset the verify() call counter
         reset(groupNotificationService);
+        reset(singleUserNotificationService);
+        reset(instanceMessageSendService);
     }
 
     /**
-    * Test for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method based on a decision matrix
-    */
+     * Test for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method based on a decision matrix
+     */
     @Test
     public void testCheckAndCreateAppropriateNotificationsWhenUpdatingExercise() {
-        testCheckNotificationForExerciseReleaseHelper(null, null, false);
-        testCheckNotificationForExerciseReleaseHelper(null, PAST_TIME, false);
-        testCheckNotificationForExerciseReleaseHelper(null, CURRENT_TIME, false);
-        testCheckNotificationForExerciseReleaseHelper(null, FUTURE_TIME, true);
+        testCheckNotificationForExerciseReleaseHelper(null, null, false, false, false, false);
+        testCheckNotificationForExerciseReleaseHelper(null, PAST_TIME, false, false, false, false);
+        testCheckNotificationForExerciseReleaseHelper(null, CURRENT_TIME, false, false, false, false);
+        testCheckNotificationForExerciseReleaseHelper(null, FUTURE_TIME, false, true, false, true);
 
-        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, null, false);
-        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, ANCIENT_TIME, false);
-        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, PAST_TIME, false); // same time -> no change
-        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, CURRENT_TIME, false);
-        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, FUTURE_TIME, true);
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, null, false, false, false, false);
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, ANCIENT_TIME, false, false, false, false);
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, PAST_TIME, false, false, false, false); // same time -> no change
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, CURRENT_TIME, false, false, false, false);
+        testCheckNotificationForExerciseReleaseHelper(PAST_TIME, FUTURE_TIME, false, true, false, true);
 
-        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, null, false);
-        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, PAST_TIME, false);
-        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, CURRENT_TIME, false); // same time -> no change
-        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, FUTURE_TIME, true);
+        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, null, false, false, false, false);
+        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, PAST_TIME, false, false, false, false);
+        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, CURRENT_TIME, false, false, false, false); // same time -> no change
+        testCheckNotificationForExerciseReleaseHelper(CURRENT_TIME, FUTURE_TIME, false, true, false, true);
 
-        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, null, true);
-        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, PAST_TIME, true);
-        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, CURRENT_TIME, true);
-        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, FUTURE_TIME, false); // same time -> no change
-        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, FUTURISTIC_TIME, true);
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, null, true, false, true, false);
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, PAST_TIME, true, false, true, false);
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, CURRENT_TIME, true, false, true, false);
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, FUTURE_TIME, false, false, false, false); // same time -> no change
+        testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, FUTURISTIC_TIME, false, true, false, true);
     }
 
     /// General notifyGroupX Tests
@@ -305,9 +319,10 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
 
     /**
      * Checks if an email was created and send
+     * @param times how often the email should have been sent
      */
-    private void verifyEmail() {
-        verify(javaMailSender, timeout(1000).times(1)).createMimeMessage();
+    private void verifyEmail(int times) {
+        verify(javaMailSender, timeout(1500).times(times)).createMimeMessage();
     }
 
     /**
@@ -336,7 +351,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
         groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotification(1, ATTACHMENT_CHANGE_TITLE);
 
-        verifyEmail();
+        verifyEmail(1);
     }
 
     /**
@@ -347,7 +362,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
         prepareNotificationSettingForTest(student, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
         groupNotificationService.notifyStudentGroupAboutExercisePractice(exercise);
         verifyRepositoryCallWithCorrectNotification(1, EXERCISE_PRACTICE_TITLE);
-        verifyEmail();
+        verifyEmail(1);
     }
 
     /**
@@ -376,7 +391,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
         prepareNotificationSettingForTest(student, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED);
         groupNotificationService.notifyAllGroupsAboutReleasedExercise(exercise);
         verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, EXERCISE_RELEASED_TITLE);
-        verifyEmail();
+        verifyEmail(1);
     }
 
     /**
@@ -459,7 +474,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
         prepareNotificationSettingForTest(student, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST);
         groupNotificationService.notifyAllGroupsAboutNewAnnouncement(post, course);
         verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_ANNOUNCEMENT_POST_TITLE);
-        verifyEmail();
+        verifyEmail(2);
     }
 
     /**

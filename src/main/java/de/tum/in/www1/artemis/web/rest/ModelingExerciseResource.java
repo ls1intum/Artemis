@@ -131,7 +131,7 @@ public class ModelingExerciseResource {
         var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         // validates general settings: points, dates
-        exerciseService.validateGeneralSettings(modelingExercise);
+        modelingExercise.validateGeneralSettings();
 
         // if exercise is created from scratch we create a new knowledge instance
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
@@ -140,7 +140,7 @@ public class ModelingExerciseResource {
 
         modelingExerciseService.scheduleOperations(result.getId());
 
-        groupNotificationService.checkNotificationForExerciseRelease(modelingExercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(modelingExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -183,7 +183,7 @@ public class ModelingExerciseResource {
         var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         // validates general settings: points, dates
-        exerciseService.validateGeneralSettings(modelingExercise);
+        modelingExercise.validateGeneralSettings();
 
         final ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
 
@@ -359,7 +359,7 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
         // validates general settings: points, dates
-        exerciseService.validateGeneralSettings(importedExercise);
+        importedExercise.validateGeneralSettings();
 
         if (importedExercise.isExamExercise()) {
             log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());
