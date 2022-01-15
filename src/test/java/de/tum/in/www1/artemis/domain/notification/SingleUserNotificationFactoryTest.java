@@ -205,6 +205,20 @@ public class SingleUserNotificationFactoryTest {
         createAndCheckExerciseNotification();
     }
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of EXERCISE_SUBMISSION_ASSESSED.
+     * I.e. notifications that originate when a user's exercise submission has been assessed.
+     */
+    @Test
+    public void createNotification_withNotificationType_() {
+        notificationType = EXERCISE_SUBMISSION_ASSESSED;
+        expectedTitle = EXERCISE_SUBMISSION_ASSESSED_TITLE;
+        expectedText = "Your submission for the " + exercise.getExerciseType().getExerciseTypeAsReadableString() + " exercise \"" + exercise.getTitle() + "\" has been assessed.";
+        expectedPriority = MEDIUM;
+        expectedTransientTarget = createExerciseTarget(exercise, EXERCISE_SUBMISSION_ASSESSED_TITLE);
+        createAndCheckExerciseNotification();
+    }
+
     /// Test for Notifications based on Plagiarism
 
     /**
