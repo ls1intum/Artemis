@@ -95,7 +95,7 @@ describe('Plagiarism Split View Component', () => {
             comparison: { currentValue: comparison } as SimpleChange,
         });
 
-        expect(comp.isProgrammingOrTextExercise).toEqual(true);
+        expect(comp.isProgrammingOrTextExercise).toBe(true);
         expect(comp.isModelingExercise).toEqual(false);
         expect(comp.parseTextMatches).toHaveBeenCalledTimes(1);
     });
