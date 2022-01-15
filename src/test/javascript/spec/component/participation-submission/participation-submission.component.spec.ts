@@ -191,8 +191,8 @@ describe('ParticipationSubmissionComponent', () => {
     }));
 
     it('Template Submission is correctly loaded', fakeAsync(() => {
-        TestBed.get(ActivatedRoute).params = of({ participationId: 2, exerciseId: 42 });
-        TestBed.get(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
+        TestBed.inject(ActivatedRoute).params = of({ participationId: 2, exerciseId: 42 });
+        TestBed.inject(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
         const templateParticipation = new TemplateProgrammingExerciseParticipation();
         templateParticipation.id = 2;
         templateParticipation.submissions = [
@@ -228,8 +228,8 @@ describe('ParticipationSubmissionComponent', () => {
     }));
 
     it('Solution Submission is correctly loaded', fakeAsync(() => {
-        TestBed.get(ActivatedRoute).params = of({ participationId: 3, exerciseId: 42 });
-        TestBed.get(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
+        TestBed.inject(ActivatedRoute).params = of({ participationId: 3, exerciseId: 42 });
+        TestBed.inject(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
         const solutionParticipation = new SolutionProgrammingExerciseParticipation();
         solutionParticipation.id = 3;
         solutionParticipation.submissions = [

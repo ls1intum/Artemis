@@ -1,4 +1,4 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
 import { take } from 'rxjs/operators';
@@ -13,7 +13,6 @@ import { AttachmentService } from 'app/lecture/attachment.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 
 describe('Attachment Service', () => {
-    let injector: TestBed;
     let httpMock: HttpTestingController;
     let service: AttachmentService;
     const resourceUrl = SERVER_API_URL + 'api/attachments';
@@ -29,9 +28,8 @@ describe('Attachment Service', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(AttachmentService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(AttachmentService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         expectedResult = {} as HttpResponse<Attachment>;
         elemDefault = new Attachment();
