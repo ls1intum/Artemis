@@ -324,7 +324,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // If we don't receive a response within that time throw an error the subscription can then handle
         this.examParticipationService
             .submitStudentExam(this.courseId, this.examId, this.studentExam)
-            .pipe(timeoutWith(20000, throwError(new Error('Submission request timed out. Please check your connection and try again.'))))
+            .pipe(
+                timeoutWith(
+                    20000,
+                    throwError(() => new Error('Submission request timed out. Please check your connection and try again.')),
+                ),
+            )
             .subscribe(
                 (studentExam: StudentExam) => {
                     this.studentExam = studentExam;

@@ -193,7 +193,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                     } else {
                         this.onError.emit('saveFailed');
                     }
-                    return throwError(error);
+                    return throwError(() => error);
                 }),
             );
         }
