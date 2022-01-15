@@ -45,6 +45,7 @@ import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/asses
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -769,6 +770,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 // lock-count from the remaining unassessed submissions of the current correction round.
                 this.firstRoundAssessments = this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i];
             }
+        }
+    }
+
+    navigateToExerciseSubmissionOverview(event: any): void {
+        if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
+            this.router.navigate(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
         }
     }
 }
