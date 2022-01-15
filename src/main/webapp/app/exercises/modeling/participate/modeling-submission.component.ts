@@ -119,8 +119,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {
             if (params['participationId']) {
-                this.modelingSubmissionService.getLatestSubmissionForModelingEditor(params['participationId']).subscribe(
-                    (modelingSubmission) => {
+                this.modelingSubmissionService.getLatestSubmissionForModelingEditor(params['participationId']).subscribe({
+                    next: (modelingSubmission) => {
                         this.updateModelingSubmission(modelingSubmission);
                         if (this.modelingExercise.teamMode) {
                             this.setupSubmissionStreamForTeam();
@@ -128,12 +128,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             this.setAutoSaveTimer();
                         }
                     },
-                    (error) => {
+                    error: (error) => {
                         if (error.status === 403) {
                             this.router.navigate(['accessdenied']);
                         }
                     },
-                );
+                });
             }
         });
         window.scroll(0, 0);
@@ -293,8 +293,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.autoSaveTimer = 0;
 
         if (this.submission.id) {
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id!).subscribe(
-                (response) => {
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id!).subscribe({
+                next: (response) => {
                     this.submission = response.body!;
                     // reconnect so that the submission status is displayed correctly in the result.component
                     this.submission.participation!.submissions = [this.submission];
@@ -302,18 +302,18 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.result = getLatestSubmissionResult(this.submission);
                     this.onSaveSuccess();
                 },
-                (error: HttpErrorResponse) => this.onSaveError(error),
-            );
+                error: (error: HttpErrorResponse) => this.onSaveError(error),
+            });
         } else {
-            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id!).subscribe(
-                (submission) => {
+            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id!).subscribe({
+                next: (submission) => {
                     this.submission = submission.body!;
                     this.result = getLatestSubmissionResult(this.submission);
                     this.subscribeToAutomaticSubmissionWebsocket();
                     this.onSaveSuccess();
                 },
-                (error: HttpErrorResponse) => this.onSaveError(error),
-            );
+                error: (error: HttpErrorResponse) => this.onSaveError(error),
+            });
         }
     }
 
@@ -330,8 +330,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.isSaving = true;
         this.autoSaveTimer = 0;
         if (this.submission.id) {
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id!).subscribe(
-                (response) => {
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id!).subscribe({
+                next: (response) => {
                     this.submission = response.body!;
                     if (this.submission.model) {
                         this.umlModel = JSON.parse(this.submission.model);
@@ -360,11 +360,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     }
                     this.onSaveSuccess();
                 },
-                (error: HttpErrorResponse) => this.onSaveError(error),
-            );
+                error: (error: HttpErrorResponse) => this.onSaveError(error),
+            });
         } else {
-            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id!).subscribe(
-                (response) => {
+            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id!).subscribe({
+                next: (response) => {
                     this.submission = response.body!;
                     this.submissionChange.next(this.submission);
                     this.participation = this.submission.participation as StudentParticipation;
@@ -380,8 +380,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.subscribeToAutomaticSubmissionWebsocket();
                     this.onSaveSuccess();
                 },
-                (error: HttpErrorResponse) => this.onSaveError(error),
-            );
+                error: (error: HttpErrorResponse) => this.onSaveError(error),
+            });
         }
     }
 

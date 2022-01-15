@@ -67,16 +67,16 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                     }),
                 ),
             )
-            .subscribe(
-                (res: HttpResponse<User[]>) => {
+            .subscribe({
+                next: (res: HttpResponse<User[]>) => {
                     this.loadingSearchResult = false;
                     this.onSuccess(res.body || [], res.headers);
                 },
-                (res: HttpErrorResponse) => {
+                error: (res: HttpErrorResponse) => {
                     this.loadingSearchResult = false;
                     onError(this.alertService, res);
                 },
-            );
+            });
     }
 
     /**
@@ -162,16 +162,16 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param login of the user that should be deleted
      */
     deleteUser(login: string) {
-        this.userService.delete(login).subscribe(
-            () => {
+        this.userService.delete(login).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'userListModification',
                     content: 'Deleted a user',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     private onSuccess(users: User[], headers: HttpHeaders) {

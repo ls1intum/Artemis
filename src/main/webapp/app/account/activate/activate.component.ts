@@ -32,9 +32,9 @@ export class ActivateComponent implements OnInit {
     }
 
     activateAccount() {
-        this.route.queryParams.pipe(flatMap((params) => this.activateService.get(params.key))).subscribe(
-            () => (this.success = true),
-            () => (this.error = true),
-        );
+        this.route.queryParams.pipe(flatMap((params) => this.activateService.get(params.key))).subscribe({
+            next: () => (this.success = true),
+            error: () => (this.error = true),
+        });
     }
 }

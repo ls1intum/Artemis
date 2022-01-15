@@ -801,31 +801,31 @@ export class GuidedTourService {
                             ),
                             switchMap(() => this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey)),
                         )
-                        .subscribe(
-                            () => {
+                        .subscribe({
+                            next: () => {
                                 this.navigateToUrlAfterRestart(`/courses/${this.currentCourse!.id}/exercises`);
                             },
-                            () => {
+                            error: () => {
                                 // start tour in case the participation was deleted otherwise
                                 this.restartIsLoading = false;
                                 this.startTour();
                             },
-                        );
+                        });
                     break;
                 // Reset tutor assessment participation
                 case ResetParticipation.TUTOR_ASSESSMENT:
                     this.restartIsLoading = true;
-                    this.tutorParticipationService.deleteTutorParticipationForGuidedTour(this.currentCourse, this.currentExercise).subscribe(
-                        () => {
+                    this.tutorParticipationService.deleteTutorParticipationForGuidedTour(this.currentCourse, this.currentExercise).subscribe({
+                        next: () => {
                             this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey).subscribe(() => {
                                 this.navigateToUrlAfterRestart('/course-management');
                             });
                         },
-                        () => {
+                        error: () => {
                             this.restartIsLoading = false;
                             this.startTour();
                         },
-                    );
+                    });
                     break;
                 case ResetParticipation.NONE:
                     this.startTour();

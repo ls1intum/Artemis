@@ -35,8 +35,8 @@ export class EditTextUnitComponent implements OnInit {
                 }),
                 finalize(() => (this.isLoading = false)),
             )
-            .subscribe(
-                (textUnitResponse: HttpResponse<TextUnit>) => {
+            .subscribe({
+                next: (textUnitResponse: HttpResponse<TextUnit>) => {
                     this.textUnit = textUnitResponse.body!;
 
                     this.formData = {
@@ -45,8 +45,8 @@ export class EditTextUnitComponent implements OnInit {
                         content: this.textUnit.content,
                     };
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     updateTextUnit(formData: TextUnitFormData) {
@@ -64,9 +64,8 @@ export class EditTextUnitComponent implements OnInit {
                     this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
                 }),
             )
-            .subscribe(
-                () => {},
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+            .subscribe({
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 }

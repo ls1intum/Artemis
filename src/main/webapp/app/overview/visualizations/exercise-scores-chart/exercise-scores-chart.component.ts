@@ -73,13 +73,13 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                (exerciseScoresResponse) => {
+            .subscribe({
+                next: (exerciseScoresResponse) => {
                     this.exerciseScores = exerciseScoresResponse.body!;
                     this.initializeChart();
                 },
-                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            );
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
 
     private initializeChart(): void {

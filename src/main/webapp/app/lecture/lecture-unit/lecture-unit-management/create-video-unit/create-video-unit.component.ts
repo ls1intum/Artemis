@@ -52,11 +52,11 @@ export class CreateVideoUnitComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                () => {
+            .subscribe({
+                next: () => {
                     this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 }

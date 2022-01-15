@@ -88,12 +88,12 @@ export class CreateAttachmentUnitComponent implements OnInit {
                             this.isLoading = false;
                         }),
                     )
-                    .subscribe(
-                        () => {
+                    .subscribe({
+                        next: () => {
                             this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                         },
-                        (res: HttpErrorResponse) => onError(this.alertService, res),
-                    );
+                        error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                    });
             },
             (error) => {
                 // displaying the file upload error in the form but not resetting the form]

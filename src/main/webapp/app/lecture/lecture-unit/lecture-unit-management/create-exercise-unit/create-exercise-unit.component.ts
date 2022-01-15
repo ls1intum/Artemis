@@ -57,16 +57,16 @@ export class CreateExerciseUnitComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                ([courseResult, exerciseUnitResult]) => {
+            .subscribe({
+                next: ([courseResult, exerciseUnitResult]) => {
                     const allExercisesOfCourse = courseResult?.body?.exercises ? courseResult?.body?.exercises : [];
                     const idsOfExercisesAlreadyConnectedToUnit = exerciseUnitResult?.body
                         ? exerciseUnitResult?.body?.map((exerciseUnit: ExerciseUnit) => exerciseUnit.exercise?.id)
                         : [];
                     this.exercisesAvailableForUnitCreation = allExercisesOfCourse.filter((exercise: Exercise) => !idsOfExercisesAlreadyConnectedToUnit.includes(exercise.id));
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     createExerciseUnits() {
@@ -83,10 +83,9 @@ export class CreateExerciseUnitComponent implements OnInit {
                     this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                 }),
             )
-            .subscribe(
-                () => {},
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+            .subscribe({
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     sortRows() {

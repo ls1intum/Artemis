@@ -104,17 +104,17 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         return this.loadExerciseHints();
                     }),
                 )
-                .subscribe(
-                    (exerciseHints: ExerciseHint[]) => {
+                .subscribe({
+                    next: (exerciseHints: ExerciseHint[]) => {
                         this.exercise.exerciseHints = exerciseHints;
                         this.loadingParticipation = false;
                         this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour, true);
                     },
-                    () => {
+                    error: () => {
                         this.participationCouldNotBeFetched = true;
                         this.loadingParticipation = false;
                     },
-                );
+                });
         });
     }
 
