@@ -14,7 +14,7 @@ import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { RepositoryInterceptor } from 'app/exercises/shared/result/repository.service';
 import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
-import { ArtemisVersionInterceptor } from 'app/core/interceptor/artemis-version.interceptor';
+import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
 import { missingTranslationHandler, translatePartialLoader } from './config/translation.config';
 import dayjs from 'dayjs/esm';
 import './config/dayjs';
@@ -44,6 +44,7 @@ import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
         },
         { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
         { provide: ErrorHandler, useClass: SentryErrorHandler },
+        { provide: WINDOW_INJECTOR_TOKEN, useValue: window },
         DatePipe,
         /**
          * @description Interceptor declarations:

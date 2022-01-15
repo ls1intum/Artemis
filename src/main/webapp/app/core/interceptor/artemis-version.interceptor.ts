@@ -1,11 +1,13 @@
-import { ApplicationRef, Injectable } from '@angular/core';
+import { ApplicationRef, Inject, Injectable, InjectionToken } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
-import { concat, EMPTY, interval, Observable } from 'rxjs';
+import { concat, interval, Observable, of } from 'rxjs';
 import { catchError, first, tap, timeout } from 'rxjs/operators';
 import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { SwUpdate } from '@angular/service-worker';
 import { Alert, AlertService } from 'app/core/util/alert.service';
+
+export const WINDOW_INJECTOR_TOKEN = new InjectionToken<Window>('Window');
 
 @Injectable()
 export class ArtemisVersionInterceptor implements HttpInterceptor {
@@ -14,7 +16,13 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
     // Indicates whether we ever saw an outdated state since last reload
     private hasSeenOutdatedInThisSession = false;
 
-    constructor(private appRef: ApplicationRef, private updates: SwUpdate, private serverDateService: ArtemisServerDateService, private alertService: AlertService) {
+    constructor(
+        private appRef: ApplicationRef,
+        private updates: SwUpdate,
+        private serverDateService: ArtemisServerDateService,
+        private alertService: AlertService,
+        @Inject(WINDOW_INJECTOR_TOKEN) private injectedWindow: Window,
+    ) {
         // Allow the app to stabilize first, before starting
         // polling for updates with `interval()`.
         const appIsStableOrTimeout = appRef.isStable.pipe(
@@ -24,7 +32,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
             // TODO: Look for the cause why the app doesn't become stable
             timeout(30000),
             // Ignore error thrown by timeout
-            catchError(() => EMPTY),
+            catchError(() => of(true)),
         );
         const updateInterval = interval(60 * 1000); // every 60s
         const updateIntervalOnceAppIsStable$ = concat(appIsStableOrTimeout, updateInterval);
@@ -87,7 +95,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
                                 // so in any case, we should reload
                                 .catch(() => {})
                                 // Reload the page with the new version
-                                .then(() => document.location.reload()),
+                                .then(() => this.injectedWindow.location.reload()),
                     },
                 });
             }
