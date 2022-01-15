@@ -13,6 +13,7 @@ export class ExerciseGroupService {
 
     constructor(private router: Router, private http: HttpClient) {}
 
+    /* istanbul ignore next */
     /**
      * Create an exercise group on the server using a POST request.
      * @param courseId The course id.
@@ -23,6 +24,7 @@ export class ExerciseGroupService {
         return this.http.post<ExerciseGroup>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups`, exerciseGroup, { observe: 'response' });
     }
 
+    /* istanbul ignore next */
     /**
      * Update an exercise group on the server using a PUT request.
      * @param courseId The course id.
@@ -33,6 +35,7 @@ export class ExerciseGroupService {
         return this.http.put<ExerciseGroup>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups`, exerciseGroup, { observe: 'response' });
     }
 
+    /* istanbul ignore next */
     /**
      * Find an exercise group on the server using a GET request.
      * @param courseId The course id.
@@ -60,6 +63,7 @@ export class ExerciseGroupService {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups/${exerciseGroupId}`, { params, observe: 'response' });
     }
 
+    /* istanbul ignore next */
     /**
      * Find all exercise groups for the given exam.
      * @param courseId The course id.
