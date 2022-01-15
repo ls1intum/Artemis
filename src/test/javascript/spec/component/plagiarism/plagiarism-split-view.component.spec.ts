@@ -96,7 +96,7 @@ describe('Plagiarism Split View Component', () => {
         });
 
         expect(comp.isProgrammingOrTextExercise).toBe(true);
-        expect(comp.isModelingExercise).toEqual(false);
+        expect(comp.isModelingExercise).toBe(false);
         expect(comp.parseTextMatches).toHaveBeenCalledTimes(1);
     });
 
