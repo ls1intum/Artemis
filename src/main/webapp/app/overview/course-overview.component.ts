@@ -216,7 +216,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     showShortDescription() {
-        this.courseDescription = this.course?.description?.substr(0, 50) + '...' || '';
+        this.courseDescription = this.course?.description?.slice(0, 50) + '...' || '';
         this.longTextShown = false;
     }
 

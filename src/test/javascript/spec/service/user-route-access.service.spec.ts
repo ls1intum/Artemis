@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ActivatedRouteSnapshot, Route } from '@angular/router';
 import { ArtemisTestModule } from '../test.module';
@@ -22,7 +22,7 @@ describe('UserRouteAccessService', () => {
     let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
     let service: UserRouteAccessService;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
                 ArtemisTestModule,
@@ -50,7 +50,7 @@ describe('UserRouteAccessService', () => {
                 service = TestBed.inject(UserRouteAccessService);
                 fixture = TestBed.createComponent(CourseExerciseDetailsComponent);
             });
-    }));
+    });
 
     it('should store the JWT token for LTI users', () => {
         const snapshot = fixture.debugElement.injector.get(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
