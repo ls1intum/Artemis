@@ -292,11 +292,11 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     }
     exportAsCsv(rows: any[], keys: string[]) {
         const options = {
-            fieldSeparator: ';', // TODO: allow user to customize
+            fieldSeparator: ';',
             quoteStrings: '"',
             showLabels: true,
             showTitle: false,
-            filename: 'Student Information' + this.course.title,
+            filename: 'Student Information ' + this.course.title,
             useTextFile: false,
             useBom: true,
             headers: keys,
