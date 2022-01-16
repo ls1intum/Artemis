@@ -6,6 +6,7 @@ import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plag
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { SimpleChange } from '@angular/core';
+import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 
 describe('Plagiarism Sidebar Component', () => {
     let comp: PlagiarismSidebarComponent;
@@ -84,13 +85,30 @@ describe('Plagiarism Sidebar Component', () => {
     });
 
     it('should handle changes correctly', () => {
-        comp.comparisons = [];
+        const comparisons = [
+            { id: 1 } as PlagiarismComparison<any>,
+            { id: 2 } as PlagiarismComparison<any>,
+            { id: 3 } as PlagiarismComparison<any>,
+            { id: 4 } as PlagiarismComparison<any>,
+            { id: 5 } as PlagiarismComparison<any>,
+            { id: 6 } as PlagiarismComparison<any>,
+            { id: 7 } as PlagiarismComparison<any>,
+            { id: 8 } as PlagiarismComparison<any>,
+            { id: 9 } as PlagiarismComparison<any>,
+            { id: 10 } as PlagiarismComparison<any>,
+            { id: 11 } as PlagiarismComparison<any>,
+            { id: 12 } as PlagiarismComparison<any>,
+        ];
+        const pagedComparisons = comparisons.slice(0, 10);
+        comp.comparisons = comparisons;
         comp.ngOnChanges({
-            comparisons: { currentValue: [] } as SimpleChange,
+            comparisons: {
+                currentValue: comparisons,
+            } as SimpleChange,
         });
 
         expect(comp.currentPage).toBe(0);
-        expect(comp.numberOfPages).toBe(0);
-        expect(comp.pagedComparisons).toEqual([]);
+        expect(comp.numberOfPages).toBe(1);
+        expect(comp.pagedComparisons).toEqual(pagedComparisons);
     });
 });
