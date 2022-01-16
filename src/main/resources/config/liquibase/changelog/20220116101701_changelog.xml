@@ -12,6 +12,10 @@
             </column>
             <column name="last_modified_by" type="VARCHAR(50)"/>
             <column name="last_modified_date" type="TIMESTAMP"/>
+            <column name="instructor_statement_a_date" type="TIMESTAMP"/>
+            <column name="instructor_statement_b_date" type="TIMESTAMP"/>
+            <column name="student_statement_a_date" type="TIMESTAMP"/>
+            <column name="student_statement_b_date" type="TIMESTAMP"/>
         </addColumn>
     </changeSet>
 </databaseChangeLog>

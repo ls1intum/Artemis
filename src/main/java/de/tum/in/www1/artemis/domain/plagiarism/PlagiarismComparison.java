@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -101,6 +102,30 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     @Nullable
     @Column(name = "instructor_statement_b")
     private String instructorStatementB;
+
+    /**
+     * Timestamp when student A made statement on the case
+     */
+    @Column(name = "student_statement_a_date")
+    private Instant studentStatementADate;
+
+    /**
+     * Timestamp when student B made statement on the case
+     */
+    @Column(name = "student_statement_b_date")
+    private Instant studentStatementBDate;
+
+    /**
+     * Timestamp when instructor statement/message sent to student A
+     */
+    @Column(name = "instructor_statement_a_date")
+    private Instant instructorStatementADate;
+
+    /**
+     * Timestamp when instructor statement/message sent to student B
+     */
+    @Column(name = "instructor_statement_b_date")
+    private Instant instructorStatementBDate;
 
     /**
      * Create a new PlagiarismComparison instance from an existing JPlagComparison object.
@@ -214,6 +239,38 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
 
     public void setInstructorStatementB(String instructorStatementB) {
         this.instructorStatementB = instructorStatementB;
+    }
+
+    public Instant getInstructorStatementADate() {
+        return instructorStatementADate;
+    }
+
+    public void setInstructorStatementADate(Instant instructorStatementADate) {
+        this.instructorStatementADate = instructorStatementADate;
+    }
+
+    public Instant getInstructorStatementBDate() {
+        return instructorStatementBDate;
+    }
+
+    public void setInstructorStatementBDate(Instant instructorStatementBDate) {
+        this.instructorStatementBDate = instructorStatementBDate;
+    }
+
+    public Instant getStudentStatementADate() {
+        return studentStatementADate;
+    }
+
+    public void setStudentStatementADate(Instant studentStatementADate) {
+        this.studentStatementADate = studentStatementADate;
+    }
+
+    public Instant getStudentStatementBDate() {
+        return studentStatementBDate;
+    }
+
+    public void setStudentStatementBDate(Instant studentStatementBDate) {
+        this.studentStatementBDate = studentStatementBDate;
     }
 
     @Override
