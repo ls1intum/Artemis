@@ -165,7 +165,7 @@ export function blobToBinaryString(blob: Blob): Promise<string> {
  * @returns Blob
  */
 export function base64StringToBlob(base64: string, type?: string): Blob {
-    const parts = [binaryStringToArrayBuffer(atob(base64))];
+    const parts = [binaryStringToArrayBuffer(window.atob(base64))];
     return type ? createBlob(parts, { type }) : createBlob(parts);
 }
 
@@ -203,7 +203,7 @@ export function base64StringToBlob(base64: string, type?: string): Blob {
  * @returns Promise that resolves with the binary string
  */
 export function blobToBase64String(blob: Blob): Promise<string> {
-    return blobToBinaryString(blob).then(btoa);
+    return blobToBinaryString(blob).then(window.btoa);
 }
 
 /**
