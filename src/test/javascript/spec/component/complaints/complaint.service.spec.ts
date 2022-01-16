@@ -39,7 +39,7 @@ describe('ComplaintService', () => {
     const serverComplaint2 = { ...clientComplaint2, submittedTime: stringTime2 };
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
             providers: [{ provide: AccountService, useClass: MockAccountService }],
         })

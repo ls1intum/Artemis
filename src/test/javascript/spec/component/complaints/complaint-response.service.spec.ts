@@ -19,7 +19,7 @@ describe('ComplaintResponseService', () => {
     let expectedComplaintResponse: any;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
             providers: [MockProvider(AccountService)],
         })

@@ -63,7 +63,7 @@ describe('ListOfComplaintsComponent', () => {
     } as Complaint;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             declarations: [ListOfComplaintsComponent, TranslatePipeMock, MockComponent(AlertComponent), MockComponent(FaIconComponent)],
             providers: [
                 MockProvider(AlertService),
