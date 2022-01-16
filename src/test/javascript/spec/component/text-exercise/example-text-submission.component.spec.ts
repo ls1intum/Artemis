@@ -29,6 +29,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { ArtemisTestModule } from '../../test.module';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -36,6 +37,7 @@ describe('ExampleTextSubmissionComponent', () => {
     let exerciseService: ExerciseService;
     let exampleSubmissionService: ExampleSubmissionService;
     let assessmentsService: TextAssessmentService;
+    let alertService: AlertService;
 
     const EXERCISE_ID = 1;
     const EXAMPLE_SUBMISSION_ID = 2;
@@ -73,6 +75,7 @@ describe('ExampleTextSubmissionComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 MockProvider(TranslateService),
+                MockProvider(AlertService),
             ],
         }).compileComponents();
 
@@ -82,7 +85,7 @@ describe('ExampleTextSubmissionComponent', () => {
         exerciseService = fixture.debugElement.injector.get(ExerciseService);
         exampleSubmissionService = fixture.debugElement.injector.get(ExampleSubmissionService);
         assessmentsService = fixture.debugElement.injector.get(TextAssessmentService);
-
+        alertService = TestBed.inject(AlertService);
         exercise = new TextExercise(undefined, undefined);
         exercise.id = EXERCISE_ID;
         exercise.title = 'Test case exercise';
@@ -193,6 +196,13 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(assessmentsService.saveExampleAssessment).toHaveBeenCalledWith(EXERCISE_ID, EXAMPLE_SUBMISSION_ID, [feedback], [textBlock1]);
     }));
 
+    it('should not save the assessment when it is invalid', () => {
+        const alertErrorSpy = jest.spyOn(alertService, 'error');
+        comp.saveAssessments();
+
+        expect(alertErrorSpy).toHaveBeenCalledTimes(1);
+    });
+
     it('editing submission from assessment state switches state', fakeAsync(() => {
         // GIVEN
         comp.exercise = exercise;
@@ -277,6 +287,13 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalled();
     }));
 
+    it('should not check the assessment when it is invalid', () => {
+        const alertErrorSpy = jest.spyOn(alertService, 'error');
+        comp.checkAssessment();
+
+        expect(alertErrorSpy).toHaveBeenCalledTimes(1);
+    });
+
     it('when wrong tutor assessment, upon server response should mark feedback as incorrect', fakeAsync(() => {
         // GIVEN
         const textBlockRefA = TextBlockRef.new();
@@ -319,6 +336,32 @@ describe('ExampleTextSubmissionComponent', () => {
         // THEN
         expect(feedbackA.correctionStatus).toEqual(FeedbackCorrectionErrorType.INCORRECT_SCORE);
         expect(feedbackB.correctionStatus).toEqual('CORRECT');
+    }));
+
+    it('should create new example submission', fakeAsync(() => {
+        comp.submission = submission;
+        comp.exercise = exercise;
+        const createStub = jest.spyOn(exampleSubmissionService, 'create').mockReturnValue(httpResponse(exampleSubmission));
+        const alertSuccessSpy = jest.spyOn(alertService, 'success');
+
+        comp.createNewExampleTextSubmission();
+        tick();
+
+        expect(createStub).toHaveBeenCalledTimes(1);
+        expect(alertSuccessSpy).toHaveBeenCalledTimes(1);
+    }));
+
+    it('should not create example submission', fakeAsync(() => {
+        comp.submission = submission;
+        comp.exercise = exercise;
+        const createStub = jest.spyOn(exampleSubmissionService, 'create').mockReturnValue(throwError({ status: 404 }));
+        const alertErrorSpy = jest.spyOn(alertService, 'error');
+
+        comp.createNewExampleTextSubmission();
+        tick();
+
+        expect(createStub).toHaveBeenCalledTimes(1);
+        expect(alertErrorSpy).toHaveBeenCalledTimes(1);
     }));
 
     const httpResponse = (body: any) => of(new HttpResponse({ body }));
