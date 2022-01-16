@@ -677,23 +677,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @private
      */
     private identifyBar(exercise: Exercise, series: any[], roundedParticipationScore: number, split: number): void {
-        let position = 0;
+        // the bar on index 0 is only rendered if the exercise has no due date
+        let index = 0;
         if (exercise.dueDate) {
-            switch (exercise.includedInOverallScore) {
-                case IncludedInOverallScore.INCLUDED_COMPLETELY:
-                    position = 1;
-                    break;
-                case IncludedInOverallScore.NOT_INCLUDED:
-                    position = 2;
-                    break;
-                case IncludedInOverallScore.INCLUDED_AS_BONUS:
-                    position = 3;
-                    break;
-            }
+            const scoreTypes = [IncludedInOverallScore.INCLUDED_COMPLETELY, IncludedInOverallScore.NOT_INCLUDED, IncludedInOverallScore.INCLUDED_AS_BONUS];
+            // we shift the index by 1, because index 0 is accessed if the exercise has no due date and this case is not represented in scoreTypes
+            index = scoreTypes.indexOf(exercise.includedInOverallScore!) + 1;
         }
-        series[position].value = roundedParticipationScore;
-        series[position].absoluteValue = split;
-        series[position].exerciseId = exercise.id;
+        series[index].value = roundedParticipationScore;
+        series[index].absoluteValue = split;
+        series[index].exerciseId = exercise.id;
     }
 
     /**

@@ -1,6 +1,6 @@
 <div class="d-flex justify-content-center">
     <h3>{{ 'artemisApp.exercise-scores-chart.title' | artemisTranslate }}</h3>
-    <div *ngIf="typeSet.size > 0" style="margin-bottom: 0.5rem; margin-left: 10px" aria-label="Filter Dropdown" ngbDropdown>
+    <div *ngIf="typeSet.size > 0" class="filter mb-2" aria-label="Filter Dropdown" ngbDropdown>
         <button class="btn" [ngClass]="{ 'btn-secondary': numberOfActiveFilters === 0, 'btn-success': numberOfActiveFilters > 0 }" ngbDropdownToggle id="filter-dropdown-button">
             <fa-icon [icon]="faFilter"></fa-icon>
             <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: numberOfActiveFilters } }}</span>
@@ -43,9 +43,7 @@
             </ng-template>
             <ng-template #seriesTooltipTemplate let-model="model">
                 <h6>{{ model[0].name }}</h6>
-                <span> {{ model[0].series }}: {{ Math.max(model[0].value - 1, 0) }}%</span><br />
-                <span> {{ model[1].series }}: {{ Math.max(model[1].value - 1, 0) }}%</span><br />
-                <span> {{ model[2].series }}: {{ Math.max(model[2].value - 1, 0) }}%</span><br />
+                <div *ngFor="let entry of model">{{ entry.series }}: {{ Math.max(entry.value - 1, 0) }}%</div>
                 <b>
                     {{ 'artemisApp.exercise-scores-chart.exerciseType' | artemisTranslate }}
                     {{ 'artemisApp.exercise-scores-chart.' + model[0].exerciseType.toLowerCase() | artemisTranslate }}</b
