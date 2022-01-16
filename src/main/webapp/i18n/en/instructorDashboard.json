@@ -35,8 +35,7 @@
             "timeWarning": "<b>Caution:</b> This action can take several minutes depending on number and size of repositories.",
             "currentlySelected": "You are about to download <strong>all teams'/students'</strong> submissions of the following exercises:"
         },
-        "exportCSV": "Import as CSV",
-
+        "exportCSV": "Export as CSV",
         "exportSubmissions": {
             "title": "Export Submissions",
             "downloadAllStudents": "Or download the submissions of all students",
