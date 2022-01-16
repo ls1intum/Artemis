@@ -105,7 +105,7 @@ describe('Plagiarism Split View Component', () => {
         jest.spyOn(splitControlSubject, 'subscribe');
 
         comp.ngOnInit();
-        expect(comp.splitControlSubject.subscribe).toHaveBeenCalled();
+        expect(comp.splitControlSubject.subscribe).toHaveBeenCalledTimes(1);
     });
 
     it('should collapse the left pane', () => {
