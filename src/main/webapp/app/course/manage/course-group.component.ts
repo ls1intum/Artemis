@@ -277,7 +277,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     /**
      * Method for exporting the csv with the needed data
      */
-    exportResults() {
+    exportStudentInformation() {
         if (this.exportReady && this.allCourseGroupUsers.length > 0) {
             const rows: any[] = this.allCourseGroupUsers.map((user: User) => {
                 const data = {};
@@ -296,7 +296,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
             quoteStrings: '"',
             showLabels: true,
             showTitle: false,
-            filename: 'Artemis Course Students' + this.course.title + ' Scores',
+            filename: 'Student Information' + this.course.title,
             useTextFile: false,
             useBom: true,
             headers: keys,
