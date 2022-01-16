@@ -38,6 +38,7 @@
                 <h5 class="mb-0">
                     <fa-icon *ngIf="plagiarismCase.exercise.type" [icon]="getIcon(plagiarismCase.exercise.type)"></fa-icon>
                     {{ plagiarismCase.exercise.title }}
+                    <span *ngIf="!plagiarismCase.exercise.exerciseGroup" class="ml-1 badge bg-secondary">{{ 'artemisApp.exercise.exam' | artemisTranslate }}</span>
                 </h5>
             </div>
             <div class="card-body">

@@ -52,7 +52,7 @@ export class PlagiarismSidebarComponent implements OnChanges {
             const comparisons: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[] = changes.comparisons.currentValue;
 
             this.currentPage = 0;
-            this.numberOfPages = this.computeNumberOfPages(comparisons.length);
+            this.numberOfPages = this.computeNumberOfPages(comparisons ? comparisons.length : 0);
             this.pagedComparisons = this.getPagedComparisons();
         }
     }
