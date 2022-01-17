@@ -228,7 +228,7 @@ describe('TextResultComponent', () => {
 
         component.result = result;
 
-        expect(component.textResults.length).toBe(2);
+        expect(component.textResults).toHaveLength(2);
         expect(component.textResults[0].feedback).not.toBe(undefined);
         expect(component.textResults[0].feedback!.isSubsequent).toBe(undefined);
         expect(component.textResults[1].feedback).not.toBe(undefined);

@@ -468,7 +468,7 @@ describe('ModelingSubmission Management Component', () => {
         expect(unreferencedFeedback!.length).toBe(1);
         expect(unreferencedFeedback![0].isSubsequent).toBe(undefined);
         expect(referencedFeedback).not.toBe(undefined);
-        expect(referencedFeedback!.length).toBe(1);
+        expect(referencedFeedback).toHaveLength(1);
         expect(referencedFeedback![0].isSubsequent).toBe(true);
     });
 });

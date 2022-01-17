@@ -323,7 +323,7 @@ describe('FileUploadSubmissionComponent', () => {
         const unreferencedFeedback = comp.unreferencedFeedback;
 
         expect(unreferencedFeedback).not.toBe(undefined);
-        expect(unreferencedFeedback!.length).toBe(2);
+        expect(unreferencedFeedback).toHaveLength(2);
         expect(unreferencedFeedback![0].isSubsequent).toBe(undefined);
         expect(unreferencedFeedback![1].isSubsequent).toBe(true);
     });
