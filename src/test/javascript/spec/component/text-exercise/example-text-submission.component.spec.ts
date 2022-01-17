@@ -242,8 +242,8 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.submission?.results).toBe(undefined);
         expect(comp.submission?.latestResult).toBe(undefined);
         expect(comp.result).toBe(undefined);
-        expect(comp.textBlockRefs.length).toBe(0);
-        expect(comp.unusedTextBlockRefs.length).toBe(0);
+        expect(comp.textBlockRefs).toHaveLength(0);
+        expect(comp.unusedTextBlockRefs).toHaveLength(0);
     }));
 
     it('it should verify correct tutorial submission', fakeAsync(() => {
