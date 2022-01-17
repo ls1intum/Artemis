@@ -1,9 +1,13 @@
 apply plugin: "war"
 
 bootWar {
-    mainClassName = 'de.tum.in.www1.artemis.ArtemisApp'
+    mainClass = 'de.tum.in.www1.artemis.ArtemisApp'
     includes = ["WEB-INF/**", "META-INF/**"]
     webXml = file("${project.rootDir}/src/main/webapp/WEB-INF/web.xml")
+    manifest {
+        attributes('Implementation-Title': 'Artemis',
+                   'Implementation-Version': version)
+    }
 }
 // Command for production build: ./gradlew -Pprod -Pwar clean bootWar
 

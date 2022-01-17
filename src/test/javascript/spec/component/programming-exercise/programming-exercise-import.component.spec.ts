@@ -1,5 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
@@ -17,7 +15,6 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockProgrammingExercisePagingService } from '../../helpers/mocks/service/mock-programming-exercise-paging.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import * as sinon from 'sinon';
 import { NgModel } from '@angular/forms';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -25,9 +22,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { NgbHighlight, NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import '@angular/localize/init';
 
 describe('ProgrammingExerciseImportComponent', () => {
     let comp: ProgrammingExerciseImportComponent;
@@ -35,7 +30,7 @@ describe('ProgrammingExerciseImportComponent', () => {
     let debugElement: DebugElement;
     let pagingService: ProgrammingExercisePagingService;
 
-    let pagingStub: sinon.SinonStub;
+    let pagingStub: jest.SpyInstance;
 
     const basicCourse = { id: 12, title: 'Random course title' } as Course;
     const exercise = { id: 42, title: 'Exercise title', programmingLanguage: ProgrammingLanguage.JAVA, course: basicCourse } as ProgrammingExercise;
@@ -69,31 +64,31 @@ describe('ProgrammingExerciseImportComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 pagingService = debugElement.injector.get(ProgrammingExercisePagingService);
-                pagingStub = sinon.stub(pagingService, 'searchForExercises');
+                pagingStub = jest.spyOn(pagingService, 'searchForExercises');
             });
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should parse the pageable search result into the correct state', fakeAsync(() => {
         const searchResult = { resultsOnPage: [exercise], numberOfPages: 3 } as SearchResult<ProgrammingExercise>;
         const searchObservable = new Subject<SearchResult<ProgrammingExercise>>();
-        pagingStub.returns(searchObservable);
+        pagingStub.mockReturnValue(searchObservable);
 
         fixture.detectChanges();
         tick();
 
-        expect(pagingStub).to.have.been.calledOnce;
+        expect(pagingStub).toHaveBeenCalledTimes(1);
         searchObservable.next(searchResult);
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.content.numberOfPages).to.be.eq(3);
-        expect(comp.content.resultsOnPage[0].id).to.be.eq(42);
-        expect(comp.total).to.be.eq(30);
-        expect(comp.loading).to.be.false;
+        expect(comp.content.numberOfPages).toBe(3);
+        expect(comp.content.resultsOnPage[0].id).toBe(42);
+        expect(comp.total).toBe(30);
+        expect(comp.loading).toBeFalse();
     }));
 });

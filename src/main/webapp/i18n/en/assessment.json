@@ -35,13 +35,15 @@
                 "overrideAssessment": "Override Assessment",
                 "nextSubmission": "Assess Next Submission",
                 "resolveConflict": "Resolve Conflicts",
-                "importExampleSubmission": "Import as Example Submission"
+                "useAsExampleSubmission": "Use as Example Submission"
             },
             "detail": {
                 "feedback": "Feedback",
+                "feedbackWithColon": "Feedback:",
                 "scoreFor": "Assessment for",
                 "tutorComment": "Tutor Comment:"
             },
+            "useAsExampleSubmissionVerificationQuestion": "Are you sure to import this submission as an example submission?",
             "messages": {
                 "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again.",
                 "loadSubmissionFailed": "Retrieving requested submission failed.",
@@ -57,7 +59,7 @@
                 "empty": "No Submissions for this exercise!",
                 "loading": "Loading...",
                 "columns": {
-                    "submissionDate": "Submission date",
+                    "submissionDate": "Submission Date",
                     "result": "Latest Result",
                     "submissionCount": "Submissions",
                     "score": "Points",

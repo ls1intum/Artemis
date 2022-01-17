@@ -4,8 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -14,7 +13,6 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -25,7 +23,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
-import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
@@ -52,7 +49,7 @@ public class ModelFactory {
         attachment.setAttachmentType(AttachmentType.FILE);
         attachment.setReleaseDate(startDate);
         attachment.setUploadDate(startDate);
-        attachment.setName("TestAttachement");
+        attachment.setName("TestAttachment");
         attachment.setLecture(lecture);
         return attachment;
     }
@@ -188,7 +185,7 @@ public class ModelFactory {
         exercise.setBonusPoints(0.0);
         exercise.setReleaseDate(releaseDate);
         exercise.setDueDate(dueDate);
-        exercise.assessmentDueDate(assessmentDueDate);
+        exercise.setAssessmentDueDate(assessmentDueDate);
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
         exercise.setMode(ExerciseMode.INDIVIDUAL);
         exercise.getCategories().add("Category");
@@ -207,7 +204,7 @@ public class ModelFactory {
         // these values are set to null explicitly
         exercise.setReleaseDate(null);
         exercise.setDueDate(null);
-        exercise.assessmentDueDate(null);
+        exercise.setAssessmentDueDate(null);
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
         exercise.setMode(ExerciseMode.INDIVIDUAL);
         exercise.getCategories().add("Category");
@@ -400,7 +397,7 @@ public class ModelFactory {
         return textSubmission;
     }
 
-    public static ProgrammingSubmission generateProgrammingSubmission(boolean submitted, String commitHash, SubmissionType type, @Nullable ZonedDateTime submissionDate) {
+    public static ProgrammingSubmission generateProgrammingSubmission(boolean submitted, String commitHash, SubmissionType type) {
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setSubmitted(submitted);
         if (submitted) {
@@ -482,7 +479,7 @@ public class ModelFactory {
             boolean postsEnabled, int requestMoreFeedbackTimeDays) {
         Course course = new Course();
         course.setId(id);
-        course.setTitle("Course title " + UUID.randomUUID().toString());
+        course.setTitle("Course title " + UUID.randomUUID());
 
         // must start with a letter
         course.setShortName("short" + UUID.randomUUID().toString().replace("-", "0"));
@@ -633,8 +630,8 @@ public class ModelFactory {
 
     public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions, int usageCount) {
         var instructions = new ArrayList<GradingInstruction>();
-        var exampleInstruction1 = new GradingInstruction();
         while (numberOfTestInstructions > 0) {
+            var exampleInstruction1 = new GradingInstruction();
             exampleInstruction1.setGradingCriterion(criterion);
             exampleInstruction1.setCredits(1);
             exampleInstruction1.setGradingScale("good test");
@@ -725,7 +722,7 @@ public class ModelFactory {
         return feedback;
     }
 
-    public static List<Feedback> applySGIonFeedback(Exercise receivedExercise) throws Exception {
+    public static List<Feedback> applySGIonFeedback(Exercise receivedExercise) {
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
 
         var gradingInstructionWithNoLimit = receivedExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0);
@@ -782,6 +779,7 @@ public class ModelFactory {
         toBeImported.setCategories(template.getCategories());
         toBeImported.setPackageName(template.getPackageName());
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
+        toBeImported.setAllowOfflineIde(template.isAllowOfflineIde());
         toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
         toBeImported.setTutorParticipations(null);
         toBeImported.setPosts(null);
@@ -891,14 +889,6 @@ public class ModelFactory {
         return policy;
     }
 
-    public static SubmissionPenaltyPolicy generateSubmissionPenaltyPolicy(int submissionLimit, double penalty, boolean active) {
-        SubmissionPenaltyPolicy policy = new SubmissionPenaltyPolicy();
-        policy.setSubmissionLimit(submissionLimit);
-        policy.setExceedingPenalty(penalty);
-        policy.setActive(active);
-        return policy;
-    }
-
     /**
      * Creates a dummy DTO used by Jenkins, which notifies about new programming exercise results.
      *
@@ -934,7 +924,7 @@ public class ModelFactory {
             error.setMessage(name + " error message");
             testcase.setErrors(List.of(error));
             return testcase;
-        }).collect(Collectors.toList()));
+        }).toList());
 
         var commitDTO = new CommitDTO();
         commitDTO.setHash(TestConstants.COMMIT_HASH_STRING);
@@ -1264,14 +1254,5 @@ public class ModelFactory {
         organization.setLogoUrl(logoUrl);
         organization.setEmailPattern(emailPattern);
         return organization;
-    }
-
-    public static AttachmentUnit generateAttachmentUnit(ZonedDateTime startDate, Lecture lecture) {
-        AttachmentUnit attachmentUnit = new AttachmentUnit();
-        attachmentUnit.setReleaseDate(startDate);
-        attachmentUnit.setName("TestAttachementUnit");
-        attachmentUnit.setLecture(lecture);
-        attachmentUnit.setDescription("Test description");
-        return attachmentUnit;
     }
 }

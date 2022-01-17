@@ -5,22 +5,22 @@ import { CypressCredentials } from '../../users';
  */
 export class CourseManagementPage {
     openCourseCreation() {
-        return cy.get('.create-course').click();
+        return cy.get('#create-course').click();
     }
 
     /**
      * @returns Returns the cypress chainable containing the root element of the course card of our created course.
      * This can be used to find specific elements within this course card.
      */
-    getCourseCard(courseName: string, courseShortName: string) {
-        return cy.contains(this.courseSelector(courseName, courseShortName)).parent().parent().parent();
+    getCourseCard(courseShortName: string) {
+        return cy.get('#course-card-' + courseShortName);
     }
 
     /**
      * Opens the exercises (of the first found course).
      */
-    openExercisesOfCourse(courseName: string, courseShortName: string) {
-        this.getCourseCard(courseName, courseShortName).find('.card-footer').children().eq(0).click();
+    openExercisesOfCourse(courseShortName: string) {
+        this.getCourseCard(courseShortName).find('#course-card-open-exercises').click();
         cy.url().should('include', '/exercises');
     }
 
@@ -29,26 +29,15 @@ export class CourseManagementPage {
      * @param courseId the id of the course
      */
     openStudentOverviewOfCourse(courseId: number) {
-        cy.get(`[href="/course-management/${courseId}/groups/students"]`).click();
+        cy.get('#open-student-management-' + courseId).click();
     }
 
     /**
      * Opens a course.
-     * @param courseName
      * @param courseShortName
      */
-    openCourse(courseName: string, courseShortName: string) {
-        return cy.contains(this.courseSelector(courseName, courseShortName)).parent().parent().click();
-    }
-
-    /**
-     * Retrieves the course selector. This is returns the element, which is used to identify a course card. It does not return the root of the course card!
-     * @param courseName the title of the course
-     * @param courseShortName the short name of the course
-     * @returns the title element (not the root element!) of the course card.
-     */
-    courseSelector(courseName: string, courseShortName: string) {
-        return `${courseName} (${courseShortName})`;
+    openCourse(courseShortName: string) {
+        return this.getCourseCard(courseShortName).find('#course-card-header').click();
     }
 
     /**
@@ -56,7 +45,7 @@ export class CourseManagementPage {
      * @param credentials the user that gets added to the student group of the course
      * */
     addStudentToCourse(credentials: CypressCredentials) {
-        cy.get('.row-md > :nth-child(5) > :nth-child(2) >').click();
+        cy.get('#add-students').click();
         this.confirmUserIntoGroup(credentials);
     }
 
@@ -65,7 +54,7 @@ export class CourseManagementPage {
      * @param credentials the user that gets added to the tutor group of the course
      * */
     addTutorToCourse(credentials: CypressCredentials) {
-        cy.get('.row-md > :nth-child(5) > :nth-child(4) >').click();
+        cy.get('#add-tutors').click();
         this.confirmUserIntoGroup(credentials);
     }
 
@@ -74,7 +63,7 @@ export class CourseManagementPage {
      * @param credentials the user that gets added to the editor group of the course
      * */
     addEditorToCourse(credentials: CypressCredentials) {
-        cy.get('.row-md > :nth-child(5) > :nth-child(6) >').click();
+        cy.get('#add-editors').click();
         this.confirmUserIntoGroup(credentials);
     }
 
@@ -83,7 +72,7 @@ export class CourseManagementPage {
      * @param credentials the user that gets added to the instructor group of the course
      * */
     addInstructorToCourse(credentials: CypressCredentials) {
-        cy.get('.row-md > :nth-child(5) > :nth-child(8) >').click();
+        cy.get('#add-instructors').click();
         this.confirmUserIntoGroup(credentials);
     }
 
@@ -92,20 +81,20 @@ export class CourseManagementPage {
      * */
     private confirmUserIntoGroup(credentials: CypressCredentials) {
         cy.get('#typeahead-basic ').type(credentials.username).type('{enter}');
-        cy.get('ngb-highlight').contains(credentials.username).click();
-        cy.get('.breadcrumb > :nth-child(2)').click();
+        cy.get('#ngb-typeahead-0-0').contains(credentials.username).click();
+        cy.get('#bread-crumb-2').click();
     }
 
     /**
      * Opens the exams of a course.
      */
-    openExamsOfCourse(courseName: string, courseShortName: string) {
-        this.getCourseCard(courseName, courseShortName).find('.card-footer').children().eq(1).click();
+    openExamsOfCourse(courseShortName: string) {
+        this.getCourseCard(courseShortName).find('#course-card-open-exams').click();
         cy.url().should('include', '/exams');
     }
 
-    openAssessmentDashboardOfCourseWithId(courseId: number) {
-        cy.get(`[href="/course-management/${courseId}/assessment-dashboard"]`).click();
-        cy.url().should('contain', `/course-management/${courseId}/assessment-dashboard`);
+    openAssessmentDashboardOfCourse(courseShortName: string) {
+        this.getCourseCard(courseShortName).find('#course-card-open-assessment-dashboard').click();
+        cy.url().should('include', '/assessment-dashboard');
     }
 }

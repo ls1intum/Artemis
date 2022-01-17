@@ -6,7 +6,7 @@
             [attr.aria-expanded]="!isQuestionCollapsed"
             [attr.aria-controls]="'collapseQuestion' + questionIndex"
         >
-            <fa-icon size="3x" [icon]="isQuestionCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
+            <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown"></fa-icon>
         </button>
         <div class="form-group question-title">
             <input
@@ -40,7 +40,7 @@
                     />
                     <span class="input-group-btn">
                         <button class="btn btn-outline-secondary" type="button" (click)="resetQuestionTitle()">
-                            <fa-icon [icon]="'undo'"></fa-icon>
+                            <fa-icon [icon]="faUndo"></fa-icon>
                         </button>
                     </span>
                 </div>
@@ -48,16 +48,16 @@
             <div class="col-md-2 text-end">
                 <div class="form-group">
                     <div class="re-evaluate-button" (click)="moveUp()">
-                        <fa-icon [icon]="'chevron-up'" size="2x"></fa-icon>
+                        <fa-icon [icon]="faChevronUp" size="2x"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" (click)="moveDown()">
-                        <fa-icon [icon]="'chevron-down'" size="2x"></fa-icon>
+                        <fa-icon [icon]="faChevronDown" size="2x"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" (click)="resetQuestion()">
-                        <fa-icon [icon]="'undo'" size="2x"></fa-icon>
+                        <fa-icon [icon]="faUndo" size="2x"></fa-icon>
                     </div>
                     <div class="re-evaluate-button" (click)="deleteQuestion()">
-                        <fa-icon [icon]="'trash'" size="2x"></fa-icon>
+                        <fa-icon [icon]="faTrash" size="2x"></fa-icon>
                     </div>
                 </div>
             </div>
@@ -120,7 +120,7 @@
             </div>
             <div class="form-group" *ngIf="!reEvaluationInProgress">
                 <div class="delete-button" (click)="deleteQuestion()">
-                    <fa-icon [icon]="'trash'" size="2x"></fa-icon>
+                    <fa-icon [icon]="faTrash" size="2x"></fa-icon>
                 </div>
             </div>
             <ng-container *ngIf="reEvaluationInProgress">
@@ -146,7 +146,7 @@
                 </div>
             </div>
             <div class="question-content" *ngIf="!reEvaluationInProgress">
-                <ace-editor
+                <jhi-ace-editor
                     #questionEditor
                     [(text)]="questionEditorText"
                     [mode]="questionEditorMode"
@@ -155,10 +155,10 @@
                     style="min-height: 200px; width: 100%; overflow: auto"
                     class="form-control"
                 >
-                </ace-editor>
+                </jhi-ace-editor>
             </div>
         </div>
-        <div class="edit-sa-question" style="padding: 20px" *ngIf="showVisualMode || reEvaluationInProgress">
+        <div class="edit-sa-question" style="padding: 20px" *ngIf="showVisualMode || reEvaluationInProgress" cdkDropListGroup>
             <h4 jhiTranslate="artemisApp.shortAnswerQuestion.editor.visualModeHeadline"></h4>
             <span *ngIf="!reEvaluationInProgress" jhiTranslate="artemisApp.shortAnswerQuestion.editor.visualModeExplanation"></span>
             <hr />
@@ -191,8 +191,10 @@
                             <div *ngIf="shortAnswerQuestionUtil.isInputField(element || '')" class="short-answer-question-container">
                                 <div
                                     class="short-answer-question-container__div-input"
-                                    dnd-droppable
-                                    (onDropSuccess)="onDragDrop(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion), $event)"
+                                    cdkDropList
+                                    (cdkDropListDropped)="
+                                        onDragDrop(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion), $event)
+                                    "
                                 ></div>
                                 <div style="position: absolute; top: -8px; right: -4px; display: inline-flex" *ngIf="reEvaluationInProgress">
                                     <div
@@ -201,21 +203,21 @@
                                         *ngIf="!shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion).invalid"
                                         (click)="shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion).invalid = true"
                                     >
-                                        <fa-icon [icon]="'ban'" size="lg"></fa-icon>
+                                        <fa-icon [icon]="faBan" size="lg"></fa-icon>
                                     </div>
                                     <div
                                         class="re-evaluate-button"
                                         title="Reset"
                                         (click)="resetSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion))"
                                     >
-                                        <fa-icon [icon]="'undo'" size="lg"></fa-icon>
+                                        <fa-icon [icon]="faUndo" size="lg"></fa-icon>
                                     </div>
                                     <div
                                         [ngClass]="reEvaluationInProgress ? 're-evaluate-button' : 'delete-button'"
                                         title="Delete"
                                         (click)="deleteSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion))"
                                     >
-                                        <fa-icon [icon]="'trash'" size="lg"></fa-icon>
+                                        <fa-icon [icon]="faTrash" size="lg"></fa-icon>
                                     </div>
                                 </div>
                                 <div [ngClass]="'mapping-number mapping-color-' + (shortAnswerQuestionUtil.getSpotNr(element || '') % 8)">
@@ -229,7 +231,7 @@
                 </div>
                 <span *ngIf="reEvaluationInProgress" class="input-group-btn" style="vertical-align: top">
                     <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
-                        <fa-icon [icon]="'undo'"></fa-icon>
+                        <fa-icon [icon]="faUndo"></fa-icon>
                     </button>
                 </span>
             </div>
@@ -240,25 +242,34 @@
             <div *ngIf="shortAnswerQuestion.solutions && shortAnswerQuestion.solutions.length" class="dnd-instructions">
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
             </div>
-            <div class="drag-items" *ngIf="shortAnswerQuestion.solutions && shortAnswerQuestion.solutions.length">
-                <div class="drag-item" *ngFor="let solution of shortAnswerQuestion.solutions" dnd-draggable [dragEnabled]="true" [dragData]="solution">
+            <div class="drag-items" *ngIf="shortAnswerQuestion.solutions && shortAnswerQuestion.solutions.length" cdkDropList cdkDropListOrientation="horizontal">
+                <div class="drag-item" *ngFor="let solution of shortAnswerQuestion.solutions" cdkDrag [cdkDragDisabled]="false" [cdkDragData]="solution">
                     <div>
                         <textarea [(ngModel)]="solution.text" (ngModelChange)="questionUpdated.emit()"></textarea>
                     </div>
                     <div class="delete-button" title="Delete" (click)="deleteSolution(solution)">
-                        <fa-icon [icon]="'trash'" size="lg"></fa-icon>
+                        <fa-icon [icon]="faTrash" size="lg"></fa-icon>
                     </div>
                     <div class="drag-handle drag-handle-wrapper" title="Move">
-                        <fa-icon [icon]="'bars'" class="drag-handle" size="lg"></fa-icon>
+                        <fa-icon [icon]="faBars" class="drag-handle" size="lg"></fa-icon>
                     </div>
                     <div class="mapping-numbers-wrapper">
                         <div *ngFor="let mapping of getMappingsForSolution(solution)">
                             <div *ngIf="mapping.spot !== undefined" [ngClass]="'mapping-number mapping-color-' + ((mapping.spot!.spotNr || 0) % 8)">
                                 {{ mapping.spot.spotNr }}
                                 <div class="unlink-mapping" (click)="deleteMapping(mapping)">
-                                    <fa-icon [icon]="'unlink'" size="lg"></fa-icon>
+                                    <fa-icon [icon]="faUnlink" size="lg"></fa-icon>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    <div *cdkDragPlaceholder></div>
+                    <div *cdkDragPreview style="border: 1px solid; background: #fafafa; padding: 4px 2px 2px 2px">
+                        <div title="Move">
+                            <fa-icon [icon]="faBars" class="drag-handle" size="lg"></fa-icon>
+                        </div>
+                        <div>
+                            <textarea disabled [(ngModel)]="solution.text" (ngModelChange)="questionUpdated.emit()"></textarea>
                         </div>
                     </div>
                 </div>
@@ -280,12 +291,12 @@
         <div *ngIf="!showVisualMode && !reEvaluationInProgress" class="toolbar">
             <div class="btn-group">
                 <div class="btn btn-outline-secondary active" jhiTranslate="artemisApp.shortAnswerQuestion.editor.text"></div>
-                <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.visual" (click)="togglePreview()"></div>
+                <div class="btn btn-outline-secondary" id="short-answer-show-visual" jhiTranslate="artemisApp.shortAnswerQuestion.editor.visual" (click)="togglePreview()"></div>
             </div>
         </div>
         <div *ngIf="showVisualMode && !reEvaluationInProgress" class="toolbar">
             <div class="btn-group">
-                <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.text" (click)="togglePreview()"></div>
+                <div class="btn btn-outline-secondary" id="short-answer-show-text" jhiTranslate="artemisApp.shortAnswerQuestion.editor.text" (click)="togglePreview()"></div>
                 <div class="btn btn-outline-secondary active" jhiTranslate="artemisApp.shortAnswerQuestion.editor.visual"></div>
             </div>
         </div>

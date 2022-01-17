@@ -8,20 +8,9 @@
             <h2 *ngIf="receivedStats" class="text-center">{{ currentPercentage }}%</h2>
             <h4 *ngIf="receivedStats" class="text-center">{{ currentAbsolute }} / {{ currentMax }}</h4>
             <h1 *ngIf="!receivedStats" class="text-center" style="z-index: 1">
-                <fa-icon [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+                <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
             </h1>
         </div>
-        <canvas
-            baseChart
-            id="doughnut"
-            height="200"
-            width="200"
-            [legend]="false"
-            [datasets]="doughnutChartData"
-            [options]="totalScoreOptions"
-            [colors]="doughnutChartColors"
-            [labels]="doughnutChartLabels"
-            [chartType]="doughnutChartType"
-        ></canvas>
+        <ngx-charts-pie-chart [view]="[200, 200]" [results]="ngxData" [scheme]="ngxColor" [doughnut]="true" [tooltipText]="bindFormatting"> </ngx-charts-pie-chart>
     </div>
 </div>

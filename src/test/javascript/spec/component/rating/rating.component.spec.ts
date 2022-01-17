@@ -1,10 +1,7 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { ArtemisTestModule } from '../../test.module';
-import { StarRatingComponent } from 'ng-starrating';
+import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { MockRatingService } from '../../helpers/mocks/service/mock-rating.service';
 import { Result } from 'app/entities/result.model';
@@ -15,9 +12,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { MockComponent } from 'ng-mocks';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('RatingComponent', () => {
     let ratingComponent: RatingComponent;
@@ -46,45 +40,44 @@ describe('RatingComponent', () => {
     });
 
     it('should get rating', () => {
-        sinon.spy(ratingService, 'getRating');
+        jest.spyOn(ratingService, 'getRating');
         ratingComponent.ngOnInit();
-        expect(ratingService.getRating).to.have.been.calledOnce;
-        expect(ratingComponent.result?.id).to.equal(89);
+        expect(ratingService.getRating).toHaveBeenCalledTimes(1);
+        expect(ratingComponent.result?.id).toBe(89);
     });
 
     it('should return due to missing result', () => {
-        sinon.spy(ratingService, 'getRating');
+        jest.spyOn(ratingService, 'getRating');
         delete ratingComponent.result;
         ratingComponent.ngOnInit();
-        expect(ratingService.getRating).to.not.have.been.called;
+        expect(ratingService.getRating).toHaveBeenCalledTimes(0);
     });
 
     it('should return due to missing participation', () => {
-        sinon.spy(ratingService, 'getRating');
+        jest.spyOn(ratingService, 'getRating');
         delete ratingComponent.result?.participation;
         ratingComponent.ngOnInit();
-        expect(ratingService.getRating).to.not.have.been.called;
+        expect(ratingService.getRating).toHaveBeenCalledTimes(0);
     });
 
     it('should create new local rating', () => {
         ratingComponent.ngOnInit();
-        expect(ratingComponent.rating.result?.id).to.be.equal(89);
-        expect(ratingComponent.rating.rating).to.be.equal(0);
+        expect(ratingComponent.rating.result?.id).toBe(89);
+        expect(ratingComponent.rating.rating).toBe(0);
     });
 
     it('should set rating received from server', () => {
-        const fake = sinon.fake.returns(of(new Rating({ id: 90 } as Result, 1)));
-        sinon.replace(ratingService, 'getRating', fake);
+        jest.spyOn(ratingService, 'getRating').mockReturnValue(of(new Rating({ id: 90 } as Result, 1)));
         ratingComponent.ngOnInit();
-        expect(ratingComponent.rating.result?.id).to.be.equal(90);
-        expect(ratingComponent.rating.rating).to.be.equal(1);
+        expect(ratingComponent.rating.result?.id).toBe(90);
+        expect(ratingComponent.rating.rating).toBe(1);
     });
 
     describe('OnRate', () => {
         beforeEach(() => {
             ratingComponent.rating = new Rating({ id: 89 } as Result, 0);
-            sinon.spy(ratingService, 'createRating');
-            sinon.spy(ratingService, 'updateRating');
+            jest.spyOn(ratingService, 'createRating');
+            jest.spyOn(ratingService, 'updateRating');
         });
 
         it('should return', () => {
@@ -94,8 +87,8 @@ describe('RatingComponent', () => {
                 newValue: 2,
                 starRating: new StarRatingComponent(),
             });
-            expect(ratingService.createRating).to.not.have.been.called;
-            expect(ratingService.updateRating).to.not.have.been.called;
+            expect(ratingService.createRating).toHaveBeenCalledTimes(0);
+            expect(ratingService.updateRating).toHaveBeenCalledTimes(0);
         });
 
         it('should create new rating', () => {
@@ -104,10 +97,10 @@ describe('RatingComponent', () => {
                 newValue: 2,
                 starRating: new StarRatingComponent(),
             });
-            expect(ratingService.createRating).to.have.been.calledOnce;
-            expect(ratingService.updateRating).to.not.have.been.called;
-            expect(ratingComponent.rating.result?.id).to.be.equal(89);
-            expect(ratingComponent.rating.rating).to.be.equal(2);
+            expect(ratingService.createRating).toHaveBeenCalledTimes(1);
+            expect(ratingService.updateRating).toHaveBeenCalledTimes(0);
+            expect(ratingComponent.rating.result?.id).toBe(89);
+            expect(ratingComponent.rating.rating).toBe(2);
         });
 
         it('should update rating', () => {
@@ -117,10 +110,10 @@ describe('RatingComponent', () => {
                 newValue: 2,
                 starRating: new StarRatingComponent(),
             });
-            expect(ratingService.updateRating).to.have.been.calledOnce;
-            expect(ratingService.createRating).to.not.have.been.called;
-            expect(ratingComponent.rating.result?.id).to.be.equal(89);
-            expect(ratingComponent.rating.rating).to.be.equal(2);
+            expect(ratingService.updateRating).toHaveBeenCalledTimes(1);
+            expect(ratingService.createRating).toHaveBeenCalledTimes(0);
+            expect(ratingComponent.rating.result?.id).toBe(89);
+            expect(ratingComponent.rating.rating).toBe(2);
         });
     });
 });

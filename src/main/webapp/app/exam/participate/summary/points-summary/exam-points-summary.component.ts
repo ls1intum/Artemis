@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
@@ -7,6 +7,7 @@ import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType } from 'app/entities/grading-scale.model';
+import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-points-summary',
@@ -23,6 +24,9 @@ export class ExamPointsSummaryComponent implements OnInit {
     isBonus = false;
     hasPassed = false;
     grade?: string;
+
+    // Icons
+    faClipboard = faClipboard;
 
     constructor(
         private serverDateService: ArtemisServerDateService,

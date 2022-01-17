@@ -23,6 +23,7 @@
                 <span class="me-2"> {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }} : {{ exam?.publishResultsDate | artemisDate }} </span>
             </h4>
         </div>
+        <jhi-exam-assessment-buttons class="w-25 float-right"></jhi-exam-assessment-buttons>
     </div>
 </div>
 
@@ -52,7 +53,6 @@
                 [numberOfCorrectionRounds]="numberOfCorrectionRounds"
                 [totalAssessmentPercentage]="totalAssessmentPercentage"
                 [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
-                [isAtLeastInstructor]="course?.isAtLeastInstructor || false"
                 [complaints]="complaints"
                 [moreFeedbackRequests]="moreFeedbackRequests"
                 [assessmentLocks]="assessmentLocks"
@@ -61,13 +61,16 @@
             </jhi-assessment-dashboard-information>
         </div>
     </div>
-
     <div class="container-fluid table-responsive">
         <h4 jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></h4>
         <div *ngIf="!isTestRun" class="guided-tour-form-check col-6 align-baseline">
-            <input type="checkbox" name="showFinishedExercise" id="field_showFinishedExercise" [ngModel]="showFinishedExercises" (ngModelChange)="triggerFinishedExercises()" />
-            <label class="form-check-label" for="field_showFinishedExercise">
-                {{ 'artemisApp.assessmentDashboard.showFinishedExercises' | artemisTranslate }}
+            <input type="checkbox" name="hideFinishedExercise" id="field_hideFinishedExercise" [ngModel]="hideFinishedExercises" (ngModelChange)="triggerFinishedExercises()" />
+            <label class="form-check-label" for="field_hideFinishedExercise">
+                {{ 'artemisApp.assessmentDashboard.hideFinishedExercises' | artemisTranslate }}
+            </label>
+            <input type="checkbox" name="hideOptional" id="field_hideOptional" [ngModel]="hideOptional" (ngModelChange)="triggerOptionalExercises()" />
+            <label class="form-check-label" for="field_hideOptional">
+                {{ 'artemisApp.assessmentDashboard.hideOptional' | artemisTranslate }}
             </label>
         </div>
         <table class="table exercise-table guided-tour-exercise-table">
@@ -75,26 +78,30 @@
                 <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" (sortChange)="sortRows()">
                     <th jhiSortBy="type">
                         <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseType' | artemisTranslate }}</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="title">
                         <a class="th-link">{{ 'artemisApp.assessmentDashboard.exercise' | artemisTranslate }}</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th *ngIf="!isTestRun">{{ 'artemisApp.assessmentDashboard.yourStatus' | artemisTranslate }}</th>
+                    <th jhiSortBy="averageRating">
+                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseAverageRating' | artemisTranslate }}</a>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
                     <th jhiSortBy="dueDate" *ngIf="!isExamMode">
                         <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseDueDate' | artemisTranslate }}</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="assessmentDueDate" *ngIf="!isExamMode">
                         <a class="th-link">{{ 'artemisApp.assessmentDashboard.assessmentsDueDate' | artemisTranslate }}</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th>{{ 'artemisApp.assessmentDashboard.actions' | artemisTranslate }}</th>
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let exercise of exercises">
+                <tr *ngFor="let exercise of currentlyShownExercises">
                     <td>
                         <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
                     </td>
@@ -118,6 +125,10 @@
                         >
                         </jhi-tutor-participation-graph>
                     </td>
+                    <td>
+                        <span *ngIf="exercise.averageRating !== undefined"> {{ exercise.averageRating.toFixed(1) }} ⭐️ ({{ exercise.numberOfRatings }}) </span>
+                        <span *ngIf="exercise.averageRating === undefined"> n.a. </span>
+                    </td>
                     <td *ngIf="!isExamMode">
                         <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
                             {{ exercise.dueDate | artemisTimeAgo }}
@@ -133,6 +144,7 @@
                         <ng-container *ngIf="!exercise.teamMode; else teamsLink">
                             <ng-container>
                                 <a
+                                    id="open-exercise-dashboard"
                                     [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
                                     class="btn btn-info btn-sm me-1"
                                     [class.guided-tour]="exercise === exerciseForGuidedTour"
@@ -144,7 +156,7 @@
 
                         <ng-template #teamsLink>
                             <a
-                                [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'teams']"
+                                [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams']"
                                 [queryParams]="{ filter: TeamFilterProp.OWN }"
                                 class="btn btn-info btn-sm me-1"
                                 [class.guided-tour]="exercise === exerciseForGuidedTour"

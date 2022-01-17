@@ -12,11 +12,11 @@
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'new']"
             id="create-quiz-button"
         >
-            <fa-icon [icon]="'plus'"></fa-icon>
+            <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createLabel"> Create new Quiz </span>
         </a>
         <a *ngIf="course && course.isAtLeastEditor" class="btn me-2 btn-primary text-truncate mb-1 me-1" [routerLink]="['/course-management', courseId, 'apollon-diagrams']">
-            <fa-icon [icon]="'plus'"></fa-icon>
+            <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop"> Create new Drag and Drop Model Quiz </span>
         </a>
         <a
@@ -24,7 +24,7 @@
             class="btn me-2 btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'export']"
         >
-            <fa-icon [icon]="'plus'"></fa-icon>
+            <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.exportLabel"> Export Quiz Exercises </span>
         </a>
     </h4>
@@ -35,21 +35,21 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="status"><span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.quizExercise.startTime">Start Time</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="duration"><span jhiTranslate="artemisApp.quizExercise.duration">Duration</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="status"><span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.quizExercise.startTime">Start Time</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="duration"><span jhiTranslate="artemisApp.quizExercise.duration">Duration</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="includedInOverallScore">
-                        <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th>{{ 'artemisApp.quizExercise.quizLifecycle' | artemisTranslate }}</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let quizExercise of filteredQuizExercises; trackBy: trackId">
+                <tr *ngFor="let quizExercise of filteredQuizExercises; trackBy: trackId" id="exercise-card-{{ quizExercise.id }}">
                     <td *ngIf="!quizIsOver(quizExercise) || !quizExercise.isAtLeastEditor">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']">{{ quizExercise.id }}</a>
                     </td>
@@ -83,7 +83,7 @@
                                 class="btn btn-warning btn-sm me-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.CLOSED"
                             >
-                                <fa-icon [icon]="'play-circle'"></fa-icon>
+                                <fa-icon [icon]="faPlayCircle"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.openForPractice"></span>
                             </button>
                             <button
@@ -93,7 +93,7 @@
                                 class="btn btn-warning btn-sm me-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.VISIBLE"
                             >
-                                <fa-icon [icon]="'play-circle'"></fa-icon>
+                                <fa-icon [icon]="faPlayCircle"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startNow">Start Now</span>
                             </button>
                             <button
@@ -103,7 +103,7 @@
                                 class="btn btn-warning btn-sm me-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.HIDDEN"
                             >
-                                <fa-icon [icon]="'eye'"></fa-icon>
+                                <fa-icon [icon]="faEye"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.showNow">Set Visible</span>
                             </button>
                         </div>
@@ -116,7 +116,7 @@
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'preview']"
                                     class="btn btn-success btn-sm me-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'eye'"></fa-icon>
+                                    <fa-icon [icon]="faEye"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview">Preview</span>
                                 </a>
                                 <a
@@ -124,7 +124,7 @@
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'solution']"
                                     class="btn btn-success btn-sm me-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'eye'"></fa-icon>
+                                    <fa-icon [icon]="faEye"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
                                 </a>
                             </div>
@@ -132,17 +132,19 @@
                                 <a
                                     *ngIf="quizExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'quiz-point-statistic']"
-                                    class="btn btn-info btn-sm me-1 mb-1"
+                                    class="btn btn-info btn-sm me-1 mb-1 d-flex align-items-center"
                                 >
-                                    <fa-icon [icon]="'signal'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.quizStatistic">Statistic</span>
+                                    <span>
+                                        <fa-icon [icon]="faSignal"></fa-icon>
+                                        <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.quizStatistic">Statistic</span>
+                                    </span>
                                 </a>
                                 <a
                                     *ngIf="quizExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'scores']"
                                     class="btn btn-info btn-sm me-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'table'"></fa-icon>
+                                    <fa-icon [icon]="faTable"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                                 </a>
                             </div>
@@ -153,7 +155,7 @@
                                     (click)="exportQuizById(quizExercise.id!, true)"
                                     class="btn btn-warning btn-sm me-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'file-export'"></fa-icon>
+                                    <fa-icon [icon]="faFileExport"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.export">Export</span>
                                 </button>
                                 <a
@@ -165,7 +167,7 @@
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
-                                        <fa-icon [icon]="'wrench'"></fa-icon>
+                                        <fa-icon [icon]="faWrench"></fa-icon>
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                     </div>
                                 </a>
@@ -175,7 +177,7 @@
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']"
                                     class="btn btn-warning btn-sm me-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'wrench'"></fa-icon>
+                                    <fa-icon [icon]="faWrench"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
                                 </a>
                             </div>
@@ -191,7 +193,7 @@
                                     deleteQuestion="artemisApp.quizExercise.reset.question"
                                     class="mb-1"
                                 >
-                                    <fa-icon [icon]="'times'"></fa-icon>
+                                    <fa-icon [icon]="faTimes"></fa-icon>
                                 </button>
                                 <button
                                     *ngIf="quizExercise.isAtLeastInstructor"
@@ -204,7 +206,7 @@
                                     id="delete-quiz-{{ quizExercise.id }}"
                                     class="mb-1"
                                 >
-                                    <fa-icon [icon]="'times'"></fa-icon>
+                                    <fa-icon [icon]="faTimes"></fa-icon>
                                 </button>
                             </div>
                         </div>

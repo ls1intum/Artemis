@@ -1,24 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../../../../test.module';
 import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
 import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgModel } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SortableComponent } from 'ng2-dnd';
 import { Directive, Input } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: '[sortableData]' })
@@ -42,7 +34,6 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
                 MockComponent(MarkdownEditorComponent),
                 MockDirective(NgModel),
                 MockDirective(MockSortableDataDirective),
-                MockComponent(SortableComponent),
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [MockProvider(TranslateService)],
@@ -70,61 +61,61 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
             });
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize component', () => {
         fixture.detectChanges();
-        expect(component).to.be.ok;
+        expect(component).not.toBeNull();
     });
 
     describe('should react to button presses', () => {
         it('move-up', () => {
-            const emitSpy = sinon.spy(component.questionMoveUp, 'emit');
+            const emitSpy = jest.spyOn(component.questionMoveUp, 'emit');
             const button = fixture.debugElement.nativeElement.querySelector('#move-up-button');
-            expect(button).to.exist;
+            expect(button).not.toBeNull();
 
             button.click();
             fixture.detectChanges();
 
-            expect(emitSpy).to.have.been.called;
+            expect(emitSpy).toHaveBeenCalledTimes(1);
         });
 
         it('move-down', () => {
-            const emitSpy = sinon.spy(component.questionMoveDown, 'emit');
+            const emitSpy = jest.spyOn(component.questionMoveDown, 'emit');
             const button = fixture.debugElement.nativeElement.querySelector('#move-down-button');
-            expect(button).to.exist;
+            expect(button).not.toBeNull();
 
             button.click();
             fixture.detectChanges();
 
-            expect(emitSpy).to.have.been.called;
+            expect(emitSpy).toHaveBeenCalledTimes(1);
         });
 
         it('delete', () => {
-            const emitSpy = sinon.spy(component.questionDeleted, 'emit');
+            const emitSpy = jest.spyOn(component.questionDeleted, 'emit');
             const button = fixture.debugElement.nativeElement.querySelector('#delete-button');
-            expect(button).to.exist;
+            expect(button).not.toBeNull();
 
             button.click();
             fixture.detectChanges();
 
-            expect(emitSpy).to.have.been.called;
+            expect(emitSpy).toHaveBeenCalledTimes(1);
         });
 
         it('reset', () => {
             const button = fixture.debugElement.nativeElement.querySelector('#reset-button');
-            expect(button).to.exist;
+            expect(button).not.toBeNull();
 
             button.click();
             fixture.detectChanges();
 
-            expect(component.question.title).to.equal(component.backupQuestion.title);
-            expect(component.question.text).to.equal(component.backupQuestion.text);
-            expect(component.question.explanation).to.equal(component.backupQuestion.explanation);
-            expect(component.question.hint).to.equal(component.backupQuestion.hint);
-            expect(component.question.answerOptions).to.deep.equal(component.backupQuestion.answerOptions);
+            expect(component.question.title).toBe(component.backupQuestion.title);
+            expect(component.question.text).toBe(component.backupQuestion.text);
+            expect(component.question.explanation).toBe(component.backupQuestion.explanation);
+            expect(component.question.hint).toBe(component.backupQuestion.hint);
+            expect(component.question.answerOptions).toEqual(component.backupQuestion.answerOptions);
         });
     });
 
@@ -132,71 +123,61 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
         component.deleteAnswer(answer1);
         fixture.detectChanges();
 
-        expect(component.question.answerOptions!.length).to.equal(0);
+        expect(component.question.answerOptions!.length).toBe(0);
     });
 
     it('should reset an answer', () => {
         component.resetAnswer(answer1);
         fixture.detectChanges();
 
-        expect(component.question.answerOptions).to.deep.equal(component.backupQuestion.answerOptions);
+        expect(component.question.answerOptions).toEqual(component.backupQuestion.answerOptions);
     });
 
     it('should invalidate answers', () => {
         component.setAnswerInvalid(answer1);
         fixture.detectChanges();
 
-        expect(component.question.answerOptions!.length).to.equal(1);
+        expect(component.question.answerOptions!.length).toBe(1);
 
         const answer = component.question.answerOptions![0];
-        expect(answer.invalid).to.be.true;
-        expect(component.isAnswerInvalid(answer)).to.be.true;
+        expect(answer.invalid).toBeTrue();
+        expect(component.isAnswerInvalid(answer)).toBeTrue();
     });
 
     it('should react to answer option changes', () => {
-        const markdownSpy = sinon.spy(ArtemisMarkdownService, 'parseTextHintExplanation');
-
         component.onAnswerOptionChange('solution[wrong]answer', answer1);
         fixture.detectChanges();
 
-        expect(markdownSpy).to.have.been.calledOnce;
-        expect(component.question.answerOptions!.length).to.equal(1);
+        expect(component.question.answerOptions!.length).toBe(1);
 
         const answer = component.question.answerOptions![0];
-        expect(answer.isCorrect).to.be.false;
+        expect(answer.isCorrect).toBeFalse();
     });
 
     it('should generate answer markdown', () => {
-        const generatedText = 'explanation';
-        const markdownService = TestBed.inject(ArtemisMarkdownService);
-        const markdownStub = sinon.stub(markdownService, 'generateTextHintExplanation').returns(generatedText);
+        const generatedText = 'answer';
 
         const result = component.generateAnswerMarkdown(answer1);
         fixture.detectChanges();
 
-        expect(markdownStub).to.have.been.called;
-        expect(result).to.equal(IncorrectOptionCommand.identifier + ' ' + generatedText);
+        expect(result).toBe(IncorrectOptionCommand.identifier + ' ' + generatedText);
     });
 
     it('should react to question changes', () => {
         const questionText = 'new text';
-        const markdownSpy = sinon.spy(ArtemisMarkdownService, 'parseTextHintExplanation');
 
         component.onQuestionChange(questionText);
         fixture.detectChanges();
 
-        expect(markdownSpy).to.have.been.called;
+        expect(component.question.text).toBe(questionText);
     });
 
     it('should get question text', () => {
-        const fakeText = 'fake';
-        const markdownService = TestBed.inject(ArtemisMarkdownService);
-        const markdownStub = sinon.stub(markdownService, 'generateTextHintExplanation').returns(fakeText);
+        const fakeText = '';
 
         const text = component.getQuestionText(component.question);
         fixture.detectChanges();
 
-        expect(markdownStub).to.have.been.called;
-        expect(text).to.equal(fakeText);
+        expect(text).toBe(fakeText);
     });
 });

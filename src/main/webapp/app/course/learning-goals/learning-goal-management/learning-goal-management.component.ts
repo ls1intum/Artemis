@@ -10,6 +10,7 @@ import { forkJoin, Subject } from 'rxjs';
 import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 import { captureException } from '@sentry/browser';
 import { isEqual } from 'lodash-es';
+import { faPencilAlt, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-learning-goal-management',
@@ -27,6 +28,11 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faPencilAlt = faPencilAlt;
 
     constructor(private activatedRoute: ActivatedRoute, private router: Router, private learningGoalService: LearningGoalService, private alertService: AlertService) {}
 

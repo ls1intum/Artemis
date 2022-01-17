@@ -40,7 +40,6 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
-import { TreeviewItem, TreeviewComponent } from 'ngx-treeview';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -66,8 +65,10 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
-import { AceEditorComponent } from 'ng2-ace-editor';
+import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
+import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -101,7 +102,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let findWithParticipationsStub: jest.SpyInstance;
 
     const user = <User>{ id: 99, groups: ['instructorGroup'] };
-    const result: Result = <any>{
+    const result: Result = {
         feedbacks: [new Feedback()],
         participation: new StudentParticipation(),
         score: 80,
@@ -148,7 +149,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     const afterComplaintResult = new Result();
     afterComplaintResult.score = 100;
 
-    const route = { params: of({ submissionId: 123 }), queryParamMap: of(convertToParamMap({ testRun: false })) } as any as ActivatedRoute;
+    const route = (): ActivatedRoute => ({ params: of({ submissionId: 123 }), queryParamMap: of(convertToParamMap({ testRun: false })) } as any as ActivatedRoute);
     const fileContent = 'This is the content of a file';
     const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
 
@@ -166,7 +167,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 CodeEditorContainerComponent,
                 CodeEditorFileBrowserComponent,
                 MockPipe(KeysPipe),
-                MockComponent(TreeviewComponent),
+                TreeviewComponent,
                 MockComponent(CodeEditorStatusComponent),
                 MockComponent(CodeEditorFileBrowserCreateNodeComponent),
                 MockComponent(CodeEditorFileBrowserFolderComponent),
@@ -195,7 +196,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: ActivatedRoute, useValue: route },
+                { provide: ActivatedRoute, useValue: route() },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })

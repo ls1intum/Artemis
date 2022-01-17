@@ -2,12 +2,13 @@
     <h4 class="modal-title">Feedback</h4>
     <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()"></button>
 </div>
-<div class="modal-body" id="result-detail-body" style="position: relative">
+<div class="modal-body position-relative" id="result-detail-body">
     <!-- Message, if defined -->
     <div *ngIf="messageKey" class="mb-3"><h6 [innerHTML]="messageKey | artemisTranslate"></h6></div>
+    <div *ngIf="showMissingAutomaticFeedbackInformation" class="mb-3"><h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate"></h6></div>
     <!-- Loading state -->
     <div *ngIf="isLoading; else feedbackContainer" class="text-muted d-flex justify-content-center" id="result-detail-spinner">
-        <fa-icon [spin]="true" size="lg" [icon]="'circle-notch'"></fa-icon>
+        <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch"></fa-icon>
     </div>
     <!-- Feedbacks container -->
     <ng-template #feedbackContainer>
@@ -23,13 +24,24 @@
                 <span class="result-score-chart-title">
                     <span jhiTranslate="artemisApp.result.score">Score</span>: {{ roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise!)) }}%
                 </span>
-                <div style="height: 100px"><jhi-chart [preset]="scoreChartPreset"> </jhi-chart></div>
-                <div *ngIf="showScoreChartTooltip" class="d-flex justify-content-center position-relative" style="margin-top: -10px">
-                    <div
-                        style="width: 250px; height: 20px; top: -15px; position: absolute"
-                        [ngbTooltip]="'artemisApp.result.chart.tooltip' | artemisTranslate"
-                        placement="bottom"
-                    ></div>
+                <div id="feedback-chart" #containerRef class="chart-space">
+                    <ngx-charts-bar-horizontal-stacked
+                        [view]="[containerRef.offsetWidth, 80]"
+                        [results]="ngxData"
+                        [xAxis]="true"
+                        [xAxisTickFormatting]="xAxisFormatting"
+                        [xScaleMax]="xScaleMax"
+                        [legend]="true"
+                        [legendTitle]="''"
+                        [legendPosition]="legendPosition"
+                        [tooltipDisabled]="true"
+                        [scheme]="ngxColors"
+                        (select)="onSelect($event)"
+                    >
+                    </ngx-charts-bar-horizontal-stacked>
+                </div>
+                <div *ngIf="showScoreChartTooltip" class="chart-tooltip-space d-flex justify-content-center position-relative">
+                    <div class="chart-tooltip-space-content" [ngbTooltip]="'artemisApp.result.chart.tooltip' | artemisTranslate" placement="bottom"></div>
                 </div>
                 <hr />
             </div>
@@ -37,11 +49,13 @@
             <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : null"></ng-container>
             <hr *ngIf="buildLogs?.length" />
             <div class="feedback-list">
-                <div *ngFor="let feedback of filteredFeedbackList; last as isLast" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedback)]">
+                <div *ngFor="let feedback of filteredFeedbackList; last as isLast" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedback)]" id="feedback-message">
                     <span>{{ feedback.category }}</span>
-                    <span class="feedback-points" *ngIf="feedback.credits">{{ roundScoreSpecifiedByCourseSettings(feedback.credits, getCourseFromExercise(exercise!)) }}P</span>
+                    <span id="feedback-points" class="feedback-points" *ngIf="feedback.credits"
+                        >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, getCourseFromExercise(exercise!)) }}P</span
+                    >
                     <span class="feedback-title" *ngIf="feedback.title">{{ feedback.title }}</span>
-                    <jhi-feedback-collapse *ngIf="feedback.text" [text]="feedback.text!" [previewText]="feedback.previewText"></jhi-feedback-collapse>
+                    <jhi-feedback-collapse id="feedback-text" *ngIf="feedback.text" [text]="feedback.text!" [previewText]="feedback.previewText"></jhi-feedback-collapse>
                     <p *ngElse>No feedback available!</p>
                 </div>
             </div>
@@ -79,5 +93,5 @@
     </p>
 </div>
 <div class="modal-footer">
-    <button type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
+    <button id="feedback-close" type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
 </div>

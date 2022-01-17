@@ -5,10 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import javax.annotation.Nullable;
 
@@ -36,6 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -223,16 +221,61 @@ public class ResultResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
-        List<Result> results = new ArrayList<>();
-        var isExamMode = exercise.isExamExercise();
-
-        List<StudentParticipation> participations;
-        if (isExamMode) {
+        final List<StudentParticipation> participations;
+        if (exercise.isExamExercise()) {
             participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
         }
         else {
             participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
         }
+
+        List<Result> results = resultsForExercise(exercise, participations, withSubmissions);
+        log.info("getResultsForExercise took {}ms for {} results.", System.currentTimeMillis() - start, results.size());
+
+        return ResponseEntity.ok().body(results);
+    }
+
+    /**
+     * GET /exercises/:exerciseId/results-with-points-per-criterion : get the successful results for an exercise, ordered ascending by build completion date.
+     * Also contains for each result the points the student achieved with manual feedback. Those points are grouped as sum for each grading criterion.
+     *
+     * @param exerciseId of the exercise for which to retrieve the results.
+     * @param withSubmissions defines if submissions are loaded from the database for the results.
+     * @return the ResponseEntity with status 200 (OK) and the list of results with points in body.
+     */
+    @GetMapping("exercises/{exerciseId}/results-with-points-per-criterion")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<List<ResultWithPointsPerGradingCriterionDTO>> getResultsForExerciseWithPointsPerCriterion(@PathVariable Long exerciseId,
+            @RequestParam(defaultValue = "true") boolean withSubmissions) {
+        final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+        final List<StudentParticipation> participations;
+        if (exercise.isExamExercise()) {
+            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacksIgnoreTestRuns(exerciseId);
+        }
+        else {
+            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacks(exerciseId);
+        }
+
+        final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        final List<Result> results = resultsForExercise(exercise, participations, withSubmissions);
+        final List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = results.stream().map(result -> resultRepository.calculatePointsPerGradingCriterion(result, course))
+                .toList();
+
+        return ResponseEntity.ok().body(resultsWithPoints);
+    }
+
+    /**
+     * Get the successful results for an exercise, ordered ascending by build completion date.
+     *
+     * @param exercise which the results belong to.
+     * @param withSubmissions true, if each result should also contain the submissions.
+     * @return a list of results as described above for the given exercise.
+     */
+    private List<Result> resultsForExercise(Exercise exercise, List<StudentParticipation> participations, boolean withSubmissions) {
+        final List<Result> results = new ArrayList<>();
+
         for (StudentParticipation participation : participations) {
             // Filter out participations without students / teams
             if (participation.getParticipant() == null) {
@@ -251,10 +294,8 @@ public class ResultResource {
             results.add(relevantSubmissionWithResult.getLatestResult());
         }
 
-        log.info("getResultsForExercise took {}ms for {} results.", System.currentTimeMillis() - start, results.size());
-
         if (withSubmissions) {
-            results = results.stream().filter(result -> result.getSubmission() != null && result.getSubmission().isSubmitted()).collect(Collectors.toList());
+            results.removeIf(result -> result.getSubmission() == null || !result.getSubmission().isSubmitted());
         }
 
         // remove unnecessary elements in the json response
@@ -264,7 +305,7 @@ public class ResultResource {
             result.getParticipation().setExercise(null);
         });
 
-        return ResponseEntity.ok().body(results);
+        return results;
     }
 
     /**
@@ -278,7 +319,7 @@ public class ResultResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> getResult(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
-        Result result = resultRepository.findOneElseThrow(resultId);
+        Result result = resultRepository.findByIdElseThrow(resultId);
         Participation participation = result.getParticipation();
         if (!participation.getId().equals(participationId)) {
             return badRequest("participationId", "400",
@@ -361,7 +402,7 @@ public class ResultResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> deleteResult(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to delete Result : {}", resultId);
-        Result result = resultRepository.findOneElseThrow(resultId);
+        Result result = resultRepository.findByIdElseThrow(resultId);
         Participation participation = result.getParticipation();
         if (!participation.getId().equals(participationId)) {
             return badRequest("participationId", "400",

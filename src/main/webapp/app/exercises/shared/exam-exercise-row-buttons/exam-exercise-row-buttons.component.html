@@ -4,7 +4,7 @@
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'scores']"
         class="btn btn-info btn-sm me-1"
     >
-        <fa-icon [icon]="'table'"></fa-icon>
+        <fa-icon [icon]="faTable"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
     </a>
 
@@ -13,7 +13,7 @@
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'programming-exercises', exercise.id, 'grading', 'test-cases']"
         class="btn btn-info btn-sm me-1"
     >
-        <fa-icon [icon]="'file-signature'"></fa-icon>
+        <fa-icon [icon]="faFileSignature"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
     </a>
 
@@ -22,7 +22,7 @@
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'participations']"
         class="btn btn-primary btn-sm me-1"
     >
-        <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+        <fa-icon [icon]="farListAlt"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
     </a>
 
@@ -31,7 +31,7 @@
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'submissions']"
         class="btn btn-success btn-sm me-1"
     >
-        <fa-icon [icon]="'book'"></fa-icon>
+        <fa-icon [icon]="faBook"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
     </a>
 
@@ -41,7 +41,7 @@
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'example-submissions']"
         class="btn btn-success btn-sm me-1"
     >
-        <fa-icon [icon]="'book'"></fa-icon>
+        <fa-icon [icon]="faBook"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions">Example Submissions</span>
     </a>
 
@@ -50,16 +50,16 @@
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'quiz-exercises', exercise.id, 'quiz-point-statistic']"
         class="btn btn-info btn-sm me-1"
     >
-        <fa-icon [icon]="'signal'"></fa-icon>
+        <fa-icon [icon]="faSignal"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.statistics">Statistics</span>
     </a>
 
     <a
         *ngIf="course.isAtLeastInstructor && exercise.teamMode"
-        [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'teams']"
+        [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'teams']"
         class="btn btn-primary btn-sm me-1"
     >
-        <fa-icon [icon]="'users'"></fa-icon>
+        <fa-icon [icon]="faUsers"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
     </a>
 
@@ -71,7 +71,7 @@
         [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'code-editor', -1]"
         class="btn btn-warning btn-sm me-1"
     >
-        <fa-icon [icon]="'pencil-alt'"></fa-icon>
+        <fa-icon [icon]="faPencilAlt"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
     </a>
 
@@ -80,7 +80,7 @@
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'quiz-exercises', exercise.id, 'preview']"
         class="btn btn-success btn-sm me-1"
     >
-        <fa-icon [icon]="'eye'"></fa-icon>
+        <fa-icon [icon]="faEye"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview">Preview</span>
     </a>
 
@@ -89,12 +89,12 @@
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'quiz-exercises', exercise.id, 'solution']"
         class="btn btn-success btn-sm me-1"
     >
-        <fa-icon [icon]="'eye'"></fa-icon>
+        <fa-icon [icon]="faEye"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
     </a>
 
     <button *ngIf="course.isAtLeastEditor && exercise.type === exerciseType.QUIZ" class="btn btn-warning btn-sm me-1" (click)="exportQuizById(true)">
-        <fa-icon [icon]="'file-export'"></fa-icon>
+        <fa-icon [icon]="faFileExport"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.export">Export</span>
     </button>
 
@@ -106,7 +106,7 @@
             [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'quiz-exercises', exercise.id, 're-evaluate']"
             class="btn btn-warning btn-sm me-1"
         >
-            <fa-icon [icon]="'wrench'"></fa-icon>
+            <fa-icon [icon]="faWrench"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
         </a>
         <!-- Only show the edit button if the exam has not ended. Disable the button if the exam is running -->
@@ -114,7 +114,7 @@
             <!-- Display a warning next to the edit button if test run participations for this exercise exist -->
             <fa-icon
                 style="margin: 0.3em"
-                [icon]="'exclamation-triangle'"
+                [icon]="faExclamationTriangle"
                 class="text-warning"
                 *ngIf="exercise.testRunParticipationsExist"
                 [ngbTooltip]="'artemisApp.quizExercise.edit.testRunSubmissionsExist' | artemisTranslate"
@@ -127,7 +127,7 @@
                 [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
                 class="btn btn-warning btn-sm me-1"
             >
-                <fa-icon [icon]="'wrench'"></fa-icon>
+                <fa-icon [icon]="faWrench"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
             </a>
         </div>
@@ -138,7 +138,7 @@
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
         class="btn btn-warning btn-sm me-1"
     >
-        <fa-icon [icon]="'wrench'"></fa-icon>
+        <fa-icon [icon]="faWrench"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
     </a>
 
@@ -151,7 +151,7 @@
         (delete)="deleteExercise()"
         [dialogError]="dialogError$"
     >
-        <fa-icon [icon]="'times'"></fa-icon>
+        <fa-icon [icon]="faTimes"></fa-icon>
     </button>
 
     <button
@@ -167,6 +167,6 @@
             deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
         }"
     >
-        <fa-icon [icon]="'times'"></fa-icon>
+        <fa-icon [icon]="faTimes"></fa-icon>
     </button>
 </div>

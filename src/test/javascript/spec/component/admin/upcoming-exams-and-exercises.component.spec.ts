@@ -6,7 +6,7 @@ import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.s
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockExamManagementService } from '../../helpers/mocks/service/mock-exam-management.service';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { MockRouterLinkDirective } from '../shared/navbar.component.spec';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('UpcomingExamsAndExercisesComponent', () => {
     let component: UpcomingExamsAndExercisesComponent;
@@ -38,7 +38,7 @@ describe('UpcomingExamsAndExercisesComponent', () => {
     });
 
     describe('OnInit', () => {
-        it('Should call load exercises and exams on init', function () {
+        it('Should call load exercises and exams on init', () => {
             // WHEN
             component.ngOnInit();
 

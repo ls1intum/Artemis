@@ -2,7 +2,6 @@ import { HttpClientModule } from '@angular/common/http';
 import { EventEmitter } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -18,25 +17,19 @@ import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.compon
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import * as chai from 'chai';
-import dayjs from 'dayjs';
-import { MockComponent } from 'ng-mocks';
-import { MockDirective } from 'ng-mocks';
-import { MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import * as sinon from 'sinon';
-import { spy } from 'sinon';
-import sinonChai from 'sinon-chai';
-import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockExamParticipationService } from '../../../helpers/mocks/service/mock-exam-participation.service';
+import { MockArtemisServerDateService } from '../../../helpers/mocks/service/mock-server-date.service';
 
 describe('ExamParticipationCoverComponent', () => {
     const course = { id: 456 } as Course;
@@ -66,30 +59,33 @@ describe('ExamParticipationCoverComponent', () => {
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
+                MockProvider(ArtemisMarkdownService),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useValue: MockRouter },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ExamParticipationService, useClass: MockExamParticipationService },
+                { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
             ],
-        }).compileComponents();
-        fixture = TestBed.createComponent(ExamParticipationCoverComponent);
-        component = fixture.componentInstance;
-        examParticipationService = TestBed.inject(ExamParticipationService);
-        accountService = TestBed.inject(AccountService);
-        artemisServerDateService = TestBed.inject(ArtemisServerDateService);
-    });
-    beforeEach(() => {
-        component.startView = false;
-        component.exam = exam;
-        component.studentExam = studentExam;
-        component.handInEarly = false;
-        component.handInPossible = true;
-        component.testRunStartTime = undefined;
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ExamParticipationCoverComponent);
+                component = fixture.componentInstance;
+                examParticipationService = TestBed.inject(ExamParticipationService);
+                accountService = TestBed.inject(AccountService);
+                artemisServerDateService = TestBed.inject(ArtemisServerDateService);
+
+                component.startView = false;
+                component.exam = exam;
+                component.studentExam = studentExam;
+                component.handInEarly = false;
+                component.handInPossible = true;
+                component.testRunStartTime = undefined;
+            });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         component.ngOnDestroy();
-        sinon.restore();
         jest.clearAllMocks();
     });
 
@@ -105,8 +101,8 @@ describe('ExamParticipationCoverComponent', () => {
         component.ngOnInit();
         tick();
 
-        expect(component.graceEndDate).to.deep.equal(now.add(1, 'seconds').add(1, 'seconds'));
-        expect(component.accountName).to.equal(user.name);
+        expect(component.graceEndDate).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
+        expect(component.accountName).toBe(user.name);
 
         now = dayjs();
         component.startView = true;
@@ -119,7 +115,7 @@ describe('ExamParticipationCoverComponent', () => {
         component.testRunStartTime = now;
         component.studentExam.testRun = true;
         component.ngOnInit();
-        expect(component.graceEndDate).to.deep.equal(now.add(1, 'seconds').add(1, 'seconds'));
+        expect(component.graceEndDate).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
     }));
 
     it('should update confirmation', () => {
@@ -127,11 +123,11 @@ describe('ExamParticipationCoverComponent', () => {
 
         component.startView = true;
         component.updateConfirmation();
-        expect(component.startEnabled).to.be.false;
+        expect(component.startEnabled).toBe(false);
 
         component.startView = false;
         component.updateConfirmation();
-        expect(component.endEnabled).to.be.false;
+        expect(component.endEnabled).toBe(false);
     });
 
     it('should start exam', fakeAsync(() => {
@@ -139,11 +135,12 @@ describe('ExamParticipationCoverComponent', () => {
         component.testRun = true;
         const exercise = { id: 99, type: ExerciseType.MODELING } as Exercise;
         component.studentExam.exercises = [exercise];
-        const saveStudentExamSpy = spy(examParticipationService, 'saveStudentExamToLocalStorage');
+        const saveStudentExamSpy = jest.spyOn(examParticipationService, 'saveStudentExamToLocalStorage');
 
         component.startExam();
 
-        expect(saveStudentExamSpy).to.be.calledOnceWith(exam!.course!.id, exam!.id, studentExam);
+        expect(saveStudentExamSpy).toHaveBeenCalledTimes(1);
+        expect(saveStudentExamSpy).toHaveBeenCalledWith(exam!.course!.id, exam!.id, studentExam);
 
         component.testRun = false;
         jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConduction').mockReturnValue(of(studentExam));
@@ -151,7 +148,7 @@ describe('ExamParticipationCoverComponent', () => {
 
         component.startExam();
         tick();
-        expect(component.studentExam).to.deep.equal(studentExam);
+        expect(component.studentExam).toEqual(studentExam);
 
         component.testRun = false;
         const startDate = dayjs();
@@ -161,58 +158,58 @@ describe('ExamParticipationCoverComponent', () => {
         component.startExam();
         tick();
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
-        expect(component.waitingForExamStart).to.be.true;
+        expect(component.waitingForExamStart).toBe(true);
         const difference = Math.ceil(component.exam.startDate.diff(now, 'seconds') / 60);
-        expect(component.timeUntilStart).to.equal(difference + ' min');
+        expect(component.timeUntilStart).toBe(difference + ' min');
 
         component.exam.startDate = undefined;
         component.startExam();
         tick();
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
-        expect(component.waitingForExamStart).to.be.true;
-        expect(component.timeUntilStart).to.equal('');
+        expect(component.waitingForExamStart).toBe(true);
+        expect(component.timeUntilStart).toBe('');
     }));
 
     it('test run should always have already started', () => {
         component.testRun = true;
-        expect(component.hasStarted()).to.be.true;
+        expect(component.hasStarted()).toBe(true);
     });
 
     it('should update displayed times if exam suddenly started ', () => {
         component.testRun = true;
         component.exam.startDate = dayjs();
         component.onExamStarted = new EventEmitter<StudentExam>();
-        const eventSpy = spy(component.onExamStarted, 'emit');
+        const eventSpy = jest.spyOn(component.onExamStarted, 'emit');
 
         component.updateDisplayedTimes(studentExam);
-        expect(eventSpy).to.be.calledOnce;
+        expect(eventSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should create the relative time text correctly', () => {
         let result = component.relativeTimeText(100);
-        expect(result).to.equal('1 min 40 s');
+        expect(result).toBe('1 min 40 s');
         result = component.relativeTimeText(10);
-        expect(result).to.equal('10 s');
+        expect(result).toBe('10 s');
     });
 
     it('should submit exam', () => {
         component.onExamEnded = new EventEmitter<StudentExam>();
-        const saveStudentExamSpy = spy(component.onExamEnded, 'emit');
+        const saveStudentExamSpy = jest.spyOn(component.onExamEnded, 'emit');
         component.submitExam();
-        expect(saveStudentExamSpy).to.be.calledOnce;
+        expect(saveStudentExamSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should continue after handing in early', () => {
         component.onExamContinueAfterHandInEarly = new EventEmitter<void>();
-        const saveStudentExamSpy = spy(component.onExamContinueAfterHandInEarly, 'emit');
+        const saveStudentExamSpy = jest.spyOn(component.onExamContinueAfterHandInEarly, 'emit');
         component.continueAfterHandInEarly();
-        expect(saveStudentExamSpy).to.be.calledOnce;
+        expect(saveStudentExamSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should get start button enabled and end button enabled', () => {
         fixture.detectChanges();
         component.testRun = true;
-        expect(component.startButtonEnabled).to.be.false;
+        expect(component.startButtonEnabled).toBe(false);
 
         const now = dayjs();
         jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
@@ -221,15 +218,15 @@ describe('ExamParticipationCoverComponent', () => {
         component.accountName = 'admin';
         component.confirmed = true;
         component.exam.visibleDate = dayjs().subtract(1, 'hours');
-        expect(component.startButtonEnabled).to.be.true;
+        expect(component.startButtonEnabled).toBe(true);
 
         component.handInPossible = true;
-        expect(component.endButtonEnabled).to.be.true;
+        expect(component.endButtonEnabled).toBe(true);
     });
 
     it('should get end button enabled', () => {
         component.enteredName = 'admin';
-        expect(component.inserted).to.be.true;
+        expect(component.inserted).toBe(true);
     });
 
     it('should disable exam button', () => {
@@ -242,12 +239,12 @@ describe('ExamParticipationCoverComponent', () => {
         component.confirmed = true;
         component.exam.visibleDate = dayjs().subtract(1, 'hours');
         component.exam.visibleDate = dayjs().add(1, 'hours');
-        expect(component.startButtonEnabled).to.be.false;
+        expect(component.startButtonEnabled).toBe(false);
     });
 
     it('should get whether student failed to submit', () => {
         component.testRun = true;
-        expect(component.studentFailedToSubmit).to.be.false;
+        expect(component.studentFailedToSubmit).toBe(false);
 
         component.testRun = false;
         const startDate = dayjs();
@@ -257,6 +254,6 @@ describe('ExamParticipationCoverComponent', () => {
         component.studentExam.workingTime = 3600;
         component.exam.gracePeriod = 1;
         component.studentExam.submitted = false;
-        expect(component.studentFailedToSubmit).to.be.true;
+        expect(component.studentFailedToSubmit).toBe(true);
     });
 });

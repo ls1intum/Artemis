@@ -1,6 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
-import { ChartDataSets, ChartOptions, ChartPoint } from 'chart.js';
-import { BaseChartDirective, Color, Label } from 'ng2-charts';
+import { AfterViewInit, Component, Input, OnChanges } from '@angular/core';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -8,34 +6,42 @@ import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { cloneDeep, sortBy } from 'lodash-es';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { round } from 'app/shared/util/utils';
-import { sortBy } from 'lodash-es';
-
-// this exercise information is needed for tooltip generation and to navigate to an exercise page
-export class CustomChartPoint implements ChartPoint {
-    y: number;
-    exerciseId: number;
-    exerciseTitle: string;
-    exerciseType: ExerciseType;
-}
 
 @Component({
     selector: 'jhi-exercise-scores-chart',
     templateUrl: './exercise-scores-chart.component.html',
     styleUrls: ['./exercise-scores-chart.component.scss'],
 })
-export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
+export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     @Input()
+    filteredExerciseIDs: number[];
+
     courseId: number;
     isLoading = false;
-    public exerciseScores: ExerciseScoresDTO[] = [];
+    exerciseScores: ExerciseScoresDTO[] = [];
+    excludedExerciseScores: ExerciseScoresDTO[] = [];
 
-    @ViewChild(BaseChartDirective)
-    chartDirective: BaseChartDirective;
-    chartInstance: Chart;
-    @ViewChild('chartDiv')
-    chartDiv: ElementRef;
+    readonly Math = Math;
+
+    // ngx
+    ngxData: any[] = [];
+    backUpData: any[] = [];
+    xAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.xAxis');
+    yAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.yAxis');
+    ngxColor = {
+        name: 'Performance in Exercises',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: ['#87ceeb', '#fa8072', '#32cd32'],
+    } as Color; // colors: blue, red, green
+    backUpColor = cloneDeep(this.ngxColor);
+    yourScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.yourScoreLabel');
+    averageScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.averageScoreLabel');
+    maximumScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.maximumScoreLabel');
+    maxScale = 101;
 
     constructor(
         private router: Router,
@@ -45,14 +51,8 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
         private translateService: TranslateService,
     ) {}
 
-    ngOnDestroy() {
-        // important to prevent memory leaks
-        this.chartInstance.destroy();
-    }
-
     ngAfterViewInit() {
-        this.chartInstance = this.chartDirective.chart;
-        this.activatedRoute.parent!.params.subscribe((params) => {
+        this.activatedRoute.parent?.parent?.params.subscribe((params) => {
             this.courseId = +params['courseId'];
             if (this.courseId) {
                 this.loadDataAndInitializeChart();
@@ -60,7 +60,11 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
         });
     }
 
-    private loadDataAndInitializeChart() {
+    ngOnChanges(): void {
+        this.initializeChart();
+    }
+
+    private loadDataAndInitializeChart(): void {
         this.isLoading = true;
         this.exerciseScoresChartService
             .getExerciseScoresForCourse(this.courseId)
@@ -78,203 +82,95 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
             );
     }
 
-    private initializeChart() {
-        // we calculate the chart width depending on the number of exercises we have to show. If you look into
-        // exercise-scores-chart.component.scss you will see that we show a horizontal navigation bar when the
-        // chart has reached a certain width
-        let chartWidth = 80 * this.exerciseScores.length;
-
-        if (chartWidth < 1200) {
-            chartWidth = 1200;
-        }
-
-        this.chartDiv.nativeElement.setAttribute('style', `width: ${chartWidth}px;`);
-        this.chartInstance.resize();
+    private initializeChart(): void {
+        this.exerciseScores = this.exerciseScores.concat(this.excludedExerciseScores);
+        this.excludedExerciseScores = this.exerciseScores.filter((score) => this.filteredExerciseIDs.includes(score.exerciseId!));
+        this.exerciseScores = this.exerciseScores.filter((score) => !this.filteredExerciseIDs.includes(score.exerciseId!));
         // we show all the exercises ordered by their release data
         const sortedExerciseScores = sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
-        this.addData(this.chartInstance, sortedExerciseScores);
+        this.addData(sortedExerciseScores);
     }
 
-    private addData(chart: Chart, exerciseScoresDTOs: ExerciseScoresDTO[]) {
-        for (const exerciseScoreDTO of exerciseScoresDTOs) {
+    /**
+     * Converts the exerciseScoresDTOs into dedicated objects that can be processed by ngx-charts in order to
+     * visualize the scores and pushes them to ngxData and backUpData
+     * @param exerciseScoresDTOs array of objects containing the students score, the average score for this exercise and
+     * the max score achieved for this exercise by a student as well as other detailed information of the exericse
+     * @private
+     */
+    private addData(exerciseScoresDTOs: ExerciseScoresDTO[]): void {
+        this.ngxData = [];
+        const scoreSeries: any[] = [];
+        const averageSeries: any[] = [];
+        const bestScoreSeries: any[] = [];
+        exerciseScoresDTOs.forEach((exerciseScoreDTO) => {
             const extraInformation = {
                 exerciseId: exerciseScoreDTO.exerciseId,
-                exerciseTitle: exerciseScoreDTO.exerciseTitle,
                 exerciseType: exerciseScoreDTO.exerciseType,
             };
+            // adapt the y axis max
+            this.maxScale = Math.max(
+                round(exerciseScoreDTO.scoreOfStudent!),
+                round(exerciseScoreDTO.averageScoreAchieved!),
+                round(exerciseScoreDTO.maxScoreAchieved!),
+                this.maxScale,
+            );
+            scoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.scoreOfStudent!) + 1, ...extraInformation });
+            averageSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.averageScoreAchieved!) + 1, ...extraInformation });
+            bestScoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.maxScoreAchieved!) + 1, ...extraInformation });
+        });
 
-            chart.data.labels!.push(exerciseScoreDTO.exerciseTitle!);
-            // from each dto we generate a data point for each of three data sets
-            (chart.data.datasets![0].data as CustomChartPoint[])!.push({
-                y: exerciseScoreDTO.scoreOfStudent,
-                ...extraInformation,
-            } as CustomChartPoint);
-            (chart.data.datasets![1].data as CustomChartPoint[])!.push({
-                y: exerciseScoreDTO.averageScoreAchieved,
-                ...extraInformation,
-            } as CustomChartPoint);
-            (chart.data.datasets![2].data as CustomChartPoint[])!.push({
-                y: exerciseScoreDTO.maxScoreAchieved,
-                ...extraInformation,
-            } as CustomChartPoint);
+        const studentScore = { name: this.yourScoreLabel, series: scoreSeries };
+        const averageScore = { name: this.averageScoreLabel, series: averageSeries };
+        const bestScore = { name: this.maximumScoreLabel, series: bestScoreSeries };
+        this.ngxData.push(studentScore);
+        this.ngxData.push(averageScore);
+        this.ngxData.push(bestScore);
+        this.ngxData = [...this.ngxData];
+        this.backUpData = [...this.ngxData];
+    }
+
+    /**
+     * Provides the functionality when the user interacts with the chart by clicking on it.
+     * If the users click on a node in the chart, they get delegated to the corresponding exercise detail page.
+     * If the users click on an entry in the legend, the corresponding line disappears or reappears depending on its previous state
+     * @param data the event sent by the framework
+     */
+    onSelect(data: any): void {
+        // delegate to the corresponding exericse if chart node is clicked
+        if (data.exerciseId) {
+            this.navigateToExercise(data.exerciseId);
+        } else {
+            // if a legend label is clicked, the corresponding line has to disappear or reappear
+            const name = JSON.parse(JSON.stringify(data)) as string;
+            // find the affected line in the dataset
+            const index = this.ngxData.findIndex((dataPack: any) => {
+                const dataName = dataPack.name as string;
+                return dataName === name;
+            });
+            // check whether the line is currently displayed
+            if (this.ngxColor.domain[index] !== 'rgba(255,255,255,0)') {
+                const placeHolder = cloneDeep(this.ngxData[index]);
+                placeHolder.series.forEach((piece: any) => {
+                    piece.value = 0;
+                });
+                // exchange actual line with all-zero line and make color transparent
+                this.ngxData[index] = placeHolder;
+                this.ngxColor.domain[index] = 'rgba(255,255,255,0)';
+            } else {
+                // if the line is currently hidden, the color and the values are reset
+                this.ngxColor.domain[index] = this.backUpColor.domain[index];
+                this.ngxData[index] = this.backUpData[index];
+            }
+            // trigger a chart update
+            this.ngxData = [...this.ngxData];
         }
-        this.chartInstance.update();
     }
 
     /**
      * We navigate to the exercise sub page when the user clicks on a data point
      */
-    navigateToExercise(exerciseId: number) {
+    navigateToExercise(exerciseId: number): void {
         this.router.navigate(['courses', this.courseId, 'exercises', exerciseId]);
     }
-
-    /* ------------------------------ Settings for the Chart ------------------------------ */
-    /**
-     * For each exercise we show three data points, hence we need three data sets:
-     * 1.) Score achieved by the user in the exercise
-     * 2.) Average score achieved by all users in the exercise
-     * 3.) Best score achieved by a user in the exercise
-     */
-
-    public dataSets: ChartDataSets[] = [
-        // score of logged in user in exercise
-        {
-            fill: false,
-            data: [],
-            label: this.translateService.instant('artemisApp.exercise-scores-chart.yourScoreLabel'),
-            pointStyle: 'circle',
-            borderWidth: 3,
-            lineTension: 0,
-            spanGaps: true,
-        },
-        // average score in exercise
-        {
-            fill: false,
-            data: [],
-            label: this.translateService.instant('artemisApp.exercise-scores-chart.averageScoreLabel'),
-            pointStyle: 'rect',
-            borderWidth: 3,
-            lineTension: 0,
-            spanGaps: true,
-            borderDash: [1, 1],
-        },
-        // best score in exercise
-        {
-            fill: false,
-            data: [],
-            label: this.translateService.instant('artemisApp.exercise-scores-chart.maximumScoreLabel'),
-            pointStyle: 'triangle',
-            borderWidth: 3,
-            lineTension: 0,
-            spanGaps: true,
-            borderDash: [15, 3, 3, 3],
-        },
-    ];
-    public labels: Label[] = this.exerciseScores.map((exerciseScoreDTO) => exerciseScoreDTO.exerciseTitle!);
-    public chartOptions: ChartOptions = {
-        // we show the pointer to indicate to the user that a data point is clickable (navigation to exercise)
-        onHover: (event: any, chartElement) => {
-            event.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
-        },
-        // when the user clicks on a data point, we navigate to the subpage of the corresponding exercise
-        onClick: (evt) => {
-            const point: any = this.chartInstance.getElementAtEvent(evt)[0];
-
-            if (point) {
-                const value: any = this.chartInstance.data.datasets![point._datasetIndex]!.data![point._index];
-                if (value.exerciseId) {
-                    this.navigateToExercise(value.exerciseId);
-                }
-            }
-        },
-        tooltips: {
-            callbacks: {
-                label(tooltipItem, data) {
-                    let label = data.datasets![tooltipItem.datasetIndex!].label || '';
-
-                    if (label) {
-                        label += ': ';
-                    }
-                    label += round(tooltipItem.yLabel as number, 2);
-                    label += ' %';
-                    return label;
-                },
-                footer(tooltipItem, data) {
-                    const dataset = data.datasets![tooltipItem[0].datasetIndex!].data![tooltipItem[0].index!];
-                    const exerciseType = (dataset as any).exerciseType;
-                    return [`Exercise Type: ${exerciseType}`];
-                },
-            },
-        },
-        responsive: true,
-        maintainAspectRatio: false,
-        title: {
-            display: false,
-        },
-        legend: {
-            position: 'left',
-        },
-        scales: {
-            yAxes: [
-                {
-                    scaleLabel: {
-                        display: true,
-                        labelString: this.translateService.instant('artemisApp.exercise-scores-chart.yAxis'),
-                        fontSize: 12,
-                    },
-                    ticks: {
-                        suggestedMax: 100,
-                        suggestedMin: 0,
-                        beginAtZero: true,
-                        precision: 0,
-                        fontSize: 12,
-                    },
-                },
-            ],
-            xAxes: [
-                {
-                    scaleLabel: {
-                        display: true,
-                        labelString: this.translateService.instant('artemisApp.exercise-scores-chart.xAxis'),
-                        fontSize: 12,
-                    },
-                    ticks: {
-                        autoSkip: false,
-                        fontSize: 12,
-                        callback(exerciseTitle: string) {
-                            if (exerciseTitle.length > 20) {
-                                // shorten exercise title if too long (will be displayed in full in tooltip)
-                                return exerciseTitle.substr(0, 20) + '...';
-                            } else {
-                                return exerciseTitle;
-                            }
-                        },
-                    },
-                },
-            ],
-        },
-    };
-    public chartColors: Color[] = [
-        // score of logged in user in exercise
-        {
-            borderColor: 'skyBlue',
-            backgroundColor: 'skyBlue',
-            hoverBackgroundColor: 'black',
-            hoverBorderColor: 'black',
-        },
-        // average score in exercise
-        {
-            borderColor: 'salmon',
-            backgroundColor: 'salmon',
-            hoverBackgroundColor: 'black',
-            hoverBorderColor: 'black',
-        },
-        // best score in exercise
-        {
-            borderColor: 'limeGreen',
-            backgroundColor: 'limeGreen',
-            hoverBackgroundColor: 'black',
-            hoverBorderColor: 'black',
-        },
-    ];
 }

@@ -7,9 +7,7 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { CookieService } from 'ngx-cookie-service';
 import { TranslateService } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -17,7 +15,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
@@ -35,7 +33,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-participate-info-box/team-participate-info-box.component';
+import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-participate/team-participate-info-box.component';
 import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
@@ -66,6 +64,8 @@ describe('ModelingSubmission Management Component', () => {
     const submission = <ModelingSubmission>(<unknown>{ id: 20, submitted: true, participation });
     const result = { id: 1 } as Result;
 
+    const originalConsoleError = console.error;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([routes[0]])],
@@ -93,7 +93,6 @@ describe('ModelingSubmission Management Component', () => {
                 { provide: ComplaintService, useClass: MockComplaintService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: CookieService, useClass: MockCookieService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: DeviceDetectorService },
@@ -110,10 +109,12 @@ describe('ModelingSubmission Management Component', () => {
                 router = debugElement.injector.get(Router);
                 comp.modelingEditor = TestBed.createComponent(MockComponent(ModelingEditorComponent)).componentInstance;
             });
+        console.error = jest.fn();
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+        console.error = originalConsoleError;
     });
 
     it('Should call load getDataForModelingEditor on init', () => {
@@ -410,5 +411,21 @@ describe('ModelingSubmission Management Component', () => {
 
         expect(currentModelStub).toHaveBeenCalledTimes(1);
         expect(canDeactivate).toBe(false);
+    });
+
+    it('should set isChanged property to false after saving', () => {
+        comp.submission = <ModelingSubmission>(<unknown>{
+            id: 1,
+            model: '{"elements": [{"id": 1}]}',
+            submitted: true,
+            participation,
+        });
+        comp.isChanged = true;
+        jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
+        comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
+        comp.modelingExercise.id = 1;
+        fixture.detectChanges();
+        comp.saveDiagram();
+        expect(comp.isChanged).toBe(false);
     });
 });

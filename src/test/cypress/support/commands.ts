@@ -35,7 +35,8 @@ declare global {
             login(credentials: CypressCredentials, url?: string): any;
             logout(): any;
             loginWithGUI(credentials: CypressCredentials): any;
-            getSettled(selector: string, options?: {}): Chainable<Cypress>;
+            getSettled(selector: string, options?: {}): Chainable<unknown>;
+            reloadUntilFound(selector: string, interval?: number, timeout?: number): Chainable<undefined>;
         }
     }
 }
@@ -81,11 +82,10 @@ Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
     }).then((response) => {
         expect(response.status).to.equal(200);
         localStorage.setItem(authTokenKey, '"' + response.body.id_token + '"');
-        cy.wait(50);
+        if (url) {
+            cy.visit(url);
+        }
     });
-    if (url) {
-        cy.visit(url);
-    }
 });
 
 /** recursively gets an element, returning only after it's determined to be attached to the DOM for good
@@ -118,4 +118,24 @@ Cypress.Commands.add('getSettled', (selector, opts = {}) => {
             return cy.wrap(el);
         });
     });
+});
+
+/**
+ * Periodically refreshes the page until an element with the specified selector is found. The command fails if the time exceeds the timeout.
+ */
+Cypress.Commands.add('reloadUntilFound', (selector: string, interval = 2000, timeout = 20000) => {
+    return cy.waitUntil(
+        () => {
+            const found = Cypress.$(selector).length > 0;
+            if (!found) {
+                cy.reload();
+            }
+            return found;
+        },
+        {
+            interval,
+            timeout,
+            errorMsg: `Timed out finding an element matching the "${selector}" selector`,
+        },
+    );
 });

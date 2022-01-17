@@ -37,11 +37,12 @@
         <h5><span jhiTranslate="artemisApp.studentExams.workingTime" [ngbTooltip]="getWorkingTimeToolTip()">Working time</span></h5>
         <form class="d-flex" [formGroup]="workingTimeForm" (ngSubmit)="saveWorkingTime()">
             <div class="me-2" [ngbTooltip]="getWorkingTimeToolTip()">
-                <input formControlName="minutes" type="number" style="width: 60px; height: 35px" class="text-center" min="0" step="1" required /> h
-                <input formControlName="seconds" type="number" style="width: 60px; height: 35px" class="text-center" min="0" max="59" step="1" required /> min
+                <input formControlName="hours" type="number" style="width: 60px; height: 35px" class="text-center" min="0" step="1" required /> h
+                <input formControlName="minutes" type="number" style="width: 60px; height: 35px" class="text-center" min="0" max="59" step="1" required /> min
+                <input formControlName="seconds" type="number" style="width: 60px; height: 35px" class="text-center" min="0" max="59" step="1" required /> s
             </div>
             <button type="submit" class="btn btn-primary me-2" [disabled]="workingTimeForm.invalid || isSavingWorkingTime || examIsVisible()">
-                <fa-icon [icon]="'save'" [ngbTooltip]="getWorkingTimeToolTip()"></fa-icon>
+                <fa-icon [icon]="faSave" [ngbTooltip]="getWorkingTimeToolTip()"></fa-icon>
                 <span jhiTranslate="entity.action.save" [ngbTooltip]="getWorkingTimeToolTip()">Save</span>
             </button>
         </form>

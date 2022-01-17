@@ -1,7 +1,4 @@
-import * as chai from 'chai';
 import { getStringSegmentPositions, matchRegexWithLineNumbers } from 'app/shared/util/global.utils';
-
-const expect = chai.expect;
 
 describe('GlobalUtils', () => {
     describe('getStringSegmentPositions', () => {
@@ -15,7 +12,7 @@ describe('GlobalUtils', () => {
             ];
 
             const segments = getStringSegmentPositions(testString, delimiter);
-            expect(segments).to.deep.equal(expectedResult);
+            expect(segments).toEqual(expectedResult);
         });
 
         it('should return correct segments of provided string and multiple character delimiter', () => {
@@ -28,7 +25,7 @@ describe('GlobalUtils', () => {
             ];
 
             const segments = getStringSegmentPositions(testString, delimiter);
-            expect(segments).to.deep.equal(expectedResult);
+            expect(segments).toEqual(expectedResult);
         });
 
         it('should return the string as a single segment if it does not contain the delimiter', () => {
@@ -37,7 +34,7 @@ describe('GlobalUtils', () => {
             const expectedResult = [{ start: 0, end: 14, word: 'word1word2word3' }];
 
             const segments = getStringSegmentPositions(testString, delimiter);
-            expect(segments).to.deep.equal(expectedResult);
+            expect(segments).toEqual(expectedResult);
         });
 
         it('should return a single segment for the empty string', () => {
@@ -46,7 +43,7 @@ describe('GlobalUtils', () => {
             const expectedResult = [{ start: 0, end: 0, word: '' }];
 
             const segments = getStringSegmentPositions(testString, delimiter);
-            expect(segments).to.deep.equal(expectedResult);
+            expect(segments).toEqual(expectedResult);
         });
     });
 
@@ -64,18 +61,18 @@ describe('GlobalUtils', () => {
             ];
             const matches = matchRegexWithLineNumbers(multilineText, globalRegex);
 
-            expect(matches).to.be.deep.equal(expectedMatches);
+            expect(matches).toEqual(expectedMatches);
         });
 
         it('should return matches if the string is not multiline', () => {
             const expectedMatches = [[0, 'def']];
             const matches = matchRegexWithLineNumbers(nonMultilineText, globalRegex);
 
-            expect(matches).to.deep.equal(expectedMatches);
+            expect(matches).toEqual(expectedMatches);
         });
 
         it('should throw an error if a string without the global flag is provided', () => {
-            expect(() => matchRegexWithLineNumbers(multilineText, nonGlobalRegex)).to.throw('Regex must contain global flag, otherwise this function will run out of memory.');
+            expect(() => matchRegexWithLineNumbers(multilineText, nonGlobalRegex)).toThrow('Regex must contain global flag, otherwise this function will run out of memory.');
         });
     });
 });

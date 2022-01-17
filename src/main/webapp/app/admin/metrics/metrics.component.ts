@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { combineLatest } from 'rxjs';
+import { faSync } from '@fortawesome/free-solid-svg-icons';
 
 import { MetricsService } from './metrics.service';
 import { Metrics, Thread } from 'app/admin/metrics/metrics.model';
@@ -13,6 +14,9 @@ export class MetricsComponent implements OnInit {
     metrics?: Metrics;
     threads?: Thread[];
     updatingMetrics = true;
+
+    // Icons
+    faSync = faSync;
 
     constructor(private metricsService: MetricsService, private changeDetector: ChangeDetectorRef) {}
 

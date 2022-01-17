@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -23,6 +22,7 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -65,12 +65,14 @@ public class ProgrammingSubmissionResource {
 
     private final UserRepository userRepository;
 
+    private final ExerciseDateService exerciseDateService;
+
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseRepository exerciseRepository,
             ParticipationRepository participationRepository, AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<VersionControlService> versionControlService,
             UserRepository userRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, GradingCriterionRepository gradingCriterionRepository,
-            SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseRepository = exerciseRepository;
         this.participationRepository = participationRepository;
@@ -83,6 +85,7 @@ public class ProgrammingSubmissionResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.submissionRepository = submissionRepository;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -208,8 +211,7 @@ public class ProgrammingSubmissionResource {
             }
         }
         if (lastGraded && submission.get().getType() != SubmissionType.INSTRUCTOR && submission.get().getType() != SubmissionType.TEST
-                && submission.get().getParticipation().getExercise().getDueDate() != null
-                && submission.get().getParticipation().getExercise().getDueDate().isBefore(ZonedDateTime.now())) {
+                && exerciseDateService.isAfterDueDate(participation)) {
             // If the submission is not the latest but the last graded, there is no point in triggering the build again as this would build the most recent VCS commit.
             // This applies only to students submissions after the exercise due date.
             return notFound();
@@ -275,8 +277,8 @@ public class ProgrammingSubmissionResource {
 
         log.info("Trigger (failed) instructor build for participations {} in exercise {} with id {}", participationIds, programmingExercise.getTitle(),
                 programmingExercise.getId());
-        var participations = programmingExerciseStudentParticipationRepository.findByExerciseIdAndParticipationIds(exerciseId, participationIds);
-        programmingSubmissionService.triggerBuildForParticipations(new ArrayList<>(participations));
+        var participations = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndParticipationIds(exerciseId, participationIds);
+        programmingSubmissionService.triggerBuildForParticipations(participations);
 
         return ResponseEntity.ok().build();
     }

@@ -44,12 +44,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Setup Node.js
-      uses: actions/setup-node@v2.4.1
+      uses: actions/setup-node@v2.5.1
       with:
         node-version: '${{ env.node }}'
         cache: 'npm'
     - name: Setup Java
-      uses: actions/setup-java@v2.3.1
+      uses: actions/setup-java@v2.5.0
       with:
         distribution: 'zulu'
         java-version: '${{ env.java }}'
@@ -127,6 +127,7 @@ jobs:
     # TODO: Push to Chair Habour (??)
 
   deploy:
+    if: ${{ github.event_name == 'pull_request' }}
     needs: build
     runs-on: ubuntu-latest
     strategy:

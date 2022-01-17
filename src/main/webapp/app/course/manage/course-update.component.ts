@@ -4,8 +4,6 @@ import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms'
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { Observable } from 'rxjs';
-import { ImageCroppedEvent } from 'ngx-image-cropper';
-import { base64StringToBlob } from 'blob-util';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
@@ -14,13 +12,16 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
+import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { base64StringToBlob } from 'app/utils/blob-util';
+import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 
 @Component({
     selector: 'jhi-course-update',
@@ -47,6 +48,13 @@ export class CourseUpdateComponent implements OnInit {
     customizeGroupNames = false; // default value
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
+
+    // Icons
+    faSave = faSave;
+    faBan = faBan;
+    faTimes = faTimes;
+    faQuestionCircle = faQuestionCircle;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private courseService: CourseManagementService,
@@ -163,8 +171,8 @@ export class CourseUpdateComponent implements OnInit {
 
     /**
      * Returns to previous state (same as back button in the browser)
-     * Returns to the detail page if there is no previous state and we edited an existing course
-     * Returns to the overview page if there is no previous state and we created a new course
+     * Returns to the detail page if there is no previous state, and we edited an existing course
+     * Returns to the overview page if there is no previous state, and we created a new course
      */
     previousState() {
         this.navigationUtilService.navigateBackWithOptional(['course-management'], this.course.id?.toString());
@@ -243,8 +251,8 @@ export class CourseUpdateComponent implements OnInit {
      */
     uploadCourseImage(): void {
         const contentType = 'image/*';
-        const b64Data = this.croppedImage.replace('data:image/png;base64,', '');
-        const file = base64StringToBlob(b64Data, contentType);
+        const base64Data = this.croppedImage.replace('data:image/png;base64,', '');
+        const file = base64StringToBlob(base64Data, contentType);
         file['name'] = this.courseImageFileName;
 
         this.isUploadingCourseImage = true;
@@ -304,7 +312,7 @@ export class CourseUpdateComponent implements OnInit {
     changeOnlineCourse() {
         this.course.onlineCourse = !this.course.onlineCourse;
         if (this.course.onlineCourse) {
-            // registration enabled cannot be activate if online course is active
+            // registration enabled cannot be activated if online course is active
             this.courseForm.controls['registrationEnabled'].setValue(false);
         }
         this.courseForm.controls['onlineCourse'].setValue(this.course.onlineCourse);
@@ -315,7 +323,7 @@ export class CourseUpdateComponent implements OnInit {
     changeRegistrationEnabled() {
         this.course.registrationEnabled = !this.course.registrationEnabled;
         if (this.course.registrationEnabled) {
-            // online course cannot be activate if registration enabled is set
+            // online course cannot be activated if registration enabled is set
             this.courseForm.controls['onlineCourse'].setValue(false);
         }
         this.courseForm.controls['registrationEnabled'].setValue(this.course.registrationEnabled);

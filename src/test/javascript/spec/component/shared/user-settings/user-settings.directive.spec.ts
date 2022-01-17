@@ -45,7 +45,7 @@ describe('User Settings Directive', () => {
     let alertService: AlertService;
     let changeDetector: ChangeDetectorRef;
 
-    let changeDetectorDetectChangesStub: any;
+    let changeDetectorDetectChangesSpy: jest.SpyInstance;
 
     const router = new MockRouter();
 
@@ -84,7 +84,7 @@ describe('User Settings Directive', () => {
                 alertService = comp.alertService;
                 comp.changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
                 changeDetector = comp.changeDetector;
-                changeDetectorDetectChangesStub = spyOn(changeDetector.constructor.prototype, 'detectChanges');
+                changeDetectorDetectChangesSpy = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
             });
     });
 
@@ -98,18 +98,18 @@ describe('User Settings Directive', () => {
         describe('test loadSettings', () => {
             it('should call userSettingsService to load Settings', () => {
                 jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(new HttpResponse({ body: notificationSettingsForTesting })));
-                const loadSettingsSuccessAsSettingsStructureSpy = spyOn(userSettingsService, 'loadSettingsSuccessAsSettingsStructure');
-                const extractIndividualSettingsFromSettingsStructureSpy = spyOn(userSettingsService, 'extractIndividualSettingsFromSettingsStructure');
+                const loadSettingsSuccessAsSettingsStructureSpy = jest.spyOn(userSettingsService, 'loadSettingsSuccessAsSettingsStructure');
+                const extractIndividualSettingsFromSettingsStructureSpy = jest.spyOn(userSettingsService, 'extractIndividualSettingsFromSettingsStructure');
 
                 comp.ngOnInit();
 
                 expect(loadSettingsSuccessAsSettingsStructureSpy).toHaveBeenCalledTimes(1);
                 expect(extractIndividualSettingsFromSettingsStructureSpy).toHaveBeenCalledTimes(1);
-                expect(changeDetectorDetectChangesStub).toHaveBeenCalled();
+                expect(changeDetectorDetectChangesSpy).toHaveBeenCalled();
             });
 
             it('should handle error correctly when loading fails', () => {
-                const alertServiceSpy = spyOn(comp.alertService, 'error');
+                const alertServiceSpy = jest.spyOn(comp.alertService, 'error');
                 const errorResponse = new HttpErrorResponse({ status: 403 });
                 jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(throwError(errorResponse));
 
@@ -122,10 +122,10 @@ describe('User Settings Directive', () => {
         describe('test savingSettings', () => {
             it('should call userSettingsService to save Settings', () => {
                 jest.spyOn(userSettingsService, 'saveSettings').mockReturnValue(of(new HttpResponse({ body: notificationSettingsForTesting })));
-                const saveSettingsSuccessSpy = spyOn(userSettingsService, 'saveSettingsSuccess');
-                const extractIndividualSettingsFromSettingsStructureSpy = spyOn(userSettingsService, 'extractIndividualSettingsFromSettingsStructure');
-                const createApplyChangesEventSpy = spyOn(userSettingsService, 'sendApplyChangesEvent');
-                const alertServiceSuccessSpy = spyOn(alertService, 'success');
+                const saveSettingsSuccessSpy = jest.spyOn(userSettingsService, 'saveSettingsSuccess');
+                const extractIndividualSettingsFromSettingsStructureSpy = jest.spyOn(userSettingsService, 'extractIndividualSettingsFromSettingsStructure');
+                const createApplyChangesEventSpy = jest.spyOn(userSettingsService, 'sendApplyChangesEvent');
+                const alertServiceSuccessSpy = jest.spyOn(alertService, 'success');
 
                 comp.saveSettings();
 
