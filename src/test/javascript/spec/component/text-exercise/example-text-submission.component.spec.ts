@@ -116,7 +116,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
         expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
-        expect(comp.state.constructor.name).toEqual('EditState');
+        expect(comp.state.constructor.name).toBe('EditState');
     }));
 
     it('should only fetch exercise for new example submission and stay in new state', fakeAsync(() => {
@@ -135,7 +135,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
         expect(exampleSubmissionService.get).toHaveBeenCalledTimes(0);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledTimes(0);
-        expect(comp.state.constructor.name).toEqual('NewState');
+        expect(comp.state.constructor.name).toBe('NewState');
     }));
 
     it('should switch state when starting assessment', fakeAsync(() => {
@@ -154,7 +154,7 @@ describe('ExampleTextSubmissionComponent', () => {
         tick();
 
         // THEN
-        expect(comp.state.constructor.name).toEqual('NewAssessmentState');
+        expect(comp.state.constructor.name).toBe('NewAssessmentState');
     }));
 
     it('should save assessment', fakeAsync(() => {
@@ -238,12 +238,12 @@ describe('ExampleTextSubmissionComponent', () => {
         // THEN
         expect(comp.state.constructor.name).toEqual('EditState');
         expect(assessmentsService.deleteExampleAssessment).toHaveBeenCalledWith(EXERCISE_ID, EXAMPLE_SUBMISSION_ID);
-        expect(comp.submission?.blocks).toBeUndefined();
-        expect(comp.submission?.results).toBeUndefined();
-        expect(comp.submission?.latestResult).toBeUndefined();
-        expect(comp.result).toBeUndefined();
-        expect(comp.textBlockRefs).toHaveLength(0);
-        expect(comp.unusedTextBlockRefs).toHaveLength(0);
+        expect(comp.submission?.blocks).toBe(undefined);
+        expect(comp.submission?.results).toBe(undefined);
+        expect(comp.submission?.latestResult).toBe(undefined);
+        expect(comp.result).toBe(undefined);
+        expect(comp.textBlockRefs.length).toBe(0);
+        expect(comp.unusedTextBlockRefs.length).toBe(0);
     }));
 
     it('it should verify correct tutorial submission', fakeAsync(() => {
@@ -310,8 +310,8 @@ describe('ExampleTextSubmissionComponent', () => {
 
         comp.textBlockRefs = [textBlockRefA, textBlockRefB];
 
-        expect(feedbackA.correctionStatus).toBeUndefined;
-        expect(feedbackB.correctionStatus).toBeUndefined;
+        expect(feedbackA.correctionStatus).toBe(undefined);
+        expect(feedbackB.correctionStatus).toBe(undefined);
 
         const tutorParticipationService = fixture.debugElement.injector.get(TutorParticipationService);
         const feedbackError = {
@@ -334,8 +334,8 @@ describe('ExampleTextSubmissionComponent', () => {
         tick();
 
         // THEN
-        expect(feedbackA.correctionStatus).toEqual(FeedbackCorrectionErrorType.INCORRECT_SCORE);
-        expect(feedbackB.correctionStatus).toEqual('CORRECT');
+        expect(feedbackA.correctionStatus).toBe(FeedbackCorrectionErrorType.INCORRECT_SCORE);
+        expect(feedbackB.correctionStatus).toBe('CORRECT');
     }));
 
     it('should create new example submission', fakeAsync(() => {
