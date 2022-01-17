@@ -18,7 +18,7 @@
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
             <jhi-category-selector
-                [exerciseCategories]="exerciseCategories"
+                [categories]="exerciseCategories"
                 [existingCategories]="existingCategories"
                 (selectedCategories)="updateCategories($event)"
             ></jhi-category-selector>
@@ -26,7 +26,7 @@
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
             <div>
-                <jhi-difficulty-picker [exercise]="modelingExercise"></jhi-difficulty-picker>
+                <jhi-difficulty-picker [exercise]="modelingExercise" id="modeling-difficulty-picker"></jhi-difficulty-picker>
             </div>
         </div>
         <jhi-team-config-form-group class="form-element" [exercise]="modelingExercise" [isImport]="isImport"></jhi-team-config-form-group>
@@ -34,6 +34,7 @@
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker
                     class="form-element"
+                    id="pick-modeling-releaseDate"
                     labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
                     [(ngModel)]="modelingExercise.releaseDate"
                     (valueChange)="validateDate()"
@@ -44,6 +45,7 @@
             <div class="form-group flex-grow-1 ms-3">
                 <jhi-date-time-picker
                     class="form-element"
+                    id="pick-modeling-dueDate"
                     name="dueDate"
                     [error]="!!modelingExercise.dueDateError"
                     labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
@@ -56,6 +58,7 @@
         <div class="form-group" *ngIf="!isExamMode">
             <jhi-date-time-picker
                 class="form-element"
+                id="pick-modeling-assessmentDueDate"
                 name="assessmentDueDate"
                 [error]="!!modelingExercise.assessmentDueDateError"
                 labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
@@ -69,7 +72,10 @@
                 'artemisApp.exercise.includedInOverallScore' + (modelingExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
             }}</label>
             <div>
-                <jhi-included-in-overall-score-picker [(includedInOverallScore)]="modelingExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
+                <jhi-included-in-overall-score-picker
+                    [(includedInOverallScore)]="modelingExercise.includedInOverallScore"
+                    id="modeling-includeInScore-picker"
+                ></jhi-included-in-overall-score-picker>
             </div>
         </div>
         <div class="row">
@@ -197,15 +203,16 @@
     <jhi-alert></jhi-alert>
     <div>
         <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" (click)="previousState()">
-            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button
             type="button"
             [disabled]="editForm.form.invalid || isSaving || modelingExercise.dueDateError || modelingExercise.assessmentDueDateError"
             class="btn btn-primary"
+            id="modeling-exercise-creation-save"
             (click)="save()"
         >
-            <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+            <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
         </button>
     </div>
 </form>

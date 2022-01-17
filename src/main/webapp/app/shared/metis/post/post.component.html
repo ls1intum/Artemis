@@ -4,7 +4,7 @@
         <div class="mb-1">
             <fa-icon
                 *ngIf="postIsResolved && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT"
-                [icon]="'check-square'"
+                [icon]="faCheckSquare"
                 iconSize="xs"
                 class="col-auto pe-0 resolved"
                 [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate"
@@ -12,7 +12,7 @@
             </fa-icon>
             <fa-icon
                 *ngIf="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
-                [icon]="'bullhorn'"
+                [icon]="faBullhorn"
                 iconSize="xs"
                 class="col-auto pe-0 announcement-icon"
                 [ngbTooltip]="'artemisApp.metis.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
@@ -25,10 +25,9 @@
                     [routerLink]="contextInformation.routerLinkComponents"
                     (click)="onNavigateToContext($event)"
                     routerLinkActive="active"
+                    >{{ contextInformation.displayName }}:</a
                 >
-                    {{ contextInformation.displayName + ':' }}
-                </a>
-                <span class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName + ':' }}</span>
+                <span class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName }}:</span>
             </span>
             <span class="col-auto">
                 <a
@@ -37,9 +36,8 @@
                     [queryParams]="metisService.getQueryParamsForPost(posting)"
                     (click)="onNavigateToPostById($event)"
                     routerLinkActive="active"
+                    >{{ posting.title }}</a
                 >
-                    {{ posting.title }}
-                </a>
                 <span class="reference-hash">#{{ posting.id }}</span>
             </span>
         </div>

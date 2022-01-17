@@ -3,7 +3,7 @@
 //        "@angular-eslint/eslint-plugin",
         "@typescript-eslint",
         "@typescript-eslint/tslint",
-        "chai-friendly"
+        "deprecation"
     ],
     "extends": [
 //        "eslint:recommended",
@@ -22,7 +22,7 @@
     },
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "ecmaVersion": 2018,
+        "ecmaVersion": 2020,
         "project": ["./tsconfig.json", "./tsconfig.app.json", "./tsconfig.spec.json", "./tsconfig.webpack.json", "src/test/cypress/tsconfig.json"],
         "sourceType": "module",
         "ecmaFeatures": {
@@ -33,10 +33,7 @@
         "@typescript-eslint/tslint/config": [
             "error",
             {
-                "lintFile": "./tslint.json",
-                "rules": {
-                    "no-unused-expressions": "off"
-                }
+                "lintFile": "./tslint.json"
             }
         ],
         "@typescript-eslint/no-unused-vars": [
@@ -55,7 +52,7 @@
         "@typescript-eslint/no-floating-promises": "off",
         "@typescript-eslint/no-unsafe-assignment": "off",
         "@angular-eslint/no-output-on-prefix": "off",
-        "chai-friendly/no-unused-expressions": 2
+        "deprecation/deprecation": "warn" // or "error" to have stricter rule
     },
     "overrides": [{
         "files": ["mock-*.ts"],

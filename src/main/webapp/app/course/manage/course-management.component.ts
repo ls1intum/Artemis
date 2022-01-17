@@ -12,6 +12,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course',
@@ -35,6 +36,11 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     dialogError$ = this.dialogErrorSource.asObservable();
 
     courseForGuidedTour?: Course;
+
+    // Icons
+    faPlus = faPlus;
+    faAngleDown = faAngleDown;
+    faAngleUp = faAngleUp;
 
     constructor(
         private examService: ExamManagementService,
@@ -95,13 +101,13 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     }
 
                     // Parse years in base 10 by extracting the two digits after the WS or SS prefix
-                    const yearsCompared = parseInt(semesterB.substr(2, 2), 10) - parseInt(semesterA.substr(2, 2), 10);
+                    const yearsCompared = parseInt(semesterB.slice(2, 4), 10) - parseInt(semesterA.slice(2, 4), 10);
                     if (yearsCompared !== 0) {
                         return yearsCompared;
                     }
 
                     // If years are the same, sort WS over SS
-                    return semesterA.substr(0, 2) === 'WS' ? -1 : 1;
+                    return semesterA.slice(0, 2) === 'WS' ? -1 : 1;
                 })
         );
     }

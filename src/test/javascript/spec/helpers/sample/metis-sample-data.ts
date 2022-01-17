@@ -8,7 +8,9 @@ import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 export const metisLecture = { id: 1, title: 'Metis  Lecture' } as Lecture;
+export const metisLecture2 = { id: 1, title: 'Second Metis  Lecture' } as Lecture;
 export const metisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
+export const metisExercise2 = { id: 1, title: 'Second Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
 
 export const metisUser1 = { id: 1, name: 'username1', login: 'login1', groups: ['metisStudents'] } as User;
 export const metisUser2 = { id: 2, name: 'username2', login: 'login2', groups: ['metisStudents'] } as User;
@@ -22,8 +24,8 @@ export const metisReactionToCreate = { emojiId: 'cheerio', creationDate: undefin
 export const metisCourse = {
     id: 1,
     title: 'Metis Course',
-    exercises: [metisExercise],
-    lectures: [metisLecture],
+    exercises: [metisExercise, metisExercise2],
+    lectures: [metisLecture, metisLecture2],
     postsEnabled: true,
     groups: ['metisTutors', 'metisStudents', 'metisInstructors'],
 } as Course;
@@ -56,8 +58,6 @@ export const metisAnswerPostToCreateUser1 = {
     content: 'metisAnswerPostToCreateUser1',
     creationDate: undefined,
 } as AnswerPost;
-
-export const metisAnswerPosts = [metisResolvingAnswerPostUser1, metisAnswerPostUser2, metisApprovedAnswerPostTutor];
 
 export const metisPostTechSupport = {
     id: 1,

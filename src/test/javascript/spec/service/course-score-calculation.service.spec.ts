@@ -1,27 +1,17 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { ABSOLUTE_SCORE, CourseScoreCalculationService, MAX_POINTS, PRESENTATION_SCORE, REACHABLE_POINTS, RELATIVE_SCORE } from 'app/overview/course-score-calculation.service';
+import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('CourseScoreCalculationService', () => {
     let courseScoreCalculationService: CourseScoreCalculationService;
 
     beforeEach(() => {
         courseScoreCalculationService = new CourseScoreCalculationService();
-    });
-
-    afterEach(() => {
-        sinon.restore();
     });
 
     it('should return the correctly calculate the course score for all normal exercise', () => {
@@ -154,19 +144,19 @@ describe('CourseScoreCalculationService', () => {
         expectedReachableScore?: number,
     ) {
         if (expectedAbsoluteScore) {
-            expect(resultMap.get(ABSOLUTE_SCORE)).to.equal(expectedAbsoluteScore);
+            expect(resultMap.get(ScoreType.ABSOLUTE_SCORE)).toBe(expectedAbsoluteScore);
         }
         if (expectedRelativeScore) {
-            expect(resultMap.get(RELATIVE_SCORE)).to.equal(expectedRelativeScore);
+            expect(resultMap.get(ScoreType.RELATIVE_SCORE)).toBe(expectedRelativeScore);
         }
         if (expectedCurrentRelativeScore) {
-            expect(resultMap.get(MAX_POINTS)).to.equal(expectedMaxPoints);
+            expect(resultMap.get(ScoreType.MAX_POINTS)).toBe(expectedMaxPoints);
         }
         if (expectedPresentationScore) {
-            expect(resultMap.get(PRESENTATION_SCORE)).to.equal(expectedPresentationScore);
+            expect(resultMap.get(ScoreType.PRESENTATION_SCORE)).toBe(expectedPresentationScore);
         }
         if (expectedReachableScore) {
-            expect(resultMap.get(REACHABLE_POINTS)).to.equal(expectedReachableScore);
+            expect(resultMap.get(ScoreType.REACHABLE_POINTS)).toBe(expectedReachableScore);
         }
     }
 });

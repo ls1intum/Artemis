@@ -1,0 +1,5 @@
+<div [hidden]="buttonLoading">
+    <fa-icon #icon *ngIf="buttonIcon" [icon]="buttonIcon"></fa-icon>
+    <span>{{ buttonLabel }}</span>
+</div>
+<fa-icon #loadingIcon [hidden]="!buttonLoading" [spin]="true" [icon]="faCircleNotch"></fa-icon>

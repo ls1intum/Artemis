@@ -9,12 +9,11 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import * as sinon from 'sinon';
 import { HttpResponse } from '@angular/common/http';
-import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
@@ -149,8 +148,8 @@ describe('Course Exam Archive Button Component', () => {
             tick();
         }));
 
-        afterEach(function () {
-            sinon.restore();
+        afterEach(() => {
+            jest.restoreAllMocks();
         });
 
         it('should not display an archive course button', fakeAsync(() => {
@@ -235,8 +234,8 @@ describe('Course Exam Archive Button Component', () => {
             tick();
         }));
 
-        afterEach(function () {
-            sinon.restore();
+        afterEach(() => {
+            jest.restoreAllMocks();
         });
 
         it('should display an archive button', fakeAsync(() => {

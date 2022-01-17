@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.plagiarism;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
-import jplag.Match;
+import de.jplag.Match;
 
 /**
  * A `PlagiarismMatch` is a sequence of identical elements of both submissions.
@@ -37,9 +37,9 @@ public class PlagiarismMatch {
     public static PlagiarismMatch fromJPlagMatch(Match jplagMatch) {
         PlagiarismMatch match = new PlagiarismMatch();
 
-        match.setStartA(jplagMatch.startA);
-        match.setStartB(jplagMatch.startB);
-        match.setLength(jplagMatch.length);
+        match.setStartA(jplagMatch.getStartOfFirst());
+        match.setStartB(jplagMatch.getStartOfSecond());
+        match.setLength(jplagMatch.getLength());
 
         return match;
     }

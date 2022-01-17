@@ -4,7 +4,6 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
@@ -13,6 +12,8 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { OrionState } from 'app/shared/orion/orion';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor-orion',
@@ -21,6 +22,10 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/e
 })
 export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnInit {
     orionState: OrionState;
+
+    // Icons
+    faCircleNotch = faCircleNotch;
+    faTimesCircle = faTimesCircle;
 
     constructor(
         private orionConnectorService: OrionConnectorService,

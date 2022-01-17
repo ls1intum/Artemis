@@ -17,11 +17,15 @@ import { iconsAsHTML } from 'app/utils/icons.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ExportToCsv } from 'export-to-csv';
+import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
 
 export const NAME_KEY = 'Name';
 export const USERNAME_KEY = 'Username';
 export const REGISTRATION_NUMBER_KEY = 'Registration Number';
 export const EMAIL_KEY = 'Email';
+
+
+
 
 const cssClasses = {
     alreadyMember: 'already-member',
@@ -57,6 +61,9 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     searchNoResults = false;
     isTransitioning = false;
     rowClass: string | undefined = undefined;
+
+    // Icons
+    faUserSlash = faUserSlash;
 
     constructor(
         private router: Router,

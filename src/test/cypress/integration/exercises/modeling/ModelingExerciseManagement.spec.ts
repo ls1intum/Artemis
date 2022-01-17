@@ -1,14 +1,16 @@
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { Course } from 'app/entities/course.model';
 import { dayjsToString } from '../../../support/utils';
 import { artemis } from '../../../support/ArtemisTesting';
-import { MODELING_SPACE } from '../../../support/pageobjects/exercises/modeling/ModelingEditor';
+import { MODELING_EDITOR_CANVAS } from '../../../support/pageobjects/exercises/modeling/ModelingEditor';
 
 // https://day.js.org/docs is a tool for date/time
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 // pageobjects
-const createModelingExercise = artemis.pageobjects.modelingExercise.creation;
-const modelingExerciseExampleSubmission = artemis.pageobjects.modelingExercise.assessmentEditor;
-const modelingEditor = artemis.pageobjects.modelingExercise.editor;
+const createModelingExercise = artemis.pageobjects.exercise.modeling.creation;
+const modelingExerciseExampleSubmission = artemis.pageobjects.assessment.modeling;
+const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 // Users
@@ -17,29 +19,29 @@ const admin = userManagement.getAdmin();
 const student = userManagement.getStudentOne();
 const instructor = userManagement.getInstructor();
 
-let course: any;
-let modelingExercise: any;
+let course: Course;
+let modelingExercise: ModelingExercise;
 
 const modelingExerciseTitle = 'Cypress modeling exercise';
 
 describe('Modeling Exercise Management Spec', () => {
     before('Create a course', () => {
         cy.login(admin);
-        courseManagementRequests.createCourse().then((courseResp: any) => {
+        courseManagementRequests.createCourse().then((courseResp: Cypress.Response<Course>) => {
             course = courseResp.body;
-            courseManagementRequests.addInstructorToCourse(course.id, instructor);
-            courseManagementRequests.addStudentToCourse(course.id, student.username);
+            courseManagementRequests.addInstructorToCourse(course.id!, instructor);
+            courseManagementRequests.addStudentToCourse(course.id!, student.username);
         });
     });
 
     after('Delete the test course', () => {
         cy.login(admin);
-        courseManagementRequests.deleteCourse(course.id);
+        courseManagementRequests.deleteCourse(course.id!);
     });
 
     afterEach('Delete modeling exercise', () => {
         cy.login(instructor);
-        courseManagementRequests.deleteModelingExercise(modelingExercise.id);
+        courseManagementRequests.deleteModelingExercise(modelingExercise.id!);
     });
 
     describe('Create Modeling Exercise', () => {
@@ -58,13 +60,12 @@ describe('Modeling Exercise Management Spec', () => {
                 .its('response.body')
                 .then((body: any) => {
                     modelingExercise = body;
-                    cy.contains(modelingExercise.title).should('exist');
+                    cy.contains(modelingExercise.title!).should('exist');
                     cy.log('Create Example Solution');
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
                     modelingEditor.addComponentToModel(1);
                     createModelingExercise.save();
-                    cy.get('jhi-exercise-submission-export').should('be.visible');
-                    cy.get(`${MODELING_SPACE} > :nth-child(1)`).should('exist');
+                    cy.get(`${MODELING_EDITOR_CANVAS}`).children().eq(0).should('exist');
 
                     cy.log('Create Example Submission');
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
@@ -73,17 +74,16 @@ describe('Modeling Exercise Management Spec', () => {
                     modelingEditor.addComponentToModel(2);
                     modelingEditor.addComponentToModel(3);
                     modelingEditor.clickCreateNewExampleSubmission();
-                    cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
                     modelingEditor.showExampleAssessment();
                     modelingExerciseExampleSubmission.openAssessmentForComponent(1);
                     modelingExerciseExampleSubmission.assessComponent(-1, 'False');
-                    modelingExerciseExampleSubmission.openAssessmentForComponent(2);
+                    modelingExerciseExampleSubmission.clickNextAssessment();
                     modelingExerciseExampleSubmission.assessComponent(2, 'Good');
-                    modelingExerciseExampleSubmission.openAssessmentForComponent(3);
+                    modelingExerciseExampleSubmission.clickNextAssessment();
                     modelingExerciseExampleSubmission.assessComponent(0, 'Unnecessary');
                     modelingExerciseExampleSubmission.submitExample();
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}`);
-                    cy.get('.apollon-editor').should('exist');
+                    cy.get('#modeling-editor-canvas').should('exist');
                 });
         });
     });
@@ -109,8 +109,12 @@ describe('Modeling Exercise Management Spec', () => {
             createModelingExercise.setPoints(points);
             createModelingExercise.save();
             cy.visit(`/course-management/${course.id}/exercises`);
-            cy.get('tbody > tr > :nth-child(2)').should('contain.text', newTitle);
-            cy.get('tbody > tr > :nth-child(6)').should('contain.text', points.toString());
+            cy.get('#exercise-card-' + modelingExercise.id)
+                .find('#modeling-exercise-' + modelingExercise.id + '-title')
+                .should('contain.text', newTitle);
+            cy.get('#exercise-card-' + modelingExercise.id)
+                .find('#modeling-exercise-' + modelingExercise.id + '-maxPoints')
+                .should('contain.text', points.toString());
         });
     });
 
@@ -124,7 +128,7 @@ describe('Modeling Exercise Management Spec', () => {
                 modelingExercise = resp.body;
             });
             cy.login(student, '/courses');
-            cy.get('.card-body').contains(course.title).click({ force: true });
+            cy.contains(course.title!).click({ force: true });
             cy.contains('No exercises available for the course.').should('be.visible');
         });
 

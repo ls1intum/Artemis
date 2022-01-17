@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -159,6 +160,29 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
 
         assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(AssessmentType.class)
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetResultWithFeedbacksFilteredBeforeLastDueDate(AssessmentType assessmentType) throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        programmingExercise.setAssessmentDueDate(null);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        final var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        participation2.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
+        participationRepository.save(participation2);
+
+        addStudentParticipationWithResult(assessmentType, null);
+        StudentParticipation participation = studentParticipationRepository.findByExerciseIdAndStudentId(programmingExercise.getId(), database.getUserByLogin("student1").getId())
+                .get(0);
+
+        var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+        assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
+        if (AssessmentType.AUTOMATIC == assessmentType) {
+            assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isAfterDueDate);
+        }
     }
 
     @Test

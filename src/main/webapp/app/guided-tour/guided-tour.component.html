@@ -37,7 +37,7 @@
                 <div [innerHTML]="currentTourStep.contentTranslateKey | artemisTranslate"></div>
                 <div *ngIf="currentTourStep.hintTranslateKey" class="step-hint">
                     <div class="step-hint__icon">
-                        <fa-icon [icon]="'info-circle'"></fa-icon>
+                        <fa-icon [icon]="faInfoCircle"></fa-icon>
                     </div>
                     <div class="step-hint__label">
                         <div [innerHTML]="currentTourStep.hintTranslateKey | artemisTranslate"></div>
@@ -45,7 +45,7 @@
                 </div>
                 <div *ngIf="currentTourStep.alreadyExecutedTranslateKey" class="step-hint interaction alert alert-success">
                     <div class="step-hint__icon">
-                        <fa-icon [icon]="'check'"></fa-icon>
+                        <fa-icon [icon]="faCheck"></fa-icon>
                     </div>
                     <div class="step-hint__label">
                         <div [innerHTML]="currentTourStep.alreadyExecutedTranslateKey | artemisTranslate"></div>
@@ -57,18 +57,15 @@
                     [class.alert-success]="userInteractionFinished"
                 >
                     <div class="step-hint__icon" *ngIf="this.userInteractionFinished; else userInteractionIcons">
-                        <fa-icon [icon]="'check'"></fa-icon>
+                        <fa-icon [icon]="faCheck"></fa-icon>
                     </div>
                     <ng-template #userInteractionIcons>
                         <div class="step-hint__icon">
-                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" [icon]="'hand-point-up'"></fa-icon>
-                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" [icon]="'i-cursor'"></fa-icon>
-                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" [spin]="true" [icon]="'circle-notch'"></fa-icon>
-                            <fa-icon
-                                *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask"
-                                [icon]="'arrows-alt'"
-                            ></fa-icon>
-                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ASSESS_SUBMISSION" [icon]="'edit'"></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" [icon]="faHandPointUp"></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" [icon]="faICursor"></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" [spin]="true" [icon]="faCircleNotch"></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask" [icon]="faArrowsAlt"></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ASSESS_SUBMISSION" [icon]="faEdit"></fa-icon>
                         </div>
                     </ng-template>
                     <div class="step-hint__label">
@@ -87,10 +84,10 @@
                 </div>
                 <div *ngIf="currentTourStep.modelingTask" class="step-hint interaction alert" [class.alert-success]="userInteractionFinished">
                     <div class="step-hint__icon" *ngIf="!userInteractionFinished">
-                        <fa-icon [icon]="'clipboard-list'"></fa-icon>
+                        <fa-icon [icon]="faClipboardList"></fa-icon>
                     </div>
                     <div class="step-hint__icon" *ngIf="userInteractionFinished">
-                        <fa-icon [icon]="'check'"></fa-icon>
+                        <fa-icon [icon]="faCheck"></fa-icon>
                     </div>
                     <div class="step-hint__label">
                         <div [innerHTML]="currentTourStep.modelingTask.taskTranslateKey | artemisTranslate"></div>
@@ -101,7 +98,7 @@
                 </div>
                 <div *ngIf="currentTourStep.videoUrl" class="step-hint interaction alert">
                     <div class="step-hint__icon">
-                        <fa-icon [icon]="'video'"></fa-icon>
+                        <fa-icon [icon]="faVideo"></fa-icon>
                     </div>
                     <div class="step-hint__label">
                         <span jhiTranslate="tour.videoHint.text"></span>
@@ -118,7 +115,7 @@
                     [disabled]="guidedTourService.isOnFirstStep"
                     (click)="guidedTourService.backStep()"
                 >
-                    <fa-icon [icon]="'chevron-left'"></fa-icon>
+                    <fa-icon [icon]="faChevronLeft"></fa-icon>
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
                 <button
@@ -127,8 +124,8 @@
                     [disabled]="guidedTourService.isOnResizeMessage || guidedTourService.restartIsLoading"
                     (click)="guidedTourService.restartTour()"
                 >
-                    <fa-icon *ngIf="!guidedTourService.restartIsLoading" [icon]="'play-circle'"></fa-icon>
-                    <fa-icon class="jhi-btn__loading" *ngIf="guidedTourService.restartIsLoading" [icon]="'circle-notch'" [spin]="true" size="sm"></fa-icon>
+                    <fa-icon *ngIf="!guidedTourService.restartIsLoading" [icon]="faPlayCircle"></fa-icon>
+                    <fa-icon class="jhi-btn__loading" *ngIf="guidedTourService.restartIsLoading" [icon]="faCircleNotch" [spin]="true" size="sm"></fa-icon>
                     <span jhiTranslate="global.menu.restartTutorial"></span>
                 </button>
                 <div class="dotstyle dotstyle--scaleup" *ngIf="!guidedTourService.isOnResizeMessage">
@@ -156,7 +153,7 @@
                     (click)="guidedTourService.nextStep()"
                 >
                     <span jhiTranslate="tour.navigation.next"></span>
-                    <fa-icon [icon]="'chevron-right'"></fa-icon>
+                    <fa-icon [icon]="faChevronRight"></fa-icon>
                 </button>
                 <button
                     *ngIf="

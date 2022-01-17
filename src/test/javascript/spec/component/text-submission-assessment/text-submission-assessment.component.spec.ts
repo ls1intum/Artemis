@@ -3,10 +3,6 @@ import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/tex
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
-import * as sinon from 'sinon';
-import { stub } from 'sinon';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -20,7 +16,7 @@ import { ParticipationType } from 'app/entities/participation/participation.mode
 import { getLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
@@ -46,9 +42,6 @@ import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -177,11 +170,11 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should create', () => {
-        expect(component).to.be.ok;
+        expect(component).not.toBeNull();
     });
 
     it('should show jhi-text-assessment-area', () => {
@@ -189,12 +182,12 @@ describe('TextSubmissionAssessmentComponent', () => {
         fixture.detectChanges();
 
         const textAssessmentArea = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
-        expect(textAssessmentArea).to.be.ok;
+        expect(textAssessmentArea).not.toBeNull();
     });
 
     it('should use jhi-assessment-layout', () => {
         const sharedLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
-        expect(sharedLayout).to.be.ok;
+        expect(sharedLayout).not.toBeNull();
     });
 
     it('should update score', () => {
@@ -207,13 +200,13 @@ describe('TextSubmissionAssessmentComponent', () => {
         textBlockRef.feedback!.credits = 42;
         textAssessmentAreaComponent.textBlockRefsChangeEmit();
 
-        expect(component.totalScore).to.equal(42);
+        expect(component.totalScore).toEqual(42);
     });
 
-    it('should save the assessment with correct parameters', function () {
+    it('should save the assessment with correct parameters', () => {
         textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
         component['setPropertiesFromServerResponse'](participation);
-        const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
+        const handleFeedbackStub = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
 
         fixture.detectChanges();
 
@@ -223,28 +216,28 @@ describe('TextSubmissionAssessmentComponent', () => {
         textBlockRef.feedback!.detailText = 'my feedback';
         textBlockRef.feedback!.credits = 42;
 
-        const saveStub = sinon.stub(textAssessmentService, 'save');
-        saveStub.returns(of(new HttpResponse({ body: result })));
+        const saveStub = jest.spyOn(textAssessmentService, 'save');
+        saveStub.mockReturnValue(of(new HttpResponse({ body: result })));
 
         component.validateFeedback();
         component.save();
-        expect(saveStub).to.have.been.calledWith(
+        expect(saveStub).toHaveBeenCalledWith(
             result?.participation?.id,
             result!.id!,
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
             [component.textBlockRefs[0].block!, textBlockRef.block!],
         );
-        expect(handleFeedbackStub).to.have.been.called;
+        expect(handleFeedbackStub).toHaveBeenCalled();
     });
 
     it('should display error when complaint resolved but assessment invalid', () => {
         // would be called on receive of event
         const complaintResponse = new ComplaintResponse();
         const alertService = fixture.debugElement.injector.get(AlertService);
-        const errorStub = stub(alertService, 'error');
+        const errorStub = jest.spyOn(alertService, 'error');
 
         component.updateAssessmentAfterComplaint(complaintResponse);
-        expect(errorStub).to.have.been.calledWith('artemisApp.textAssessment.error.invalidAssessments');
+        expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
     });
 
     it('should send update when complaint resolved and assessments are valid', () => {
@@ -256,15 +249,15 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.unreferencedFeedback = [unreferencedFeedback];
         textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
 
-        const updateAssessmentAfterComplaintStub = sinon.stub(textAssessmentService, 'updateAssessmentAfterComplaint');
-        updateAssessmentAfterComplaintStub.returns(of(new HttpResponse({ body: new Result() })));
+        const updateAssessmentAfterComplaintStub = jest.spyOn(textAssessmentService, 'updateAssessmentAfterComplaint');
+        updateAssessmentAfterComplaintStub.mockReturnValue(of(new HttpResponse({ body: new Result() })));
 
         // would be called on receive of event
         const complaintResponse = new ComplaintResponse();
         component.updateAssessmentAfterComplaint(complaintResponse);
-        expect(updateAssessmentAfterComplaintStub).to.have.been.called;
+        expect(updateAssessmentAfterComplaintStub).toHaveBeenCalled();
     });
-    it('should submit the assessment with correct parameters', function () {
+    it('should submit the assessment with correct parameters', () => {
         textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
         component['setPropertiesFromServerResponse'](participation);
         fixture.detectChanges();
@@ -275,12 +268,12 @@ describe('TextSubmissionAssessmentComponent', () => {
         textBlockRef.feedback!.detailText = 'my feedback';
         textBlockRef.feedback!.credits = 42;
 
-        const submitStub = sinon.stub(textAssessmentService, 'submit');
-        submitStub.returns(of(new HttpResponse({ body: result })));
+        const submitStub = jest.spyOn(textAssessmentService, 'submit');
+        submitStub.mockReturnValue(of(new HttpResponse({ body: result })));
 
         component.validateFeedback();
         component.submit();
-        expect(submitStub).to.have.been.calledWith(
+        expect(submitStub).toHaveBeenCalledWith(
             participation.id!,
             result!.id!,
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
@@ -291,12 +284,12 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.submission = submission;
         component.exercise = exercise;
 
-        const importStub = sinon.stub(exampleSubmissionService, 'import');
-        importStub.returns(of(new HttpResponse({ body: new ExampleSubmission() })));
+        const importStub = jest.spyOn(exampleSubmissionService, 'import');
+        importStub.mockReturnValue(of(new HttpResponse({ body: new ExampleSubmission() })));
 
-        component.importStudentSubmissionAsExampleSubmission();
+        component.useStudentSubmissionAsExampleSubmission();
 
-        expect(importStub).to.have.calledOnce;
-        expect(importStub).to.have.been.calledWith(submission.id, exercise.id);
+        expect(importStub).toHaveBeenCalledTimes(1);
+        expect(importStub).toHaveBeenCalledWith(submission.id, exercise.id);
     });
 });

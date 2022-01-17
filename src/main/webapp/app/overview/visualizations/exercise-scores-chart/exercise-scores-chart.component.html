@@ -1,6 +1,34 @@
 <h3 class="text-center">{{ 'artemisApp.exercise-scores-chart.title' | artemisTranslate }}</h3>
-<div class="chart-wrapper mx-auto">
-    <div class="mx-auto chart" #chartDiv>
-        <canvas baseChart [datasets]="dataSets" [labels]="labels" [options]="chartOptions" [colors]="chartColors" [legend]="true" [chartType]="'line'"></canvas>
+<div #containerRef class="chart-wrapper mx-auto">
+    <div>
+        <ngx-charts-line-chart
+            [view]="[containerRef.offsetWidth, 350]"
+            [results]="ngxData"
+            [scheme]="ngxColor"
+            [yAxisLabel]="yAxisLabel"
+            [xAxisLabel]="xAxisLabel"
+            [legend]="true"
+            [legendTitle]="''"
+            [xAxis]="true"
+            [yAxis]="true"
+            [showYAxisLabel]="true"
+            [showXAxisLabel]="true"
+            [yScaleMax]="maxScale"
+            [yScaleMin]="1"
+            [maxXAxisTickLength]="15"
+            (select)="onSelect($event)"
+        >
+            <ng-template #tooltipTemplate let-model="model">
+                <h6>{{ model.name }}</h6>
+                <span>{{ model.series }}: {{ Math.max(model.value - 1, 0) }} %</span>
+            </ng-template>
+            <ng-template #seriesTooltipTemplate let-model="model">
+                <h6>{{ model[0].name }}</h6>
+                <span> {{ model[0].series }}: {{ Math.max(model[0].value - 1, 0) }} %</span><br />
+                <span> {{ model[1].series }}: {{ Math.max(model[1].value - 1, 0) }} %</span><br />
+                <span> {{ model[2].series }}: {{ Math.max(model[2].value - 1, 0) }} %</span><br />
+                <span style="font-weight: bold" jhiTranslate="artemisApp.exercise-scores-chart.exerciseType" [translateValues]="{ type: model[0].exerciseType }"></span>
+            </ng-template>
+        </ngx-charts-line-chart>
     </div>
 </div>

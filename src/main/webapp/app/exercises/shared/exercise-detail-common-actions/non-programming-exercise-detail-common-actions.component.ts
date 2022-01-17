@@ -9,6 +9,7 @@ import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faBook, faChartBar, faListAlt, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
@@ -26,11 +27,21 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
 
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    teamBaseResource: string;
     baseResource: string;
     shortBaseResource: string;
     readonly ExerciseType = ExerciseType;
 
     readonly AssessmentType = AssessmentType;
+
+    // Icons
+    faTimes = faTimes;
+    faBook = faBook;
+    faWrench = faWrench;
+    faUsers = faUsers;
+    faTable = faTable;
+    faListAlt = faListAlt;
+    faChartBar = faChartBar;
 
     constructor(
         private textExerciseService: TextExerciseService,
@@ -43,11 +54,15 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     ngOnInit(): void {
         if (!this.isExamExercise) {
             this.baseResource = `/course-management/${this.course.id!}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+            this.teamBaseResource = `/course-management/${this.course.id!}/exercises/${this.exercise.id}/`;
             this.shortBaseResource = `/course-management/${this.course.id!}/`;
         } else {
             this.baseResource =
                 `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}` +
                 `/exercise-groups/${this.exercise.exerciseGroup?.id}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+            this.teamBaseResource =
+                `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}` +
+                `/exercise-groups/${this.exercise.exerciseGroup?.id}/exercises/${this.exercise.id}/`;
             this.shortBaseResource = `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}/`;
         }
     }

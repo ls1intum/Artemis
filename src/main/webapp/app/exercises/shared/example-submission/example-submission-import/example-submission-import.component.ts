@@ -6,8 +6,9 @@ import { Submission } from 'app/entities/submission.model';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExampleSubmissionImportPagingService } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import-paging.service';
+import { faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
 
 export enum TableColumn {
     ID = 'ID',
@@ -26,6 +27,7 @@ export class ExampleSubmissionImportComponent implements OnInit {
     private sort = new Subject<void>();
 
     submissions: Submission[] = [];
+    readonly exerciseType = ExerciseType;
 
     loading = false;
     content: SearchResult<Submission>;
@@ -37,6 +39,10 @@ export class ExampleSubmissionImportComponent implements OnInit {
         sortingOrder: SortingOrder.DESCENDING,
         sortedColumn: TableColumn.ID,
     };
+
+    // Icons
+    faSort = faSort;
+    faQuestionCircle = faQuestionCircle;
 
     constructor(
         private sortService: SortService,
@@ -63,6 +69,9 @@ export class ExampleSubmissionImportComponent implements OnInit {
                 this.content = resp;
                 this.loading = false;
                 this.total = resp.numberOfPages * this.state.pageSize;
+                this.content?.resultsOnPage?.forEach((submission) => {
+                    submission.submissionSize = this.exampleSubmissionService.getSubmissionSize(submission, this.exercise);
+                });
             });
     }
 

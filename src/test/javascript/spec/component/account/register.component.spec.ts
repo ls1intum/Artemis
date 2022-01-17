@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, async, inject, tick, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, inject, tick, fakeAsync } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 
@@ -20,7 +20,7 @@ describe('Component Tests', () => {
         let comp: RegisterComponent;
         let translateService: TranslateService;
 
-        beforeEach(async(() => {
+        beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule],
                 declarations: [RegisterComponent],
@@ -34,7 +34,7 @@ describe('Component Tests', () => {
             })
                 .overrideTemplate(RegisterComponent, '')
                 .compileComponents();
-        }));
+        });
 
         beforeEach(() => {
             fixture = TestBed.createComponent(RegisterComponent);

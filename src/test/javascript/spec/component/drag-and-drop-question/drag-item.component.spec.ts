@@ -1,17 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AngularFittextModule } from 'angular-fittext';
 import { DragItemComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-item.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import * as chai from 'chai';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { DndModule } from 'ng2-dnd';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { DeviceDetectorService, DeviceInfo } from 'ngx-device-detector';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.module';
 
 describe('DragItemComponent', () => {
     let fixture: ComponentFixture<DragItemComponent>;
@@ -20,7 +14,7 @@ describe('DragItemComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, DndModule.forRoot(), AngularFittextModule],
+            imports: [ArtemisTestModule, DragDropModule, FitTextModule],
             declarations: [MockComponent(SecuredImageComponent), DragItemComponent],
             providers: [MockProvider(DeviceDetectorService)],
         })
@@ -32,13 +26,13 @@ describe('DragItemComponent', () => {
             });
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(comp).to.be.ok;
+        expect(comp).not.toBeNull();
     });
 
     it('should get deviceInfo and isMobile from device service on init', () => {
@@ -52,12 +46,12 @@ describe('DragItemComponent', () => {
             deviceType: 'deviceType',
             orientation: 'orientation',
         } as DeviceInfo;
-        const deviceInfoStub = sinon.stub(deviceDetectorService, 'getDeviceInfo').returns(deviceInfo);
-        const isMobileStub = sinon.stub(deviceDetectorService, 'isMobile').returns(true);
+        const deviceInfoSpy = jest.spyOn(deviceDetectorService, 'getDeviceInfo').mockReturnValue(deviceInfo);
+        const isMobileSpy = jest.spyOn(deviceDetectorService, 'isMobile').mockReturnValue(true);
         comp.ngOnInit();
-        expect(deviceInfoStub).to.have.been.called;
-        expect(isMobileStub).to.have.been.called;
-        expect(comp.deviceInfo).to.deep.equal(deviceInfo);
-        expect(comp.isMobile).to.equal(true);
+        expect(deviceInfoSpy).toHaveBeenCalled();
+        expect(isMobileSpy).toHaveBeenCalled();
+        expect(comp.deviceInfo).toEqual(deviceInfo);
+        expect(comp.isMobile).toBeTrue();
     });
 });

@@ -41,12 +41,12 @@ public class ExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseResource.class);
 
-    private static final String ENTITY_NAME = "exercise";
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     private final ExerciseService exerciseService;
+
+    private final ExerciseDeletionService exerciseDeletionService;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -62,24 +62,21 @@ public class ExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ComplaintRepository complaintRepository;
-
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserRepository userRepository, ExamDateService examDateService,
-            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ComplaintRepository complaintRepository, SubmissionRepository submissionRepository, TutorLeaderboardService tutorLeaderboardService,
-            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository) {
+    public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
+            UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+            ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository) {
         this.exerciseService = exerciseService;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
-        this.complaintRepository = complaintRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examDateService = examDateService;
         this.exerciseRepository = exerciseRepository;
@@ -237,7 +234,7 @@ public class ExerciseResource {
         log.debug("REST request to reset Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        exerciseService.reset(exercise);
+        exerciseDeletionService.reset(exercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "exercise", exerciseId.toString())).build();
     }
 
@@ -257,13 +254,13 @@ public class ExerciseResource {
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
-        exerciseService.cleanup(exerciseId, deleteRepositories);
+        exerciseDeletionService.cleanup(exerciseId, deleteRepositories);
         log.info("Cleanup build plans was successful for Exercise : {}", exerciseId);
         return ResponseEntity.ok().build();
     }
 
     /**
-     * GET /exercises/:exerciseId/details : sends exercise details including all results for the currently logged in user
+     * GET /exercises/:exerciseId/details : sends exercise details including all results for the currently logged-in user
      *
      * @param exerciseId the exerciseId of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
@@ -271,9 +268,7 @@ public class ExerciseResource {
     @GetMapping(value = "/exercises/{exerciseId}/details")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
-        long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("{} requested access for exercise with exerciseId {}", user.getLogin(), exerciseId);
 
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
 
@@ -301,6 +296,7 @@ public class ExerciseResource {
         }
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
+            // TODO: instead fetch the policy without programming exercise, should be faster
             SubmissionPolicy policy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
             programmingExercise.setSubmissionPolicy(policy);
             programmingExercise.checksAndSetsIfProgrammingExerciseIsLocalSimulation();
@@ -312,9 +308,7 @@ public class ExerciseResource {
             exercise.filterSensitiveInformation();
         }
 
-        log.debug("getResultsForCurrentUser took {}ms", System.currentTimeMillis() - start);
-
-        return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
+        return ResponseEntity.ok(exercise);
     }
 
     /**

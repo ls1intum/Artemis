@@ -13,7 +13,7 @@ import {
     ViewEncapsulation,
 } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { AceEditorComponent } from 'ng2-ace-editor';
+import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
@@ -25,6 +25,9 @@ import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { cloneDeep } from 'lodash-es';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
+import { markdownForHtml } from 'app/shared/util/markdown.conversion.util';
+import { generateTextHintExplanation, parseTextHintExplanation } from 'app/shared/util/markdown.util';
+import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -81,6 +84,17 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     textParts: (string | undefined)[][];
 
     backupQuestion: ShortAnswerQuestion;
+
+    // Icons
+    faBan = faBan;
+    faTrash = faTrash;
+    faUndo = faUndo;
+    faChevronUp = faChevronUp;
+    faChevronDown = faChevronDown;
+    faBars = faBars;
+    faUnlink = faUnlink;
+    faAngleRight = faAngleRight;
+    faAngleDown = faAngleDown;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,
@@ -226,7 +240,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     generateMarkdown(): string {
         this.setOptionsWithID();
         const markdownText =
-            this.artemisMarkdown.generateTextHintExplanation(this.shortAnswerQuestion) +
+            generateTextHintExplanation(this.shortAnswerQuestion) +
             '\n\n\n' +
             this.shortAnswerQuestion.solutions?.map((solution, index) => this.optionsWithID[index] + ' ' + solution.text!.trim()).join('\n');
         return markdownText;
@@ -264,7 +278,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const solutionParts = questionParts.map((questionPart) => questionPart.split(/\]/g)).slice(1);
 
         // Split question into main text, hint and explanation
-        ArtemisMarkdownService.parseTextHintExplanation(questionText, this.shortAnswerQuestion);
+        parseTextHintExplanation(questionText, this.shortAnswerQuestion);
 
         // Extract existing solutions IDs
         const existingSolutionIDs = this.shortAnswerQuestion.solutions!.filter((solution) => solution.id !== undefined).map((solution) => solution.id);
@@ -420,11 +434,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         container.appendChild(preCaretRange.cloneContents());
         const htmlContent = container.innerHTML;
 
-        const startOfRange = this.artemisMarkdown.markdownForHtml(htmlContent).length - selection.toString().length;
+        const startOfRange = markdownForHtml(htmlContent).length - selection.toString().length;
         const endOfRange = startOfRange + selection.toString().length;
 
         const markedTextHTML = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
-        const markedText = this.artemisMarkdown.markdownForHtml(markedTextHTML).substring(startOfRange, endOfRange);
+        const markedText = markdownForHtml(markedTextHTML).substring(startOfRange, endOfRange);
 
         // split text before first option tag
         const questionText = editor
@@ -439,7 +453,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         // recreation of question text from array and update textParts and parse textParts to html
         this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
         editor.setValue(this.generateMarkdown());
         editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
         this.addOptionToSpot(editor, this.numberOfSpot, markedText, this.firstPressed);
@@ -485,7 +499,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param dragEvent {object} the solution involved (may be a copy at this point)
      */
     onDragDrop(spot: ShortAnswerSpot, dragEvent: any): void {
-        let dragItem = dragEvent.dragData;
+        let dragItem = dragEvent.item.data;
         // Replace dragItem with original (because it may be a copy)
         dragItem = this.shortAnswerQuestion.solutions?.find((originalDragItem) =>
             dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID,
@@ -606,7 +620,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     togglePreview(): void {
         this.showVisualMode = !this.showVisualMode;
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text!);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
 
         this.questionEditor.getEditor().setValue(this.generateMarkdown());
         this.questionEditor.getEditor().clearSelection();

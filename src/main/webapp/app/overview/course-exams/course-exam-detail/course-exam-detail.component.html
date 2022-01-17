@@ -1,9 +1,9 @@
-<div *ngIf="exam" (click)="openExam()">
+<div *ngIf="exam" (click)="openExam()" id="exam-{{ exam.id }}">
     <div class="row card-header text-white bg-secondary">
         <h4 class="card-title text-center">{{ exam.title }}</h4>
     </div>
     <div class="row card-body justify-content-center">
-        <h4 class="col-auto"><fa-icon [icon]="'pen-alt'" size="3x"></fa-icon></h4>
+        <h4 class="col-auto"><fa-icon [icon]="faPenAlt" size="3x"></fa-icon></h4>
     </div>
     <div class="row card-footer">
         <div *ngIf="exam.startDate" class="col-12">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: exam.startDate | artemisDate } }}</div>

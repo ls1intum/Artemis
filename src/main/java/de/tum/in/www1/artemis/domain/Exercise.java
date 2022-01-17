@@ -42,37 +42,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
         @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"), @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
         @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Exercise extends DomainObject {
-
-    @Column(name = "title")
-    @JsonView(QuizView.Before.class)
-    private String title;
-
-    @Column(name = "short_name")
-    @JsonView(QuizView.Before.class)
-    private String shortName;
-
-    @Column(name = "release_date")
-    @JsonView(QuizView.Before.class)
-    private ZonedDateTime releaseDate;
-
-    @Column(name = "due_date")
-    @JsonView(QuizView.Before.class)
-    private ZonedDateTime dueDate;
-
-    @Column(name = "assessment_due_date")
-    @JsonView(QuizView.Before.class)
-    private ZonedDateTime assessmentDueDate;
-
-    @Column(name = "max_points")
-    private Double maxPoints;
-
-    @Column(name = "bonus_points")
-    private Double bonusPoints;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "assessment_type")
-    private AssessmentType assessmentType;
+public abstract class Exercise extends BaseExercise {
 
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
@@ -97,15 +67,6 @@ public abstract class Exercise extends DomainObject {
     @Column(name = "categories")
     @JsonView(QuizView.Before.class)
     private Set<String> categories = new HashSet<>();
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "difficulty")
-    @JsonView(QuizView.Before.class)
-    private DifficultyLevel difficulty;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "mode")
-    private ExerciseMode mode;
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -164,7 +125,6 @@ public abstract class Exercise extends DomainObject {
     private Set<Post> posts = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
@@ -204,105 +164,11 @@ public abstract class Exercise extends DomainObject {
     @Transient
     private boolean isGradingInstructionFeedbackUsedTransient = false;
 
-    public String getTitle() {
-        return title;
-    }
+    @Transient
+    private Double averageRatingTransient;
 
-    public Exercise title(String title) {
-        this.title = title;
-        return this;
-    }
-
-    /**
-     * Sets the title of the exercise
-     * all consecutive, trailing or preceding whitespaces are replaced with a single space.
-     *
-     * @param title the new (unsanitized) title to be set
-     */
-    public void setTitle(String title) {
-        this.title = title != null ? title.strip().replaceAll("\\s+", " ") : null;
-    }
-
-    public String getShortName() {
-        return shortName;
-    }
-
-    public void setShortName(String shortName) {
-        this.shortName = shortName;
-    }
-
-    public ZonedDateTime getReleaseDate() {
-        return releaseDate;
-    }
-
-    public Exercise releaseDate(ZonedDateTime releaseDate) {
-        this.releaseDate = releaseDate;
-        return this;
-    }
-
-    public void setReleaseDate(ZonedDateTime releaseDate) {
-        this.releaseDate = releaseDate;
-    }
-
-    public ZonedDateTime getDueDate() {
-        return dueDate;
-    }
-
-    public Exercise dueDate(ZonedDateTime dueDate) {
-        this.dueDate = dueDate;
-        return this;
-    }
-
-    public void setDueDate(ZonedDateTime dueDate) {
-        this.dueDate = dueDate;
-    }
-
-    public ZonedDateTime getAssessmentDueDate() {
-        return assessmentDueDate;
-    }
-
-    public Exercise assessmentDueDate(ZonedDateTime assessmentDueDate) {
-        this.assessmentDueDate = assessmentDueDate;
-        return this;
-    }
-
-    public void setAssessmentDueDate(ZonedDateTime assessmentDueDate) {
-        this.assessmentDueDate = assessmentDueDate;
-    }
-
-    /**
-     * Checks if the assessment due date is in the past. Also returns true, if no assessment due date is set.
-     *
-     * @return true if the assessment due date is in the past, otherwise false
-     */
-    @JsonIgnore
-    public boolean isAssessmentDueDateOver() {
-        return this.assessmentDueDate == null || ZonedDateTime.now().isAfter(this.assessmentDueDate);
-    }
-
-    public Double getMaxPoints() {
-        return maxPoints;
-    }
-
-    public void setMaxPoints(Double maxPoints) {
-        this.maxPoints = maxPoints;
-    }
-
-    public Double getBonusPoints() {
-        return bonusPoints;
-    }
-
-    public void setBonusPoints(Double bonusPoints) {
-        this.bonusPoints = bonusPoints;
-    }
-
-    public AssessmentType getAssessmentType() {
-        return assessmentType;
-    }
-
-    public void setAssessmentType(AssessmentType assessmentType) {
-        this.assessmentType = assessmentType;
-    }
+    @Transient
+    private Long numberOfRatingsTransient;
 
     public boolean getAllowComplaintsForAutomaticAssessments() {
         return allowComplaintsForAutomaticAssessments;
@@ -326,27 +192,6 @@ public abstract class Exercise extends DomainObject {
 
     public void setGradingInstructions(String gradingInstructions) {
         this.gradingInstructions = gradingInstructions;
-    }
-
-    public DifficultyLevel getDifficulty() {
-        return difficulty;
-    }
-
-    public void setDifficulty(DifficultyLevel difficulty) {
-        this.difficulty = difficulty;
-    }
-
-    public ExerciseMode getMode() {
-        return mode;
-    }
-
-    public Exercise mode(ExerciseMode mode) {
-        this.mode = mode;
-        return this;
-    }
-
-    public void setMode(ExerciseMode mode) {
-        this.mode = mode;
     }
 
     public TeamAssignmentConfig getTeamAssignmentConfig() {
@@ -517,26 +362,6 @@ public abstract class Exercise extends DomainObject {
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-    public Boolean isEnded() {
-        if (getDueDate() == null) {
-            return Boolean.FALSE;
-        }
-        return ZonedDateTime.now().isAfter(getDueDate());
-    }
-
-    /**
-     * Checks if the due date is in the future. Returns true, if no due date is set.
-     *
-     * @return true if the due date is in the future, otherwise false
-     */
-    @JsonIgnore
-    public boolean isBeforeDueDate() {
-        if (dueDate == null) {
-            return true;
-        }
-        return ZonedDateTime.now().isBefore(dueDate);
-    }
-
     public Set<LearningGoal> getLearningGoals() {
         return learningGoals;
     }
@@ -545,29 +370,12 @@ public abstract class Exercise extends DomainObject {
         this.learningGoals = learningGoals;
     }
 
-    public boolean isTeamMode() {
-        return mode == ExerciseMode.TEAM;
-    }
-
     public Long getNumberOfParticipations() {
         return numberOfParticipationsTransient;
     }
 
     public void setNumberOfParticipations(Long numberOfParticipationsTransient) {
         this.numberOfParticipationsTransient = numberOfParticipationsTransient;
-    }
-
-    /**
-     * check if students are allowed to see this exercise
-     *
-     * @return true, if students are allowed to see this exercise, otherwise false
-     */
-    @JsonView(QuizView.Before.class)
-    public Boolean isVisibleToStudents() {
-        if (releaseDate == null) {  // no release date means the exercise is visible to students
-            return Boolean.TRUE;
-        }
-        return releaseDate.isBefore(ZonedDateTime.now());
     }
 
     /**
@@ -672,7 +480,7 @@ public abstract class Exercise extends DomainObject {
      * Find the latest (rated or unrated result) of the given participation. Returns null, if there are no results. Please beware: In many cases you might only want to show rated
      * results.
      *
-     * @param participation to find latest result for.
+     * @param participation to find the latest result for.
      * @return latest result or null
      */
     public Result findLatestResultWithCompletionDate(Participation participation) {
@@ -714,7 +522,7 @@ public abstract class Exercise extends DomainObject {
      * Filter for appropriate submission. Relevance in the following order:
      * - submission with rated result
      * - submission with unrated result (late submission)
-     * - no submission with any result > latest submission
+     * - no submission with any result > the latest submission
      *
      * @param submissions that need to be filtered
      * @return filtered submission
@@ -847,7 +655,7 @@ public abstract class Exercise extends DomainObject {
         // Exam
         ZonedDateTime releaseDate;
         if (this.isExamExercise()) {
-            releaseDate = this.getExerciseGroup().getExam().getStartDate();
+            releaseDate = getExerciseGroup().getExam().getStartDate();
         }
         else {
             releaseDate = getReleaseDate();
@@ -879,11 +687,28 @@ public abstract class Exercise extends DomainObject {
         this.isGradingInstructionFeedbackUsedTransient = isGradingInstructionFeedbackUsedTransient;
     }
 
+    public Double getAverageRating() {
+        return averageRatingTransient;
+    }
+
+    public void setAverageRating(Double averageRating) {
+        this.averageRatingTransient = averageRating;
+    }
+
+    public Long getNumberOfRatings() {
+        return numberOfRatingsTransient;
+    }
+
+    public void setNumberOfRatings(Long numberOfRatings) {
+        this.numberOfRatingsTransient = numberOfRatings;
+    }
+
+    @Nullable
     public Boolean getPresentationScoreEnabled() {
         return presentationScoreEnabled;
     }
 
-    public void setPresentationScoreEnabled(Boolean presentationScoreEnabled) {
+    public void setPresentationScoreEnabled(@Nullable Boolean presentationScoreEnabled) {
         this.presentationScoreEnabled = presentationScoreEnabled;
     }
 
@@ -927,7 +752,7 @@ public abstract class Exercise extends DomainObject {
      * Check whether the exercise has either a course or an exerciseGroup.
      *
      * @param entityName name of the entity
-     * @throws BadRequestAlertException if course and exerciseGroup are set or course and exerciseGroup are not set
+     * @throws BadRequestAlertException if the course and exerciseGroup are set or course and exerciseGroup are not set
      */
     public void checkCourseAndExerciseGroupExclusivity(String entityName) throws BadRequestAlertException {
         if (isCourseExercise() == isExamExercise()) {
@@ -1005,6 +830,38 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
+     * Validates score settings
+     * 1. The maxScore needs to be greater than 0
+     * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
+     *
+     */
+    public void validateScoreSettings() {
+        // Check if max score is set
+        if (getMaxPoints() == null || getMaxPoints() <= 0) {
+            throw new BadRequestAlertException("The max score needs to be greater than 0", "Exercise", "maxScoreInvalid");
+        }
+
+        if (getBonusPoints() == null) {
+            // make sure the default value is set properly
+            setBonusPoints(0.0);
+        }
+
+        // Check IncludedInOverallScore
+        if (getIncludedInOverallScore() == null) {
+            throw new BadRequestAlertException("The IncludedInOverallScore-property must be set", "Exercise", "includedInOverallScoreNotSet");
+        }
+
+        if (!getIncludedInOverallScore().validateBonusPoints(getBonusPoints())) {
+            throw new BadRequestAlertException("The provided bonus points are not allowed", "Exercise", "bonusPointsInvalid");
+        }
+    }
+
+    public void validateGeneralSettings() {
+        validateScoreSettings();
+        validateDates();
+    }
+
+    /**
      * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
      * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
      */
@@ -1023,47 +880,5 @@ public abstract class Exercise extends DomainObject {
         }
     }
 
-    /**
-     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
-     * @throws BadRequestAlertException if the dates are not valid
-     */
-    public void validateDates() {
-        // All fields are optional, so there is no error if none of them is set
-        if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null) {
-            return;
-        }
-        // at least one is set, so we have to check the two possible errors
-        boolean validDates = isBeforeAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate());
-
-        if (!validDates) {
-            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
-        }
-    }
-
-    /**
-     * This method is used to validate the assesmentDueDate of an exercise. An assessmentDueDate is valid if it is after the releaseDate and dueDate. A given assesmentDueDate is invalid without an according dueDate
-     * @return true if there is no assessmentDueDateError
-     */
-    private static boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
-        if (assessmentDueDate == null) {
-            return true;
-        }
-        // There cannot be a assessmentDueDate without dueDate
-        if (dueDate == null) {
-            return false;
-        }
-        return isBeforeAndNotNull(dueDate, assessmentDueDate) && isBeforeAndNotNull(releaseDate, assessmentDueDate);
-    }
-
-    /**
-     * This method is used to validate if the previousDate is before the laterDate.
-     * @return true if the previousDate is valid
-     */
-    private static boolean isBeforeAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {
-        if (previousDate == null || laterDate == null) {
-            return true;
-        }
-        return previousDate.isBefore(laterDate);
-    }
-
+    public abstract ExerciseType getExerciseType();
 }

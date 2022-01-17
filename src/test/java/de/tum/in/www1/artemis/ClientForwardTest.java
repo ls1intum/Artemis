@@ -26,12 +26,37 @@ public class ClientForwardTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Test
     public void testClientEndpoint() throws Exception {
-        ResultActions perform = request.getMvc().perform(get("/non-existant-mapping"));
+        ResultActions perform = request.getMvc().perform(get("/non-existent-mapping"));
         perform.andExpect(status().isOk()).andExpect(forwardedUrl("/"));
     }
 
     @Test
     public void testNestedClientEndpoint() throws Exception {
         request.getMvc().perform(get("/admin/user-management")).andExpect(status().isOk()).andExpect(forwardedUrl("/"));
+    }
+
+    @Test
+    void getUnmappedDottedEndpoint() throws Exception {
+        request.getMvc().perform(get("/foo.js")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getUnmappedNestedDottedEndpoint() throws Exception {
+        request.getMvc().perform(get("/foo/bar.js")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getWebsocketInfoEndpoint() throws Exception {
+        request.getMvc().perform(get("/websocket/info")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getWebsocketEndpoint() throws Exception {
+        request.getMvc().perform(get("/websocket/tracker/308/sessionId/websocket")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getWebsocketFallbackEndpoint() throws Exception {
+        request.getMvc().perform(get("/websocket/tracker/308/sessionId/xhr_streaming")).andExpect(status().isNotFound());
     }
 }

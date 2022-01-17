@@ -12,10 +12,10 @@
         </div>
         <div class="mt-3">
             <button type="button" class="btn btn-secondary" (click)="previousState()">
-                <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"> Cancel</span>
+                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"> Cancel</span>
             </button>
-            <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
-                <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+            <button type="submit" id="save-group" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
             </button>
         </div>
     </form>

@@ -16,7 +16,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
+import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -43,6 +45,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
     List<Result> findWithEagerSubmissionAndFeedbackByParticipationExerciseId(Long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "participation" })
+    List<Result> findWithEagerSubmissionAndFeedbackAndParticipationByParticipationExerciseId(Long exerciseId);
 
     /**
      * Get the latest results for each participation in an exercise from the database together with the list of feedback items.
@@ -210,7 +215,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<Result> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("tutorId") Long tutorId);
 
     /**
-     * count the number of finsished assessments of an exam with given examId
+     * count the number of finished assessments of an exam with given examId
      *
      * @param examId id of the exam
      * @return a list that contains the count of manual assessments for each studentParticipation of the exam
@@ -334,8 +339,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
         // here we receive a list which contains an entry for each student participation of the exercise.
         // the entry simply is the number of already created and submitted manual results, so the number is either 1 or 2
-        List<Long> countlist = countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(exercise.getId());
-        return convertDatabaseResponseToDueDateStats(countlist, numberOfCorrectionRounds);
+        List<Long> countList = countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(exercise.getId());
+        return convertDatabaseResponseToDueDateStats(countList, numberOfCorrectionRounds);
     }
 
     /**
@@ -344,7 +349,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      *
      * @param exercise  - the exercise we are interested in
      * @param numberOfCorrectionRounds - the correction round we want finished assessments for
-     * @param tutor tutor for which we want to coutnt the
+     * @param tutor tutor for which we want to count the number of locked assessments
      * @return an array of the number of assessments for the exercise for a given correction round
      */
     default DueDateStat[] countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds, User tutor) {
@@ -372,28 +377,28 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default DueDateStat[] countNumberOfFinishedAssessmentsForExamForCorrectionRounds(Long examId, int numberOfCorrectionRounds) {
 
-        // here we receive a list which contains an entry for each studentparticipation of the exam.
+        // here we receive a list which contains an entry for each student participation of the exam.
         // the entry simply is the number of already created and submitted manual results, so the number is either 1 or 2
-        List<Long> countlist = countNumberOfFinishedAssessmentsByExamIdIgnoreTestRuns(examId);
-        return convertDatabaseResponseToDueDateStats(countlist, numberOfCorrectionRounds);
+        List<Long> countList = countNumberOfFinishedAssessmentsByExamIdIgnoreTestRuns(examId);
+        return convertDatabaseResponseToDueDateStats(countList, numberOfCorrectionRounds);
     }
 
     /**
      * Takes the Long List database response and converts it to the according DueDateStats
      *
-     * @param countlist                 - the lists returned from the database
-     * @param numberOfCorrectionRounds  - numbmer of the correction rounds which is set for the given exam
+     * @param countList                 - the lists returned from the database
+     * @param numberOfCorrectionRounds  - number of the correction rounds which is set for the given exam
      * @return an array of DueDateStats which contains a DueDateStat with the number of assessments for each correction round.
      */
-    default DueDateStat[] convertDatabaseResponseToDueDateStats(List<Long> countlist, int numberOfCorrectionRounds) {
+    default DueDateStat[] convertDatabaseResponseToDueDateStats(List<Long> countList, int numberOfCorrectionRounds) {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
 
         // depending on the number of correctionRounds we create 1 or 2 DueDateStats that contain the sum of all participations:
         // with either 1 or more manual results, OR 2 or more manual results
-        correctionRoundsDataStats[0] = new DueDateStat(countlist.stream().filter(x -> x >= 1L).count(), 0L);
+        correctionRoundsDataStats[0] = new DueDateStat(countList.stream().filter(x -> x >= 1L).count(), 0L);
         // so far the number of correctionRounds is limited to 2
         if (numberOfCorrectionRounds == 2) {
-            correctionRoundsDataStats[1] = new DueDateStat(countlist.stream().filter(x -> x >= 2L).count(), 0L);
+            correctionRoundsDataStats[1] = new DueDateStat(countList.stream().filter(x -> x >= 2L).count(), 0L);
         }
         return correctionRoundsDataStats;
     }
@@ -523,22 +528,22 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     }
 
     /**
-     * submit the result means it is saved with a calculated score, result string and a completion date.
+     * Submitting the result means it is saved with a calculated score, result string and a completion date.
      * @param result the result which should be set to submitted
      * @param exercise the exercises to which the result belongs, which is needed to get points and to determine if the result is rated or not
+     * @param dueDate before which the result is considered to be rated
      * @return the saved result
      */
-    default Result submitResult(Result result, Exercise exercise) {
+    default Result submitResult(Result result, Exercise exercise, Optional<ZonedDateTime> dueDate) {
         double maxPoints = exercise.getMaxPoints();
         double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
         // Exam results and manual results of programming exercises and example submissions are always to rated
-        if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise
-                || (result.getSubmission().isExampleSubmission() != null && result.getSubmission().isExampleSubmission())) {
+        if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise || Boolean.TRUE.equals(result.isExampleResult())) {
             result.setRated(true);
         }
         else {
-            result.setRatedIfNotExceeded(exercise.getDueDate(), result.getSubmission().getSubmissionDate());
+            result.setRatedIfNotExceeded(dueDate.orElse(null), result.getSubmission().getSubmissionDate());
         }
 
         result.setCompletionDate(ZonedDateTime.now());
@@ -593,6 +598,49 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     }
 
     /**
+     * Calculates the sum of points of all feedbacks. Additionally, computes the sum of points of feedbacks belonging to the same {@link GradingCriterion}.
+     *
+     * Points are rounded as defined by the course settings.
+     *
+     * @param result for which the points should be summed up.
+     * @param course with the exercise the result belongs to.
+     * @return the result together with the total points and the points per criterion.
+     */
+    default ResultWithPointsPerGradingCriterionDTO calculatePointsPerGradingCriterion(final Result result, final Course course) {
+        final Map<Long, Double> pointsPerCriterion = new HashMap<>();
+        final Map<Long, Integer> gradingInstructionsUseCount = new HashMap<>();
+
+        for (final Feedback feedback : result.getFeedbacks()) {
+            final double feedbackPoints;
+            final Long criterionId;
+
+            if (feedback.getGradingInstruction() != null) {
+                feedbackPoints = feedback.computeTotalScore(0, gradingInstructionsUseCount);
+                criterionId = feedback.getGradingInstruction().getGradingCriterion().getId();
+            }
+            else {
+                feedbackPoints = feedback.getCredits() != null ? feedback.getCredits() : 0;
+                criterionId = null;
+            }
+
+            pointsPerCriterion.compute(criterionId, (key, oldPoints) -> (oldPoints == null) ? feedbackPoints : oldPoints + feedbackPoints);
+        }
+
+        final double totalPoints = RoundingUtil.roundScoreSpecifiedByCourseSettings(pointsPerCriterion.values().stream().mapToDouble(points -> points).sum(), course);
+
+        // points for feedbacks without criterion were only needed for totalPoints calculation
+        pointsPerCriterion.remove(null);
+
+        // round the point sums per criterion once at the end
+        pointsPerCriterion.entrySet().forEach(entry -> {
+            Double rounded = RoundingUtil.roundScoreSpecifiedByCourseSettings(entry.getValue(), course);
+            entry.setValue(rounded);
+        });
+
+        return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints, pointsPerCriterion);
+    }
+
+    /**
      * Get the latest result from the database by participation id together with the list of feedback items.
      *
      * @param participationId the id of the participation to load from the database
@@ -619,18 +667,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return the result
      */
-    default Result findOneElseThrow(long resultId) {
+    default Result findByIdElseThrow(long resultId) {
         return findById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
-    }
-
-    /**
-     * Get a distinct result from the database by its submissionId, else throws an EntityNotFoundException
-     *
-     * @param submissionId the id of the result to load from the database
-     * @return the result, else throws an EntityNotFoundException
-     */
-    default Result findDistinctBySubmissionIdElseThrow(Long submissionId) {
-        return findDistinctBySubmissionId(submissionId).orElseThrow(() -> new EntityNotFoundException("Result with submissionId", submissionId));
     }
 
     /**
@@ -639,8 +677,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return the result with submission and feedback list
      */
-    default Result findOneWithEagerSubmissionAndFeedback(long resultId) {
-        return findWithEagerSubmissionAndFeedbackById(resultId).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + resultId + "\" does not exist"));
+    default Result findByIdWithEagerSubmissionAndFeedbackElseThrow(long resultId) {
+        return findWithEagerSubmissionAndFeedbackById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
     }
 
     /**
@@ -651,7 +689,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return the result with the given id
      */
     default Result findByIdWithEagerFeedbacksElseThrow(long resultId) {
-        return findByIdWithEagerFeedbacks(resultId).orElseThrow(() -> new EntityNotFoundException("Submission", +resultId));
+        return findByIdWithEagerFeedbacks(resultId).orElseThrow(() -> new EntityNotFoundException("Submission", resultId));
     }
 
     /**
@@ -665,7 +703,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         for (ExampleSubmission exampleSubmission : exampleSubmissions) {
             Submission submission = exampleSubmission.getSubmission();
             if (!submission.isEmpty()) {
-                Result result = findOneWithEagerSubmissionAndFeedback(submission.getLatestResult().getId());
+                Result result = findByIdWithEagerSubmissionAndFeedbackElseThrow(submission.getLatestResult().getId());
                 results.add(result);
             }
         }

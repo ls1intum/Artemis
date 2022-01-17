@@ -1,0 +1,37 @@
+.post-tag-list {
+    width: 100%;
+
+    .post-tag {
+        padding: 0 !important;
+        height: 30px !important;
+        border-radius: 0.25rem !important;
+        background: transparent !important;
+
+        .custom-tag {
+            padding: 0.15rem 0.45rem;
+            background: #0275d8;
+            border-radius: 0.25rem;
+            color: #fff;
+
+            &:hover {
+                opacity: 0.8;
+            }
+
+            .post-tag-remove {
+                color: #fff;
+            }
+        }
+    }
+
+    .post-tag-input {
+        height: 30px;
+    }
+}
+
+.tag-option {
+    background: #fff;
+
+    &:hover {
+        background: #ccc;
+    }
+}

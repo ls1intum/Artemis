@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import javax.persistence.*;
 
@@ -63,21 +64,8 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
     }
 
     @Override
-    public void addResult(SubmittedAnswer submittedAnswer, boolean rated) {
-        changeStatisticBasedOnResult(submittedAnswer, rated, 1);
-    }
-
-    @Override
-    public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated) {
-        changeStatisticBasedOnResult(submittedAnswer, rated, -1);
-    }
-
-    @Override
     public void resetStatistic() {
-        setParticipantsRated(0);
-        setParticipantsUnrated(0);
-        setRatedCorrectCounter(0);
-        setUnRatedCorrectCounter(0);
+        super.resetStatistic();
         for (ShortAnswerSpotCounter spotCounter : shortAnswerSpotCounters) {
             spotCounter.setRatedCounter(0);
             spotCounter.setUnRatedCounter(0);
@@ -93,38 +81,20 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
      *                        of the quizExercise)
      * @param change          the int-value, which will be added to the Counter and participants
      */
-    private void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change) {
-        if (submittedAnswer == null) {
+    @Override
+    protected void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change) {
+        if (!(submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer)) {
             return;
         }
-
-        ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer = (ShortAnswerSubmittedAnswer) submittedAnswer;
 
         if (rated) {
             // change the rated participants
             setParticipantsRated(getParticipantsRated() + change);
-
-            if (shortAnswerSubmittedAnswer.getSubmittedTexts() != null) {
-
+            handleCountersForCorrectSpots(shortAnswerSubmittedAnswer, (ShortAnswerSpotCounter spotCounter) -> {
                 // change rated spotCounter if spot is correct
-                for (ShortAnswerSpotCounter spotCounter : shortAnswerSpotCounters) {
-                    ShortAnswerSpot spot = spotCounter.getSpot();
-                    ShortAnswerSubmittedText shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spot);
-                    Set<ShortAnswerSolution> shortAnswerSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spot);
+                spotCounter.setRatedCounter(spotCounter.getRatedCounter() + change);
+            });
 
-                    if (shortAnswerSubmittedText == null) {
-                        continue;
-                    }
-                    // reconnect to avoid issues
-                    shortAnswerSubmittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer);
-                    for (ShortAnswerSolution solution : shortAnswerSolutions) {
-                        if (shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText())
-                                && Boolean.TRUE.equals(shortAnswerSubmittedText.isIsCorrect())) {
-                            spotCounter.setRatedCounter(spotCounter.getRatedCounter() + change);
-                        }
-                    }
-                }
-            }
             // change rated correctCounter if answer is complete correct
             if (getQuizQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer)) {
                 setRatedCorrectCounter(getRatedCorrectCounter() + change);
@@ -134,30 +104,35 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
         else {
             // change the unrated participants
             setParticipantsUnrated(getParticipantsUnrated() + change);
-
-            if (shortAnswerSubmittedAnswer.getSubmittedTexts() != null) {
+            handleCountersForCorrectSpots(shortAnswerSubmittedAnswer, (ShortAnswerSpotCounter spotCounter) -> {
                 // change unrated spotCounter if spot is correct
-                for (ShortAnswerSpotCounter spotCounter : shortAnswerSpotCounters) {
-                    ShortAnswerSpot spot = spotCounter.getSpot();
-                    ShortAnswerSubmittedText shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spot);
-                    Set<ShortAnswerSolution> shortAnswerSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spot);
-
-                    if (shortAnswerSubmittedText == null) {
-                        continue;
-                    }
-                    // reconnect to avoid issues
-                    shortAnswerSubmittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer);
-                    for (ShortAnswerSolution solution : shortAnswerSolutions) {
-                        if (shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText())
-                                && Boolean.TRUE.equals(shortAnswerSubmittedText.isIsCorrect())) {
-                            spotCounter.setUnRatedCounter(spotCounter.getUnRatedCounter() + change);
-                        }
-                    }
-                }
-            }
+                spotCounter.setUnRatedCounter(spotCounter.getUnRatedCounter() + change);
+            });
             // change unrated correctCounter if answer is complete correct
             if (getQuizQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer)) {
                 setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
+            }
+        }
+    }
+
+    private void handleCountersForCorrectSpots(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer, Consumer<ShortAnswerSpotCounter> changeCounterIfSpotIsCorrect) {
+        if (shortAnswerSubmittedAnswer.getSubmittedTexts() != null) {
+            for (ShortAnswerSpotCounter spotCounter : shortAnswerSpotCounters) {
+                ShortAnswerSpot spot = spotCounter.getSpot();
+                ShortAnswerSubmittedText shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spot);
+                Set<ShortAnswerSolution> shortAnswerSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spot);
+
+                if (shortAnswerSubmittedText == null) {
+                    continue;
+                }
+                // reconnect to avoid issues
+                shortAnswerSubmittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer);
+                for (ShortAnswerSolution solution : shortAnswerSolutions) {
+                    if (shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText())
+                            && Boolean.TRUE.equals(shortAnswerSubmittedText.isIsCorrect())) {
+                        changeCounterIfSpotIsCorrect.accept(spotCounter);
+                    }
+                }
             }
         }
     }

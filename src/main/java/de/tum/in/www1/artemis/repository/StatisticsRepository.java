@@ -2,9 +2,12 @@ package de.tum.in.www1.artemis.repository;
 
 import java.time.*;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.IsoFields;
 import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.*;
+
+import javax.annotation.Nullable;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -439,40 +442,31 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * Gets the number of entries for the specific graphType and the span. First we distribute into the different types of graphs.
      * After that, we distinguish between the views in which this graph can be shown and call the corresponding method
      *
+     * @param graphType the type of graph the data should be fetched for (see GraphType.java)
      * @param span the spanType for which the call is executed
      * @param startDate The startDate of which the data should be fetched
      * @param endDate The endDate of which the data should be fetched
-     * @param graphType the type of graph the data should be fetched for (see GraphType.java)
      * @param view the view in which the data will be displayed (Artemis, Course, Exercise)
-     * @param entityId the entityId which is null for a user statistics call and contains the Id for the other statistics pages
+     * @param entityId the entityId which is null for a user statistics call and contains the id for the other statistics pages
      * @return the return value of the processed database call which returns a list of entries
      */
-    default List<StatisticsEntry> getNumberOfEntriesPerTimeSlot(SpanType span, ZonedDateTime startDate, ZonedDateTime endDate, GraphType graphType, StatisticsView view,
-            Long entityId) {
-        var exerciseIds = view == StatisticsView.COURSE ? findExerciseIdsByCourseId(entityId) : null;
+    default List<StatisticsEntry> getNumberOfEntriesPerTimeSlot(GraphType graphType, SpanType span, ZonedDateTime startDate, ZonedDateTime endDate, StatisticsView view,
+            @Nullable Long entityId) {
+        var exerciseIds = view == StatisticsView.COURSE && entityId != null ? findExerciseIdsByCourseId(entityId) : null;
         switch (graphType) {
             case SUBMISSIONS -> {
-                switch (view) {
-                    case ARTEMIS -> {
-                        return getTotalSubmissions(startDate, endDate);
-                    }
-                    case COURSE -> {
-                        return getTotalSubmissionsForCourse(startDate, endDate, exerciseIds);
-                    }
-                    case EXERCISE -> {
-                        return getTotalSubmissionsForExercise(startDate, endDate, entityId);
-                    }
-                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
-                }
+                return switch (view) {
+                    case ARTEMIS -> getTotalSubmissions(startDate, endDate);
+                    case COURSE -> getTotalSubmissionsForCourse(startDate, endDate, exerciseIds);
+                    case EXERCISE -> getTotalSubmissionsForExercise(startDate, endDate, entityId);
+                };
             }
             case ACTIVE_USERS -> {
-                List<StatisticsEntry> result;
-                switch (view) {
-                    case ARTEMIS -> result = getActiveUsers(startDate, endDate);
-                    case COURSE -> result = getActiveUsersForCourse(startDate, endDate, exerciseIds);
-                    case EXERCISE -> result = getActiveUsersForExercise(startDate, endDate, entityId);
-                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
-                }
+                List<StatisticsEntry> result = switch (view) {
+                    case ARTEMIS -> getActiveUsers(startDate, endDate);
+                    case COURSE -> getActiveUsersForCourse(startDate, endDate, exerciseIds);
+                    case EXERCISE -> getActiveUsersForExercise(startDate, endDate, entityId);
+                };
                 return filterDuplicatedUsers(span, result, startDate, graphType);
             }
             case LOGGED_IN_USERS -> {
@@ -482,123 +476,77 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 return filterDuplicatedUsers(span, result, startDate, graphType);
             }
             case RELEASED_EXERCISES -> {
-                switch (view) {
-                    case ARTEMIS -> {
-                        return getReleasedExercises(startDate, endDate);
-                    }
-                    case COURSE -> {
-                        return getReleasedExercisesForCourse(startDate, endDate, exerciseIds);
-                    }
-                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
-                }
+                return switch (view) {
+                    case ARTEMIS -> getReleasedExercises(startDate, endDate);
+                    case COURSE -> getReleasedExercisesForCourse(startDate, endDate, exerciseIds);
+                    case EXERCISE -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                };
             }
             case EXERCISES_DUE -> {
-                switch (view) {
-                    case ARTEMIS -> {
-                        return getExercisesDue(startDate, endDate);
-                    }
-                    case COURSE -> {
-                        return getExercisesDueForCourse(startDate, endDate, exerciseIds);
-                    }
-                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
-                }
+                return switch (view) {
+                    case ARTEMIS -> getExercisesDue(startDate, endDate);
+                    case COURSE -> getExercisesDueForCourse(startDate, endDate, exerciseIds);
+                    case EXERCISE -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                };
             }
             case CONDUCTED_EXAMS -> {
-                switch (view) {
-                    case ARTEMIS -> {
-                        return getConductedExams(startDate, endDate);
-                    }
-                    case COURSE -> {
-                        return getConductedExamsForCourse(startDate, endDate, entityId);
-                    }
-                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
-                }
+                return switch (view) {
+                    case ARTEMIS -> getConductedExams(startDate, endDate);
+                    case COURSE -> getConductedExamsForCourse(startDate, endDate, entityId);
+                    case EXERCISE -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                };
             }
             case EXAM_PARTICIPATIONS -> {
-                switch (view) {
-                    case ARTEMIS -> {
-                        return getExamParticipations(startDate, endDate);
-                    }
-                    case COURSE -> {
-                        return getExamParticipationsForCourse(startDate, endDate, entityId);
-                    }
-                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
-                }
+                return switch (view) {
+                    case ARTEMIS -> getExamParticipations(startDate, endDate);
+                    case COURSE -> getExamParticipationsForCourse(startDate, endDate, entityId);
+                    case EXERCISE -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                };
             }
             case EXAM_REGISTRATIONS -> {
-                switch (view) {
-                    case ARTEMIS -> {
-                        return getExamRegistrations(startDate, endDate);
-                    }
-                    case COURSE -> {
-                        return getExamRegistrationsForCourse(startDate, endDate, entityId);
-                    }
-                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
-                }
+                return switch (view) {
+                    case ARTEMIS -> getExamRegistrations(startDate, endDate);
+                    case COURSE -> getExamRegistrationsForCourse(startDate, endDate, entityId);
+                    case EXERCISE -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                };
             }
             case ACTIVE_TUTORS -> {
-                List<StatisticsEntry> result;
-                switch (view) {
-                    case ARTEMIS -> result = getActiveTutors(startDate, endDate);
-                    case COURSE -> result = getActiveTutorsForCourse(startDate, endDate, exerciseIds);
-                    case EXERCISE -> result = getActiveTutorsForExercise(startDate, endDate, entityId);
-                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
-                }
+                List<StatisticsEntry> result = switch (view) {
+                    case ARTEMIS -> getActiveTutors(startDate, endDate);
+                    case COURSE -> getActiveTutorsForCourse(startDate, endDate, exerciseIds);
+                    case EXERCISE -> getActiveTutorsForExercise(startDate, endDate, entityId);
+                };
                 return filterDuplicatedUsers(span, result, startDate, graphType);
             }
             case CREATED_RESULTS -> {
-                switch (view) {
-                    case ARTEMIS -> {
-                        return getCreatedResults(startDate, endDate);
-                    }
-                    case COURSE -> {
-                        return getCreatedResultsForCourse(startDate, endDate, exerciseIds);
-                    }
-                    case EXERCISE -> {
-                        return getCreatedResultsForExercise(startDate, endDate, entityId);
-                    }
-                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
-                }
+                return switch (view) {
+                    case ARTEMIS -> getCreatedResults(startDate, endDate);
+                    case COURSE -> getCreatedResultsForCourse(startDate, endDate, exerciseIds);
+                    case EXERCISE -> getCreatedResultsForExercise(startDate, endDate, entityId);
+                };
             }
             case CREATED_FEEDBACKS -> {
-                switch (view) {
-                    case ARTEMIS -> {
-                        return getResultFeedbacks(startDate, endDate);
-                    }
-                    case COURSE -> {
-                        return getResultFeedbacksForCourse(startDate, endDate, exerciseIds);
-                    }
-                    case EXERCISE -> {
-                        return getResultFeedbacksForExercise(startDate, endDate, entityId);
-                    }
-                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
-                }
+                return switch (view) {
+                    case ARTEMIS -> getResultFeedbacks(startDate, endDate);
+                    case COURSE -> getResultFeedbacksForCourse(startDate, endDate, exerciseIds);
+                    case EXERCISE -> getResultFeedbacksForExercise(startDate, endDate, entityId);
+                };
             }
             case POSTS -> {
-                switch (view) {
-                    case COURSE -> {
-                        return getPostsForCourseInDateRange(startDate, endDate, entityId);
-                    }
-                    case EXERCISE -> {
-                        return getPostsForExerciseInDateRange(startDate, endDate, entityId);
-                    }
-                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
-                }
+                return switch (view) {
+                    case COURSE -> getPostsForCourseInDateRange(startDate, endDate, entityId);
+                    case EXERCISE -> getPostsForExerciseInDateRange(startDate, endDate, entityId);
+                    case ARTEMIS -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                };
             }
             case RESOLVED_POSTS -> {
-                switch (view) {
-                    case COURSE -> {
-                        return getResolvedCoursePostsInDateRange(startDate, endDate, entityId);
-                    }
-                    case EXERCISE -> {
-                        return getResolvedExercisePostsInDateRange(startDate, endDate, entityId);
-                    }
-                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
-                }
+                return switch (view) {
+                    case COURSE -> getResolvedCoursePostsInDateRange(startDate, endDate, entityId);
+                    case EXERCISE -> getResolvedExercisePostsInDateRange(startDate, endDate, entityId);
+                    case ARTEMIS -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                };
             }
-            default -> {
-                return new ArrayList<>();
-            }
+            default -> throw new UnsupportedOperationException("Unsupported graph type: " + graphType);
         }
     }
 
@@ -614,9 +562,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @return A List<StatisticsData> with only distinct users per timeslot
      */
     private List<StatisticsEntry> filterDuplicatedUsers(SpanType span, List<StatisticsEntry> result, ZonedDateTime startDate, GraphType graphType) {
-        Map<Object, List<String>> users = new HashMap<>();
+        Map<Integer, List<String>> users = new HashMap<>();
         for (StatisticsEntry listElement : result) {
-            Object index;
             ZonedDateTime date;
             if (graphType == GraphType.LOGGED_IN_USERS) {
                 Instant instant = (Instant) listElement.getDay();
@@ -625,31 +572,35 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             else {
                 date = (ZonedDateTime) listElement.getDay();
             }
-            if (span == SpanType.DAY) {
-                index = date.getHour();
-            }
-            else if (span == SpanType.WEEK || span == SpanType.MONTH) {
-                index = date.withHour(0).withMinute(0).withSecond(0).withNano(0);
-            }
-            else if (span == SpanType.QUARTER) {
-                index = getWeekOfDate(date);
-            }
-            else {
-                index = date.getMonth();
-            }
-            String username = listElement.getUsername();
-            List<String> usersInSameSlot = users.get(index);
-            // if this index is not yet existing in users
-            if (usersInSameSlot == null) {
-                usersInSameSlot = new ArrayList<>();
-                usersInSameSlot.add(username);
-                users.put(index, usersInSameSlot);
-            }   // if the value of the map for this index does not contain this username
-            else if (!usersInSameSlot.contains(username)) {
-                usersInSameSlot.add(username);
-            }
+            Integer index = switch (span) {
+                case DAY -> date.getHour();
+                case WEEK, MONTH -> Math.toIntExact(ChronoUnit.DAYS.between(startDate, date));
+                case QUARTER -> getWeekOfDate(date);
+                case YEAR -> date.getMonth().getValue();
+            };
+            addUserToTimeslot(users, listElement, index);
         }
         return mergeUsersPerTimeslotIntoList(users, span, startDate);
+    }
+
+    /**
+     * This method is normally invoked in a for each loop and adds a user based on the list element in case it does not yet exist in the users map
+     * @param users the map of existing users
+     * @param userStatisticEntry the statistic entry which contains a username and a potentially new user
+     * @param index the index of the map which should be considered, can be a date or an integer
+     */
+    default void addUserToTimeslot(Map<Integer, List<String>> users, StatisticsEntry userStatisticEntry, Integer index) {
+        String username = userStatisticEntry.getUsername();
+        List<String> usersInSameSlot = users.get(index);
+        // if this index is not yet existing in users
+        if (usersInSameSlot == null) {
+            usersInSameSlot = new ArrayList<>();
+            usersInSameSlot.add(username);
+            users.put(index, usersInSameSlot);
+        }   // if the value of the map for this index does not contain this username
+        else if (!usersInSameSlot.contains(username)) {
+            usersInSameSlot.add(username);
+        }
     }
 
     /**
@@ -661,30 +612,31 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @param startDate the startDate which we need for mapping into timeslots
      * @return A List<StatisticsData> with no duplicated user per timeslot
      */
-    private List<StatisticsEntry> mergeUsersPerTimeslotIntoList(Map<Object, List<String>> users, SpanType span, ZonedDateTime startDate) {
+    private List<StatisticsEntry> mergeUsersPerTimeslotIntoList(Map<Integer, List<String>> users, SpanType span, ZonedDateTime startDate) {
         List<StatisticsEntry> returnList = new ArrayList<>();
-        users.forEach((timeslot, userList) -> {
-            ZonedDateTime start;
-            if (span == SpanType.DAY) {
-                start = startDate.withHour((Integer) timeslot);
-            }
-            else if (span == SpanType.WEEK || span == SpanType.MONTH) {
-                start = (ZonedDateTime) timeslot;
-            }
-            else if (span == SpanType.QUARTER) {
-                int year = (Integer) timeslot < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
-                ZonedDateTime firstDateOfYear = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone());
-                start = getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(((Integer) timeslot) - 1) : firstDateOfYear.plusWeeks((Integer) timeslot);
-            }
-            else {
-                start = startDate.withMonth(((Month) timeslot).getValue());
-            }
+        users.forEach((timeIndex, userList) -> {
+            ZonedDateTime start = switch (span) {
+                case DAY -> startDate.withHour(timeIndex);
+                case WEEK, MONTH -> startDate.plusDays(timeIndex);
+                case QUARTER -> {
+                    int year = timeIndex < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
+                    ZonedDateTime firstDateOfYear = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone());
+                    yield getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(timeIndex - 1) : firstDateOfYear.plusWeeks(timeIndex);
+                }
+                case YEAR -> startDate.withMonth(timeIndex);
+            };
             StatisticsEntry listElement = new StatisticsEntry(start, userList.size());
             returnList.add(listElement);
         });
         return returnList;
     }
 
+    /**
+     * Gets the week of the given date
+     *
+     * @param date the date to get the week for
+     * @return the calendar week of the given date
+     */
     default Integer getWeekOfDate(ZonedDateTime date) {
         LocalDate localDate = date.toLocalDate();
         TemporalField weekOfYear = WeekFields.of(DayOfWeek.MONDAY, 4).weekOfWeekBasedYear();
@@ -693,108 +645,81 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     /**
      * Gets a List<StatisticsData> each containing a date and an amount of entries. We take the amount of entries and
-     * map it into a the results array based on the date of the entry. This method handles the spanType DAY
+     * map it into the results list based on the date of the entry. This method handles the spanType DAY
+     * **Note**: The length of the result list must be correct, all values must be initialized with 0
      *
      * @param outcome A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
-     * @param result the array in which the converted outcome should be inserted
-     * @return an array, containing the values for each bar in the graph
+     * @param result the list in which the converted outcome should be inserted
      */
-    default Integer[] mergeResultsIntoArrayForDay(List<StatisticsEntry> outcome, Integer[] result) {
+    default void sortDataIntoHours(List<StatisticsEntry> outcome, List<Integer> result) {
         for (StatisticsEntry entry : outcome) {
-            int hour = ((ZonedDateTime) entry.getDay()).getHour();
-            int amount = (int) entry.getAmount();
-            result[hour] += amount;
+            int hourIndex = ((ZonedDateTime) entry.getDay()).getHour();
+            int amount = Math.toIntExact(entry.getAmount());
+            int currentValue = result.get(hourIndex);
+            result.set(hourIndex, currentValue + amount);
         }
-        return result;
     }
 
     /**
      * Gets a List<StatisticsData> each containing a date and an amount of entries. We take the amount of entries and
-     * map it into a the results array based on the date of the entry. This method handles the spanType WEEK
+     * map it into the results list based on the date of the entry. This method handles the spanType WEEK and MONTH
+     * **Note**: The length of the result list must be correct, all values must be initialized with 0
      *
      * @param outcome A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
-     * @param result the array in which the converted outcome should be inserted
-     * @param startDate the startDate of the result array
-     * @return an array, containing the values for each bar in the graph
+     * @param result the list in which the converted outcome should be inserted
+     * @param startDate the startDate of the result list
      */
-    default Integer[] mergeResultsIntoArrayForWeek(List<StatisticsEntry> outcome, Integer[] result, ZonedDateTime startDate) {
+    default void sortDataIntoDays(List<StatisticsEntry> outcome, List<Integer> result, ZonedDateTime startDate) {
+        for (StatisticsEntry entry : outcome) {
+            ZonedDateTime date = (ZonedDateTime) entry.getDay();
+            int amount = Math.toIntExact(entry.getAmount());
+            int dayIndex = Math.toIntExact(ChronoUnit.DAYS.between(startDate, date));
+            int currentValue = result.get(dayIndex);
+            result.set(dayIndex, currentValue + amount);
+        }
+    }
+
+    /**
+     * Gets a List<StatisticsData> each containing a date and an amount of entries. We take the amount of entries and
+     * map it into the results list based on the date of the entry. This method sorts the data into weeks.
+     * **Note**: The length of the result list must be correct, all values must be initialized with 0
+     *
+     * @param outcome A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
+     * @param result the list in which the converted outcome should be inserted, should be initialized with enough values
+     * @param startDate the startDate of the result list
+     */
+    default void sortDataIntoWeeks(List<StatisticsEntry> outcome, List<Integer> result, ZonedDateTime startDate) {
+        for (StatisticsEntry entry : outcome) {
+            ZonedDateTime date = (ZonedDateTime) entry.getDay();
+            int amount = Math.toIntExact(entry.getAmount());
+            int dateWeek = getWeekOfDate(date);
+            int startDateWeek = getWeekOfDate(startDate);
+            int weeksInYear = Math.toIntExact(IsoFields.WEEK_OF_WEEK_BASED_YEAR.rangeRefinedBy(startDate).getMaximum());    // either 52 or 53
+            int weekIndex = (dateWeek - startDateWeek + weeksInYear) % weeksInYear;     // make sure to have a positive value in the range [0, 52 or 53]
+            int currentValue = result.get(weekIndex);
+            result.set(weekIndex, currentValue + amount);
+        }
+    }
+
+    /**
+     * Gets a List<StatisticsData> each containing a date and an amount of entries. We take the amount of entries and
+     * map it into the results list based on the date of the entry. This method handles the spanType YEAR
+     * **Note**: The length of the result list must be correct, all values must be initialized with 0
+     *
+     * @param outcome A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
+     * @param result the list in which the converted outcome should be inserted
+     * @param startDate the startDate of the result list
+     */
+    default void sortDataIntoMonths(List<StatisticsEntry> outcome, List<Integer> result, ZonedDateTime startDate) {
         for (StatisticsEntry entry : outcome) {
             ZonedDateTime date = (ZonedDateTime) entry.getDay();
             int amount = (int) entry.getAmount();
-            int dayDifference = (int) ChronoUnit.DAYS.between(startDate, date);
-            result[dayDifference] += amount;
-        }
-        return result;
-    }
-
-    /**
-     * Gets a List<StatisticsData> each containing a date and an amount of entries. We take the amount of entries and
-     * map it into a the results array based on the date of the entry. This method handles the spanType MONTH
-     *
-     * @param outcome A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
-     * @param result the array in which the converted outcome should be inserted
-     * @param startDate the startDate of the result array
-     * @return an array, containing the values for each bar in the graph
-     */
-    default Integer[] mergeResultsIntoArrayForMonth(List<StatisticsEntry> outcome, Integer[] result, ZonedDateTime startDate) {
-        for (StatisticsEntry map : outcome) {
-            ZonedDateTime date = (ZonedDateTime) map.getDay();
-            int amount = (int) map.getAmount();
-            int dayDifference = (int) ChronoUnit.DAYS.between(startDate, date);
-            result[dayDifference] += amount;
-        }
-        return result;
-    }
-
-    /**
-     * Gets a List<StatisticsData> each containing a date and an amount of entries. We take the amount of entries and
-     * map it into a the results array based on the date of the entry. This method handles the spanType Quarter
-     *
-     * @param outcome A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
-     * @param result the array in which the converted outcome should be inserted
-     * @param startDate the startDate of the result array
-     * @return an array, containing the values for each bar in the graph
-     */
-    default Integer[] mergeResultsIntoArrayForQuarter(List<StatisticsEntry> outcome, Integer[] result, ZonedDateTime startDate) {
-        for (StatisticsEntry map : outcome) {
-            ZonedDateTime date = (ZonedDateTime) map.getDay();
-            int amount = (int) map.getAmount();
-            int dateWeek = getWeekOfDate(date);
-            int startDateWeek = getWeekOfDate(startDate);
-            int weeksDifference;
-            // if the graph contains two different years
-            weeksDifference = dateWeek < startDateWeek ? dateWeek + 53 - startDateWeek : dateWeek - startDateWeek;
-            result[weeksDifference] += amount;
-
-        }
-        return result;
-    }
-
-    /**
-     * Gets a List<StatisticsData> each containing a date and an amount of entries. We take the amount of entries and
-     * map it into a the results array based on the date of the entry. This method handles the spanType YEAR
-     *
-     * @param outcome A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
-     * @param result the array in which the converted outcome should be inserted
-     * @param startDate the startDate of the result array
-     * @return an array, containing the values for each bar in the graph
-     */
-    default Integer[] mergeResultsIntoArrayForYear(List<StatisticsEntry> outcome, Integer[] result, ZonedDateTime startDate) {
-        for (StatisticsEntry map : outcome) {
-            ZonedDateTime date = (ZonedDateTime) map.getDay();
-            int amount = (int) map.getAmount();
             int monthOfDate = date.getMonth().getValue();
             int monthOfStartDate = startDate.getMonth().getValue();
-            if (monthOfDate >= monthOfStartDate) {
-                // Date is in same year as startDate
-                result[monthOfDate - monthOfStartDate] += amount;
-            }
-            else {
-                // Date is in different year as startDate
-                result[12 - monthOfStartDate + monthOfDate] += amount;
-            }
+            int monthsPerYear = 12;
+            int monthIndex = (monthOfDate - monthOfStartDate + monthsPerYear) % monthsPerYear; // make sure to have a positive value in the range [0, 12]
+            int currentValue = result.get(monthIndex);
+            result.set(monthIndex, currentValue + amount);
         }
-        return result;
     }
-
 }

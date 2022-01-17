@@ -17,7 +17,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-describe('ComplaintsComponent', () => {
+describe('ComplaintsFormComponent', () => {
     const teamComplaints = 42;
     const studentComplaints = 69;
     const course: Course = { maxTeamComplaints: teamComplaints, maxComplaints: studentComplaints };

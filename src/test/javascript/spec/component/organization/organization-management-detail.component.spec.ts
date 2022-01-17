@@ -53,7 +53,7 @@ describe('OrganizationManagementDetailComponent', () => {
         userService = TestBed.inject(UserService);
     });
 
-    afterEach(async () => {
+    beforeEach(() => {
         jest.clearAllMocks();
     });
 

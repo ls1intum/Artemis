@@ -170,15 +170,25 @@
                 "complaintsTitle": "Total Complaints",
                 "moreFeedbackTitle": "More Feedback Requests",
                 "averageStudentScoreTitle": "Average Student Score"
-            }
+            },
+            "activeStudents": "Active students: {{ students }}"
         },
         "courseStatistics": {
             "statistics": "Statistics",
             "course": "Course",
-            "courseAverage": "course average",
+            "courseAverage": "Course average",
             "exerciseAverage": "exercise average",
             "amountOfStudents": "# of students",
-            "activeStudents": "Active students"
+            "activeStudents": "Active students",
+            "activeStudentsExplanation": "Active students are students that submitted at least once in the corresponding week.",
+            "average": "Average: ",
+            "averageReferenceLineCheckboxLabel": "Show average as reference line",
+            "exerciseType": "Exercise type",
+            "programming": "Programming",
+            "quiz": "Quiz",
+            "modeling": "Modeling",
+            "text": "Text",
+            "file-upload": "File Upload"
         }
     }
 }

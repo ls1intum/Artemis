@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
@@ -12,16 +12,22 @@ import { DragAndDropQuestionStatistic } from 'app/entities/quiz/drag-and-drop-qu
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { blueColor, greenColor, QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
+import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
     templateUrl: './drag-and-drop-question-statistic.component.html',
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil],
-    styleUrls: ['./drag-and-drop-question-statistic.component.scss'],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', './drag-and-drop-question-statistic.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
 export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
     question: DragAndDropQuestion;
+
+    // Icons
+    faSync = faSync;
+    faCheckCircle = faCheckCircle;
+    faTimesCircle = faTimesCircle;
 
     constructor(
         route: ActivatedRoute,
@@ -33,8 +39,9 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
         quizStatisticUtil: QuizStatisticUtil,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         private artemisMarkdown: ArtemisMarkdownService,
+        protected changeDetector: ChangeDetectorRef,
     ) {
-        super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService);
+        super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService, changeDetector);
     }
 
     /**

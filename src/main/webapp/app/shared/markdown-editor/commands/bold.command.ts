@@ -1,8 +1,9 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faBold } from '@fortawesome/free-solid-svg-icons';
 import { Command } from './command';
 
 export class BoldCommand extends Command {
-    buttonIcon = 'bold' as IconProp;
+    buttonIcon = faBold as IconProp;
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.bold';
 
     /**
@@ -17,7 +18,7 @@ export class BoldCommand extends Command {
         const selectedText = this.getSelectedText();
         let textToAdd = '';
 
-        if (selectedText.substr(0, 2) === '**' && selectedText.substr(selectedText.length - 2, 2) === '**') {
+        if (selectedText.slice(0, 2) === '**' && selectedText.slice(selectedText.length - 2, selectedText.length) === '**') {
             textToAdd = selectedText.slice(2, -2);
             this.insertText(textToAdd);
         } else {

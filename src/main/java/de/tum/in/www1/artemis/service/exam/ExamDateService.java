@@ -67,10 +67,10 @@ public class ExamDateService {
      * @throws EntityNotFoundException the given exercise is an exam exercise and the exam cannot be found
      */
     public boolean isExerciseWorkingPeriodOver(Exercise exercise) {
-        if (exercise.isExamExercise()) {
-            return isExamWithGracePeriodOver(exercise.getExamViaExerciseGroupOrCourseMember());
+        if (!exercise.isExamExercise()) {
+            throw new IllegalArgumentException("This function should only be used for exam exercises");
         }
-        return !exercise.isBeforeDueDate();
+        return isExamWithGracePeriodOver(exercise.getExamViaExerciseGroupOrCourseMember());
     }
 
     /**

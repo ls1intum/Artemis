@@ -12,8 +12,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation.utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
@@ -23,6 +23,8 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
+import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -43,6 +45,20 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
     @ContentChild('overrideButtons') overrideButtons: TemplateRef<any>;
     private buildPlanLinkTemplate: string;
+
+    // Icons
+    faSort = faSort;
+    faPlus = faPlus;
+    faDownload = faDownload;
+    faTimes = faTimes;
+    faBook = faBook;
+    faWrench = faWrench;
+    faCheckDouble = faCheckDouble;
+    faUsers = faUsers;
+    faTable = faTable;
+    faListAlt = faListAlt;
+    faPencilAlt = faPencilAlt;
+    faFileSignature = faFileSignature;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -148,6 +164,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     sortRows() {
         this.sortService.sortByProperty(this.programmingExercises, this.predicate, this.reverse);
+        this.applyFilter();
     }
 
     openImportModal() {

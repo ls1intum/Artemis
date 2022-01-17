@@ -7,7 +7,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { merge, Subject } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -17,7 +17,7 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
@@ -25,10 +25,11 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
-import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
+import { getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -60,6 +61,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     // indicates, that it is an exam exercise and the publishResults date is in the past
     isAfterPublishDate: boolean;
     isOwnerOfParticipation: boolean;
+
+    // Icon
+    farListAlt = faListAlt;
 
     constructor(
         private route: ActivatedRoute,
@@ -157,7 +161,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     get isActive(): boolean {
         const isActive =
-            !this.examMode && !this.result && (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && dayjs(this.textExercise.dueDate).isSameOrAfter(dayjs())));
+            !this.examMode &&
+            !this.result &&
+            (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && !hasExerciseDueDatePassed(this.textExercise, this.participation)));
         return !!isActive;
     }
 

@@ -16,7 +16,7 @@
                         name="usedForTutorial"
                         id="field_usedForTutorial"
                         [(ngModel)]="exampleSubmission.usedForTutorial"
-                        (ngModelChange)="unsavedChanges = true"
+                        (ngModelChange)="unsavedSubmissionChanges = true"
                     />
                     <label class="form-check-label" for="field_usedForTutorial">{{ 'artemisApp.exampleSubmission.usedForTutorial' | artemisTranslate }}</label>
                 </div>
@@ -24,16 +24,21 @@
 
             <div class="row">
                 <ng-container [ngSwitch]="state.submissionEditButton">
-                    <button *ngSwitchCase="SubmissionButtonStates.NEW" (click)="createNewExampleTextSubmission()" class="btn btn-primary col-auto">
-                        <fa-icon [icon]="'save'"></fa-icon>
+                    <button id="create-example-submission" *ngSwitchCase="SubmissionButtonStates.NEW" (click)="createNewExampleTextSubmission()" class="btn btn-primary col-auto">
+                        <fa-icon [icon]="faSave"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.createNewSubmission' | artemisTranslate }}
                     </button>
-                    <button *ngSwitchCase="SubmissionButtonStates.UPDATE" (click)="updateExampleTextSubmission()" class="btn btn-primary col-auto">
-                        <fa-icon [icon]="'save'"></fa-icon>
+                    <button
+                        *ngSwitchCase="SubmissionButtonStates.UPDATE"
+                        (click)="updateExampleTextSubmission()"
+                        class="btn btn-primary col-auto"
+                        [disabled]="!unsavedSubmissionChanges"
+                    >
+                        <fa-icon [icon]="faSave"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.updateExampleSubmission' | artemisTranslate }}
                     </button>
                     <button *ngSwitchCase="SubmissionButtonStates.EDIT" (click)="editSubmission()" class="btn btn-danger col-auto" id="editSampleSolution">
-                        <fa-icon [icon]="'edit'"></fa-icon>
+                        <fa-icon [icon]="faEdit"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.editExampleSubmission' | artemisTranslate }}
                     </button>
                 </ng-container>
@@ -45,9 +50,9 @@
                         (click)="startAssessment()"
                         class="btn btn-primary col-auto ms-auto me-3"
                         id="createNewAssessment"
-                        [disabled]="unsavedChanges"
+                        [disabled]="unsavedSubmissionChanges"
                     >
-                        <fa-icon [icon]="'save'"></fa-icon>
+                        <fa-icon [icon]="faSave"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.createNewAssessment' | artemisTranslate }}
                     </button>
                     <button
@@ -57,11 +62,11 @@
                         class="btn btn-primary col-auto ms-auto me-3"
                         id="saveNewAssessment"
                     >
-                        <fa-icon [icon]="'save'"></fa-icon>
+                        <fa-icon [icon]="faSave"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.saveNewAssessment' | artemisTranslate }}
                     </button>
                     <button *ngSwitchCase="AssessButtonStates.UPDATE" (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ms-auto me-3">
-                        <fa-icon [icon]="'save'"></fa-icon>
+                        <fa-icon [icon]="faSave"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.updateAssessment' | artemisTranslate }}
                     </button>
                 </ng-container>
@@ -72,14 +77,17 @@
 
 <jhi-alert></jhi-alert>
 
+<h5 *ngIf="toComplete" class="fw-light mt-3">{{ 'artemisApp.exampleSubmission.home.assessmentTraining' | artemisTranslate }}</h5>
+
 <jhi-resizeable-container class="col-12 mt-3">
     <!--region Left Panel-->
     <span left-header *ngIf="state.ui === UIStates.SUBMISSION" jhiTranslate="artemisApp.exampleSubmission.exampleSubmission">Example submission</span>
     <textarea
+        id="example-text-submission-input"
         left-body
         *ngIf="state.ui === UIStates.SUBMISSION"
         [(ngModel)]="submission!.text"
-        (ngModelChange)="unsavedChanges = true"
+        (ngModelChange)="unsavedSubmissionChanges = true"
         style="width: 100%; height: 50vh"
     ></textarea>
     <jhi-score-display
@@ -102,7 +110,7 @@
     <!--endregion-->
 
     <!--region Right Panel-->
-    <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
+    <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
     <span right-header jhiTranslate="artemisApp.textAssessment.instructions">Instructions</span>
     <div
         right-body
@@ -118,9 +126,24 @@
         jhiTranslate="artemisApp.textAssessment.assessmentInstruction"
         *ngIf="state.ui === UIStates.ASSESSMENT"
     ></div>
-    <jhi-assessment-instructions right-body *ngIf="exercise" [exercise]="exercise" class="markdown-preview"></jhi-assessment-instructions>
+    <jhi-assessment-instructions
+        id="instructions"
+        right-body
+        *ngIf="exercise"
+        [exercise]="exercise"
+        [isAssessmentTraining]="toComplete"
+        class="markdown-preview"
+    ></jhi-assessment-instructions>
     <!--endregion-->
 </jhi-resizeable-container>
+
+<jhi-unreferenced-feedback
+    *ngIf="state.ui === UIStates.ASSESSMENT"
+    [(feedbacks)]="unreferencedFeedback"
+    [readOnly]="readOnly"
+    [addReferenceIdForExampleSubmission]="true"
+    (feedbacksChange)="validateFeedback()"
+></jhi-unreferenced-feedback>
 
 <div class="col-12 text-end pt-2" *ngIf="toComplete">
     <button class="btn btn-primary col-3 guided-tour-check-assessment" (click)="checkAssessment()" [disabled]="!assessmentsAreValid" id="checkAssessment">
@@ -130,7 +153,7 @@
 
 <div class="col-12 text-end pt-2" *ngIf="readOnly">
     <button (click)="readAndUnderstood()" class="btn btn-success col-3 guided-tour-read">
-        <fa-icon [icon]="'save'"></fa-icon>
+        <fa-icon [icon]="faSave"></fa-icon>
         {{ 'artemisApp.exampleSubmission.readAndUnderstood' | artemisTranslate }}
     </button>
 </div>

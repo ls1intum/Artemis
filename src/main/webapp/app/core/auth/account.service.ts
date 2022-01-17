@@ -14,7 +14,6 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 
 export interface IAccountService {
-    fetch: () => Observable<HttpResponse<User>>;
     save: (account: any) => Observable<HttpResponse<any>>;
     authenticate: (identity?: User) => void;
     hasAnyAuthority: (authorities: string[]) => Promise<boolean>;
@@ -64,7 +63,7 @@ export class AccountService implements IAccountService {
         }
     }
 
-    fetch(): Observable<HttpResponse<User>> {
+    private fetch(): Observable<HttpResponse<User>> {
         return this.http.get<User>(SERVER_API_URL + 'api/account', { observe: 'response' });
     }
 
@@ -233,22 +232,26 @@ export class AccountService implements IAccountService {
         );
     }
 
-    /**
-     * Sets the appropriate access rights for the passed exercise.
-     *
-     * @param exercise for which the access rights shall be set
-     */
+    setAccessRightsForExerciseAndReferencedCourse(exercise: Exercise) {
+        this.setAccessRightsForExercise(exercise);
+        if (exercise.course) {
+            this.setAccessRightsForCourse(exercise.course);
+        }
+    }
+
+    setAccessRightsForCourseAndReferencedExercises(course: Course) {
+        this.setAccessRightsForCourse(course);
+        if (course.exercises) {
+            course.exercises.forEach((exercise: Exercise) => this.setAccessRightsForExercise(exercise));
+        }
+    }
+
     setAccessRightsForExercise(exercise: Exercise) {
         exercise.isAtLeastTutor = this.isAtLeastTutorForExercise(exercise);
         exercise.isAtLeastEditor = this.isAtLeastEditorForExercise(exercise);
         exercise.isAtLeastInstructor = this.isAtLeastInstructorForExercise(exercise);
     }
 
-    /**
-     * Sets the appropriate access rights for the passed course.
-     *
-     * @param course for which the access rights shall be set
-     */
     setAccessRightsForCourse(course: Course) {
         course.isAtLeastTutor = this.isAtLeastTutorInCourse(course);
         course.isAtLeastEditor = this.isAtLeastEditorInCourse(course);

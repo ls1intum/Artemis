@@ -9,7 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
-import { ClipboardModule } from 'ngx-clipboard';
+import { ClipboardModule } from '@angular/cdk/clipboard';
 import { AlertService } from 'app/core/util/alert.service';
 import { of, BehaviorSubject, Subject } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
@@ -17,7 +17,6 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
 import { ArtemisTestModule } from '../../test.module';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -66,7 +65,7 @@ describe('JhiCloneRepoButtonComponent', () => {
                 MockDirective(FeatureToggleDirective),
             ],
             providers: [
-                { provide: AlertService, useClass: MockAlertService },
+                MockProvider(AlertService),
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -90,7 +89,7 @@ describe('JhiCloneRepoButtonComponent', () => {
         localStorageUseSshObserveStub.mockReturnValue(localStorageUseSshObserveStubSubject);
     });
 
-    afterEach(function () {
+    afterEach(() => {
         // completely restore all fakes created through the sandbox
         jest.restoreAllMocks();
     });
@@ -181,13 +180,12 @@ describe('JhiCloneRepoButtonComponent', () => {
 
         fixture.debugElement.query(By.css('.clone-repository')).nativeElement.click();
         tick();
-        fixture.debugElement.query(By.css('.use-ssh'));
-        fixture.debugElement.query(By.css('.use-ssh')).nativeElement.click();
+        fixture.debugElement.query(By.css('#useSSHButton')).nativeElement.click();
         tick();
         expect(localStorageUseSshStoreStub).toHaveBeenNthCalledWith(1, 'useSsh', true);
         expect(component.useSsh).toBeTruthy();
 
-        fixture.debugElement.query(By.css('.use-ssh')).nativeElement.click();
+        fixture.debugElement.query(By.css('#useHTTPSButton')).nativeElement.click();
         tick();
         expect(localStorageUseSshStoreStub).toHaveBeenCalledWith('useSsh', false);
         expect(component.useSsh).toBeFalsy();

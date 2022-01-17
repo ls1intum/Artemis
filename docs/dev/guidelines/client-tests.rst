@@ -4,7 +4,7 @@ Client Tests
 
 **If you are new to client testing, it is highly recommended that you work through the** `testing part <https://angular.io/guide/testing>`_ **of the angular tutorial.**
 
-We use `Jest <https://jestjs.io>`_ as our client testing framework.
+We use `Jest <https://jestjs.io>`__ as our client testing framework.
 
 There are different tools available to support client testing. We try to limit ourselves to Jest as much as possible. We use `NgMocks <https://www.npmjs.com/package/ng-mocks/>`_ for mocking the dependencies of an angular component.
 
@@ -38,7 +38,7 @@ The most basic test looks similar to this:
                 });
         });
 
-        afterEach(function () {
+        afterEach(() => {
             jest.restoreAllMocks();
         });
 
@@ -272,7 +272,7 @@ Some guidelines:
 
 10. If you have minimized :code:`expect` and can choose between multiple verification functions providing the same functionality, choose the most generic one. This way we will use as few functions as possible. For example prefer :code:`toBe(true)` and :code:`toBe(false)` over :code:`toBeTrue()` and :code:`toBeFalse()`.
 
-11. Use `Jest <https://jestjs.io/docs/expect>`_ whenever possible. Use `Jest Extended <https://github.com/jest-community/jest-extended#api>`_ only if it shortens the expect statements considerably and makes it more readable.
+11. Use `Jest <https://jestjs.io/docs/expect>`__ whenever possible. Use `Jest Extended <https://github.com/jest-community/jest-extended#api>`_ only if it shortens the expect statements considerably and makes it more readable.
 
 12. For situations described below, only use the uniform solution to keep the codebase as consistent as possible.
 

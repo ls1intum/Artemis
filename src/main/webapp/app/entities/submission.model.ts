@@ -1,7 +1,7 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 export const enum SubmissionType {
     MANUAL = 'MANUAL',
@@ -42,6 +42,9 @@ export abstract class Submission implements BaseEntity {
 
     // only used for exam to check if it is saved to server
     public isSynced?: boolean;
+
+    // client-side property, shows the number of elements used in the example submission
+    public submissionSize?: number;
 
     protected constructor(submissionExerciseType: SubmissionExerciseType) {
         this.submissionExerciseType = submissionExerciseType;
@@ -141,4 +144,17 @@ export function getFirstResultWithComplaint(submission: Submission | undefined):
             return resultsWithComplaint[0];
         }
     }
+}
+
+export function reconnectSubmissions(submissions: Submission[]): void {
+    return submissions.forEach((submission: Submission) => {
+        // reconnect some associations
+        const latestResult = getLatestSubmissionResult(submission);
+        if (latestResult) {
+            latestResult.submission = submission;
+            latestResult.participation = submission.participation;
+            submission.participation!.results = [latestResult!];
+            setLatestSubmissionResult(submission, latestResult);
+        }
+    });
 }

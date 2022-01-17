@@ -2,16 +2,16 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Post } from 'app/entities/metis/post.model';
-import { PostingsService } from 'app/shared/metis/postings.service';
+import { PostingService } from 'app/shared/metis/posting.service';
 import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
 
 type EntityResponseType = HttpResponse<Post>;
 type EntityArrayResponseType = HttpResponse<Post[]>;
 
 @Injectable({ providedIn: 'root' })
-export class PostService extends PostingsService<Post> {
+export class PostService extends PostingService<Post> {
     public resourceUrl = SERVER_API_URL + 'api/courses/';
 
     constructor(protected http: HttpClient) {

@@ -1,20 +1,12 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { CourseManagementExerciseRowComponent } from 'app/course/manage/overview/course-management-exercise-row.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementOverviewStatisticsComponent } from 'app/course/manage/overview/course-management-overview-statistics.component';
-import { ChartsModule } from 'ng2-charts';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { LineChartModule } from '@swimlane/ngx-charts';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 describe('CourseManagementOverviewStatisticsComponent', () => {
     let fixture: ComponentFixture<CourseManagementOverviewStatisticsComponent>;
@@ -25,15 +17,15 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ChartsModule],
+            imports: [MockModule(LineChartModule)],
             declarations: [
                 CourseManagementOverviewStatisticsComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
-                MockComponent(CourseManagementExerciseRowComponent),
-                MockComponent(CourseManagementCardComponent),
+                MockComponent(FaIconComponent),
+                MockDirective(TranslateDirective),
+                MockComponent(HelpIconComponent),
             ],
-            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
+            providers: [MockProvider(TranslateService)],
         })
             .compileComponents()
             .then(() => {
@@ -47,26 +39,28 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
         component.amountOfStudentsInCourse = amountOfStudentsInCourse;
         component.initialStats = initialStats;
 
-        fixture.detectChanges();
-        expect(component).to.be.ok;
+        component.ngOnInit();
 
-        expect(component.dataForSpanType).to.deep.equal([0, 44, 36, 92]);
-        expect(component.chartData[0].label).to.equal(component.amountOfStudents);
-        expect(component.chartData[0].data).to.deep.equal([0, 44, 36, 92]);
-
-        // Test formatting
-        expect(component.barChartOptions.scales.yAxes[0].ticks.callback(44)).to.equal('44%');
-        expect(component.barChartOptions.tooltips.callbacks.label({ index: 2 })).to.equal(' ' + initialStats[2]);
+        expect(component.ngxData).toHaveLength(1);
+        expect(component.ngxData[0].name).toBe('active students');
+        expect(component.ngxData[0].series[0].value).toBe(0);
+        expect(component.ngxData[0].series[1].value).toBe(44);
+        expect(component.ngxData[0].series[2].value).toBe(36);
+        expect(component.ngxData[0].series[3].value).toBe(92);
     });
 
     it('should react to changes', () => {
-        fixture.detectChanges();
+        component.ngOnInit();
 
         component.initialStats = [];
         component.amountOfStudentsInCourse = 0;
+
         component.ngOnChanges();
 
-        expect(component.loading).to.be.false;
-        expect(component.dataForSpanType).to.deep.equal([0, 0, 0, 0]);
+        expect(component.loading).toBe(false);
+        expect(component.ngxData[0].series[0].value).toBe(0);
+        expect(component.ngxData[0].series[1].value).toBe(0);
+        expect(component.ngxData[0].series[2].value).toBe(0);
+        expect(component.ngxData[0].series[3].value).toBe(0);
     });
 });

@@ -153,7 +153,7 @@ export default function () {
         req = [
             {
                 method: 'get',
-                url: baseUrl + '/favicon.svg',
+                url: baseUrl + '/logo/favicon.svg',
                 params: {
                     cookies: {
                         'XSRF-TOKEN': defaultXSRFToken,
@@ -425,7 +425,7 @@ export default function () {
                     return Math.random()
                         .toString(36)
                         .replace(/[^a-z]+/g, '')
-                        .substr(0, 12);
+                        .slice(0, 12);
                 }
 
                 function subscribeCourse(courseId, role) {

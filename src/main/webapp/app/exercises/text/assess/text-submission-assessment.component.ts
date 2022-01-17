@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -34,7 +34,7 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -82,7 +82,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
     isExamMode = false;
-    isAtLeastInstructor = false;
 
     private get referencedFeedback(): Feedback[] {
         return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
@@ -91,6 +90,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private get assessments(): Feedback[] {
         return [...this.referencedFeedback, ...this.unreferencedFeedback];
     }
+
+    // Icons
+    farListAlt = faListAlt;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -147,7 +149,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             this.isTestRun = queryParams.get('testRun') === 'true';
             this.correctionRound = Number(queryParams.get('correction-round'));
         });
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
 
         this.activatedRoute.paramMap.subscribe((paramMap) => {
             this.exerciseId = Number(paramMap.get('exerciseId'));
@@ -273,7 +274,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         super.handleSaveOrSubmitSuccessWithAlert(response, translationKey);
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
         response.body!.feedbacks?.forEach((newFeedback) => {
             newFeedback.conflictingTextAssessments = this.result?.feedbacks?.find((feedback) => feedback.id === newFeedback.id)?.conflictingTextAssessments;
         });
@@ -452,7 +452,15 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     get readOnly(): boolean {
-        return !isAllowedToModifyFeedback(this.isAtLeastInstructor, this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.result, this.complaint, this.exercise);
+        return !isAllowedToModifyFeedback(
+            this.exercise?.isAtLeastInstructor ?? false,
+            this.isTestRun,
+            this.isAssessor,
+            this.hasAssessmentDueDatePassed,
+            this.result,
+            this.complaint,
+            this.exercise,
+        );
     }
 
     protected handleError(error: HttpErrorResponse): void {
@@ -461,9 +469,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     /**
-     * Invokes exampleSubmissionService when importExampleSubmission is emitted in assessment-layout
+     * Invokes exampleSubmissionService when useAsExampleSubmission is emitted in assessment-layout
      */
-    importStudentSubmissionAsExampleSubmission(): void {
+    useStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.exercise) {
             this.exampleSubmissionService.import(this.submission.id!, this.exercise.id!).subscribe(
                 () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
