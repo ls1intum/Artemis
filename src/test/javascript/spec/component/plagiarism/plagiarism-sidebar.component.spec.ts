@@ -84,7 +84,7 @@ describe('Plagiarism Sidebar Component', () => {
         expect(comp.currentPage).toEqual(3);
     });
 
-    it('should handle changes correctly', () => {
+    it('should reset pagination on changes', () => {
         const comparisons = [
             { id: 1 } as PlagiarismComparison<any>,
             { id: 2 } as PlagiarismComparison<any>,
