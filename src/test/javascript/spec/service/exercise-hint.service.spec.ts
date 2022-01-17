@@ -21,7 +21,6 @@ describe('ExerciseHint Service', () => {
             providers: [{ provide: ExerciseService, useClass: MockExerciseService }],
         });
         expectedResult = {} as HttpResponse<ExerciseHint>;
-
         service = TestBed.inject(ExerciseHintService);
         httpMock = TestBed.inject(HttpTestingController);
 

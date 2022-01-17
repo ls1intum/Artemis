@@ -32,7 +32,6 @@ describe('Participation Service', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         });
-
         service = TestBed.inject(ParticipationService);
         httpMock = TestBed.inject(HttpTestingController);
         currentDate = dayjs();

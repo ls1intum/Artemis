@@ -33,7 +33,6 @@ describe('FileUploadExercise Service', () => {
                 { provide: ExerciseService, useClass: MockExerciseService },
             ],
         });
-
         service = TestBed.inject(FileUploadExerciseService);
         httpMock = TestBed.inject(HttpTestingController);
 

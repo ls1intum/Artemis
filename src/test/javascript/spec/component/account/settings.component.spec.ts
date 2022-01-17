@@ -1,4 +1,4 @@
-import { TestBed, async, tick, fakeAsync, inject } from '@angular/core/testing';
+import { TestBed, tick, fakeAsync, inject } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { throwError, of } from 'rxjs';
 
@@ -29,7 +29,7 @@ describe('SettingsComponent', () => {
         imageUrl: '',
     };
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [SettingsComponent],
@@ -43,7 +43,7 @@ describe('SettingsComponent', () => {
         })
             .overrideTemplate(SettingsComponent, '')
             .compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         const fixture = TestBed.createComponent(SettingsComponent);

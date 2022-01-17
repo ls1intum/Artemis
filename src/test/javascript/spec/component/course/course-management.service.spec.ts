@@ -48,7 +48,6 @@ describe('Course Management Service', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
-
         courseManagementService = TestBed.inject(CourseManagementService);
         httpMock = TestBed.inject(HttpTestingController);
         accountService = TestBed.inject(AccountService);

@@ -29,7 +29,7 @@ describe('OrganizationSelectorComponent', () => {
             });
     });
 
-    afterEach(async () => {
+    beforeEach(() => {
         jest.clearAllMocks();
     });
 
