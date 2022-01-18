@@ -9,13 +9,13 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-public class ProgrammingExerciseSolutionService {
+public class ProgrammingExerciseSolutionEntryService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository;
 
-    public ProgrammingExerciseSolutionService(ProgrammingExerciseRepository programmingExerciseRepository,
+    public ProgrammingExerciseSolutionEntryService(ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseSolutionEntryRepository = programmingExerciseSolutionEntryRepository;
