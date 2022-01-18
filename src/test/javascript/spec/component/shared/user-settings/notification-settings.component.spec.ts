@@ -72,7 +72,7 @@ describe('NotificationSettingsComponent', () => {
     });
 
     it('should reuse settings via service if they were already loaded', () => {
-        let settingGetMock = jest.spyOn(notificationSettingsServiceMock, 'getNotificationSettings').mockReturnValue([notificationSettingA]);
+        const settingGetMock = jest.spyOn(notificationSettingsServiceMock, 'getNotificationSettings').mockReturnValue([notificationSettingA]);
         comp.ngOnInit();
         expect(settingGetMock).toHaveBeenCalledTimes(1);
         // check if current settings are not empty
