@@ -84,7 +84,6 @@ export class CreateExerciseUnitComponent implements OnInit {
                 }),
             )
             .subscribe({
-                next: () => {},
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }

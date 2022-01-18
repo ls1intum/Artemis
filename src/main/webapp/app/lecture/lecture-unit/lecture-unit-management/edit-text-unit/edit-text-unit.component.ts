@@ -65,7 +65,6 @@ export class EditTextUnitComponent implements OnInit {
                 }),
             )
             .subscribe({
-                next: () => {},
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }

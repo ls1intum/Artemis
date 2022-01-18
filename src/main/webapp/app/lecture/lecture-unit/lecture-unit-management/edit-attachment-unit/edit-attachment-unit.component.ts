@@ -130,7 +130,6 @@ export class EditAttachmentUnitComponent implements OnInit {
                 }),
             )
             .subscribe({
-                next: () => {},
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
