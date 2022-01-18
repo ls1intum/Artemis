@@ -45,7 +45,7 @@ public class CodeHintService {
      * Update a codeHint by id
      * @param codeHint the updated codeHint
      * @param codeHintId the code hint id
-     * @return
+     * @return the updated codeHint
      */
     public CodeHint updateCodeHint(CodeHint codeHint, Long codeHintId) {
         if (codeHint.getId() == null || !codeHintId.equals(codeHint.getId()) || codeHint.getExercise() == null) {

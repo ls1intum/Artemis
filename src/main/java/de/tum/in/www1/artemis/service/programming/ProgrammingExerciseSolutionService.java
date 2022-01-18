@@ -51,7 +51,7 @@ public class ProgrammingExerciseSolutionService {
      * Update a programmingExerciseSolutionEntry by id
      * @param programmingExerciseSolutionEntry the updated programmingExerciseSolutionEntry
      * @param programmingExerciseSolutionEntryId the programmingExerciseSolutionEntry id
-     * @return
+     * @return the updated programming exercise solution entry
      */
     public ProgrammingExerciseSolutionEntry updateProgrammingExerciseSolutionEntry(ProgrammingExerciseSolutionEntry programmingExerciseSolutionEntry,
             Long programmingExerciseSolutionEntryId) {

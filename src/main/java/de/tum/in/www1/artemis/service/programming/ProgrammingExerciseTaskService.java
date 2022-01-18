@@ -45,6 +45,7 @@ public class ProgrammingExerciseTaskService {
      * Update a programmingExerciseTask
      * @param programmingExerciseTask the updated task
      * @param programmingExerciseTaskId id of the task
+     * @return the updated programming exercise task
      */
     public ProgrammingExerciseTask updateProgrammingExerciseTask(ProgrammingExerciseTask programmingExerciseTask, Long programmingExerciseTaskId) {
         if (programmingExerciseTask.getId() == null || !programmingExerciseTaskId.equals(programmingExerciseTask.getId()) || programmingExerciseTask.getExercise() == null) {
