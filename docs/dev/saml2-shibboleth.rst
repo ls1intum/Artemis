@@ -40,34 +40,44 @@ You can see the structure of the saml2 configuration in the following:
 
 .. code:: yaml
 
-	saml2:
-		# Define the patterns used when generating users. SAML2 Attributes can be substituted by surrounding them with
-		# curly brackets. E.g. username: '{user_attribute}'. Missing attributes get replaced with an empty string.
-		# This enables definition of alternative attribute keys when using multiple IdPs. E.g. username: '{uid}{user_id}'.
-		# User template pattern:
-		username-pattern: '{first_name}_{last_name}'
-		first-name-pattern: '{first_name}'
-		last-name-pattern: '{last_name}'
-		email-pattern: '{email}'
-		registration-number-pattern: '{uid}'
-		lang-key-pattern: 'en' # can be a pattern or fixed to en/de
-		# A list of identity provides (IdP). Metadata location can be a local path (or classpath) or url.
-		# If your IdP does not publish its metadata you can generate it here: https://www.samltool.com/idp_metadata.php
-		identity-providers:
-			#- metadata: https://idp_host/.../metadata
-			#  registration-id: IdPName
-			#  entity-id: artemis
-			#  cert-file: # path-to-cert (optional) Set this path to the Certificate for encryption/signing or leave it blank
-			#  key-file: # path-to-key (optional) Set this path to the Key for encryption/signing or leave it blank (must be a PKCS#8 file!)
-			# Multiple IdPs can be configured
-			# - metadata: <URL>
-			#   registrationid: <id>
-			#   entityid: <id>
+    saml2:
+        # Define the patterns used when generating users. SAML2 Attributes can be substituted by surrounding them with
+        # curly brackets. E.g. username: '{user_attribute}'. Missing attributes get replaced with an empty string.
+        # This enables definition of alternative attribute keys when using multiple IdPs. E.g. username: '{uid}{user_id}'.
+        # User template pattern:
+        username-pattern: '{first_name}_{last_name}'
+        first-name-pattern: '{first_name}'
+        last-name-pattern: '{last_name}'
+        email-pattern: '{email}'
+        registration-number-pattern: '{uid}'
+        lang-key-pattern: 'en' # can be a pattern or fixed to en/de
+        # It is also possible to only extract parts of the attribute values.
+        # For each attribute key exactly one regular expression can optionally be defined that is used to extract only parts
+        # of the received value. The regular expression must match the whole value. It also has to contain a named capture
+        # group with the name 'value'.
+        # E.g. when receiving 'pre1234post' from the SAML2 service in the 'uid'-example below, only '1234' will be used when
+        # replacing '{uid}' in one of the user attributes defined above.
+        value-extraction-patterns:
+            #- key: 'registration_number'
+            #  value_pattern: 'somePrefix(?<value>.+)someSuffix'
+            #- key: 'uid'
+            #  value_pattern: 'pre(?<value>\d+)post'
+        # A list of identity provides (IdP). Metadata location can be a local path (or classpath) or url.
+        # If your IdP does not publish its metadata you can generate it here: https://www.samltool.com/idp_metadata.php
+        identity-providers:
+            #- metadata: https://idp_host/.../metadata
+            #  registration-id: IdPName
+            #  entity-id: artemis
+            #  cert-file: # path-to-cert (optional) Set this path to the Certificate for encryption/signing or leave it blank
+            #  key-file: # path-to-key (optional) Set this path to the Key for encryption/signing or leave it blank (must be a PKCS#8 file!)
+            # Multiple IdPs can be configured
+            # - metadata: <URL>
+            #   registrationid: <id>
+            #   entityid: <id>
 
-	# String used for the SAML2 login button. E.g. 'Shibboleth Login'
-	info.saml2.button-label: 'SAML2 Login'
-	# Sends a e-mail to the new user with a link to set the Artemis password. This password allows login to Artemis and its
-	# services such as GitLab and Jenkins. This allows the users to use password-based Git workflows.
-	# Enabled the password reset function in Artemis.
-	info.saml2.enable-password: true
-
+    # String used for the SAML2 login button. E.g. 'Shibboleth Login'
+    info.saml2.button-label: 'SAML2 Login'
+    # Sends a e-mail to the new user with a link to set the Artemis password. This password allows login to Artemis and its
+    # services such as GitLab and Jenkins. This allows the users to use password-based Git workflows.
+    # Enabled the password reset function in Artemis.
+    info.saml2.enable-password: true
