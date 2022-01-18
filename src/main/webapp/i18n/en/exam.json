@@ -84,6 +84,7 @@
         "examScores": {
             "xAxes": "Score in %",
             "yAxes": "Number of Participants",
+            "highlightMedian": "Highlight median in chart: {{ median }}%",
             "maxPoints": "Maximum Points",
             "title": "Exam Scores",
             "examStatisticsTitle": "Exam Statistics",

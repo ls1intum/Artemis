@@ -305,6 +305,10 @@
         </table>
 
         <div #containerRef class="d-block">
+            <label>
+                <input type="checkbox" [checked]="showMedian" (change)="toggleMedian()" />
+                <span class="ms-1">{{ 'artemisApp.examScores.highlightMedian' | artemisTranslate: { median: this.median } }}</span>
+            </label>
             <!-- Histogram -->
             <ngx-charts-bar-vertical
                 [view]="[containerRef.offsetWidth, 400]"
@@ -319,6 +323,8 @@
                 [yScaleMax]="yScaleMax"
                 [dataLabelFormatting]="dataLabelFormatting"
                 [showDataLabel]="true"
+                [activeEntries]="activeEntries"
+                (select)="onSelect()"
             >
                 <ng-template #tooltipTemplate let-model="model">
                     <b>{{ model.name }}</b

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExportToCsv } from 'export-to-csv';
 import {
@@ -16,7 +16,7 @@ import {
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { round, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { TranslateService } from '@ngx-translate/core';
@@ -30,6 +30,9 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course, NgxDataEntry } from 'app/entities/course.model';
 import { ScaleType, Color } from '@swimlane/ngx-charts';
+import { AccountService } from 'app/core/auth/account.service';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { GraphColors } from 'app/entities/statistics.model';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -59,9 +62,14 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         name: 'Exam statistics',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['rgba(127,127,127,255)'],
+        domain: [],
     } as Color;
+    activeEntries: NgxDataEntry[] = [];
     dataLabelFormatting = this.formatDataLabel.bind(this);
+    showMedian = true;
+    medianGradingStep: NgxDataEntry;
+    median: number;
+    studentScores: number[];
 
     // exam score dtos
     studentIdToExamScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
@@ -99,17 +107,12 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private participantScoresService: ParticipantScoresService,
         private gradingSystemService: GradingSystemService,
         private courseManagementService: CourseManagementService,
+        private router: Router,
+        private accountService: AccountService,
     ) {}
 
     ngOnInit() {
-        /* fill ngxData with a default configuration. The assignment of the names is only a placeholder,
-           they will be set to default labels in createChart.
-           If a grading key exists, ngxData gets reset according to it in calculateFilterDependentStatistics.
-           If no grading key exists, this default configuration is presented to the user.
-         */
-        for (let i = 0; i < 100 / this.binWidth; i++) {
-            this.ngxData.push({ name: i.toString(), value: 0 });
-        }
+        this.generateDefaultNgxChartsSetting();
         this.route.params.subscribe((params) => {
             const getExamScoresObservable = this.examService.getExamScores(params['courseId'], params['examId']);
             // alternative exam scores calculation using participant scores table
@@ -165,6 +168,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     }
                     this.isLoading = false;
                     this.createChart();
+                    this.setupChartColoring();
+                    this.computeMedianAndIdentifyGradingStep();
+                    this.activeEntries = [this.medianGradingStep];
+                    this.setupAxisLabels();
                     this.changeDetector.detectChanges();
                     this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse.body!);
                 },
@@ -174,6 +181,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
         // Update the view if the language was changed
         this.languageChangeSubscription = this.languageHelper.language.subscribe(() => {
+            this.setupAxisLabels();
             this.changeDetector.detectChanges();
         });
     }
@@ -254,11 +262,19 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      */
     findGradeStepIndex(percentage: number): number {
         let index = 0;
-        this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
-            if (this.gradingSystemService.matchGradePercentage(gradeStep, percentage)) {
-                index = i;
+        if (this.gradingScaleExists) {
+            this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
+                if (this.gradingSystemService.matchGradePercentage(gradeStep, percentage)) {
+                    index = i;
+                }
+            });
+        } else {
+            index = Math.floor(percentage / this.binWidth);
+            if (index >= 100 / this.binWidth) {
+                // This happens, for 100%, if the exam total points were not set correctly or bonus points were given
+                index = 100 / this.binWidth - 1;
             }
-        });
+        }
         return index;
     }
 
@@ -268,6 +284,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * 2. Distribution of scores
      */
     private calculateFilterDependentStatistics() {
+        this.generateDefaultNgxChartsSetting();
+        this.studentScores = [];
         if (this.gradingScaleExists) {
             this.histogramData = Array(this.gradingScale!.gradeSteps.length);
             this.ngxData = [];
@@ -275,7 +293,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 this.ngxData.push({ name: i.toString(), value: 0 });
             }
         }
-        this.ngxData.forEach((gradingStep: NgxDataEntry) => (gradingStep.value = 0));
         this.histogramData.fill(0);
 
         // Create data structures holding the statistics for all exercise groups and exercises
@@ -297,9 +314,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             if (!studentResult.submitted && this.filterForSubmittedExams) {
                 continue;
             }
+            this.studentScores.push(studentResult.overallScoreAchieved ?? 0);
             // Update histogram data structure
-            let histogramIndex: number;
-            if (this.gradingScaleExists) {
+            const histogramIndex = this.findGradeStepIndex(studentResult.overallScoreAchieved ?? 0);
+            /*if (this.gradingScaleExists) {
                 histogramIndex = this.findGradeStepIndex(studentResult.overallScoreAchieved ?? 0);
             } else {
                 histogramIndex = Math.floor(studentResult.overallScoreAchieved! / this.binWidth);
@@ -307,7 +325,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     // This happens, for 100%, if the exam total points were not set correctly or bonus points were given
                     histogramIndex = 100 / this.binWidth - 1;
                 }
-            }
+            }*/
             this.ngxData[histogramIndex].value++;
             this.histogramData[histogramIndex]++;
             if (!studentResult.exerciseGroupIdToExerciseResult) {
@@ -344,7 +362,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         // Calculate exercise group and exercise statistics
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
-        this.ngxData = [...this.ngxData];
+        this.createChart();
+        this.computeMedianAndIdentifyGradingStep();
         this.yScaleMax = this.calculateTickMax();
     }
 
@@ -736,5 +755,78 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     formatDataLabel(submissionCount: number): string {
         const percentage = this.noOfExamsFiltered && this.noOfExamsFiltered > 0 ? this.roundAndPerformLocalConversion((submissionCount * 100) / this.noOfExamsFiltered) : 0;
         return submissionCount + ' (' + percentage + '%)';
+    }
+
+    /**
+     * fill ngxData with a default configuration. The assignment of the names is only a placeholder,
+     * they will be set to default labels in createChart.
+     * If a grading key exists, ngxData gets reset according to it in calculateFilterDependentStatistics.
+     * If no grading key exists, this default configuration is presented to the user.
+     * @private
+     */
+    private generateDefaultNgxChartsSetting(): void {
+        this.ngxData = [];
+        for (let i = 0; i < 100 / this.binWidth; i++) {
+            this.ngxData.push({ name: i.toString(), value: 0 });
+        }
+    }
+
+    private setupChartColoring(): void {
+        this.ngxColor.domain = [];
+        if (!this.gradingScaleExists) {
+            for (let i = 0; i < 100 / this.binWidth; i++) {
+                if (i < 8) {
+                    this.ngxColor.domain.push(GraphColors.RED);
+                } else {
+                    this.ngxColor.domain.push(GraphColors.GREY);
+                }
+            }
+        } else {
+            this.gradingScale!.gradeSteps.forEach((gradeStep) => {
+                if (gradeStep.isPassingGrade) {
+                    this.ngxColor.domain.push(GraphColors.GREY);
+                } else {
+                    this.ngxColor.domain.push(GraphColors.RED);
+                }
+            });
+        }
+        this.ngxData = [...this.ngxData];
+    }
+
+    private setupAxisLabels(): void {
+        this.yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
+        this.xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
+    }
+
+    onSelect() {
+        if (this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
+            this.router.navigate(['course-management', this.course!.id, 'exams', this.examScoreDTO.examId, 'participant-scores']);
+        }
+    }
+
+    toggleMedian() {
+        this.showMedian = !this.showMedian;
+        this.computeMedianAndIdentifyGradingStep();
+        if (this.showMedian) {
+            this.activeEntries = [this.medianGradingStep];
+        } else {
+            this.activeEntries = [];
+        }
+        this.ngxData = [...this.ngxData];
+    }
+
+    private computeMedianAndIdentifyGradingStep(): void {
+        this.studentScores.sort();
+        const isEven = this.studentScores.length % 2 === 0;
+        const mid = Math.floor(this.studentScores.length / 2) - 1;
+        if (isEven) {
+            const firstValue = this.studentScores[mid];
+            const secondValue = this.studentScores[mid + 1];
+            this.median = round((firstValue + secondValue) / 2, 2);
+        } else {
+            this.median = this.studentScores[mid + 1];
+        }
+        const position = this.findGradeStepIndex(this.median);
+        this.medianGradingStep = this.ngxData[position];
     }
 }

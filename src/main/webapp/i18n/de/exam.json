@@ -84,6 +84,7 @@
         "examScores": {
             "xAxes": "Ergebnis in %",
             "yAxes": "Anzahl Teilnehmende",
+            "highlightMedian": "Hebe Median im Diagram hervor: {{ median }}%",
             "maxPoints": "Maximale Punktzahl",
             "title": "Klausurergebnisse",
             "examStatisticsTitle": "Klausurstatistik",
