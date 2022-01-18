@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.config.migration.entries;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
@@ -16,12 +15,6 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
     private final UserRepository userRepository;
 
     private final PasswordService passwordService;
-
-    @Value("${artemis.lti.user-group-name-edx:#{null}}")
-    private String USER_GROUP_NAME_EDX;
-
-    @Value("${artemis.lti.user-group-name-u4i:#{null}}")
-    private String USER_GROUP_NAME_U4I;
 
     public MigrationEntry20211214_184200(UserRepository userRepository, PasswordService passwordService) {
         this.userRepository = userRepository;
@@ -37,18 +30,22 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
         int listCount = (int) Math.floor(users.size() / 100f);
         for (int i = 0; i < listCount - 1; i++) {
             List<User> sublist = users.subList(i * listSize, (i + 1) * listSize);
-            setInternalStatus(sublist);
+            processUsers(sublist);
         }
         if (remainder > 0) {
             List<User> sublist = users.subList(listCount * listSize, (listCount * listSize) + remainder);
-            setInternalStatus(sublist);
+            processUsers(sublist);
         }
     }
 
-    private void setInternalStatus(List<User> userList) {
+    private void processUsers(List<User> userList) {
         userList = userList.stream().peek(user -> {
             String password = passwordService.decryptPassword(user);
             user.setInternal(!password.isEmpty());
+            if (!user.isInternal()) {
+                user.setResetDate(null);
+                user.setResetKey(null);
+            }
         }).toList();
 
         userRepository.saveAll(userList);

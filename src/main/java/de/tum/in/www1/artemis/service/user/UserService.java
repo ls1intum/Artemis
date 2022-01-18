@@ -203,17 +203,19 @@ public class UserService {
     }
 
     /**
-     * Request password reset for user email
+     * Set password reset data for a user if eligible
      *
-     * @param mail to find user
-     * @return user if user exists otherwise null
+     * @param user user requesting reset
+     * @return true if the user is eligible
      */
-    public Optional<User> requestPasswordReset(String mail) {
-        return userRepository.findOneByEmailIgnoreCase(mail).filter(User::getActivated).map(user -> {
+    public boolean prepareUserForPasswordReset(User user) {
+        if (user.getActivated() && user.isInternal()) {
             user.setResetKey(RandomUtil.generateResetKey());
             user.setResetDate(Instant.now());
-            return saveUser(user);
-        });
+            saveUser(user);
+            return true;
+        }
+        return false;
     }
 
     /**

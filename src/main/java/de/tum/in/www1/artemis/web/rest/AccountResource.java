@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -208,13 +209,14 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/reset-password/init")
     public void requestPasswordReset(@RequestBody String mail) {
-        Optional<User> user = userService.requestPasswordReset(mail);
-        if (user.isPresent()) {
-            if (!user.get().isInternal()) {
+        List<User> user = userRepository.findAllByEmailIgnoreCase(mail);
+        if (!user.isEmpty()) {
+            List<User> internalUsers = user.stream().filter(User::isInternal).toList();
+            if (internalUsers.isEmpty()) {
                 throw new BadRequestAlertException("The user is handled externally. The password can't be reset within Artemis.", "Account", "externalUser");
             }
-            else {
-                mailService.sendPasswordResetMail(user.get());
+            else if (userService.prepareUserForPasswordReset(internalUsers.get(0))) {
+                mailService.sendPasswordResetMail(internalUsers.get(0));
             }
         }
         else {
