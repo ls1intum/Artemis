@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 @Table(name = "solution_entry")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class SolutionEntry extends DomainObject {
+public class ProgrammingExerciseSolutionEntry extends DomainObject {
 
     @Column(name = "file")
     private String file;
@@ -47,7 +47,7 @@ public class SolutionEntry extends DomainObject {
         return file;
     }
 
-    public SolutionEntry file(String file) {
+    public ProgrammingExerciseSolutionEntry file(String file) {
         this.file = file;
         return this;
     }
@@ -60,7 +60,7 @@ public class SolutionEntry extends DomainObject {
         return previousLine;
     }
 
-    public SolutionEntry previousLine(Integer previousLine) {
+    public ProgrammingExerciseSolutionEntry previousLine(Integer previousLine) {
         this.previousLine = previousLine;
         return this;
     }
@@ -73,7 +73,7 @@ public class SolutionEntry extends DomainObject {
         return line;
     }
 
-    public SolutionEntry line(Integer line) {
+    public ProgrammingExerciseSolutionEntry line(Integer line) {
         this.line = line;
         return this;
     }
@@ -86,7 +86,7 @@ public class SolutionEntry extends DomainObject {
         return previousCode;
     }
 
-    public SolutionEntry previousCode(String previousCode) {
+    public ProgrammingExerciseSolutionEntry previousCode(String previousCode) {
         this.previousCode = previousCode;
         return this;
     }
@@ -99,7 +99,7 @@ public class SolutionEntry extends DomainObject {
         return code;
     }
 
-    public SolutionEntry code(String code) {
+    public ProgrammingExerciseSolutionEntry code(String code) {
         this.code = code;
         return this;
     }
@@ -112,7 +112,7 @@ public class SolutionEntry extends DomainObject {
         return codeHint;
     }
 
-    public SolutionEntry codeHint(CodeHint codeHint) {
+    public ProgrammingExerciseSolutionEntry codeHint(CodeHint codeHint) {
         this.codeHint = codeHint;
         return this;
     }
@@ -125,7 +125,7 @@ public class SolutionEntry extends DomainObject {
         return this.testCase;
     }
 
-    public SolutionEntry testCase(ProgrammingExerciseTestCase testCase) {
+    public ProgrammingExerciseSolutionEntry testCase(ProgrammingExerciseTestCase testCase) {
         this.testCase = testCase;
         return this;
     }

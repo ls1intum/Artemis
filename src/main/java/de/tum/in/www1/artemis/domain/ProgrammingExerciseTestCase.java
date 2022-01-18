@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
-import de.tum.in.www1.artemis.domain.hestia.SolutionEntry;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 
 /**
  * A ProgrammingExerciseTestCase.
@@ -53,9 +53,9 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     @JsonIgnoreProperties("testCases")
     private Set<ProgrammingExerciseTask> tasks = new HashSet<>();
 
-    @OneToMany(mappedBy = "testCase", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "testCase", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("programmingExerciseTestCase")
-    private Set<SolutionEntry> solutionEntries = new HashSet<>();
+    private Set<ProgrammingExerciseSolutionEntry> solutionEntries = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties("programmingExerciseTestCase")
@@ -146,16 +146,16 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         this.tasks = tasks;
     }
 
-    public Set<SolutionEntry> getSolutionEntries() {
+    public Set<ProgrammingExerciseSolutionEntry> getSolutionEntries() {
         return solutionEntries;
     }
 
-    public ProgrammingExerciseTestCase solutionEntries(Set<SolutionEntry> solutionEntries) {
+    public ProgrammingExerciseTestCase solutionEntries(Set<ProgrammingExerciseSolutionEntry> solutionEntries) {
         this.solutionEntries = solutionEntries;
         return this;
     }
 
-    public void setSolutionEntries(Set<SolutionEntry> solutionEntries) {
+    public void setSolutionEntries(Set<ProgrammingExerciseSolutionEntry> solutionEntries) {
         this.solutionEntries = solutionEntries;
     }
 

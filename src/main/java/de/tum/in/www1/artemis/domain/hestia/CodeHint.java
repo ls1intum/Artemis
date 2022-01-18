@@ -18,24 +18,24 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTask;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CodeHint extends ExerciseHint {
 
-    @OneToMany(mappedBy = "codeHint", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "codeHint", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("codeHint")
-    private Set<SolutionEntry> solutionEntries = new HashSet<>();
+    private Set<ProgrammingExerciseSolutionEntry> solutionEntries = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties("codeHint")
     private ProgrammingExerciseTask task;
 
-    public Set<SolutionEntry> getSolutionEntries() {
+    public Set<ProgrammingExerciseSolutionEntry> getSolutionEntries() {
         return this.solutionEntries;
     }
 
-    public CodeHint solutionEntries(Set<SolutionEntry> solutionEntries) {
+    public CodeHint solutionEntries(Set<ProgrammingExerciseSolutionEntry> solutionEntries) {
         this.solutionEntries = solutionEntries;
         return this;
     }
 
-    public void setSolutionEntries(Set<SolutionEntry> solutionEntries) {
+    public void setSolutionEntries(Set<ProgrammingExerciseSolutionEntry> solutionEntries) {
         this.solutionEntries = solutionEntries;
     }
 
