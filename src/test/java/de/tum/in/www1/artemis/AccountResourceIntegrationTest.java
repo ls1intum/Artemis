@@ -453,7 +453,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         userRepository.saveAndFlush(user);
 
         var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(email);
-        request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
+        request.getMvc().perform(req).andExpect(status().is(HttpStatus.BAD_REQUEST.value())).andReturn();
         ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
     }
 

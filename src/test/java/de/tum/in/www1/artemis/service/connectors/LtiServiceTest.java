@@ -173,7 +173,6 @@ public class LtiServiceTest {
         onSuccessfulAuthenticationSetup(user, ltiUserId);
         ltiService.handleLaunchRequest(launchRequest, exercise);
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
-        verify(userCreationService).activateUser(user);
 
         SecurityContextHolder.clearContext();
         launchRequest.setContext_label("randomLabel");
@@ -197,7 +196,6 @@ public class LtiServiceTest {
         launchRequest.setContext_label("TUMx");
         ltiService.handleLaunchRequest(launchRequest, exercise);
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
-        verify(userCreationService).activateUser(user);
 
         SecurityContextHolder.clearContext();
         launchRequest.setContext_label("randomLabel");
