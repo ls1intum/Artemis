@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_C
 
 import java.util.*;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
@@ -117,13 +118,18 @@ public class Feedback extends DomainObject {
         return detailText;
     }
 
-    public Feedback detailText(String detailText) {
-        this.detailText = detailText;
+    public Feedback detailText(@Nullable String detailText) {
+        this.setDetailText(detailText);
         return this;
     }
 
-    public void setDetailText(String detailText) {
-        this.detailText = detailText;
+    public void setDetailText(@Nullable String detailText) {
+        if (detailText == null || detailText.length() <= FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
+            this.detailText = detailText;
+        }
+        else {
+            this.detailText = detailText.substring(0, FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
+        }
     }
 
     public String getReference() {

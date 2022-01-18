@@ -185,7 +185,6 @@ public class StaticCodeAnalysisService {
             // the category for this feedback
             Optional<StaticCodeAnalysisCategory> category = Optional.empty();
             try {
-
                 // extract the sca issue
                 var issue = mapper.readValue(feedback.getDetailText(), StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue.class);
 
