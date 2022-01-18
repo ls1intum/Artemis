@@ -52,7 +52,6 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
             super.ngOnInit();
         } else {
             // else reuse the already available/loaded ones
-            //TODO CODE DUPLICATION -> simply put in one method or smth
             this.userSettings = this.userSettingsService.loadSettingsSuccessAsSettingsStructure(newestNotificationSettings, this.userSettingsCategory);
             this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
             this.changeDetector.detectChanges();

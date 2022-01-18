@@ -21,17 +21,6 @@ import { SettingId } from 'app/shared/constants/user-settings.constants';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationSettingsService {
-    // needed to make it possible for other services to get the latest settings without calling the server additional times
-    private newestNotificationSettings: NotificationSetting[] = [];
-
-    public getNotificationSettings(): NotificationSetting[] {
-        return this.newestNotificationSettings;
-    }
-
-    public setNotificationSettings(notificationSettings: NotificationSetting[]) {
-        this.newestNotificationSettings = notificationSettings;
-    }
-
     /**
      * This is the place where the mapping between SettingIds and notification titles happens on the client side
      * Each SettingIds can be based on multiple different notification titles (based on NotificationTypes)
@@ -49,6 +38,17 @@ export class NotificationSettingsService {
         [SettingId.NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST, [NEW_REPLY_FOR_COURSE_POST_TITLE]],
         [SettingId.NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED, [EXAM_ARCHIVE_STARTED_TITLE, COURSE_ARCHIVE_STARTED_TITLE]],
     ]);
+
+    // needed to make it possible for other services to get the latest settings without calling the server additional times
+    private newestNotificationSettings: NotificationSetting[] = [];
+
+    public getNotificationSettings(): NotificationSetting[] {
+        return this.newestNotificationSettings;
+    }
+
+    public setNotificationSettings(notificationSettings: NotificationSetting[]) {
+        this.newestNotificationSettings = notificationSettings;
+    }
 
     /**
      * Creates an updates map that indicates which notifications (titles) are (de)activated in the current notification settings
