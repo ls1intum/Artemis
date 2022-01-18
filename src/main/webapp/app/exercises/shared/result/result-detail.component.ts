@@ -349,7 +349,7 @@ export class ResultDetailComponent implements OnInit {
                 if (error.status === 403) {
                     return of(null);
                 }
-                return throwError(error);
+                return throwError(() => error);
             }),
         );
     };

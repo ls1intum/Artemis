@@ -73,16 +73,16 @@ export class ExerciseGroupsComponent implements OnInit {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         // Only take action when a response was received for both requests
-        forkJoin(this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()).subscribe(
-            ([examRes, examInfoDTO]) => {
+        forkJoin([this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()]).subscribe({
+            next: ([examRes, examInfoDTO]) => {
                 this.exam = examRes.body!;
                 this.exerciseGroups = this.exam.exerciseGroups;
                 this.course = this.exam.course!;
                 this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined;
                 this.setupExerciseGroupToExerciseTypesDict();
             },
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     /**
@@ -236,10 +236,10 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     private saveOrder(): void {
-        this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe(
-            (res) => (this.exerciseGroups = res.body!),
-            () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
-        );
+        this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe({
+            next: (res) => (this.exerciseGroups = res.body!),
+            error: () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
+        });
     }
 
     /**
