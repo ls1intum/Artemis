@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { Subscription } from 'rxjs';
-import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, mergeMap, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
@@ -143,7 +143,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
      */
     loadParticipationWithLatestResult(participationId: number): Observable<StudentParticipation> {
         return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
-            flatMap((participation: ProgrammingExerciseStudentParticipation) =>
+            mergeMap((participation: ProgrammingExerciseStudentParticipation) =>
                 participation.results?.length
                     ? this.loadResultDetails(participation, participation.results[0]).pipe(
                           map((feedbacks) => {

@@ -15,24 +15,28 @@ describe('ComplaintResponseService', () => {
     let complaintResponseService: ComplaintResponseService;
     let httpTestingController: HttpTestingController;
     let defaultComplaintResponse: ComplaintResponse;
+    let accountService: AccountService;
     let expectedComplaintResponse: any;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
             providers: [MockProvider(AccountService)],
-        });
-        expectedComplaintResponse = {} as HttpResponse<ComplaintResponse>;
+        })
+            .compileComponents()
+            .then(() => {
+                expectedComplaintResponse = {} as HttpResponse<ComplaintResponse>;
+                complaintResponseService = TestBed.inject(ComplaintResponseService);
+                httpTestingController = TestBed.inject(HttpTestingController);
+                accountService = TestBed.inject(AccountService);
 
-        complaintResponseService = TestBed.inject(ComplaintResponseService);
-        httpTestingController = TestBed.inject(HttpTestingController);
-
-        defaultComplaintResponse = new ComplaintResponse();
-        defaultComplaintResponse.id = 1;
-        defaultComplaintResponse.lockEndDate = dayjs();
-        defaultComplaintResponse.submittedTime = dayjs();
-        defaultComplaintResponse.complaint = new Complaint();
-        defaultComplaintResponse.complaint.id = 1;
+                defaultComplaintResponse = new ComplaintResponse();
+                defaultComplaintResponse.id = 1;
+                defaultComplaintResponse.lockEndDate = dayjs();
+                defaultComplaintResponse.submittedTime = dayjs();
+                defaultComplaintResponse.complaint = new Complaint();
+                defaultComplaintResponse.complaint.id = 1;
+            });
     });
 
     afterEach(() => {
@@ -41,7 +45,6 @@ describe('ComplaintResponseService', () => {
     });
 
     function setupLockTest(loginOfLoggedInUser: string, loggedInUserIsInstructor: boolean, loginOfReviewer: string, lockActive: boolean) {
-        const accountService = TestBed.inject(AccountService);
         jest.spyOn(accountService, 'userIdentity', 'get').mockImplementation(function getterFn() {
             const user = new User();
             user.login = loginOfLoggedInUser;

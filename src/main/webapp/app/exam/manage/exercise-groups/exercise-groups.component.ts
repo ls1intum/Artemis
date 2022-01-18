@@ -73,7 +73,7 @@ export class ExerciseGroupsComponent implements OnInit {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         // Only take action when a response was received for both requests
-        forkJoin(this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()).subscribe({
+        forkJoin([this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()]).subscribe({
             next: ([examRes, examInfoDTO]) => {
                 this.exam = examRes.body!;
                 this.exerciseGroups = this.exam.exerciseGroups;

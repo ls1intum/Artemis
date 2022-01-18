@@ -42,7 +42,7 @@ export class CreateExerciseUnitComponent implements OnInit {
     ngOnInit(): void {
         this.isLoading = true;
         const lectureRoute = this.activatedRoute.parent!.parent!;
-        combineLatest(lectureRoute.paramMap, lectureRoute.parent!.paramMap)
+        combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap])
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {

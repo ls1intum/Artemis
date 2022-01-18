@@ -39,7 +39,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
 
     ngOnInit() {
         const lectureRoute = this.activatedRoute.parent!.parent!;
-        combineLatest(lectureRoute.paramMap, lectureRoute.parent!.paramMap).subscribe(([params, parentParams]) => {
+        combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params, parentParams]) => {
             this.lectureId = Number(params.get('lectureId'));
             this.courseId = Number(parentParams.get('courseId'));
         });

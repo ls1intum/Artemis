@@ -191,10 +191,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 }),
                 switchMap(() => {
                     if (this.commitState === CommitState.COULD_NOT_BE_RETRIEVED) {
-                        return throwError('couldNotBeRetrieved');
+                        return throwError(() => new Error('couldNotBeRetrieved'));
                     } else if (this.commitState === CommitState.CONFLICT) {
                         this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
-                        return throwError('repositoryInConflict');
+                        return throwError(() => new Error('repositoryInConflict'));
                     }
                     return this.loadFiles();
                 }),
@@ -216,9 +216,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 }),
             )
             .subscribe({
-                error: (error) => {
+                error: (error: Error) => {
                     this.isLoadingFiles = false;
-                    this.onError.emit(error);
+                    this.onError.emit(error.message);
                 },
             });
     };
@@ -520,7 +520,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                         .filter(([value]) => value),
                 ),
             ),
-            catchError(() => throwError('couldNotBeRetrieved')),
+            catchError(() => throwError(() => new Error('couldNotBeRetrieved'))),
         );
     };
 
@@ -539,7 +539,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                         .filter(([value]) => !value.includes('README.md')),
                 ),
             ),
-            catchError(() => throwError('couldNotBeRetrieved')),
+            catchError(() => throwError(() => new Error('couldNotBeRetrieved'))),
         );
     }
 

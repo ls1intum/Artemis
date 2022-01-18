@@ -74,7 +74,7 @@ describe('LoginService', () => {
     it('should emit an error when an action fails', () => {
         const error = 'fatal error';
         removeAuthTokenFromCachesStub.mockReturnValue(of(undefined));
-        authenticateStub.mockReturnValue(throwError(error));
+        authenticateStub.mockReturnValue(throwError(() => error));
         loginService.logout(true);
 
         commonExpects();

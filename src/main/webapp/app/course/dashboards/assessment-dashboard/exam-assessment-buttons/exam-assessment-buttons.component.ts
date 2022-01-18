@@ -78,7 +78,7 @@ export class ExamAssessmentButtonsComponent implements OnInit {
             );
 
             // Calculate hasStudentsWithoutExam only when both observables emitted
-            forkJoin(studentExamObservable, examObservable).subscribe(() => {
+            forkJoin([studentExamObservable, examObservable]).subscribe(() => {
                 this.isLoading = false;
             });
         });
