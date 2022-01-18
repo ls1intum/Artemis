@@ -91,14 +91,14 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
 
                 // quizExercise channel => react to changes made to quizExercise (e.g. start date)
                 this.jhiWebsocketService.subscribe(this.quizExerciseChannel);
-                this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe(
-                    (quiz) => {
+                this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe({
+                    next: (quiz) => {
                         if (this.waitingForQuizStart && params['exerciseId'] === quiz.id) {
                             this.loadQuizSuccess(quiz);
                         }
                     },
-                    () => {},
-                );
+                    error: () => {},
+                });
             }
 
             // ask for new Data if the websocket for new statistical data was notified

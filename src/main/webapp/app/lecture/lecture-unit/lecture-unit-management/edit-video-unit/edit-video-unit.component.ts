@@ -25,7 +25,7 @@ export class EditVideoUnitComponent implements OnInit {
     ngOnInit(): void {
         this.isLoading = true;
         const lectureRoute = this.activatedRoute.parent!.parent!;
-        combineLatest(this.activatedRoute.paramMap, lectureRoute.paramMap)
+        combineLatest([this.activatedRoute.paramMap, lectureRoute.paramMap])
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {

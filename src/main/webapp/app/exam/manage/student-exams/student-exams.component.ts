@@ -91,7 +91,7 @@ export class StudentExamsComponent implements OnInit {
             );
 
             // Calculate hasStudentsWithoutExam only when both observables emitted
-            forkJoin(studentExamObservable, examObservable).subscribe(() => {
+            forkJoin([studentExamObservable, examObservable]).subscribe(() => {
                 this.isLoading = false;
                 if (this.exam.registeredUsers) {
                     this.hasStudentsWithoutExam = this.studentExams.length < this.exam.registeredUsers.length;

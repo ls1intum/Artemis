@@ -80,8 +80,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.paramSubscription = combineLatest(
-            this.activatedRoute.parent!.parent!.params,
-            this.activatedRoute.parent!.parent!.queryParams,
+            [this.activatedRoute.parent!.parent!.params, this.activatedRoute.parent!.parent!.queryParams],
             (params: Params, queryParams: Params) => ({
                 params,
                 queryParams,

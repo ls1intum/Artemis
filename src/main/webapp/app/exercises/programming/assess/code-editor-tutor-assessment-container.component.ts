@@ -153,8 +153,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             const submissionObservable = submissionId === 'new' ? this.loadRandomSubmission(this.exerciseId) : this.loadSubmission(Number(submissionId));
             submissionObservable
                 .pipe(
-                    tap(
-                        (submission: ProgrammingSubmission) => {
+                    tap({
+                        next: (submission: ProgrammingSubmission) => {
                             this.handleReceivedSubmission(submission);
                             if (submissionId === 'new') {
                                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -162,11 +162,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                                 this.location.go(newUrl);
                             }
                         },
-                        (error: HttpErrorResponse) => {
+                        error: (error: HttpErrorResponse) => {
                             this.handleErrorResponse(error);
                         },
-                        () => (this.loadingParticipation = false),
-                    ),
+                        complete: () => (this.loadingParticipation = false),
+                    }),
                     // The following is needed for highlighting changed code lines
                     switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!)),
                     tap((programmingExercise) => (this.templateParticipation = programmingExercise.body!.templateParticipation!)),

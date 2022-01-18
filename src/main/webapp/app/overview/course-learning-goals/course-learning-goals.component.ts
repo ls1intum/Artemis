@@ -73,8 +73,8 @@ export class CourseLearningGoalsComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                ([learningGoalProgressResponses, learningGoalProgressResponsesUsingParticipantScores]) => {
+            .subscribe({
+                next: ([learningGoalProgressResponses, learningGoalProgressResponsesUsingParticipantScores]) => {
                     for (const learningGoalProgressResponse of learningGoalProgressResponses) {
                         const learningGoalProgress = learningGoalProgressResponse.body!;
                         this.learningGoalIdToLearningGoalProgress.set(learningGoalProgress.learningGoalId, learningGoalProgress);
@@ -85,8 +85,8 @@ export class CourseLearningGoalsComponent implements OnInit {
                     }
                     this.testIfScoreUsingParticipantScoresTableDiffers();
                 },
-                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            );
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
 
     identify(index: number, learningGoal: LearningGoal) {

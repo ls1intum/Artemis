@@ -73,7 +73,7 @@ export class AuditsComponent implements OnInit {
     }
 
     private handleNavigation(): void {
-        combineLatest(this.activatedRoute.data, this.activatedRoute.queryParamMap, (data: Data, params: ParamMap) => {
+        combineLatest([this.activatedRoute.data, this.activatedRoute.queryParamMap], (data: Data, params: ParamMap) => {
             const page = params.get('page');
             this.page = page !== null ? +page : 1;
             const sort = (params.get('sort') ?? data['defaultSort']).split(',');
