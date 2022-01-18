@@ -13,10 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
@@ -33,11 +35,15 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     public ProgrammingExerciseSolutionEntryResource(ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            AuthorizationCheckService authCheckService) {
         this.programmingExerciseSolutionEntryRepository = programmingExerciseSolutionEntryRepository;
+        this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
@@ -71,6 +77,25 @@ public class ProgrammingExerciseSolutionEntryResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, programmingExercise, null);
         Set<ProgrammingExerciseSolutionEntry> solutionEntries = programmingExercise.getExerciseHints().stream().filter(hint -> hint instanceof CodeHint)
                 .flatMap(codeHint -> ((CodeHint) codeHint).getSolutionEntries().stream()).collect(Collectors.toSet());
+        return ResponseEntity.ok(solutionEntries);
+    }
+
+    /**
+     * {@code GET  /programming-exercise-tasks/:taskId/programming-exercise-solution-entries} : get the programmingExerciseSolutionEntries of a provided exercise task.
+     *
+     * @param taskId the task id of which to retrieve the solution entries.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the programmingExerciseSolutionEntries, or with status {@code 404 (Not Found)}.
+     */
+    @GetMapping("/programming-exercise-tasks/{taskId}/programming-exercise-solution-entries")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Set<ProgrammingExerciseSolutionEntry>> getProgrammingSolutionEntryForProgrammingExerciseTask(@PathVariable Long taskId) {
+        log.debug("REST request to get Programming Exercise Solution Entry : {}", taskId);
+        ProgrammingExerciseTask programmingExerciseTask = programmingExerciseTaskRepository.findByIdElseThrow(taskId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseTask.getExercise().getId());
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, programmingExercise, null);
+
+        Set<ProgrammingExerciseSolutionEntry> solutionEntries = programmingExerciseTask.getCodeHints().stream().flatMap(codeHint -> codeHint.getSolutionEntries().stream())
+                .collect(Collectors.toSet());
         return ResponseEntity.ok(solutionEntries);
     }
 }
