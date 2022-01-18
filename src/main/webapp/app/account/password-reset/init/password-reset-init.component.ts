@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { PasswordResetInitService } from './password-reset-init.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -16,8 +16,7 @@ import { ExternalUserPasswordResetModalComponent } from 'app/account/password-re
 export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     @ViewChild('emailUsername', { static: false })
     emailUsernameElement?: ElementRef;
-
-    success = false;
+    emailUsernameValue = '';
     useExternal: boolean;
     externalCredentialProvider: string;
     externalPasswordResetLink?: string;
@@ -55,15 +54,13 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     }
 
     requestReset(): void {
-        const emailUsername = this.emailUsernameElement?.nativeElement.value;
-        if (!emailUsername) {
+        if (!this.emailUsernameValue) {
             this.alertService.error('reset.request.messages.info');
             return;
         }
-        this.passwordResetInitService.save(emailUsername).subscribe({
+        this.passwordResetInitService.save(this.emailUsernameValue).subscribe({
             next: () => {
                 this.alertService.success('reset.request.messages.success');
-                this.success = true;
             },
             error: (err: HttpErrorResponse) => {
                 if (this.useExternal && err?.error?.errorKey === 'externalUser') {
