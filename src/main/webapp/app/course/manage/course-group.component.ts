@@ -20,7 +20,6 @@ import { ExportToCsv } from 'export-to-csv';
 
 export const NAME_KEY = 'Name';
 export const USERNAME_KEY = 'Username';
-export const REGISTRATION_NUMBER_KEY = 'Registration Number';
 export const EMAIL_KEY = 'Email';
 
 const cssClasses = {
@@ -283,11 +282,10 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
                 const data = {};
                 data[NAME_KEY] = user.name!.trim();
                 data[USERNAME_KEY] = user.login!.trim();
-                data[REGISTRATION_NUMBER_KEY] = user.visibleRegistrationNumber ? user.visibleRegistrationNumber!.trim() : '';
                 data[EMAIL_KEY] = user.email!.trim();
                 return data;
             });
-            const keys = [NAME_KEY, USERNAME_KEY, REGISTRATION_NUMBER_KEY, EMAIL_KEY];
+            const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY];
             this.exportAsCsv(rows, keys);
         }
     }
