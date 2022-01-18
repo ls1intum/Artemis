@@ -3,8 +3,9 @@ import {
     ATTACHMENT_CHANGE_TITLE,
     COURSE_ARCHIVE_STARTED_TITLE,
     EXAM_ARCHIVE_STARTED_TITLE,
-    EXERCISE_RELEASED_TITLE,
     EXERCISE_PRACTICE_TITLE,
+    EXERCISE_RELEASED_TITLE,
+    EXERCISE_SUBMISSION_ASSESSED_TITLE,
     NEW_COURSE_POST_TITLE,
     NEW_EXERCISE_POST_TITLE,
     NEW_LECTURE_POST_TITLE,
@@ -13,7 +14,6 @@ import {
     NEW_REPLY_FOR_LECTURE_POST_TITLE,
     Notification,
     NotificationType,
-    EXERCISE_SUBMISSION_ASSESSED_TITLE,
 } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
@@ -21,6 +21,17 @@ import { SettingId } from 'app/shared/constants/user-settings.constants';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationSettingsService {
+    // needed to make it possible for other services to get the latest settings without calling the server additional times
+    private newestNotificationSettings: NotificationSetting[] = [];
+
+    public getNotificationSettings(): NotificationSetting[] {
+        return this.newestNotificationSettings;
+    }
+
+    public setNotificationSettings(notificationSettings: NotificationSetting[]) {
+        this.newestNotificationSettings = notificationSettings;
+    }
+
     /**
      * This is the place where the mapping between SettingIds and notification titles happens on the client side
      * Each SettingIds can be based on multiple different notification titles (based on NotificationTypes)
