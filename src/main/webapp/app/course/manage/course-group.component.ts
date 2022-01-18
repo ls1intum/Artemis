@@ -17,6 +17,7 @@ import { iconsAsHTML } from 'app/utils/icons.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ExportToCsv } from 'export-to-csv';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 export const NAME_KEY = 'Name';
 export const USERNAME_KEY = 'Username';
@@ -57,6 +58,9 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     searchNoResults = false;
     isTransitioning = false;
     rowClass: string | undefined = undefined;
+
+    // Icons
+    faDownload = faDownload;
 
     constructor(
         private router: Router,
