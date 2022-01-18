@@ -25,7 +25,7 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
      * Returns the task name with the given id
      *
      * @param taskId the id of the task
-     * @return the name/title of the hint or null if the task does not exist
+     * @return the name of the task or null if the task does not exist
      */
     @Query("""
             SELECT t.taskName
