@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 
 /**
  * This DTO contains the information used for the exercise-scores-chart.component.ts
@@ -18,8 +19,7 @@ public class ExerciseScoresDTO {
 
     public String exerciseTitle;
 
-    // this is just the simple name of the exercise class
-    public String exerciseType;
+    public ExerciseType exerciseType;
 
     // we need the release date information to sort the exercises in the chart by their release date
     public ZonedDateTime releaseDate;
@@ -38,7 +38,7 @@ public class ExerciseScoresDTO {
         this.exerciseId = exercise.getId();
         this.exerciseTitle = exercise.getTitle();
         this.releaseDate = exercise.getReleaseDate();
-        this.exerciseType = exercise.getClass().getSimpleName();
+        this.exerciseType = exercise.getExerciseType();
     }
 
 }

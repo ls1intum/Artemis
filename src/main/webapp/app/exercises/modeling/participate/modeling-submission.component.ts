@@ -6,7 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ComplaintType } from 'app/entities/complaint.model';
-import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
+import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -34,7 +34,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { getNamesForAssessments } from '../assess/modeling-assessment.util';
-import { faGripLines } from '@fortawesome/free-solid-svg-icons';
+import { faGripLines, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
@@ -95,6 +95,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     // Icons
     faGripLines = faGripLines;
     farListAlt = faListAlt;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -425,14 +426,22 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Check whether or not a assessmentResult exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] | undefined {
-        return this.assessmentResult ? getUnreferencedFeedback(this.assessmentResult.feedbacks) : undefined;
+        if (this.assessmentResult?.feedbacks) {
+            checkSubsequentFeedbackInAssessment(this.assessmentResult.feedbacks);
+            return getUnreferencedFeedback(this.assessmentResult.feedbacks);
+        }
+        return undefined;
     }
 
     /**
      * Find "Referenced Feedback" item for Result, if it exists.
      */
     get referencedFeedback(): Feedback[] | undefined {
-        return this.assessmentResult?.feedbacks?.filter((feedbackElement) => feedbackElement.reference != undefined);
+        if (this.assessmentResult?.feedbacks) {
+            checkSubsequentFeedbackInAssessment(this.assessmentResult.feedbacks);
+            return this.assessmentResult?.feedbacks?.filter((feedbackElement) => feedbackElement.reference != undefined);
+        }
+        return undefined;
     }
 
     /**
