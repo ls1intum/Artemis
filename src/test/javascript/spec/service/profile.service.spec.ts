@@ -9,7 +9,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 
-describe('Logs Service', () => {
+describe('Profile Service', () => {
     let service: ProfileService;
     let httpMock: HttpTestingController;
 
@@ -58,7 +58,7 @@ describe('Logs Service', () => {
             version: '5.0.0',
             group: 'de.tum.in.www1.artemis',
         },
-        features: ['PROGRAMMING_EXERCISES'],
+        features: ['ProgrammingExercises', 'PlagiarismChecks'],
         programmingLanguageFeatures: [
             {
                 programmingLanguage: 'KOTLIN',
@@ -139,7 +139,7 @@ describe('Logs Service', () => {
         inProduction: true,
         openApiEnabled: true,
         sentry: { dsn: 'https://ceeb3e72ec094684aefbb132f87231f2@sentry.ase.in.tum.de/2' },
-        features: [FeatureToggle.ProgrammingExercises],
+        features: [FeatureToggle.ProgrammingExercises, FeatureToggle.PlagiarismChecks],
         buildPlanURLTemplate: 'https://artemistest2jenkins.ase.in.tum.de/job/{projectKey}/job/{buildPlanId}',
         commitHashURLTemplate: 'https://artemistest2gitlab.ase.in.tum.de/{projectKey}/{repoSlug}/-/commit/{commitHash}',
         sshCloneURLTemplate: 'ssh://git@artemistest2gitlab.ase.in.tum.de:2222/',
