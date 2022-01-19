@@ -200,7 +200,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test_run_exercise_assessment_dashboard: 'artemisApp.exerciseAssessmentDashboard.home.title',
         lti_configuration: 'artemisApp.programmingExercise.home.title',
         teams: 'artemisApp.team.home.title',
-        hints: 'artemisApp.exerciseHint.home.title',
+        text_hints: 'artemisApp.textHint.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
         goal_management: 'artemisApp.learningGoal.manageLearningGoals.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
