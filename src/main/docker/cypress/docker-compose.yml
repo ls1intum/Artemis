@@ -32,6 +32,7 @@ services:
             artemis.continuous-integration.password: "${CI_PASSWORD}"
             artemis.continuous-integration.token: "${CI_TOKEN}"
             artemis.continuous-integration.artemis-authentication-token-value: "${CI_AUTH_TOKEN}"
+            artemis.continuous-integration.vcs-application-link-name: "Bitbucket Prelive"
             info.test-server: "true"
             server.url: "${SERVER_URL}"
         ports:
