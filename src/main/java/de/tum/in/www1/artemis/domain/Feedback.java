@@ -123,6 +123,10 @@ public class Feedback extends DomainObject {
         return this;
     }
 
+    /**
+     * sets the detail text of the feedback. In case the detail text is longer than 5000 characters, the additional characters are cut off to avoid database issues
+     * @param detailText the new detail text for the feedback, can be null
+     */
     public void setDetailText(@Nullable String detailText) {
         if (detailText == null || detailText.length() <= FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
             this.detailText = detailText;
