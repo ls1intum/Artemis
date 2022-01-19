@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.config.migration.entries;
 
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
@@ -41,8 +40,15 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
 
     private void processUsers(List<User> userList) {
         userList = userList.stream().peek(user -> {
-            String password = passwordService.decryptPassword(user);
-            user.setInternal(!StringUtils.isEmpty(password));
+            String encryptedPassword = user.getPassword();
+            if (encryptedPassword == null || encryptedPassword.matches("^\\$2[abxy]\\$\\d{2}\\$.*$")) {
+                user.setInternal(false);
+                user.setPassword(passwordService.encryptPassword(""));
+            }
+            else {
+                String decryptedPassword = passwordService.decryptPassword(user);
+                user.setInternal(!decryptedPassword.isEmpty());
+            }
             if (!user.isInternal()) {
                 user.setResetDate(null);
                 user.setResetKey(null);
