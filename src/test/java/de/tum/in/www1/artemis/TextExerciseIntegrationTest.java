@@ -747,6 +747,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         teamAssignmentConfig.setMaxTeamSize(10);
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
         exerciseToBeImported.setCourse(course2);
+        exerciseToBeImported.setMaxPoints(1.0);
 
         exerciseToBeImported = request.postWithResponseBody("/api/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class, HttpStatus.CREATED);
 
@@ -784,6 +785,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         var exerciseToBeImported = new TextExercise();
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
         exerciseToBeImported.setCourse(course2);
+        exerciseToBeImported.setMaxPoints(1.0);
 
         exerciseToBeImported = request.postWithResponseBody("/api/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class, HttpStatus.CREATED);
 

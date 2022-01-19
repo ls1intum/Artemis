@@ -15,49 +15,58 @@ import org.springframework.http.ResponseEntity;
  * Deprecation: please throw exceptions instead of using the below methods,
  * use e.g. AccessForbiddenException, EntityNotFoundException, BadRequestAlertException
  */
-@Deprecated(forRemoval = true, since = "5.2.0")
 public final class ResponseUtil implements tech.jhipster.web.util.ResponseUtil {
 
     // NOTE: This would be null because spring does not allow static field injection
     @Value("${jhipster.clientApp.name}")
     private static String applicationName = "artemisApp";
 
+    @Deprecated(forRemoval = true, since = "5.2.0")
     public static <X> ResponseEntity<X> ok() {
         return ResponseEntity.ok().build();
     }
 
+    @Deprecated(forRemoval = true, since = "5.2.0")
     public static <X> ResponseEntity<X> notFound() {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
+    @Deprecated(forRemoval = true, since = "5.2.0")
     public static <X> ResponseEntity<X> forbidden() {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
+    @Deprecated(forRemoval = true, since = "5.2.0")
     public static <X> ResponseEntity<X> forbidden(String entityName, String errorKey, String message) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).headers(HeaderUtil.createFailureAlert(applicationName, true, entityName, errorKey, message)).build();
     }
 
+    @Deprecated(forRemoval = true, since = "5.2.0")
     public static <X> ResponseEntity<X> forbidden(String applicationName, String entityName, String errorKey, String message) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).headers(HeaderUtil.createFailureAlert(applicationName, true, entityName, errorKey, message)).build();
     }
 
+    @Deprecated(forRemoval = true, since = "5.2.0")
     public static <X> ResponseEntity<X> locked(String entityName, String errorKey, String message) {
         return ResponseEntity.status(HttpStatus.LOCKED).headers(HeaderUtil.createFailureAlert(applicationName, true, entityName, errorKey, message)).build();
     }
 
+    @Deprecated(forRemoval = true, since = "5.2.0")
     public static <X> ResponseEntity<X> badRequest() {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 
+    @Deprecated(forRemoval = true, since = "5.2.0")
     public static <X> ResponseEntity<X> badRequest(String entityName, String errorKey, String message) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createFailureAlert(applicationName, true, entityName, errorKey, message)).build();
     }
 
+    @Deprecated(forRemoval = true, since = "5.2.0")
     public static <X> ResponseEntity<X> conflict() {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
     }
 
+    @Deprecated(forRemoval = true, since = "5.2.0")
     public static <X> ResponseEntity<X> conflict(String entityName, String errorKey, String message) {
         return ResponseEntity.status(HttpStatus.CONFLICT).headers(HeaderUtil.createFailureAlert(applicationName, true, entityName, errorKey, message)).build();
     }

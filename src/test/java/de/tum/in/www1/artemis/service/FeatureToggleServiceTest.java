@@ -59,19 +59,17 @@ public class FeatureToggleServiceTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     public void testShouldNotEnableTwice() {
-        // Must be updated if additional features are added
-        assertEquals(1, featureToggleService.enabledFeatures().size());
+        assertEquals(Feature.values().length, featureToggleService.enabledFeatures().size());
         featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
 
         // Feature should not be added multiple times
-        assertEquals(1, featureToggleService.enabledFeatures().size());
+        assertEquals(Feature.values().length, featureToggleService.enabledFeatures().size());
     }
 
     @Test
     public void testShouldNotDisableTwice() {
         featureToggleService.disableFeature(Feature.PROGRAMMING_EXERCISES);
 
-        // Must be updated if additional features are added
         assertEquals(1, featureToggleService.disabledFeatures().size());
         featureToggleService.disableFeature(Feature.PROGRAMMING_EXERCISES);
 

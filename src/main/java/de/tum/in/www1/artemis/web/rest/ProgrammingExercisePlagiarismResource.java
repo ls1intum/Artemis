@@ -95,13 +95,11 @@ public class ProgrammingExercisePlagiarismResource {
      */
     @GetMapping(CHECK_PLAGIARISM)
     @PreAuthorize("hasRole('EDITOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle({ Feature.PROGRAMMING_EXERCISES, Feature.PLAGIARISM_CHECK })
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore)
             throws ExitException, IOException {
-        log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-
         ProgrammingLanguage language = programmingExercise.getProgrammingLanguage();
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
 
@@ -111,6 +109,7 @@ public class ProgrammingExercisePlagiarismResource {
         }
 
         long start = System.nanoTime();
+        log.info("Start programmingPlagiarismDetectionService.checkPlagiarism for exercise {}", exerciseId);
         TextPlagiarismResult result = programmingPlagiarismDetectionService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore);
         log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons in {}", result.getComparisons().size(), TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(result);
