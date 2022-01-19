@@ -20,7 +20,7 @@ import { ArtemisLectureModule } from 'app/lecture/lecture.module';
 import { ArtemisTextExerciseManagementModule } from 'app/exercises/text/manage/text-exercise-management.module';
 import { ArtemisDashboardsModule } from 'app/shared/dashboards/dashboards.module';
 import { ArtemisParticipationModule } from 'app/exercises/shared/participation/participation.module';
-import { ArtemisExerciseHintManagementModule } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-management.module';
+import { ArtemisTextHintManagementModule } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-management.module';
 import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/manage/modeling-exercise-management.module';
 import { ArtemisCourseScoresModule } from 'app/course/course-scores/course-scores.module';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
@@ -79,7 +79,7 @@ import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.modul
         ArtemisModelingExerciseModule,
         ArtemisColorSelectorModule,
         ArtemisDashboardsModule,
-        ArtemisExerciseHintManagementModule,
+        ArtemisTextHintManagementModule,
         ArtemisParticipationModule,
         ArtemisComplaintsForTutorModule,
         ArtemisListOfComplaintsModule,

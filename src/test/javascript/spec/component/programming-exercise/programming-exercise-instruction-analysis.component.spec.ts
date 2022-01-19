@@ -78,7 +78,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             const testCases = ['testabc'];
             comp.problemStatement = problemStatement;
             comp.taskRegex = taskRegex;
-            comp.exerciseHints = hints;
+            comp.textHints = hints;
             comp.exerciseTestCases = testCases;
 
             comp.ngOnInit();
@@ -130,7 +130,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
                 comp.problemStatement = problemStatement;
                 comp.taskRegex = taskRegex;
                 comp.exerciseTestCases = exerciseTestCases;
-                comp.exerciseHints = exerciseHints;
+                comp.textHints = exerciseHints;
 
                 const completeAnalysis = {
                     '0': { invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'] },

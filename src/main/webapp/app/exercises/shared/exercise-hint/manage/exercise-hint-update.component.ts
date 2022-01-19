@@ -4,8 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable, of, Subscription } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
-import { ExerciseHintService } from './exercise-hint.service';
+import { TextHintService } from './text-hint.service';
 import { EditorMode, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -20,12 +19,12 @@ import { TextHint } from 'app/entities/hestia/text-hint-model';
     templateUrl: './exercise-hint-update.component.html',
     styleUrls: ['./exercise-hint.scss'],
 })
-export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
+export class TextHintUpdateComponent implements OnInit, OnDestroy {
     MarkdownEditorHeight = MarkdownEditorHeight;
 
     courseId: number;
     exerciseId: number;
-    exerciseHint = new TextHint();
+    textHint = new TextHint();
 
     isSaving: boolean;
     isLoading: boolean;
@@ -43,13 +42,13 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     constructor(
         private route: ActivatedRoute,
         protected alertService: AlertService,
-        protected exerciseHintService: ExerciseHintService,
+        protected textHintService: TextHintService,
         protected exerciseService: ExerciseService,
         private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     /**
-     * Fetches the exercise from the server and assigns it on the exercise hint
+     * Fetches the exercise from the server and assigns it on the text hint
      */
     ngOnInit() {
         this.isLoading = true;
@@ -59,16 +58,16 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
             this.isSaving = false;
             this.exerciseNotFound = false;
         });
-        this.route.data.subscribe(({ exerciseHint }) => {
-            this.exerciseHint = exerciseHint;
+        this.route.data.subscribe(({ textHint }) => {
+            this.textHint = textHint;
             // If the exercise was not yet created, load the exercise from the current route to set it as its exercise.
-            if (!this.exerciseHint.id) {
+            if (!this.textHint.id) {
                 this.exerciseService
                     .find(this.exerciseId)
                     .pipe(
                         map(({ body }) => body),
                         tap((res: Exercise) => {
-                            this.exerciseHint.exercise = res;
+                            this.textHint.exercise = res;
                         }),
                         catchError((error: HttpErrorResponse) => {
                             this.exerciseNotFound = true;
@@ -95,11 +94,11 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Setter to update the exercise hint content
+     * Setter to update the text hint content
      * @param newContent New value to set
      */
     updateHintContent(newContent: string) {
-        this.exerciseHint.content = newContent;
+        this.textHint.content = newContent;
     }
 
     /**
@@ -110,23 +109,23 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     previousState() {
         this.navigationUtilService.navigateBackWithOptional(
             ['course-management', this.courseId.toString(), 'programming-exercises', this.exerciseId.toString(), 'hints'],
-            this.exerciseHint.id?.toString(),
+            this.textHint.id?.toString(),
         );
     }
 
     /**
-     * Saves the exercise hint by creating or updating it on the server
+     * Saves the text hint by creating or updating it on the server
      */
     save() {
         this.isSaving = true;
-        if (this.exerciseHint.id !== undefined) {
-            this.subscribeToSaveResponse(this.exerciseHintService.update(this.exerciseHint));
+        if (this.textHint.id !== undefined) {
+            this.subscribeToSaveResponse(this.textHintService.update(this.textHint));
         } else {
-            this.subscribeToSaveResponse(this.exerciseHintService.create(this.exerciseHint));
+            this.subscribeToSaveResponse(this.textHintService.create(this.textHint));
         }
     }
 
-    protected subscribeToSaveResponse(result: Observable<HttpResponse<ExerciseHint>>) {
+    protected subscribeToSaveResponse(result: Observable<HttpResponse<TextHint>>) {
         result.subscribe(
             () => this.onSaveSuccess(),
             () => this.onSaveError(),

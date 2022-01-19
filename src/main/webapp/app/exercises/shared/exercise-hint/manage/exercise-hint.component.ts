@@ -4,8 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
-import { ExerciseHintService } from './exercise-hint.service';
+import { TextHintService } from './text-hint.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -16,9 +15,9 @@ import { TextHint } from 'app/entities/hestia/text-hint-model';
     selector: 'jhi-exercise-hint',
     templateUrl: './exercise-hint.component.html',
 })
-export class ExerciseHintComponent implements OnInit, OnDestroy {
+export class TextHintComponent implements OnInit, OnDestroy {
     exerciseId: number;
-    exerciseHints: TextHint[];
+    textHints: TextHint[];
     eventSubscriber: Subscription;
 
     private dialogErrorSource = new Subject<string>();
@@ -32,7 +31,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     faEye = faEye;
     faWrench = faWrench;
 
-    constructor(private route: ActivatedRoute, protected exerciseHintService: ExerciseHintService, private alertService: AlertService, protected eventManager: EventManager) {}
+    constructor(private route: ActivatedRoute, protected textHintService: TextHintService, private alertService: AlertService, protected eventManager: EventManager) {}
 
     /**
      * Subscribes to the route params to act on the currently selected exercise.
@@ -41,7 +40,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.params.subscribe((params) => {
             this.exerciseId = params['exerciseId'];
             this.loadAllByExerciseId();
-            this.registerChangeInExerciseHints();
+            this.registerChangeInTextHints();
         });
     }
 
@@ -57,52 +56,52 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Load all exercise hints with the currently selected exerciseId (taken from route params).
+     * Load all text hints with the currently selected exerciseId (taken from route params).
      */
     loadAllByExerciseId() {
-        this.exerciseHintService
+        this.textHintService
             .findByExerciseId(this.exerciseId)
             .pipe(
-                filter((res: HttpResponse<ExerciseHint[]>) => res.ok),
-                map((res: HttpResponse<ExerciseHint[]>) => res.body),
+                filter((res: HttpResponse<TextHint[]>) => res.ok),
+                map((res: HttpResponse<TextHint[]>) => res.body),
             )
             .subscribe(
-                (res: ExerciseHint[]) => {
-                    this.exerciseHints = res;
+                (res: TextHint[]) => {
+                    this.textHints = res;
                 },
                 (res: HttpErrorResponse) => onError(this.alertService, res),
             );
     }
 
     /**
-     * Returns the track id of an exercise hint
+     * Returns the track id of an text hint
      * @param index Index of the item
      * @param item Item for which to get the id
      */
-    trackId(index: number, item: ExerciseHint) {
+    trackId(index: number, item: TextHint) {
         return item.id;
     }
 
     /**
-     * (Re-)subscribe to the exercise hint list modification subscription
+     * (Re-)subscribe to the text hint list modification subscription
      */
-    registerChangeInExerciseHints() {
+    registerChangeInTextHints() {
         if (this.eventSubscriber) {
             this.eventSubscriber.unsubscribe();
         }
-        this.eventSubscriber = this.eventManager.subscribe('exerciseHintListModification', () => this.loadAllByExerciseId());
+        this.eventSubscriber = this.eventManager.subscribe('textHintListModification', () => this.loadAllByExerciseId());
     }
 
     /**
-     * Deletes exercise hint
-     * @param exerciseHintId the id of the exercise hint that we want to delete
+     * Deletes text hint
+     * @param textHintId the id of the text hint that we want to delete
      */
-    deleteExerciseHint(exerciseHintId: number) {
-        this.exerciseHintService.delete(exerciseHintId).subscribe(
+    deleteTextHint(textHintId: number) {
+        this.textHintService.delete(textHintId).subscribe(
             () => {
                 this.eventManager.broadcast({
-                    name: 'exerciseHintListModification',
-                    content: 'Deleted an exerciseHint',
+                    name: 'textHintListModification',
+                    content: 'Deleted an textHint',
                 });
                 this.dialogErrorSource.next('');
             },

@@ -20,7 +20,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -51,6 +50,7 @@ import {
     faUserPlus,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
+import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -117,7 +117,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private courseManagementService: CourseManagementService,
         private exerciseService: ExerciseService,
-        private hintService: ExerciseHintService,
+        private textHintService: TextHintService,
         private apollonDiagramService: ApollonDiagramService,
         private lectureService: LectureService,
         private examService: ExamManagementService,
@@ -317,8 +317,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'assessment-dashboard':
                 this.addResolvedTitleAsCrumb(this.exerciseService.getTitle(Number(segment)), currentPath, segment);
                 break;
-            case 'hints':
-                this.addResolvedTitleAsCrumb(this.hintService.getTitle(Number(segment)), currentPath, segment);
+            case 'text-hints':
+                this.addResolvedTitleAsCrumb(this.textHintService.getTitle(Number(segment)), currentPath, segment);
                 break;
             case 'apollon-diagrams':
                 this.addResolvedTitleAsCrumb(this.apollonDiagramService.getTitle(Number(segment)), currentPath, segment);

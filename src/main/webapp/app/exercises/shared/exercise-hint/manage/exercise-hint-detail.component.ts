@@ -9,8 +9,8 @@ import { TextHint } from 'app/entities/hestia/text-hint-model';
     selector: 'jhi-exercise-hint-detail',
     templateUrl: './exercise-hint-detail.component.html',
 })
-export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
-    exerciseHint: TextHint;
+export class TextHintDetailComponent implements OnInit, OnDestroy {
+    textHint: TextHint;
 
     courseId: number;
     exerciseId: number;
@@ -30,8 +30,8 @@ export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
             this.courseId = params['courseId'];
             this.exerciseId = params['exerciseId'];
         });
-        this.route.data.subscribe(({ exerciseHint }) => {
-            this.exerciseHint = exerciseHint;
+        this.route.data.subscribe(({ textHint }) => {
+            this.textHint = textHint;
         });
     }
 

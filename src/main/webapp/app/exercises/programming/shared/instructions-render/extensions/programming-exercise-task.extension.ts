@@ -7,7 +7,6 @@ import { Result } from 'app/entities/result.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -15,7 +14,7 @@ import { TextHint } from 'app/entities/hestia/text-hint-model';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
-    public exerciseHints: ExerciseHint[] = [];
+    public textHints: TextHint[] = [];
     private latestResult?: Result;
     private exercise: Exercise;
 
@@ -74,7 +73,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
             // The same task could appear multiple times in the instructions (edge case).
             for (let i = 0; i < taskHtmlContainers.length; i++) {
                 const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionTaskStatusComponent).create(this.injector);
-                componentRef.instance.exerciseHints = this.exerciseHints.filter((hint) => hint instanceof TextHint && hints.includes(hint.id!.toString(10)));
+                componentRef.instance.textHints = this.textHints.filter((hint) => hints.includes(hint.id!.toString(10)));
                 componentRef.instance.taskName = taskName;
                 componentRef.instance.latestResult = this.latestResult;
                 componentRef.instance.tests = tests;

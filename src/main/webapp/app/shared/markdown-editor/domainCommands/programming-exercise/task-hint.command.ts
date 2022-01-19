@@ -4,7 +4,7 @@ export class TaskHintCommand extends DomainMultiOptionListCommand {
     buttonTranslationString = 'artemisApp.programmingExercise.problemStatement.exerciseHintCommand';
 
     protected getValueMeta(): string {
-        return 'exerciseHint';
+        return 'textHint';
     }
 
     /**

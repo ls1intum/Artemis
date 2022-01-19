@@ -4,85 +4,85 @@ import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { of } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { ExerciseHintService } from './exercise-hint.service';
-import { ExerciseHintComponent } from './exercise-hint.component';
-import { ExerciseHintDetailComponent } from './exercise-hint-detail.component';
-import { ExerciseHintUpdateComponent } from './exercise-hint-update.component';
+import { TextHintService } from './text-hint.service';
+import { TextHintComponent } from './exercise-hint.component';
+import { TextHintDetailComponent } from './exercise-hint-detail.component';
+import { TextHintUpdateComponent } from './exercise-hint-update.component';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { exerciseTypes } from 'app/entities/exercise.model';
 import { TextHint } from 'app/entities/hestia/text-hint-model';
 
 @Injectable({ providedIn: 'root' })
-export class ExerciseHintResolve implements Resolve<ExerciseHint> {
-    constructor(private service: ExerciseHintService) {}
+export class TextHintResolve implements Resolve<ExerciseHint> {
+    constructor(private service: TextHintService) {}
 
     /**
-     * Resolves the route into an exercise hint id and fetches it from the server
+     * Resolves the route into a text hint id and fetches it from the server
      * @param route Route which to resolve
      */
     resolve(route: ActivatedRouteSnapshot) {
         const id = route.params['hintId'] ? route.params['hintId'] : undefined;
         if (id) {
             return this.service.find(id).pipe(
-                filter((response: HttpResponse<ExerciseHint>) => response.ok),
-                map((exerciseHint: HttpResponse<ExerciseHint>) => exerciseHint.body!),
+                filter((response: HttpResponse<TextHint>) => response.ok),
+                map((textHint: HttpResponse<TextHint>) => textHint.body!),
             );
         }
         return of(new TextHint());
     }
 }
 
-export const exerciseHintRoute: Routes = [
+export const textHintRoute: Routes = [
     ...exerciseTypes.map((exerciseType) => {
         return {
-            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/hints/new',
-            component: ExerciseHintUpdateComponent,
+            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/text-hints/new',
+            component: TextHintUpdateComponent,
             resolve: {
-                exerciseHint: ExerciseHintResolve,
+                textHint: TextHintResolve,
             },
             data: {
                 authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                pageTitle: 'artemisApp.exerciseHint.home.title',
+                pageTitle: 'artemisApp.textHint.home.title',
             },
             canActivate: [UserRouteAccessService],
         };
     }),
     ...exerciseTypes.map((exerciseType) => {
         return {
-            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/hints/:hintId',
-            component: ExerciseHintDetailComponent,
+            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/text-hints/:hintId',
+            component: TextHintDetailComponent,
             resolve: {
-                exerciseHint: ExerciseHintResolve,
+                textHint: TextHintResolve,
             },
             data: {
                 authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                pageTitle: 'artemisApp.exerciseHint.home.title',
+                pageTitle: 'artemisApp.textHint.home.title',
             },
             canActivate: [UserRouteAccessService],
         };
     }),
     ...exerciseTypes.map((exerciseType) => {
         return {
-            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/hints/:hintId/edit',
-            component: ExerciseHintUpdateComponent,
+            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/text-hints/:hintId/edit',
+            component: TextHintUpdateComponent,
             resolve: {
-                exerciseHint: ExerciseHintResolve,
+                textHint: TextHintResolve,
             },
             data: {
                 authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                pageTitle: 'artemisApp.exerciseHint.home.title',
+                pageTitle: 'artemisApp.textHint.home.title',
             },
             canActivate: [UserRouteAccessService],
         };
     }),
     ...exerciseTypes.map((exerciseType) => {
         return {
-            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/hints',
-            component: ExerciseHintComponent,
+            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/text-hints',
+            component: TextHintComponent,
             data: {
                 authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                pageTitle: 'artemisApp.exerciseHint.home.title',
+                pageTitle: 'artemisApp.textHint.home.title',
             },
             canActivate: [UserRouteAccessService],
         };

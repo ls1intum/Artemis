@@ -61,55 +61,6 @@ describe('ExerciseHint Service', () => {
             req.flush(returnedFromService);
             expect(expectedResult.body).toEqual(elemDefault);
         });
-
-        it('should create a ExerciseHint', () => {
-            const returnedFromService = Object.assign(
-                {
-                    id: 0,
-                    title: 'AAAAA',
-                    content: 'BBBBBB',
-                    exercise: {
-                        id: 1,
-                    },
-                },
-                elemDefault,
-            );
-            const expected = Object.assign({}, returnedFromService);
-            service
-                .create(exerciseHint)
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({ method: 'POST' });
-            req.flush(returnedFromService);
-            expect(expectedResult.body).toEqual(expected);
-        });
-
-        it('should update a ExerciseHint', () => {
-            const returnedFromService = Object.assign(
-                {
-                    title: 'BBBBBB',
-                    content: 'BBBBBB',
-                },
-                elemDefault,
-            );
-
-            const expected = Object.assign({}, returnedFromService);
-            service
-                .update(elemDefault)
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({ method: 'PUT' });
-            req.flush(returnedFromService);
-            expect(expectedResult.body).toEqual(expected);
-        });
-
-        it('should delete a ExerciseHint', () => {
-            service.delete(123).subscribe((resp) => (expectedResult = resp.ok));
-
-            const req = httpMock.expectOne({ method: 'DELETE' });
-            req.flush({ status: 200 });
-            expect(expectedResult).toBe(true);
-        });
     });
 
     afterEach(() => {

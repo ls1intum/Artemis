@@ -8,7 +8,6 @@ import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programmi
 import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { TaskHintCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task-hint.command';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -19,9 +18,10 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
 import { Result } from 'app/entities/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
+import { TextHint } from 'app/entities/hestia/text-hint-model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -34,7 +34,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     programmingExercise: ProgrammingExercise;
 
     exerciseTestCases: string[] = [];
-    exerciseHints: ExerciseHint[];
+    textHints: TextHint[];
 
     taskCommand = new TaskCommand();
     taskRegex = this.taskCommand.getTagRegex('g');
@@ -113,20 +113,20 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         private alertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private testCaseService: ProgrammingExerciseGradingService,
-        private exerciseHintService: ExerciseHintService,
+        private textHintService: TextHintService,
     ) {}
 
     ngOnChanges(changes: SimpleChanges): void {
         if (hasExerciseChanged(changes)) {
             this.setupTestCaseSubscription();
             if (this.exercise.exerciseHints) {
-                this.exerciseHints = this.exercise.exerciseHints;
+                this.textHints = this.exercise.exerciseHints;
                 this.prepareTaskHints();
             } else {
                 if (this.exercise.id) {
-                    this.loadExerciseHints(this.exercise.id);
+                    this.loadTextHints(this.exercise.id);
                 } else {
-                    this.exerciseHints = [];
+                    this.textHints = [];
                 }
             }
         }
@@ -179,25 +179,25 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     /**
-     * Load the exercise hints and assign them to the task hint command.
+     * Load the text hints and assign them to the task hint command.
      *
-     * @param exerciseId for which to load the exercise hints.
+     * @param exerciseId for which to load the text hints.
      */
-    loadExerciseHints(exerciseId: number) {
-        this.exerciseHintService
+    loadTextHints(exerciseId: number) {
+        this.textHintService
             .findByExerciseId(exerciseId)
             .pipe(rxMap(({ body }) => body || []))
-            .subscribe((exerciseHints: ExerciseHint[]) => {
-                this.exerciseHints = exerciseHints;
+            .subscribe((textHints: TextHint[]) => {
+                this.textHints = textHints;
                 this.prepareTaskHints();
             });
     }
 
     /**
-     * Prepares the task hints using exerciseHints
+     * Prepares the task hints using textHints
      */
     private prepareTaskHints() {
-        this.taskHintCommand.setValues(this.exerciseHints.map(({ id, title }) => ({ id: id!.toString(10), value: title! })));
+        this.taskHintCommand.setValues(this.textHints.map(({ id, title }) => ({ id: id!.toString(10), value: title! })));
     }
 
     /** Save the problem statement on the server.

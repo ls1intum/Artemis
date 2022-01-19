@@ -2,28 +2,28 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
-import { ExerciseHintComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.component';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { TextHintComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.component';
 import { ArtemisTestModule } from '../../test.module';
 import { TextHint } from 'app/entities/hestia/text-hint-model';
+import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
 
-describe('ExerciseHint Management Component', () => {
-    let comp: ExerciseHintComponent;
-    let fixture: ComponentFixture<ExerciseHintComponent>;
-    let service: ExerciseHintService;
+describe('TextHint Management Component', () => {
+    let comp: TextHintComponent;
+    let fixture: ComponentFixture<TextHintComponent>;
+    let service: TextHintService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ExerciseHintComponent],
+            declarations: [TextHintComponent],
             providers: [],
         })
-            .overrideTemplate(ExerciseHintComponent, '')
+            .overrideTemplate(TextHintComponent, '')
             .compileComponents();
 
-        fixture = TestBed.createComponent(ExerciseHintComponent);
+        fixture = TestBed.createComponent(TextHintComponent);
         comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(ExerciseHintService);
+        service = fixture.debugElement.injector.get(TextHintService);
     });
 
     it('Should call load all on init', () => {
@@ -46,6 +46,6 @@ describe('ExerciseHint Management Component', () => {
 
         // THEN
         expect(service.findByExerciseId).toHaveBeenCalled();
-        expect(comp.exerciseHints[0]).toEqual(expect.objectContaining({ id: 123 }));
+        expect(comp.textHints[0]).toEqual(expect.objectContaining({ id: 123 }));
     });
 });

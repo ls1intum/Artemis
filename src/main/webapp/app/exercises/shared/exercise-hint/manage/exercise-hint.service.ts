@@ -9,18 +9,6 @@ export type ExerciseHintResponse = HttpResponse<ExerciseHint>;
 
 export interface IExerciseHintService {
     /**
-     * Creates an exercise hint
-     * @param exerciseHint Exercise hint to create
-     */
-    create(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse>;
-
-    /**
-     * Updates an exercise hint
-     * @param exerciseHint Exercise hint to update
-     */
-    update(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse>;
-
-    /**
      * Finds an exercise hint
      * @param id Id of exercise hint to find
      */
@@ -31,12 +19,6 @@ export interface IExerciseHintService {
      * @param exerciseId Id of exercise
      */
     findByExerciseId(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>>;
-
-    /**
-     * Deletes an exercise hint
-     * @param id Id of exercise hint to delete
-     */
-    delete(id: number): Observable<HttpResponse<void>>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -81,7 +63,7 @@ export class ExerciseHintService implements IExerciseHintService {
      * @param exerciseId Id of exercise
      */
     findByExerciseId(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
-        return this.http.get<ExerciseHint[]>(`api/exercises/${exerciseId}/hints`, { observe: 'response' });
+        return this.http.get<ExerciseHint[]>(`api/exercises/${exerciseId}/exercise-hints`, { observe: 'response' });
     }
 
     /**

@@ -18,12 +18,10 @@ import { ProgrammingExerciseInstructionService } from 'app/exercises/programming
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { HttpResponse } from '@angular/common/http';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Participation } from 'app/entities/participation/participation.model';
-import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -37,10 +35,12 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockComponent } from 'ng-mocks';
+import { ITextHintService, TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
+import { MockTextHintService } from '../../helpers/mocks/service/mock-text-hint.service';
+import { TextHint } from 'app/entities/hestia/text-hint-model';
 
 describe('ProgrammingExerciseInstructionComponent', () => {
     let comp: ProgrammingExerciseInstructionComponent;
@@ -49,7 +49,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let repositoryFileService: RepositoryFileService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
-    let exerciseHintService: IExerciseHintService;
+    let textHintService: ITextHintService;
     let modalService: NgbModal;
 
     let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
@@ -58,7 +58,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let getLatestResultWithFeedbacks: jest.SpyInstance;
     let getHintsForExerciseStub: jest.SpyInstance;
 
-    const exerciseHints = [{ id: 1 }, { id: 2 }];
+    const textHints = [{ id: 1 }, { id: 2 }];
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -81,7 +81,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: ExerciseHintService, useClass: MockExerciseHintService },
+                { provide: TextHintService, useClass: MockTextHintService },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -94,16 +94,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
                 repositoryFileService = debugElement.injector.get(RepositoryFileService);
-                exerciseHintService = debugElement.injector.get(ExerciseHintService);
+                textHintService = debugElement.injector.get(TextHintService);
                 modalService = debugElement.injector.get(NgbModal);
 
                 subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 openModalStub = jest.spyOn(modalService, 'open');
                 getFileStub = jest.spyOn(repositoryFileService, 'get');
                 getLatestResultWithFeedbacks = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
-                getHintsForExerciseStub = jest
-                    .spyOn(exerciseHintService, 'findByExerciseId')
-                    .mockReturnValue(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
+                getHintsForExerciseStub = jest.spyOn(textHintService, 'findByExerciseId').mockReturnValue(of({ body: textHints }) as Observable<HttpResponse<TextHint[]>>);
 
                 comp.personalParticipation = true;
             });
@@ -133,7 +131,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.isInitial).toBe(true);
         expect(getHintsForExerciseStub).toHaveBeenCalledOnce();
         expect(getHintsForExerciseStub).toHaveBeenCalledWith(exercise.id);
-        expect(comp.exerciseHints).toEqual(exerciseHints);
+        expect(comp.textHints).toEqual(textHints);
     });
 
     it('should try to fetch README.md from assignment repository if no problemStatement was provided', () => {

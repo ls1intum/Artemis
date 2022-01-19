@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, map, tap } from 'rxjs/operators';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { TextHint } from 'app/entities/hestia/text-hint-model';
 
 @Component({
     selector: 'jhi-programming-exercise-instruction-instructor-analysis',
@@ -12,7 +12,7 @@ import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-sv
 })
 export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, OnChanges, OnDestroy {
     @Input() exerciseTestCases: string[];
-    @Input() exerciseHints: ExerciseHint[];
+    @Input() textHints: TextHint[];
     @Input() problemStatement: string;
     @Input() taskRegex: RegExp;
 
@@ -40,7 +40,7 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
                         this.problemStatement,
                         this.taskRegex,
                         this.exerciseTestCases,
-                        this.exerciseHints,
+                        this.textHints,
                     );
                     this.missingTestCases = missingTestCases;
                     this.invalidTestCases = invalidTestCases;
@@ -56,7 +56,7 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
         if (
             (changes.problemStatement || changes.exerciseTestCases || changes.exerciseHints) &&
             this.exerciseTestCases &&
-            this.exerciseHints &&
+            this.textHints &&
             this.problemStatement &&
             this.taskRegex
         ) {

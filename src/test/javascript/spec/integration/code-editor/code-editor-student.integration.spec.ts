@@ -28,14 +28,12 @@ import {
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/participate/code-editor-student-container.component';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
-import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -46,7 +44,7 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { CodeEditorRepositoryIsLockedComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
-import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
+import { TextHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -62,6 +60,8 @@ import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
+import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
+import { MockTextHintService } from '../../helpers/mocks/service/mock-text-hint.service';
 
 describe('CodeEditorStudentIntegration', () => {
     // needed to make sure ace is defined
@@ -99,7 +99,7 @@ describe('CodeEditorStudentIntegration', () => {
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(UpdatingResultComponent),
                 MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
-                MockComponent(ExerciseHintStudentComponent),
+                MockComponent(TextHintStudentComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),
                 MockComponent(AdditionalFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
@@ -129,7 +129,7 @@ describe('CodeEditorStudentIntegration', () => {
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
-                { provide: ExerciseHintService, useClass: MockExerciseHintService },
+                { provide: TextHintService, useClass: MockTextHintService },
             ],
         })
             .compileComponents()
