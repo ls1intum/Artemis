@@ -62,7 +62,7 @@ describe('ActivateComponent', () => {
     it('should set set error to true upon activation failure', inject(
         [ActivateService],
         fakeAsync((service: ActivateService) => {
-            jest.spyOn(service, 'get').mockReturnValue(throwError('ERROR'));
+            jest.spyOn(service, 'get').mockReturnValue(throwError(() => new Error('ERROR')));
 
             comp.activateAccount();
             tick();

@@ -326,7 +326,7 @@ describe('ExamParticipationComponent', () => {
         comp.exam = new Exam();
         comp.exam.course = new Course();
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        const courseExerciseServiceStub = jest.spyOn(courseExerciseService, 'startExercise').mockReturnValue(throwError(httpError));
+        const courseExerciseServiceStub = jest.spyOn(courseExerciseService, 'startExercise').mockReturnValue(throwError(() => httpError));
         let index = 0;
         const states = ['generating', 'failed'];
         comp.generateParticipationStatus.subscribe((state) => {
@@ -417,7 +417,7 @@ describe('ExamParticipationComponent', () => {
 
     it('should show error', () => {
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(httpError));
+        const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
         const alertErrorSpy = jest.spyOn(alertService, 'error');
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalled();

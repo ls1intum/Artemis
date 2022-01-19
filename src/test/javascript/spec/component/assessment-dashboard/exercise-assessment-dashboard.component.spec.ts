@@ -312,7 +312,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should not set unassessedSubmission if lock limit is reached', () => {
-        modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(lockLimitErrorResponse));
+        modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => lockLimitErrorResponse));
         modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 
         comp.loadAll();
@@ -384,7 +384,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     describe('test calls for all exercise types', () => {
         it('fileuploadSubmission', () => {
-            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(lockLimitErrorResponse));
+            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => lockLimitErrorResponse));
             modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 
             exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise, headers: new HttpHeaders() })));
@@ -396,7 +396,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
 
         it('textSubmission', () => {
-            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(lockLimitErrorResponse));
+            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => lockLimitErrorResponse));
 
             exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: textExercise, headers: new HttpHeaders() })));
 
@@ -407,7 +407,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
 
         it('programmingSubmission', () => {
-            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(lockLimitErrorResponse));
+            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => lockLimitErrorResponse));
 
             exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: programmingExercise, headers: new HttpHeaders() })));
 
