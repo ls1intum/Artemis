@@ -30,6 +30,8 @@ services:
             artemis.continuous-integration.url: "${CI_URL}"
             artemis.continuous-integration.user: "${CI_USER}"
             artemis.continuous-integration.password: "${CI_PASSWORD}"
+            artemis.continuous-integration.token: "${CI_TOKEN}"
+            artemis.continuous-integration.artemis-authentication-token-value: "${CI_AUTH_TOKEN}"
             info.test-server: "true"
             server.url: "${SERVER_URL}"
         ports:
