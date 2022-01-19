@@ -1,10 +1,10 @@
 import { Credentials, IAuthServerProvider } from 'app/core/auth/auth-jwt.service';
-import { empty } from 'rxjs';
+import { EMPTY } from 'rxjs';
 import { of } from 'rxjs';
 
 export class MockAuthServerProviderService implements IAuthServerProvider {
     getToken = () => 'abc';
-    login = (credentials: Credentials) => empty();
+    login = (credentials: Credentials) => EMPTY;
     loginWithToken = (jwt: string, rememberMe: boolean) => Promise.resolve('abc');
     removeAuthTokenFromCaches = () => of(undefined);
     clearCaches = () => of(undefined);

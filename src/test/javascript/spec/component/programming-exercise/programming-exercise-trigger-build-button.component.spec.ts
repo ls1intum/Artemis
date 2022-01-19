@@ -44,7 +44,7 @@ describe('TriggerBuildButtonSpec', () => {
 
     const submission = { id: 1 } as any;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisProgrammingExerciseActionsModule],
             providers: [

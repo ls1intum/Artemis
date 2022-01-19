@@ -49,7 +49,7 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
         let settingId = event.currentTarget.id;
         // optionId String could have an appended (e.g.( " email" or " webapp" to specify which option to toggle
         if (settingId.indexOf(' ') !== -1) {
-            settingId = settingId.substr(0, settingId.indexOf(' '));
+            settingId = settingId.slice(0, settingId.indexOf(' '));
         }
         const settingToUpdate = this.settings.find((setting) => setting.settingId === settingId);
         if (!settingToUpdate) {

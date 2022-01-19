@@ -21,7 +21,7 @@ describe('DeleteDialogComponent', () => {
     let debugElement: DebugElement;
     let ngbActiveModal: NgbActiveModal;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgbModule],
             declarations: [DeleteDialogComponent, AlertComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],

@@ -101,13 +101,13 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     }
 
                     // Parse years in base 10 by extracting the two digits after the WS or SS prefix
-                    const yearsCompared = parseInt(semesterB.substr(2, 2), 10) - parseInt(semesterA.substr(2, 2), 10);
+                    const yearsCompared = parseInt(semesterB.slice(2, 4), 10) - parseInt(semesterA.slice(2, 4), 10);
                     if (yearsCompared !== 0) {
                         return yearsCompared;
                     }
 
                     // If years are the same, sort WS over SS
-                    return semesterA.substr(0, 2) === 'WS' ? -1 : 1;
+                    return semesterA.slice(0, 2) === 'WS' ? -1 : 1;
                 })
         );
     }

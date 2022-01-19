@@ -199,7 +199,7 @@ describe('ModelingSubmission Management Component', () => {
     });
 
     it('should navigate to access denied page on 403 error status', () => {
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(throwError({ status: 403 }));
+        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(throwError(() => ({ status: 403 })));
         const routerStub = jest.spyOn(router, 'navigate').mockReturnValue(new Promise(() => true));
         fixture.detectChanges();
         expect(routerStub).toHaveBeenCalledTimes(1);
@@ -242,7 +242,7 @@ describe('ModelingSubmission Management Component', () => {
     it('should catch error on submit', () => {
         const modelSubmission = <ModelingSubmission>(<unknown>{ model: '{"elements": [{"id": 1}]}', submitted: true, participation });
         comp.submission = modelSubmission;
-        jest.spyOn(service, 'create').mockReturnValue(throwError({ status: 500 }));
+        jest.spyOn(service, 'create').mockReturnValue(throwError(() => ({ status: 500 })));
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
         comp.modelingExercise.id = 1;

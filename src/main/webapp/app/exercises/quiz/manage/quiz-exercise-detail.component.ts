@@ -562,7 +562,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                 reasonString += res + '   -   ';
             });
         }
-        return reasonString.substr(0, reasonString.length - 5);
+        return reasonString.slice(0, reasonString.length - 5);
     }
 
     /**

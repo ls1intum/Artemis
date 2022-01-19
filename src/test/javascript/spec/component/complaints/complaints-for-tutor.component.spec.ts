@@ -1,4 +1,4 @@
-import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
@@ -19,7 +19,7 @@ describe('ComplaintsForTutorComponent', () => {
     let complaintForTutorComponentFixture: ComponentFixture<ComplaintsForTutorComponent>;
     let injectedComplaintResponseService: ComplaintResponseService;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), FormsModule],
             declarations: [ComplaintsForTutorComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
@@ -31,7 +31,7 @@ describe('ComplaintsForTutorComponent', () => {
                 complaintsForTutorComponent = complaintForTutorComponentFixture.componentInstance;
                 injectedComplaintResponseService = complaintForTutorComponentFixture.debugElement.injector.get(ComplaintResponseService);
             });
-    }));
+    });
 
     afterEach(() => {
         jest.restoreAllMocks();
