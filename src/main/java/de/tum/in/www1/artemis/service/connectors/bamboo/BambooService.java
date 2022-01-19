@@ -737,26 +737,25 @@ public class BambooService extends AbstractContinuousIntegrationService {
             return "The project " + projectKey + " already exists in the CI Server. Please choose a different short name!";
         }
         catch (HttpClientErrorException e) {
-            log.error("Encountered http exception when querying for project!", e);
-            log.info("Encountered http exception when querying for project!", e);
-            log.debug("Bamboo project {} does not exit", projectKey);
-            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-                // only if this is the case, we additionally check that the project name is unique
-                final var response = restTemplate.exchange(serverUrl + "/rest/api/latest/search/projects?searchTerm=" + projectName, HttpMethod.GET, null,
-                        BambooProjectsSearchDTO.class);
-                if (response.getBody() != null && response.getBody().getSize() > 0) {
-                    final var exists = response.getBody().getSearchResults().stream().map(BambooProjectsSearchDTO.SearchResultDTO::getSearchEntity)
-                            .anyMatch(project -> project.getProjectName().equalsIgnoreCase(projectName));
-                    if (exists) {
-                        log.warn("Bamboo project with name {} already exists", projectName);
-                        return "The project " + projectName + " already exists in the CI Server. Please choose a different title!";
-                    }
-                }
-
-                return null;
-            }
+            throw new IllegalStateException("Encountered http exception when querying for project!", e);
+            // log.debug("Bamboo project {} does not exit", projectKey);
+            // if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+            // // only if this is the case, we additionally check that the project name is unique
+            // final var response = restTemplate.exchange(serverUrl + "/rest/api/latest/search/projects?searchTerm=" + projectName, HttpMethod.GET, null,
+            // BambooProjectsSearchDTO.class);
+            // if (response.getBody() != null && response.getBody().getSize() > 0) {
+            // final var exists = response.getBody().getSearchResults().stream().map(BambooProjectsSearchDTO.SearchResultDTO::getSearchEntity)
+            // .anyMatch(project -> project.getProjectName().equalsIgnoreCase(projectName));
+            // if (exists) {
+            // log.warn("Bamboo project with name {} already exists", projectName);
+            // return "The project " + projectName + " already exists in the CI Server. Please choose a different title!";
+            // }
+            // }
+            //
+            // return null;
+            // }
         }
-        return "The project already exists on the Continuous Integration Server. Please choose a different title and short name!";
+        // return "The project already exists on the Continuous Integration Server. Please choose a different title and short name!";
     }
 
     /**
