@@ -1,5 +1,5 @@
 import { Component, ContentChild, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -34,11 +34,8 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { Observable } from 'rxjs';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
-import { SubmissionType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -84,7 +81,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     exerciseDashboardLink: string[];
     loadingInitialSubmission = true;
     highlightDifferences = false;
-    isAtLeastInstructor = false;
 
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
@@ -139,7 +135,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.isTestRun = queryParams.get('testRun') === 'true';
             this.correctionRound = Number(queryParams.get('correction-round'));
         });
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
@@ -219,6 +214,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResult = getLatestSubmissionResult(this.submission);
         this.participation = submission.participation!;
         this.exercise = this.participation.exercise as ProgrammingExercise;
+        /**
+         * CARE: Setting access rights for exercises should not happen this way and is a workaround.
+         *       The access rights should always be set when loading the exercise/course in the service!
+         * Problem: For a reason, which I do not understand, the exercise is undefined when the exercise is loaded
+         *       leading to {@link AccountService#setAccessRightsForExerciseAndReferencedCourse} skipping setting the
+         *       access rights.
+         *       This problem reoccurs in {@link FileUploadAssessmentComponent#initializePropertiesFromSubmission}
+         */
+        this.accountService.setAccessRightsForExercise(this.exercise);
         this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && dayjs(this.exercise!.assessmentDueDate).isBefore(dayjs());
 
         this.checkPermissions();
@@ -474,7 +478,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     readOnly() {
         return !isAllowedToModifyFeedback(
-            this.isAtLeastInstructor,
+            this.exercise.isAtLeastInstructor ?? false,
             this.isTestRun,
             this.isAssessor,
             this.hasAssessmentDueDatePassed,
@@ -504,9 +508,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.isAssessor = this.manualResult.assessor.id === this.userId;
         } else {
             this.isAssessor = true;
-        }
-        if (this.exercise) {
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(getCourseFromExercise(this.exercise));
         }
     }
 

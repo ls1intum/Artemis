@@ -166,7 +166,7 @@ public class ProgrammingExerciseService {
 
         scheduleOperations(programmingExercise.getId());
 
-        groupNotificationService.checkNotificationForExerciseRelease(programmingExercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(programmingExercise, instanceMessageSendService);
 
         return programmingExercise;
     }
@@ -670,6 +670,7 @@ public class ProgrammingExerciseService {
         // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
         ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
         programmingExerciseBeforeUpdate.setReleaseDate(programmingExercise.getReleaseDate());
+        programmingExerciseBeforeUpdate.setAssessmentDueDate(programmingExercise.getAssessmentDueDate());
 
         programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
         programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());

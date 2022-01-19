@@ -79,7 +79,7 @@ describe('StudentExamDetailComponent', () => {
 
         studentExam = {
             id: 1,
-            workingTime: 3600,
+            workingTime: 12002,
             exam,
             user: student,
             exercises: [exercise],
@@ -180,6 +180,7 @@ describe('StudentExamDetailComponent', () => {
                 gradingSystemService = TestBed.inject(GradingSystemService);
             });
     });
+
     afterEach(() => {
         jest.restoreAllMocks();
     });
@@ -191,9 +192,14 @@ describe('StudentExamDetailComponent', () => {
 
         expect(findCourseSpy).toHaveBeenCalledTimes(1);
         expect(gradeSpy).toHaveBeenCalledTimes(1);
-        expect(course.id).toEqual(1);
-        expect(studentExamDetailComponent.workingTimeForm).not.toBeNull();
-        expect(studentExamDetailComponent.achievedTotalPoints).toEqual(40);
+        expect(course.id).toBe(1);
+        expect(studentExamDetailComponent.workingTimeForm).not.toBe(null);
+        expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
+
+        // 12002 sec working time = 200 minutes 2 seconds = 3h 20 min 2 s
+        expect(studentExamDetailComponent.workingTimeForm.controls.hours.value).toBe(3);
+        expect(studentExamDetailComponent.workingTimeForm.controls.minutes.value).toBe(20);
+        expect(studentExamDetailComponent.workingTimeForm.controls.seconds.value).toBe(2);
     });
 
     it('should save working time', () => {
@@ -202,11 +208,11 @@ describe('StudentExamDetailComponent', () => {
 
         studentExamDetailComponent.saveWorkingTime();
         expect(studentExamSpy).toHaveBeenCalledTimes(1);
-        expect(studentExamDetailComponent.isSavingWorkingTime).toEqual(false);
-        expect(course.id).toEqual(1);
-        expect(studentExamDetailComponent.workingTimeForm).not.toBeNull();
-        expect(studentExamDetailComponent.achievedTotalPoints).toEqual(40);
-        expect(studentExamDetailComponent.maxTotalPoints).toEqual(100);
+        expect(studentExamDetailComponent.isSavingWorkingTime).toBe(false);
+        expect(course.id).toBe(1);
+        expect(studentExamDetailComponent.workingTimeForm).not.toBe(null);
+        expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
+        expect(studentExamDetailComponent.maxTotalPoints).toBe(100);
     });
 
     it('should not increase points when save working time is called more than once', () => {
@@ -216,35 +222,37 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.saveWorkingTime();
         studentExamDetailComponent.saveWorkingTime();
         expect(studentExamSpy).toHaveBeenCalledTimes(3);
-        expect(studentExamDetailComponent.isSavingWorkingTime).toEqual(false);
-        expect(course.id).toEqual(1);
-        expect(studentExamDetailComponent.workingTimeForm).not.toBeNull();
-        expect(studentExamDetailComponent.achievedTotalPoints).toEqual(40);
-        expect(studentExamDetailComponent.maxTotalPoints).toEqual(100);
+        expect(studentExamDetailComponent.isSavingWorkingTime).toBe(false);
+        expect(course.id).toBe(1);
+        expect(studentExamDetailComponent.workingTimeForm).not.toBe(null);
+        expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
+        expect(studentExamDetailComponent.maxTotalPoints).toBe(100);
     });
 
     it('should get examIsOver', () => {
         studentExamDetailComponent.studentExam = studentExam;
         studentExam.exam!.gracePeriod = 100;
-        expect(studentExamDetailComponent.examIsOver()).toEqual(false);
+        expect(studentExamDetailComponent.examIsOver()).toBe(false);
         studentExam.exam!.endDate = dayjs().add(-20, 'seconds');
-        expect(studentExamDetailComponent.examIsOver()).toEqual(false);
+        expect(studentExamDetailComponent.examIsOver()).toBe(false);
         studentExam.exam!.endDate = dayjs().add(-200, 'seconds');
-        expect(studentExamDetailComponent.examIsOver()).toEqual(true);
+        expect(studentExamDetailComponent.examIsOver()).toBe(true);
         studentExam.exam = undefined;
-        expect(studentExamDetailComponent.examIsOver()).toEqual(false);
+        expect(studentExamDetailComponent.examIsOver()).toBe(false);
     });
 
     it('should toggle to unsubmitted', () => {
         const toggleSubmittedStateSpy = jest.spyOn(studentExamService, 'toggleSubmittedState');
         studentExamDetailComponentFixture.detectChanges();
-        expect(studentExamDetailComponent.studentExam.submitted).toEqual(undefined);
-        expect(studentExamDetailComponent.studentExam.submissionDate).toEqual(undefined);
+        expect(studentExamDetailComponent.studentExam.submitted).toBe(undefined);
+        expect(studentExamDetailComponent.studentExam.submissionDate).toBe(undefined);
 
         studentExamDetailComponent.toggle();
 
         expect(toggleSubmittedStateSpy).toHaveBeenCalledTimes(1);
-        expect(studentExamDetailComponent.studentExam.submitted).toEqual(true);
-        expect(studentExamDetailComponent.studentExam.submissionDate).not.toBeUndefined();
+        expect(studentExamDetailComponent.studentExam.submitted).toBe(true);
+        // the toggle uses the current time as submission date,
+        // therefore no useful assertion about a concrete value is possible here
+        expect(studentExamDetailComponent.studentExam.submissionDate).not.toBe(undefined);
     });
 });

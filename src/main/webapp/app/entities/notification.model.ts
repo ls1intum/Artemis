@@ -26,6 +26,8 @@ export class Notification implements BaseEntity {
 /**
  * Corresponds to the server-side NotificationTitleTypeConstants(.java) constant Strings
  */
+export const EXERCISE_SUBMISSION_ASSESSED_TITLE = 'Exercise Submission Assessed';
+
 export const ATTACHMENT_CHANGE_TITLE = 'Attachment updated';
 
 export const EXERCISE_RELEASED_TITLE = 'Exercise released';

@@ -206,7 +206,7 @@ describe('GuidedTourService', () => {
             jest.spyOn<any, any>(guidedTourComponent, 'subscribeToDotChanges').mockImplementation(() => {});
         }
 
-        async function startCourseOverviewTour(guidedTour: GuidedTour) {
+        function startCourseOverviewTour(guidedTour: GuidedTour) {
             guidedTourComponent.ngAfterViewInit();
 
             guidedTourComponentFixture.ngZone!.run(() => {
@@ -225,9 +225,9 @@ describe('GuidedTourService', () => {
         }
 
         describe('Tours without user interaction', () => {
-            beforeEach(async () => {
+            beforeEach(() => {
                 prepareGuidedTour(tour);
-                await startCourseOverviewTour(tour);
+                startCourseOverviewTour(tour);
             });
 
             it('should start and finish the course overview guided tour', async () => {
@@ -265,9 +265,9 @@ describe('GuidedTourService', () => {
         });
 
         describe('Tours with user interaction', () => {
-            beforeEach(async () => {
+            beforeEach(() => {
                 prepareGuidedTour(tourWithUserInteraction);
-                await startCourseOverviewTour(tourWithUserInteraction);
+                startCourseOverviewTour(tourWithUserInteraction);
             });
 
             it('should disable the next button', () => {
