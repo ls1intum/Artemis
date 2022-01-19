@@ -18,6 +18,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 export type PlagiarismCheckState = {
     state: 'COMPLETED' | 'RUNNING';
@@ -91,6 +92,8 @@ export class PlagiarismInspectorComponent implements OnInit {
      * The minimumSize option is only configurable, if this value is true.
      */
     enableMinimumSize = false;
+
+    readonly FeatureToggle = FeatureToggle;
 
     // Icons
     faQuestionCircle = faQuestionCircle;

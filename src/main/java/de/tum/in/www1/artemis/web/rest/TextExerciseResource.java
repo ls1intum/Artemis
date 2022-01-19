@@ -486,7 +486,7 @@ public class TextExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
     @GetMapping("/text-exercises/{exerciseId}/check-plagiarism")
-    @FeatureToggle(Feature.PLAGIARISM_CHECK)
+    @FeatureToggle(Feature.PlagiarismChecks)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) throws ExitException {

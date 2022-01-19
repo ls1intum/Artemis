@@ -139,7 +139,7 @@ describe('Logs Service', () => {
         inProduction: true,
         openApiEnabled: true,
         sentry: { dsn: 'https://ceeb3e72ec094684aefbb132f87231f2@sentry.ase.in.tum.de/2' },
-        features: [FeatureToggle.PROGRAMMING_EXERCISES],
+        features: [FeatureToggle.ProgrammingExercises],
         buildPlanURLTemplate: 'https://artemistest2jenkins.ase.in.tum.de/job/{projectKey}/job/{buildPlanId}',
         commitHashURLTemplate: 'https://artemistest2gitlab.ase.in.tum.de/{projectKey}/{repoSlug}/-/commit/{commitHash}',
         sshCloneURLTemplate: 'ssh://git@artemistest2gitlab.ase.in.tum.de:2222/',

@@ -420,7 +420,7 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
     @GetMapping("modeling-exercises/{exerciseId}/check-plagiarism")
-    @FeatureToggle(Feature.PLAGIARISM_CHECK)
+    @FeatureToggle(Feature.PlagiarismChecks)
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) {

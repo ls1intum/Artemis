@@ -74,7 +74,7 @@ public class ProgrammingExercisePlagiarismResource {
      */
     @GetMapping(PLAGIARISM_RESULT)
     @PreAuthorize("hasRole('EDITOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<TextPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the programming exercise with id: {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -95,7 +95,7 @@ public class ProgrammingExercisePlagiarismResource {
      */
     @GetMapping(CHECK_PLAGIARISM)
     @PreAuthorize("hasRole('EDITOR')")
-    @FeatureToggle({ Feature.PROGRAMMING_EXERCISES, Feature.PLAGIARISM_CHECK })
+    @FeatureToggle({ Feature.ProgrammingExercises, Feature.PlagiarismChecks })
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore)
             throws ExitException, IOException {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -127,7 +127,7 @@ public class ProgrammingExercisePlagiarismResource {
      */
     @GetMapping(value = CHECK_PLAGIARISM_JPLAG_REPORT, produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasRole('EDITOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore)
             throws ExitException, IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
