@@ -571,6 +571,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             health = status.getBody().get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
         }
         catch (Exception emAll) {
+            log.error("Bamboo service connection is down!", emAll);
             health = new ConnectorHealth(emAll);
         }
 
