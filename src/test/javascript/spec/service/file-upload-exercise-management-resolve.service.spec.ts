@@ -7,7 +7,10 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { MockCourseManagementService } from '../helpers/mocks/service/mock-course-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { MockProvider } from 'ng-mocks';
-import { Observable, of } from 'rxjs';
+import { Observable, of, take } from 'rxjs';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { Course } from 'app/entities/course.model';
+import { HttpResponse } from '@angular/common/http';
 
 describe('FileUploadExerciseManagementResolve', () => {
     let service: FileUploadExerciseManagementResolve;
@@ -18,6 +21,11 @@ describe('FileUploadExerciseManagementResolve', () => {
     let exerciseFindStub: jest.SpyInstance;
     let courseFindStub: jest.SpyInstance;
     let exerciseGroupFindStub: jest.SpyInstance;
+
+    let result: Observable<FileUploadExercise>;
+
+    const expectedExercisePerCourseIDOrExerciseGroupID = new FileUploadExercise({ id: 456 } as Course, undefined);
+    expectedExercisePerCourseIDOrExerciseGroupID.filePattern = 'pdf, png';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -43,52 +51,59 @@ describe('FileUploadExerciseManagementResolve', () => {
     it('should process empty params correctly', () => {
         const snapshot = { params: {} } as unknown as ActivatedRouteSnapshot;
 
-        service.resolve(snapshot);
+        result = service.resolve(snapshot);
 
+        verifyResult(new FileUploadExercise(undefined, undefined));
         verifyCalls(false, false, false);
     });
 
     it('should process exercise ID correctly', () => {
         const snapshot = {
-            params: { exerciseId: 42 },
+            params: { exerciseId: 2 },
         } as unknown as ActivatedRouteSnapshot;
 
-        service.resolve(snapshot);
+        result = service.resolve(snapshot);
 
-        expect(exerciseFindStub).toHaveBeenCalledWith(42);
+        expect(exerciseFindStub).toHaveBeenCalledWith(2);
+        verifyResult(fileUploadExercise);
         verifyCalls(true, false, false);
     });
 
     it('should process course ID without exam ID and exercise Group ID correctly', () => {
         const snapshot = {
-            params: { courseId: 3 },
+            params: { courseId: 456 },
         } as unknown as ActivatedRouteSnapshot;
+        const course = { id: 456 } as Course;
+        jest.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
-        service.resolve(snapshot);
+        result = service.resolve(snapshot);
 
-        expect(courseFindStub).toHaveBeenCalledWith(3);
+        expect(courseFindStub).toHaveBeenCalledWith(456);
+        verifyResult(expectedExercisePerCourseIDOrExerciseGroupID);
         verifyCalls(false, true, false);
     });
 
     it('should process course ID with exam ID and without exercise Group ID correctly', () => {
         const snapshot = {
-            params: { courseId: 3, examId: 4 },
+            params: { courseId: 456, examId: 4 },
         } as unknown as ActivatedRouteSnapshot;
 
-        service.resolve(snapshot);
+        result = service.resolve(snapshot);
 
-        expect(courseFindStub).toHaveBeenCalledWith(3);
+        expect(courseFindStub).toHaveBeenCalledWith(456);
+        verifyResult(expectedExercisePerCourseIDOrExerciseGroupID);
         verifyCalls(false, true, false);
     });
 
     it('should process course ID with exam ID and exercise Group ID correctly', () => {
         const snapshot = {
-            params: { courseId: 3, examId: 4, exerciseGroupId: 5 },
+            params: { courseId: 456, examId: 4, exerciseGroupId: 5 },
         } as unknown as ActivatedRouteSnapshot;
 
-        service.resolve(snapshot);
+        result = service.resolve(snapshot);
 
-        expect(exerciseGroupFindStub).toHaveBeenCalledWith(3, 4, 5);
+        expect(exerciseGroupFindStub).toHaveBeenCalledWith(456, 4, 5);
+        verifyResult(fileUploadExercise);
         verifyCalls(false, false, true);
     });
 
@@ -96,5 +111,9 @@ describe('FileUploadExerciseManagementResolve', () => {
         expect(exerciseFindStub).toHaveBeenCalledTimes(exerciseServiceCalled ? 1 : 0);
         expect(courseFindStub).toHaveBeenCalledTimes(courseServiceCalled ? 1 : 0);
         expect(exerciseGroupFindStub).toHaveBeenCalledTimes(exerciseGroupServiceCalled ? 1 : 0);
+    };
+
+    const verifyResult = (expectedResult: FileUploadExercise) => {
+        result.pipe(take(1)).subscribe((resultContent) => expect(resultContent).toEqual(expectedResult));
     };
 });
