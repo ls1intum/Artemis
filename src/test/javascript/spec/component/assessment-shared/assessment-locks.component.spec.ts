@@ -5,7 +5,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -20,6 +20,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { of } from 'rxjs';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('AssessmentLocksComponent', () => {
     let component: AssessmentLocksComponent;
@@ -28,17 +29,11 @@ describe('AssessmentLocksComponent', () => {
     let textAssessmentService: TextAssessmentService;
     let programmingAssessmentService: ProgrammingAssessmentManualResultService;
     let fileUploadAssessmentService: FileUploadAssessmentService;
-    let confirmSpy: jest.SpyInstance<boolean, [message?: string | undefined]>;
 
     const modelingSubmission = { id: 21, submissionExerciseType: SubmissionExerciseType.MODELING } as ModelingSubmission;
     const fileUploadSubmission = { id: 22, submissionExerciseType: SubmissionExerciseType.FILE_UPLOAD } as FileUploadSubmission;
     const textSubmission = { id: 23, participation: { exercise: { id: 1 }, id: 2 }, submissionExerciseType: SubmissionExerciseType.TEXT } as TextSubmission;
     const programmingSubmission = { id: 24, submissionExerciseType: SubmissionExerciseType.PROGRAMMING } as ProgrammingSubmission;
-
-    beforeAll(() => {
-        confirmSpy = jest.spyOn(window, 'confirm');
-        confirmSpy.mockImplementation(jest.fn(() => true));
-    });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -54,6 +49,7 @@ describe('AssessmentLocksComponent', () => {
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: textAssessmentService, useClass: TextAssessmentService },
                 { provide: programmingAssessmentService, useClass: ProgrammingAssessmentManualResultService },
                 { provide: fileUploadAssessmentService, useClass: FileUploadAssessmentService },
@@ -74,9 +70,6 @@ describe('AssessmentLocksComponent', () => {
         component = fixture.componentInstance;
         fixture.detectChanges();
     });
-
-    afterAll(() => confirmSpy.mockRestore());
-
     it('should create', () => {
         expect(component).toBeTruthy();
     });
