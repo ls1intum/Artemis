@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
@@ -75,14 +76,12 @@ public class PlagiarismResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> updatePlagiarismComparisonStatus(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") long comparisonId,
             @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
-        log.debug("REST request to update the status of the plagiarism comparison with id: {}", comparisonId);
+        log.info("REST request to update the status {} of the plagiarism comparison with id: {}", statusDTO.getStatus(), comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authenticationCheckService.isAtLeastEditorInCourse(course, currentUser)) {
-            throw new AccessForbiddenException("Only editors or instructors of this course can update plagiarism cases.");
-        }
-        var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
-        plagiarismComparisonRepository.updatePlagiarismComparisonStatus(comparison.getId(), statusDTO.getStatus());
+        authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        // TODO: check that the comparisonId belongs to the courseId
+        plagiarismComparisonRepository.updatePlagiarismComparisonStatus(comparisonId, statusDTO.getStatus());
+        log.info("Finished updating the status {} of the plagiarism comparison with id: {}", statusDTO.getStatus(), comparisonId);
         return ResponseEntity.ok().body(null);
     }
 
