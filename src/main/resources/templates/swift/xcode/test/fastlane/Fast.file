@@ -48,7 +48,7 @@ desc "Run Static Code Analysis"
 lane :sca do
     # Run Static Code Analysis with swiftlint
     swiftlint(
-        output_file: "../target/swiftlint-result.xml",
+        output_file: "target/swiftlint-result.xml",
         config_file: ".swiftlint.yml",
         ignore_exit_status: true
     )
