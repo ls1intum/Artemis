@@ -31,7 +31,7 @@ describe('StatisticsGraphComponent', () => {
                 fixture = TestBed.createComponent(StatisticsGraphComponent);
                 component = fixture.componentInstance;
                 service = TestBed.inject(StatisticsService);
-                httpMock = TestBed.get(HttpTestingController);
+                httpMock = TestBed.inject(HttpTestingController);
             });
     });
 

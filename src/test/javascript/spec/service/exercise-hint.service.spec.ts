@@ -1,4 +1,4 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
 import { take } from 'rxjs/operators';
@@ -11,7 +11,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { TextHint } from 'app/entities/hestia/text-hint-model';
 
 describe('ExerciseHint Service', () => {
-    let injector: TestBed;
     let service: ExerciseHintService;
     let httpMock: HttpTestingController;
     let elemDefault: TextHint;
@@ -30,9 +29,8 @@ describe('ExerciseHint Service', () => {
             ],
         });
         expectedResult = {} as HttpResponse<ExerciseHint>;
-        injector = getTestBed();
-        service = injector.get(ExerciseHintService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(ExerciseHintService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.id = 1;

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
-import { ActivatedRoute, Data, ParamMap, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
 
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
@@ -73,7 +73,7 @@ export class AuditsComponent implements OnInit {
     }
 
     private handleNavigation(): void {
-        combineLatest(this.activatedRoute.data, this.activatedRoute.queryParamMap, (data: Data, params: ParamMap) => {
+        combineLatest({ data: this.activatedRoute.data, params: this.activatedRoute.queryParamMap }).subscribe(({ data, params }) => {
             const page = params.get('page');
             this.page = page !== null ? +page : 1;
             const sort = (params.get('sort') ?? data['defaultSort']).split(',');
@@ -86,7 +86,7 @@ export class AuditsComponent implements OnInit {
                 this.toDate = this.datePipe.transform(params.get('to'), this.dateFormat)!;
             }
             this.loadData();
-        }).subscribe();
+        });
     }
 
     private loadData(): void {

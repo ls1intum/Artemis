@@ -192,7 +192,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 this.router.navigateByUrl(redirect);
             } else {
                 // TODO: Remove redirect after summer 2021 term. New deep links should no longer use /#.
-                const url = this.router.url.startsWith('/#') ? this.router.url.substr(2) : 'courses';
+                const url = this.router.url.startsWith('/#') ? this.router.url.slice(2) : 'courses';
                 this.router.navigate([url]);
             }
         }

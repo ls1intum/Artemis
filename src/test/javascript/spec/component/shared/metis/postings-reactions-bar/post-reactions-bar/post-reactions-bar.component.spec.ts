@@ -1,4 +1,4 @@
-import { ComponentFixture, getTestBed, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
@@ -29,7 +29,6 @@ import { metisCourse, metisUser1 } from '../../../../../helpers/sample/metis-sam
 
 describe('PostReactionsBarComponent', () => {
     let component: PostReactionsBarComponent;
-    let injector: TestBed;
     let fixture: ComponentFixture<PostReactionsBarComponent>;
     let debugElement: DebugElement;
     let metisService: MetisService;
@@ -61,8 +60,7 @@ describe('PostReactionsBarComponent', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(PostReactionsBarComponent);
-                injector = getTestBed();
-                metisService = injector.get(MetisService);
+                metisService = TestBed.inject(MetisService);
                 debugElement = fixture.debugElement;
                 component = fixture.componentInstance;
                 metisServiceUpdateDisplayPriorityMock = jest.spyOn(metisService, 'updatePostDisplayPriority');

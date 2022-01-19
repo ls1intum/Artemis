@@ -27,6 +27,7 @@
             "settingNames": {
                 "exerciseReleased": "Exercise released",
                 "exerciseOpenForPractice": "Exercise Open for Practice",
+                "exerciseSubmissionAssessed": "Exercise Submission assessed",
                 "attachmentChanges": "Attachment Changes",
                 "newExercisePost": "New Exercise Post",
                 "newReplyForExercisePost": "New Reply for Exercise Post",
@@ -42,6 +43,7 @@
             "settingDescriptions": {
                 "exerciseReleasedDescription": "Get notified when a new exercise has been released",
                 "exerciseOpenForPracticeDescription": "Get notified when an exercise has been opened for practice (e.g. Quiz)",
+                "exerciseSubmissionAssessedDescription": "Get notified when your exercise submissions get assessed",
                 "attachmentChangesDescription": "Receive a notification when an attachment was changed",
                 "newExercisePostDescription": "Get notified when a new exercise post has been created",
                 "newReplyForExercisePostDescription": "Get notified when a new reply for an exercise post has been created",

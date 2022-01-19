@@ -16,7 +16,7 @@ describe('Underline Command', () => {
         jest.restoreAllMocks();
     });
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
         })

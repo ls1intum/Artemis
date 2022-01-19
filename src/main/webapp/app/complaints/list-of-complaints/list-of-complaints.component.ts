@@ -30,7 +30,7 @@ export class ListOfComplaintsComponent implements OnInit {
     private exerciseId: number;
     private tutorId: number;
     private examId?: number;
-    private correctionRound?: number;
+    correctionRound?: number;
     complaintsSortingPredicate = 'id';
     complaintsReverseOrder = false;
     complaintsToShow: Complaint[] = [];
@@ -93,7 +93,7 @@ export class ListOfComplaintsComponent implements OnInit {
                 this.complaints = res.body!;
                 this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
 
-                if (this.complaints.length > 0 && this.complaints[0].student) {
+                if (this.complaints.some((complaint) => complaint.student)) {
                     this.hasStudentInformation = true;
                 }
             },

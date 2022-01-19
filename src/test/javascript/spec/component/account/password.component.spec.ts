@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
@@ -17,7 +17,7 @@ describe('Component Tests', () => {
         let fixture: ComponentFixture<PasswordComponent>;
         let service: PasswordService;
 
-        beforeEach(async(() => {
+        beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule],
                 declarations: [PasswordComponent],
@@ -30,7 +30,7 @@ describe('Component Tests', () => {
             })
                 .overrideTemplate(PasswordComponent, '')
                 .compileComponents();
-        }));
+        });
 
         beforeEach(() => {
             fixture = TestBed.createComponent(PasswordComponent);
@@ -94,7 +94,7 @@ describe('Component Tests', () => {
 
         it('should notify of error if change password fails', () => {
             // GIVEN
-            jest.spyOn(service, 'save').mockReturnValue(throwError('ERROR'));
+            jest.spyOn(service, 'save').mockReturnValue(throwError(() => new Error('ERROR')));
             comp.passwordForm.patchValue({
                 newPassword: 'myPassword',
                 confirmPassword: 'myPassword',
