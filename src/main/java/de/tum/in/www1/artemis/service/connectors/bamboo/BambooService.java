@@ -733,6 +733,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             return "The project " + projectKey + " already exists in the CI Server. Please choose a different short name!";
         }
         catch (HttpClientErrorException e) {
+            log.error("Encountered http exception when querying for project!", e);
             log.debug("Bamboo project {} does not exit", projectKey);
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 // only if this is the case, we additionally check that the project name is unique
