@@ -5,7 +5,7 @@ import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { of } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -14,6 +14,8 @@ import { HttpResponse } from '@angular/common/http';
 import { LineChartModule } from '@swimlane/ngx-charts';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { MockRouter } from '../../../../helpers/mocks/mock-router';
 
 class MockActivatedRoute {
     parent: any;
@@ -43,7 +45,8 @@ describe('ExerciseScoresChartComponent', () => {
             declarations: [ExerciseScoresChartComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(TranslateService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
                 MockProvider(ExerciseScoresChartService),
 
                 {
@@ -72,14 +75,7 @@ describe('ExerciseScoresChartComponent', () => {
         const firstExercise = generateExerciseScoresDTO(ExerciseType.TEXT, 1, 50, 70, 100, dayjs(), 'First Exercise');
         const secondExercise = generateExerciseScoresDTO(ExerciseType.QUIZ, 2, 40, 80, 90, dayjs().add(5, 'days'), 'Second Exercise');
 
-        const exerciseScoresChartService = TestBed.inject(ExerciseScoresChartService);
-        const exerciseScoresResponse: HttpResponse<ExerciseScoresDTO[]> = new HttpResponse({
-            body: [firstExercise, secondExercise],
-            status: 200,
-        });
-        component.filteredExerciseIDs = [];
-        const getScoresStub = jest.spyOn(exerciseScoresChartService, 'getExerciseScoresForCourse').mockReturnValue(of(exerciseScoresResponse));
-        component.ngAfterViewInit();
+        const getScoresStub = setUpServiceAndStartComponent([firstExercise, secondExercise]);
         expect(getScoresStub).toHaveBeenCalledTimes(1);
         expect(component.ngxData).toHaveLength(3);
 
@@ -111,15 +107,7 @@ describe('ExerciseScoresChartComponent', () => {
             exercises.push(generateExerciseScoresDTO(ExerciseType.QUIZ, i, i * 5, 100 - i * 4, 100 - i * 4, dayjs().add(i, 'days'), i + 'th Exercise'));
         }
 
-        const exerciseScoresChartService = TestBed.inject(ExerciseScoresChartService);
-        const exerciseScoresResponse: HttpResponse<ExerciseScoresDTO[]> = new HttpResponse({
-            body: exercises,
-            status: 200,
-        });
-
-        component.filteredExerciseIDs = [];
-        const getScoresStub = jest.spyOn(exerciseScoresChartService, 'getExerciseScoresForCourse').mockReturnValue(of(exerciseScoresResponse));
-        component.ngAfterViewInit();
+        const getScoresStub = setUpServiceAndStartComponent(exercises);
 
         expect(getScoresStub).toHaveBeenCalledTimes(1);
         expect(component.ngxData[0].series.map((exercise: any) => exercise.exerciseId)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
@@ -136,6 +124,80 @@ describe('ExerciseScoresChartComponent', () => {
         expect(getScoresStub).toHaveBeenCalledTimes(1);
         expect(component.ngxData[0].series.map((exercise: any) => exercise.exerciseId)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     });
+
+    it('should react correctly if legend entry is clicked', () => {
+        const firstExercise = generateExerciseScoresDTO(ExerciseType.FILE_UPLOAD, 1, 40, 30, 60, dayjs(), 'first exercise');
+        const secondExercise = generateExerciseScoresDTO(ExerciseType.FILE_UPLOAD, 2, 43, 31, 70, dayjs(), 'second exercise');
+
+        setUpServiceAndStartComponent([firstExercise, secondExercise]);
+        const legendClickEvent = 'artemisApp.exercise-scores-chart.maximumScoreLabel';
+        component.onSelect(legendClickEvent);
+
+        expect(component.ngxColor.domain[2]).toBe('rgba(255,255,255,0)');
+        expect(component.ngxData[2].series.map((exercise: any) => exercise.value)).toEqual([0, 0]);
+
+        component.onSelect(legendClickEvent);
+        expect(component.ngxColor.domain[2]).toBe('#32cd32');
+        expect(component.ngxData[2].series.map((exercise: any) => exercise.value)).toEqual([61, 71]);
+    });
+
+    it('should react correct if chart point is clicked', () => {
+        const firstExercise = generateExerciseScoresDTO(ExerciseType.TEXT, 1, 40, 30, 60, dayjs(), 'first exercise');
+        const secondExercise = generateExerciseScoresDTO(ExerciseType.QUIZ, 2, 43, 31, 70, dayjs(), 'second exercise');
+
+        setUpServiceAndStartComponent([firstExercise, secondExercise]);
+        const routerMock = TestBed.inject(Router);
+        const routerSpy = jest.spyOn(routerMock, 'navigate');
+        const pointClickEvent = { exerciseId: 2 };
+
+        component.onSelect(pointClickEvent);
+
+        expect(routerSpy).toHaveBeenCalledWith(['courses', 1, 'exercises', 2]);
+
+        pointClickEvent.exerciseId = 1;
+
+        component.onSelect(pointClickEvent);
+
+        expect(routerSpy).toHaveBeenCalledWith(['courses', 1, 'exercises', 1]);
+    });
+
+    it('should setup and execute exercise type filter correctly', () => {
+        const exerciseTypes = [ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.QUIZ, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD];
+        const exerciseDTOs: ExerciseScoresDTO[] = [];
+        exerciseTypes.forEach((type, index) => {
+            const dto = generateExerciseScoresDTO(type, index, index, index * 2, 100, dayjs(), type);
+            exerciseDTOs.push(dto);
+        });
+        setUpServiceAndStartComponent(exerciseDTOs);
+
+        expect(component.numberOfActiveFilters).toBe(5);
+
+        exerciseTypes.forEach((type, index) => {
+            expect(component.typeSet.has(type)).toBe(true);
+            expect(component.chartFilter.get(type)).toBe(true);
+
+            component.toggleExerciseType(type);
+
+            expect(component.numberOfActiveFilters).toBe(4 - index);
+            expect(component.chartFilter.get(type)).toBe(false);
+
+            component.ngxData.forEach((line: any) => {
+                expect(line.series.filter((exerciseEntry: any) => exerciseEntry.exerciseType === exerciseDTOs[index].exerciseType)).toHaveLength(0);
+            });
+        });
+    });
+
+    const setUpServiceAndStartComponent = (exerciseDTOs: ExerciseScoresDTO[]) => {
+        const exerciseScoresChartService = TestBed.inject(ExerciseScoresChartService);
+        const exerciseScoresResponse: HttpResponse<ExerciseScoresDTO[]> = new HttpResponse({
+            body: exerciseDTOs,
+            status: 200,
+        });
+        component.filteredExerciseIDs = [];
+        const getScoresStub = jest.spyOn(exerciseScoresChartService, 'getExerciseScoresForCourse').mockReturnValue(of(exerciseScoresResponse));
+        component.ngAfterViewInit();
+        return getScoresStub;
+    };
 });
 
 function validateStructureOfDataPoint(dataPoint: any, exerciseScoresDTO: ExerciseScoresDTO, score: number) {

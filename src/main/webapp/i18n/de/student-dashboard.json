@@ -124,7 +124,11 @@
                 "textPointLabel": "Textaufgaben Punkte",
                 "fileUploadPointLabel": "Dateiupload-Aufgaben Punkte",
                 "missingPointsLabel": "Fehlende Punkte",
-                "achievedPointsLabel": "Erreichte Punkte"
+                "achievedPointsLabel": "Erreichte Punkte",
+                "includeStandardCategories": "Verberge Artemis Standard-Kategorien:",
+                "includeIndividualCategories": "Zeige kurs-spezifische Kategorien:",
+                "includeAllCategories": "Wähle alle Optionen",
+                "exercisesWithNoCategories": "Aufgaben ohne Kategorien"
             },
             "lectureList": {
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",
