@@ -18,8 +18,8 @@ describe('FileUploadExerciseManagementResolve', () => {
     let courseManagementService: CourseManagementService;
     let exerciseGroupService: ExerciseGroupService;
 
-    let exerciseFindStub: jest.SpyInstance;
-    let courseFindStub: jest.SpyInstance;
+    let exerciseFindSpy: jest.SpyInstance;
+    let courseFindSpy: jest.SpyInstance;
     let exerciseGroupFindStub: jest.SpyInstance;
 
     let result: Observable<FileUploadExercise>;
@@ -42,8 +42,8 @@ describe('FileUploadExerciseManagementResolve', () => {
                 courseManagementService = TestBed.inject(CourseManagementService);
                 exerciseGroupService = TestBed.inject(ExerciseGroupService);
 
-                exerciseFindStub = jest.spyOn(fileUploadService, 'find');
-                courseFindStub = jest.spyOn(courseManagementService, 'find');
+                exerciseFindSpy = jest.spyOn(fileUploadService, 'find');
+                courseFindSpy = jest.spyOn(courseManagementService, 'find');
                 exerciseGroupFindStub = jest.spyOn(exerciseGroupService, 'find').mockReturnValue(of({ body: fileUploadExercise }) as Observable<EntityResponseType>);
             });
     });
@@ -64,7 +64,7 @@ describe('FileUploadExerciseManagementResolve', () => {
 
         result = service.resolve(snapshot);
 
-        expect(exerciseFindStub).toHaveBeenCalledWith(2);
+        expect(exerciseFindSpy).toHaveBeenCalledWith(2);
         verifyResult(fileUploadExercise);
         verifyCalls(true, false, false);
     });
@@ -78,7 +78,7 @@ describe('FileUploadExerciseManagementResolve', () => {
 
         result = service.resolve(snapshot);
 
-        expect(courseFindStub).toHaveBeenCalledWith(456);
+        expect(courseFindSpy).toHaveBeenCalledWith(456);
         verifyResult(expectedExercisePerCourseIDOrExerciseGroupID);
         verifyCalls(false, true, false);
     });
@@ -90,7 +90,7 @@ describe('FileUploadExerciseManagementResolve', () => {
 
         result = service.resolve(snapshot);
 
-        expect(courseFindStub).toHaveBeenCalledWith(456);
+        expect(courseFindSpy).toHaveBeenCalledWith(456);
         verifyResult(expectedExercisePerCourseIDOrExerciseGroupID);
         verifyCalls(false, true, false);
     });
@@ -108,8 +108,8 @@ describe('FileUploadExerciseManagementResolve', () => {
     });
 
     const verifyCalls = (exerciseServiceCalled: boolean, courseServiceCalled: boolean, exerciseGroupServiceCalled: boolean) => {
-        expect(exerciseFindStub).toHaveBeenCalledTimes(exerciseServiceCalled ? 1 : 0);
-        expect(courseFindStub).toHaveBeenCalledTimes(courseServiceCalled ? 1 : 0);
+        expect(exerciseFindSpy).toHaveBeenCalledTimes(exerciseServiceCalled ? 1 : 0);
+        expect(courseFindSpy).toHaveBeenCalledTimes(courseServiceCalled ? 1 : 0);
         expect(exerciseGroupFindStub).toHaveBeenCalledTimes(exerciseGroupServiceCalled ? 1 : 0);
     };
 
