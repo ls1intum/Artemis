@@ -186,14 +186,14 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                 tap((fileSubmission: FileSubmission) => {
                     this.onSavedFiles.emit(fileSubmission);
                 }),
-                catchError((error) => {
+                catchError((error: Error) => {
                     this.editorState = EditorState.UNSAVED_CHANGES;
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('saveFailed' + error.message);
                     } else {
                         this.onError.emit('saveFailed');
                     }
-                    return throwError(error);
+                    return throwError(() => error);
                 }),
             );
         }
@@ -234,7 +234,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
             )
             .subscribe(
                 () => {},
-                (error) => {
+                (error: Error) => {
                     this.commitState = CommitState.UNCOMMITTED_CHANGES;
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('commitFailed' + error.message);

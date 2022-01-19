@@ -18,7 +18,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, of, Subject, Subscription, throwError } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, throttleTime, timeoutWith } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -324,7 +324,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // If we don't receive a response within that time throw an error the subscription can then handle
         this.examParticipationService
             .submitStudentExam(this.courseId, this.examId, this.studentExam)
-            .pipe(timeoutWith(20000, throwError(new Error('Submission request timed out. Please check your connection and try again.'))))
+            .pipe(
+                timeout({
+                    each: 20000,
+                    with: () => throwError(() => new Error('Submission request timed out. Please check your connection and try again.')),
+                }),
+            )
             .subscribe(
                 (studentExam: StudentExam) => {
                     this.studentExam = studentExam;
