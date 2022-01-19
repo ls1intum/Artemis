@@ -354,13 +354,17 @@ public class ExerciseService {
         log.info("User {} has updated {} {} with id {}", user.getLogin(), exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
     }
 
-    public void checkExampleSubmissions(Exercise updatedModelingExercise) {
+    /**
+     * checks the example submissions of the exercise and removes unnecessary associations to other objects
+     * @param exercise the exercise for which example submissions should be checked
+     */
+    public void checkExampleSubmissions(Exercise exercise) {
         // Avoid recursions
-        if (updatedModelingExercise.getExampleSubmissions().size() != 0) {
-            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(updatedModelingExercise.getId());
-            updatedModelingExercise.setExampleSubmissions(exampleSubmissionsWithResults);
-            updatedModelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
-            updatedModelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
+        if (exercise.getExampleSubmissions().size() != 0) {
+            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
+            exercise.setExampleSubmissions(exampleSubmissionsWithResults);
+            exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
+            exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
     }
 
