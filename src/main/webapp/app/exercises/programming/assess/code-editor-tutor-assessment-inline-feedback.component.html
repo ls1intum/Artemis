@@ -2,9 +2,10 @@
     id="inline-feedback"
     class="border rounded"
     [style.max-width]="'780px'"
-    [class.alert-success]="feedback.credits! > 0"
-    [class.alert-danger]="feedback.credits! < 0"
-    [class.alert-warning]="!feedback.credits"
+    [class.alert-success]="feedback.credits! > 0 && feedback.isSubsequent === undefined"
+    [class.alert-danger]="feedback.credits! < 0 && feedback.isSubsequent === undefined"
+    [class.alert-warning]="!feedback.credits && feedback.isSubsequent === undefined"
+    [class.alert-secondary]="readOnly && feedback.isSubsequent"
 >
     <div *ngIf="!viewOnly; else readOnlyFeedback" class="m-2" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
         <div class="row align-items-start">
@@ -70,9 +71,14 @@
         <div class="row align-items-center m-0">
             <div class="col ps-0 pt-1">
                 <h5 class="d-inline">
-                    <span class="badge" [class.bg-success]="feedback.credits! > 0" [class.bg-danger]="feedback.credits! < 0" [class.bg-warning]="feedback.credits === 0">{{
-                        roundScoreSpecifiedByCourseSettings(feedback.credits, course) + 'P'
-                    }}</span>
+                    <span
+                        class="badge"
+                        [class.bg-success]="feedback.credits! > 0 && feedback.isSubsequent === undefined"
+                        [class.bg-danger]="feedback.credits! < 0 && feedback.isSubsequent === undefined"
+                        [class.bg-warning]="feedback.credits === 0 && feedback.isSubsequent === undefined"
+                        [class.bg-secondary]="readOnly && feedback.isSubsequent"
+                        >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, course) + 'P' }}</span
+                    >
                 </h5>
                 <h6 class="d-inline" jhiTranslate="artemisApp.assessment.detail.tutorComment">Tutor Comment:</h6>
             </div>
@@ -80,6 +86,9 @@
                 <button type="submit" (click)="editFeedback(codeLine)" class="btn btn-primary btn-sm">
                     <fa-icon [icon]="faPencilAlt"></fa-icon> <span jhiTranslate="entity.action.edit">Edit</span>
                 </button>
+            </div>
+            <div *ngIf="readOnly && feedback.isSubsequent" class="col d-flex justify-content-end pe-0 pt-1 text-secondary">
+                <fa-icon class="float-end" [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"></fa-icon>
             </div>
         </div>
         <div class="row ms-4 mt-2 pb-1"><span [innerHTML]="buildFeedbackTextForCodeEditor(feedback)"></span></div>

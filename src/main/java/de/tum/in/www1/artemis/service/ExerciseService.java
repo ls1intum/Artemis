@@ -629,7 +629,10 @@ public class ExerciseService {
 
         List<Feedback> feedbackToBeDeleted = getFeedbackToBeDeletedAfterGradingInstructionUpdate(deleteFeedbackAfterGradingInstructionUpdate, gradingInstructions, exercise);
 
-        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackAndParticipationByParticipationExerciseId(exercise.getId());
+        // update the grading criteria to re-calculate the results considering the updated usage limits
+        gradingCriterionRepository.saveAll(exercise.getGradingCriteria());
+
+        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
 
         // add example submission results that belong exercise
         if (!exercise.getExampleSubmissions().isEmpty()) {
