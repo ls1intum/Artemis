@@ -70,7 +70,7 @@ public class ExerciseHintResource {
      * @param exerciseId the exercise id of which to retrieve the exercise hints.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exerciseHint, or with status {@code 404 (Not Found)}.
      */
-    @GetMapping("/exercises/{exerciseId}/hints")
+    @GetMapping("/exercises/{exerciseId}/exercise-hints")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseId);
