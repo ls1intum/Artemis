@@ -16,7 +16,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { cloneDeep } from 'lodash-es';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { empty, of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
@@ -247,7 +247,7 @@ describe('ExamScoresComponent', () => {
                         return [gradeStep1, gradeStep2, gradeStep3, gradeStep4];
                     },
                 }),
-                MockProvider(JhiLanguageHelper, { language: empty() }),
+                MockProvider(JhiLanguageHelper, { language: EMPTY }),
                 MockProvider(CourseManagementService, {
                     find: () => {
                         return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));

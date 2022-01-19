@@ -20,7 +20,7 @@ export class ReactingUsersOnPostingPipe implements PipeTransform {
      * @returns {Observable<string>} observable of concatenated, translated (and shortened if required) string of reacting users
      */
     transform(reactingUsers: string[]): Observable<string> {
-        return Observable.create((observer: any) => {
+        return new Observable((observer: any) => {
             observer.next(this.updateReactingUsersString(reactingUsers));
             this.translateService.onLangChange.subscribe(() => {
                 observer.next(this.updateReactingUsersString(reactingUsers));

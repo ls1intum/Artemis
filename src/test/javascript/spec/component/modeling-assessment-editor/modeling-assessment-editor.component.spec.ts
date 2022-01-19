@@ -166,7 +166,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         it('wrongly call ngOnInit and throw exception', fakeAsync(() => {
             modelingSubmissionSpy = jest.spyOn(modelingSubmissionService, 'getSubmission');
             const response = new HttpErrorResponse({ status: 403 });
-            modelingSubmissionSpy.mockReturnValue(throwError(response));
+            modelingSubmissionSpy.mockReturnValue(throwError(() => response));
 
             component.ngOnInit();
             tick(500);
@@ -410,7 +410,9 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.modelingExercise.id = 1;
 
             const response = new HttpErrorResponse({ status: 403 });
-            const serviceSpy = jest.spyOn(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment').mockReturnValue(throwError(response));
+            const serviceSpy = jest
+                .spyOn(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment')
+                .mockReturnValue(throwError(() => response));
 
             component.ngOnInit();
             tick(500);
