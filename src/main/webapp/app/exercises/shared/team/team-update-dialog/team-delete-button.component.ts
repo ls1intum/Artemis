@@ -54,12 +54,12 @@ export class TeamDeleteButtonComponent implements OnDestroy {
      *
      */
     removeTeam = () => {
-        this.teamService.delete(this.exercise, this.team.id!).subscribe(
-            () => {
+        this.teamService.delete(this.exercise, this.team.id!).subscribe({
+            next: () => {
                 this.delete.emit(this.team);
                 this.dialogErrorSource.next('');
             },
-            () => this.alertService.error('artemisApp.team.removeTeam.error'),
-        );
+            error: () => this.alertService.error('artemisApp.team.removeTeam.error'),
+        });
     };
 }

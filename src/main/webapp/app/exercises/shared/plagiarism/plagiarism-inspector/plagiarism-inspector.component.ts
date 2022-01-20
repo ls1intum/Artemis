@@ -176,24 +176,24 @@ export class PlagiarismInspectorComponent implements OnInit {
 
         switch (this.exercise.type) {
             case ExerciseType.MODELING: {
-                this.modelingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe(
-                    (result) => this.handlePlagiarismResult(result),
-                    () => (this.detectionInProgress = false),
-                );
+                this.modelingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe({
+                    next: (result) => this.handlePlagiarismResult(result),
+                    error: () => (this.detectionInProgress = false),
+                });
                 return;
             }
             case ExerciseType.PROGRAMMING: {
-                this.programmingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe(
-                    (result) => this.handlePlagiarismResult(result),
-                    () => (this.detectionInProgress = false),
-                );
+                this.programmingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe({
+                    next: (result) => this.handlePlagiarismResult(result),
+                    error: () => (this.detectionInProgress = false),
+                });
                 return;
             }
             case ExerciseType.TEXT: {
-                this.textExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe(
-                    (result) => this.handlePlagiarismResult(result),
-                    () => (this.detectionInProgress = false),
-                );
+                this.textExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe({
+                    next: (result) => this.handlePlagiarismResult(result),
+                    error: () => (this.detectionInProgress = false),
+                });
                 return;
             }
             default: {
@@ -228,15 +228,15 @@ export class PlagiarismInspectorComponent implements OnInit {
     checkPlagiarismJPlagReport(options?: PlagiarismOptions) {
         this.detectionInProgress = true;
 
-        this.programmingExerciseService.checkPlagiarismJPlagReport(this.exercise.id!, options).subscribe(
-            (response: HttpResponse<Blob>) => {
+        this.programmingExerciseService.checkPlagiarismJPlagReport(this.exercise.id!, options).subscribe({
+            next: (response: HttpResponse<Blob>) => {
                 this.detectionInProgress = false;
                 downloadZipFileFromResponse(response);
             },
-            () => {
+            error: () => {
                 this.detectionInProgress = false;
             },
-        );
+        });
     }
 
     isProgrammingExercise() {
@@ -250,15 +250,15 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.detectionInProgress = true;
 
         if (this.exercise.type === ExerciseType.TEXT) {
-            this.textExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe(
-                (result) => this.handlePlagiarismResult(result),
-                () => (this.detectionInProgress = false),
-            );
+            this.textExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe({
+                next: (result) => this.handlePlagiarismResult(result),
+                error: () => (this.detectionInProgress = false),
+            });
         } else {
-            this.programmingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe(
-                (result) => this.handlePlagiarismResult(result),
-                () => (this.detectionInProgress = false),
-            );
+            this.programmingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe({
+                next: (result) => this.handlePlagiarismResult(result),
+                error: () => (this.detectionInProgress = false),
+            });
         }
     }
 
@@ -268,10 +268,10 @@ export class PlagiarismInspectorComponent implements OnInit {
     checkPlagiarismModeling(options?: PlagiarismOptions) {
         this.detectionInProgress = true;
 
-        this.modelingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe(
-            (result: ModelingPlagiarismResult) => this.handlePlagiarismResult(result),
-            () => (this.detectionInProgress = false),
-        );
+        this.modelingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe({
+            next: (result: ModelingPlagiarismResult) => this.handlePlagiarismResult(result),
+            error: () => (this.detectionInProgress = false),
+        });
     }
 
     handlePlagiarismResult(result: ModelingPlagiarismResult | TextPlagiarismResult) {
