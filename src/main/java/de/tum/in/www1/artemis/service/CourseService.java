@@ -384,7 +384,7 @@ public class CourseService {
      *
      * @param exerciseIds the ids to get the active students for
      * @param periodIndex the deviation from the current time
-     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 16 for the course detail view
+     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 17 for the course detail view
      * @param date the date for which the active students' calculation should end (e.g. now)
      * @return An Integer list containing active students for each index. An index corresponds to a week
      */
@@ -455,7 +455,7 @@ public class CourseService {
         dto.setNumberOfEditorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getEditorGroupName())));
         dto.setNumberOfInstructorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getInstructorGroupName())));
 
-        dto.setActiveStudents(getActiveStudents(exerciseIds, 0, 16, ZonedDateTime.now()));
+        dto.setActiveStudents(getActiveStudents(exerciseIds, 0, 17, ZonedDateTime.now()));
         return dto;
     }
 

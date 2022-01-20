@@ -43,8 +43,10 @@ describe('Audits Service', () => {
         }));
 
         it('should propagate not found response', fakeAsync(() => {
-            service.query({}).subscribe(null, (_error: any) => {
-                expect(_error.status).toEqual(404);
+            service.query({}).subscribe({
+                error: (_error: any) => {
+                    expect(_error.status).toEqual(404);
+                },
             });
 
             const req = httpMock.expectOne({ method: 'GET' });

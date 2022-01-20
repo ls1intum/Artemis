@@ -41,6 +41,7 @@ import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Iterators;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -136,7 +137,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         // Return null if no valid addresses can be found. This is e.g. due to an invalid config or a development setup without a broker.
         if (!brokerAddressList.isEmpty()) {
             // This provides a round-robin use of brokers, we only want to use the fallback broker if the primary broker fails, so we have the same order of brokers in all nodes
-            Iterator<InetSocketAddress> addressIterator = brokerAddressList.listIterator();
+            var addressIterator = Iterators.cycle(brokerAddressList);
             return new ReactorNettyTcpClient<>(client -> client.remoteAddress(addressIterator::next), new StompReactorNettyCodec());
         }
         return null;

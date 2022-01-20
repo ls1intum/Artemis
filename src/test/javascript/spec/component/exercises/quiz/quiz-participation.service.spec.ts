@@ -1,20 +1,22 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { QuizParticipationService } from 'app/exercises/quiz/participate/quiz-participation.service';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Result } from 'app/entities/result.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+
 describe('Quiz Participation Service', () => {
-    let injector: TestBed;
     let service: QuizParticipationService;
     let httpMock: HttpTestingController;
     let exerciseId: number;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
+            providers: [{ provide: AccountService, useClass: MockAccountService }],
         });
-        injector = getTestBed();
-        service = injector.get(QuizParticipationService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(QuizParticipationService);
+        httpMock = TestBed.inject(HttpTestingController);
         exerciseId = 123;
     });
 

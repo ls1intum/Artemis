@@ -139,11 +139,9 @@ export class ExerciseService {
     }
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {
-        return this.http.get<Exercise[]>(`${this.resourceUrl}/upcoming`, { observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => this.convertExerciseCategoryArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => this.setAccessRightsExerciseEntityArrayResponseType(res)),
-        );
+        return this.http
+            .get<Exercise[]>(`${this.resourceUrl}/upcoming`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.processExerciseEntityArrayResponse(res)));
     }
 
     /**
@@ -362,11 +360,9 @@ export class ExerciseService {
      * @param { number } exerciseId - Id of exercise to retrieve
      */
     getForTutors(exerciseId: number): Observable<HttpResponse<Exercise>> {
-        return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-assessment-dashboard`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-            map((res: EntityResponseType) => this.setAccessRightsExerciseEntityResponseType(res)),
-        );
+        return this.http
+            .get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-assessment-dashboard`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -427,45 +423,39 @@ export class ExerciseService {
     /**
      * This method bundles recurring conversion steps for Exercise EntityResponses.
      * @param exerciseRes
-     * @private
      */
-    private processExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
+    public processExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
         this.convertDateFromServer(exerciseRes);
         this.convertExerciseCategoriesFromServer(exerciseRes);
         this.setAccessRightsExerciseEntityResponseType(exerciseRes);
         return exerciseRes;
     }
 
-    private setAccessRightsExerciseEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
+    /**
+     * This method bundles recurring conversion steps for Exercise EntityArrayResponses.
+     * @param exerciseResArray
+     */
+    public processExerciseEntityArrayResponse(exerciseResArray: EntityArrayResponseType): EntityArrayResponseType {
+        this.convertDateArrayFromServer(exerciseResArray);
+        this.convertExerciseCategoryArrayFromServer(exerciseResArray);
+        this.setAccessRightsExerciseEntityArrayResponseType(exerciseResArray);
+        return exerciseResArray;
+    }
+
+    public setAccessRightsExerciseEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((exercise: Exercise) => {
-                this.setAccessRightsExercise(exercise);
+                this.accountService.setAccessRightsForExerciseAndReferencedCourse(exercise);
             });
         }
         return res;
     }
 
-    private setAccessRightsExerciseEntityResponseType(res: EntityResponseType): EntityResponseType {
+    public setAccessRightsExerciseEntityResponseType(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.setAccessRightsExercise(res.body);
+            this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body as Exercise);
         }
         return res;
-    }
-
-    /**
-     * To reduce the error proneness the access rights for exercises and also
-     * their referenced course are set.
-     * @param exercise the course for which the access rights are set
-     * @private
-     */
-    private setAccessRightsExercise(exercise: Exercise): Exercise {
-        if (exercise) {
-            this.accountService.setAccessRightsForExercise(exercise);
-            if (exercise.course) {
-                this.accountService.setAccessRightsForCourse(exercise.course);
-            }
-        }
-        return exercise;
     }
 }
 

@@ -98,20 +98,20 @@ export class StudentExamDetailComponent implements OnInit {
      */
     saveWorkingTime() {
         this.isSavingWorkingTime = true;
-        const seconds = this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
-        this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, seconds).subscribe(
-            (res) => {
+        const seconds = this.workingTimeForm.controls.hours.value * 3600 + this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
+        this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, seconds).subscribe({
+            next: (res) => {
                 if (res.body) {
                     this.setStudentExam(res.body);
                 }
                 this.isSavingWorkingTime = false;
                 this.alertService.success('artemisApp.studentExamDetail.saveWorkingTimeSuccessful');
             },
-            () => {
+            error: () => {
                 this.alertService.error('artemisApp.studentExamDetail.workingTimeCouldNotBeSaved');
                 this.isSavingWorkingTime = false;
             },
-        );
+        });
     }
 
     /**
@@ -144,18 +144,11 @@ export class StudentExamDetailComponent implements OnInit {
     }
 
     private initWorkingTimeForm() {
-        const workingTime = this.artemisDurationFromSecondsPipe.toHHmmNotation(this.studentExam.workingTime!);
-        const workingTimeParts = workingTime.split(':');
+        const workingTime = this.artemisDurationFromSecondsPipe.secondsToDuration(this.studentExam.workingTime!);
         this.workingTimeForm = new FormGroup({
-            minutes: new FormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: this.examIsVisible() }, [
-                Validators.min(0),
-                Validators.required,
-            ]),
-            seconds: new FormControl({ value: parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), disabled: this.examIsVisible() }, [
-                Validators.min(0),
-                Validators.max(59),
-                Validators.required,
-            ]),
+            hours: new FormControl({ value: workingTime.days * 24 + workingTime.hours, disabled: this.examIsVisible() }, [Validators.min(0), Validators.required]),
+            minutes: new FormControl({ value: workingTime.minutes, disabled: this.examIsVisible() }, [Validators.min(0), Validators.max(59), Validators.required]),
+            seconds: new FormControl({ value: workingTime.seconds, disabled: this.examIsVisible() }, [Validators.min(0), Validators.max(59), Validators.required]),
         });
     }
 
@@ -192,8 +185,8 @@ export class StudentExamDetailComponent implements OnInit {
     toggle() {
         this.busy = true;
         if (this.studentExam.exam && this.studentExam.exam.id) {
-            this.studentExamService.toggleSubmittedState(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, this.studentExam!.submitted!).subscribe(
-                (res) => {
+            this.studentExamService.toggleSubmittedState(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, this.studentExam!.submitted!).subscribe({
+                next: (res) => {
                     if (res.body) {
                         this.studentExam.submissionDate = res.body.submissionDate;
                         this.studentExam.submitted = res.body.submitted;
@@ -201,11 +194,11 @@ export class StudentExamDetailComponent implements OnInit {
                     this.alertService.success('artemisApp.studentExamDetail.toggleSuccessful');
                     this.busy = false;
                 },
-                () => {
+                error: () => {
                     this.alertService.error('artemisApp.studentExamDetail.togglefailed');
                     this.busy = false;
                 },
-            );
+            });
         }
     }
 

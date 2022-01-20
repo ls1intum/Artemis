@@ -79,9 +79,9 @@ artemis:
         # Defines the used docker images for certain programming languages
         build:
             images:
-                JAVA: "ls1tum/artemis-maven-template:java17-2"
-                KOTLIN: "ls1tum/artemis-maven-template:java17-2"
-                EMPTY: "ls1tum/artemis-maven-template:java17-2"
+                JAVA: "ls1tum/artemis-maven-template:java17-3"
+                KOTLIN: "ls1tum/artemis-maven-template:java17-3"
+                EMPTY: "ls1tum/artemis-maven-template:java17-3"
                 PYTHON: "ls1tum/artemis-python-docker:latest"
                 C: "ls1tum/artemis-c-docker:latest"
                 HASKELL: "tumfpv/fpv-stack:8.8.4"

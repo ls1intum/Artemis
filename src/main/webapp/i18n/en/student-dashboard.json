@@ -14,11 +14,11 @@
                 "registerSuccessful": "Registration successful",
                 "signUpForCourse": "Register",
                 "cancel": "Cancel",
-                "noCourse": "No courses available to register for",
+                "noCourse": "No courses available for registration",
                 "courseLoading": "Courses are loading...",
-                "pleaseSelectCourse": "# Select a course",
                 "courseSignupConfirmationTitle": "Confirm Course Registration"
-            }
+            },
+            "course": "Course"
         },
         "courseOverview": {
             "noDescription": "No description available",
@@ -126,7 +126,11 @@
                 "textPointLabel": "Text Points",
                 "fileUploadPointLabel": "File upload Points",
                 "missingPointsLabel": "Missing Points",
-                "achievedPointsLabel": "Achieved Points"
+                "achievedPointsLabel": "Achieved Points",
+                "includeStandardCategories": "Hide Artemis standard categories:",
+                "includeIndividualCategories": "Include course specific categories:",
+                "includeAllCategories": "Select all options",
+                "exercisesWithNoCategories": "Exercises with no categories"
             },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",

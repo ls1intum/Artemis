@@ -43,8 +43,8 @@ export class CreateLearningGoalComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                (lectureResult) => {
+            .subscribe({
+                next: (lectureResult) => {
                     if (lectureResult.body) {
                         this.lecturesWithLectureUnits = lectureResult.body;
                         for (const lecture of this.lecturesWithLectureUnits) {
@@ -55,8 +55,8 @@ export class CreateLearningGoalComponent implements OnInit {
                         }
                     }
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     createLearningGoal(formData: LearningGoalFormData) {
@@ -79,12 +79,12 @@ export class CreateLearningGoalComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                () => {
+            .subscribe({
+                next: () => {
                     // currently at /course-management/{courseId}/goal-management/create, going back to /course-management/{courseId}/goal-management/
                     this.router.navigate(['../'], { relativeTo: this.activatedRoute });
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 }

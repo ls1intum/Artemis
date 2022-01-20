@@ -41,6 +41,8 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 
 describe('FileUploadSubmissionComponent', () => {
     let comp: FileUploadSubmissionComponent;
@@ -287,4 +289,42 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.destroy();
         flush();
     }));
+
+    it('should mark the subsequent feedback', () => {
+        const gradingInstruction = {
+            id: 1,
+            credits: 1,
+            gradingScale: 'scale',
+            instructionDescription: 'description',
+            feedback: 'instruction feedback',
+            usageCount: 1,
+        } as GradingInstruction;
+
+        const feedbacks = [
+            {
+                id: 1,
+                detailText: 'feedback1',
+                credits: 1,
+                gradingInstruction,
+                type: FeedbackType.MANUAL_UNREFERENCED,
+            } as Feedback,
+            {
+                id: 2,
+                detailText: 'feedback2',
+                credits: 1,
+                gradingInstruction,
+                type: FeedbackType.MANUAL_UNREFERENCED,
+            } as Feedback,
+        ];
+
+        comp.result = new Result();
+        comp.result.feedbacks = feedbacks;
+
+        const unreferencedFeedback = comp.unreferencedFeedback;
+
+        expect(unreferencedFeedback).not.toBe(undefined);
+        expect(unreferencedFeedback).toHaveLength(2);
+        expect(unreferencedFeedback![0].isSubsequent).toBe(undefined);
+        expect(unreferencedFeedback![1].isSubsequent).toBe(true);
+    });
 });

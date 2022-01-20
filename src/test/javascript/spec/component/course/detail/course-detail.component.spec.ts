@@ -22,6 +22,7 @@ import { CourseManagementDetailViewDto } from 'app/course/manage/course-manageme
 import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
@@ -72,6 +73,7 @@ describe('Course Management Detail Component', () => {
                 MockDirective(HasAnyAuthorityDirective),
                 MockComponent(CourseDetailDoughnutChartComponent),
                 MockComponent(CourseDetailLineChartComponent),
+                MockComponent(FullscreenComponent),
             ],
             providers: [{ provide: ActivatedRoute, useValue: route }, { provide: Router, useClass: MockRouter }, MockProvider(CourseManagementService)],
         }).compileComponents();
@@ -102,7 +104,7 @@ describe('Course Management Detail Component', () => {
         component.ngOnInit();
         expect(component.courseDTO).toEqual(dtoMock);
         expect(component.course).toEqual(course);
-        expect(registerSpy).toHaveBeenCalled();
+        expect(registerSpy).toHaveBeenCalledTimes(2);
     });
 
     it('should destroy event subscriber onDestroy', () => {

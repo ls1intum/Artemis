@@ -375,18 +375,19 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/to-register : get all courses that the current user can register to. Decided by the start and end date and if the registrationEnabled flag is set correctly
+     * GET /courses/for-registration : get all courses that the current user can register to. Decided by the start and end date and if the registrationEnabled flag is set correctly
      *
      * @return the list of courses which are active
      */
-    @GetMapping("/courses/to-register")
+    @GetMapping("/courses/for-registration")
     @PreAuthorize("hasRole('USER')")
     public List<Course> getAllCoursesToRegister() {
         log.debug("REST request to get all currently active Courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
+        List<Course> allRegisteredCourses = courseService.findAllActiveForUser(user);
         List<Course> allCoursesToRegister = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations();
-        return allCoursesToRegister.stream().filter(course -> {
+        List<Course> registrableCourses = allCoursesToRegister.stream().filter(course -> {
             // further, check if the course has been assigned to any organization and if yes,
             // check if user is member of at least one of them
             if (course.getOrganizations() != null && course.getOrganizations().size() > 0) {
@@ -395,7 +396,9 @@ public class CourseResource {
             else {
                 return true;
             }
-        }).toList();
+        }).collect(Collectors.toList());
+        registrableCourses.removeAll(allRegisteredCourses);
+        return registrableCourses;
     }
 
     /**
@@ -1122,7 +1125,7 @@ public class CourseResource {
     public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 16, ZonedDateTime.now()));
+        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 17, ZonedDateTime.now()));
     }
 
     /**

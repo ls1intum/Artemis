@@ -16,10 +16,22 @@
         </div>
     </div>
     <div #containerRef class="col-md-9">
-        <ngx-charts-bar-vertical [view]="[containerRef.offsetWidth, 250]" [results]="ngxData" [scheme]="ngxColor" [yScaleMax]="100" [xAxis]="true" [yAxis]="true">
+        <ngx-charts-bar-vertical
+            [view]="[containerRef.offsetWidth, 250]"
+            [results]="ngxData"
+            [scheme]="ngxColor"
+            [yScaleMax]="100"
+            [xAxis]="true"
+            [yAxis]="true"
+            (select)="onSelect($event)"
+        >
             <ng-template #tooltipTemplate let-model="model">
                 <b>{{ model.name }}</b> <br />
-                <span>{{ 'artemisApp.courseStatistics.exerciseAverage' | artemisTranslate }}: {{ model.value }}%</span>
+                <span>{{ 'artemisApp.courseStatistics.exerciseAverage' | artemisTranslate }}: {{ model.value }}%</span> <br />
+                <b
+                    >{{ 'artemisApp.courseStatistics.exerciseType' | artemisTranslate }}:
+                    {{ 'artemisApp.courseStatistics.' + convertTypeForTooltip(model.name, model.value) | artemisTranslate }}</b
+                >
             </ng-template>
         </ngx-charts-bar-vertical>
     </div>

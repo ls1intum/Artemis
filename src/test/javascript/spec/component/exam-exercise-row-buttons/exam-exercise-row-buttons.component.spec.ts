@@ -125,7 +125,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
             });
             it('should handle error for textexercise', () => {
                 const error = { message: 'error occurred!' } as HttpErrorResponse;
-                deleteTextExerciseStub.mockReturnValue(throwError(error));
+                deleteTextExerciseStub.mockReturnValue(throwError(() => error));
                 component.exercise = textExercise;
                 component.deleteExercise();
                 expect(deleteTextExerciseStub).toHaveBeenCalledTimes(1);
@@ -142,7 +142,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
             });
             it('should handle error for modelingexercise', () => {
                 const error = { message: 'error occurred!' } as HttpErrorResponse;
-                deleteModelingExerciseStub.mockReturnValue(throwError(error));
+                deleteModelingExerciseStub.mockReturnValue(throwError(() => error));
                 component.exercise = modelingExercise;
                 component.deleteExercise();
                 expect(deleteModelingExerciseStub).toHaveBeenCalledTimes(1);
@@ -159,7 +159,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
             });
             it('should handle error for fileupload exercise', () => {
                 const error = { message: 'error occurred!' } as HttpErrorResponse;
-                deleteFileUploadExerciseStub.mockReturnValue(throwError(error));
+                deleteFileUploadExerciseStub.mockReturnValue(throwError(() => error));
                 component.exercise = fileUploadExercise;
                 component.deleteExercise();
                 expect(deleteFileUploadExerciseStub).toHaveBeenCalledTimes(1);
@@ -176,7 +176,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
             });
             it('should handle error for quizexercise', () => {
                 const error = { message: 'error occurred!' } as HttpErrorResponse;
-                deleteQuizExerciseStub.mockReturnValue(throwError(error));
+                deleteQuizExerciseStub.mockReturnValue(throwError(() => error));
                 component.exercise = quizExercise;
                 component.deleteExercise();
                 expect(deleteQuizExerciseStub).toHaveBeenCalledTimes(1);
@@ -194,7 +194,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
         });
         it('should handle error for programmingExercise', () => {
             const error = { message: 'error occurred!' } as HttpErrorResponse;
-            deleteProgrammingExerciseStub.mockReturnValue(throwError(error));
+            deleteProgrammingExerciseStub.mockReturnValue(throwError(() => error));
             component.exercise = programmingExercise;
             component.deleteProgrammingExercise({});
             expect(deleteProgrammingExerciseStub).toHaveBeenCalledTimes(1);
