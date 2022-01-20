@@ -46,17 +46,17 @@ export class ComplaintsFormComponent implements OnInit {
         complaint.result.id = this.resultId;
         complaint.complaintType = this.complaintType;
 
-        this.complaintService.create(complaint, this.examId).subscribe(
-            () => {
+        this.complaintService.create(complaint, this.examId).subscribe({
+            next: () => {
                 this.submit.emit();
             },
-            (err: HttpErrorResponse) => {
+            error: (err: HttpErrorResponse) => {
                 if (err?.error?.errorKey === 'tooManyComplaints') {
                     this.alertService.error('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintsPerCourse });
                 } else {
                     onError(this.alertService, err);
                 }
             },
-        );
+        });
     }
 }

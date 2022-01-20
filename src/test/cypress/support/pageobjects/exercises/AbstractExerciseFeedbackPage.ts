@@ -1,3 +1,4 @@
+import { Interception } from 'cypress/types/net-stubbing';
 import { BASE_API, POST } from '../../constants';
 /**
  * Parent class for all exercise feedback pages (/course/./exercise/./participate/.)
@@ -22,8 +23,8 @@ export abstract class AbstractExerciseFeedback {
         cy.get('#complainTextArea').type(complaint, { parseSpecialCharSequences: false });
         cy.intercept(POST, BASE_API + 'complaints').as('postComplaint');
         cy.get('#submit-complaint').click();
-        return cy.wait('@postComplaint').then((request: any) => {
-            expect(request.response.statusCode).to.eq(201);
+        return cy.wait('@postComplaint').then((request: Interception) => {
+            expect(request.response!.statusCode).to.eq(201);
         });
     }
 }

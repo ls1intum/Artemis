@@ -1,5 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { getTestBed, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { take } from 'rxjs/operators';
@@ -7,7 +7,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 
 describe('ModelingSubmission Service', () => {
-    let injector: TestBed;
     let service: ModelingSubmissionService;
     let httpMock: HttpTestingController;
     let elemDefault: ModelingSubmission;
@@ -17,9 +16,8 @@ describe('ModelingSubmission Service', () => {
             imports: [HttpClientTestingModule],
             providers: [{ provide: AccountService, useClass: MockAccountService }],
         });
-        injector = getTestBed();
-        service = injector.get(ModelingSubmissionService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(ModelingSubmissionService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         elemDefault = new ModelingSubmission();
     });
