@@ -1,3 +1,12 @@
+<li class="nav-item pointer">
+    <button class="guided-tour-notification nav-link notification-button light-button" (click)="toggleSidebar(); updateLastNotificationRead()">
+        <fa-icon [icon]="faBell"></fa-icon>
+        <span class="badge bg-danger rounded-pill" *ngIf="recentNotificationCount > 0">
+            {{ recentNotificationCount }}<span *ngIf="recentNotificationCount >= notifications.length">+</span>
+        </span>
+    </button>
+</li>
+
 <div class="notification-overlay" (click)="toggleSidebar()" [ngClass]="showSidebar ? 'show' : 'hide'"></div>
 
 <div class="notification-sidebar" [ngClass]="showSidebar ? 'show' : 'hide'">
