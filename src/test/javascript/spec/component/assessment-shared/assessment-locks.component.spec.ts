@@ -83,7 +83,7 @@ describe('AssessmentLocksComponent', () => {
         const cancelAssessmentStub = jest.spyOn(programmingAssessmentService, 'cancelAssessment').mockReturnValue(of());
         const windowConfirmStub = jest.spyOn(window, 'confirm').mockReturnValue(true);
         component.cancelAssessment(programmingSubmission);
-        expect(windowConfirmStub).toBeCalled();
+        expect(windowConfirmStub).toBeCalledTimes(1);
         expect(cancelAssessmentStub).toBeCalledTimes(1);
     });
 
@@ -91,7 +91,7 @@ describe('AssessmentLocksComponent', () => {
         const cancelAssessmentStub = jest.spyOn(modelingAssessmentService, 'cancelAssessment').mockReturnValue(of());
         const windowConfirmStub = jest.spyOn(window, 'confirm').mockReturnValue(true);
         component.cancelAssessment(modelingSubmission);
-        expect(windowConfirmStub).toBeCalled();
+        expect(windowConfirmStub).toBeCalledTimes(2);
         expect(cancelAssessmentStub).toBeCalledTimes(1);
     });
 
@@ -99,7 +99,7 @@ describe('AssessmentLocksComponent', () => {
         const cancelAssessmentStub = jest.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of());
         const windowConfirmStub = jest.spyOn(window, 'confirm').mockReturnValue(true);
         component.cancelAssessment(textSubmission);
-        expect(windowConfirmStub).toBeCalled();
+        expect(windowConfirmStub).toBeCalledTimes(3);
         expect(cancelAssessmentStub).toBeCalledTimes(1);
     });
 
@@ -107,7 +107,7 @@ describe('AssessmentLocksComponent', () => {
         const cancelAssessmentStub = jest.spyOn(fileUploadAssessmentService, 'cancelAssessment').mockReturnValue(of());
         const windowConfirmStub = jest.spyOn(window, 'confirm').mockReturnValue(true);
         component.cancelAssessment(fileUploadSubmission);
-        expect(windowConfirmStub).toBeCalled();
+        expect(windowConfirmStub).toBeCalledTimes(4);
         expect(cancelAssessmentStub).toBeCalledTimes(1);
     });
 });
