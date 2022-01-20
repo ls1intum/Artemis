@@ -75,7 +75,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
         this.updates
             .checkForUpdate()
             .then((updateAvailable: boolean) => {
-                console.log('Checked for updates! ' + this.hasSeenOutdatedInThisSession + ' - ' + updateAvailable);
+                console.log('Checked for updates-- ' + this.hasSeenOutdatedInThisSession + ' - ' + updateAvailable);
                 if (this.hasSeenOutdatedInThisSession || updateAvailable) {
                     this.hasSeenOutdatedInThisSession = true;
 
