@@ -105,6 +105,8 @@ describe('Plagiarism Split View Component', () => {
         jest.spyOn(splitControlSubject, 'subscribe');
 
         comp.ngOnInit();
+
+        // eslint-disable-next-line deprecation/deprecation
         expect(comp.splitControlSubject.subscribe).toHaveBeenCalledTimes(1);
     });
 

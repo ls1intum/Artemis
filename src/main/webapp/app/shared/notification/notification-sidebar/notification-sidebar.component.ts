@@ -154,10 +154,10 @@ export class NotificationSidebarComponent implements OnInit {
                     size: this.notificationsPerPage,
                     sort: ['notificationDate,desc'],
                 })
-                .subscribe(
-                    (res: HttpResponse<Notification[]>) => this.loadNotificationsSuccess(res.body!, res.headers),
-                    (res: HttpErrorResponse) => (this.error = res.message),
-                );
+                .subscribe({
+                    next: (res: HttpResponse<Notification[]>) => this.loadNotificationsSuccess(res.body!, res.headers),
+                    error: (res: HttpErrorResponse) => (this.error = res.message),
+                });
         }
     }
 
@@ -260,16 +260,16 @@ export class NotificationSidebarComponent implements OnInit {
      * Loads the notifications settings
      */
     private loadNotificationSettings(): void {
-        this.userSettingsService.loadSettings(UserSettingsCategory.NOTIFICATION_SETTINGS).subscribe(
-            (res: HttpResponse<Setting[]>) => {
+        this.userSettingsService.loadSettings(UserSettingsCategory.NOTIFICATION_SETTINGS).subscribe({
+            next: (res: HttpResponse<Setting[]>) => {
                 this.notificationSettings = this.userSettingsService.loadSettingsSuccessAsIndividualSettings(
                     res.body!,
                     UserSettingsCategory.NOTIFICATION_SETTINGS,
                 ) as NotificationSetting[];
                 this.notificationTitleActivationMap = this.notificationSettingsService.createUpdatedNotificationTitleActivationMap(this.notificationSettings);
             },
-            (res: HttpErrorResponse) => (this.error = res.message),
-        );
+            error: (res: HttpErrorResponse) => (this.error = res.message),
+        });
     }
 
     /**

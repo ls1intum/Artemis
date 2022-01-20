@@ -391,12 +391,12 @@ export class CourseManagementService {
         setTimeout(() => {
             // Retrieve courses if no courses were fetched before and are not queried at the moment.
             if (!this.fetchingCoursesForNotifications && !this.coursesForNotifications.getValue()) {
-                this.findAllForNotifications().subscribe(
-                    (res: HttpResponse<Course[]>) => {
+                this.findAllForNotifications().subscribe({
+                    next: (res: HttpResponse<Course[]>) => {
                         this.coursesForNotifications.next(res.body || undefined);
                     },
-                    () => (this.fetchingCoursesForNotifications = false),
-                );
+                    error: () => (this.fetchingCoursesForNotifications = false),
+                });
             }
         }, 500);
         return this.coursesForNotifications;
