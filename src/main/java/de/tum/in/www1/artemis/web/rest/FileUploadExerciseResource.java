@@ -119,7 +119,7 @@ public class FileUploadExerciseResource {
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
 
-        groupNotificationService.checkNotificationForExerciseRelease(fileUploadExercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(fileUploadExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);

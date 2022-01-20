@@ -73,16 +73,16 @@ export class ExerciseGroupsComponent implements OnInit {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         // Only take action when a response was received for both requests
-        forkJoin(this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()).subscribe(
-            ([examRes, examInfoDTO]) => {
+        forkJoin([this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()]).subscribe({
+            next: ([examRes, examInfoDTO]) => {
                 this.exam = examRes.body!;
                 this.exerciseGroups = this.exam.exerciseGroups;
                 this.course = this.exam.course!;
                 this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined;
                 this.setupExerciseGroupToExerciseTypesDict();
             },
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     /**
@@ -129,8 +129,8 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param event representation of users choices to delete the student repositories and base repositories
      */
     deleteExerciseGroup(exerciseGroupId: number, event: { [key: string]: boolean }) {
-        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe(
-            () => {
+        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'exerciseGroupOverviewModification',
                     content: 'Deleted an exercise group',
@@ -139,8 +139,8 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.exerciseGroups = this.exerciseGroups!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId);
                 delete this.exerciseGroupToExerciseTypesDict[exerciseGroupId];
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     /**
@@ -236,10 +236,10 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     private saveOrder(): void {
-        this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe(
-            (res) => (this.exerciseGroups = res.body!),
-            () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
-        );
+        this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe({
+            next: (res) => (this.exerciseGroups = res.body!),
+            error: () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
+        });
     }
 
     /**

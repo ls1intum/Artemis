@@ -105,7 +105,7 @@ describe('TeamComponent', () => {
         });
 
         it('should call alert service error when exercise service fails', () => {
-            const exerciseStub = jest.spyOn(exerciseService, 'find').mockReturnValue(throwError({ status: 404 }));
+            const exerciseStub = jest.spyOn(exerciseService, 'find').mockReturnValue(throwError(() => ({ status: 404 })));
             alertServiceStub = jest.spyOn(alertService, 'error');
             waitForAsync(() => {
                 comp.ngOnInit();
@@ -116,7 +116,7 @@ describe('TeamComponent', () => {
         });
 
         it('should call alert service error when team service fails', () => {
-            const teamStub = jest.spyOn(teamService, 'find').mockReturnValue(throwError({ status: 404 }));
+            const teamStub = jest.spyOn(teamService, 'find').mockReturnValue(throwError(() => ({ status: 404 })));
             alertServiceStub = jest.spyOn(alertService, 'error');
             waitForAsync(() => {
                 comp.ngOnInit();

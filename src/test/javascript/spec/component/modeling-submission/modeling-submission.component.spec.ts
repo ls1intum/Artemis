@@ -1,6 +1,6 @@
 import * as ace from 'brace';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
@@ -199,7 +199,7 @@ describe('ModelingSubmission Management Component', () => {
     });
 
     it('should navigate to access denied page on 403 error status', () => {
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(throwError({ status: 403 }));
+        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(throwError(() => ({ status: 403 })));
         const routerStub = jest.spyOn(router, 'navigate').mockReturnValue(new Promise(() => true));
         fixture.detectChanges();
         expect(routerStub).toHaveBeenCalledTimes(1);
@@ -242,7 +242,7 @@ describe('ModelingSubmission Management Component', () => {
     it('should catch error on submit', () => {
         const modelSubmission = <ModelingSubmission>(<unknown>{ model: '{"elements": [{"id": 1}]}', submitted: true, participation });
         comp.submission = modelSubmission;
-        jest.spyOn(service, 'create').mockReturnValue(throwError({ status: 500 }));
+        jest.spyOn(service, 'create').mockReturnValue(throwError(() => ({ status: 500 })));
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
         comp.modelingExercise.id = 1;
@@ -427,5 +427,48 @@ describe('ModelingSubmission Management Component', () => {
         fixture.detectChanges();
         comp.saveDiagram();
         expect(comp.isChanged).toBe(false);
+    });
+
+    it('should mark the subsequent feedback', () => {
+        comp.assessmentResult = new Result();
+
+        const gradingInstruction = {
+            id: 1,
+            credits: 1,
+            gradingScale: 'scale',
+            instructionDescription: 'description',
+            feedback: 'instruction feedback',
+            usageCount: 1,
+        } as GradingInstruction;
+
+        const feedbacks = [
+            {
+                id: 1,
+                detailText: 'feedback1',
+                credits: 1,
+                gradingInstruction,
+                type: FeedbackType.MANUAL_UNREFERENCED,
+            } as Feedback,
+            {
+                id: 2,
+                detailText: 'feedback2',
+                credits: 1,
+                gradingInstruction,
+                type: FeedbackType.MANUAL,
+                reference: 'asdf',
+            } as Feedback,
+        ];
+
+        comp.assessmentResult.feedbacks = feedbacks;
+
+        const unreferencedFeedback = comp.unreferencedFeedback;
+        const referencedFeedback = comp.referencedFeedback;
+
+        expect(unreferencedFeedback).not.toBe(undefined);
+        expect(unreferencedFeedback!.length).toBe(1);
+        expect(unreferencedFeedback![0].isSubsequent).toBe(undefined);
+        expect(referencedFeedback).not.toBe(undefined);
+        expect(referencedFeedback).toHaveLength(1);
+        expect(referencedFeedback![0].isSubsequent).toBe(true);
     });
 });

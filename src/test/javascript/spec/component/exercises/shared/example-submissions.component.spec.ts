@@ -89,7 +89,7 @@ describe('Example Submission Component', () => {
 
     it('should catch an error on delete', () => {
         component.exercise = exercise;
-        jest.spyOn(exampleSubmissionService, 'delete').mockReturnValue(throwError({ status: 500 }));
+        jest.spyOn(exampleSubmissionService, 'delete').mockReturnValue(throwError(() => ({ status: 500 })));
 
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         component.deleteExampleSubmission(0);
@@ -122,7 +122,7 @@ describe('Example Submission Component', () => {
         const componentInstance = { exercise: Exercise };
         const result = new Promise((resolve) => resolve(true));
         const modalServiceStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
-        const importStub = jest.spyOn(exampleSubmissionService, 'import').mockReturnValue(throwError({ status: 500 }));
+        const importStub = jest.spyOn(exampleSubmissionService, 'import').mockReturnValue(throwError(() => ({ status: 500 })));
 
         component.openImportModal();
 

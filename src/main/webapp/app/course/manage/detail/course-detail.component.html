@@ -130,12 +130,14 @@
                     ></jhi-course-detail-doughnut-chart>
                 </div>
             </div>
-            <jhi-course-detail-line-chart
-                class="col-md-8"
-                [course]="course"
-                [numberOfStudentsInCourse]="course.numberOfStudents!"
-                [initialStats]="activeStudents"
-            ></jhi-course-detail-line-chart>
+            <jhi-fullscreen class="col-md-8 fullscreen align-items-center">
+                <jhi-course-detail-line-chart
+                    class="col-12"
+                    [course]="course"
+                    [numberOfStudentsInCourse]="course.numberOfStudents!"
+                    [initialStats]="activeStudents"
+                ></jhi-course-detail-line-chart>
+            </jhi-fullscreen>
         </div>
         <hr />
         <div>

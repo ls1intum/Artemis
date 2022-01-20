@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
-import { NgbCollapse, NgbModal, NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
@@ -49,7 +49,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, AceEditorModule, DragDropModule, NgbPopoverModule],
+            imports: [ArtemisTestModule, MockModule(FormsModule), AceEditorModule, MockModule(DragDropModule)],
             declarations: [
                 ShortAnswerQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -259,7 +259,11 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const mapping2 = new ShortAnswerMapping(spot3, shortAnswerSolution1);
         const alternativeMapping = new ShortAnswerMapping(new ShortAnswerSpot(), new ShortAnswerSolution());
         component.shortAnswerQuestion.correctMappings = [mapping1, mapping2, alternativeMapping];
-        const event = { dragData: shortAnswerSolution1 };
+        const event = {
+            item: {
+                data: shortAnswerSolution1,
+            },
+        };
 
         fixture.detectChanges();
         component.onDragDrop(spot, event);

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.getDockerImageName;
-
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
@@ -25,6 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.connectors.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
@@ -76,10 +75,13 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     @Value("${artemis.continuous-integration.artemis-authentication-token-key}")
     private String ARTEMIS_AUTHENTICATION_TOKEN_KEY;
 
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+
     private final ResourceLoaderService resourceLoaderService;
 
-    public JenkinsBuildPlanCreator(ResourceLoaderService resourceLoaderService) {
+    public JenkinsBuildPlanCreator(ResourceLoaderService resourceLoaderService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.resourceLoaderService = resourceLoaderService;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     @PostConstruct
@@ -104,7 +106,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_TESTS_CHECKOUT_PATH, Constants.TESTS_CHECKOUT_PATH);
         replacements.put(REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl);
         replacements.put(REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
-        replacements.put(REPLACE_DOCKER_IMAGE_NAME, getDockerImageName(programmingLanguage, projectType));
+        replacements.put(REPLACE_DOCKER_IMAGE_NAME, programmingLanguageConfiguration.getImage(programmingLanguage,projectType));
         replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);
         // at the moment, only Java and Swift are supported
         if (isStaticCodeAnalysisEnabled) {

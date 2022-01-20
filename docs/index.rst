@@ -25,6 +25,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    user/exercises
    user/exam_mode
    user/orion
+   user/discussion
 
 
 .. toctree::
@@ -50,3 +51,4 @@ All these exercises are supposed to be run either live in the lecture with insta
 
    admin/registration
    admin/accessRights
+   admin/troubleshooting
