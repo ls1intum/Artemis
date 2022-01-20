@@ -83,8 +83,9 @@
         },
         "examScores": {
             "xAxes": "Ergebnis in %",
+            "xAxesSuffix": " + {Notenname}",
             "yAxes": "Anzahl Teilnehmende",
-            "highlightMedian": "Hebe Median im Diagram hervor: {{ median }}%",
+            "highlightPassedMedian": "Hebe Median aller bestandenen Klausuren im Diagram hervor: {{ median }}%",
             "maxPoints": "Maximale Punktzahl",
             "title": "Klausurergebnisse",
             "examStatisticsTitle": "Klausurstatistik",

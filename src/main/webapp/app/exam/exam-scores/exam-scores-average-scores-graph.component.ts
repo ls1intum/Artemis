@@ -31,7 +31,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         name: 'exercise groups',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [GraphColors.BLUE],
+        domain: [],
     } as Color;
     xScaleMax = 100;
     lookup: NameToValueMap = {};
@@ -58,6 +58,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         this.lookup[this.averageScores.title] = { absoluteValue: this.averageScores.averagePoints! };
         const exerciseGroupAverage = this.averageScores.averagePercentage ? this.averageScores.averagePercentage : 0;
         this.ngxData.push({ name: this.averageScores.title, value: exerciseGroupAverage });
+        this.ngxColor.domain.push(this.determineColor(true, exerciseGroupAverage));
         this.xScaleMax = this.xScaleMax > exerciseGroupAverage ? this.xScaleMax : exerciseGroupAverage;
         this.averageScores.exerciseResults.forEach((exercise) => {
             const exerciseAverage = exercise.averagePercentage ?? 0;
@@ -68,7 +69,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                 exerciseId: exercise.exerciseId,
                 exerciseType: exercise.exerciseType,
             };
-            this.ngxColor.domain.push(GraphColors.DARK_BLUE);
+            this.ngxColor.domain.push(this.determineColor(false, exerciseGroupAverage));
         });
 
         this.ngxData = [...this.ngxData];
@@ -111,6 +112,16 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         const type = this.lookup[event.name].exerciseType;
         if (id && type) {
             this.navigateToExercise(id, type);
+        }
+    }
+
+    private determineColor(isExerciseGroup: boolean, score: number): string {
+        if (score >= 50) {
+            return isExerciseGroup ? GraphColors.BLUE : GraphColors.DARK_BLUE;
+        } else if (score > 25) {
+            return GraphColors.YELLOW;
+        } else {
+            return GraphColors.RED;
         }
     }
 }

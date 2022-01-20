@@ -83,8 +83,9 @@
         },
         "examScores": {
             "xAxes": "Score in %",
+            "xAxesSuffix": " + {Grade Name}",
             "yAxes": "Number of Participants",
-            "highlightMedian": "Highlight median in chart: {{ median }}%",
+            "highlightPassedMedian": "Highlight median of passed exams in chart: {{ median }}%",
             "maxPoints": "Maximum Points",
             "title": "Exam Scores",
             "examStatisticsTitle": "Exam Statistics",

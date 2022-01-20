@@ -35,7 +35,7 @@
                 <input type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
                 <span class="ms-1">{{ 'artemisApp.examScores.filterForSubmittedExams' | artemisTranslate }}</span>
             </label>
-            <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
+            <label class="radio-inline mb-0 d-flex align-items-center">
                 <input type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
                 <span class="ms-1">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | artemisTranslate }}</span>
             </label>
@@ -305,9 +305,24 @@
         </table>
 
         <div #containerRef class="d-block">
-            <label>
-                <input type="checkbox" [checked]="showMedian" (change)="toggleMedian()" />
-                <span class="ms-1">{{ 'artemisApp.examScores.highlightMedian' | artemisTranslate: { median: this.median } }}</span>
+            <label *ngIf="gradingScaleExists && !isBonus" class="d-flex align-items-center">
+                <input type="checkbox" [checked]="showPassedMedian" (change)="togglePassedMedian()" />
+                <span class="ms-1">{{
+                    'artemisApp.examScores.highlightPassedMedian'
+                        | artemisTranslate
+                            : {
+                                  median: this.aggregatedExamResults.medianRelativePassed
+                                      ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, course)
+                                      : 0
+                              }
+                }}</span>
+            </label>
+            <label class="d-flex align-items-center">
+                <input type="checkbox" [checked]="showOverallMedian" (change)="toggleOverallMedian()" />
+                <span class="ms-1"
+                    >Highlight overall median in chart:
+                    {{ this.aggregatedExamResults.medianRelativeTotal ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativeTotal, course) : 0 }}%</span
+                >
             </label>
             <!-- Histogram -->
             <ngx-charts-bar-vertical

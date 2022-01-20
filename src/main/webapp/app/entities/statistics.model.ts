@@ -45,6 +45,7 @@ export enum GraphColors {
     TRANSPARENT = 'rgba(93,138,201,0)',
     GREEN = 'rgba(40,164,40,1)',
     RED = 'rgba(204,0,0,1)',
+    YELLOW = 'rgba(230, 174, 6, 1)',
 }
 
 export const ngxColor = {
