@@ -27,6 +27,7 @@ export class NotificationSidebarComponent implements OnInit {
     showSidebar = false;
     showButtonToHideCurrentlyDisplayedNotifications = true;
     loading = false;
+    body = document.querySelector('body');
 
     // notification logic related
     notifications: Notification[] = [];
@@ -108,6 +109,13 @@ export class NotificationSidebarComponent implements OnInit {
      */
     toggleSidebar(): void {
         this.showSidebar = !this.showSidebar;
+
+        // (un)lock scrolling for background (needed for IOS scrolling)
+        if (this.showSidebar) {
+            this.body!.style.overflow = 'hidden';
+        } else {
+            this.body!.style.removeProperty('overflow');
+        }
     }
 
     // notification logic related methods
