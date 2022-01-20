@@ -6,7 +6,7 @@
             (close)="close(alert)"
             [dismissible]="alert.dismissible"
         >
-            <div class="d-flex align-items-center">
+            <div class="d-flex align-items-center justify-between w-100">
                 <pre class="flex-grow-1" [innerHTML]="getAlertMessage(alert)"></pre>
                 <button *ngIf="alert.action" type="button" class="btn btn-primary" (click)="alert.action.callback()">{{ alert.action.label }}</button>
             </div>
