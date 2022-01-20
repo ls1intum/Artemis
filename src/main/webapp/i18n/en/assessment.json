@@ -10,6 +10,7 @@
             "feedbackCommentPlaceholder": "You can enter feedback here...",
             "additionalFeedbackCommentPlaceholder": "You can enter additional feedback here...",
             "automaticGenerated": "Automatically generated feedback",
+            "subsequentFeedback": "This is subsequent feedback which is not included in the total score.",
             "error": {
                 "assessmentDueDateOver": "The assessment due date of this exercise has passed."
             },

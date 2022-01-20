@@ -54,13 +54,13 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         this.jhiWebsocketService
             .receive(this.websocketTopic)
             .pipe(map(this.convertOnlineTeamStudentsFromServer))
-            .subscribe(
-                (students: OnlineTeamStudent[]) => {
+            .subscribe({
+                next: (students: OnlineTeamStudent[]) => {
                     this.onlineTeamStudents = students;
                     this.computeTypingTeamStudents();
                 },
-                (error) => console.error(error),
-            );
+                error: (error) => console.error(error),
+            });
         setTimeout(() => {
             this.jhiWebsocketService.send(this.buildWebsocketTopic('/trigger'), {});
         }, 700);
@@ -68,10 +68,10 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
 
     private setupTypingIndicatorSender() {
         if (this.typing$) {
-            this.typing$.pipe(throttleTime(this.sendTypingInterval)).subscribe(
-                () => this.jhiWebsocketService.send(this.buildWebsocketTopic('/typing'), {}),
-                (error) => console.error(error),
-            );
+            this.typing$.pipe(throttleTime(this.sendTypingInterval)).subscribe({
+                next: () => this.jhiWebsocketService.send(this.buildWebsocketTopic('/typing'), {}),
+                error: (error) => console.error(error),
+            });
         }
     }
 

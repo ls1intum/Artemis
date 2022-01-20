@@ -185,7 +185,7 @@ export class TeamParticipationTableComponent implements OnInit {
         // Programming exercises can only be assessed by anyone / all other exercises can be assessed by tutors
         // if the exercise due date has passed
         if (exercise.type === ExerciseType.PROGRAMMING || !exercise.isAtLeastInstructor) {
-            return !hasExerciseDueDatePassed(exercise, submission!.participation);
+            return !hasExerciseDueDatePassed(exercise, submission.participation);
         } else if (exercise.isAtLeastInstructor) {
             return false;
         }
