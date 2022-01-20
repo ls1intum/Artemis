@@ -86,17 +86,17 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         this.sourceTeams = undefined;
         this.loadingSourceTeams = true;
         this.loadingSourceTeamsFailed = false;
-        this.teamService.findAllByExerciseId(sourceExercise.id!).subscribe(
-            (teamsResponse) => {
+        this.teamService.findAllByExerciseId(sourceExercise.id!).subscribe({
+            next: (teamsResponse) => {
                 this.sourceTeams = teamsResponse.body!;
                 this.computeSourceTeamsFreeOfConflicts();
                 this.loadingSourceTeams = false;
             },
-            () => {
+            error: () => {
                 this.loadingSourceTeams = false;
                 this.loadingSourceTeamsFailed = true;
             },
-        );
+        });
     }
 
     /**
@@ -278,16 +278,16 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         }
         if (this.showImportFromExercise) {
             this.isImporting = true;
-            this.teamService.importTeamsFromSourceExercise(this.exercise, this.sourceExercise!, this.importStrategy!).subscribe(
-                (res) => this.onSaveSuccess(res),
-                (error) => this.onSaveError(error),
-            );
+            this.teamService.importTeamsFromSourceExercise(this.exercise, this.sourceExercise!, this.importStrategy!).subscribe({
+                next: (res) => this.onSaveSuccess(res),
+                error: (error) => this.onSaveError(error),
+            });
         } else if (this.sourceTeams) {
             this.resetConflictingSets();
-            this.teamService.importTeams(this.exercise, this.sourceTeams, this.importStrategy!).subscribe(
-                (res) => this.onSaveSuccess(res),
-                (error) => this.onSaveError(error),
-            );
+            this.teamService.importTeams(this.exercise, this.sourceTeams, this.importStrategy!).subscribe({
+                next: (res) => this.onSaveSuccess(res),
+                error: (error) => this.onSaveError(error),
+            });
         }
     }
 

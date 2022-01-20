@@ -54,13 +54,13 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     deleteLearningGoal(learningGoalId: number) {
-        this.learningGoalService.delete(learningGoalId, this.courseId).subscribe(
-            () => {
+        this.learningGoalService.delete(learningGoalId, this.courseId).subscribe({
+            next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     getLearningGoalCourseProgress(learningGoal: LearningGoal) {
@@ -91,8 +91,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                ([learningGoalProgressResponses, learningGoalProgressResponsesUsingParticipantScores]) => {
+            .subscribe({
+                next: ([learningGoalProgressResponses, learningGoalProgressResponsesUsingParticipantScores]) => {
                     for (const learningGoalProgressResponse of learningGoalProgressResponses) {
                         const learningGoalProgress = learningGoalProgressResponse.body!;
                         this.learningGoalIdToLearningGoalCourseProgress.set(learningGoalProgress.learningGoalId, learningGoalProgress);
@@ -103,8 +103,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                     }
                     this.testIfScoreUsingParticipantScoresTableDiffers();
                 },
-                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            );
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
 
     /**

@@ -62,8 +62,10 @@ describe('User Service', () => {
         });
 
         it('should propagate not found response', () => {
-            service.find('user').subscribe(null, (_error: any) => {
-                expect(_error.status).toEqual(404);
+            service.find('user').subscribe({
+                error: (_error: any) => {
+                    expect(_error.status).toEqual(404);
+                },
             });
 
             const req = httpMock.expectOne({ method: 'GET' });

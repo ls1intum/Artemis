@@ -354,7 +354,7 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should not create example submission', fakeAsync(() => {
         comp.submission = submission;
         comp.exercise = exercise;
-        const createStub = jest.spyOn(exampleSubmissionService, 'create').mockReturnValue(throwError({ status: 404 }));
+        const createStub = jest.spyOn(exampleSubmissionService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
         const alertErrorSpy = jest.spyOn(alertService, 'error');
 
         comp.createNewExampleTextSubmission();
