@@ -99,19 +99,19 @@ export class StudentExamDetailComponent implements OnInit {
     saveWorkingTime() {
         this.isSavingWorkingTime = true;
         const seconds = this.workingTimeForm.controls.hours.value * 3600 + this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
-        this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, seconds).subscribe(
-            (res) => {
+        this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, seconds).subscribe({
+            next: (res) => {
                 if (res.body) {
                     this.setStudentExam(res.body);
                 }
                 this.isSavingWorkingTime = false;
                 this.alertService.success('artemisApp.studentExamDetail.saveWorkingTimeSuccessful');
             },
-            () => {
+            error: () => {
                 this.alertService.error('artemisApp.studentExamDetail.workingTimeCouldNotBeSaved');
                 this.isSavingWorkingTime = false;
             },
-        );
+        });
     }
 
     /**
@@ -185,8 +185,8 @@ export class StudentExamDetailComponent implements OnInit {
     toggle() {
         this.busy = true;
         if (this.studentExam.exam && this.studentExam.exam.id) {
-            this.studentExamService.toggleSubmittedState(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, this.studentExam!.submitted!).subscribe(
-                (res) => {
+            this.studentExamService.toggleSubmittedState(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, this.studentExam!.submitted!).subscribe({
+                next: (res) => {
                     if (res.body) {
                         this.studentExam.submissionDate = res.body.submissionDate;
                         this.studentExam.submitted = res.body.submitted;
@@ -194,11 +194,11 @@ export class StudentExamDetailComponent implements OnInit {
                     this.alertService.success('artemisApp.studentExamDetail.toggleSuccessful');
                     this.busy = false;
                 },
-                () => {
+                error: () => {
                     this.alertService.error('artemisApp.studentExamDetail.togglefailed');
                     this.busy = false;
                 },
-            );
+            });
         }
     }
 

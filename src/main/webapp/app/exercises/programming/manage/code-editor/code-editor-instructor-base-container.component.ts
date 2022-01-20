@@ -134,16 +134,16 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                         return this.loadExerciseHints();
                     }),
                 )
-                .subscribe(
-                    (exerciseHints: ExerciseHint[]) => {
+                .subscribe({
+                    next: (exerciseHints: ExerciseHint[]) => {
                         this.exercise.exerciseHints = exerciseHints;
                         this.loadingState = LOADING_STATE.CLEAR;
                     },
-                    (err: Error) => {
+                    error: (err: Error) => {
                         this.loadingState = LOADING_STATE.FETCHING_FAILED;
                         this.onError(err.message);
                     },
-                );
+                });
         });
     }
 
@@ -327,10 +327,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                     this.loadingState = LOADING_STATE.CLEAR;
                 }),
             )
-            .subscribe(
-                () => {},
-                (err: Error) => this.onError(err.message),
-            );
+            .subscribe({
+                error: (err: Error) => this.onError(err.message),
+            });
     }
 
     /**
@@ -351,10 +350,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                     this.loadingState = LOADING_STATE.CLEAR;
                 }),
             )
-            .subscribe(
-                () => {},
-                (err: Error) => this.onError(err.message),
-            );
+            .subscribe({
+                error: (err: Error) => this.onError(err.message),
+            });
     }
 
     /**

@@ -74,12 +74,12 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
             this.isExamMode = this.fileUploadExercise.exerciseGroup !== undefined;
             if (!this.isExamMode) {
                 this.exerciseCategories = this.fileUploadExercise.categories || [];
-                this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course!.id!).subscribe(
-                    (categoryRes: HttpResponse<string[]>) => {
+                this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course!.id!).subscribe({
+                    next: (categoryRes: HttpResponse<string[]>) => {
                         this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                     },
-                    (error: HttpErrorResponse) => onError(this.alertService, error),
-                );
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
             }
 
             this.saveCommand = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise, this.editType);
@@ -96,13 +96,13 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
 
-        this.saveCommand.save(this.fileUploadExercise, this.notificationText).subscribe(
-            () => this.onSaveSuccess(),
-            (res: HttpErrorResponse) => this.onSaveError(res),
-            () => {
+        this.saveCommand.save(this.fileUploadExercise, this.notificationText).subscribe({
+            next: () => this.onSaveSuccess(),
+            error: (res: HttpErrorResponse) => this.onSaveError(res),
+            complete: () => {
                 this.isSaving = false;
             },
-        );
+        });
     }
 
     /**

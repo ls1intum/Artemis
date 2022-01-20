@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
-import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.getDockerImageName;
 
 import java.io.IOException;
 import java.net.URL;
@@ -57,6 +56,7 @@ import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
+import de.tum.in.www1.artemis.service.connectors.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import tech.jhipster.config.JHipsterConstants;
 
@@ -76,6 +76,8 @@ public class BambooBuildPlanService {
     @Value("${artemis.continuous-integration.vcs-application-link-name}")
     private String vcsApplicationLinkName;
 
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+
     private final ResourceLoaderService resourceLoaderService;
 
     private final BambooServer bambooServer;
@@ -84,11 +86,13 @@ public class BambooBuildPlanService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, Optional<VersionControlService> versionControlService) {
+    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, Optional<VersionControlService> versionControlService,
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
         this.env = env;
         this.versionControlService = versionControlService;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     /**
@@ -396,8 +400,8 @@ public class BambooBuildPlanService {
         }
     }
 
-    private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage language) {
-        var dockerImage = getDockerImageName(language);
+    private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage programmingLanguage) {
+        var dockerImage = programmingLanguageConfiguration.getImages().get(programmingLanguage);
         return new DockerConfiguration().image(dockerImage);
     }
 }
