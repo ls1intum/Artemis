@@ -72,33 +72,37 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
      */
     private checkForUpdates() {
         // first update the service worker
-        this.updates.checkForUpdate().then((updateAvailable: boolean) => {
-            if (this.hasSeenOutdatedInThisSession || updateAvailable) {
-                this.hasSeenOutdatedInThisSession = true;
+        this.updates
+            .checkForUpdate()
+            .then((updateAvailable: boolean) => {
+                console.log('Checked for updates: ' + this.hasSeenOutdatedInThisSession + ' - ' + updateAvailable);
+                if (this.hasSeenOutdatedInThisSession || updateAvailable) {
+                    this.hasSeenOutdatedInThisSession = true;
 
-                // Close previous alert to avoid duplicates
-                this.alert?.close!();
+                    // Close previous alert to avoid duplicates
+                    this.alert?.close!();
 
-                // Show fresh alert with long timeout and store it for later rerun of this method
-                this.alert = this.alertService.addAlert({
-                    type: 'info',
-                    message: 'artemisApp.outdatedAlert',
-                    timeout: 10000000000,
-                    action: {
-                        label: 'artemisApp.outdatedAction',
-                        callback: () =>
-                            // Apply the update
-                            this.updates
-                                .activateUpdate()
-                                // Ignore any error. Any error happening here doesn't matter
-                                // If we reach this point, we want to load an update
-                                // so in any case, we should reload
-                                .catch(() => {})
-                                // Reload the page with the new version
-                                .then(() => this.injectedWindow.location.reload()),
-                    },
-                });
-            }
-        });
+                    // Show fresh alert with long timeout and store it for later rerun of this method
+                    this.alert = this.alertService.addAlert({
+                        type: 'info',
+                        message: 'artemisApp.outdatedAlert',
+                        timeout: 10000000000,
+                        action: {
+                            label: 'artemisApp.outdatedAction',
+                            callback: () =>
+                                // Apply the update
+                                this.updates
+                                    .activateUpdate()
+                                    // Ignore any error. Any error happening here doesn't matter
+                                    // If we reach this point, we want to load an update
+                                    // so in any case, we should reload
+                                    .catch(() => {})
+                                    // Reload the page with the new version
+                                    .then(() => this.injectedWindow.location.reload()),
+                        },
+                    });
+                }
+            })
+            .catch((error) => console.log(error));
     }
 }
