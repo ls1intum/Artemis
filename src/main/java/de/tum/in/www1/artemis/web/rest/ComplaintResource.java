@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -25,6 +23,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -171,7 +170,7 @@ public class ComplaintResource {
         var isOwner = authCheckService.isOwnerOfParticipation(participation, user);
         var isAtLeastTA = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         if (!isOwner && !isAtLeastTA) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
         var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
