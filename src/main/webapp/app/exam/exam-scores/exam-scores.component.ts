@@ -34,6 +34,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { GraphColors } from 'app/entities/statistics.model';
 
+enum MedianType {
+    PASSED,
+    OVERALL,
+}
+
 @Component({
     selector: 'jhi-exam-scores',
     templateUrl: './exam-scores.component.html',
@@ -54,6 +59,42 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public noOfExamsFiltered: number;
 
     // ngx
+    ngxTestData = [
+        { name: '[0,5)', value: 13 },
+        { name: '[5,10)', value: 16 },
+        { name: '[10,15)', value: 23 },
+        { name: '[15,20)', value: 35 },
+        { name: '[25,30)', value: 37 },
+        { name: '[30,35)', value: 60 },
+        { name: '[35,40)', value: 42 },
+        { name: '[40,45)', value: 24 },
+        { name: '[45,50)', value: 10 },
+        { name: '[50,55)', value: 31 },
+        { name: '[55,60)', value: 13 },
+        { name: '[60,65)', value: 3 },
+        { name: '[65,70)', value: 10 },
+        { name: '[70,75)', value: 33 },
+        { name: '[75,80)', value: 3 },
+        { name: '[80,85)', value: 63 },
+        { name: '[85,90)', value: 13 },
+        { name: '[90,95)', value: 7 },
+        { name: '[95,100)', value: 103 },
+    ];
+    ngxTestPassedData = [
+        { name: '[0,40){5,0}', value: 13 },
+        { name: '[40,45){4,7}', value: 16 },
+        { name: '[45,50){4,3}', value: 23 },
+        { name: '[50,55){4,0}', value: 35 },
+        { name: '[55,60){3,7}', value: 37 },
+        { name: '[60,65){3,3}', value: 60 },
+        { name: '[65,70){3,0}', value: 42 },
+        { name: '[70,75){2,7}', value: 24 },
+        { name: '[75,80){2,3}', value: 10 },
+        { name: '[80,85){2,0}', value: 31 },
+        { name: '[85,90){1,7}', value: 13 },
+        { name: '[90,95){1,3}', value: 3 },
+        { name: '[95,100){1,0}', value: 10 },
+    ];
     ngxData: NgxDataEntry[] = [];
     yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
     xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
@@ -68,9 +109,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     dataLabelFormatting = this.formatDataLabel.bind(this);
     showOverallMedian: boolean;
     showPassedMedian: boolean;
-    chartMedianBar: NgxDataEntry;
-    chartMedian: number;
+
     readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly medianType = MedianType;
 
     // exam score dtos
     studentIdToExamScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
@@ -360,7 +401,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
         this.createChart();
-        this.determineChartMedianDependingOfGradingScaleExistence(this.gradingScaleExists && !this.isBonus);
+        const medianType = this.gradingScaleExists && !this.isBonus ? MedianType.PASSED : MedianType.OVERALL;
+        this.determineAndHighlightChartMedian(medianType);
         this.yScaleMax = this.calculateTickMax();
     }
 
@@ -768,11 +810,18 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Sets up the bar coloring
+     * If no grading scale exists, all bars representing a score < 40% are colored yellow in order to visualize that this is a critical performance
+     * If a grading scale exists, all bars representing a score that does not pass the exam are colored red
+     * In either case, all bars above the two thresholds remain grey
+     * @private
+     */
     private setupChartColoring(): void {
         this.ngxColor.domain = [];
         if (!this.gradingScaleExists) {
             for (let i = 0; i < 100 / this.binWidth; i++) {
-                if (i < 8) {
+                if (i < 7) {
                     this.ngxColor.domain.push(GraphColors.YELLOW);
                 } else {
                     this.ngxColor.domain.push(GraphColors.GREY);
@@ -790,6 +839,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.ngxData = [...this.ngxData];
     }
 
+    /**
+     * Auxiliary method in order to keep the chart translation sensitive
+     * @private
+     */
     private setupAxisLabels(): void {
         this.yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
         this.xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
@@ -799,50 +852,68 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Handles the click event on a chart bar. The user is then delegated to the participant scores page of the exam
+     */
     onSelect() {
         if (this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
             this.router.navigate(['course-management', this.course!.id, 'exams', this.examScoreDTO.examId, 'participant-scores']);
         }
     }
 
-    togglePassedMedian() {
-        this.showPassedMedian = !this.showPassedMedian;
-        if (this.showPassedMedian) {
-            this.showOverallMedian = false;
-            this.determineChartMedianDependingOfGradingScaleExistence(true);
-            this.activeEntries = [this.chartMedianBar];
+    /**
+     * Method that handles the toggling of a median highlighting in the chart.
+     * If no grading scale exists, the user can only toggle the overall score median.
+     * If a grading scale exists, the user can switch between the overall score median and the median of the scores of all passed exams.
+     * Per default, the latter is selected in this case.
+     * @param medianType an enum indicating if the user toggles the overall median or the passed median
+     */
+    toggleMedian(medianType: MedianType): void {
+        let showMedian;
+        switch (medianType) {
+            case MedianType.PASSED:
+                this.showPassedMedian = showMedian = !this.showPassedMedian;
+                break;
+            case MedianType.OVERALL:
+                this.showOverallMedian = showMedian = !this.showOverallMedian;
+                break;
+        }
+        if (showMedian) {
+            // At max only one median should be highlighted at a time. Therefore we deactivate the other one if a highlighting is selected
+            if (medianType === MedianType.PASSED) {
+                // The user selects the passed median to be highlighted, therefore we deactivate the highlighting of the other one
+                this.showOverallMedian = false;
+            } else {
+                // The user selects the overall median to be highlighted, therefore we deactivate the highlighting of the other one
+                this.showPassedMedian = false;
+            }
+            this.determineAndHighlightChartMedian(medianType);
         } else {
             this.activeEntries = [];
         }
         this.ngxData = [...this.ngxData];
     }
 
-    toggleOverallMedian() {
-        this.showOverallMedian = !this.showOverallMedian;
-        if (this.showOverallMedian) {
-            this.showPassedMedian = false;
-            this.determineChartMedianDependingOfGradingScaleExistence(false);
-            this.activeEntries = [this.chartMedianBar];
-        } else {
-            this.activeEntries = [];
-        }
-        this.ngxData = [...this.ngxData];
-    }
-
-    private determineChartMedianDependingOfGradingScaleExistence(includeOnlyPassed: boolean): void {
-        if (includeOnlyPassed) {
-            this.chartMedian = this.aggregatedExamResults.medianRelativePassed
-                ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, this.course)
-                : 0;
+    /**
+     * Auxiliary method that determines the median to be highlighted in the chart
+     * It identifies the bar representing the corresponding median type and
+     * highlights it by making all other chart bars a bit more transparent
+     * @param medianType enum representing the type of median to be highlighted
+     * @private
+     */
+    private determineAndHighlightChartMedian(medianType: MedianType): void {
+        let chartMedian;
+        if (medianType === MedianType.PASSED) {
+            chartMedian = this.aggregatedExamResults.medianRelativePassed ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, this.course) : 0;
             this.showPassedMedian = true;
         } else {
-            this.chartMedian = this.aggregatedExamResults.medianRelativeTotal
-                ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativeTotal, this.course)
-                : 0;
+            chartMedian = this.aggregatedExamResults.medianRelativeTotal ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativeTotal, this.course) : 0;
             this.showOverallMedian = true;
         }
-        const index = this.findGradeStepIndex(this.chartMedian);
-        this.chartMedianBar = this.ngxData[index];
-        this.activeEntries = [this.chartMedianBar];
+        const index = this.findGradeStepIndex(chartMedian);
+        // const medianChartBar = this.ngxData[index];
+        // this.activeEntries = this.ngxData.filter((chartBar) => chartBar.name !== medianChartBar.name);
+        const medianChartBar = this.ngxTestData[index];
+        this.activeEntries = this.ngxTestData.filter((chartBar) => chartBar.name !== medianChartBar.name);
     }
 }

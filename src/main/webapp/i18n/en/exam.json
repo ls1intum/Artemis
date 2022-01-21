@@ -86,6 +86,7 @@
             "xAxesSuffix": " + {Grade Name}",
             "yAxes": "Number of Participants",
             "highlightPassedMedian": "Highlight median of passed exams in chart: {{ median }}%",
+            "highlightOverallMedian": "Highlight median of all exams in chart: {{ median }}%",
             "maxPoints": "Maximum Points",
             "title": "Exam Scores",
             "examStatisticsTitle": "Exam Statistics",

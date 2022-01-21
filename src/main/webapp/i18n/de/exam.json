@@ -86,6 +86,7 @@
             "xAxesSuffix": " + {Notenname}",
             "yAxes": "Anzahl Teilnehmende",
             "highlightPassedMedian": "Hebe Median aller bestandenen Klausuren im Diagram hervor: {{ median }}%",
+            "highlightOverallMedian": "Hebe Median aller Klausuren im Diagram hervor: {{ median }}%",
             "maxPoints": "Maximale Punktzahl",
             "title": "Klausurergebnisse",
             "examStatisticsTitle": "Klausurstatistik",
