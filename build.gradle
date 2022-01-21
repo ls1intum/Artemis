@@ -19,7 +19,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "com.google.cloud.tools.jib" version "3.1.4"
+    id "com.google.cloud.tools.jib" version "3.2.0"
     id "com.github.node-gradle.node" version "3.1.1"
     id "com.diffplug.spotless" version "6.2.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
