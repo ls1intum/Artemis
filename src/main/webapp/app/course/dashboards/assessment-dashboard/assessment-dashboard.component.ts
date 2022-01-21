@@ -131,8 +131,8 @@ export class AssessmentDashboardComponent implements OnInit {
 
                 this.extractExercises(exercises);
             });
-            this.examManagementService.getStatsForExamAssessmentDashboard(this.courseId, this.examId).subscribe(
-                (res: HttpResponse<StatsForDashboard>) => {
+            this.examManagementService.getStatsForExamAssessmentDashboard(this.courseId, this.examId).subscribe({
+                next: (res: HttpResponse<StatsForDashboard>) => {
                     this.stats = StatsForDashboard.from(res.body!);
                     this.numberOfSubmissions = this.stats.numberOfSubmissions;
                     this.numberOfAssessmentsOfCorrectionRounds = this.stats.numberOfAssessmentsOfCorrectionRounds;
@@ -167,19 +167,19 @@ export class AssessmentDashboardComponent implements OnInit {
                     }
                     this.computeIssuesWithTutorPerformance();
                 },
-                (response: string) => this.onError(response),
-            );
+                error: (response: string) => this.onError(response),
+            });
         } else {
-            this.courseService.getCourseWithInterestingExercisesForTutors(this.courseId).subscribe(
-                (res: HttpResponse<Course>) => {
+            this.courseService.getCourseWithInterestingExercisesForTutors(this.courseId).subscribe({
+                next: (res: HttpResponse<Course>) => {
                     this.course = Course.from(res.body!);
                     this.extractExercises(this.course.exercises);
                 },
-                (response: string) => this.onError(response),
-            );
+                error: (response: string) => this.onError(response),
+            });
 
-            this.courseService.getStatsForTutors(this.courseId).subscribe(
-                (res: HttpResponse<StatsForDashboard>) => {
+            this.courseService.getStatsForTutors(this.courseId).subscribe({
+                next: (res: HttpResponse<StatsForDashboard>) => {
                     this.stats = StatsForDashboard.from(res.body!);
                     this.numberOfSubmissions = this.stats.numberOfSubmissions;
                     this.totalNumberOfAssessments = this.stats.totalNumberOfAssessments;
@@ -224,8 +224,8 @@ export class AssessmentDashboardComponent implements OnInit {
                     this.guidedTourService.componentPageLoaded();
                     this.computeIssuesWithTutorPerformance();
                 },
-                (response: string) => this.onError(response),
-            );
+                error: (response: string) => this.onError(response),
+            });
         }
     }
 
@@ -367,16 +367,16 @@ export class AssessmentDashboardComponent implements OnInit {
         this.toggelingSecondCorrectionButton = true;
         const currentExercise = this.currentlyShownExercises.find((exercise) => exercise.id === exerciseId)!;
         const index = this.currentlyShownExercises.indexOf(currentExercise);
-        this.exerciseService.toggleSecondCorrection(exerciseId).subscribe(
-            (res: Boolean) => {
+        this.exerciseService.toggleSecondCorrection(exerciseId).subscribe({
+            next: (res: Boolean) => {
                 this.currentlyShownExercises[index].secondCorrectionEnabled = !this.currentlyShownExercises[index].secondCorrectionEnabled;
                 currentExercise!.secondCorrectionEnabled = res as boolean;
                 this.toggelingSecondCorrectionButton = false;
             },
-            (err: string) => {
+            error: (err: string) => {
                 this.onError(err);
             },
-        );
+        });
     }
 
     getAssessmentDashboardLinkForExercise(exercise: Exercise): string[] {
