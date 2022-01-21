@@ -35,7 +35,6 @@ describe('PasswordResetInitComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(PasswordResetInitComponent);
                 comp = fixture.componentInstance;
-                comp.passwordResetEnabled = true;
             });
     });
 

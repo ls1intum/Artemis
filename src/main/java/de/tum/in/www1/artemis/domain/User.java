@@ -341,7 +341,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     public String toDatabaseString() {
         return "Student: login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber + '\'';
     }
-    
+
     public boolean isInternal() {
         return isInternal;
     }

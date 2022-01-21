@@ -21,7 +21,6 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     resetRequestForm = this.fb.group({
         email: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email]],
     });
-    passwordResetEnabled = false;
     useExternal: boolean;
     externalCredentialProvider: string;
     externalPasswordResetLink?: string;
@@ -39,8 +38,6 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                this.passwordResetEnabled = profileInfo.registrationEnabled || false;
-                this.passwordResetEnabled ||= profileInfo.saml2?.enablePassword || false;
                 this.useExternal = profileInfo.useExternal;
                 this.externalCredentialProvider = profileInfo.externalCredentialProvider;
                 const lang = this.translateService.currentLang;
