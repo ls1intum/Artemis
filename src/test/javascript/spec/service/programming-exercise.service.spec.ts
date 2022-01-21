@@ -1,4 +1,4 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -16,7 +16,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 
 describe('ProgrammingExercise Service', () => {
-    let injector: TestBed;
     let service: ProgrammingExerciseService;
     let httpMock: HttpTestingController;
     let defaultProgrammingExercise: ProgrammingExercise;
@@ -34,9 +33,8 @@ describe('ProgrammingExercise Service', () => {
         })
             .compileComponents()
             .then(() => {
-                injector = getTestBed();
-                service = injector.get(ProgrammingExerciseService);
-                httpMock = injector.get(HttpTestingController);
+                service = TestBed.inject(ProgrammingExerciseService);
+                httpMock = TestBed.inject(HttpTestingController);
 
                 defaultProgrammingExercise = new ProgrammingExercise(undefined, undefined);
             });

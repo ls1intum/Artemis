@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 
@@ -12,14 +12,14 @@ describe('HealthComponent', () => {
     let fixture: ComponentFixture<HealthComponent>;
     let service: HealthService;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [HealthComponent],
         })
             .overrideTemplate(HealthComponent, '')
             .compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(HealthComponent);
@@ -53,7 +53,7 @@ describe('HealthComponent', () => {
         it('should handle a 503 on refreshing health data', () => {
             // GIVEN
             const health: Health = { status: 'DOWN', components: { mail: { status: 'DOWN' } } };
-            jest.spyOn(service, 'checkHealth').mockReturnValue(throwError(new HttpErrorResponse({ status: 503, error: health })));
+            jest.spyOn(service, 'checkHealth').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503, error: health })));
 
             // WHEN
             comp.refresh();

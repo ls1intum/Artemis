@@ -289,7 +289,7 @@ describe('ResultDetailComponent', () => {
     it('fetchBuildLogs should suppress 403 error', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
         const response = new HttpErrorResponse({ status: 403 });
-        buildlogsStub.mockReturnValue(throwError(response));
+        buildlogsStub.mockReturnValue(throwError(() => response));
 
         comp.ngOnInit();
 
@@ -302,7 +302,7 @@ describe('ResultDetailComponent', () => {
     it('fetchBuildLogs should not suppress errors with status other than 403', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
         const response = new HttpErrorResponse({ status: 500 });
-        buildlogsStub.mockReturnValue(throwError(response));
+        buildlogsStub.mockReturnValue(throwError(() => response));
 
         comp.ngOnInit();
 

@@ -304,12 +304,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                 this.isExamMode = false;
                                 this.programmingExercise.course = res.body!;
                                 this.exerciseCategories = this.programmingExercise.categories || [];
-                                this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course!.id!).subscribe(
-                                    (categoryRes: HttpResponse<string[]>) => {
+                                this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course!.id!).subscribe({
+                                    next: (categoryRes: HttpResponse<string[]>) => {
                                         this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                     },
-                                    (error: HttpErrorResponse) => onError(this.alertService, error),
-                                );
+                                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                                });
                             });
                         }
                     }
@@ -464,10 +464,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
-        result.subscribe(
-            () => this.onSaveSuccess(),
-            (error: HttpErrorResponse) => this.onSaveError(error),
-        );
+        result.subscribe({
+            next: () => this.onSaveSuccess(),
+            error: (error: HttpErrorResponse) => this.onSaveError(error),
+        });
     }
 
     private onSaveSuccess() {
@@ -572,16 +572,16 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
         this.programmingExercise.projectType = type;
-        this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe(
-            (file) => {
+        this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
+            next: (file) => {
                 this.programmingExercise.problemStatement = file;
                 this.problemStatementLoaded = true;
             },
-            () => {
+            error: () => {
                 this.programmingExercise.problemStatement = '';
                 this.problemStatementLoaded = true;
             },
-        );
+        });
     }
 
     /**

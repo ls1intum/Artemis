@@ -1,11 +1,10 @@
-import { getTestBed, TestBed, tick, fakeAsync } from '@angular/core/testing';
+import { TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 describe('Structured Grading Criteria Service', () => {
-    let injector: TestBed;
     let service: StructuredGradingCriterionService;
     let httpMock: HttpTestingController;
     let feedbacks: Feedback[];
@@ -14,9 +13,8 @@ describe('Structured Grading Criteria Service', () => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
         });
-        injector = getTestBed();
-        service = injector.get(StructuredGradingCriterionService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(StructuredGradingCriterionService);
+        httpMock = TestBed.inject(HttpTestingController);
     });
 
     describe('Service methods', () => {

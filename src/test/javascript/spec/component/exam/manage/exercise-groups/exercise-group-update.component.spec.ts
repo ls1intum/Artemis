@@ -103,7 +103,7 @@ describe('ExerciseGroupUpdateComponent', () => {
         const error = { status: 404 };
         component.exerciseGroup.id = undefined;
 
-        jest.spyOn(service, 'create').mockReturnValue(throwError(new HttpErrorResponse(error)));
+        jest.spyOn(service, 'create').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
 
         component.save();
 

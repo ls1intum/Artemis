@@ -191,10 +191,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 }),
                 switchMap(() => {
                     if (this.commitState === CommitState.COULD_NOT_BE_RETRIEVED) {
-                        return throwError('couldNotBeRetrieved');
+                        return throwError(() => new Error('couldNotBeRetrieved'));
                     } else if (this.commitState === CommitState.CONFLICT) {
                         this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
-                        return throwError('repositoryInConflict');
+                        return throwError(() => new Error('repositoryInConflict'));
                     }
                     return this.loadFiles();
                 }),
@@ -215,13 +215,12 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     this.setupTreeview();
                 }),
             )
-            .subscribe(
-                () => {},
-                (error) => {
+            .subscribe({
+                error: (error: Error) => {
                     this.isLoadingFiles = false;
-                    this.onError.emit(error);
+                    this.onError.emit(error.message);
                 },
-            );
+            });
     };
 
     /**
@@ -421,13 +420,13 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             return;
         }
 
-        this.renameFile(filePath, newFileName).subscribe(
-            () => {
+        this.renameFile(filePath, newFileName).subscribe({
+            next: () => {
                 this.handleFileChange(new RenameFileChange(fileType, filePath, newFilePath));
                 this.renamingFile = undefined;
             },
-            () => this.onError.emit('fileOperationFailed'),
-        );
+            error: () => this.onError.emit('fileOperationFailed'),
+        });
     }
 
     /**
@@ -464,21 +463,21 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
         const file = folderPath ? `${folderPath}/${fileName}` : fileName;
         if (fileType === FileType.FILE) {
-            this.createFile(file).subscribe(
-                () => {
+            this.createFile(file).subscribe({
+                next: () => {
                     this.handleFileChange(new CreateFileChange(FileType.FILE, file));
                     this.creatingFile = undefined;
                 },
-                () => this.onError.emit('fileOperationFailed'),
-            );
+                error: () => this.onError.emit('fileOperationFailed'),
+            });
         } else {
-            this.createFolder(file).subscribe(
-                () => {
+            this.createFolder(file).subscribe({
+                next: () => {
                     this.handleFileChange(new CreateFileChange(FileType.FOLDER, file));
                     this.creatingFile = undefined;
                 },
-                () => this.onError.emit('fileOperationFailed'),
-            );
+                error: () => this.onError.emit('fileOperationFailed'),
+            });
         }
     }
 
@@ -521,7 +520,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                         .filter(([value]) => value),
                 ),
             ),
-            catchError(() => throwError('couldNotBeRetrieved')),
+            catchError(() => throwError(() => new Error('couldNotBeRetrieved'))),
         );
     };
 
@@ -540,7 +539,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                         .filter(([value]) => !value.includes('README.md')),
                 ),
             ),
-            catchError(() => throwError('couldNotBeRetrieved')),
+            catchError(() => throwError(() => new Error('couldNotBeRetrieved'))),
         );
     }
 
