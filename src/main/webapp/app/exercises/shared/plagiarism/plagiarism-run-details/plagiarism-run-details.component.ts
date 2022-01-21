@@ -14,28 +14,6 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
      */
     @Input() plagiarismResult: TextPlagiarismResult | ModelingPlagiarismResult;
 
-    /*
-    ngxTestData is for testing purposes on your local setup as
-    it might be a bit difficult to simulate such amounts of plagiarisms on the test servers.
-    If you want to inject the data into the chart, replace line 19 in the corresponding html template with the following:
-
-    [results]="ngxTestData"
-
-    Feel free to manipulate the values in order to check the behavior of the chart for only small values (< 10)
-     */
-
-    /*ngxTestData = [
-        { name: '0%-10%', value: 0 },
-        { name: '10%-20%', value: 0 },
-        { name: '20%-30%', value: 0 },
-        { name: '30%-40%', value: 0 },
-        { name: '40%-50%', value: 13 },
-        { name: '50%-60%', value: 24 },
-        { name: '60%-70%', value: 36 },
-        { name: '70%-80%', value: 41 },
-        { name: '80%-90%', value: 57 },
-        { name: '90%-100%', value: 0 },
-    ];*/
     yScaleMax = 5;
 
     constructor() {
