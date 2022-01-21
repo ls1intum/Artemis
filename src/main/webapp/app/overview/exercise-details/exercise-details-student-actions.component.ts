@@ -97,8 +97,8 @@ export class ExerciseDetailsStudentActionsComponent {
         this.courseExerciseService
             .startExercise(this.exercise.id!)
             .pipe(finalize(() => (this.exercise.loading = false)))
-            .subscribe(
-                (participation) => {
+            .subscribe({
+                next: (participation) => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = participationStatus(this.exercise);
@@ -111,10 +111,10 @@ export class ExerciseDetailsStudentActionsComponent {
                         }
                     }
                 },
-                () => {
+                error: () => {
                     this.alertService.warning('artemisApp.exercise.startError');
                 },
-            );
+            });
     }
 
     /**
@@ -125,8 +125,8 @@ export class ExerciseDetailsStudentActionsComponent {
         this.courseExerciseService
             .resumeProgrammingExercise(this.exercise.id!)
             .pipe(finalize(() => (this.exercise.loading = false)))
-            .subscribe(
-                (participation: StudentParticipation) => {
+            .subscribe({
+                next: (participation: StudentParticipation) => {
                     if (participation) {
                         // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
                         participation.results = this.exercise.studentParticipations![0] ? this.exercise.studentParticipations![0].results : [];
@@ -135,10 +135,10 @@ export class ExerciseDetailsStudentActionsComponent {
                         this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                     }
                 },
-                (error) => {
+                error: (error) => {
                     this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
-            );
+            });
     }
 
     /**

@@ -86,10 +86,10 @@ export class RegisterComponent implements OnInit, AfterViewInit {
             user.email = this.registerForm.get(['email'])!.value;
             user.password = password;
             user.langKey = this.translateService.currentLang;
-            this.registerService.save(user).subscribe(
-                () => (this.success = true),
-                (response) => this.processError(response),
-            );
+            this.registerService.save(user).subscribe({
+                next: () => (this.success = true),
+                error: (response) => this.processError(response),
+            });
         }
     }
 

@@ -167,8 +167,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
             this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => (this.course = courseResponse.body!));
 
-            forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe(
-                ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
+            forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe({
+                next: ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
                     this.examScoreDTO = getExamScoresResponse!.body!;
                     if (this.examScoreDTO) {
                         this.hasSecondCorrectionAndStarted = this.examScoreDTO.hasSecondCorrectionAndStarted;
@@ -215,8 +215,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     this.changeDetector.detectChanges();
                     this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse.body!);
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
         });
 
         // Update the view if the language was changed

@@ -215,13 +215,12 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     this.setupTreeview();
                 }),
             )
-            .subscribe(
-                () => {},
-                (error: Error) => {
+            .subscribe({
+                error: (error: Error) => {
                     this.isLoadingFiles = false;
                     this.onError.emit(error.message);
                 },
-            );
+            });
     };
 
     /**
@@ -421,13 +420,13 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             return;
         }
 
-        this.renameFile(filePath, newFileName).subscribe(
-            () => {
+        this.renameFile(filePath, newFileName).subscribe({
+            next: () => {
                 this.handleFileChange(new RenameFileChange(fileType, filePath, newFilePath));
                 this.renamingFile = undefined;
             },
-            () => this.onError.emit('fileOperationFailed'),
-        );
+            error: () => this.onError.emit('fileOperationFailed'),
+        });
     }
 
     /**
@@ -464,21 +463,21 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
         const file = folderPath ? `${folderPath}/${fileName}` : fileName;
         if (fileType === FileType.FILE) {
-            this.createFile(file).subscribe(
-                () => {
+            this.createFile(file).subscribe({
+                next: () => {
                     this.handleFileChange(new CreateFileChange(FileType.FILE, file));
                     this.creatingFile = undefined;
                 },
-                () => this.onError.emit('fileOperationFailed'),
-            );
+                error: () => this.onError.emit('fileOperationFailed'),
+            });
         } else {
-            this.createFolder(file).subscribe(
-                () => {
+            this.createFolder(file).subscribe({
+                next: () => {
                     this.handleFileChange(new CreateFileChange(FileType.FOLDER, file));
                     this.creatingFile = undefined;
                 },
-                () => this.onError.emit('fileOperationFailed'),
-            );
+                error: () => this.onError.emit('fileOperationFailed'),
+            });
         }
     }
 
