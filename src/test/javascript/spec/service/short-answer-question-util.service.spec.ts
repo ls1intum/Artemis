@@ -1,4 +1,4 @@
-import { TestBed, getTestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { ArtemisTestModule } from '../test.module';
@@ -9,7 +9,6 @@ import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.mod
 import { cloneDeep } from 'lodash-es';
 
 describe('ShortAnswerQuestionUtil', () => {
-    let injector: TestBed;
     let service: ShortAnswerQuestionUtil;
 
     const spot = new ShortAnswerSpot();
@@ -44,13 +43,12 @@ describe('ShortAnswerQuestionUtil', () => {
         }
     };
 
-    beforeEach(async () => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule],
         });
 
-        injector = getTestBed();
-        service = injector.get(ShortAnswerQuestionUtil);
+        service = TestBed.inject(ShortAnswerQuestionUtil);
     });
     it('should return correct getter', () => {
         const solutions = service.getAllSolutionsForSpot(shortAnswerQuestion.correctMappings, spot);

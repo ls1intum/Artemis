@@ -272,7 +272,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const problemstatement = 'lorem ipsum';
         const exercise = { id: 3, course: { id: 4 }, problemStatement: problemstatement } as ProgrammingExercise;
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
-        getLatestResultWithFeedbacks.mockReturnValue(throwError('fatal error'));
+        getLatestResultWithFeedbacks.mockReturnValue(throwError(() => new Error('fatal error')));
         comp.participation = participation;
         comp.exercise = exercise;
         comp.isInitial = true;

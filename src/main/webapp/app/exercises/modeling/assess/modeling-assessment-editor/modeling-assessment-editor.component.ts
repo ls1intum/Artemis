@@ -128,29 +128,29 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private loadSubmission(submissionId: number): void {
-        this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound, this.resultId).subscribe(
-            (submission: ModelingSubmission) => {
+        this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound, this.resultId).subscribe({
+            next: (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 this.handleErrorResponse(error);
             },
-        );
+        });
     }
 
     private loadRandomSubmission(exerciseId: number): void {
-        this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound).subscribe(
-            (submission: ModelingSubmission) => {
+        this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
+            next: (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
                 this.location.go(newUrl);
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 this.handleErrorResponse(error);
             },
-        );
+        });
     }
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
@@ -204,17 +204,17 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (!this.submission) {
             return;
         }
-        this.complaintService.findBySubmissionId(this.submission.id!).subscribe(
-            (res) => {
+        this.complaintService.findBySubmissionId(this.submission.id!).subscribe({
+            next: (res) => {
                 if (!res.body) {
                     return;
                 }
                 this.complaint = res.body;
             },
-            () => {
+            error: () => {
                 this.onError();
             },
-        );
+        });
     }
 
     /**
@@ -315,18 +315,18 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!).subscribe(
-            (result: Result) => {
+        this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!).subscribe({
+            next: (result: Result) => {
                 this.result = result;
                 this.handleFeedback(this.result.feedbacks);
                 this.alertService.clear();
                 this.alertService.success('modelingAssessmentEditor.messages.saveSuccessful');
             },
-            () => {
+            error: () => {
                 this.alertService.clear();
                 this.alertService.error('modelingAssessmentEditor.messages.saveFailed');
             },
-        );
+        });
     }
 
     onSubmitAssessment() {
@@ -356,8 +356,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.alertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
             return;
         }
-        this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!, true).subscribe(
-            (result: Result) => {
+        this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!, true).subscribe({
+            next: (result: Result) => {
                 result.participation!.results = [result];
                 this.result = result;
 
@@ -366,7 +366,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
                 this.highlightMissingFeedback = false;
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 let errorMessage = 'modelingAssessmentEditor.messages.submitFailed';
                 if (error.error && error.error.entityName && error.error.message) {
                     errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
@@ -374,7 +374,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.alertService.clear();
                 this.alertService.error(errorMessage);
             },
-        );
+        });
     }
 
     /**
@@ -384,15 +384,15 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, complaintResponse, this.submission!.id!).subscribe(
-            (response) => {
+        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, complaintResponse, this.submission!.id!).subscribe({
+            next: (response) => {
                 this.result = response.body!;
                 // reconnect
                 this.result.participation!.results = [this.result];
                 this.alertService.clear();
                 this.alertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
             },
-            (httpErrorResponse: HttpErrorResponse) => {
+            error: (httpErrorResponse: HttpErrorResponse) => {
                 this.alertService.clear();
                 const error = httpErrorResponse.error;
                 if (error && error.errorKey && error.errorKey === 'complaintLock') {
@@ -401,7 +401,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                     this.alertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
                 }
             },
-        );
+        });
     }
 
     /**
@@ -424,8 +424,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     assessNext() {
         this.isLoading = true;
         this.nextSubmissionBusy = true;
-        this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe(
-            (unassessedSubmission: ModelingSubmission) => {
+        this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe({
+            next: (unassessedSubmission: ModelingSubmission) => {
                 this.nextSubmissionBusy = false;
                 this.isLoading = false;
 
@@ -444,11 +444,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 );
                 this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } }));
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy = false;
                 this.handleErrorResponse(error);
             },
-        );
+        });
     }
 
     /**
@@ -544,10 +544,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      */
     useStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.modelingExercise) {
-            this.exampleSubmissionService.import(this.submission.id!, this.modelingExercise.id!).subscribe(
-                () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
-                (error: HttpErrorResponse) => onError(this.alertService, error),
-            );
+            this.exampleSubmissionService.import(this.submission.id!, this.modelingExercise.id!).subscribe({
+                next: () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
         }
     }
 }

@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
@@ -10,7 +10,6 @@ import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learni
 import { LearningGoal } from 'app/entities/learningGoal.model';
 
 describe('LearningGoalService', () => {
-    let testBed: TestBed;
     let learningGoalService: LearningGoalService;
     let httpTestingController: HttpTestingController;
     let defaultLearningGoal: LearningGoal;
@@ -35,9 +34,8 @@ describe('LearningGoalService', () => {
         expectedResultLearningGoal = {} as HttpResponse<LearningGoal>;
         expectedResultLearningGoalProgress = {} as HttpResponse<IndividualLearningGoalProgress>;
 
-        testBed = getTestBed();
-        learningGoalService = testBed.get(LearningGoalService);
-        httpTestingController = testBed.get(HttpTestingController);
+        learningGoalService = TestBed.inject(LearningGoalService);
+        httpTestingController = TestBed.inject(HttpTestingController);
 
         defaultLearningGoal = new LearningGoal();
         defaultLearningGoal.id = 0;

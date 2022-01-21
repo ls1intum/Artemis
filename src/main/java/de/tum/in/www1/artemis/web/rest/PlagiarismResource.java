@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
@@ -75,14 +76,12 @@ public class PlagiarismResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> updatePlagiarismComparisonStatus(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") long comparisonId,
             @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
-        log.debug("REST request to update the status of the plagiarism comparison with id: {}", comparisonId);
+        log.info("REST request to update the status {} of the plagiarism comparison with id: {}", statusDTO.getStatus(), comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authenticationCheckService.isAtLeastEditorInCourse(course, currentUser)) {
-            throw new AccessForbiddenException("Only editors or instructors of this course can update plagiarism cases.");
-        }
-        var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
-        plagiarismComparisonRepository.updatePlagiarismComparisonStatus(comparison.getId(), statusDTO.getStatus());
+        authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        // TODO: check that the comparisonId belongs to the courseId
+        plagiarismComparisonRepository.updatePlagiarismComparisonStatus(comparisonId, statusDTO.getStatus());
+        log.info("Finished updating the status {} of the plagiarism comparison with id: {}", statusDTO.getStatus(), comparisonId);
         return ResponseEntity.ok().body(null);
     }
 
@@ -119,7 +118,7 @@ public class PlagiarismResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<PlagiarismStatementDTO> updatePlagiarismComparisonInstructorStatement(@PathVariable("courseId") long courseId,
             @PathVariable("comparisonId") long comparisonId, @PathVariable("studentLogin") String studentLogin, @RequestBody PlagiarismStatementDTO statement) {
-
+        // TODO: this database call might not work for large comparisons and lead to server crashes, we should do it differently in the future
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User affectedUser = userRepository.getUserByLoginElseThrow(studentLogin);
@@ -157,6 +156,7 @@ public class PlagiarismResource {
     @GetMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<PlagiarismCaseDTO> getPlagiarismComparisonForStudent(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId) {
+        // TODO: this database call might not work for large comparisons and lead to server crashes, we should do it differently in the future
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -187,6 +187,7 @@ public class PlagiarismResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<PlagiarismStatementDTO> updatePlagiarismComparisonStudentStatement(@PathVariable("courseId") long courseId,
             @PathVariable("comparisonId") long comparisonId, @RequestBody PlagiarismStatementDTO statement) {
+        // TODO: this database call might not work for large comparisons and lead to server crashes, we should do it differently in the future
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -224,7 +225,7 @@ public class PlagiarismResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<PlagiarismComparisonStatusDTO> updatePlagiarismComparisonFinalStatus(@PathVariable("courseId") long courseId,
             @PathVariable("comparisonId") long comparisonId, @PathVariable("studentLogin") String studentLogin, @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
-
+        // TODO: this database call might not work for large comparisons and lead to server crashes, we should do it differently in the future
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User affectedUser = userRepository.getUserWithGroupsAndAuthorities(studentLogin);

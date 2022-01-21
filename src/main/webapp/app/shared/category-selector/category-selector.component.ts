@@ -139,7 +139,7 @@ export class CategorySelectorComponent implements OnInit, OnChanges {
 
     // only invoked for autocomplete
     onItemSelect(event: MatAutocompleteSelectedEvent): void {
-        const categoryString = (event.option.viewValue || '').trim();
+        const categoryString = (event.option.value || '').trim();
         // check if there is an existing category and reuse the same color
         let category = this.findExistingCategory(categoryString);
         if (!category) {
@@ -147,6 +147,7 @@ export class CategorySelectorComponent implements OnInit, OnChanges {
         }
 
         this.categories.push(category);
+        this.selectedCategories.emit(this.categories);
         this.categoryInput.nativeElement.value = '';
         this.categoryCtrl.setValue(null);
     }

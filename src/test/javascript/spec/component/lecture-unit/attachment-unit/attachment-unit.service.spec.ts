@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
@@ -11,7 +11,6 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 
 describe('AttachmentUnitService', () => {
-    let injector: TestBed;
     let service: AttachmentUnitService;
     let httpMock: HttpTestingController;
     let elemDefault: AttachmentUnit;
@@ -29,9 +28,8 @@ describe('AttachmentUnitService', () => {
             ],
         });
         expectedResult = {} as HttpResponse<AttachmentUnit>;
-        injector = getTestBed();
-        service = injector.get(AttachmentUnitService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(AttachmentUnitService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         const attachment = new Attachment();
         attachment.id = 0;

@@ -20,9 +20,8 @@ export class AuthExpiredInterceptor implements HttpInterceptor {
      */
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         return next.handle(request).pipe(
-            tap(
-                () => {},
-                (err: any) => {
+            tap({
+                error: (err: any) => {
                     if (err instanceof HttpErrorResponse) {
                         // When there is no existing token we were not logged in to begin with
                         if (err.status === 401 && this.authServerProvider.getToken() != undefined) {
@@ -38,7 +37,7 @@ export class AuthExpiredInterceptor implements HttpInterceptor {
                         }
                     }
                 },
-            ),
+            }),
         );
     }
 }
