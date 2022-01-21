@@ -20,7 +20,7 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { HttpResponse } from '@angular/common/http';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { of } from 'rxjs';
@@ -70,7 +70,7 @@ describe('LectureUnitManagementComponent', () => {
                 MockComponent(VideoUnitComponent),
                 MockComponent(TextUnitComponent),
                 MockComponent(FaIconComponent),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(RouterOutlet),

@@ -3,7 +3,7 @@ import { GradingSystemComponent } from 'app/grading-system/grading-system.compon
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ArtemisTestModule } from '../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -79,7 +79,7 @@ describe('Grading System Component', () => {
                 MockDirective(NgModel),
                 MockDirective(NgSelectOption),
                 GradingSystemComponent,
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockComponent(AlertErrorComponent),
                 MockComponent(GradingSystemInfoModalComponent),
                 MockDirective(DeleteButtonDirective),

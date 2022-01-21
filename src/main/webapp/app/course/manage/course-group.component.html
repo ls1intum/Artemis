@@ -6,7 +6,6 @@
         <span class="text-muted">({{ courseGroupName }})</span>
         <jhi-user-import-button *ngIf="course?.isAtLeastInstructor" class="ms-4" [courseId]="course.id!" [courseGroup]="courseGroup!" (finish)="loadAll()"></jhi-user-import-button>
     </h2>
-    <jhi-alert></jhi-alert>
     <jhi-data-table
         id="registered-students"
         [isLoading]="isLoading"

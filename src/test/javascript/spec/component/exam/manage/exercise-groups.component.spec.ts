@@ -16,7 +16,7 @@ import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercis
 import { ProgrammingExerciseInstructorStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-status.component';
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -64,7 +64,7 @@ describe('Exercise Groups Component', () => {
                 ExerciseGroupsComponent,
                 MockComponent(ExamExerciseRowButtonsComponent),
                 MockComponent(ProgrammingExerciseInstructorStatusComponent),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockComponent(AlertErrorComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),

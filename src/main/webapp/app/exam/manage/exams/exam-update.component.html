@@ -10,7 +10,6 @@
             </ng-template>
 
             <div>
-                <jhi-alert-error></jhi-alert-error>
                 <div class="form-group" *ngIf="exam.course">
                     <label class="form-control-label" for="course" jhiTranslate="artemisApp.examManagement.courseTitle">Course Title</label>
                     <input id="course" name="course" readonly type="text" class="form-control" [value]="exam.course.title" />

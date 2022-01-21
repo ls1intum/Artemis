@@ -6,8 +6,6 @@
                 {{ exam.title }}
             </h2>
             <hr />
-            <jhi-alert></jhi-alert>
-            <jhi-alert-error></jhi-alert-error>
             <div *ngIf="exam.course?.isAtLeastInstructor">
                 <a [routerLink]="['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'participant-scores']" class="btn btn-primary mt-1">
                     <fa-icon [icon]="faTable"></fa-icon>

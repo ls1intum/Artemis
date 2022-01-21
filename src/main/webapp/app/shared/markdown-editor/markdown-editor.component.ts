@@ -155,9 +155,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
     enableFileUpload = true;
     acceptedFileExtensions = 'png,jpg,jpeg,svg,pdf';
 
-    @Input()
-    shouldDisplayAlert = true;
-
     // Icons
     faQuestionCircle = faQuestionCircle;
     faGripLines = faGripLines;

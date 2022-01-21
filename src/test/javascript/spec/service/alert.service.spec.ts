@@ -9,16 +9,12 @@ describe('Alert Service Test', () => {
         type: 'success' as AlertType,
         message: 'Hello Jhipster',
         timeout: 3000,
-        toast: true,
-        position: 'top left',
     };
     const alertSampleWithId = {
         type: 'success' as AlertType,
         message: 'Hello Jhipster',
         id: 0,
         timeout: 3000,
-        toast: true,
-        position: 'top left',
     };
     let service: AlertService;
 
@@ -140,16 +136,6 @@ describe('Alert Service Test', () => {
             expect.objectContaining({
                 type: 'success',
                 message: 'Hello Jhipster',
-            } as Alert),
-        );
-    });
-
-    it('should produce a success message with custom position', () => {
-        expect(service.addAlert({ type: 'success', message: 'Hello Jhipster', position: 'bottom left' })).toEqual(
-            expect.objectContaining({
-                type: 'success',
-                message: 'Hello Jhipster',
-                position: 'bottom left',
             } as Alert),
         );
     });

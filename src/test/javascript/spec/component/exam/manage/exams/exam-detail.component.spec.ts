@@ -15,7 +15,7 @@ import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/
 import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -62,7 +62,7 @@ describe('ExamDetailComponent', () => {
                 DummyComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockComponent(AlertErrorComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),

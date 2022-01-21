@@ -11,7 +11,7 @@ import { ModelingExerciseComponent } from 'app/exercises/modeling/manage/modelin
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
 import { TextExerciseComponent } from 'app/exercises/text/manage/text-exercise/text-exercise.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -40,7 +40,7 @@ describe('Course Management Exercises Component', () => {
                 MockDirective(NgbCollapse),
                 MockDirective(TranslateDirective),
                 MockDirective(ExtensionPointDirective),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockComponent(ProgrammingExerciseComponent),
                 MockDirective(OrionFilterDirective),
                 MockComponent(QuizExerciseComponent),

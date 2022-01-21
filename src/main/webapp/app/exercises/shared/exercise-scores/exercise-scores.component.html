@@ -4,7 +4,6 @@
         <span *ngIf="exercise.exerciseGroup">{{ exercise.exerciseGroup?.exam?.title }} - {{ exercise.title }}</span>
         <small jhiTranslate="artemisApp.exercise.resultCount" [translateValues]="{ resultsLength: filteredResultsSize }">results</small>
     </h2>
-    <jhi-alert></jhi-alert>
     <div class="mb-2 clearfix">
         <div class="exercise-scores-filter-toolbar d-flex align-content-center my-2">
             <div class="d-flex align-items-center">

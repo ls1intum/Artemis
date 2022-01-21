@@ -5,7 +5,7 @@ import { Course } from 'app/entities/course.model';
 import { ConsistencyCheckError, ErrorType } from 'app/entities/consistency-check-result.model';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
@@ -42,7 +42,7 @@ describe('ConsistencyCheckComponent', () => {
             declarations: [
                 ConsistencyCheckComponent,
                 MockDirective(TranslateDirective),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockComponent(AlertErrorComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbHighlight),

@@ -3,8 +3,6 @@
         <div *ngIf="textExercise">
             <h2><span jhiTranslate="artemisApp.textExercise.detail.title">Text Exercise</span> {{ textExercise.id }}</h2>
             <hr />
-            <jhi-alert></jhi-alert>
-            <jhi-alert-error></jhi-alert-error>
             <div class="text-start">
                 <jhi-non-programming-exercise-detail-common-actions
                     *ngIf="course"

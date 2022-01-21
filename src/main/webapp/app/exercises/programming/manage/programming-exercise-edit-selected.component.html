@@ -4,10 +4,6 @@
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
-        <div class="row justify-content-center">
-            <jhi-alert></jhi-alert>
-            <jhi-alert-error></jhi-alert-error>
-        </div>
         <div *ngIf="failureOccurred" class="row justify-content-center">
             <span class="mb-1" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorOccurred">The following exercises could not be updated:</span>
             <div class="table-responsive m-2 p-1">

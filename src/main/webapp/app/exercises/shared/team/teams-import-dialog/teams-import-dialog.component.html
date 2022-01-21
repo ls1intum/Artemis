@@ -7,8 +7,6 @@
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
-        <jhi-alert-error></jhi-alert-error>
-        <jhi-alert></jhi-alert>
         <div class="w100 row justify-content-center card-header">
             <div class="btn-group">
                 <div class="btn" [ngClass]="{ 'btn-primary': showImportFromExercise, 'btn-default': !showImportFromExercise }" (click)="setShowImportFromExercise(true)">

@@ -3,7 +3,6 @@
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
             <h2 id="myNotificationLabel" jhiTranslate="artemisApp.systemNotification.createOrEditLabel">Create or edit a system notification</h2>
             <div>
-                <jhi-alert-error></jhi-alert-error>
                 <div class="form-group" [hidden]="!notification.id">
                     <label jhiTranslate="global.field.id">ID</label>
                     <input type="text" class="form-control" name="id" [(ngModel)]="notification.id" readonly />

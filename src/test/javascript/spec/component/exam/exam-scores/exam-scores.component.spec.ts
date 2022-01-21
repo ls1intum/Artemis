@@ -8,7 +8,7 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AggregatedExerciseGroupResult, ExamScoreDTO, ExerciseGroup, ExerciseInfo, ExerciseResult, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamScoresComponent } from 'app/exam/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
@@ -215,7 +215,7 @@ describe('ExamScoresComponent', () => {
             declarations: [
                 ExamScoresComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(HelpIconComponent),
                 MockDirective(TranslateDirective),

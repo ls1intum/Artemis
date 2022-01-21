@@ -10,7 +10,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -39,7 +39,7 @@ describe('DeleteDialogDirective', () => {
                 TestComponent,
                 DeleteButtonDirective,
                 MockComponent(DeleteDialogComponent),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 TranslatePipeMock,
                 MockDirective(TranslateDirective),
             ],

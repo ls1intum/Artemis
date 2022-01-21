@@ -16,7 +16,6 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     filter: ExerciseFilter;
     @Output() exerciseCount = new EventEmitter<number>();
     @Output() filteredExerciseCount = new EventEmitter<number>();
-    showAlertHeading: boolean;
     showHeading: boolean;
     courseId: number;
     predicate: string;
@@ -40,7 +39,6 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
      * Fetches an exercise from the server (and if needed the course as well)
      */
     ngOnInit(): void {
-        this.showAlertHeading = !this.embedded;
         this.showHeading = this.embedded;
         this.load();
         this.registerChangeInExercises();

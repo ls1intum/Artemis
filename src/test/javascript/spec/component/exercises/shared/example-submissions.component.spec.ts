@@ -11,7 +11,7 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockDirective, MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -48,7 +48,7 @@ describe('Example Submission Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
                 MockComponent(ResultComponent),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockComponent(AlertErrorComponent),
                 MockDirective(NgbTooltip),
             ],

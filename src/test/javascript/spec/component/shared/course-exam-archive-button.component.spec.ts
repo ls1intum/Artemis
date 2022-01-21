@@ -15,7 +15,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { HttpResponse } from '@angular/common/http';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -44,7 +44,7 @@ describe('Course Exam Archive Button Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockComponent(AlertErrorComponent),
-                MockDirective(AlertComponent),
+                MockDirective(AlertOverlayComponent),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
             ],

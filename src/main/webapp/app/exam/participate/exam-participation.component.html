@@ -9,9 +9,9 @@
         (onExamStarted)="examStarted($event)"
     ></jhi-exam-participation-cover>
 
-    <ng-container *ngIf="studentExam; else alert">
+    <ng-container *ngIf="studentExam">
         <!-- exam participation -->
-        <ng-container *ngIf="isVisible() && isActive() && !isOver() && examStartConfirmed; else alert">
+        <ng-container *ngIf="isVisible() && isActive() && !isOver() && examStartConfirmed">
             <!-- exam nav -->
             <jhi-exam-navigation-bar
                 id="exam-navigation-bar"
@@ -25,9 +25,6 @@
                 (examAboutToEnd)="examEnded()"
                 (onExamHandInEarly)="toggleHandInEarly()"
             ></jhi-exam-navigation-bar>
-            <div class="d-flex justify-content-center mt-2 mb-4">
-                <jhi-alert></jhi-alert>
-            </div>
             <!-- exercises -->
             <div [hidden]="activePageIndex !== -1">
                 <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)"> </jhi-exam-exercise-overview-page>
@@ -134,11 +131,6 @@
         ></jhi-exam-participation-cover>
         <jhi-exam-participation-summary *ngIf="isOver() && studentExam.submitted" [studentExam]="studentExam"></jhi-exam-participation-summary>
     </ng-container>
-    <ng-template #alert>
-        <div class="d-flex justify-content-center mt-2 mb-4">
-            <jhi-alert></jhi-alert>
-        </div>
-    </ng-template>
 </ng-container>
 <ng-container *ngIf="!loadingExam && !exam">
     <p jhiTranslate="artemisApp.examParticipation.noStudentExam" [translateValues]="{ examTitle: examTitle }"></p>

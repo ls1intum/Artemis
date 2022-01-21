@@ -12,7 +12,7 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { flatMap } from 'lodash-es';
@@ -65,7 +65,7 @@ describe('TeamsImportDialogComponent', () => {
                     MockDirective(DeleteButtonDirective),
                     MockDirective(TranslateDirective),
                     TranslatePipeMock,
-                    MockComponent(AlertComponent),
+                    MockComponent(AlertOverlayComponent),
                     MockComponent(AlertErrorComponent),
                     MockComponent(TeamExerciseSearchComponent),
                     MockComponent(TeamStudentsListComponent),

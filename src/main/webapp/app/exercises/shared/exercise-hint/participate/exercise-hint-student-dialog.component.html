@@ -3,7 +3,6 @@
     <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
 </div>
 <div class="modal-body">
-    <jhi-alert-error></jhi-alert-error>
     <div *ngFor="let hint of exerciseHints; index as i" class="mb-4">
         <h3 class="mb-3">Hint {{ i + 1 }}: {{ hint.title }}</h3>
         <div class="p-3 border border-1 border-secondary bg-light" [innerHTML]="hint.content | htmlForMarkdown"></div>

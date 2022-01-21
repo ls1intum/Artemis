@@ -21,7 +21,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
@@ -51,7 +51,7 @@ describe('Exam Management Component', () => {
                 MockPipe(ArtemisDatePipe),
                 MockRouterLinkDirective,
                 MockDirective(SortDirective),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockPipe(DurationPipe),
                 MockDirective(DeleteButtonDirective),
             ],

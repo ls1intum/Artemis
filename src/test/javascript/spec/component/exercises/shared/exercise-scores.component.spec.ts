@@ -11,7 +11,7 @@ import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
 import { of, Subscription } from 'rxjs';
 import { NgModel } from '@angular/forms';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
 import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission-export/submission-export-button.component';
@@ -88,7 +88,7 @@ describe('Exercise Scores Component', () => {
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(NgxDatatableModule)],
             declarations: [
                 ExerciseScoresComponent,
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockComponent(ExerciseScoresExportButtonComponent),
                 MockComponent(ProgrammingAssessmentRepoExportButtonComponent),
                 MockComponent(SubmissionExportButtonComponent),

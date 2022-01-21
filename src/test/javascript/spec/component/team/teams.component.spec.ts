@@ -19,7 +19,7 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-export-button.component';
 import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
 import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-button.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-participate/team-students-list.component';
@@ -52,7 +52,7 @@ describe('TeamsComponent', () => {
                 MockComponent(TeamsExportButtonComponent),
                 MockComponent(TeamsImportButtonComponent),
                 MockComponent(TeamUpdateButtonComponent),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockComponent(DataTableComponent),
                 MockComponent(TeamStudentsListComponent),
                 MockRouterLinkDirective,

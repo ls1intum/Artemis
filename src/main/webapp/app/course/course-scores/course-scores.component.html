@@ -11,7 +11,6 @@
             <span jhiTranslate="instructorDashboard.exportCSV">&nbsp;Export Results as CSV</span>
         </button>
     </h4>
-    <jhi-alert></jhi-alert>
     <span *ngIf="!exportReady" style="color: grey"
         ><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span jhitranslate="instructorDashboard.loadingStudents">Loading the results of all students...</span></span
     >

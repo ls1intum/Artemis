@@ -17,7 +17,7 @@ import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/question
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -84,7 +84,7 @@ const quizExerciseUnreleased = {
 const testBedDeclarations = [
     QuizParticipationComponent,
     ButtonComponent,
-    MockComponent(AlertComponent),
+    MockComponent(AlertOverlayComponent),
     MockPipe(ArtemisTranslatePipe),
     MockPipe(ArtemisDatePipe),
     MockDirective(TranslateDirective),

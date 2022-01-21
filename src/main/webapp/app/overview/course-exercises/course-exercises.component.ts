@@ -21,6 +21,7 @@ import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSo
 import { User } from 'app/core/user/user.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -106,6 +107,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         private guidedTourService: GuidedTourService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private localStorage: LocalStorageService,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit() {
@@ -150,6 +152,17 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         if (this.controls) {
             this.controlConfiguration.subject!.next(this.controls);
         }
+    }
+
+    c = 0;
+
+    addAlert(): void {
+        console.log('test');
+        this.alertService.addAlert({
+            type: 'info',
+            message: 'Test 123' + this.c++,
+            timeout: 30000,
+        });
     }
 
     setSortingAttribute(attribute: SortingAttribute) {

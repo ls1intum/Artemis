@@ -1,7 +1,6 @@
 <div>
     <h4>{{ (exerciseGroup.id ? 'artemisApp.examManagement.exerciseGroup.update' : 'artemisApp.examManagement.exerciseGroup.create') | artemisTranslate }}</h4>
     <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="save()">
-        <jhi-alert-error></jhi-alert-error>
         <div class="form-group">
             <label class="form-check-label" for="title" jhiTranslate="artemisApp.examManagement.exerciseGroup.title">Title</label>
             <input class="form-control" required type="text" name="title" id="title" [(ngModel)]="exerciseGroup.title" />

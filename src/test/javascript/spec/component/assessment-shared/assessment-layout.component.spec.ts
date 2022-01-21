@@ -6,7 +6,7 @@ import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/asse
 import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { Complaint } from 'app/entities/complaint.model';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
@@ -29,7 +29,7 @@ describe('AssessmentLayoutComponent', () => {
                 AssessmentHeaderComponent,
                 MockComponent(ComplaintsForTutorComponent),
                 MockComponent(AssessmentComplaintAlertComponent),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockComponent(NgbAlert),
                 MockComponent(AssessmentWarningComponent),
                 MockDirective(TranslateDirective),
@@ -50,11 +50,6 @@ describe('AssessmentLayoutComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
-    });
-
-    it('should include jhi-alert', () => {
-        const jhiAlertComponent = fixture.debugElement.query(By.directive(AlertComponent));
-        expect(jhiAlertComponent).toBeTruthy();
     });
 
     it('should include jhi-assessment-header', () => {

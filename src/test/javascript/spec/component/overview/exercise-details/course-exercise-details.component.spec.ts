@@ -49,7 +49,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
@@ -94,7 +94,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ComplaintsStudentViewComponent),
                 MockComponent(RatingComponent),
                 MockRouterLinkDirective,
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockComponent(AlertErrorComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(FaIconComponent),

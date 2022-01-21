@@ -9,7 +9,7 @@ import { User } from 'app/core/user/user.model';
 import { of } from 'rxjs';
 import { MockModule } from 'ng-mocks/cjs/lib/mock-module/mock-module';
 import { MockComponent } from 'ng-mocks/cjs/lib/mock-component/mock-component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
@@ -38,7 +38,7 @@ describe('UserManagementComponent', () => {
             declarations: [
                 UserManagementComponent,
                 MockComponent(AlertErrorComponent),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockRouterLinkDirective,
                 MockComponent(ItemCountComponent),
                 MockPipe(ArtemisDatePipe),

@@ -10,7 +10,7 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -47,7 +47,7 @@ describe('ExamStudentsComponent', () => {
                 ExamStudentsComponent,
                 MockComponent(UsersImportButtonComponent),
                 MockComponent(DataTableComponent),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),

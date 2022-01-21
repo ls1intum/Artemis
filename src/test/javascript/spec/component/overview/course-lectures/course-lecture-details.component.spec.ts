@@ -18,7 +18,7 @@ import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-uni
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
 import { LearningGoalsPopoverComponent } from 'app/course/learning-goals/learning-goals-popover/learning-goals-popover.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -91,7 +91,7 @@ describe('CourseLectureDetails', () => {
                 TextUnitComponent,
                 VideoUnitComponent,
                 LearningGoalsPopoverComponent,
-                AlertComponent,
+                AlertOverlayComponent,
                 NotReleasedTagComponent,
                 DifficultyBadgeComponent,
                 IncludedInScoreBadgeComponent,

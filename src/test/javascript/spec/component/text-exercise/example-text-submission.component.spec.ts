@@ -18,7 +18,7 @@ import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-asse
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { State } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
 import { ExampleTextSubmissionComponent } from 'app/exercises/text/manage/example-text-submission/example-text-submission.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
@@ -65,7 +65,7 @@ describe('ExampleTextSubmissionComponent', () => {
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
             ],
             providers: [
                 {

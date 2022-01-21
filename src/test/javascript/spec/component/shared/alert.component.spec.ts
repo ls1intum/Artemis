@@ -1,24 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 
-describe('Alert Component Tests', () => {
-    let comp: AlertComponent;
-    let fixture: ComponentFixture<AlertComponent>;
+describe('Alert Overlay Component Tests', () => {
+    let comp: AlertOverlayComponent;
+    let fixture: ComponentFixture<AlertOverlayComponent>;
     let alertService: AlertService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [AlertComponent],
+            declarations: [AlertOverlayComponent],
         })
-            .overrideTemplate(AlertComponent, '')
+            .overrideTemplate(AlertOverlayComponent, '')
             .compileComponents();
     });
 
     beforeEach(() => {
-        fixture = TestBed.createComponent(AlertComponent);
+        fixture = TestBed.createComponent(AlertOverlayComponent);
         comp = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
     });

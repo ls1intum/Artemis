@@ -29,7 +29,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TextFeedbackConflictsComponent', () => {
@@ -158,7 +158,7 @@ describe('TextFeedbackConflictsComponent', () => {
                 MockComponent(ScoreDisplayComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ feedbackId: 1 }) } } },

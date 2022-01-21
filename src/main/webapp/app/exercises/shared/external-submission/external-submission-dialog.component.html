@@ -7,8 +7,6 @@
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
-        <jhi-alert-error></jhi-alert-error>
-        <jhi-alert></jhi-alert>
         <div class="form-group" *ngIf="exercise.gradingInstructions">
             <h3 for="id" jhiTranslate="artemisApp.exercise.assessmentInstructions">Assessment Instructions</h3>
             <span [innerHTML]="exercise.gradingInstructions | htmlForMarkdown"></span>

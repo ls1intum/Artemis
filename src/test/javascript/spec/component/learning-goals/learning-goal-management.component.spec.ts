@@ -5,7 +5,7 @@ import { LearningGoalService } from 'app/course/learning-goals/learningGoal.serv
 import { of } from 'rxjs';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LearningGoalManagementComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-management.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { Component, Input } from '@angular/core';
@@ -37,7 +37,7 @@ describe('LearningGoalManagementComponent', () => {
                 LearningGoalManagementComponent,
                 LearningGoalCardStubComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(AlertComponent),
+                MockComponent(AlertOverlayComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),

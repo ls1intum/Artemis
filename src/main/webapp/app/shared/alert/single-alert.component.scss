@@ -1,0 +1,39 @@
+:host {
+    width: 100%;
+    overflow: hidden;
+
+    .alert-inner {
+        width: 100%;
+
+        color: #0c5460;
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        padding: 15px 20px;
+        border-radius: 0.15rem;
+        box-shadow: rgba(0, 0, 0, 0.55) 0px 5px 15px;
+
+        flex: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .left {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+
+            .message {
+                white-space: break-spaces;
+                text-overflow: ellipsis;
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 480px) {
+    :host {
+        width: 75%;
+        max-width: 800px;
+    }
+}
