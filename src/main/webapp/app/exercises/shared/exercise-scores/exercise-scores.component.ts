@@ -100,7 +100,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             const findCourse = this.courseService.find(params['courseId']);
             const findExercise = this.exerciseService.find(params['exerciseId']);
 
-            forkJoin(findCourse, findExercise).subscribe(([courseRes, exerciseRes]) => {
+            forkJoin([findCourse, findExercise]).subscribe(([courseRes, exerciseRes]) => {
                 this.course = courseRes.body!;
                 this.exercise = exerciseRes.body!;
                 // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.

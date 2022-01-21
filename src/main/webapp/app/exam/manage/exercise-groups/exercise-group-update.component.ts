@@ -55,10 +55,10 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ExerciseGroup>>) {
-        result.subscribe(
-            () => this.onSaveSuccess(),
-            (err: HttpErrorResponse) => this.onSaveError(err),
-        );
+        result.subscribe({
+            next: () => this.onSaveSuccess(),
+            error: (err: HttpErrorResponse) => this.onSaveError(err),
+        });
     }
 
     private onSaveSuccess() {

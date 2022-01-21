@@ -24,21 +24,17 @@ export class ComplaintResponseService {
      * @param complaintResponse complaint response to check the lock status for
      * @param exercise exercise used to find out if currently logged in user is instructor
      */
-    isComplaintResponseLockedForLoggedInUser(complaintResponse: ComplaintResponse, exercise: Exercise) {
-        if (complaintResponse.isCurrentlyLocked && complaintResponse.submittedTime === undefined) {
-            return !(complaintResponse.reviewer?.login === this.accountService.userIdentity?.login || this.accountService.isAtLeastInstructorForExercise(exercise));
-        } else {
-            return false;
-        }
+    isComplaintResponseLockedForLoggedInUser(complaintResponse: ComplaintResponse, exercise: Exercise): boolean {
+        return !this.accountService.isAtLeastInstructorForExercise(exercise) && !this.isComplaintResponseLockedByLoggedInUser(complaintResponse);
     }
 
     /**
      * Checks if the lock on a complaint response is active and if the currently logged in user is the creator of the lock
      * @param complaintResponse complaint response to check
      */
-    isComplaintResponseLockedByLoggedInUser(complaintResponse: ComplaintResponse) {
+    isComplaintResponseLockedByLoggedInUser(complaintResponse: ComplaintResponse): boolean {
         return (
-            complaintResponse.isCurrentlyLocked && complaintResponse.submittedTime === undefined && complaintResponse.reviewer?.login === this.accountService.userIdentity?.login
+            !!complaintResponse.isCurrentlyLocked && complaintResponse.submittedTime === undefined && complaintResponse.reviewer?.login === this.accountService.userIdentity?.login
         );
     }
 

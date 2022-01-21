@@ -6,7 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ComplaintType } from 'app/entities/complaint.model';
-import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
+import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -34,7 +34,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { getNamesForAssessments } from '../assess/modeling-assessment.util';
-import { faGripLines } from '@fortawesome/free-solid-svg-icons';
+import { faGripLines, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
@@ -95,6 +95,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     // Icons
     faGripLines = faGripLines;
     farListAlt = faListAlt;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -119,8 +120,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {
             if (params['participationId']) {
-                this.modelingSubmissionService.getLatestSubmissionForModelingEditor(params['participationId']).subscribe(
-                    (modelingSubmission) => {
+                this.modelingSubmissionService.getLatestSubmissionForModelingEditor(params['participationId']).subscribe({
+                    next: (modelingSubmission) => {
                         this.updateModelingSubmission(modelingSubmission);
                         if (this.modelingExercise.teamMode) {
                             this.setupSubmissionStreamForTeam();
@@ -128,12 +129,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             this.setAutoSaveTimer();
                         }
                     },
-                    (error) => {
+                    error: (error) => {
                         if (error.status === 403) {
                             this.router.navigate(['accessdenied']);
                         }
                     },
-                );
+                });
             }
         });
         window.scroll(0, 0);
@@ -293,8 +294,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.autoSaveTimer = 0;
 
         if (this.submission.id) {
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id!).subscribe(
-                (response) => {
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id!).subscribe({
+                next: (response) => {
                     this.submission = response.body!;
                     // reconnect so that the submission status is displayed correctly in the result.component
                     this.submission.participation!.submissions = [this.submission];
@@ -302,18 +303,18 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.result = getLatestSubmissionResult(this.submission);
                     this.onSaveSuccess();
                 },
-                (error: HttpErrorResponse) => this.onSaveError(error),
-            );
+                error: (error: HttpErrorResponse) => this.onSaveError(error),
+            });
         } else {
-            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id!).subscribe(
-                (submission) => {
+            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id!).subscribe({
+                next: (submission) => {
                     this.submission = submission.body!;
                     this.result = getLatestSubmissionResult(this.submission);
                     this.subscribeToAutomaticSubmissionWebsocket();
                     this.onSaveSuccess();
                 },
-                (error: HttpErrorResponse) => this.onSaveError(error),
-            );
+                error: (error: HttpErrorResponse) => this.onSaveError(error),
+            });
         }
     }
 
@@ -330,8 +331,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.isSaving = true;
         this.autoSaveTimer = 0;
         if (this.submission.id) {
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id!).subscribe(
-                (response) => {
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id!).subscribe({
+                next: (response) => {
                     this.submission = response.body!;
                     if (this.submission.model) {
                         this.umlModel = JSON.parse(this.submission.model);
@@ -360,11 +361,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     }
                     this.onSaveSuccess();
                 },
-                (error: HttpErrorResponse) => this.onSaveError(error),
-            );
+                error: (error: HttpErrorResponse) => this.onSaveError(error),
+            });
         } else {
-            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id!).subscribe(
-                (response) => {
+            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id!).subscribe({
+                next: (response) => {
                     this.submission = response.body!;
                     this.submissionChange.next(this.submission);
                     this.participation = this.submission.participation as StudentParticipation;
@@ -380,8 +381,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.subscribeToAutomaticSubmissionWebsocket();
                     this.onSaveSuccess();
                 },
-                (error: HttpErrorResponse) => this.onSaveError(error),
-            );
+                error: (error: HttpErrorResponse) => this.onSaveError(error),
+            });
         }
     }
 
@@ -425,14 +426,22 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Check whether or not a assessmentResult exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] | undefined {
-        return this.assessmentResult ? getUnreferencedFeedback(this.assessmentResult.feedbacks) : undefined;
+        if (this.assessmentResult?.feedbacks) {
+            checkSubsequentFeedbackInAssessment(this.assessmentResult.feedbacks);
+            return getUnreferencedFeedback(this.assessmentResult.feedbacks);
+        }
+        return undefined;
     }
 
     /**
      * Find "Referenced Feedback" item for Result, if it exists.
      */
     get referencedFeedback(): Feedback[] | undefined {
-        return this.assessmentResult?.feedbacks?.filter((feedbackElement) => feedbackElement.reference != undefined);
+        if (this.assessmentResult?.feedbacks) {
+            checkSubsequentFeedbackInAssessment(this.assessmentResult.feedbacks);
+            return this.assessmentResult?.feedbacks?.filter((feedbackElement) => feedbackElement.reference != undefined);
+        }
+        return undefined;
     }
 
     /**

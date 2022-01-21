@@ -150,7 +150,7 @@ describe('Test Run Management Component', () => {
             const componentInstance = { title: String, text: String };
             const result = new Promise((resolve) => resolve({} as StudentExam));
             jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
-            jest.spyOn(examManagementService, 'createTestRun').mockReturnValue(throwError(httpError));
+            jest.spyOn(examManagementService, 'createTestRun').mockReturnValue(throwError(() => httpError));
             jest.spyOn(alertService, 'error');
             fixture.detectChanges();
 
