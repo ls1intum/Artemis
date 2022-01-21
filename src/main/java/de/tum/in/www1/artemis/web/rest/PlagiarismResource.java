@@ -135,6 +135,9 @@ public class PlagiarismResource {
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("Only instructors responsible for this course can access this plagiarism case.");
         }
+        if (!Objects.equals(comparison.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
+            throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
+        }
 
         if (comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
             plagiarismComparisonRepository.updatePlagiarismComparisonInstructorStatementA(comparison.getId(), instructorStatement);
@@ -170,10 +173,14 @@ public class PlagiarismResource {
         if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("Only students registered for this course can access this plagiarism comparison.");
         }
+        if (!Objects.equals(comparison.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
+            throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
+        }
 
         // check if current user is part of the comparison or not
         if (!(comparison.getSubmissionA().getStudentLogin().equals(user.getLogin()) || comparison.getSubmissionB().getStudentLogin().equals(user.getLogin()))) {
-            throw new AccessForbiddenException("User tried updating plagiarism case they're not affected by.");
+            log.error("User {} tried accessing plagiarism case with comparison id {} they're not affected by.", user.getLogin(), comparisonId);
+            throw new AccessForbiddenException("User tried accessing plagiarism case they're not affected by.");
         }
 
         PlagiarismComparison<?> anonymizedComparisonForStudentView = this.plagiarismService.anonymizeComparisonForStudentView(comparison, user.getLogin());
@@ -201,6 +208,9 @@ public class PlagiarismResource {
 
         if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("Only students registered for this course can access this plagiarism comparison.");
+        }
+        if (!Objects.equals(comparison.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
+            throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
         }
 
         if (comparison.getInstructorStatementA() != null && comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
@@ -239,6 +249,9 @@ public class PlagiarismResource {
 
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("Only instructors responsible for this course can access this plagiarism comparison.");
+        }
+        if (!Objects.equals(comparison.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
+            throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
         }
 
         if (comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
