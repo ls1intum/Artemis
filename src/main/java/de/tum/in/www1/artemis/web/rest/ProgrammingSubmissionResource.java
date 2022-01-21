@@ -144,7 +144,7 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-build")
     @PreAuthorize("hasRole('USER')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         // this call supports TemplateProgrammingExerciseParticipation, SolutionProgrammingExerciseParticipation and ProgrammingExerciseStudentParticipation
@@ -185,7 +185,7 @@ public class ProgrammingSubmissionResource {
     // TODO: we should definitely change this URL, it does not make sense to use /programming-submissions/{participationId}
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-failed-build")
     @PreAuthorize("hasRole('USER')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
@@ -230,7 +230,7 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build-all")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
         try {
             Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -262,7 +262,7 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody Set<Long> participationIds) {
         if (participationIds.isEmpty()) {
             return badRequest();
