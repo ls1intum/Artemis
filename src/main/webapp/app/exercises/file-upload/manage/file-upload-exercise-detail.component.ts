@@ -57,14 +57,14 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
         this.fileUploadExerciseService
             .find(exerciseId)
             .pipe(filter((res) => !!res.body))
-            .subscribe(
-                (fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
+            .subscribe({
+                next: (fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
                     this.fileUploadExercise = fileUploadExerciseResponse.body!;
                     this.isExamExercise = this.fileUploadExercise.exerciseGroup !== undefined;
                     this.course = this.isExamExercise ? this.fileUploadExercise.exerciseGroup?.exam?.course : this.fileUploadExercise.course;
                 },
-                (error: HttpErrorResponse) => onError(this.alertService, error),
-            );
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
         });

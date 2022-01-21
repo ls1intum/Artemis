@@ -129,8 +129,8 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param event representation of users choices to delete the student repositories and base repositories
      */
     deleteExerciseGroup(exerciseGroupId: number, event: { [key: string]: boolean }) {
-        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe(
-            () => {
+        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'exerciseGroupOverviewModification',
                     content: 'Deleted an exercise group',
@@ -139,8 +139,8 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.exerciseGroups = this.exerciseGroups!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId);
                 delete this.exerciseGroupToExerciseTypesDict[exerciseGroupId];
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     /**

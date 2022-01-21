@@ -125,13 +125,13 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             this.course = courseResponse.body!;
         });
         // fetch statistics separately because it takes quite long for larger courses
-        this.courseService.getCourseStatisticsForDetailView(courseId).subscribe(
-            (courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
+        this.courseService.getCourseStatisticsForDetailView(courseId).subscribe({
+            next: (courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
                 this.courseDTO = courseResponse.body!;
                 this.activeStudents = courseResponse.body!.activeStudents;
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     /**
@@ -139,16 +139,16 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * @param courseId id the course that will be deleted
      */
     deleteCourse(courseId: number) {
-        this.courseService.delete(courseId).subscribe(
-            () => {
+        this.courseService.delete(courseId).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'courseListModification',
                     content: 'Deleted an course',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
         this.router.navigate(['/course-management']);
     }
 }

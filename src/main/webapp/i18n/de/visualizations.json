@@ -7,7 +7,18 @@
             "maximumScoreLabel": "Bestes Ergebnis",
             "yAxis": "Ergebnis (%)",
             "xAxis": "Aufgaben",
-            "exerciseType": "Aufgabentyp: {{ type }}"
+            "exerciseType": "Aufgabentyp: ",
+            "text": "Textaufgabe",
+            "file_upload": "Dateiupload-Aufgabe",
+            "programming": "Programmieraufgabe",
+            "modeling": "Modellierungsaufgabe",
+            "quiz": "Quizaufgabe",
+            "includeType": "Zeige Aufgabentyp:",
+            "textPlural": "Textaufgaben",
+            "file_uploadPlural": "Dateiupload-Aufgaben",
+            "programmingPlural": "Programmieraufgaben",
+            "modelingPlural": "Modellierungsaufgaben",
+            "quizPlural": "Quizaufgaben"
         }
     }
 }

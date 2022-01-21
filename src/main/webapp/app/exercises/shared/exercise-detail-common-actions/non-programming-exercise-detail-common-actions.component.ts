@@ -70,8 +70,8 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     deleteExercise() {
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
-                this.textExerciseService.delete(this.exercise.id!).subscribe(
-                    () => {
+                this.textExerciseService.delete(this.exercise.id!).subscribe({
+                    next: () => {
                         this.eventManager.broadcast({
                             name: 'textExerciseListModification',
                             content: 'Deleted a textExercise',
@@ -79,12 +79,12 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                         this.dialogErrorSource.next('');
                         this.navigateToOverview();
                     },
-                    (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-                );
+                    error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                });
                 break;
             case ExerciseType.FILE_UPLOAD:
-                this.fileUploadExerciseService.delete(this.exercise.id!).subscribe(
-                    () => {
+                this.fileUploadExerciseService.delete(this.exercise.id!).subscribe({
+                    next: () => {
                         this.eventManager.broadcast({
                             name: 'fileUploadExerciseListModification',
                             content: 'Deleted an fileUploadExercise',
@@ -92,12 +92,12 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                         this.dialogErrorSource.next('');
                         this.navigateToOverview();
                     },
-                    (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-                );
+                    error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                });
                 break;
             case ExerciseType.MODELING:
-                this.modelingExerciseService.delete(this.exercise.id!).subscribe(
-                    () => {
+                this.modelingExerciseService.delete(this.exercise.id!).subscribe({
+                    next: () => {
                         this.eventManager.broadcast({
                             name: 'modelingExerciseListModification',
                             content: 'Deleted an modelingExercise',
@@ -105,8 +105,8 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                         this.dialogErrorSource.next('');
                         this.navigateToOverview();
                     },
-                    (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-                );
+                    error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                });
                 break;
             default:
         }
