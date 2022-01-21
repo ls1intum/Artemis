@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
-
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -318,12 +316,12 @@ public class TextExerciseResource {
 
         // users can only see their own submission (to prevent cheating), TAs, instructors and admins can see all answers
         if (!authCheckService.isOwnerOfParticipation(participation, user) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
         if (!authCheckService.isAllowedToGetExamResult(textExercise, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
 
         // if no results, check if there are really no results or the relation to results was not updated yet

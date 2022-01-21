@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.feature;
 
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
-
 import java.util.Arrays;
 
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -46,7 +44,7 @@ public class FeatureToggleAspect {
             return joinPoint.proceed();
         }
         else {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
     }
 }
