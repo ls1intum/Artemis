@@ -72,15 +72,15 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
      */
     deleteExampleSubmission(index: number) {
         const submissionId = this.exercise.exampleSubmissions![index].id!;
-        this.exampleSubmissionService.delete(submissionId).subscribe(
-            () => {
+        this.exampleSubmissionService.delete(submissionId).subscribe({
+            next: () => {
                 this.exercise.exampleSubmissions!.splice(index, 1);
                 this.createdExampleAssessment.splice(index, 1);
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 this.alertService.error(error.message);
             },
-        );
+        });
     }
 
     /**
@@ -117,13 +117,13 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
         });
         exampleSubmissionImportModalRef.componentInstance.exercise = this.exercise;
         exampleSubmissionImportModalRef.result.then((selectedSubmission: Submission) => {
-            this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise.id!).subscribe(
-                () => {
+            this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise.id!).subscribe({
+                next: () => {
                     this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
                     location.reload();
                 },
-                (error: HttpErrorResponse) => onError(this.alertService, error),
-            );
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
         });
     }
 }

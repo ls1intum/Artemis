@@ -401,17 +401,17 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (!this.studentParticipation?.submissions || !this.studentParticipation!.submissions![0] || !this.hasResults) {
             return;
         }
-        this.complaintService.findBySubmissionId(this.studentParticipation!.submissions![0].id!).subscribe(
-            (res) => {
+        this.complaintService.findBySubmissionId(this.studentParticipation!.submissions![0].id!).subscribe({
+            next: (res) => {
                 if (!res.body) {
                     return;
                 }
                 this.complaint = res.body;
             },
-            (err: HttpErrorResponse) => {
+            error: (err: HttpErrorResponse) => {
                 this.onError(err.message);
             },
-        );
+        });
 
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
             return this.studentParticipation?.results?.find((result: Result) => !!result.completionDate) || undefined;
@@ -487,15 +487,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      */
     simulateSubmission() {
         this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
-        this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(
-            () => {
+        this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe({
+            next: () => {
                 this.wasSubmissionSimulated = true;
                 this.alertService.success('artemisApp.exercise.submissionSuccessful');
             },
-            () => {
+            error: () => {
                 this.alertService.error('artemisApp.exercise.submissionUnsuccessful');
             },
-        );
+        });
     }
 
     /**
@@ -505,8 +505,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      */
     simulateResult() {
         this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
-        this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(
-            (result) => {
+        this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe({
+            next: (result) => {
                 // set the value to false in order to deactivate the result button
                 this.wasSubmissionSimulated = false;
 
@@ -518,10 +518,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
                 this.alertService.success('artemisApp.exercise.resultCreationSuccessful');
             },
-            () => {
+            error: () => {
                 this.alertService.error('artemisApp.exercise.resultCreationUnsuccessful');
             },
-        );
+        });
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
