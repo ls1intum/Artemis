@@ -54,8 +54,8 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
         this.courseExerciseService
             .findAllFileUploadExercisesForCourse(this.courseId)
             .pipe(filter((res) => !!res.body))
-            .subscribe(
-                (res: HttpResponse<FileUploadExercise[]>) => {
+            .subscribe({
+                next: (res: HttpResponse<FileUploadExercise[]>) => {
                     this.fileUploadExercises = res.body!;
                     // reconnect exercise with course
                     this.fileUploadExercises.forEach((exercise) => {
@@ -65,8 +65,8 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                     this.emitExerciseCount(this.fileUploadExercises.length);
                     this.applyFilter();
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     protected applyFilter(): void {
@@ -88,16 +88,16 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
      * @param fileUploadExerciseId id of the exercise that will be deleted
      */
     deleteFileUploadExercise(fileUploadExerciseId: number) {
-        this.fileUploadExerciseService.delete(fileUploadExerciseId).subscribe(
-            () => {
+        this.fileUploadExerciseService.delete(fileUploadExerciseId).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'fileUploadExerciseListModification',
                     content: 'Deleted an fileUploadExercise',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     protected getChangeEventName(): string {

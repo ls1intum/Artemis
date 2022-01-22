@@ -14,7 +14,7 @@ export class OrionButtonComponent {
     @Input() smallButton = false;
     @Input() disabled = false;
     // Disable by feature toggle.
-    @Input() featureToggle: FeatureToggle = FeatureToggle.PROGRAMMING_EXERCISES;
+    @Input() featureToggle: FeatureToggle = FeatureToggle.ProgrammingExercises;
     // Indirect handler to disable clicking while loading
     @Output() clickHandler = new EventEmitter<void>();
 

@@ -88,8 +88,8 @@ export class ListOfComplaintsComponent implements OnInit {
             }
         }
 
-        complaintResponse.subscribe(
-            (res) => {
+        complaintResponse.subscribe({
+            next: (res) => {
                 this.complaints = res.body!;
                 this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
 
@@ -97,9 +97,9 @@ export class ListOfComplaintsComponent implements OnInit {
                     this.hasStudentInformation = true;
                 }
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-            () => (this.loading = false),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            complete: () => (this.loading = false),
+        });
     }
 
     openAssessmentEditor(complaint: Complaint) {

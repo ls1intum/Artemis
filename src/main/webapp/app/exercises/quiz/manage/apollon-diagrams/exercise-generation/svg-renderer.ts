@@ -52,7 +52,7 @@ function toPNGBlob(canvas: HTMLCanvasElement, callback: (blob: Blob) => void) {
         canvas.toBlob(callback);
     } else {
         setTimeout(() => {
-            const binaryRepresentation = atob(canvas.toDataURL().split(',')[1]);
+            const binaryRepresentation = window.atob(canvas.toDataURL().split(',')[1]);
             const length = binaryRepresentation.length;
             const buffer = new Uint8Array(length);
 

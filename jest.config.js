@@ -1,16 +1,15 @@
-require('jest-preset-angular/ngcc-jest-processor');
-
 const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collapse-white-space', '@angular/animations', '@angular/common', '@ls1intum/apollon',
     '@angular/compiler', '@angular/core', '@angular/forms', '@angular/localize', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router',
     '@ngx-translate/core', '@ngx-translate/http-loader', '@fortawesome/angular-fontawesome', '@angular/cdk', '@angular/material', '@angular/cdk', 'dayjs/esm',
     'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-device-detector', '@swimlane/ngx-charts'].join('|');
 
 const {
-    compilerOptions: { paths = {}, baseUrl = './' },
+    compilerOptions: { baseUrl = './' },
 } = require('./tsconfig.json');
 const environment = require('./webpack/environment');
 
 module.exports = {
+    globalSetup: 'jest-preset-angular/global-setup',
     globals: {
         ...environment,
         'ts-jest': {
@@ -52,10 +51,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should be increase to at least 80%
-            statements: 77.4,
-            branches: 65.1,
-            functions: 68.9,
-            lines: 77.0,
+            statements: 78.3,
+            branches: 65.8,
+            functions: 70.0,
+            lines: 78.0,
         },
     },
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
