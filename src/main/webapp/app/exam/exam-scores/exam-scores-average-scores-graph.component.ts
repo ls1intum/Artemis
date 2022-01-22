@@ -115,6 +115,13 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         }
     }
 
+    /**
+     * Determines the color for a given bar
+     * @param isExerciseGroup boolean that indicates if the currently determined color is assigned to a bar representing the exercise group average
+     * This is necessary because we have a color difference between the exercise group average representation and an exercise average representation
+     * @param score the score the bar will represent
+     * @private
+     */
     private determineColor(isExerciseGroup: boolean, score: number): string {
         if (score >= 50) {
             return isExerciseGroup ? GraphColors.BLUE : GraphColors.DARK_BLUE;

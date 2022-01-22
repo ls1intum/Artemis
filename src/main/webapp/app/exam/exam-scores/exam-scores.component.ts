@@ -37,6 +37,7 @@ import { GraphColors } from 'app/entities/statistics.model';
 enum MedianType {
     PASSED,
     OVERALL,
+    SUBMITTED,
 }
 
 @Component({
@@ -64,6 +65,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         { name: '[5,10)', value: 16 },
         { name: '[10,15)', value: 23 },
         { name: '[15,20)', value: 35 },
+        { name: '[20,25)', value: 17 },
         { name: '[25,30)', value: 37 },
         { name: '[30,35)', value: 60 },
         { name: '[35,40)', value: 42 },
@@ -108,6 +110,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     activeEntries: NgxDataEntry[] = [];
     dataLabelFormatting = this.formatDataLabel.bind(this);
     showOverallMedian: boolean;
+    overallChartMedian: number; // This value can vary as it depends on if the user only includes submitted exams or not
     showPassedMedian: boolean;
 
     readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
@@ -207,6 +210,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         // Exam statistics must only be calculated once as they are not filter dependent
                         this.calculateExamStatistics();
                         this.calculateFilterDependentStatistics();
+                        const medianType = this.gradingScaleExists && !this.isBonus ? MedianType.PASSED : MedianType.OVERALL;
+                        if (medianType === MedianType.PASSED) {
+                            this.setChartMedianForOverallMedian();
+                        }
+                        this.determineAndHighlightChartMedian(medianType);
                     }
                     this.isLoading = false;
                     this.createChart();
@@ -235,6 +243,12 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     toggleFilterForSubmittedExam() {
         this.filterForSubmittedExams = !this.filterForSubmittedExams;
         this.calculateFilterDependentStatistics();
+        if (this.gradingScaleExists && !this.isBonus) {
+            this.setChartMedianIfOnlySubmittedExamsAreIncluded();
+        } else {
+            this.showOverallMedian = true;
+            this.determineAndHighlightChartMedian(MedianType.SUBMITTED);
+        }
         this.changeDetector.detectChanges();
     }
 
@@ -355,15 +369,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
             // Update histogram data structure
             const histogramIndex = this.findGradeStepIndex(studentResult.overallScoreAchieved ?? 0);
-            /*if (this.gradingScaleExists) {
-                histogramIndex = this.findGradeStepIndex(studentResult.overallScoreAchieved ?? 0);
-            } else {
-                histogramIndex = Math.floor(studentResult.overallScoreAchieved! / this.binWidth);
-                if (histogramIndex >= 100 / this.binWidth) {
-                    // This happens, for 100%, if the exam total points were not set correctly or bonus points were given
-                    histogramIndex = 100 / this.binWidth - 1;
-                }
-            }*/
             this.ngxData[histogramIndex].value++;
             this.histogramData[histogramIndex]++;
             if (!studentResult.exerciseGroupIdToExerciseResult) {
@@ -401,8 +406,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
         this.createChart();
-        const medianType = this.gradingScaleExists && !this.isBonus ? MedianType.PASSED : MedianType.OVERALL;
-        this.determineAndHighlightChartMedian(medianType);
         this.yScaleMax = this.calculateTickMax();
     }
 
@@ -821,7 +824,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.ngxColor.domain = [];
         if (!this.gradingScaleExists) {
             for (let i = 0; i < 100 / this.binWidth; i++) {
-                if (i < 7) {
+                if (i < 8) {
                     this.ngxColor.domain.push(GraphColors.YELLOW);
                 } else {
                     this.ngxColor.domain.push(GraphColors.GREY);
@@ -891,7 +894,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         } else {
             this.activeEntries = [];
         }
-        this.ngxData = [...this.ngxData];
     }
 
     /**
@@ -906,14 +908,30 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         if (medianType === MedianType.PASSED) {
             chartMedian = this.aggregatedExamResults.medianRelativePassed ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, this.course) : 0;
             this.showPassedMedian = true;
+        } else if (medianType === MedianType.OVERALL) {
+            this.setChartMedianForOverallMedian();
+            chartMedian = this.overallChartMedian;
+            this.showOverallMedian = true;
         } else {
-            chartMedian = this.aggregatedExamResults.medianRelativeTotal ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativeTotal, this.course) : 0;
+            this.setChartMedianIfOnlySubmittedExamsAreIncluded();
+            chartMedian = this.overallChartMedian;
             this.showOverallMedian = true;
         }
         const index = this.findGradeStepIndex(chartMedian);
-        // const medianChartBar = this.ngxData[index];
-        // this.activeEntries = this.ngxData.filter((chartBar) => chartBar.name !== medianChartBar.name);
+        /* const medianChartBar = this.ngxData[index];
+        this.activeEntries = this.ngxData.filter((chartBar) => chartBar.name !== medianChartBar.name);
+        */
         const medianChartBar = this.ngxTestData[index];
         this.activeEntries = this.ngxTestData.filter((chartBar) => chartBar.name !== medianChartBar.name);
+    }
+
+    private setChartMedianIfOnlySubmittedExamsAreIncluded(): void {
+        this.overallChartMedian = this.aggregatedExamResults.medianRelative ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelative, this.course) : 0;
+    }
+
+    private setChartMedianForOverallMedian(): void {
+        this.overallChartMedian = this.aggregatedExamResults.medianRelativeTotal
+            ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativeTotal, this.course)
+            : 0;
     }
 }

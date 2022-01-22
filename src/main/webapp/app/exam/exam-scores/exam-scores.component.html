@@ -328,9 +328,7 @@
                     'artemisApp.examScores.highlightOverallMedian'
                         | artemisTranslate
                             : {
-                                  median: this.aggregatedExamResults.medianRelativeTotal
-                                      ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativeTotal, course)
-                                      : 0
+                                  median: this.overallChartMedian
                               }
                 }}</span>
             </label>
@@ -350,6 +348,7 @@
                 [showDataLabel]="true"
                 [activeEntries]="activeEntries"
                 (select)="onSelect()"
+                class="row"
             >
                 <ng-template #tooltipTemplate let-model="model">
                     <b>{{ model.name }}</b
@@ -357,6 +356,22 @@
                     <span>{{ 'statistics.amountOfStudents' | artemisTranslate }}: {{ model.value }}</span>
                 </ng-template>
             </ngx-charts-bar-vertical>
+            <div *ngIf="gradingScaleExists && !isBonus" class="d-flex justify-content-center align-items-center">
+                <div class="color-box sufficient-performance"></div>
+                <span class="ms-2">{{ 'artemisApp.examScores.sufficientPerformance' | artemisTranslate }}</span>
+
+                <div class="ms-4 color-box insufficient-performance"></div>
+                <span class="ms-2">{{ 'artemisApp.examScores.insufficientPerformance' | artemisTranslate }}</span>
+                <jhi-help-icon class="ms-2" placement="right auto" text="artemisApp.examScores.gradingScaleExplanation"></jhi-help-icon>
+            </div>
+            <div *ngIf="!gradingScaleExists || isBonus" class="d-flex justify-content-center align-items-center">
+                <div class="color-box critical-performance"></div>
+                <span class="ms-2">{{ 'artemisApp.examScores.criticalPerformance' | artemisTranslate }}</span>
+
+                <div class="ms-4 color-box insufficient-performance"></div>
+                <span class="ms-2">{{ 'artemisApp.examScores.uncriticalPerformance' | artemisTranslate }}</span>
+                <jhi-help-icon class="ms-2" placement="right auto" text="artemisApp.examScores.noGradingScaleExplanation"></jhi-help-icon>
+            </div>
         </div>
 
         <!-- Exercise Statistics -->
