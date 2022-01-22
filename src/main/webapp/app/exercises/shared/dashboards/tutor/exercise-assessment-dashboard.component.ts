@@ -776,6 +776,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         }
     }
 
+    /**
+     * Handles the click event of a user on a part of the chart.
+     * Given the user has the right permissions, navigates to the submissions page of the exercise
+     * @param event event that is delegated by ngx-charts. Used here to trigger the delegation only if the user clicks on the pie chart
+     * not the legend
+     */
     navigateToExerciseSubmissionOverview(event: any): void {
         if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
             this.router.navigate(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);

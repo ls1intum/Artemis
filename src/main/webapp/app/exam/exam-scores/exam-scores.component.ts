@@ -211,8 +211,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.calculateExamStatistics();
                         this.calculateFilterDependentStatistics();
                         const medianType = this.gradingScaleExists && !this.isBonus ? MedianType.PASSED : MedianType.OVERALL;
+                        // if a grading scale exists and the scoring type is not bonus, per default the median of all passed exams is shown.
+                        // We need to set the value for the overall median in order to show it next to the check box
                         if (medianType === MedianType.PASSED) {
-                            this.setChartMedianForOverallMedian();
+                            // We pass MedianType.OVERALL since we want the median of all exams to be shown, not only of the submitted exams
+                            this.setOverallChartMedianDependingOfExamsIncluded(MedianType.OVERALL);
                         }
                         this.determineAndHighlightChartMedian(medianType);
                     }
@@ -243,11 +246,21 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     toggleFilterForSubmittedExam() {
         this.filterForSubmittedExams = !this.filterForSubmittedExams;
         this.calculateFilterDependentStatistics();
+        const overallMedian = this.filterForSubmittedExams ? MedianType.SUBMITTED : MedianType.OVERALL;
+        /*
+        if a grading scale exists that is not configured as bonus, we have to update the
+        overall median value as we only encounter submitted exams now.
+        For the median of all passed exams this is not necessary, as an exam can only pass
+        if it is submitted.
+         */
         if (this.gradingScaleExists && !this.isBonus) {
-            this.setChartMedianIfOnlySubmittedExamsAreIncluded();
+            this.setOverallChartMedianDependingOfExamsIncluded(overallMedian);
+            this.showOverallMedian = false;
+            this.showPassedMedian = true;
+            this.determineAndHighlightChartMedian(MedianType.PASSED);
         } else {
             this.showOverallMedian = true;
-            this.determineAndHighlightChartMedian(MedianType.SUBMITTED);
+            this.determineAndHighlightChartMedian(overallMedian);
         }
         this.changeDetector.detectChanges();
     }
@@ -816,8 +829,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets up the bar coloring
      * If no grading scale exists, all bars representing a score < 40% are colored yellow in order to visualize that this is a critical performance
-     * If a grading scale exists, all bars representing a score that does not pass the exam are colored red
-     * In either case, all bars above the two thresholds remain grey
+     * If a grading scale exists that is bonus, all bars with a lower bound < 40% are colored yellow as well
+     * If a grading scale exists that is not bonus, all bars representing a score that does not pass the exam are colored red
+     * In either case, all bars above the thresholds remain grey
      * @private
      */
     private setupChartColoring(): void {
@@ -832,13 +846,24 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
         } else {
             this.gradingScale!.gradeSteps.forEach((gradeStep) => {
-                if (gradeStep.isPassingGrade) {
-                    this.ngxColor.domain.push(GraphColors.GREY);
+                let color;
+                if (this.isBonus) {
+                    if (gradeStep.lowerBoundPercentage < 40) {
+                        color = GraphColors.YELLOW;
+                    } else {
+                        color = GraphColors.GREY;
+                    }
                 } else {
-                    this.ngxColor.domain.push(GraphColors.RED);
+                    if (gradeStep.isPassingGrade) {
+                        color = GraphColors.GREY;
+                    } else {
+                        color = GraphColors.RED;
+                    }
                 }
+                this.ngxColor.domain.push(color);
             });
         }
+
         this.ngxData = [...this.ngxData];
     }
 
@@ -908,30 +933,30 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         if (medianType === MedianType.PASSED) {
             chartMedian = this.aggregatedExamResults.medianRelativePassed ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, this.course) : 0;
             this.showPassedMedian = true;
-        } else if (medianType === MedianType.OVERALL) {
-            this.setChartMedianForOverallMedian();
-            chartMedian = this.overallChartMedian;
-            this.showOverallMedian = true;
         } else {
-            this.setChartMedianIfOnlySubmittedExamsAreIncluded();
+            this.setOverallChartMedianDependingOfExamsIncluded(medianType);
             chartMedian = this.overallChartMedian;
             this.showOverallMedian = true;
         }
         const index = this.findGradeStepIndex(chartMedian);
-        /* const medianChartBar = this.ngxData[index];
+        const medianChartBar = this.ngxData[index];
         this.activeEntries = this.ngxData.filter((chartBar) => chartBar.name !== medianChartBar.name);
-        */
-        const medianChartBar = this.ngxTestData[index];
-        this.activeEntries = this.ngxTestData.filter((chartBar) => chartBar.name !== medianChartBar.name);
+        /*const medianChartBar = this.ngxTestData[index];
+        this.activeEntries = this.ngxTestData.filter((chartBar) => chartBar.name !== medianChartBar.name);*/
     }
 
-    private setChartMedianIfOnlySubmittedExamsAreIncluded(): void {
-        this.overallChartMedian = this.aggregatedExamResults.medianRelative ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelative, this.course) : 0;
-    }
-
-    private setChartMedianForOverallMedian(): void {
-        this.overallChartMedian = this.aggregatedExamResults.medianRelativeTotal
-            ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativeTotal, this.course)
-            : 0;
+    /**
+     * Auxiliary method that sets overallChartMedian depending on if only submitted exams are included or not
+     * @param medianType enum indicating if the median of all exams should be shown or only of submitted exams
+     * @private
+     */
+    private setOverallChartMedianDependingOfExamsIncluded(medianType: MedianType): void {
+        if (medianType === MedianType.OVERALL) {
+            this.overallChartMedian = this.aggregatedExamResults.medianRelative ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelative, this.course) : 0;
+        } else {
+            this.overallChartMedian = this.aggregatedExamResults.medianRelativeTotal
+                ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativeTotal, this.course)
+                : 0;
+        }
     }
 }
