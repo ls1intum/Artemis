@@ -229,7 +229,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         }
 
         this.checkPermissions();
-        this.validateAssessment();
 
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
 
