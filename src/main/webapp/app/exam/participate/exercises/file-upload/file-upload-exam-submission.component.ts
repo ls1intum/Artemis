@@ -148,16 +148,16 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if (!this.submissionFile) {
             return;
         }
-        this.fileUploadSubmissionService.update(this.studentSubmission as FileUploadSubmission, this.exercise.id!, this.submissionFile).subscribe(
-            (res) => {
+        this.fileUploadSubmissionService.update(this.studentSubmission as FileUploadSubmission, this.exercise.id!, this.submissionFile).subscribe({
+            next: (res) => {
                 const submissionFromServer = res.body!;
                 this.studentSubmission.filePath = submissionFromServer.filePath;
                 this.studentSubmission.isSynced = true;
                 this.studentSubmission.submitted = true;
                 this.updateViewFromSubmission();
             },
-            () => this.onError(),
-        );
+            error: () => this.onError(),
+        });
     }
 
     /**

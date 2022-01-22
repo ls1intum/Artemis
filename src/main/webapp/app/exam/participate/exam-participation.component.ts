@@ -18,7 +18,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, of, Subject, Subscription, throwError } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, throttleTime, timeoutWith } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -144,8 +144,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
             this.loadingExam = true;
             if (!!this.testRunId) {
-                this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe(
-                    (studentExam) => {
+                this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
+                    next: (studentExam) => {
                         this.studentExam = studentExam;
                         this.studentExam.exam!.course = new Course();
                         this.studentExam.exam!.course.id = this.courseId;
@@ -154,12 +154,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.initIndividualEndDates(this.testRunStartTime);
                         this.loadingExam = false;
                     },
-                    // if error occurs
-                    () => (this.loadingExam = false),
-                );
+                    error: () => (this.loadingExam = false),
+                });
             } else {
-                this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe(
-                    (studentExam) => {
+                this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe({
+                    next: (studentExam) => {
                         this.studentExam = studentExam;
                         this.exam = studentExam.exam!;
                         this.initIndividualEndDates(this.exam.startDate!);
@@ -184,9 +183,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                             this.loadingExam = false;
                         }
                     },
-                    // if error occurs
-                    () => (this.loadingExam = false),
-                );
+                    error: () => (this.loadingExam = false),
+                });
             }
         });
         this.initLiveMode();
@@ -324,9 +322,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // If we don't receive a response within that time throw an error the subscription can then handle
         this.examParticipationService
             .submitStudentExam(this.courseId, this.examId, this.studentExam)
-            .pipe(timeoutWith(20000, throwError(new Error('Submission request timed out. Please check your connection and try again.'))))
-            .subscribe(
-                (studentExam: StudentExam) => {
+            .pipe(
+                timeout({
+                    each: 20000,
+                    with: () => throwError(() => new Error('Submission request timed out. Please check your connection and try again.')),
+                }),
+            )
+            .subscribe({
+                next: (studentExam: StudentExam) => {
                     this.studentExam = studentExam;
                     this.studentExam.exercises!.forEach((exercise) => {
                         // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
@@ -334,38 +337,38 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     });
                     this.alertService.addAlert({ type: 'success', message: 'artemisApp.studentExam.submitSuccessful', timeout: 20000 });
                 },
-                (error: Error) => {
+                error: (error: Error) => {
                     // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible
                     const alreadySubmitted = error.message === 'artemisApp.studentExam.alreadySubmitted';
 
                     // When we have already submitted load the existing submission
                     if (alreadySubmitted) {
                         if (!!this.testRunId) {
-                            this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe(
-                                (studentExam: StudentExam) => {
+                            this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
+                                next: (studentExam: StudentExam) => {
                                     this.studentExam = studentExam;
                                 },
-                                (loadError: Error) => {
+                                error: (loadError: Error) => {
                                     this.alertService.error(loadError.message);
 
                                     // Allow the user to try to reload the exam from the server
                                     this.submitInProgress = false;
                                     this.handInPossible = true;
                                 },
-                            );
+                            });
                         } else {
-                            this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe(
-                                (existingExam: StudentExam) => {
+                            this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe({
+                                next: (existingExam: StudentExam) => {
                                     this.studentExam = existingExam;
                                 },
-                                (loadError: Error) => {
+                                error: (loadError: Error) => {
                                     this.alertService.error(loadError.message);
 
                                     // Allow the user to try to reload the exam from the server
                                     this.submitInProgress = false;
                                     this.handInPossible = true;
                                 },
-                            );
+                            });
                         }
                     } else {
                         this.alertService.error(error.message);
@@ -373,7 +376,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.handInPossible = error.message !== 'artemisApp.studentExam.submissionNotInTime';
                     }
                 },
-            );
+            });
     }
 
     /**
@@ -625,25 +628,25 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
-                        this.textSubmissionService.update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id!).subscribe(
-                            () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                            (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
-                        );
+                        this.textSubmissionService.update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id!).subscribe({
+                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                        });
                         break;
                     case ExerciseType.MODELING:
-                        this.modelingSubmissionService.update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id!).subscribe(
-                            () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                            (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
-                        );
+                        this.modelingSubmissionService.update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id!).subscribe({
+                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                        });
                         break;
                     case ExerciseType.PROGRAMMING:
                         // nothing to do here, because programming exercises are submitted differently
                         break;
                     case ExerciseType.QUIZ:
-                        this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission as QuizSubmission).subscribe(
-                            () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                            (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
-                        );
+                        this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission as QuizSubmission).subscribe({
+                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                        });
                         break;
                     case ExerciseType.FILE_UPLOAD:
                         // nothing to do here, because file upload exercises are only submitted manually, not when you switch between exercises

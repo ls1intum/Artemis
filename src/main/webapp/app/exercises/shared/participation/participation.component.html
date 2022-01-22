@@ -262,7 +262,7 @@
                                 </ng-container>
                                 <button
                                     *ngIf="exercise.isAtLeastInstructor"
-                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                     [skipFeatureToggle]="exercise.type !== ExerciseType.PROGRAMMING"
                                     jhiDeleteButton
                                     [entityTitle]="exercise.teamMode ? value.team?.name : value.student?.name"
@@ -279,7 +279,7 @@
                                 </button>
                                 <button
                                     *ngIf="exercise?.type === ExerciseType.PROGRAMMING && value.buildPlanId !== null && exercise.isAtLeastInstructor"
-                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                     jhiDeleteButton
                                     [actionType]="ActionType.Cleanup"
                                     deleteQuestion="artemisApp.participation.cleanupBuildPlan.question"

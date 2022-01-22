@@ -83,7 +83,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/final-status/student1", plagiarismComparisonStatus,
                 HttpStatus.OK);
-        var updatedPlagiarismComparison = plagiarismComparisonRepository.findByIdElseThrow(plagiarismComparison.getId());
+        var updatedPlagiarismComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison.getId());
         assertThat(updatedPlagiarismComparison.getStatusA()).as("should update status for studentA").isEqualTo(PlagiarismStatus.CONFIRMED);
     }
 
@@ -112,7 +112,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/final-status/student2", plagiarismComparisonStatus,
                 HttpStatus.OK);
-        var updatedPlagiarismComparison = plagiarismComparisonRepository.findByIdElseThrow(plagiarismComparison.getId());
+        var updatedPlagiarismComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison.getId());
         assertThat(updatedPlagiarismComparison.getStatusB()).as("should update status for studentB").isEqualTo(PlagiarismStatus.CONFIRMED);
     }
 
@@ -202,7 +202,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         statement.statement = "test statement";
 
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/student-statement", statement, HttpStatus.OK);
-        var comparison = plagiarismComparisonRepository.findByIdElseThrow(plagiarismComparison.getId());
+        var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison.getId());
         assertThat(comparison.getStudentStatementA()).as("should update student statement").isEqualTo("test statement");
     }
 
@@ -226,7 +226,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         statement.statement = "test statement";
 
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/student-statement", statement, HttpStatus.OK);
-        var comparison = plagiarismComparisonRepository.findByIdElseThrow(plagiarismComparison.getId());
+        var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison.getId());
         assertThat(comparison.getStudentStatementB()).as("should update student statement").isEqualTo("test statement");
     }
 
@@ -275,7 +275,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         statement.statement = "test statement";
 
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/instructor-statement/student1", statement, HttpStatus.OK);
-        var comparison = plagiarismComparisonRepository.findByIdElseThrow(plagiarismComparison.getId());
+        var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison.getId());
         assertThat(comparison.getInstructorStatementA()).as("should update instructor statement").isEqualTo("test statement");
     }
 
@@ -301,7 +301,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         statement.statement = "test statement";
 
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/instructor-statement/student2", statement, HttpStatus.OK);
-        var comparison = plagiarismComparisonRepository.findByIdElseThrow(plagiarismComparison.getId());
+        var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison.getId());
         assertThat(comparison.getInstructorStatementB()).as("should update instructor statement").isEqualTo("test statement");
     }
 
