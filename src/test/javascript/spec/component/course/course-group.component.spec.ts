@@ -9,7 +9,6 @@ import { UserService } from 'app/core/user/user.service';
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseGroup } from 'app/entities/course.model';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
@@ -18,7 +17,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable, of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -53,7 +52,6 @@ describe('Course Management Detail Component', () => {
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(DeleteButtonDirective),
-                MockComponent(AlertErrorComponent),
                 MockDirective(AlertOverlayComponent),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),

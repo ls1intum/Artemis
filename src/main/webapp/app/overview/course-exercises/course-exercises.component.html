@@ -1,7 +1,6 @@
 <ng-template #controls>
     <div class="course-overview-controls" *ngIf="course && course!.exercises && course!.exercises.length > 0">
         <div class="d-flex align-items-center">
-            <button class="btn" (click)="addAlert()">Add alert</button>
             <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
                 <button class="btn" [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }" ngbDropdownToggle id="filter-dropdown-button">
                     <fa-icon [icon]="faFilter"></fa-icon>

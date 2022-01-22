@@ -50,7 +50,6 @@ import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.s
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -95,7 +94,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(RatingComponent),
                 MockRouterLinkDirective,
                 MockComponent(AlertOverlayComponent),
-                MockComponent(AlertErrorComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(ExtensionPointDirective),

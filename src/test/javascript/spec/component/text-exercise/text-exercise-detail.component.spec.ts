@@ -15,7 +15,6 @@ import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ExerciseDetailsComponent } from 'app/exercises/shared/exercise/exercise-details/exercise-details.component';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -48,7 +47,6 @@ describe('TextExercise Management Detail Component', () => {
                 TextExerciseDetailComponent,
                 MockComponent(NonProgrammingExerciseDetailCommonActionsComponent),
                 MockComponent(AlertOverlayComponent),
-                MockComponent(AlertErrorComponent),
                 MockComponent(ExerciseDetailStatisticsComponent),
                 MockComponent(ExerciseDetailsComponent),
                 MockRouterLinkDirective,

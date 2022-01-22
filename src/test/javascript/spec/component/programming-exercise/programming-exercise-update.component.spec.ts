@@ -25,7 +25,6 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
@@ -78,7 +77,6 @@ describe('ProgrammingExercise Management Update Component', () => {
                 SelectControlValueAccessor,
                 NumberValueAccessor,
                 MockComponent(AlertOverlayComponent),
-                MockComponent(AlertErrorComponent),
                 MockComponent(HelpIconComponent),
                 MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
                 MockComponent(TableEditableFieldComponent),

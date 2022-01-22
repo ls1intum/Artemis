@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -27,12 +26,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
-            declarations: [
-                SystemNotificationManagementUpdateComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(AlertErrorComponent),
-                MockDirective(FormDateTimePickerComponent),
-            ],
+            declarations: [SystemNotificationManagementUpdateComponent, MockPipe(ArtemisTranslatePipe), MockDirective(FormDateTimePickerComponent)],
             providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(ArtemisNavigationUtilService)],
         })
             .compileComponents()

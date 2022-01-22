@@ -8,6 +8,7 @@
         <a [href]="releaseNotesUrl" id="release-notes" jhiTranslate="releaseNotes" class="footer-text ms-3" target="_blank"></a>
         <a [routerLink]="['/privacy']" id="privacy" jhiTranslate="legal.privacy.title" class="footer-text ms-3"></a>
         <a [routerLink]="['/imprint']" id="imprint" jhiTranslate="legal.imprint.title" class="footer-text ms-3"></a>
+        <a class="footer-text ms-3" (click)="addAlert()">Add alert</a>
     </div>
 </div>
 

@@ -21,7 +21,6 @@ import { of } from 'rxjs';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 
@@ -50,7 +49,6 @@ describe('CourseOverviewExerciseListControls', () => {
                 TranslatePipeMock,
                 MockPipe(ArtemisDatePipe),
                 MockTranslateValuesDirective,
-                MockComponent(AlertErrorComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

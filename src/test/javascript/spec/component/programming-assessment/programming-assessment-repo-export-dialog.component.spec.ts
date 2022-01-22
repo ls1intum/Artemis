@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { HttpResponse, HttpHeaders } from '@angular/common/http';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
@@ -16,9 +16,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { NgModel, NgForm } from '@angular/forms';
+import { NgForm, NgModel } from '@angular/forms';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
@@ -54,7 +53,6 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 ProgrammingAssessmentRepoExportDialogComponent,
                 MockTranslateValuesDirective,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(AlertErrorComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),

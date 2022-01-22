@@ -1,19 +1,17 @@
-import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { MockComponent, MockProvider, MockModule, MockPipe, MockDirective } from 'ng-mocks';
+import { HttpClientModule, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { Course } from 'app/entities/course.model';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -52,7 +50,6 @@ describe('Exam Update Component', () => {
             imports: [RouterTestingModule.withRoutes(routes), MockModule(NgbModule), TranslateModule.forRoot(), FontAwesomeTestingModule, FormsModule, HttpClientModule],
             declarations: [
                 ExamUpdateComponent,
-                MockComponent(AlertErrorComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(MarkdownEditorComponent),
                 MockComponent(DataTableComponent),

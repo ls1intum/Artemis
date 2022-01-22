@@ -9,11 +9,10 @@ import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockDirective, MockComponent, MockModule, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -49,7 +48,6 @@ describe('Example Submission Component', () => {
                 MockDirective(TranslateDirective),
                 MockComponent(ResultComponent),
                 MockComponent(AlertOverlayComponent),
-                MockComponent(AlertErrorComponent),
                 MockDirective(NgbTooltip),
             ],
             providers: [{ provide: ActivatedRoute, useValue: route }, { provide: TranslateService, useClass: MockTranslateService }, MockProvider(NgbModal)],

@@ -1,4 +1,4 @@
-import { HttpResponse, HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -8,7 +8,6 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -41,7 +40,6 @@ describe('UsersImportButtonComponent', () => {
                 MockComponent(FaIconComponent),
                 MockComponent(HelpIconComponent),
                 MockComponent(AlertOverlayComponent),
-                MockComponent(AlertErrorComponent),
             ],
             providers: [
                 MockProvider(NgbActiveModal),

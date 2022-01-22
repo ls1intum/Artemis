@@ -16,7 +16,6 @@ import { HttpResponse } from '@angular/common/http';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExamArchiveButtonComponent, CourseExamArchiveState } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
@@ -43,7 +42,6 @@ describe('Course Exam Archive Button Component', () => {
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(DeleteButtonDirective),
-                MockComponent(AlertErrorComponent),
                 MockDirective(AlertOverlayComponent),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),

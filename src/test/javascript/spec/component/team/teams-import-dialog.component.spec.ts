@@ -11,7 +11,6 @@ import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-partic
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -66,7 +65,6 @@ describe('TeamsImportDialogComponent', () => {
                     MockDirective(TranslateDirective),
                     TranslatePipeMock,
                     MockComponent(AlertOverlayComponent),
-                    MockComponent(AlertErrorComponent),
                     MockComponent(TeamExerciseSearchComponent),
                     MockComponent(TeamStudentsListComponent),
                     MockComponent(HelpIconComponent),

@@ -11,7 +11,6 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { DurationPipe } from 'app/shared/pipes/duration.pipe';
-import { SingleAlertComponent } from 'app/shared/alert/single-alert.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule],
@@ -26,7 +25,6 @@ import { SingleAlertComponent } from 'app/shared/alert/single-alert.component';
         ArtemisTimeAgoPipe,
         ArtemisDurationFromSecondsPipe,
         DurationPipe,
-        SingleAlertComponent,
     ],
     exports: [
         ArtemisSharedLibsModule,

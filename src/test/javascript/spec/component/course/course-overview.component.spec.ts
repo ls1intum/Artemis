@@ -26,7 +26,6 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -111,7 +110,6 @@ describe('CourseOverviewComponent', () => {
                 MockComponent(CourseCardComponent),
                 MockComponent(SecuredImageComponent),
                 MockComponent(AlertOverlayComponent),
-                MockComponent(AlertErrorComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

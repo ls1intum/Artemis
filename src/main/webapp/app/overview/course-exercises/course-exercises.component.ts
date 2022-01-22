@@ -154,17 +154,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         }
     }
 
-    c = 0;
-
-    addAlert(): void {
-        console.log('test');
-        this.alertService.addAlert({
-            type: 'info',
-            message: 'Test 123' + this.c++,
-            timeout: 30000,
-        });
-    }
-
     setSortingAttribute(attribute: SortingAttribute) {
         this.sortingAttribute = attribute;
         this.localStorage.store(SortFilterStorageKey.ATTRIBUTE, this.sortingAttribute.toString());

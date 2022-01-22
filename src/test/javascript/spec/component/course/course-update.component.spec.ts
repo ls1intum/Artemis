@@ -9,14 +9,13 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
 import { Course } from 'app/entities/course.model';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -92,7 +91,6 @@ describe('Course Management Update Component', () => {
                 MarkdownEditorStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
-                MockComponent(AlertErrorComponent),
                 MockComponent(AlertOverlayComponent),
                 MockComponent(SecuredImageComponent),
                 MockComponent(FormDateTimePickerComponent),

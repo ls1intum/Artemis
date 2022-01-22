@@ -8,16 +8,26 @@ import { Subscription } from 'rxjs';
 
 export type AlertType = 'success' | 'danger' | 'warning' | 'info';
 
-export interface Alert {
-    id?: number;
+export interface AlertBase {
     type: AlertType;
     message?: string;
     translationKey?: string;
     translationParams?: { [key: string]: unknown };
     timeout?: number;
-    close?: () => void;
-    action?: { label: string; callback: () => void };
+    action?: { label: string; callback: (alert: Alert) => void };
+    onClose?: (alert: Alert) => void;
     dismissible?: boolean;
+}
+
+export interface Alert extends AlertBase {
+    id: number;
+    close: () => void;
+    readonly isOpen: boolean;
+}
+
+export interface AlertInternal extends Alert {
+    closeFunction?: (callback: () => void) => void;
+    isOpen: boolean;
 }
 
 @Injectable({
@@ -29,7 +39,7 @@ export class AlertService {
 
     // unique id for each alert. Starts from 0.
     private alertId = 0;
-    private alerts: Alert[] = [];
+    private alerts: AlertInternal[] = [];
 
     errorListener: Subscription;
     httpErrorListener: Subscription;
@@ -98,7 +108,7 @@ export class AlertService {
     }
 
     clear(): void {
-        this.alerts = [];
+        [...this.alerts].forEach((alert) => alert.close());
     }
 
     get(): Alert[] {
@@ -111,51 +121,57 @@ export class AlertService {
      *                   If `translateKey` is available then it's translation else `message` is used for showing.
      * @returns  Added alert
      */
-    addAlert(alert: Alert): Alert {
-        alert.id = this.alertId++;
+    addAlert(alert: AlertBase): Alert {
+        const alertInternal = alert as AlertInternal;
+        alertInternal.id = this.alertId++;
+        alertInternal.isOpen = true;
 
-        if (alert.translationKey) {
+        if (alertInternal.translationKey) {
             // in case a translation key is defined, we use it to create the message
-            const translatedMessage = this.translateService.instant(alert.translationKey, alert.translationParams);
+            const translatedMessage = this.translateService.instant(alertInternal.translationKey, alertInternal.translationParams);
             // if translation key exists
-            if (translatedMessage !== `${translationNotFoundMessage}[${alert.translationKey}]`) {
-                alert.message = translatedMessage;
-            } else if (!alert.message) {
-                alert.message = alert.translationKey;
+            if (translatedMessage !== `${translationNotFoundMessage}[${alertInternal.translationKey}]`) {
+                alertInternal.message = translatedMessage;
+            } else if (!alertInternal.message) {
+                alertInternal.message = alertInternal.translationKey;
             }
-        } else if (alert.message) {
+        } else if (alertInternal.message) {
             // Note: in most cases, our code passes the translation key as message
-            alert.message = this.translateService.instant(alert.message, alert.translationParams);
+            alertInternal.message = this.translateService.instant(alertInternal.message, alertInternal.translationParams);
         }
 
-        alert.message = this.sanitizer.sanitize(SecurityContext.HTML, alert.message ?? '') ?? '';
-        alert.timeout = alert.timeout ?? this.timeout;
-        alert.dismissible = alert.dismissible ?? (alert.action ? false : this.dismissible);
-        alert.close = () => {
-            const alertIndex = this.alerts.indexOf(alert);
+        alertInternal.message = this.sanitizer.sanitize(SecurityContext.HTML, alertInternal.message ?? '') ?? '';
+        alertInternal.timeout = alertInternal.timeout ?? this.timeout;
+        alertInternal.dismissible = alertInternal.dismissible ?? this.dismissible;
+        alertInternal.close = () => {
+            alertInternal.isOpen = false;
+            const alertIndex = this.alerts.indexOf(alertInternal);
             if (alertIndex >= 0) {
                 this.alerts.splice(alertIndex, 1);
+                if (alertInternal.onClose) {
+                    alertInternal.onClose(alertInternal);
+                }
             }
         };
-        if (alert.action) {
-            alert.action.label = this.sanitizer.sanitize(SecurityContext.HTML, this.translateService.instant(alert.action.label) ?? '') ?? '';
+        if (alertInternal.action) {
+            alertInternal.action.label = this.sanitizer.sanitize(SecurityContext.HTML, this.translateService.instant(alertInternal.action.label) ?? '') ?? '';
         }
 
-        this.alerts.splice(0, 0, alert);
+        this.alerts.splice(0, 0, alertInternal);
 
-        if (alert.timeout > 0) {
+        if (alertInternal.timeout > 0) {
             // Workaround protractor waiting for setTimeout.
             // Reference https://www.protractortest.org/#/timeouts
             this.ngZone.runOutsideAngular(() => {
                 setTimeout(() => {
                     this.ngZone.run(() => {
-                        alert.close!();
+                        alertInternal.close!();
                     });
-                }, alert.timeout);
+                }, alertInternal.timeout);
             });
         }
 
-        return alert;
+        return alertInternal;
     }
 
     success(message: string, translationParams?: { [key: string]: unknown }): Alert {

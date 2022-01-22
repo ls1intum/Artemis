@@ -1,5 +1,5 @@
 import * as ace from 'brace';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick, discardPeriodicTasks } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
 import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-dialog.component';
@@ -11,7 +11,6 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -35,7 +34,6 @@ describe('TeamUpdateDialogComponent', () => {
             declarations: [
                 TeamUpdateDialogComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(AlertErrorComponent),
                 MockComponent(AlertOverlayComponent),
                 MockComponent(HelpIconComponent),
                 MockPipe(RemoveKeysPipe),
