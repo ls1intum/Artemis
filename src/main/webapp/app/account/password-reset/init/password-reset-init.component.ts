@@ -14,13 +14,10 @@ import { ExternalUserPasswordResetModalComponent } from 'app/account/password-re
     templateUrl: './password-reset-init.component.html',
 })
 export class PasswordResetInitComponent implements OnInit, AfterViewInit {
-    @ViewChild('email', { static: false })
-    email?: ElementRef;
+    @ViewChild('emailUsername', { static: false })
+    emailUsernameElement?: ElementRef;
 
     success = false;
-    resetRequestForm = this.fb.group({
-        email: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email]],
-    });
     useExternal: boolean;
     externalCredentialProvider: string;
     externalPasswordResetLink?: string;
@@ -52,13 +49,18 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit(): void {
-        if (this.email) {
-            this.email.nativeElement.focus();
+        if (this.emailUsernameElement) {
+            this.emailUsernameElement.nativeElement.focus();
         }
     }
 
     requestReset(): void {
-        this.passwordResetInitService.save(this.resetRequestForm.get(['email'])!.value).subscribe({
+        const emailUsername = this.emailUsernameElement?.nativeElement.value;
+        if (!emailUsername) {
+            this.alertService.error('reset.request.messages.info');
+            return;
+        }
+        this.passwordResetInitService.save(emailUsername).subscribe({
             next: () => {
                 this.alertService.success('reset.request.messages.success');
                 this.success = true;

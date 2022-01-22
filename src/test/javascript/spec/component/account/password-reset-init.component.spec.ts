@@ -42,7 +42,7 @@ describe('PasswordResetInitComponent', () => {
         const node = {
             focus(): void {},
         };
-        comp.email = new ElementRef(node);
+        comp.emailUsernameElement = new ElementRef(node);
         jest.spyOn(node, 'focus');
 
         comp.ngAfterViewInit();
