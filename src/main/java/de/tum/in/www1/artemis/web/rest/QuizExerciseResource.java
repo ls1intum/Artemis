@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
@@ -204,7 +203,7 @@ public class QuizExerciseResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
         var quizExercises = quizExerciseRepository.findByCourseIdWithCategories(courseId);
 

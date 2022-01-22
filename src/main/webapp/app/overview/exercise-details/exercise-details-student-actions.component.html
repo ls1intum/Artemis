@@ -188,7 +188,7 @@
             class="start-exercise"
             jhi-exercise-action-button
             [buttonIcon]="faPlayCircle"
-            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
@@ -204,7 +204,7 @@
                     [id]="'open-exercise-' + exercise.id"
                     jhi-exercise-action-button
                     [buttonIcon]="faFolderOpen"
-                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                     [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
                     [buttonLoading]="!!exercise.loading"
                     [smallButton]="smallButtons"
@@ -227,7 +227,7 @@
             [id]="'resume-exercise-' + exercise.id"
             jhi-exercise-action-button
             [buttonIcon]="faPlayCircle"
-            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             [buttonLabel]="'artemisApp.exerciseActions.resumeExercise' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"

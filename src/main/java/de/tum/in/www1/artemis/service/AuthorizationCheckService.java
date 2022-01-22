@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
-
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -516,7 +514,7 @@ public class AuthorizationCheckService {
      **/
     public void checkIsAdminElseThrow(@Nullable User user) {
         if (!isAdmin(user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
     }
 

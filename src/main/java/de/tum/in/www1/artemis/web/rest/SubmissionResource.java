@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -107,10 +105,10 @@ public class SubmissionResource {
         log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!exercise.isExamExercise()) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
         if (!authCheckService.isAtLeastEditorForExercise(exercise)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -195,7 +193,7 @@ public class SubmissionResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
     }
 
