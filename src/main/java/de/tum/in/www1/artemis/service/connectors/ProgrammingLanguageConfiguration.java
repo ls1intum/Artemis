@@ -2,10 +2,10 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.util.*;
 
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 
 /**
  * This configuration file provides functions to get the configured Docker Images for {@link ProgrammingLanguage ProgrammingLanguages}.
@@ -39,7 +39,8 @@ public class ProgrammingLanguageConfiguration {
                 continue;
             }
             // Extract the longest key of a matching language
-            var matchedLanguage = allLanguageNames.stream().filter(definedKey::startsWith).findFirst().orElseThrow(() -> new IllegalArgumentException("No matching language has been found for " + definedKey));
+            var matchedLanguage = allLanguageNames.stream().filter(definedKey::startsWith).findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("No matching language has been found for " + definedKey));
             var projectType = definedKey.substring(matchedLanguage.length() + 1);
             if (!allProjectTypes.contains(projectType)) {
                 throw new IllegalArgumentException("Could not find ProjectType: " + projectType + " in Definition: " + definedKey);
