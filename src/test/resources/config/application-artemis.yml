@@ -48,18 +48,6 @@ artemis:
         vcs-credentials: fake-key
         artemis-authentication-token-key: fake-key
         artemis-authentication-token-value: fake-token
-        build:
-            images:
-                JAVA: "~~invalid~~"
-                KOTLIN: "~~invalid~~"
-                EMPTY: "~~invalid~~"
-                PYTHON: "~~invalid~~"
-                C: "~~invalid~~"
-                HASKELL: "~~invalid~~"
-                VHDL: "~~invalid~~"
-                ASSEMBLER: "~~invalid~~"
-                SWIFT: "~~invalid~~"
-                OCAML: "~~invalid~~"
 
     lti:
         id: artemis_lti
