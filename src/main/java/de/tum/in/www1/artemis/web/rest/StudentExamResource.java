@@ -645,7 +645,7 @@ public class StudentExamResource {
             return badRequest();
         }
         if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(ZonedDateTime.now())) {
-            throw new AccessForbiddenException("exam", examId);
+            throw new AccessForbiddenException("Exam", examId);
         }
 
         ZonedDateTime submissionTime = ZonedDateTime.now();
@@ -682,7 +682,7 @@ public class StudentExamResource {
             return badRequest();
         }
         if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(ZonedDateTime.now())) {
-            throw new AccessForbiddenException("exam", examId);
+            throw new AccessForbiddenException("Exam", examId);
         }
 
         studentExam.setSubmissionDate(null);

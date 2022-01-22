@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ExamAccessService {
 
-    private static final String ENTITY_NAME = "exam";
+    private static final String ENTITY_NAME = "Exam";
 
     private final AuthorizationCheckService authorizationCheckService;
 
