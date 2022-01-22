@@ -282,7 +282,8 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     public String toString() {
         return "PlagiarismComparison{" + "similarity=" + similarity + ", status=" + status + ", studentStatementA='" + studentStatementA + '\'' + ", studentStatementB='"
                 + studentStatementB + '\'' + ", statusA=" + statusA + ", statusB=" + statusB + ", instructorStatementA='" + instructorStatementA + '\'' + ", instructorStatementB='"
-                + instructorStatementB + '\'' + '}';
+                + instructorStatementB + '\'' + ", studentStatementADate='" + studentStatementADate + '\'' + ", studentStatementBDate='" + studentStatementBDate + '\''
+                + ", instructorStatementADate='" + instructorStatementADate + '\'' + ", instructorStatementBDate='" + instructorStatementBDate + '\'' + '}';
     }
 
     @Override
@@ -299,9 +300,11 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         PlagiarismComparison<?> that = (PlagiarismComparison<?>) o;
         return Double.compare(that.similarity, similarity) == 0 && Objects.equals(plagiarismResult, that.plagiarismResult) && Objects.equals(submissionA, that.submissionA)
                 && Objects.equals(submissionB, that.submissionB) && Objects.equals(matches, that.matches) && status == that.status
-                && Objects.equals(studentStatementA, that.studentStatementB) && Objects.equals(instructorStatementA, that.instructorStatementA)
+                && Objects.equals(studentStatementA, that.studentStatementA) && Objects.equals(instructorStatementA, that.instructorStatementA)
                 && Objects.equals(instructorStatementB, that.instructorStatementB) && Objects.equals(studentStatementB, that.studentStatementB) && statusA == that.statusA
-                && statusB == that.statusB;
+                && statusB == that.statusB && Objects.equals(studentStatementADate, that.studentStatementADate)
+                && Objects.equals(instructorStatementADate, that.instructorStatementADate) && Objects.equals(instructorStatementBDate, that.instructorStatementBDate)
+                && Objects.equals(studentStatementBDate, that.studentStatementBDate);
     }
 
     @Override
