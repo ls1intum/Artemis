@@ -238,6 +238,6 @@ public abstract class AssessmentResource {
         // delete assessment
         assessmentService.deleteAssessment(submission, result);
 
-        return ok();
+        return ResponseEntity.ok().build();
     }
 }

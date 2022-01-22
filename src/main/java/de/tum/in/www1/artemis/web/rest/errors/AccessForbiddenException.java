@@ -13,6 +13,10 @@ public class AccessForbiddenException extends RuntimeException {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    public AccessForbiddenException() {
+        super(NOT_ALLOWED);
+    }
+
     public AccessForbiddenException(String message) {
         super(message);
     }

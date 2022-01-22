@@ -13,7 +13,7 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
             [btnType]="ButtonType.INFO"
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
-            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [featureToggle]="FeatureToggle.ProgrammingExercises"
             [icon]="faDownload"
             [title]="singleParticipantMode ? 'instructorDashboard.exportRepos.titleSingle' : 'instructorDashboard.exportRepos.title'"
             (onClick)="openRepoExportDialog($event)"
