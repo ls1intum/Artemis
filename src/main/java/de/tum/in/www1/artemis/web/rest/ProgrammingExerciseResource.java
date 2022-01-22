@@ -185,7 +185,7 @@ public class ProgrammingExerciseResource {
      */
     @PostMapping(SETUP)
     @PreAuthorize("hasRole('EDITOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() != null) {
@@ -279,7 +279,7 @@ public class ProgrammingExerciseResource {
      */
     @PutMapping(PROGRAMMING_EXERCISES)
     @PreAuthorize("hasRole('EDITOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise updatedProgrammingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise : {}", updatedProgrammingExercise);
@@ -352,7 +352,7 @@ public class ProgrammingExerciseResource {
      */
     @PutMapping(TIMELINE)
     @PreAuthorize("hasRole('EDITOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExercise updatedProgrammingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update the timeline of ProgrammingExercise : {}", updatedProgrammingExercise);
@@ -488,7 +488,7 @@ public class ProgrammingExerciseResource {
      */
     @DeleteMapping(PROGRAMMING_EXERCISE)
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
@@ -511,7 +511,7 @@ public class ProgrammingExerciseResource {
      */
     @PutMapping(value = COMBINE_COMMITS, produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasRole('EDITOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> combineTemplateRepositoryCommits(@PathVariable long exerciseId) {
         log.debug("REST request to combine the commits of the template repository of ProgrammingExercise with id: {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
@@ -534,7 +534,7 @@ public class ProgrammingExerciseResource {
      */
     @PutMapping(value = GENERATE_TESTS, produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasRole('EDITOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable long exerciseId) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
@@ -683,7 +683,7 @@ public class ProgrammingExerciseResource {
      */
     @PutMapping(REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody ProgrammingExercise programmingExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);

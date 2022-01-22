@@ -11,7 +11,7 @@
                     </a>
                     <!-- Edit in editor button -->
                     <a
-                        [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
+                        [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                         *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation"
                         jhiOrionFilter
                         [showInOrionWindow]="false"
@@ -64,7 +64,7 @@
                     </a>
                     <a
                         *ngIf="programmingExercise.isAtLeastEditor"
-                        [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
+                        [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                         class="btn btn-outline-primary btn-sm me-1"
                         routerLink="plagiarism"
                         style="margin-bottom: 10px"
@@ -72,7 +72,7 @@
                         <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism">Check Plagiarism</span>
                     </a>
                     <button
-                        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                         *ngIf="programmingExercise.isAtLeastInstructor"
                         (click)="checkConsistencies(programmingExercise)"
                         class="btn btn-outline-primary btn-sm me-1"
@@ -116,7 +116,7 @@
                     </span>
                     <span class="me-1" *ngIf="programmingExercise.isAtLeastEditor">
                         <button
-                            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
                             (click)="combineTemplateCommits()"
                             class="btn btn-secondary btn-sm"
@@ -127,7 +127,7 @@
                     </span>
                     <span *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.isAtLeastEditor" class="me-1">
                         <button
-                            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
                             (click)="generateStructureOracle()"
                             class="btn btn-secondary btn-sm"
@@ -138,7 +138,7 @@
                     </span>
                     <span *ngIf="programmingExercise.isAtLeastEditor" class="mr-1">
                         <button
-                            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
                             (click)="recreateBuildPlans()"
                             class="btn btn-secondary btn-sm"
@@ -174,7 +174,7 @@
 
                     <button
                         *ngIf="programmingExercise.isAtLeastInstructor"
-                        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                         jhiDeleteButton
                         [actionType]="ActionType.Cleanup"
                         [entityTitle]="programmingExercise.title || ''"
