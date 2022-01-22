@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -15,6 +14,8 @@ import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entiti
 import { GradeType } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
+import { normalWorkingTime } from 'app/exam/participate/exam.utils';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -26,7 +27,6 @@ export class StudentExamDetailComponent implements OnInit {
     studentExam: StudentExam;
     course: Course;
     student: User;
-    workingTimeForm: FormGroup;
     isSavingWorkingTime = false;
     isTestRun = false;
     maxTotalPoints = 0;
@@ -40,6 +40,15 @@ export class StudentExamDetailComponent implements OnInit {
     grade?: string;
     isBonus = false;
     passed = false;
+
+    workingTimeFormValues = {
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
+        percent: 0,
+    };
+
+    private normalWorkingTime = 0;
 
     // Icons
     faSave = faSave;
@@ -83,9 +92,9 @@ export class StudentExamDetailComponent implements OnInit {
     calculateGrade() {
         const achievedPercentageScore = (this.achievedTotalPoints / this.maxTotalPoints) * 100;
         this.gradingSystemService.matchPercentageToGradeStepForExam(this.courseId, this.examId, achievedPercentageScore).subscribe((gradeObservable) => {
-            if (gradeObservable && gradeObservable!.body) {
+            if (gradeObservable && gradeObservable.body) {
                 this.gradingScaleExists = true;
-                const gradeDTO = gradeObservable!.body;
+                const gradeDTO = gradeObservable.body;
                 this.grade = gradeDTO.gradeName;
                 this.passed = gradeDTO.isPassingGrade;
                 this.isBonus = gradeDTO.gradeType === GradeType.BONUS;
@@ -98,7 +107,7 @@ export class StudentExamDetailComponent implements OnInit {
      */
     saveWorkingTime() {
         this.isSavingWorkingTime = true;
-        const seconds = this.workingTimeForm.controls.hours.value * 3600 + this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
+        const seconds = this.getWorkingTimeSeconds();
         this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, seconds).subscribe({
             next: (res) => {
                 if (res.body) {
@@ -120,48 +129,119 @@ export class StudentExamDetailComponent implements OnInit {
      */
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
+
+        this.normalWorkingTime = normalWorkingTime(this.studentExam.exam!)!;
         this.initWorkingTimeForm();
+
         this.maxTotalPoints = 0;
         this.achievedTotalPoints = 0;
         this.bonusTotalPoints = 0;
-        studentExam.exercises!.forEach((exercise) => {
-            this.maxTotalPoints += exercise.maxPoints!;
-            this.bonusTotalPoints += exercise.bonusPoints!;
-            if (
-                exercise.studentParticipations?.length &&
-                exercise.studentParticipations.length > 0 &&
-                exercise.studentParticipations[0].results?.length &&
-                exercise.studentParticipations[0].results!.length > 0
-            ) {
-                if (exercise!.studentParticipations[0].submissions && exercise!.studentParticipations[0].submissions!.length > 0) {
-                    exercise!.studentParticipations[0].submissions![0].results! = exercise.studentParticipations[0].results;
-                    setLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0], getLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0]));
-                }
 
-                this.achievedTotalPoints += roundScoreSpecifiedByCourseSettings((exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100, this.course);
+        studentExam.exercises!.forEach((exercise) => this.initExercise(exercise));
+    }
+
+    /**
+     * Updates the points tallies based on the student’s results in the exercise.
+     *
+     * Also makes sure that the latest result is correctly connected to the student’s submission.
+     * @param exercise which should be included in the total points calculations.
+     * @private
+     */
+    private initExercise(exercise: Exercise) {
+        this.maxTotalPoints += exercise.maxPoints!;
+        this.bonusTotalPoints += exercise.bonusPoints!;
+
+        if (
+            exercise.studentParticipations?.length &&
+            exercise.studentParticipations.length > 0 &&
+            exercise.studentParticipations[0].results?.length &&
+            exercise.studentParticipations[0].results.length > 0
+        ) {
+            if (exercise.studentParticipations[0].submissions && exercise.studentParticipations[0].submissions.length > 0) {
+                exercise.studentParticipations[0].submissions[0].results = exercise.studentParticipations[0].results;
+                setLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0], getLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0]));
             }
-        });
-    }
 
-    private initWorkingTimeForm() {
-        const workingTime = this.artemisDurationFromSecondsPipe.secondsToDuration(this.studentExam.workingTime!);
-        this.workingTimeForm = new FormGroup({
-            hours: new FormControl({ value: workingTime.days * 24 + workingTime.hours, disabled: this.examIsVisible() }, [Validators.min(0), Validators.required]),
-            minutes: new FormControl({ value: workingTime.minutes, disabled: this.examIsVisible() }, [Validators.min(0), Validators.max(59), Validators.required]),
-            seconds: new FormControl({ value: workingTime.seconds, disabled: this.examIsVisible() }, [Validators.min(0), Validators.max(59), Validators.required]),
-        });
-    }
-
-    examIsVisible(): boolean {
-        if (this.isTestRun) {
-            // for test runs we always want to be able to change the working time
-            return !!this.studentExam.submitted;
-        } else if (this.studentExam.exam) {
-            // Disable the form to edit the working time if the exam is already visible
-            return dayjs(this.studentExam.exam.visibleDate).isBefore(dayjs());
+            this.achievedTotalPoints += roundScoreSpecifiedByCourseSettings((exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100, this.course);
         }
-        // if exam is undefined, the form to edit the working time is disabled
-        return true;
+    }
+
+    /**
+     * Updates the form values based on the working time of the student exam.
+     * @private
+     */
+    private initWorkingTimeForm() {
+        this.setWorkingTimeDuration(this.studentExam.workingTime!);
+        this.updateWorkingTimePercent();
+    }
+
+    /**
+     * Updates the working time duration values of the form whenever the percent value has been changed by the user.
+     */
+    updateWorkingTimeDuration() {
+        const seconds = Math.round(this.normalWorkingTime * (1.0 + this.workingTimeFormValues.percent / 100));
+        this.setWorkingTimeDuration(seconds);
+    }
+
+    /**
+     * Updates the hours, minutes, and seconds values of the form.
+     * @param seconds the total number of seconds of working time.
+     * @private
+     */
+    private setWorkingTimeDuration(seconds: number) {
+        const workingTime = this.artemisDurationFromSecondsPipe.secondsToDuration(seconds);
+        this.workingTimeFormValues.hours = workingTime.days * 24 + workingTime.hours;
+        this.workingTimeFormValues.minutes = workingTime.minutes;
+        this.workingTimeFormValues.seconds = workingTime.seconds;
+    }
+
+    /**
+     * Uses the current durations saved in the form to update the extension percent value.
+     */
+    updateWorkingTimePercent() {
+        this.workingTimeFormValues.percent = this.getWorkingTimePercentDifference();
+    }
+
+    /**
+     * Calculates how many seconds the currently set working time has in total.
+     * @private
+     */
+    private getWorkingTimeSeconds(): number {
+        return this.workingTimeFormValues.hours * 3600 + this.workingTimeFormValues.minutes * 60 + this.workingTimeFormValues.seconds;
+    }
+
+    /**
+     * Calculates the difference in whole percent between the regular working time and the currently set individual working time.
+     *
+     * E.g., with a regular time of "1h" and a current value of "1h30min" returns 50.
+     * @private
+     */
+    private getWorkingTimePercentDifference(): number {
+        return Math.round((this.getWorkingTimeSeconds() / this.normalWorkingTime - 1.0) * 100);
+    }
+
+    /**
+     * Checks if the user should be able to edit the inputs.
+     */
+    isFormDisabled(): boolean {
+        return this.isSavingWorkingTime || !this.canChangeExamWorkingTime();
+    }
+
+    /**
+     * Checks if the working time of the exam can still be changed.
+     * @private
+     */
+    private canChangeExamWorkingTime(): boolean {
+        if (this.isTestRun) {
+            // for unsubmitted test runs we always want to be able to change the working time
+            return !this.studentExam.submitted;
+        } else if (this.studentExam.exam) {
+            // for student exams it can only be changed before the student is able to see it
+            return dayjs().isBefore(dayjs(this.studentExam.exam.visibleDate));
+        } else {
+            // if there is no exam, then it cannot be changed
+            return false;
+        }
     }
 
     examIsOver(): boolean {
@@ -174,9 +254,9 @@ export class StudentExamDetailComponent implements OnInit {
     }
 
     getWorkingTimeToolTip(): string {
-        return this.examIsVisible()
-            ? 'You cannot change the individual working time after the exam has become visible.'
-            : 'You can change the individual working time of the student here.';
+        return this.canChangeExamWorkingTime()
+            ? 'You can change the individual working time of the student here.'
+            : 'You cannot change the individual working time after the exam has become visible.';
     }
 
     /**
@@ -185,7 +265,7 @@ export class StudentExamDetailComponent implements OnInit {
     toggle() {
         this.busy = true;
         if (this.studentExam.exam && this.studentExam.exam.id) {
-            this.studentExamService.toggleSubmittedState(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, this.studentExam!.submitted!).subscribe({
+            this.studentExamService.toggleSubmittedState(this.courseId, this.studentExam.exam.id, this.studentExam.id!, this.studentExam.submitted!).subscribe({
                 next: (res) => {
                     if (res.body) {
                         this.studentExam.submissionDate = res.body.submissionDate;
@@ -207,13 +287,10 @@ export class StudentExamDetailComponent implements OnInit {
      * @param content the modal content
      */
     openConfirmationModal(content: any) {
-        this.modalService.open(content).result.then(
-            (result: string) => {
-                if (result === 'confirm') {
-                    this.toggle();
-                }
-            },
-            () => {},
-        );
+        this.modalService.open(content).result.then((result: string) => {
+            if (result === 'confirm') {
+                this.toggle();
+            }
+        });
     }
 }

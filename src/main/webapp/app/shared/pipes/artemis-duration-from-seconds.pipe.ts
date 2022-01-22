@@ -52,6 +52,11 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
         };
     }
 
+    /**
+     * Converts the given duration into a human-readable short format as required by {@link transform}.
+     * @param duration that should be converted into a human-readable format.
+     * @private
+     */
     private static handleShortFormat(duration: Duration): string {
         if (duration.days > 0) {
             return `${duration.days}d ${duration.hours}h`;
@@ -64,6 +69,11 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
         }
     }
 
+    /**
+     * Converts the given duration into a human-readable long format as required by {@link transform}.
+     * @param duration that should be converted into a human-readable format.
+     * @private
+     */
     private static handleLongFormat(duration: Duration): string {
         if (duration.days > 0) {
             return `${duration.days}d ${duration.hours}h ${duration.minutes}min ${duration.seconds}s`;
