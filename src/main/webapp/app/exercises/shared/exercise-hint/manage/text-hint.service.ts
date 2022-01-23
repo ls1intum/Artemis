@@ -43,17 +43,17 @@ export interface ITextHintService {
 export class TextHintService implements ITextHintService {
     public resourceUrl = SERVER_API_URL + 'api/text-hints';
 
-    constructor(protected http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(protected http: HttpClient) {}
 
     /**
      * Creates a text hint
      * @param textHint Text hint to create
      */
     create(textHint: TextHint): Observable<TextHintResponse> {
-        textHint.exercise = this.exerciseService.convertDateFromClient(textHint.exercise!);
+        textHint.exercise = ExerciseService.convertDateFromClient(textHint.exercise!);
         textHint.type = 'text';
         if (textHint.exercise.categories) {
-            textHint.exercise.categories = this.exerciseService.stringifyExerciseCategories(textHint.exercise);
+            textHint.exercise.categories = ExerciseService.stringifyExerciseCategories(textHint.exercise);
         }
         return this.http.post<TextHint>(this.resourceUrl, textHint, { observe: 'response' });
     }
@@ -63,8 +63,8 @@ export class TextHintService implements ITextHintService {
      * @param textHint Text hint to update
      */
     update(textHint: TextHint): Observable<TextHintResponse> {
-        textHint.exercise = this.exerciseService.convertDateFromClient(textHint.exercise!);
-        textHint.exercise.categories = this.exerciseService.stringifyExerciseCategories(textHint.exercise);
+        textHint.exercise = ExerciseService.convertDateFromClient(textHint.exercise!);
+        textHint.exercise.categories = ExerciseService.stringifyExerciseCategories(textHint.exercise);
         return this.http.put<TextHint>(`${this.resourceUrl}/${textHint.id}`, textHint, { observe: 'response' });
     }
 
@@ -96,7 +96,7 @@ export class TextHintService implements ITextHintService {
 
     /**
      * Deletes a text hint
-     * @param exerciseHintId Id of text hint to delete
+     * @param textHintId Id of text hint to delete
      */
     delete(textHintId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${textHintId}`, { observe: 'response' });
