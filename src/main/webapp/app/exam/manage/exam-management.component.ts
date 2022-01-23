@@ -59,14 +59,14 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * @see registerChangeInExams
      */
     ngOnInit(): void {
-        this.courseService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe(
-            (res: HttpResponse<Course>) => {
+        this.courseService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
+            next: (res: HttpResponse<Course>) => {
                 this.course = res.body!;
                 this.loadAllExamsForCourse();
                 this.registerChangeInExams();
             },
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     /**
@@ -83,8 +83,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * Load all exams for a course.
      */
     loadAllExamsForCourse() {
-        this.examManagementService.findAllExamsForCourse(this.course.id!).subscribe(
-            (res: HttpResponse<Exam[]>) => {
+        this.examManagementService.findAllExamsForCourse(this.course.id!).subscribe({
+            next: (res: HttpResponse<Exam[]>) => {
                 this.exams = res.body!;
                 this.exams.forEach((exam) => {
                     this.examManagementService
@@ -94,8 +94,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
                         );
                 });
             },
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     /**
@@ -112,13 +112,13 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * @param examId Id to be deleted
      */
     deleteExam(examId: number): void {
-        this.examManagementService.delete(this.course.id!, examId).subscribe(
-            () => {
+        this.examManagementService.delete(this.course.id!, examId).subscribe({
+            next: () => {
                 this.dialogErrorSource.next('');
                 this.exams = this.exams.filter((exam) => exam.id !== examId);
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     /**

@@ -124,12 +124,11 @@ export class TextHintUpdateComponent implements OnInit, OnDestroy {
             this.subscribeToSaveResponse(this.textHintService.create(this.textHint));
         }
     }
-
     protected subscribeToSaveResponse(result: Observable<HttpResponse<TextHint>>) {
-        result.subscribe(
-            () => this.onSaveSuccess(),
-            () => this.onSaveError(),
-        );
+        result.subscribe({
+            next: () => this.onSaveSuccess(),
+            error: () => this.onSaveError(),
+        });
     }
 
     protected onSaveSuccess() {

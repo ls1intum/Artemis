@@ -65,12 +65,12 @@ export class TextHintComponent implements OnInit, OnDestroy {
                 filter((res: HttpResponse<TextHint[]>) => res.ok),
                 map((res: HttpResponse<TextHint[]>) => res.body),
             )
-            .subscribe(
-                (res: TextHint[]) => {
+            .subscribe({
+                next: (res: TextHint[]) => {
                     this.textHints = res;
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     /**
@@ -97,15 +97,15 @@ export class TextHintComponent implements OnInit, OnDestroy {
      * @param textHintId the id of the text hint that we want to delete
      */
     deleteTextHint(textHintId: number) {
-        this.textHintService.delete(textHintId).subscribe(
-            () => {
+        this.textHintService.delete(textHintId).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'textHintListModification',
                     content: 'Deleted an textHint',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 }

@@ -12,7 +12,7 @@ import { ExerciseType, getCourseFromExercise, IncludedInOverallScore } from 'app
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
@@ -99,6 +99,9 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exercise.id!).subscribe((submissionPolicy) => {
                             this.exercise.submissionPolicy = submissionPolicy;
                         });
+                        if (this.participation.results && this.participation.results[0] && this.participation.results[0].feedbacks) {
+                            checkSubsequentFeedbackInAssessment(this.participation.results[0].feedbacks);
+                        }
                     }),
                     switchMap(() => {
                         return this.loadTextHints();
@@ -187,7 +190,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
      * Check whether or not a latestResult exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] {
-        if (this.latestResult) {
+        if (this.latestResult && this.latestResult.feedbacks) {
+            checkSubsequentFeedbackInAssessment(this.latestResult.feedbacks);
             return getUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
         }
         return [];

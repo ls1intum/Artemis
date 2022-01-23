@@ -208,15 +208,15 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
     downloadArchive() {
         if (this.archiveMode === 'Exam' && this.exam) {
-            this.examService.downloadExamArchive(this.course.id!, this.exam.id!).subscribe(
-                (response) => downloadZipFileFromResponse(response),
-                () => this.alertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
-            );
+            this.examService.downloadExamArchive(this.course.id!, this.exam.id!).subscribe({
+                next: (response) => downloadZipFileFromResponse(response),
+                error: () => this.alertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
+            });
         } else {
-            this.courseService.downloadCourseArchive(this.course.id!).subscribe(
-                (response) => downloadZipFileFromResponse(response),
-                () => this.alertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
-            );
+            this.courseService.downloadCourseArchive(this.course.id!).subscribe({
+                next: (response) => downloadZipFileFromResponse(response),
+                error: () => this.alertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
+            });
         }
     }
 
@@ -235,14 +235,14 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.courseService.cleanupCourse(this.course.id!).subscribe(
-            () => {
+        this.courseService.cleanupCourse(this.course.id!).subscribe({
+            next: () => {
                 this.alertService.success('artemisApp.programmingExercise.cleanup.successMessage');
                 this.dialogErrorSource.next('');
             },
-            (error) => {
+            error: (error) => {
                 this.dialogErrorSource.next(error.error.title);
             },
-        );
+        });
     }
 }

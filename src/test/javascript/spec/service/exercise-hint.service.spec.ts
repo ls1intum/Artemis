@@ -5,10 +5,10 @@ import { take } from 'rxjs/operators';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { MockProvider } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TextHint } from 'app/entities/hestia/text-hint-model';
+import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
 
 describe('ExerciseHint Service', () => {
     let service: ExerciseHintService;
@@ -20,13 +20,7 @@ describe('ExerciseHint Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            providers: [
-                MockProvider(ExerciseService, {
-                    convertDateFromClient<E extends Exercise>(res: E): E {
-                        return res;
-                    },
-                }),
-            ],
+            providers: [{ provide: ExerciseService, useClass: MockExerciseService }],
         });
         expectedResult = {} as HttpResponse<ExerciseHint>;
         service = TestBed.inject(ExerciseHintService);

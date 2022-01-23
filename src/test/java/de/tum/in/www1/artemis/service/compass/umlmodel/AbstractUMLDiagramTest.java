@@ -28,7 +28,7 @@ public abstract class AbstractUMLDiagramTest {
         submissions.add(modelingSubmission1);
         submissions.add(modelingSubmission2);
 
-        var comparisonResult = modelingPlagiarismDetectionService.compareSubmissions(submissions, minimumSimilarity, 1, 0, 1L);
+        var comparisonResult = modelingPlagiarismDetectionService.checkPlagiarism(submissions, minimumSimilarity, 1, 0, 1L);
         assertThat(comparisonResult).isNotNull();
         assertThat(comparisonResult.getComparisons()).hasSize(1);
         assertThat(comparisonResult.getComparisons().stream().findFirst().get().getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.01));

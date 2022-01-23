@@ -24,7 +24,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
     let accountService: AccountService;
-    let exerciseService: ExerciseService;
     let lectureService: LectureService;
     let httpMock: HttpTestingController;
     let isAtLeastTutorInCourseSpy: jest.SpyInstance;
@@ -52,7 +51,6 @@ describe('Course Management Service', () => {
         courseManagementService = TestBed.inject(CourseManagementService);
         httpMock = TestBed.inject(HttpTestingController);
         accountService = TestBed.inject(AccountService);
-        exerciseService = TestBed.inject(ExerciseService);
         lectureService = TestBed.inject(LectureService);
 
         isAtLeastTutorInCourseSpy = jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
@@ -70,7 +68,7 @@ describe('Course Management Service', () => {
         course.endDate = undefined;
         returnedFromService = { ...course } as Course;
         participations = [new StudentParticipation()];
-        convertExercisesDateFromServerSpy = jest.spyOn(exerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
+        convertExercisesDateFromServerSpy = jest.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
     });
 
     const expectDateConversionToBeCalled = (courseForConversion: Course) => {
