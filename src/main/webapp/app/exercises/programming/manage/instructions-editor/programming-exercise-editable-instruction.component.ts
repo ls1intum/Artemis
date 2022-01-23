@@ -7,7 +7,7 @@ import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
-import { TaskHintCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task-hint.command';
+import { ExerciseHintCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/exercise-hint.command';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -39,7 +39,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     taskCommand = new TaskCommand();
     taskRegex = this.taskCommand.getTagRegex('g');
     testCaseCommand = new TestCaseCommand();
-    taskHintCommand = new TaskHintCommand();
+    taskHintCommand = new ExerciseHintCommand();
     katexCommand = new KatexCommand();
     domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.taskHintCommand];
 

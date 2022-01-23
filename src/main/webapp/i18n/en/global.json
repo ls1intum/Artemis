@@ -68,7 +68,6 @@
                 "shortAnswerMapping": "Short Answer Mapping",
                 "programmingExerciseTestCase": "Programming Exercise Test Case",
                 "exerciseHint": "Exercise Hint",
-                "textHint": "Text Hint",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)",
                 "metis": {
                     "post": "Post",

@@ -200,7 +200,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test_run_exercise_assessment_dashboard: 'artemisApp.exerciseAssessmentDashboard.home.title',
         lti_configuration: 'artemisApp.programmingExercise.home.title',
         teams: 'artemisApp.team.home.title',
-        text_hints: 'artemisApp.textHint.home.title',
+        hints: 'artemisApp.exerciseHint.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
         goal_management: 'artemisApp.learningGoal.manageLearningGoals.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
@@ -317,7 +317,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'assessment-dashboard':
                 this.addResolvedTitleAsCrumb(this.exerciseService.getTitle(Number(segment)), currentPath, segment);
                 break;
-            case 'text-hints':
+            case 'hints':
                 this.addResolvedTitleAsCrumb(this.textHintService.getTitle(Number(segment)), currentPath, segment);
                 break;
             case 'apollon-diagrams':
