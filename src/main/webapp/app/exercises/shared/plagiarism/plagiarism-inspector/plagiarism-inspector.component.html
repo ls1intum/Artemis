@@ -13,7 +13,12 @@
                 </div>
             </div>
             <div class="plagiarism-header-top-right">
-                <button class="check-plagiarism btn btn-primary" (click)="checkPlagiarism()" [disabled]="detectionInProgress">
+                <button
+                    [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
+                    class="check-plagiarism btn btn-primary"
+                    (click)="checkPlagiarism()"
+                    [overwriteDisabled]="detectionInProgress"
+                >
                     <span>{{ plagiarismResult ? ('artemisApp.plagiarism.rerun' | artemisTranslate) : ('artemisApp.plagiarism.detect' | artemisTranslate) }}</span>
                 </button>
 

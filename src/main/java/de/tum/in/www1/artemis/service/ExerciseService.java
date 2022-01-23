@@ -76,12 +76,15 @@ public class ExerciseService {
 
     private final RatingService ratingService;
 
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, QuizScheduleService quizScheduleService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             LtiOutcomeUrlRepository ltiOutcomeUrlRepository, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
-            GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService) {
+            GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService,
+            ExampleSubmissionRepository exampleSubmissionRepository) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -101,6 +104,7 @@ public class ExerciseService {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDateService = exerciseDateService;
         this.ratingService = ratingService;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
     }
 
     /**
@@ -348,6 +352,20 @@ public class ExerciseService {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.EDIT_EXERCISE, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has updated {} {} with id {}", user.getLogin(), exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
+    }
+
+    /**
+     * checks the example submissions of the exercise and removes unnecessary associations to other objects
+     * @param exercise the exercise for which example submissions should be checked
+     */
+    public void checkExampleSubmissions(Exercise exercise) {
+        // Avoid recursions
+        if (exercise.getExampleSubmissions().size() != 0) {
+            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
+            exercise.setExampleSubmissions(exampleSubmissionsWithResults);
+            exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
+            exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
+        }
     }
 
     /**
