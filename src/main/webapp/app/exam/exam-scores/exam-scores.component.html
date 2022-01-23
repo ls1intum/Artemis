@@ -310,7 +310,7 @@
         </table>
 
         <div #containerRef class="d-block">
-            <label *ngIf="gradingScaleExists && !isBonus" class="d-flex align-items-center">
+            <label *ngIf="showPassedMedianCheckbox" class="d-flex align-items-center">
                 <input type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
                 <span class="ms-1">{{
                     'artemisApp.examScores.highlightPassedMedian'
@@ -322,8 +322,8 @@
                               }
                 }}</span>
             </label>
-            <label class="d-flex align-items-center">
-                <input type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(medianType.OVERALL)" />
+            <label *ngIf="showOverallMedianCheckbox" class="d-flex align-items-center">
+                <input type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
                 <span class="ms-1">{{
                     'artemisApp.examScores.highlightOverallMedian'
                         | artemisTranslate

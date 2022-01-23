@@ -73,8 +73,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     activeEntries: NgxDataEntry[] = [];
     dataLabelFormatting = this.formatDataLabel.bind(this);
     showOverallMedian: boolean;
+    showOverallMedianCheckbox = true;
     overallChartMedian: number; // This value can vary as it depends on if the user only includes submitted exams or not
+    overallChartMedianType: MedianType; // We need to distinguish the different overall medians for the toggling
     showPassedMedian: boolean;
+    showPassedMedianCheckbox: boolean;
 
     readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
     readonly medianType = MedianType;
@@ -177,6 +180,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         // if a grading scale exists and the scoring type is not bonus, per default the median of all passed exams is shown.
                         // We need to set the value for the overall median in order to show it next to the check box
                         if (medianType === MedianType.PASSED) {
+                            this.showPassedMedianCheckbox = true;
                             // We pass MedianType.OVERALL since we want the median of all exams to be shown, not only of the submitted exams
                             this.setOverallChartMedianDependingOfExamsIncluded(MedianType.OVERALL);
                             this.showOverallMedian = false;
@@ -210,7 +214,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     toggleFilterForSubmittedExam() {
         this.filterForSubmittedExams = !this.filterForSubmittedExams;
         this.calculateFilterDependentStatistics();
-        const overallMedian = this.filterForSubmittedExams ? MedianType.SUBMITTED : MedianType.OVERALL;
+        const overallMedianType = this.filterForSubmittedExams ? MedianType.SUBMITTED : MedianType.OVERALL;
         /*
         if a grading scale exists that is not configured as bonus, we have to update the
         overall median value as we only encounter submitted exams now.
@@ -218,13 +222,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         if it is submitted.
          */
         if (this.gradingScaleExists && !this.isBonus) {
-            this.setOverallChartMedianDependingOfExamsIncluded(overallMedian);
+            this.setOverallChartMedianDependingOfExamsIncluded(overallMedianType);
             this.showOverallMedian = false;
             this.showPassedMedian = true;
             this.determineAndHighlightChartMedian(MedianType.PASSED);
         } else {
             this.showOverallMedian = true;
-            this.determineAndHighlightChartMedian(overallMedian);
+            this.determineAndHighlightChartMedian(overallMedianType);
         }
         this.changeDetector.detectChanges();
     }
@@ -904,7 +908,26 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         }
         const index = this.findGradeStepIndex(chartMedian);
         const medianChartBar = this.ngxData[index];
-        this.activeEntries = this.ngxData.filter((chartBar) => chartBar.name !== medianChartBar.name);
+
+        // Highlighting a bar only makes sense if this bar is representing a value > 0
+        if (medianChartBar.value === 0) {
+            if (medianType === MedianType.PASSED) {
+                this.showPassedMedianCheckbox = false;
+            } else {
+                this.showOverallMedianCheckbox = false;
+            }
+            this.activeEntries = [];
+        } else {
+            /*
+            The median value for passed exams does not change by any filter configuration, therefore the corresponding flag won't get updated after init.
+            The median value for all exams does change depending on if only submitted exams are included or not. Here we have to update the flag if the bar
+            represents a value > 0
+             */
+            if (medianType !== MedianType.PASSED) {
+                this.showOverallMedianCheckbox = true;
+            }
+            this.activeEntries = this.ngxData.filter((chartBar) => chartBar.name !== medianChartBar.name);
+        }
         /*const medianChartBar = this.ngxTestData[index];
         this.activeEntries = this.ngxTestData.filter((chartBar) => chartBar.name !== medianChartBar.name);*/
     }
@@ -922,5 +945,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         } else {
             this.overallChartMedian = this.aggregatedExamResults.medianRelative ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelative, this.course) : 0;
         }
+        this.overallChartMedianType = medianType;
     }
 }
