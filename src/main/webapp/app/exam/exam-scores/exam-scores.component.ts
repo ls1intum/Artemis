@@ -871,6 +871,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 this.showPassedMedian = showMedian = !this.showPassedMedian;
                 break;
             case MedianType.OVERALL:
+            case MedianType.SUBMITTED:
                 this.showOverallMedian = showMedian = !this.showOverallMedian;
                 break;
         }
