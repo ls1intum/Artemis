@@ -13,6 +13,7 @@ services:
         volumes:
             - ../../resources/config/application-artemis.yml:/home/artemis/application-artemis.yml:ro
             - ../../resources/config/application-prod.yml:/home/artemis/application-prod.yml:ro
+            - ./application.properties:/home/artemis/application.properties:ro
         environment:
             _JAVA_OPTIONS: "-Xmx5120m -Xms2560m"
             JHIPSTER_SLEEP: 30 # gives time for other services to boot before the application
@@ -20,7 +21,8 @@ services:
             spring.datasource.url: "${DATASOURCE_URL}"
             spring.datasource.username: root
             spring.datasource.password: ""
-            artemis.user-management.use-external: "true"
+            artemis.user-management.internal-admin.username: "${ADMIN_USERNAME}"
+            artemis.user-management.internal-admin.password: "${ADMIN_PASSWORD}"
             artemis.user-management.external.url: "${UM_URL}"
             artemis.user-management.external.user: "${UM_USER}"
             artemis.user-management.external.password: "${UM_PASSWORD}"
@@ -32,9 +34,6 @@ services:
             artemis.continuous-integration.password: "${CI_PASSWORD}"
             artemis.continuous-integration.token: "${CI_TOKEN}"
             artemis.continuous-integration.artemis-authentication-token-value: "${CI_AUTH_TOKEN}"
-            artemis.continuous-integration.vcs-application-link-name: "Bitbucket Prelive"
-            info.test-server: "true"
-            server.url: "${SERVER_URL}"
         ports:
             - 8080:8080
         networks:
