@@ -69,6 +69,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     loadingInitialSubmission = true;
     highlightDifferences = false;
     resizeOptions = { verticalResize: true };
+    isApollonModelLoaded = false;
 
     private cancelConfirmationText: string;
 
@@ -417,6 +418,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     onFeedbackChanged(feedback: Feedback[]) {
+        if (!this.isApollonModelLoaded) {
+            this.isApollonModelLoaded = true;
+            this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
+            return;
+        }
+
         this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
         this.validateFeedback();
     }
