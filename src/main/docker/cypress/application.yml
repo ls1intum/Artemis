@@ -67,7 +67,7 @@ info:
 
 logging:
   file:
-    name: '/opt/artemis/artemis.log'
+    name: '/home/artemis/artemis.log'
 
 management:
   metrics:
