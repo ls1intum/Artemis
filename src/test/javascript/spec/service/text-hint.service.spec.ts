@@ -2,19 +2,17 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
 import { take } from 'rxjs/operators';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { Exercise } from 'app/entities/exercise.model';
 import { TextHint } from 'app/entities/hestia/text-hint-model';
 import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
+import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
 
-describe('ExerciseHint Service', () => {
-    let service: ExerciseHintService;
+describe('TextHint Service', () => {
+    let service: TextHintService;
     let httpMock: HttpTestingController;
     let elemDefault: TextHint;
-    let exerciseHint: TextHint;
+    let textHint: TextHint;
     let expectedResult: any;
 
     beforeEach(() => {
@@ -22,8 +20,8 @@ describe('ExerciseHint Service', () => {
             imports: [HttpClientTestingModule],
             providers: [{ provide: ExerciseService, useClass: MockExerciseService }],
         });
-        expectedResult = {} as HttpResponse<ExerciseHint>;
-        service = TestBed.inject(ExerciseHintService);
+        expectedResult = {} as HttpResponse<TextHint>;
+        service = TestBed.inject(TextHintService);
         httpMock = TestBed.inject(HttpTestingController);
 
         const exercise = new ProgrammingExercise(undefined, undefined);
@@ -35,10 +33,10 @@ describe('ExerciseHint Service', () => {
         elemDefault.content = 'AAAAAAA';
         elemDefault.exercise = exercise;
 
-        exerciseHint = new TextHint();
-        exerciseHint.title = 'AAAAA';
-        exerciseHint.content = 'BBBBB';
-        exerciseHint.exercise = exercise;
+        textHint = new TextHint();
+        textHint.title = 'AAAAA';
+        textHint.content = 'BBBBB';
+        textHint.exercise = exercise;
     });
 
     describe('Service methods', () => {
