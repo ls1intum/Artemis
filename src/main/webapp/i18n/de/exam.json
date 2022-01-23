@@ -84,6 +84,7 @@
         "examScores": {
             "xAxes": "Ergebnis in %",
             "xAxesSuffix": " + {Notenname}",
+            "xAxesSuffixBonus": " + {Bonuspunkte}",
             "yAxes": "Anzahl Teilnehmende",
             "highlightPassedMedian": "Hebe Median aller bestandenen Klausuren im Diagram hervor: {{ median }}%",
             "highlightOverallMedian": "Hebe Median aller Klausuren im Diagram hervor: {{ median }}%",
