@@ -194,7 +194,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.alertService.info('modelingAssessmentEditor.messages.lock');
         }
         this.checkPermissions();
-        this.validateFeedback();
 
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
 
