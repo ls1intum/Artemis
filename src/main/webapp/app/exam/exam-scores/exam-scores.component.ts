@@ -34,7 +34,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { GraphColors } from 'app/entities/statistics.model';
 
-enum MedianType {
+export enum MedianType {
     PASSED,
     OVERALL,
     SUBMITTED,
@@ -216,6 +216,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         if (medianType === MedianType.PASSED) {
                             // We pass MedianType.OVERALL since we want the median of all exams to be shown, not only of the submitted exams
                             this.setOverallChartMedianDependingOfExamsIncluded(MedianType.OVERALL);
+                            this.showOverallMedian = false;
                         }
                         this.determineAndHighlightChartMedian(medianType);
                     }
@@ -952,11 +953,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      */
     private setOverallChartMedianDependingOfExamsIncluded(medianType: MedianType): void {
         if (medianType === MedianType.OVERALL) {
-            this.overallChartMedian = this.aggregatedExamResults.medianRelative ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelative, this.course) : 0;
-        } else {
             this.overallChartMedian = this.aggregatedExamResults.medianRelativeTotal
                 ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativeTotal, this.course)
                 : 0;
+        } else {
+            this.overallChartMedian = this.aggregatedExamResults.medianRelative ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelative, this.course) : 0;
         }
     }
 }

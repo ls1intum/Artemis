@@ -69,7 +69,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                 exerciseId: exercise.exerciseId,
                 exerciseType: exercise.exerciseType,
             };
-            this.ngxColor.domain.push(this.determineColor(false, exerciseGroupAverage));
+            this.ngxColor.domain.push(this.determineColor(false, exerciseAverage));
         });
 
         this.ngxData = [...this.ngxData];
