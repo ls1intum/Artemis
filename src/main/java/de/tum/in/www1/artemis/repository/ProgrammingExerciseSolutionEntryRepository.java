@@ -14,8 +14,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @SuppressWarnings("unused")
 public interface ProgrammingExerciseSolutionEntryRepository extends JpaRepository<ProgrammingExerciseSolutionEntry, Long> {
 
-    Set<ProgrammingExerciseSolutionEntry> findByExerciseId(Long exerciseId);
-
     @NotNull
     default ProgrammingExerciseSolutionEntry findByIdElseThrow(long entryId) throws EntityNotFoundException {
         return findById(entryId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Solution Entry", entryId));
@@ -27,4 +25,11 @@ public interface ProgrammingExerciseSolutionEntryRepository extends JpaRepositor
             WHERE h.id = :codeHintId
             """)
     Set<ProgrammingExerciseSolutionEntry> findByCodeHintId(@Param("codeHintId") Long codeHintId);
+
+    @Query("""
+            SELECT t.solutionEntries
+            FROM ProgrammingExerciseTestCase t
+            WHERE t.id = :testCaseId
+            """)
+    Set<ProgrammingExerciseSolutionEntry> findByTestCaseId(@Param("testCaseId") Long testCaseId);
 }

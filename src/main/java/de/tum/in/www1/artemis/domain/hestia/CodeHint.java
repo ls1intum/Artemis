@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTask;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CodeHint extends ExerciseHint {
 
-    @OneToMany(mappedBy = "codeHint", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "codeHint", cascade = { CascadeType.MERGE, CascadeType.PERSIST }, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("codeHint")
     private Set<ProgrammingExerciseSolutionEntry> solutionEntries = new HashSet<>();
 
@@ -30,17 +30,21 @@ public class CodeHint extends ExerciseHint {
         return this.solutionEntries;
     }
 
+    public void setSolutionEntries(Set<ProgrammingExerciseSolutionEntry> solutionEntries) {
+        this.solutionEntries = solutionEntries;
+    }
+
     public CodeHint solutionEntries(Set<ProgrammingExerciseSolutionEntry> solutionEntries) {
         this.solutionEntries = solutionEntries;
         return this;
     }
 
-    public void setSolutionEntries(Set<ProgrammingExerciseSolutionEntry> solutionEntries) {
-        this.solutionEntries = solutionEntries;
-    }
-
     public ProgrammingExerciseTask getProgrammingExerciseTask() {
         return task;
+    }
+
+    public void setProgrammingExerciseTask(ProgrammingExerciseTask programmingExerciseTask) {
+        this.task = programmingExerciseTask;
     }
 
     public CodeHint programmingExerciseTask(ProgrammingExerciseTask programmingExerciseTask) {
@@ -48,8 +52,12 @@ public class CodeHint extends ExerciseHint {
         return this;
     }
 
-    public void setProgrammingExerciseTask(ProgrammingExerciseTask programmingExerciseTask) {
-        this.task = programmingExerciseTask;
+    /**
+     * This method ensures that all solution entry references are removed before deleting a CodeHint
+     */
+    @PreRemove
+    private void preRemove() {
+        solutionEntries.forEach(solutionEntry -> solutionEntry.setCodeHint(null));
     }
 
     @Override

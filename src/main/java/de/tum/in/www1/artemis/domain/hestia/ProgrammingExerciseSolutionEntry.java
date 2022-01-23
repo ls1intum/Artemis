@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
  * A SolutionEntry.
  */
 @Entity
-@Table(name = "solution_entry")
+@Table(name = "programming_exercise_solution_entry")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExerciseSolutionEntry extends DomainObject {

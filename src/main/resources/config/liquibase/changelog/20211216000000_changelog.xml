@@ -63,7 +63,7 @@
     </changeSet>
 
     <changeSet author="timor-morrien" id="20211216000000-5">
-        <createTable tableName="solution_entry">
+        <createTable tableName="programming_exercise_solution_entry">
             <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -75,14 +75,14 @@
             <column name="test_case_id" type="BIGINT"/>
             <column name="code_hint_id" type="BIGINT"/>
         </createTable>
-        <addForeignKeyConstraint baseTableName="solution_entry"
+        <addForeignKeyConstraint baseTableName="programming_exercise_solution_entry"
                                  baseColumnNames="test_case_id"
-                                 constraintName="fk_solution_entry_test_case_id"
+                                 constraintName="fk_programming_exercise_solution_entry_test_case_id"
                                  referencedTableName="programming_exercise_test_case"
                                  referencedColumnNames="id"/>
-        <addForeignKeyConstraint baseTableName="solution_entry"
+        <addForeignKeyConstraint baseTableName="programming_exercise_solution_entry"
                                  baseColumnNames="code_hint_id"
-                                 constraintName="fk_solution_entry_code_hint_id"
+                                 constraintName="fk_programming_exercise_solution_entry_code_hint_id"
                                  referencedTableName="exercise_hint"
                                  referencedColumnNames="id"/>
     </changeSet>
