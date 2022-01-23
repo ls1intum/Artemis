@@ -86,8 +86,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                (lecture) => {
+            .subscribe({
+                next: (lecture) => {
                     this.lecture = lecture;
                     if (lecture?.lectureUnits) {
                         this.lectureUnits = lecture?.lectureUnits;
@@ -95,18 +95,17 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                         this.lectureUnits = [];
                     }
                 },
-                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            );
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
 
     updateOrder() {
         this.lectureUnitService
             .updateOrder(this.lectureId, this.lectureUnits)
             .pipe(map((response: HttpResponse<LectureUnit[]>) => response.body!))
-            .subscribe(
-                () => {},
-                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            );
+            .subscribe({
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
 
     moveUp(index: number): void {
@@ -166,13 +165,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     deleteLectureUnit(lectureUnitId: number) {
-        this.lectureUnitService.delete(lectureUnitId, this.lectureId).subscribe(
-            () => {
+        this.lectureUnitService.delete(lectureUnitId, this.lectureId).subscribe({
+            next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     editButtonAvailable(lectureUnit: LectureUnit) {
