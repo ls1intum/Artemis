@@ -131,19 +131,13 @@ public class TextSubmissionResource {
         final TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
         // Apply further checks if it is an exam submission
-        Optional<ResponseEntity<TextSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(textExercise, user);
-        if (examSubmissionAllowanceFailure.isPresent()) {
-            return examSubmissionAllowanceFailure.get();
-        }
+        examSubmissionService.checkSubmissionAllowance(textExercise, user);
 
         // Prevent multiple submissions (currently only for exam submissions)
         textSubmission = (TextSubmission) examSubmissionService.preventMultipleSubmissions(textExercise, textSubmission, user);
 
         // Check if the user is allowed to submit
-        Optional<ResponseEntity<TextSubmission>> submissionAllowanceFailure = textSubmissionService.checkSubmissionAllowance(textExercise, textSubmission, user);
-        if (submissionAllowanceFailure.isPresent()) {
-            return submissionAllowanceFailure.get();
-        }
+        textSubmissionService.checkSubmissionAllowance(textExercise, textSubmission, user);
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 

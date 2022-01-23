@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -193,25 +194,22 @@ public class StudentExamResource {
         log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         boolean isTestRun = studentExam.isTestRun();
-        Optional<ResponseEntity<StudentExam>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId(), currentUser, isTestRun);
-        if (accessFailure.isPresent()) {
-            return accessFailure.get();
-        }
+        this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId(), currentUser, isTestRun);
         // prevent manipulation of the user object that is attached to the student exam in the request body (which is saved later on into the database as part of this request)
         if (!Objects.equals(studentExam.getUser().getId(), currentUser.getId())) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExam.getId());
         if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
             log.error("Student exam with id {} for user {} is already submitted.", studentExam.getId(), currentUser.getLogin());
-            return conflict("studentExam", "alreadySubmitted", "You have already submitted.");
+            throw new ConflictException("You have already submitted.", "studentExam", "alreadySubmitted");
         }
 
         // checks if student exam is live (after start date, before end date + grace period)
         if (!isTestRun && (existingStudentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(existingStudentExam.getExam().getStartDate())
                 || existingStudentExam.getIndividualEndDate() != null && !ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDateWithGracePeriod()))) {
-            return forbidden("studentExam", "submissionNotInTime", "You can only submit between start and end of the exam.");
+            throw new AccessForbiddenException("You can only submit between start and end of the exam.");
         }
 
         return studentExamService.submitStudentExam(existingStudentExam, studentExam, currentUser);
@@ -237,20 +235,13 @@ public class StudentExamResource {
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
 
         // 1st: load the studentExam with all associated exercises
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId);
-        if (optionalStudentExam.isEmpty()) {
-            return notFound();
-        }
-        var studentExam = optionalStudentExam.get();
-
-        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, user, studentExam.isTestRun());
-        if (courseAndExamAccessFailure.isPresent()) {
-            return courseAndExamAccessFailure.get();
-        }
+        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId)
+                .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + user.getId()));
+        studentExamAccessService.checkCourseAndExamAccess(courseId, examId, user, studentExam.isTestRun());
 
         // students can not fetch the exam until 5 minutes before the exam start, we use the same constant in the client
         if (ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         prepareStudentExamForConduction(request, user, studentExam);
@@ -280,21 +271,13 @@ public class StudentExamResource {
         log.debug("REST request to get the test run for exam {} with id {}", examId, testRunId);
 
         // 1st: load the testRun with all associated exercises
-        Optional<StudentExam> optionalTestRun = studentExamRepository.findWithExercisesById(testRunId);
-        if (optionalTestRun.isEmpty()) {
-            return notFound();
-        }
-        var testRun = optionalTestRun.get();
+        StudentExam testRun = studentExamRepository.findWithExercisesById(testRunId).orElseThrow(() -> new EntityNotFoundException("StudentExam", testRunId));
 
         if (!currentUser.equals(testRun.getUser())) {
             return conflict();
         }
 
-        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, currentUser, true);
-        if (courseAndExamAccessFailure.isPresent()) {
-            return courseAndExamAccessFailure.get();
-        }
-
+        studentExamAccessService.checkCourseAndExamAccess(courseId, examId, currentUser, true);
         prepareStudentExamForConduction(request, currentUser, testRun);
 
         log.info("getTestRunForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, testRun.getExercises().size(), currentUser.getLogin());
@@ -318,20 +301,13 @@ public class StudentExamResource {
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
 
         // 1st: load the studentExam with all associated exercises
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId);
-        if (optionalStudentExam.isEmpty()) {
-            return notFound();
-        }
-        var studentExam = optionalStudentExam.get();
-
-        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, user, studentExam.isTestRun());
-        if (courseAndExamAccessFailure.isPresent()) {
-            return courseAndExamAccessFailure.get();
-        }
+        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId)
+                .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + user.getId()));
+        studentExamAccessService.checkCourseAndExamAccess(courseId, examId, user, studentExam.isTestRun());
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
         if (!studentExam.isSubmitted()) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         loadExercisesForStudentExam(studentExam);
