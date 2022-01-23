@@ -60,43 +60,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public noOfExamsFiltered: number;
 
     // ngx
-    ngxTestData = [
-        { name: '[0,5)', value: 13 },
-        { name: '[5,10)', value: 16 },
-        { name: '[10,15)', value: 23 },
-        { name: '[15,20)', value: 35 },
-        { name: '[20,25)', value: 17 },
-        { name: '[25,30)', value: 37 },
-        { name: '[30,35)', value: 60 },
-        { name: '[35,40)', value: 42 },
-        { name: '[40,45)', value: 24 },
-        { name: '[45,50)', value: 10 },
-        { name: '[50,55)', value: 31 },
-        { name: '[55,60)', value: 13 },
-        { name: '[60,65)', value: 3 },
-        { name: '[65,70)', value: 10 },
-        { name: '[70,75)', value: 33 },
-        { name: '[75,80)', value: 3 },
-        { name: '[80,85)', value: 63 },
-        { name: '[85,90)', value: 13 },
-        { name: '[90,95)', value: 7 },
-        { name: '[95,100)', value: 103 },
-    ];
-    ngxTestPassedData = [
-        { name: '[0,40){5,0}', value: 13 },
-        { name: '[40,45){4,7}', value: 16 },
-        { name: '[45,50){4,3}', value: 23 },
-        { name: '[50,55){4,0}', value: 35 },
-        { name: '[55,60){3,7}', value: 37 },
-        { name: '[60,65){3,3}', value: 60 },
-        { name: '[65,70){3,0}', value: 42 },
-        { name: '[70,75){2,7}', value: 24 },
-        { name: '[75,80){2,3}', value: 10 },
-        { name: '[80,85){2,0}', value: 31 },
-        { name: '[85,90){1,7}', value: 13 },
-        { name: '[90,95){1,3}', value: 3 },
-        { name: '[95,100){1,0}', value: 10 },
-    ];
     ngxData: NgxDataEntry[] = [];
     yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
     xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
