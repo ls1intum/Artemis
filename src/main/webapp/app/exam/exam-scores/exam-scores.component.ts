@@ -843,8 +843,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
         this.xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
 
-        if (this.gradingScaleExists) {
-            this.xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffix');
+        if (this.gradingScaleExists && !this.isBonus) {
+            this.xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixNoBonus');
+        } else if (this.gradingScaleExists && this.isBonus) {
+            this.xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixBonus');
         }
     }
 
