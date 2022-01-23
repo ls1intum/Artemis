@@ -21,6 +21,7 @@ describe('Participation Service', () => {
     let httpMock: HttpTestingController;
     let participationDefault: Participation;
     let currentDate: dayjs.Dayjs;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -183,6 +184,8 @@ describe('Participation Service', () => {
     it('should update a Participation', fakeAsync(() => {
         const exercise = new TextExercise(new Course(), undefined);
         exercise.id = 1;
+        exercise.categories = undefined;
+
         const returnedFromService = Object.assign(
             {
                 repositoryUrl: 'BBBBBB',
