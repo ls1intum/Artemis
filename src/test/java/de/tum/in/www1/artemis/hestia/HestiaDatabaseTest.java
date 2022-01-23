@@ -33,9 +33,6 @@ public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucket
     private ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository;
 
     @Autowired
-    private ExerciseHintRepository exerciseHintRepository;
-
-    @Autowired
     private CodeHintRepository codeHintRepository;
 
     private Long programmingExerciseId;
