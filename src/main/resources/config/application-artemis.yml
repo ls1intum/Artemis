@@ -76,21 +76,6 @@ artemis:
         # Jenkins: The token value you use for the Server Notification Plugin and is stored under the notification-token credential above
         artemis-authentication-token-value: <token>
         build-timeout: 30 # Does cancel jenkins builds after 30 minutes to remove build that get stuck
-        # Defines the used docker images for certain programming languages
-        build:
-            images:
-                JAVA: "ls1tum/artemis-maven-template:java17-3"
-                KOTLIN: "ls1tum/artemis-maven-template:java17-3"
-                EMPTY: "ls1tum/artemis-maven-template:java17-3"
-                PYTHON: "ls1tum/artemis-python-docker:latest"
-                C: "ls1tum/artemis-c-docker:latest"
-                C_FACT: "sharingcodeability/fact:latest"
-                HASKELL: "tumfpv/fpv-stack:8.8.4"
-                VHDL: "tizianleonhardt/era-artemis-vhdl:latest"
-                ASSEMBLER: "tizianleonhardt/era-artemis-assembler:latest"
-                SWIFT: "norionomura/swiftlint:latest"
-                OCAML: "ls1tum/artemis-ocaml-docker:v1"
-
     lti: # only important for online courses that use LTI, can typically be ignored
         id: artemis_lti
         oauth-key: artemis_lti_key
