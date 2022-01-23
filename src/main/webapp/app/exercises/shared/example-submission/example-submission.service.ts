@@ -14,7 +14,7 @@ export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class ExampleSubmissionService {
-    constructor(private http: HttpClient, private exerciseService: ExerciseService, private stringCountService: StringCountService) {}
+    constructor(private http: HttpClient, private stringCountService: StringCountService) {}
 
     /**
      * Creates an example submission
@@ -97,9 +97,9 @@ export class ExampleSubmissionService {
     private convert(exampleSubmission: ExampleSubmission): ExampleSubmission {
         const jsonCopy = Object.assign({}, exampleSubmission);
         if (jsonCopy.exercise) {
-            jsonCopy.exercise = this.exerciseService.convertDateFromClient(jsonCopy.exercise);
-            jsonCopy.exercise = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(jsonCopy.exercise!);
-            jsonCopy.exercise.categories = this.exerciseService.stringifyExerciseCategories(jsonCopy.exercise);
+            jsonCopy.exercise = ExerciseService.convertDateFromClient(jsonCopy.exercise);
+            jsonCopy.exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(jsonCopy.exercise!);
+            jsonCopy.exercise.categories = ExerciseService.stringifyExerciseCategories(jsonCopy.exercise);
         }
         return jsonCopy;
     }
