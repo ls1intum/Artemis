@@ -52,9 +52,6 @@ describe('AssessmentLocksComponent', () => {
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: textAssessmentService, useClass: TextAssessmentService },
                 { provide: programmingAssessmentService, useClass: ProgrammingAssessmentManualResultService },
                 { provide: fileUploadAssessmentService, useClass: FileUploadAssessmentService },
@@ -75,44 +72,44 @@ describe('AssessmentLocksComponent', () => {
         fixture = TestBed.createComponent(AssessmentLocksComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
-        jest.resetAllMocks();
         windowConfirmStub = jest.spyOn(window, 'confirm').mockReturnValue(true);
     });
-    it('should create', () => {
-        expect(component).toBeTruthy();
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should call getAllLockedSubmissions on init', () => {
         const courseServiceStub = jest.spyOn(courseService, 'findAllLockedSubmissionsOfCourse').mockReturnValue(of());
         component.ngOnInit();
-        expect(courseServiceStub).toBeCalledTimes(1);
+        expect(courseServiceStub).toHaveBeenCalledTimes(1);
     });
 
     it('should release lock for programming exercise', () => {
         const cancelAssessmentStub = jest.spyOn(programmingAssessmentService, 'cancelAssessment').mockReturnValue(of());
         component.cancelAssessment(programmingSubmission);
         expect(windowConfirmStub).toBeCalledTimes(1);
-        expect(cancelAssessmentStub).toBeCalledTimes(1);
+        expect(cancelAssessmentStub).toHaveBeenCalledTimes(1);
     });
 
     it('should release lock for modeling exercise', () => {
         const cancelAssessmentStub = jest.spyOn(modelingAssessmentService, 'cancelAssessment').mockReturnValue(of());
         component.cancelAssessment(modelingSubmission);
         expect(windowConfirmStub).toBeCalledTimes(1);
-        expect(cancelAssessmentStub).toBeCalledTimes(1);
+        expect(cancelAssessmentStub).toHaveBeenCalledTimes(1);
     });
 
     it('should release lock for text exercise', () => {
         const cancelAssessmentStub = jest.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of());
         component.cancelAssessment(textSubmission);
         expect(windowConfirmStub).toBeCalledTimes(1);
-        expect(cancelAssessmentStub).toBeCalledTimes(1);
+        expect(cancelAssessmentStub).toHaveBeenCalledTimes(1);
     });
 
     it('should release lock for the file upload exercise', () => {
         const cancelAssessmentStub = jest.spyOn(fileUploadAssessmentService, 'cancelAssessment').mockReturnValue(of());
         component.cancelAssessment(fileUploadSubmission);
         expect(windowConfirmStub).toBeCalledTimes(1);
-        expect(cancelAssessmentStub).toBeCalledTimes(1);
+        expect(cancelAssessmentStub).toHaveBeenCalledTimes(1);
     });
 });
