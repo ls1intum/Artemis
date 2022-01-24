@@ -12,7 +12,7 @@
                 *ngIf="course && course.isAtLeastEditor"
                 id="jh-create-entity"
                 class="btn btn-primary jh-create-entity create-programming-exercise text-truncate mb-1 me-1"
-                [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
+                [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                 [routerLink]="['/course-management', courseId, 'programming-exercises', 'new']"
             >
                 <fa-icon [icon]="faPlus"></fa-icon>
@@ -22,7 +22,7 @@
                 *ngIf="course && course.isAtLeastEditor"
                 id="jh-import-entity"
                 class="btn btn-primary jh-create-entity create-programming-exercise text-truncate mb-1 me-1"
-                [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                 (click)="openImportModal()"
             >
                 <fa-icon [icon]="faPlus"></fa-icon>
@@ -231,7 +231,7 @@
                                     </div>
                                 </a>
                                 <a
-                                    [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                                     *ngIf="programmingExercise.isAtLeastEditor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
                                     class="btn btn-info btn-sm me-1 mb-1"
@@ -245,7 +245,7 @@
                             </div>
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a
-                                    [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                                     [attr.disabled]="false"
                                     *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation"
                                     [routerLink]="[
@@ -279,7 +279,7 @@
                             <div class="btn-group-vertical me-1 mb-1">
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                     jhiDeleteButton
                                     [actionType]="ActionType.Reset"
                                     [entityTitle]="programmingExercise.title!"
@@ -293,7 +293,7 @@
                                 </button>
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                     jhiDeleteButton
                                     [entityTitle]="programmingExercise.title!"
                                     deleteQuestion="artemisApp.programmingExercise.delete.question"
