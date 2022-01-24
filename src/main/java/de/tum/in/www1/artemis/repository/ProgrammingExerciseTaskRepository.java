@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @SuppressWarnings("unused")

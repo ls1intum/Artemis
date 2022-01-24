@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.programming;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;

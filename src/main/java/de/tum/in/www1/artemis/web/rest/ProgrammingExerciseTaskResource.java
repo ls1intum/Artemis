@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web;
+package de.tum.in.www1.artemis.web.rest;
 
 import java.util.Set;
 
@@ -12,14 +12,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 /**
- * REST controller for managing {@link de.tum.in.www1.artemis.domain.ProgrammingExerciseTask}.
+ * REST controller for managing {@link ProgrammingExerciseTask}.
  */
 @RestController
 @RequestMapping("/api")
@@ -63,7 +63,7 @@ public class ProgrammingExerciseTaskResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ProgrammingExerciseTask> getProgrammingExerciseTask(@PathVariable Long programmingExerciseTaskId) {
         log.debug("REST request to get ProgrammingExerciseTask : {}", programmingExerciseTaskId);
-        var task = programmingExerciseTaskRepository.findByIdElseThrow(programmingExerciseTaskId);
+        var task = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesAndProgrammingExerciseElseThrow(programmingExerciseTaskId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, task.getExercise(), null);
         return ResponseEntity.ok().body(task);
     }
