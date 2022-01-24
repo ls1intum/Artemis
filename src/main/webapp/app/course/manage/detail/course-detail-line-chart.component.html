@@ -1,12 +1,9 @@
 <div class="course-detail-parent-container col">
     <div class="row justify-content-center chart-title-line">
         <div class="d-inline-flex flex-nowrap justify-content-center">
-            <a *ngIf="course.isAtLeastInstructor; else showTitle" [routerLink]="['/course-management', course.id, 'course-statistics']" class="text-center">
+            <a [routerLink]="['/course-management', course.id, 'course-statistics']" class="text-center">
                 <h5>{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h5>
             </a>
-            <ng-template #showTitle>
-                <h5>{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h5>
-            </ng-template>
             <jhi-help-icon class="chart-explanation-tooltip" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation"></jhi-help-icon>
         </div>
     </div>
