@@ -1,9 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
 import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
@@ -20,10 +18,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { of } from 'rxjs';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { HttpResponse } from '@angular/common/http';
 
 describe('AssessmentLocksComponent', () => {
     let component: AssessmentLocksComponent;
