@@ -276,7 +276,7 @@ describe('NavbarComponent', () => {
             expect(hintsStub).toHaveBeenCalledWith(3);
 
             const hintsCrumb = {
-                label: 'artemisApp.textHint.home.title',
+                label: 'artemisApp.exerciseHint.home.title',
                 translate: true,
                 uri: '/course-management/1/exercises/2/text-hints/',
             } as MockBreadcrumb;
