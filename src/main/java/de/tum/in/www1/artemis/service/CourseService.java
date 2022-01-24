@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.IsoFields;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -424,7 +425,9 @@ public class CourseService {
             ZonedDateTime date = LocalDateTime.parse(dateOfElement, formatter).atZone(zone);
             int index = statisticsRepository.getWeekOfDate(date);
             // the database stores entries in UTC, so it can happen that entries have a date one date before the startDate
-            index = index == startIndex - 1 ? startIndex : index;
+            var unifiedDateWeekBeforeStartIndex = startIndex == 1 ? Math.toIntExact(IsoFields.WEEK_OF_WEEK_BASED_YEAR.rangeRefinedBy(startDate.minusWeeks(1)).getMaximum())
+                    : startIndex - 1;
+            index = index == unifiedDateWeekBeforeStartIndex ? startIndex : index;
             statisticsRepository.addUserToTimeslot(usersByDate, listElement, index);
         }
         List<StatisticsEntry> returnList = new ArrayList<>();
