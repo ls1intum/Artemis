@@ -19,10 +19,10 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ExportToCsv } from 'export-to-csv';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
-export const NAME_KEY = 'Name';
-export const USERNAME_KEY = 'Username';
-export const EMAIL_KEY = 'Email';
-export const REGISTRATION_NUMBER_KEY = 'Registration Number';
+const NAME_KEY = 'Name';
+const USERNAME_KEY = 'Username';
+const EMAIL_KEY = 'Email';
+const REGISTRATION_NUMBER_KEY = 'Registration Number';
 
 const cssClasses = {
     alreadyMember: 'already-member',
@@ -301,7 +301,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
             quoteStrings: '"',
             showLabels: true,
             showTitle: false,
-            filename: 'Student Information ' + this.course.title,
+            filename: this.courseGroupEntityName.charAt(0).toUpperCase() + this.courseGroupEntityName.slice(1) + ' Information ' + this.course.title,
             useTextFile: false,
             useBom: true,
             headers: keys,
