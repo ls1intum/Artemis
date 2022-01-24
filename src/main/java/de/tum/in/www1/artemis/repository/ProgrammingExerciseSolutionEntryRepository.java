@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.Optional;
 import java.util.Set;
 
 import javax.validation.constraints.NotNull;
@@ -18,6 +19,20 @@ public interface ProgrammingExerciseSolutionEntryRepository extends JpaRepositor
     default ProgrammingExerciseSolutionEntry findByIdElseThrow(long entryId) throws EntityNotFoundException {
         return findById(entryId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Solution Entry", entryId));
     }
+
+    @NotNull
+    default ProgrammingExerciseSolutionEntry findByIdWithTestCaseAndProgrammingExerciseElseThrow(long entryId) throws EntityNotFoundException {
+        return findByIdWithTestCaseAndProgrammingExercise(entryId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Solution Entry", entryId));
+    }
+
+    @Query("""
+            SELECT se
+            FROM ProgrammingExerciseSolutionEntry se
+            LEFT JOIN FETCH se.testCase tc
+            LEFT JOIN FETCH tc.exercise pe
+            WHERE se.id = :entryId
+            """)
+    Optional<ProgrammingExerciseSolutionEntry> findByIdWithTestCaseAndProgrammingExercise(long entryId);
 
     @Query("""
             SELECT h.solutionEntries

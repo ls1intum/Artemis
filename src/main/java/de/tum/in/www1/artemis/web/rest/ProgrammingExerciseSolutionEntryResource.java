@@ -14,11 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTask;
-import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTaskRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
@@ -37,13 +37,16 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     public ProgrammingExerciseSolutionEntryResource(ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            AuthorizationCheckService authCheckService) {
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, AuthorizationCheckService authCheckService) {
         this.programmingExerciseSolutionEntryRepository = programmingExerciseSolutionEntryRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
@@ -58,8 +61,8 @@ public class ProgrammingExerciseSolutionEntryResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ProgrammingExerciseSolutionEntry> getProgrammingSolutionEntry(@PathVariable Long programmingExerciseSolutionEntryId) {
         log.debug("REST request to get Programming Exercise Solution Entry : {}", programmingExerciseSolutionEntryId);
-        var solutionEntry = programmingExerciseSolutionEntryRepository.findByIdElseThrow(programmingExerciseSolutionEntryId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, solutionEntry.getCodeHint().getExercise(), null);
+        var solutionEntry = programmingExerciseSolutionEntryRepository.findByIdWithTestCaseAndProgrammingExerciseElseThrow(programmingExerciseSolutionEntryId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, solutionEntry.getTestCase().getExercise(), null);
         return ResponseEntity.ok().body(solutionEntry);
     }
 
@@ -75,8 +78,8 @@ public class ProgrammingExerciseSolutionEntryResource {
         log.debug("REST request to get Programming Exercise Solution Entry : {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, programmingExercise, null);
-        Set<ProgrammingExerciseSolutionEntry> solutionEntries = programmingExercise.getExerciseHints().stream().filter(hint -> hint instanceof CodeHint)
-                .flatMap(codeHint -> ((CodeHint) codeHint).getSolutionEntries().stream()).collect(Collectors.toSet());
+        Set<ProgrammingExerciseSolutionEntry> solutionEntries = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream()
+                .flatMap(testCase -> testCase.getSolutionEntries().stream()).collect(Collectors.toSet());
         return ResponseEntity.ok(solutionEntries);
     }
 
@@ -90,11 +93,11 @@ public class ProgrammingExerciseSolutionEntryResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<ProgrammingExerciseSolutionEntry>> getProgrammingSolutionEntryForProgrammingExerciseTask(@PathVariable Long taskId) {
         log.debug("REST request to get Programming Exercise Solution Entry : {}", taskId);
-        ProgrammingExerciseTask programmingExerciseTask = programmingExerciseTaskRepository.findByIdElseThrow(taskId);
+        ProgrammingExerciseTask programmingExerciseTask = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesAndProgrammingExerciseElseThrow(taskId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseTask.getExercise().getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, programmingExercise, null);
 
-        Set<ProgrammingExerciseSolutionEntry> solutionEntries = programmingExerciseTask.getCodeHints().stream().flatMap(codeHint -> codeHint.getSolutionEntries().stream())
+        Set<ProgrammingExerciseSolutionEntry> solutionEntries = programmingExerciseTask.getTestCases().stream().flatMap(testCase -> testCase.getSolutionEntries().stream())
                 .collect(Collectors.toSet());
         return ResponseEntity.ok(solutionEntries);
     }

@@ -18,6 +18,13 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
 
     Set<ProgrammingExerciseTestCase> findByExerciseId(Long exerciseId);
 
+    @Query("""
+            SELECT DISTINCT tc FROM ProgrammingExerciseTestCase tc
+            LEFT JOIN FETCH tc.solutionEntries se
+            WHERE tc.exercise.id = :#{#exerciseId}
+            """)
+    Set<ProgrammingExerciseTestCase> findByExerciseIdWithSolutionEntries(Long exerciseId);
+
     Set<ProgrammingExerciseTestCase> findByExerciseIdAndActive(Long exerciseId, Boolean active);
 
     /**

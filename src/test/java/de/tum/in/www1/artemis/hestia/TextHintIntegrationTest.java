@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.TextHint;
@@ -45,7 +46,7 @@ public class TextHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void queryAllHintsForAnExerciseAsAStudent() throws Exception {
-        request.getList("/api/exercises/" + exercise.getId() + "/text-hints", HttpStatus.OK, ExerciseHint.class);
+        request.getList("/api/exercises/" + exercise.getId() + "/exercise-hints", HttpStatus.OK, ExerciseHint.class);
     }
 
     @Test
