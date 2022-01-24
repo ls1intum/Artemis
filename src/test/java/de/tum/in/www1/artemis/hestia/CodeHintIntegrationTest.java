@@ -78,22 +78,22 @@ public class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getHintForAnExerciseAsTutorForbidden() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
-        request.get("/api/exercise-hints/" + exerciseHint.getId(), HttpStatus.FORBIDDEN, ExerciseHint.class);
+        request.get("/api/code-hints/" + exerciseHint.getId(), HttpStatus.FORBIDDEN, ExerciseHint.class);
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     public void getHintForAnExerciseAsEditor() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
-        request.get("/api/exercise-hints/" + exerciseHint.getId(), HttpStatus.OK, ExerciseHint.class);
+        request.get("/api/code-hints/" + exerciseHint.getId(), HttpStatus.OK, ExerciseHint.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getHintForAnExerciseAsAnInstructor() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
-        request.get("/api/exercise-hints/" + exerciseHint.getId(), HttpStatus.OK, ExerciseHint.class);
-        request.get("/api/exercise-hints/" + 0L, HttpStatus.NOT_FOUND, ExerciseHint.class);
+        request.get("/api/code-hints/" + exerciseHint.getId(), HttpStatus.OK, ExerciseHint.class);
+        request.get("/api/code-hints/" + 0L, HttpStatus.NOT_FOUND, ExerciseHint.class);
     }
 
     @Test
@@ -121,13 +121,13 @@ public class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
         final var hint = new CodeHint().title("Test Hint").exercise(exercise);
         exerciseHintRepository.save(hint);
 
-        final var title = request.get("/api/exercise-hints/" + hint.getId() + "/title", HttpStatus.OK, String.class);
+        final var title = request.get("/api/code-hints/" + hint.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(hint.getTitle());
     }
 
     @Test
     @WithMockUser(username = "user1", roles = "USER")
     public void testGetHintTitleForNonExistingHint() throws Exception {
-        request.get("/api/exercise-hints/12312312321/title", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/code-hints/12312312321/title", HttpStatus.NOT_FOUND, String.class);
     }
 }

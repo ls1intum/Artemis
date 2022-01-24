@@ -48,7 +48,7 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
     }
 
     public ProgrammingExerciseSolutionEntry file(String file) {
-        this.file = file;
+        setFile(file);
         return this;
     }
 
@@ -61,7 +61,7 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
     }
 
     public ProgrammingExerciseSolutionEntry previousLine(Integer previousLine) {
-        this.previousLine = previousLine;
+        setPreviousLine(previousLine);
         return this;
     }
 
@@ -74,7 +74,7 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
     }
 
     public ProgrammingExerciseSolutionEntry line(Integer line) {
-        this.line = line;
+        setLine(line);
         return this;
     }
 
@@ -87,7 +87,7 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
     }
 
     public ProgrammingExerciseSolutionEntry previousCode(String previousCode) {
-        this.previousCode = previousCode;
+        setPreviousCode(previousCode);
         return this;
     }
 
@@ -100,7 +100,7 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
     }
 
     public ProgrammingExerciseSolutionEntry code(String code) {
-        this.code = code;
+        setCode(code);
         return this;
     }
 
@@ -113,7 +113,7 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
     }
 
     public ProgrammingExerciseSolutionEntry codeHint(CodeHint codeHint) {
-        this.codeHint = codeHint;
+        setCodeHint(codeHint);
         return this;
     }
 
@@ -126,7 +126,7 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
     }
 
     public ProgrammingExerciseSolutionEntry testCase(ProgrammingExerciseTestCase testCase) {
-        this.testCase = testCase;
+        setTestCase(testCase);
         return this;
     }
 

@@ -129,7 +129,7 @@ public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucket
         var codeHint = (CodeHint) new CodeHint().programmingExerciseTask(task).exercise(programmingExercise).title("Code Hint 1");
         codeHint = codeHintRepository.save(codeHint);
         for (ProgrammingExerciseSolutionEntry solutionEntry : allSolutionEntries) {
-            solutionEntry.setCodeHint(codeHint);
+            solutionEntry.codeHint(codeHint);
             programmingExerciseSolutionEntryRepository.save(solutionEntry);
         }
         assertThat(programmingExerciseSolutionEntryRepository.findByCodeHintId(codeHint.getId())).hasSize(6).isEqualTo(allSolutionEntries);

@@ -35,7 +35,7 @@ public class CodeHint extends ExerciseHint {
     }
 
     public CodeHint solutionEntries(Set<ProgrammingExerciseSolutionEntry> solutionEntries) {
-        this.solutionEntries = solutionEntries;
+        setSolutionEntries(solutionEntries);
         return this;
     }
 
@@ -48,7 +48,7 @@ public class CodeHint extends ExerciseHint {
     }
 
     public CodeHint programmingExerciseTask(ProgrammingExerciseTask programmingExerciseTask) {
-        this.task = programmingExerciseTask;
+        setProgrammingExerciseTask(programmingExerciseTask);
         return this;
     }
 
