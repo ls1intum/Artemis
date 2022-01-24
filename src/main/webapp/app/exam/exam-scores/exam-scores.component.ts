@@ -931,8 +931,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
             this.activeEntries = this.ngxData.filter((chartBar) => chartBar.name !== medianChartBar.name);
         }
-        /*const medianChartBar = this.ngxTestData[index];
-        this.activeEntries = this.ngxTestData.filter((chartBar) => chartBar.name !== medianChartBar.name);*/
     }
 
     /**
