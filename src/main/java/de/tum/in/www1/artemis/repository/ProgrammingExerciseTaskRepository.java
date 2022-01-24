@@ -18,11 +18,6 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
     Set<ProgrammingExerciseTask> findByExerciseId(Long exerciseId);
 
     @NotNull
-    default ProgrammingExerciseTask findByIdElseThrow(long taskId) throws EntityNotFoundException {
-        return findById(taskId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Task", taskId));
-    }
-
-    @NotNull
     default ProgrammingExerciseTask findByIdWithTestCaseAndSolutionEntriesAndProgrammingExerciseElseThrow(long entryId) throws EntityNotFoundException {
         return findByIdWithTestCaseAndSolutionEntriesAndProgrammingExercise(entryId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Task", entryId));
     }

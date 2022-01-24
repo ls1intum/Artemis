@@ -132,6 +132,10 @@ public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucket
             solutionEntry.codeHint(codeHint);
             programmingExerciseSolutionEntryRepository.save(solutionEntry);
         }
+        codeHint.solutionEntries(allSolutionEntries);
+        codeHint = codeHintRepository.save(codeHint);
+        task.codeHints(Set.of(codeHint));
+        task = programmingExerciseTaskRepository.save(task);
         assertThat(programmingExerciseSolutionEntryRepository.findByCodeHintId(codeHint.getId())).hasSize(6).isEqualTo(allSolutionEntries);
         assertThat(codeHintRepository.findByExerciseId(programmingExerciseId)).containsExactly(codeHint);
     }

@@ -121,4 +121,10 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
         var name = request.get("/api/programming-exercise-tasks/" + task.getId() + "/name", HttpStatus.OK, String.class);
         assertThat(name).isEqualTo(task.getTaskName());
     }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetTaskNameForNonExistingTask() throws Exception {
+        request.get("/api/programming-exercise-tasks/12312312321/name", HttpStatus.NOT_FOUND, String.class);
+    }
 }
