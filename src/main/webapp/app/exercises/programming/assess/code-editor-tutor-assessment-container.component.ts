@@ -539,7 +539,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         this.onFeedbackLoaded.emit();
-        this.validateFeedback();
     }
 
     private setFeedbacksForManualResult() {
