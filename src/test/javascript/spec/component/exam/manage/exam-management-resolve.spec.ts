@@ -46,8 +46,8 @@ describe('Exam Resolve', () => {
         examObservable.subscribe((exam) => (receivedExam = exam));
         tick();
 
-        expect(findSpy.mock.calls).toHaveLength(1);
-        expect(findSpy.mock.calls[0]).toEqual([1, 2, true, true]);
+        expect(findSpy).toHaveBeenCalledTimes(1);
+        expect(findSpy).toHaveBeenCalledWith(1, 2, true, true);
         expect(receivedExam).toEqual({ id: 1 });
     }));
 
