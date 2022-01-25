@@ -128,7 +128,8 @@ export class AlertService {
      * @returns  Added alert
      */
     addAlert(alert: AlertCreationProperties): Alert {
-        const alertInternal = alert as AlertInternal;
+        // Defensive copy to prevent overwrites
+        const alertInternal = { ...alert } as AlertInternal;
         alertInternal.isOpen = true;
 
         if (!alert.disableTranslation) {
@@ -174,7 +175,10 @@ export class AlertService {
             }
         };
         if (alertInternal.action) {
-            alertInternal.action.label = this.sanitizer.sanitize(SecurityContext.HTML, this.translateService.instant(alertInternal.action.label) ?? '') ?? '';
+            alertInternal.action = {
+                label: this.sanitizer.sanitize(SecurityContext.HTML, this.translateService.instant(alertInternal.action.label) ?? '') ?? '',
+                callback: alertInternal.action.callback,
+            };
         }
 
         this.alerts.unshift(alertInternal);
