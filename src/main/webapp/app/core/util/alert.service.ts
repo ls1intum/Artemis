@@ -83,6 +83,7 @@ export class AlertService {
                     } else if (httpErrorResponse.error && httpErrorResponse.error.fieldErrors) {
                         const fieldErrors = httpErrorResponse.error.fieldErrors;
                         for (const fieldError of fieldErrors) {
+                            // This is most likely related to server side field validations and gentrifies the error message to only tell the user that the size is wrong
                             if (['Min', 'Max', 'DecimalMin', 'DecimalMax'].includes(fieldError.message)) {
                                 fieldError.message = 'Size';
                             }
