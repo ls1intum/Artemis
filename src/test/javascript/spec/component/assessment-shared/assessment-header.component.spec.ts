@@ -112,6 +112,17 @@ describe('AssessmentHeaderComponent', () => {
         expect(warningComponent).toBeTruthy();
     });
 
+    it('should display alert when assessment due date has passed', () => {
+        component.hasAssessmentDueDatePassed = true;
+        // @ts-ignore
+        component.result = undefined;
+        fixture.detectChanges();
+
+        const alertComponent = fixture.debugElement.query(By.css('ngb-alert'));
+        expect(alertComponent).not.toBe(undefined);
+        expect(alertComponent.nativeElement.innerHTML).toContain('Assessment Due Date is over, the assessment will be published immediately after submitting');
+    });
+
     it('should hide right side row-container if loading', () => {
         component.isLoading = false;
         fixture.detectChanges();
