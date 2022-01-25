@@ -1,4 +1,3 @@
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Router } from '@angular/router';
