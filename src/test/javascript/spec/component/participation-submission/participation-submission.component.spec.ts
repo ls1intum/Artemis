@@ -40,7 +40,6 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { Result } from 'app/entities/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
@@ -98,7 +97,6 @@ describe('ParticipationSubmissionComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockDirective(DeleteButtonDirective),
-                MockComponent(AlertOverlayComponent),
                 MockComponent(ResultComponent),
                 MockComponent(FaIconComponent),
             ],

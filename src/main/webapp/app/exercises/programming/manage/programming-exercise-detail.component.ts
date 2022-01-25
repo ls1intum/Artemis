@@ -204,14 +204,20 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     generateStructureOracle() {
         this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id!).subscribe({
             next: (res) => {
-                const jhiAlert = this.alertService.success(res);
-                jhiAlert.message = res;
+                this.alertService.addAlert({
+                    type: 'success',
+                    message: res,
+                    disableTranslation: true,
+                });
             },
             error: (error) => {
                 const errorMessage = error.headers.get('X-artemisApp-alert');
                 // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-                const jhiAlert = this.alertService.error(errorMessage);
-                jhiAlert.message = errorMessage;
+                this.alertService.addAlert({
+                    type: 'danger',
+                    message: errorMessage,
+                    disableTranslation: true,
+                });
             },
         });
     }
@@ -219,14 +225,20 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     recreateBuildPlans() {
         this.programmingExerciseService.recreateBuildPlans(this.programmingExercise.id!).subscribe({
             next: (res) => {
-                const jhiAlert = this.alertService.success(res);
-                jhiAlert.message = res;
+                this.alertService.addAlert({
+                    type: 'success',
+                    message: res,
+                    disableTranslation: true,
+                });
             },
             error: (error) => {
                 const errorMessage = error.headers.get('X-artemisApp-alert');
                 // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-                const jhiAlert = this.alertService.error(errorMessage);
-                jhiAlert.message = errorMessage;
+                this.alertService.addAlert({
+                    type: 'danger',
+                    message: errorMessage,
+                    disableTranslation: true,
+                });
             },
         });
     }

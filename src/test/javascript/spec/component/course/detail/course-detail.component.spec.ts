@@ -9,7 +9,6 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import dayjs from 'dayjs/esm';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -65,7 +64,6 @@ describe('Course Management Detail Component', () => {
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(DeleteButtonDirective),
-                MockDirective(AlertOverlayComponent),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(CourseExamArchiveButtonComponent),
                 MockDirective(HasAnyAuthorityDirective),

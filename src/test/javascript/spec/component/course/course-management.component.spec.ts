@@ -11,7 +11,6 @@ import { Course } from 'app/entities/course.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -92,7 +91,6 @@ describe('CourseManagementComponent', () => {
             declarations: [
                 CourseManagementComponent,
                 MockDirective(OrionFilterDirective),
-                MockComponent(AlertOverlayComponent),
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockDirective(SortByDirective),
                 MockPipe(ArtemisTranslatePipe),

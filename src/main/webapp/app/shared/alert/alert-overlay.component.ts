@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Alert, AlertService } from 'app/core/util/alert.service';
-import { checkForMissingTranslationKey } from 'app/shared/util/utils';
 import { faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { animate, group, style, transition, trigger } from '@angular/animations';
 
@@ -69,15 +68,5 @@ export class AlertOverlayComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy(): void {
         this.alertService.closeAll();
-    }
-
-    /**
-     * The received alert may contain a message which could not be translated.
-     * We slice the wrapping 'translation-not-found[..]' and return the response.
-     * @param alert which contains the alert message
-     */
-    getAlertMessage(alert: Alert) {
-        checkForMissingTranslationKey(alert);
-        return alert.message;
     }
 }

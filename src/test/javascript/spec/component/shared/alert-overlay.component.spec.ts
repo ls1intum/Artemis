@@ -39,7 +39,7 @@ describe('Alert Overlay Component Tests', () => {
     });
 
     it('Should call alertService.clear on destroy', () => {
-        const clearStub = jest.spyOn(alertService, 'clear');
+        const clearStub = jest.spyOn(alertService, 'closeAll');
 
         // WHEN
         comp.ngOnDestroy();

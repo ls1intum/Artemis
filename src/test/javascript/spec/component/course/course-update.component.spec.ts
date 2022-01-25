@@ -9,7 +9,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
 import { Course } from 'app/entities/course.model';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
@@ -91,7 +90,6 @@ describe('Course Management Update Component', () => {
                 MarkdownEditorStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
-                MockComponent(AlertOverlayComponent),
                 MockComponent(SecuredImageComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(ColorSelectorComponent),

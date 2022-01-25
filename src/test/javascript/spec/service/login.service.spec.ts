@@ -51,7 +51,7 @@ describe('LoginService', () => {
 
                 removeAuthTokenFromCachesStub = jest.spyOn(authServerProvider, 'removeAuthTokenFromCaches');
                 authenticateStub = jest.spyOn(accountService, 'authenticate');
-                alertServiceClearStub = jest.spyOn(alertService, 'clear');
+                alertServiceClearStub = jest.spyOn(alertService, 'closeAll');
                 notificationServiceCleanUpStub = jest.spyOn(notificationService, 'cleanUp');
                 navigateByUrlStub = jest.spyOn(router, 'navigateByUrl');
                 alertServiceErrorStub = jest.spyOn(alertService, 'error');

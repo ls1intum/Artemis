@@ -1,7 +1,6 @@
 import { omit } from 'lodash-es';
 import { captureException } from '@sentry/browser';
 import { Result } from 'app/entities/result.model';
-import { Alert } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 
 // Cartesian product helper function
@@ -113,26 +112,6 @@ export const findLatestResult = (results?: Result[]) => {
     return results && results.length > 0 ? results.reduce((current, result) => (current.id! > result.id! ? current : result)) : undefined;
 };
 
-/**
- * This is a workaround to avoid translation not found issues.
- * Checks if the alert message could not be translated and removes the translation-not-found annotation.
- * Sending an alert to Sentry with the missing translation key.
- * @param alert which was sent to the alertService
- */
-export const checkForMissingTranslationKey = (alert: Alert) => {
-    if (alert?.message?.startsWith('translation-not-found')) {
-        // In case a translation key is not found, remove the 'translation-not-found[...]' annotation
-        const alertMessageMatch = alert.message.match(/translation-not-found\[(.*?)\]$/);
-        if (alertMessageMatch && alertMessageMatch.length > 1) {
-            alert.message = alertMessageMatch[1];
-        } else {
-            // Fallback, in case the bracket is missing
-            alert.message = alert.message.replace('translation-not-found', '');
-        }
-        // Sent a sentry warning with the translation key
-        captureException(new Error('Unknown translation key: ' + alert.message));
-    }
-};
 /**
  * Splits a camel case string into individual words and combines them to a new string separated by spaces
  */

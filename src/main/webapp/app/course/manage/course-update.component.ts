@@ -280,8 +280,11 @@ export class CourseUpdateComponent implements OnInit {
         const errorMessage = error.error ? error.error.title : error.headers?.get('x-artemisapp-alert');
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
         if (errorMessage) {
-            const jhiAlert = this.alertService.error(errorMessage);
-            jhiAlert.message = errorMessage;
+            this.alertService.addAlert({
+                type: 'danger',
+                message: errorMessage,
+                disableTranslation: true,
+            });
         }
 
         this.isSaving = false;

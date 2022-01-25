@@ -12,7 +12,6 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -34,7 +33,6 @@ describe('TeamUpdateDialogComponent', () => {
             declarations: [
                 TeamUpdateDialogComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(AlertOverlayComponent),
                 MockComponent(HelpIconComponent),
                 MockPipe(RemoveKeysPipe),
                 MockComponent(TeamOwnerSearchComponent),

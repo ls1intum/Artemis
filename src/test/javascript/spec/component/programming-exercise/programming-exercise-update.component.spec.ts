@@ -23,7 +23,6 @@ import {
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -76,7 +75,6 @@ describe('ProgrammingExercise Management Update Component', () => {
                 DefaultValueAccessor,
                 SelectControlValueAccessor,
                 NumberValueAccessor,
-                MockComponent(AlertOverlayComponent),
                 MockComponent(HelpIconComponent),
                 MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
                 MockComponent(TableEditableFieldComponent),

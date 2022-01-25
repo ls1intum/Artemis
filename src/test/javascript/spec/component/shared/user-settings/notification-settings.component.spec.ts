@@ -7,8 +7,6 @@ import { MockPipe } from 'ng-mocks/cjs/lib/mock-pipe/mock-pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
-import { MockComponent } from 'ng-mocks';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { AlertService } from 'app/core/util/alert.service';
@@ -19,7 +17,7 @@ describe('NotificationSettingsComponent', () => {
     let fixture: ComponentFixture<NotificationSettingsComponent>;
 
     const imports = [ArtemisTestModule];
-    const declarations = [MockComponent(AlertOverlayComponent), NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
+    const declarations = [NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
     const providers = [
         MockProvider(AlertService),
         MockProvider(UrlSerializer),

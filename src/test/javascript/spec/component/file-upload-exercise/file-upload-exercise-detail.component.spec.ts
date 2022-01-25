@@ -21,7 +21,6 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { ExerciseDetailsComponent } from 'app/exercises/shared/exercise/exercise-details/exercise-details.component';
 
@@ -66,7 +65,6 @@ describe('FileUploadExercise Management Detail Component', () => {
                 FileUploadExerciseDetailComponent,
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(NonProgrammingExerciseDetailCommonActionsComponent),
-                MockComponent(AlertOverlayComponent),
                 MockComponent(ExerciseDetailStatisticsComponent),
                 MockComponent(ExerciseDetailsComponent),
             ],

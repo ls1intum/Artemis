@@ -160,8 +160,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             },
             error: (error: HttpErrorResponse) => {
                 const errorMessage = error.headers.get('X-artemisApp-message')!;
-                const jhiAlert = this.alertService.error(errorMessage);
-                jhiAlert.message = errorMessage;
+                this.alertService.addAlert({
+                    type: 'danger',
+                    message: errorMessage,
+                    disableTranslation: true,
+                });
             },
         });
     }

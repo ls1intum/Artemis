@@ -9,7 +9,6 @@ import { User } from 'app/core/user/user.model';
 import { of } from 'rxjs';
 import { MockModule } from 'ng-mocks/cjs/lib/mock-module/mock-module';
 import { MockComponent } from 'ng-mocks/cjs/lib/mock-component/mock-component';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -36,7 +35,6 @@ describe('UserManagementComponent', () => {
             imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(NgbModule)],
             declarations: [
                 UserManagementComponent,
-                MockComponent(AlertOverlayComponent),
                 MockRouterLinkDirective,
                 MockComponent(ItemCountComponent),
                 MockPipe(ArtemisDatePipe),

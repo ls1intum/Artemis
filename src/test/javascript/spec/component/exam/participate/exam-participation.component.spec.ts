@@ -30,11 +30,10 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockProvider, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
@@ -71,7 +70,6 @@ describe('ExamParticipationComponent', () => {
                 MockComponent(ProgrammingExamSubmissionComponent),
                 MockComponent(FileUploadExamSubmissionComponent),
                 MockComponent(JhiConnectionStatusComponent),
-                MockComponent(AlertOverlayComponent),
                 MockDirective(TranslateDirective),
                 MockComponent(TestRunRibbonComponent),
                 MockComponent(ExamParticipationSummaryComponent),

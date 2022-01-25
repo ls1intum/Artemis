@@ -8,7 +8,6 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -39,7 +38,6 @@ describe('UsersImportButtonComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
                 MockComponent(HelpIconComponent),
-                MockComponent(AlertOverlayComponent),
             ],
             providers: [
                 MockProvider(NgbActiveModal),

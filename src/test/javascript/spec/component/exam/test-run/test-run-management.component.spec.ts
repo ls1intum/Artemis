@@ -15,14 +15,13 @@ import { Exercise } from 'app/entities/exercise.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
@@ -53,7 +52,6 @@ describe('Test Run Management Component', () => {
 
             declarations: [
                 TestRunManagementComponent,
-                MockComponent(AlertOverlayComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),

@@ -34,7 +34,6 @@ export class ConnectionNotificationService {
      * Only update on connect if there is not already an active connection.
      * This alert is temporary and disappears after 10 seconds.
      **/
-
     onConnect = () => {
         if (this.connected === false) {
             this.alert?.close();

@@ -12,7 +12,6 @@ import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update
 import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-button.component';
 import { TeamComponent } from 'app/exercises/shared/team/team.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -47,7 +46,6 @@ describe('TeamComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockComponent(TeamParticipationTableComponent),
                 MockComponent(DataTableComponent),
-                MockComponent(AlertOverlayComponent),
                 MockComponent(AssessmentWarningComponent),
             ],
             providers: [

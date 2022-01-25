@@ -443,8 +443,11 @@ export class MarkdownEditorComponent implements AfterViewInit {
             const extension = file.name.split('.').pop()!.toLocaleLowerCase();
             if (this.acceptedFileExtensions.split(',').indexOf(extension) === -1) {
                 const errorMessage = `Unsupported file type! Only files of type ${this.acceptedFileExtensions} allowed.`;
-                const jhiAlert = this.alertService.error(errorMessage);
-                jhiAlert.message = errorMessage;
+                this.alertService.addAlert({
+                    type: 'danger',
+                    message: errorMessage,
+                    disableTranslation: true,
+                });
             } else {
                 this.fileUploaderService.uploadMarkdownFile(file).then(
                     (res) => {
@@ -456,8 +459,11 @@ export class MarkdownEditorComponent implements AfterViewInit {
                         aceEditor.insert(textToAdd);
                     },
                     (error: Error) => {
-                        const jhiAlert = this.alertService.error(error.message);
-                        jhiAlert.message = error.message;
+                        this.alertService.addAlert({
+                            type: 'danger',
+                            message: error.message,
+                            disableTranslation: true,
+                        });
                     },
                 );
             }

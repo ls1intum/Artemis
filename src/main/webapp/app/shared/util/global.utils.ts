@@ -96,9 +96,11 @@ export const onError = (alertService: AlertService, error: HttpErrorResponse) =>
             alertService.error('error.http.500');
             break;
         default:
-            // Manually set alert.message to avoid missing translation errors
-            const alert = alertService.error(error.message);
-            alert.message = error.message;
+            alertService.addAlert({
+                type: 'danger',
+                message: error.message,
+                disableTranslation: true,
+            });
             break;
     }
 };

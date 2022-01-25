@@ -5,21 +5,24 @@ import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { Subscription } from 'rxjs';
+import { captureException } from '@sentry/browser';
 
 export type AlertType = 'success' | 'danger' | 'warning' | 'info';
 
 interface AlertBaseInternal {
     type: AlertType;
     message?: string;
-    translationKey?: string;
-    translationParams?: { [key: string]: unknown };
     timeout?: number;
     action?: { readonly label: string; readonly callback: (alert: Alert) => void };
     onClose?: (alert: Alert) => void;
     dismissible?: boolean;
 }
 
-export interface AlertCreationProperties extends Readonly<AlertBaseInternal> {}
+export interface AlertCreationProperties extends Readonly<AlertBaseInternal> {
+    translationKey?: string;
+    translationParams?: { [key: string]: unknown };
+    disableTranslation?: boolean;
+}
 
 export interface Alert extends Readonly<AlertBaseInternal> {
     readonly close: () => void;
@@ -127,18 +130,33 @@ export class AlertService {
         const alertInternal = alert as AlertInternal;
         alertInternal.isOpen = true;
 
-        if (alertInternal.translationKey) {
-            // in case a translation key is defined, we use it to create the message
-            const translatedMessage = this.translateService.instant(alertInternal.translationKey, alertInternal.translationParams);
-            // if translation key exists
-            if (translatedMessage !== `${translationNotFoundMessage}[${alertInternal.translationKey}]`) {
-                alertInternal.message = translatedMessage;
-            } else if (!alertInternal.message) {
-                alertInternal.message = alertInternal.translationKey;
+        if (!alert.disableTranslation) {
+            if (alert.translationKey) {
+                // in case a translation key is defined, we use it to create the message
+                const translatedMessage = this.translateService.instant(alert.translationKey, alert.translationParams);
+                // if translation key exists
+                if (translatedMessage !== `${translationNotFoundMessage}[${alert.translationKey}]`) {
+                    alertInternal.message = translatedMessage;
+                } else if (!alertInternal.message) {
+                    alertInternal.message = alert.translationKey;
+                }
+            } else if (alertInternal.message) {
+                // Note: in most cases, our code passes the translation key as message
+                alertInternal.message = this.translateService.instant(alertInternal.message, alert.translationParams);
             }
-        } else if (alertInternal.message) {
-            // Note: in most cases, our code passes the translation key as message
-            alertInternal.message = this.translateService.instant(alertInternal.message, alertInternal.translationParams);
+
+            if (alertInternal.message?.startsWith('translation-not-found')) {
+                // In case a translation key is not found, remove the 'translation-not-found[...]' annotation
+                const alertMessageMatch = alertInternal.message.match(/translation-not-found\[(.*?)\]$/);
+                // Sent a sentry warning with the translation key
+                captureException(new Error('Unknown translation key: ' + alert.message));
+                if (alertMessageMatch && alertMessageMatch.length > 1) {
+                    alertInternal.message = alertMessageMatch[1];
+                } else {
+                    // Fallback, in case the bracket is missing
+                    alertInternal.message = alertInternal.message.replace('translation-not-found', '');
+                }
+            }
         }
 
         alertInternal.message = this.sanitizer.sanitize(SecurityContext.HTML, alertInternal.message ?? '') ?? '';
