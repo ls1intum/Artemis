@@ -198,7 +198,7 @@
         ></button>
         <!-- TODO: Exam mode reuses the whole component at the moment. We need the clone repo button but not the open
         code editor button. We should think about refactoring the clone repo button into a own component -->
-        <ng-container *ngIf="[shouldDisplayIDEButtons() && exercise.studentParticipations && exercise.studentParticipations.length > 0">
+        <ng-container *ngIf="shouldDisplayIDEButtons() && exercise.studentParticipations && exercise.studentParticipations.length > 0">
             <ng-container *jhiExtensionPoint="overrideCloneOnlineEditorButton; context: { exercise: exercise }">
                 <button
                     [id]="'open-exercise-' + exercise.id"
