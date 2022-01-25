@@ -816,7 +816,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.gradingScale!.gradeSteps.forEach((gradeStep) => {
                 let color;
                 if (this.isBonus) {
-                    if (gradeStep.lowerBoundPercentage < 40) {
+                    if (gradeStep.gradeName === '0') {
                         color = GraphColors.YELLOW;
                     } else {
                         color = GraphColors.GREY;

@@ -357,20 +357,21 @@
                 </ng-template>
             </ngx-charts-bar-vertical>
             <div *ngIf="gradingScaleExists && !isBonus" class="d-flex justify-content-center align-items-center">
-                <div class="color-box sufficient-performance"></div>
-                <span class="ms-2">{{ 'artemisApp.examScores.sufficientPerformance' | artemisTranslate }}</span>
-
-                <div class="ms-4 color-box insufficient-performance"></div>
+                <div class="color-box insufficient-performance"></div>
                 <span class="ms-2">{{ 'artemisApp.examScores.insufficientPerformance' | artemisTranslate }}</span>
-                <jhi-help-icon class="ms-2" placement="right auto" text="artemisApp.examScores.gradingScaleExplanation"></jhi-help-icon>
+
+                <div class="ms-4 color-box sufficient-performance"></div>
+                <span class="ms-2">{{ 'artemisApp.examScores.sufficientPerformance' | artemisTranslate }}</span>
+                <jhi-help-icon class="ms-2" placement="right auto" text="artemisApp.examScores.gradingScaleExplanationNotBonus"></jhi-help-icon>
             </div>
             <div *ngIf="!gradingScaleExists || isBonus" class="d-flex justify-content-center align-items-center">
                 <div class="color-box critical-performance"></div>
                 <span class="ms-2">{{ 'artemisApp.examScores.criticalPerformance' | artemisTranslate }}</span>
 
-                <div class="ms-4 color-box insufficient-performance"></div>
+                <div class="ms-4 color-box sufficient-performance"></div>
                 <span class="ms-2">{{ 'artemisApp.examScores.uncriticalPerformance' | artemisTranslate }}</span>
-                <jhi-help-icon class="ms-2" placement="right auto" text="artemisApp.examScores.noGradingScaleExplanation"></jhi-help-icon>
+                <jhi-help-icon *ngIf="!isBonus" class="ms-2" placement="right auto" text="artemisApp.examScores.noGradingScaleExplanation"></jhi-help-icon>
+                <jhi-help-icon *ngIf="isBonus" class="ms-2" placement="right auto" text="artemisApp.examScores.gradingScaleExplanationBonus"></jhi-help-icon>
             </div>
         </div>
 
