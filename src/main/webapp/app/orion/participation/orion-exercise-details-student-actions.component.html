@@ -8,7 +8,7 @@
 >
     <ng-template #overrideCloneOnlineEditorButton>
         <jhi-ide-button
-            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [featureToggle]="FeatureToggle.ProgrammingExercises"
             (clickHandler)="importIntoIDE()"
             [buttonLabel]="'artemisApp.exerciseActions.importIntoIntelliJ' | artemisTranslate"
             [buttonLoading]="this.exercise.loading || orionState.cloning"
@@ -16,7 +16,7 @@
             *ngIf="isOfflineIdeAllowed && (orionState.view !== ExerciseView.STUDENT || orionState.opened !== this.exercise.id)"
         ></jhi-ide-button>
         <jhi-ide-button
-            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [featureToggle]="FeatureToggle.ProgrammingExercises"
             (clickHandler)="submitChanges()"
             buttonLabel="Submit"
             [buttonLoading]="this.exercise.loading || orionState.building"
