@@ -3,7 +3,6 @@ import { VERSION } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { filter, tap } from 'rxjs/operators';
-import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-footer',
@@ -15,7 +14,7 @@ export class FooterComponent implements OnInit {
 
     email: string;
 
-    constructor(private profileService: ProfileService, private alertService: AlertService) {}
+    constructor(private profileService: ProfileService) {}
 
     ngOnInit(): void {
         this.profileService
@@ -39,26 +38,5 @@ export class FooterComponent implements OnInit {
             '%20our%20public%20bug%20tracker%20at%20https%3A%2F%2Fgithub.com' +
             '%2Fls1intum%2FArtemis%20for%20known%20bugs.%0AFor%20questions' +
             '%20regarding%20exercises%20and%20their%20content%2C%20please%20contact%20your%20instructors.';
-    }
-
-    c = 0;
-
-    addAlert(): void {
-        const x = this.c % 4;
-        const t = x === 0 ? 'info' : x === 1 ? 'danger' : x === 2 ? 'warning' : 'success';
-        this.alertService.addAlert({
-            type: t,
-            message: 'Test 123' + this.c++,
-            timeout: 20000,
-            dismissible: true,
-            onClose: (alert) => console.log('Alert ' + alert.message + ' closed'),
-            action:
-                this.c % 3 === 0
-                    ? {
-                          label: 'artemisApp.connectionAlert.alert',
-                          callback: (alert) => this.alertService.addAlert({ type: 'info', message: 'You clicked an Alert callback!', timeout: 3000 }),
-                      }
-                    : undefined,
-        });
     }
 }
