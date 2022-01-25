@@ -19,11 +19,11 @@
 
         <div class="d-flex mb-1">
             <h6 *ngIf="examScoreDTO.maxPoints">{{ 'artemisApp.examScores.maxPoints' | artemisTranslate }}: {{ localize(examScoreDTO.maxPoints) }},</h6>
-            <a *ngIf="course!.isAtLeastInstructor" [routerLink]="['/course-management', course!.id, 'exams', examScoreDTO.examId, 'exercise-groups']">
+            <a [routerLink]="['/course-management', course!.id, 'exams', examScoreDTO.examId, 'exercise-groups']">
                 <h6 class="ms-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | artemisTranslate }}</h6>
             </a>
             <h6>,</h6>
-            <a *ngIf="course!.isAtLeastInstructor" [routerLink]="['/course-management', course!.id, 'exams', examScoreDTO.examId, 'students']">
+            <a [routerLink]="['/course-management', course!.id, 'exams', examScoreDTO.examId, 'students']">
                 <h6 class="ms-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | artemisTranslate }}</h6>
             </a>
         </div>
