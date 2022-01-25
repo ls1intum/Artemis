@@ -33,7 +33,7 @@ export class ConnectionNotificationService {
     /**
      * Only update on connect if there is not already an active connection.
      * This alert is temporary and disappears after 10 seconds.
-     **/
+     */
     onConnect = () => {
         if (this.connected === false) {
             this.alert?.close();
@@ -45,7 +45,7 @@ export class ConnectionNotificationService {
     /**
      * Only update on disconnect if the connection was active before.
      * This needs to be checked because the websocket service triggers a disconnect before the connect.
-     **/
+     */
     onDisconnect = () => {
         if (this.connected === true) {
             this.alert?.close();
