@@ -150,6 +150,11 @@ export class ExerciseDetailsStudentActionsComponent {
         return participationStatus(this.exercise);
     }
 
+    shouldDisplayIDEButtons(): boolean {
+        const status = this.participationStatusWrapper();
+        return status === ParticipationStatus.INITIALIZED || status === ParticipationStatus.INACTIVE;
+    }
+
     /**
      * Returns the id of the team that the student is assigned to (only applicable to team-based exercises)
      *
