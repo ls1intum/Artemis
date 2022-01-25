@@ -96,7 +96,7 @@ export class LoginService {
                 }),
                 // 4: Clear all existing alerts of the user.
                 tap(() => {
-                    return this.alertService.clear();
+                    return this.alertService.closeAll();
                 }),
                 // 5: Clean up notification service.
                 tap(() => {

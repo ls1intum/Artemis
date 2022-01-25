@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { inject, TestBed } from '@angular/core/testing';
 import { MissingTranslationHandler, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { missingTranslationHandler } from 'app/core/config/translation.config';
-import { Alert, AlertBase, AlertService, AlertType } from 'app/core/util/alert.service';
+import { Alert, AlertCreationProperties, AlertService, AlertType } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 
 describe('Alert Service Test', () => {
@@ -14,7 +14,6 @@ describe('Alert Service Test', () => {
     const alertSampleWithId = {
         type: 'success' as AlertType,
         message: 'Hello Jhipster',
-        id: 0,
         timeout: 3000,
     };
     let service: AlertService;
@@ -36,6 +35,7 @@ describe('Alert Service Test', () => {
         translateService.setTranslation('en', {
             'Hello Jhipster': 'Hello Jhipster',
             'Hello Jhipster success': 'Hello Jhipster success',
+            'Hello Jhipster info': 'Hello Jhipster info',
             'Error Message': 'Error Message',
             'Second Error Message': 'Second Error Message',
             'Bad Request': 'Bad Request',
@@ -48,26 +48,24 @@ describe('Alert Service Test', () => {
 
     it('should produce a proper alert object and fetch it', () => {
         expect(service.addAlert(alertSample)).toEqual(expect.objectContaining(alertSampleWithId as Alert));
-        expect(service.get().length).toBe(1);
+        expect(service.get()).toHaveLength(1);
         expect(service.get()[0]).toEqual(expect.objectContaining(alertSampleWithId as Alert));
     });
 
-    it('should produce an alert object with correct id', () => {
+    it('should produce an alert object correctly', () => {
         service.addAlert({ type: 'info', message: 'Hello Jhipster info' });
         expect(service.addAlert({ type: 'success', message: 'Hello Jhipster success' })).toEqual(
             expect.objectContaining({
                 type: 'success',
                 message: 'Hello Jhipster success',
-                id: 1,
             } as Alert),
         );
 
-        expect(service.get().length).toBe(2);
+        expect(service.get()).toHaveLength(2);
         expect(service.get()[0]).toEqual(
             expect.objectContaining({
                 type: 'success',
                 message: 'Hello Jhipster success',
-                id: 1,
             } as Alert),
         );
     });
@@ -80,46 +78,43 @@ describe('Alert Service Test', () => {
             expect.objectContaining({
                 type: 'success',
                 message: 'Hello Jhipster success',
-                id: 2,
             } as Alert),
         );
 
-        expect(service.get().length).toBe(3);
+        expect(service.get()).toHaveLength(3);
         alert1.close?.();
-        expect(service.get().length).toBe(2);
-        expect(service.get()[0]).not.toEqual(
+        expect(service.get()).toHaveLength(2);
+        expect(service.get()[0]).toEqual(
             expect.objectContaining({
-                type: 'info',
-                message: 'Hello Jhipster info 2',
-                id: 1,
+                type: 'success',
+                message: 'Hello Jhipster success',
             } as Alert),
         );
         expect(alert1.onClose).toHaveBeenCalledTimes(1);
         alert2.close?.();
-        expect(service.get().length).toBe(1);
-        expect(service.get()[0]).not.toEqual(
+        expect(service.get()).toHaveLength(1);
+        expect(service.get()[0]).toEqual(
             expect.objectContaining({
-                type: 'success',
-                message: 'Hello Jhipster success',
-                id: 2,
+                type: 'info',
+                message: 'Hello Jhipster info',
             } as Alert),
         );
         expect(alert2.onClose).toHaveBeenCalledTimes(1);
 
         alert0.close?.();
-        expect(service.get().length).toBe(0);
+        expect(service.get()).toHaveLength(0);
         expect(alert0.onClose).toHaveBeenCalledTimes(1);
     });
 
     it('should close an alert on timeout correctly', () => {
-        const alert = { type: 'info', message: 'Hello Jhipster info', onClose: jest.fn() } as AlertBase;
+        const alert = { type: 'info', message: 'Hello Jhipster info', onClose: jest.fn() } as AlertCreationProperties;
         service.addAlert(alert);
 
-        expect(service.get().length).toBe(1);
+        expect(service.get()).toHaveLength(1);
 
         jest.advanceTimersByTime(9000);
 
-        expect(service.get().length).toBe(0);
+        expect(service.get()).toHaveLength(0);
         expect(alert.onClose).toHaveBeenCalledTimes(1);
     });
 
@@ -128,11 +123,11 @@ describe('Alert Service Test', () => {
             { type: 'info', message: 'Hello Jhipster info', onClose: jest.fn() },
             { type: 'danger', message: 'Hello Jhipster info', onClose: jest.fn() },
             { type: 'success', message: 'Hello Jhipster info', onClose: jest.fn() },
-        ];
-        alerts.forEach((alert) => service.addAlert(alert as AlertBase));
-        expect(service.get().length).toBe(3);
-        service.clear();
-        expect(service.get().length).toBe(0);
+        ] as AlertCreationProperties[];
+        alerts.forEach((alert) => service.addAlert(alert));
+        expect(service.get()).toHaveLength(3);
+        service.closeAll();
+        expect(service.get()).toHaveLength(0);
         alerts.forEach((alert) => expect(alert.onClose).toHaveBeenCalledTimes(1));
     });
 
@@ -206,7 +201,7 @@ describe('Alert Service Test', () => {
         // GIVEN
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
         // THEN
-        expect(service.get().length).toBe(1);
+        expect(service.get()).toHaveLength(1);
         expect(service.get()[0].message).toBe('Server not reachable');
     });
 
@@ -214,7 +209,7 @@ describe('Alert Service Test', () => {
         // GIVEN
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 404 } });
         // THEN
-        expect(service.get().length).toBe(1);
+        expect(service.get()).toHaveLength(1);
         expect(service.get()[0].message).toBe('Not found');
     });
 
@@ -223,7 +218,7 @@ describe('Alert Service Test', () => {
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { error: { message: 'Error Message' } } });
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { error: 'Second Error Message' } });
         // THEN
-        expect(service.get().length).toBe(2);
+        expect(service.get()).toHaveLength(2);
         expect(service.get()[1].message).toBe('Error Message');
         expect(service.get()[0].message).toBe('Second Error Message');
     });
@@ -245,7 +240,7 @@ describe('Alert Service Test', () => {
         });
         eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
         // THEN
-        expect(service.get().length).toBe(1);
+        expect(service.get()).toHaveLength(1);
         expect(service.get()[0].message).toBe('error.validation');
     });
 
@@ -259,7 +254,7 @@ describe('Alert Service Test', () => {
         });
         eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
         // THEN
-        expect(service.get().length).toBe(1);
+        expect(service.get()).toHaveLength(1);
         expect(service.get()[0].message).toBe('Bad Request');
     });
 
@@ -281,7 +276,7 @@ describe('Alert Service Test', () => {
         });
         eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
         // THEN
-        expect(service.get().length).toBe(1);
+        expect(service.get()).toHaveLength(1);
         expect(service.get()[0].message).toBe('Error on field &#34;artemisApp.foo.minField&#34;');
     });
 
@@ -299,7 +294,7 @@ describe('Alert Service Test', () => {
         });
         eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
         // THEN
-        expect(service.get().length).toBe(1);
+        expect(service.get()).toHaveLength(1);
         expect(service.get()[0].message).toBe('Error Message');
     });
 });

@@ -68,7 +68,7 @@ export class AlertOverlayComponent implements OnInit, OnDestroy {
      * call clear() for alertService on destroy
      */
     ngOnDestroy(): void {
-        this.alertService.clear();
+        this.alertService.closeAll();
     }
 
     /**

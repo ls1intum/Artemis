@@ -8,26 +8,29 @@ import { Subscription } from 'rxjs';
 
 export type AlertType = 'success' | 'danger' | 'warning' | 'info';
 
-export interface AlertBase {
+interface AlertBaseInternal {
     type: AlertType;
     message?: string;
     translationKey?: string;
     translationParams?: { [key: string]: unknown };
     timeout?: number;
-    action?: { label: string; callback: (alert: Alert) => void };
+    action?: { readonly label: string; readonly callback: (alert: Alert) => void };
     onClose?: (alert: Alert) => void;
     dismissible?: boolean;
 }
 
-export interface Alert extends AlertBase {
-    id: number;
-    close: () => void;
+export interface AlertCreationProperties extends Readonly<AlertBaseInternal> {}
+
+export interface Alert extends Readonly<AlertBaseInternal> {
+    readonly close: () => void;
     readonly isOpen: boolean;
 }
 
-export interface AlertInternal extends Alert {
+interface AlertInternal extends AlertBaseInternal {
     closeFunction?: (callback: () => void) => void;
+    close: () => void;
     isOpen: boolean;
+    action?: { label: string; callback: (alert: Alert) => void };
 }
 
 @Injectable({
@@ -38,7 +41,6 @@ export class AlertService {
     dismissible = true;
 
     // unique id for each alert. Starts from 0.
-    private alertId = 0;
     private alerts: AlertInternal[] = [];
 
     errorListener: Subscription;
@@ -107,7 +109,7 @@ export class AlertService {
         });
     }
 
-    clear(): void {
+    closeAll(): void {
         [...this.alerts].forEach((alert) => alert.close());
     }
 
@@ -121,9 +123,8 @@ export class AlertService {
      *                   If `translateKey` is available then it's translation else `message` is used for showing.
      * @returns  Added alert
      */
-    addAlert(alert: AlertBase): Alert {
+    addAlert(alert: AlertCreationProperties): Alert {
         const alertInternal = alert as AlertInternal;
-        alertInternal.id = this.alertId++;
         alertInternal.isOpen = true;
 
         if (alertInternal.translationKey) {
@@ -157,7 +158,7 @@ export class AlertService {
             alertInternal.action.label = this.sanitizer.sanitize(SecurityContext.HTML, this.translateService.instant(alertInternal.action.label) ?? '') ?? '';
         }
 
-        this.alerts.splice(0, 0, alertInternal);
+        this.alerts.unshift(alertInternal);
 
         if (alertInternal.timeout > 0) {
             // Workaround protractor waiting for setTimeout.
@@ -165,7 +166,7 @@ export class AlertService {
             this.ngZone.runOutsideAngular(() => {
                 setTimeout(() => {
                     this.ngZone.run(() => {
-                        alertInternal.close!();
+                        alertInternal.close();
                     });
                 }, alertInternal.timeout);
             });
