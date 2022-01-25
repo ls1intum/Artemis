@@ -26,6 +26,9 @@ public class CodeHintService {
      * @return created code hint
      */
     public CodeHint createCodeHint(CodeHint codeHint) {
+        if (codeHint.getExercise() == null) {
+            throw new BadRequestAlertException("A code hint can only be created if the exercise is not null", "Code Hint", "idnull");
+        }
         programmingExerciseRepository.findByIdElseThrow(codeHint.getExercise().getId());
 
         return codeHintRepository.save(codeHint);
