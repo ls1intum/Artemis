@@ -17,5 +17,6 @@
                 ></path>
             </svg>
         </div>
+        <div class="time-bar" *ngIf="(alert?.timeout || 0) > 0" [ngStyle]="{ animationDuration: alert.timeout + 'ms' }"></div>
     </div>
 </div>

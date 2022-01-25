@@ -49,14 +49,14 @@ export class FooterComponent implements OnInit {
         this.alertService.addAlert({
             type: t,
             message: 'Test 123' + this.c++,
-            timeout: 10000,
+            timeout: 20000,
             dismissible: true,
             onClose: (alert) => console.log('Alert ' + alert.message + ' closed'),
             action:
                 this.c % 3 === 0
                     ? {
                           label: 'artemisApp.connectionAlert.alert',
-                          callback: (alert) => console.log('Callback from Alert ' + alert.message),
+                          callback: (alert) => this.alertService.addAlert({ type: 'info', message: 'You clicked an Alert callback!', timeout: 3000 }),
                       }
                     : undefined,
         });

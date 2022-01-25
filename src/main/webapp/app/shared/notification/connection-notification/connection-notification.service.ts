@@ -50,7 +50,7 @@ export class ConnectionNotificationService {
     onDisconnect = () => {
         if (this.connected === true) {
             this.alert?.close();
-            this.alert = this.alertService.addAlert({ type: 'danger', message: 'artemisApp.connectionAlert.disconnected', timeout: 10000000, dismissible: false });
+            this.alert = this.alertService.addAlert({ type: 'danger', message: 'artemisApp.connectionAlert.disconnected', timeout: 0, dismissible: false });
             this.connected = false;
         }
     };
