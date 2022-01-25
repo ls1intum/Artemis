@@ -3,7 +3,7 @@ import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } fr
 import { Observable, Subject } from 'rxjs';
 import { tap, throttleTime } from 'rxjs/operators';
 import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';
-import { Alert, AlertCreationProperties, AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Injectable()
