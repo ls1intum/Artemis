@@ -106,10 +106,6 @@ describe('Submission Export Dialog Component', () => {
             component.handleExportResponse = handleExportResponseMock;
         });
 
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
-
         it('should export submission', () => {
             exportSubmissionServiceMock = jest.fn().mockReturnValue(of({ body: {} } as HttpResponse<Blob>));
             submissionExportService.exportSubmissions = exportSubmissionServiceMock;

@@ -15,7 +15,7 @@ export class MockNgbModalRef {
         exerciseId: undefined,
         exerciseType: undefined,
     };
-    result: Promise<any> = new Promise((resolve, reject) => resolve(true));
+    result: Promise<boolean> = Promise.resolve(true);
 }
 
 describe('Submission Export Button Component', () => {
