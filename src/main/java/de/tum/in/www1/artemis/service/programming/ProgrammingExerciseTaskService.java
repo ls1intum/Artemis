@@ -26,6 +26,9 @@ public class ProgrammingExerciseTaskService {
      * @return the created programming exercise task
      */
     public ProgrammingExerciseTask createProgrammingExerciseTask(ProgrammingExerciseTask programmingExerciseTask) {
+        if (programmingExerciseTask.getExercise() == null) {
+            throw new BadRequestAlertException("A programming exercise task can only be created if the exercise is not null", "Programming Exercise Task", "idnull");
+        }
         programmingExerciseRepository.findByIdElseThrow(programmingExerciseTask.getExercise().getId());
 
         return programmingExerciseTaskRepository.save(programmingExerciseTask);
@@ -36,9 +39,10 @@ public class ProgrammingExerciseTaskService {
      * @param programmingExerciseTaskId id of the task to be deleted
      */
     public void deleteProgrammingExerciseTask(Long programmingExerciseTaskId) {
-        var codeHint = programmingExerciseTaskRepository.findById(programmingExerciseTaskId).orElseThrow(() -> new EntityNotFoundException("Code Hint", programmingExerciseTaskId));
+        var task = programmingExerciseTaskRepository.findById(programmingExerciseTaskId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise Task", programmingExerciseTaskId));
 
-        programmingExerciseTaskRepository.delete(codeHint);
+        programmingExerciseTaskRepository.delete(task);
     }
 
     /**
