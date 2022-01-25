@@ -30,6 +30,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { GraphColors } from 'app/entities/statistics.model';
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -231,6 +232,7 @@ describe('ExamScoresComponent', () => {
                 MockDirective(SortDirective),
                 MockDirective(DeleteButtonDirective),
                 MockComponent(ExamScoresAverageScoresGraphComponent),
+                MockRouterLinkDirective,
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: { params: of({ courseId: 1, examId: 1 }) } },
@@ -670,6 +672,9 @@ describe('ExamScoresComponent', () => {
 
     it('should setup coloring correctly if grading scale exists and it is bonus', () => {
         const adjustedGradingScale = gradingScale;
+        adjustedGradingScale.gradeSteps.forEach((gradingStep, index) => {
+            gradingStep.gradeName = index.toString();
+        });
         adjustedGradingScale.gradeType = GradeType.BONUS;
         jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: adjustedGradingScale })));
         jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
