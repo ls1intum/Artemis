@@ -32,6 +32,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { GraphColors } from 'app/entities/statistics.model';
 
 export enum FeedbackItemType {
     Issue,
@@ -91,6 +92,7 @@ export class ResultDetailComponent implements OnInit {
     loadingFailed = false;
     feedbackList: FeedbackItem[];
     filteredFeedbackList: FeedbackItem[];
+    backupFilteredFeedbackList: FeedbackItem[];
     buildLogs: BuildLogEntryArray;
 
     showScoreChartTooltip = false;
@@ -105,10 +107,13 @@ export class ResultDetailComponent implements OnInit {
         name: 'Feedback Detail',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['#28a745', '#dc3545'], // colors: green, red
+        domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
     xScaleMax = 100;
     legendPosition = LegendPosition.Below;
+    showOnlyPositiveFeedback = false;
+    showOnlyNegativeFeedback = false;
+    filterApplied = false;
 
     get exercise(): Exercise | undefined {
         if (this.result.participation) {
@@ -161,6 +166,7 @@ export class ResultDetailComponent implements OnInit {
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
                         this.feedbackList = this.createFeedbackItems(filteredFeedback);
                         this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
+                        this.backupFilteredFeedbackList = this.filteredFeedbackList;
                         if (this.showScoreChart) {
                             this.updateChart(this.feedbackList);
                         }
@@ -497,8 +503,8 @@ export class ResultDetailComponent implements OnInit {
             {
                 name: 'Score',
                 series: [
-                    { name: this.labels[0], value: 0 },
-                    { name: this.labels[1], value: 0 },
+                    { name: this.labels[0], value: 0, isPositive: true },
+                    { name: this.labels[1], value: 0, isPositive: false },
                 ],
             },
         ];
@@ -540,7 +546,12 @@ export class ResultDetailComponent implements OnInit {
     }
 
     /**
-     * Handles the event if the user clicks on a legend entry. Then, the corresponding bar should disappear
+     * Handles the event if the user clicks on a part of the chart.
+     * If the user clicks on a legend entry, the corresponding bar disappears.
+     * If the user clicks on a bar, the feedback items get filtered accordingly:
+     * Click on the green bar -> Only the positive feedback is shown
+     * Click in the red bar -> Only the feedback concerning deductions is shown
+     * In order to prevent confusion, additionally a disclaimer is shown that states that the feedback items are currently filtered.
      * @param event the information that is delegated by the chart framework. It is dependent on the spot
      * the user clicks
      */
@@ -551,12 +562,43 @@ export class ResultDetailComponent implements OnInit {
                 if (points.name === name) {
                     const color = this.ngxColors.domain[index];
                     // if the bar is not transparent yet, make it transparent. Else, reset the normal color
-                    this.ngxColors.domain[index] = color !== 'rgba(255,255,255,0)' ? 'rgba(255,255,255,0)' : index === 0 ? '#28a745' : '#dc3545';
+                    this.ngxColors.domain[index] = color !== 'rgba(255,255,255,0)' ? 'rgba(255,255,255,0)' : index === 0 ? GraphColors.GREEN : GraphColors.RED;
+                    // '#28a745' : '#dc3545';
 
                     // update is necessary for the colors to change
                     this.ngxData = [...this.ngxData];
                 }
             });
+        } else {
+            if (event.isPositive) {
+                this.showOnlyPositiveFeedback = !this.showOnlyPositiveFeedback;
+                if (this.showOnlyPositiveFeedback) {
+                    this.showOnlyNegativeFeedback = false;
+                    this.filteredFeedbackList = this.filteredFeedbackList.filter((feedback) => feedback.positive === true);
+                } else {
+                    this.filteredFeedbackList = this.backupFilteredFeedbackList;
+                }
+                this.filterApplied = this.showOnlyPositiveFeedback;
+            } else {
+                this.showOnlyNegativeFeedback = !this.showOnlyNegativeFeedback;
+                if (this.showOnlyNegativeFeedback) {
+                    this.showOnlyPositiveFeedback = false;
+                    this.filteredFeedbackList = this.filteredFeedbackList.filter((feedback) => feedback.positive === false && feedback.appliedCredits);
+                } else {
+                    this.filteredFeedbackList = this.backupFilteredFeedbackList;
+                }
+                this.filterApplied = this.showOnlyNegativeFeedback;
+            }
         }
+    }
+
+    /**
+     * Method that handles the filter reset applied by the chart
+     */
+    resetChartFilter() {
+        this.showOnlyNegativeFeedback = false;
+        this.showOnlyPositiveFeedback = false;
+        this.filterApplied = false;
+        this.filteredFeedbackList = this.backupFilteredFeedbackList;
     }
 }
