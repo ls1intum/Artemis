@@ -20,35 +20,35 @@ export class CypressUserManagement {
      * @returns the first testing account with student rights.
      */
     public getStudentOne(): CypressCredentials {
-        return this.getUserWithId('100');
-    }
-
-    /**
-     * @returns a tutor account.
-     */
-    public getTutor(): CypressCredentials {
-        return this.getUserWithId('101');
+        return this.getUserWithId('0');
     }
 
     /**
      * @returns the second testing account with student rights.
      */
     public getStudentTwo(): CypressCredentials {
-        return this.getUserWithId('102');
-    }
-
-    /**
-     * @returns an instructor account.
-     */
-    public getInstructor(): CypressCredentials {
-        return this.getUserWithId('103');
+        return this.getUserWithId('1');
     }
 
     /**
      * @returns the third testing account with student rights.
      */
     public getStudentThree(): CypressCredentials {
-        return this.getUserWithId('104');
+        return this.getUserWithId('2');
+    }
+
+    /**
+     * @returns an instructor account.
+     */
+    public getInstructor(): CypressCredentials {
+        return this.getUserWithId('3');
+    }
+
+    /**
+     * @returns a tutor account.
+     */
+    public getTutor(): CypressCredentials {
+        return this.getUserWithId('4');
     }
 
     private getUserWithId(id: string): CypressCredentials {
