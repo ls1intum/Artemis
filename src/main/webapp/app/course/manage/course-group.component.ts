@@ -51,7 +51,6 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     isAdmin = false;
-
     isLoading = false;
     isSearching = false;
     searchFailed = false;
@@ -281,7 +280,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     /**
      * Method for exporting the csv with the needed data
      */
-    exportStudentInformation() {
+    exportUsersInformation() {
         if (this.allCourseGroupUsers.length > 0) {
             const rows: any[] = this.allCourseGroupUsers.map((user: User) => {
                 const data = {};
@@ -295,13 +294,13 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
             this.exportAsCsv(rows, keys);
         }
     }
-    exportAsCsv(rows: any[], keys: string[]) {
+    private exportAsCsv(rows: any[], keys: string[]) {
         const options = {
             fieldSeparator: ';',
             quoteStrings: '"',
             showLabels: true,
             showTitle: false,
-            filename: this.courseGroupEntityName.charAt(0).toUpperCase() + this.courseGroupEntityName.slice(1) + ' Information ' + this.course.title,
+            filename: this.courseGroupEntityName.charAt(0).toUpperCase() + this.courseGroupEntityName.slice(1) + ' ' + this.course.title,
             useTextFile: false,
             useBom: true,
             headers: keys,
