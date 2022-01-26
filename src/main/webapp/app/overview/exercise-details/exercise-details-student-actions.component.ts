@@ -150,6 +150,11 @@ export class ExerciseDetailsStudentActionsComponent {
         return participationStatus(this.exercise);
     }
 
+    /**
+     * Display the 'open code editor' or 'clone repo' buttons if
+     * - the participation is initialized (build plan exists, no clean up happened), or
+     * - the participation is inactive (build plan cleaned up), but can not be resumed (e.g. because we're after the due date)
+     */
     shouldDisplayIDEButtons(): boolean {
         const status = participationStatus(this.exercise);
         return (
