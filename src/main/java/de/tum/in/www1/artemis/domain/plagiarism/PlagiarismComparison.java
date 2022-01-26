@@ -104,6 +104,18 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     private String instructorStatementB;
 
     /**
+     * Timestamp when instructor set final status for student A
+     */
+    @Column(name = "final_status_a_date")
+    private Instant finalStatusADate;
+
+    /**
+     * Timestamp when instructor set final status for student B
+     */
+    @Column(name = "final_status_b_date")
+    private Instant finalStatusBDate;
+
+    /**
      * Timestamp when student A made statement on the case
      */
     @Column(name = "student_statement_a_date")
@@ -241,6 +253,22 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         this.instructorStatementB = instructorStatementB;
     }
 
+    public Instant getFinalStatusADate() {
+        return finalStatusADate;
+    }
+
+    public void setFinalStatusADate(Instant finalStatusADate) {
+        this.finalStatusADate = finalStatusADate;
+    }
+
+    public Instant getFinalStatusBDate() {
+        return finalStatusBDate;
+    }
+
+    public void setFinalStatusBDate(Instant finalStatusBDate) {
+        this.finalStatusBDate = finalStatusBDate;
+    }
+
     public Instant getInstructorStatementADate() {
         return instructorStatementADate;
     }
@@ -282,8 +310,9 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     public String toString() {
         return "PlagiarismComparison{" + "similarity=" + similarity + ", status=" + status + ", studentStatementA='" + studentStatementA + '\'' + ", studentStatementB='"
                 + studentStatementB + '\'' + ", statusA=" + statusA + ", statusB=" + statusB + ", instructorStatementA='" + instructorStatementA + '\'' + ", instructorStatementB='"
-                + instructorStatementB + '\'' + ", studentStatementADate='" + studentStatementADate + '\'' + ", studentStatementBDate='" + studentStatementBDate + '\''
-                + ", instructorStatementADate='" + instructorStatementADate + '\'' + ", instructorStatementBDate='" + instructorStatementBDate + '\'' + '}';
+                + instructorStatementB + '\'' + ", finalStatusADate='" + finalStatusADate + '\'' + ", finalStatusBDate='" + finalStatusBDate + '\'' + ", studentStatementADate='"
+                + studentStatementADate + '\'' + ", studentStatementBDate='" + studentStatementBDate + '\'' + ", instructorStatementADate='" + instructorStatementADate + '\''
+                + ", instructorStatementBDate='" + instructorStatementBDate + '\'' + '}';
     }
 
     @Override
@@ -302,9 +331,9 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
                 && Objects.equals(submissionB, that.submissionB) && Objects.equals(matches, that.matches) && status == that.status
                 && Objects.equals(studentStatementA, that.studentStatementA) && Objects.equals(instructorStatementA, that.instructorStatementA)
                 && Objects.equals(instructorStatementB, that.instructorStatementB) && Objects.equals(studentStatementB, that.studentStatementB) && statusA == that.statusA
-                && statusB == that.statusB && Objects.equals(studentStatementADate, that.studentStatementADate)
-                && Objects.equals(instructorStatementADate, that.instructorStatementADate) && Objects.equals(instructorStatementBDate, that.instructorStatementBDate)
-                && Objects.equals(studentStatementBDate, that.studentStatementBDate);
+                && statusB == that.statusB && Objects.equals(finalStatusADate, that.finalStatusADate) && Objects.equals(studentStatementADate, that.studentStatementADate)
+                && Objects.equals(instructorStatementADate, that.instructorStatementADate) && Objects.equals(finalStatusBDate, that.finalStatusBDate)
+                && Objects.equals(instructorStatementBDate, that.instructorStatementBDate) && Objects.equals(studentStatementBDate, that.studentStatementBDate);
     }
 
     @Override
