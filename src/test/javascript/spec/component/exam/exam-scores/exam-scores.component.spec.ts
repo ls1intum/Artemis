@@ -688,28 +688,7 @@ describe('ExamScoresComponent', () => {
     it('should setup coloring correctly if no grading scale exists', () => {
         jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: undefined as unknown as GradingScale })));
         jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        const expectedColoring = [
-            GraphColors.YELLOW,
-            GraphColors.YELLOW,
-            GraphColors.YELLOW,
-            GraphColors.YELLOW,
-            GraphColors.YELLOW,
-            GraphColors.YELLOW,
-            GraphColors.YELLOW,
-            GraphColors.YELLOW,
-            GraphColors.GREY,
-            GraphColors.GREY,
-            GraphColors.GREY,
-            GraphColors.GREY,
-            GraphColors.GREY,
-            GraphColors.GREY,
-            GraphColors.GREY,
-            GraphColors.GREY,
-            GraphColors.GREY,
-            GraphColors.GREY,
-            GraphColors.GREY,
-            GraphColors.GREY,
-        ];
+        const expectedColoring = [...Array(8).fill(GraphColors.YELLOW), ...Array(12).fill(GraphColors.GREY)];
         fixture.detectChanges();
 
         expect(comp.gradingScaleExists).toBe(false);
