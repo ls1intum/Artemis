@@ -2,6 +2,7 @@ import { PlagiarismStatus } from './PlagiarismStatus';
 import { PlagiarismSubmission } from './PlagiarismSubmission';
 import { PlagiarismMatch } from './PlagiarismMatch';
 import { PlagiarismSubmissionElement } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmissionElement';
+import dayjs from 'dayjs/esm';
 
 /**
  * Pair of compared student submissions whose similarity is above a certain threshold.
@@ -38,12 +39,12 @@ export class PlagiarismComparison<E extends PlagiarismSubmissionElement> {
     status: PlagiarismStatus;
 
     /**
-     * Status fn the statement by student A
+     * Status of the statement by student A
      */
     statusA: PlagiarismStatus;
 
     /**
-     * Status on the statement of student B
+     * Status of the statement of student B
      */
     statusB: PlagiarismStatus;
 
@@ -66,4 +67,34 @@ export class PlagiarismComparison<E extends PlagiarismSubmissionElement> {
      * Statement by instructor for student B
      */
     instructorStatementB?: string;
+
+    /**
+     * Timestamp when instructor set final status for student A
+     */
+    statusADate?: dayjs.Dayjs;
+
+    /**
+     * Timestamp when instructor set final status for student B
+     */
+    statusBDate?: dayjs.Dayjs;
+
+    /**
+     * Timestamp when student A made statement on the case
+     */
+    studentStatementADate?: dayjs.Dayjs;
+
+    /**
+     * Timestamp when student B made statement on the case
+     */
+    studentStatementBDate?: dayjs.Dayjs;
+
+    /**
+     * Timestamp when instructor statement/message sent to student A
+     */
+    instructorStatementADate?: dayjs.Dayjs;
+
+    /**
+     * Timestamp when instructor statement/message sent to student B
+     */
+    instructorStatementBDate?: dayjs.Dayjs;
 }
