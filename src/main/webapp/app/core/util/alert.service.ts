@@ -134,9 +134,9 @@ export class AlertService {
 
     /**
      * Adds alert to alerts array and returns added alert.
-     * @param alert      Alert to add. If `timeout`, `toast` or `position` is missing then applying default value.
-     *                   If `translateKey` is available then it's translation else `message` is used for showing.
-     * @returns  Added alert
+     * @param alert   Alert specification to add. If `timeout` or `dismissible` is missing then applying default value.
+     *                Set timeout to zero to disable timeout
+     * @returns       Added alert
      */
     addAlert(alert: AlertCreationProperties): Alert {
         // Defensive copy to prevent overwrites
