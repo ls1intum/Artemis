@@ -36,7 +36,7 @@ services:
             server.url: "${SERVER_URL}"
             server.port: "${SERVER_PORT}"
         ports:
-            - ${SERVER_PORT}:8080
+            - ${SERVER_PORT}:${SERVER_PORT}
         networks:
             - artemis
         depends_on:
