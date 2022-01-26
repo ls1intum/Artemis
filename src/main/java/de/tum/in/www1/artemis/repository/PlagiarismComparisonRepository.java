@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
 
@@ -77,4 +78,33 @@ public interface PlagiarismComparisonRepository extends JpaRepository<Plagiarism
     @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.studentStatementB = :statement where plagiarismComparison.id = :plagiarismComparisonId")
     void updatePlagiarismComparisonStudentStatementB(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("statement") String statement);
 
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.statusADate = :date where plagiarismComparison.id = :plagiarismComparisonId")
+    void updatePlagiarismComparisonFinalStatusADate(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("date") Instant date);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.statusBDate = :date where plagiarismComparison.id = :plagiarismComparisonId")
+    void updatePlagiarismComparisonFinalStatusBDate(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("date") Instant date);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.instructorStatementADate = :date where plagiarismComparison.id = :plagiarismComparisonId")
+    void updatePlagiarismComparisonInstructorStatementADate(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("date") Instant date);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.instructorStatementBDate = :date where plagiarismComparison.id = :plagiarismComparisonId")
+    void updatePlagiarismComparisonInstructorStatementBDate(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("date") Instant date);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.studentStatementADate = :date where plagiarismComparison.id = :plagiarismComparisonId")
+    void updatePlagiarismComparisonStudentStatementADate(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("date") Instant date);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.studentStatementBDate = :date where plagiarismComparison.id = :plagiarismComparisonId")
+    void updatePlagiarismComparisonStudentStatementBDate(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("date") Instant date);
 }

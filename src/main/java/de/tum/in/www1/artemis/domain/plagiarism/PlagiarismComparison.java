@@ -106,14 +106,14 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     /**
      * Timestamp when instructor set final status for student A
      */
-    @Column(name = "final_status_a_date")
-    private Instant finalStatusADate;
+    @Column(name = "status_a_date")
+    private Instant statusADate;
 
     /**
      * Timestamp when instructor set final status for student B
      */
-    @Column(name = "final_status_b_date")
-    private Instant finalStatusBDate;
+    @Column(name = "status_b_date")
+    private Instant statusBDate;
 
     /**
      * Timestamp when student A made statement on the case
@@ -253,20 +253,20 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         this.instructorStatementB = instructorStatementB;
     }
 
-    public Instant getFinalStatusADate() {
-        return finalStatusADate;
+    public Instant getStatusADate() {
+        return statusADate;
     }
 
-    public void setFinalStatusADate(Instant finalStatusADate) {
-        this.finalStatusADate = finalStatusADate;
+    public void setStatusADate(Instant finalStatusADate) {
+        this.statusADate = finalStatusADate;
     }
 
-    public Instant getFinalStatusBDate() {
-        return finalStatusBDate;
+    public Instant getStatusBDate() {
+        return statusBDate;
     }
 
-    public void setFinalStatusBDate(Instant finalStatusBDate) {
-        this.finalStatusBDate = finalStatusBDate;
+    public void setStatusBDate(Instant finalStatusBDate) {
+        this.statusBDate = finalStatusBDate;
     }
 
     public Instant getInstructorStatementADate() {
@@ -310,7 +310,7 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     public String toString() {
         return "PlagiarismComparison{" + "similarity=" + similarity + ", status=" + status + ", studentStatementA='" + studentStatementA + '\'' + ", studentStatementB='"
                 + studentStatementB + '\'' + ", statusA=" + statusA + ", statusB=" + statusB + ", instructorStatementA='" + instructorStatementA + '\'' + ", instructorStatementB='"
-                + instructorStatementB + '\'' + ", finalStatusADate='" + finalStatusADate + '\'' + ", finalStatusBDate='" + finalStatusBDate + '\'' + ", studentStatementADate='"
+                + instructorStatementB + '\'' + ", finalStatusADate='" + statusADate + '\'' + ", finalStatusBDate='" + statusBDate + '\'' + ", studentStatementADate='"
                 + studentStatementADate + '\'' + ", studentStatementBDate='" + studentStatementBDate + '\'' + ", instructorStatementADate='" + instructorStatementADate + '\''
                 + ", instructorStatementBDate='" + instructorStatementBDate + '\'' + '}';
     }
@@ -331,8 +331,8 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
                 && Objects.equals(submissionB, that.submissionB) && Objects.equals(matches, that.matches) && status == that.status
                 && Objects.equals(studentStatementA, that.studentStatementA) && Objects.equals(instructorStatementA, that.instructorStatementA)
                 && Objects.equals(instructorStatementB, that.instructorStatementB) && Objects.equals(studentStatementB, that.studentStatementB) && statusA == that.statusA
-                && statusB == that.statusB && Objects.equals(finalStatusADate, that.finalStatusADate) && Objects.equals(studentStatementADate, that.studentStatementADate)
-                && Objects.equals(instructorStatementADate, that.instructorStatementADate) && Objects.equals(finalStatusBDate, that.finalStatusBDate)
+                && statusB == that.statusB && Objects.equals(statusADate, that.statusADate) && Objects.equals(studentStatementADate, that.studentStatementADate)
+                && Objects.equals(instructorStatementADate, that.instructorStatementADate) && Objects.equals(statusBDate, that.statusBDate)
                 && Objects.equals(instructorStatementBDate, that.instructorStatementBDate) && Objects.equals(studentStatementBDate, that.studentStatementBDate);
     }
 

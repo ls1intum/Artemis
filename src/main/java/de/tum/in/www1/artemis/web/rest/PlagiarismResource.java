@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -141,10 +142,12 @@ public class PlagiarismResource {
 
         if (comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
             plagiarismComparisonRepository.updatePlagiarismComparisonInstructorStatementA(comparison.getId(), instructorStatement);
+            plagiarismComparisonRepository.updatePlagiarismComparisonInstructorStatementADate(comparison.getId(), Instant.now());
             comparison.setInstructorStatementA(instructorStatement); // needed for notifications
         }
         else if (comparison.getSubmissionB().getStudentLogin().equals(studentLogin)) {
             plagiarismComparisonRepository.updatePlagiarismComparisonInstructorStatementB(comparison.getId(), instructorStatement);
+            plagiarismComparisonRepository.updatePlagiarismComparisonInstructorStatementBDate(comparison.getId(), Instant.now());
             comparison.setInstructorStatementB(instructorStatement); // needed for notifications
         }
         else {
@@ -215,9 +218,11 @@ public class PlagiarismResource {
 
         if (comparison.getInstructorStatementA() != null && comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
             plagiarismComparisonRepository.updatePlagiarismComparisonStudentStatementA(comparison.getId(), studentStatement);
+            plagiarismComparisonRepository.updatePlagiarismComparisonStudentStatementADate(comparison.getId(), Instant.now());
         }
         else if (comparison.getInstructorStatementB() != null && comparison.getSubmissionB().getStudentLogin().equals(studentLogin)) {
             plagiarismComparisonRepository.updatePlagiarismComparisonStudentStatementB(comparison.getId(), studentStatement);
+            plagiarismComparisonRepository.updatePlagiarismComparisonStudentStatementBDate(comparison.getId(), Instant.now());
         }
         else {
             throw new AccessForbiddenException("User tried updating plagiarism case they're not affected by.");
@@ -256,10 +261,12 @@ public class PlagiarismResource {
 
         if (comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
             plagiarismComparisonRepository.updatePlagiarismComparisonFinalStatusA(comparisonId, finalStatus);
+            plagiarismComparisonRepository.updatePlagiarismComparisonFinalStatusADate(comparisonId, Instant.now());
             comparison.setStatusA(finalStatus); // needed for notifications
         }
         else if (comparison.getSubmissionB().getStudentLogin().equals(studentLogin)) {
             plagiarismComparisonRepository.updatePlagiarismComparisonFinalStatusB(comparisonId, finalStatus);
+            plagiarismComparisonRepository.updatePlagiarismComparisonFinalStatusBDate(comparisonId, Instant.now());
             comparison.setStatusB(finalStatus); // needed for notifications
         }
         else {
