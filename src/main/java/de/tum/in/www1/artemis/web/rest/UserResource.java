@@ -120,10 +120,9 @@ public class UserResource {
     @PostMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
-
+        log.info("REST request to save User : {}", managedUserVM);
         checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
-
-        log.debug("REST request to save User : {}", managedUserVM);
+        log.info("Username and password are valid");
 
         if (managedUserVM.getId() != null) {
             throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idexists");

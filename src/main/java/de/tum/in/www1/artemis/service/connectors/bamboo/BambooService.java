@@ -738,7 +738,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
         }
         catch (HttpClientErrorException e) {
             log.error("Encountered http exception when querying for project!", e);
-            log.info("Encountered http exception when querying for project!", e);
             log.debug("Bamboo project {} does not exit", projectKey);
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 // only if this is the case, we additionally check that the project name is unique

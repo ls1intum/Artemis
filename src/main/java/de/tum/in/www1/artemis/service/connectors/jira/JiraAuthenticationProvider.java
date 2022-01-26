@@ -198,6 +198,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST) && e.getResponseBodyAsString().contains("user is already a member of")) {
                 // ignore the error if the user is already in the group
+                log.info("User {} already exists in JIRA group {}", user.getLogin(), group);
                 return;
             }
             log.error("Could not add user {} to JIRA group {}. Error: {}", user.getLogin(), group, e.getMessage());

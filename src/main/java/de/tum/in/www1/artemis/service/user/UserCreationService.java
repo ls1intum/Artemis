@@ -184,7 +184,7 @@ public class UserCreationService {
 
         addUserToGroupsInternal(user, userDTO.getGroups());
 
-        log.debug("Created Information for User: {}", user);
+        log.info("Created Information for User: {}", user);
         return user;
     }
 
