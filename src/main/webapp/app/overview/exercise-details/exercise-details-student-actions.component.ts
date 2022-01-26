@@ -151,8 +151,13 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     shouldDisplayIDEButtons(): boolean {
-        const status = this.participationStatusWrapper();
-        return status === ParticipationStatus.INITIALIZED || status === ParticipationStatus.INACTIVE;
+        const status = participationStatus(this.exercise);
+        return (
+            (status === ParticipationStatus.INITIALIZED || status === ParticipationStatus.INACTIVE) &&
+            !!this.exercise.studentParticipations && // This seems weird but silences eslint
+            this.exercise.studentParticipations!.length > 0 &&
+            !isStartExerciseAvailable(this.exercise)
+        );
     }
 
     /**
