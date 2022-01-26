@@ -52,24 +52,6 @@ describe('Alert Service Test', () => {
         expect(service.get()[0]).toEqual(expect.objectContaining(alertSampleWithId as Alert));
     });
 
-    it('should produce an alert object correctly', () => {
-        service.addAlert({ type: 'info', message: 'Hello Jhipster info' });
-        expect(service.addAlert({ type: 'success', message: 'Hello Jhipster success' })).toEqual(
-            expect.objectContaining({
-                type: 'success',
-                message: 'Hello Jhipster success',
-            } as Alert),
-        );
-
-        expect(service.get()).toHaveLength(2);
-        expect(service.get()[0]).toEqual(
-            expect.objectContaining({
-                type: 'success',
-                message: 'Hello Jhipster success',
-            } as Alert),
-        );
-    });
-
     it('should close an alert correctly', () => {
         const alert0 = service.addAlert({ type: 'info', message: 'Hello Jhipster info', onClose: jest.fn() });
         const alert1 = service.addAlert({ type: 'info', message: 'Hello Jhipster info 2', onClose: jest.fn() });

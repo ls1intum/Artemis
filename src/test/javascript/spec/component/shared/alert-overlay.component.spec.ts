@@ -38,7 +38,7 @@ describe('Alert Overlay Component Tests', () => {
         expect(getStub).toHaveBeenCalled();
     });
 
-    it('Should call alertService.clear on destroy', () => {
+    it('Should close all alerts on destroy', () => {
         const clearStub = jest.spyOn(alertService, 'closeAll');
 
         // WHEN

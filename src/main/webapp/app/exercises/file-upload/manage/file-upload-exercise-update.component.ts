@@ -126,7 +126,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
     private onSaveError(error: HttpErrorResponse) {
         const errorMessage = error.headers.get('X-artemisApp-alert')!;
-        // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
         this.alertService.addAlert({
             type: 'danger',
             message: errorMessage,

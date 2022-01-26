@@ -18,7 +18,7 @@ interface AlertBaseInternal {
     dismissible?: boolean;
 }
 
-export interface AlertCreationProperties extends Readonly<AlertBaseInternal> {
+export interface AlertCreationProperties extends AlertBaseInternal {
     translationKey?: string;
     translationParams?: { [key: string]: unknown };
     disableTranslation?: boolean;
@@ -36,14 +36,13 @@ interface AlertInternal extends AlertBaseInternal {
     action?: { label: string; callback: (alert: Alert) => void };
 }
 
+const DEFAULT_TIMEOUT = 8000;
+const DEFAULT_DISMISSIBLE = true;
+
 @Injectable({
     providedIn: 'root',
 })
 export class AlertService {
-    timeout = 8000;
-    dismissible = true;
-
-    // unique id for each alert. Starts from 0.
     private alerts: AlertInternal[] = [];
 
     errorListener: Subscription;
@@ -83,7 +82,8 @@ export class AlertService {
                     } else if (httpErrorResponse.error && httpErrorResponse.error.fieldErrors) {
                         const fieldErrors = httpErrorResponse.error.fieldErrors;
                         for (const fieldError of fieldErrors) {
-                            // This is most likely related to server side field validations and gentrifies the error message to only tell the user that the size is wrong
+                            // This is most likely related to server side field validations and gentrifies the error message
+                            // to only tell the user that the size is wrong instead of the specific field
                             if (['Min', 'Max', 'DecimalMin', 'DecimalMax'].includes(fieldError.message)) {
                                 fieldError.message = 'Size';
                             }
@@ -132,38 +132,37 @@ export class AlertService {
         const alertInternal = { ...alert } as AlertInternal;
         alertInternal.isOpen = true;
 
-        if (!alert.disableTranslation) {
+        if (!alert.disableTranslation && (alert.translationKey || alert.message)) {
+            // in case a translation key is defined, we use it to create the message
+            // Note: in most cases, our code passes the translation key as message
+            let translationKey: string;
             if (alert.translationKey) {
-                // in case a translation key is defined, we use it to create the message
-                const translatedMessage = this.translateService.instant(alert.translationKey, alert.translationParams);
-                // if translation key exists
-                if (translatedMessage !== `${translationNotFoundMessage}[${alert.translationKey}]`) {
-                    alertInternal.message = translatedMessage;
-                } else if (!alertInternal.message) {
-                    alertInternal.message = alert.translationKey;
-                }
-            } else if (alertInternal.message) {
-                // Note: in most cases, our code passes the translation key as message
-                alertInternal.message = this.translateService.instant(alertInternal.message, alert.translationParams);
+                translationKey = alert.translationKey;
+            } else {
+                translationKey = alert.message!;
             }
 
-            if (alertInternal.message?.startsWith('translation-not-found')) {
-                // In case a translation key is not found, remove the 'translation-not-found[...]' annotation
-                const alertMessageMatch = alertInternal.message.match(/translation-not-found\[(.*?)\]$/);
-                // Sent a sentry warning with the translation key
-                captureException(new Error('Unknown translation key: ' + alert.message));
-                if (alertMessageMatch && alertMessageMatch.length > 1) {
-                    alertInternal.message = alertMessageMatch[1];
-                } else {
-                    // Fallback, in case the bracket is missing
-                    alertInternal.message = alertInternal.message.replace('translation-not-found', '');
+            const translatedMessage = this.translateService.instant(translationKey, alert.translationParams);
+
+            const translationFound = !translatedMessage.startsWith(translationNotFoundMessage);
+            if (translationFound) {
+                alertInternal.message = translatedMessage;
+            } else {
+                // Sent a sentry warning with the unknown translation key
+                captureException(new Error('Unknown translation key: ' + translationKey));
+
+                // Fallback to displaying the translation key
+                // Keeping the original message if it exists in case the message field is supplied with a default english version, and
+                // the translationKey field is used for translations
+                if (!alert.message) {
+                    alertInternal.message = translationKey;
                 }
             }
         }
 
         alertInternal.message = this.sanitizer.sanitize(SecurityContext.HTML, alertInternal.message ?? '') ?? '';
-        alertInternal.timeout = alertInternal.timeout ?? this.timeout;
-        alertInternal.dismissible = alertInternal.dismissible ?? this.dismissible;
+        alertInternal.timeout = alertInternal.timeout ?? DEFAULT_TIMEOUT;
+        alertInternal.dismissible = alertInternal.dismissible ?? DEFAULT_DISMISSIBLE;
         alertInternal.close = () => {
             alertInternal.isOpen = false;
             const alertIndex = this.alerts.indexOf(alertInternal);
@@ -203,7 +202,6 @@ export class AlertService {
             type: 'success',
             message,
             translationParams,
-            timeout: this.timeout,
         });
     }
 
@@ -212,7 +210,6 @@ export class AlertService {
             type: 'danger',
             message,
             translationParams,
-            timeout: this.timeout,
         });
     }
 
@@ -221,7 +218,6 @@ export class AlertService {
             type: 'warning',
             message,
             translationParams,
-            timeout: this.timeout,
         });
     }
 
@@ -230,7 +226,6 @@ export class AlertService {
             type: 'info',
             message,
             translationParams,
-            timeout: this.timeout,
         });
     }
 

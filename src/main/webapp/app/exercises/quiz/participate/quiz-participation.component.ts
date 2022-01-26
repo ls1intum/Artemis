@@ -773,7 +773,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     onSaveError(error: string) {
         if (error) {
             const errorMessage = 'Saving answers failed: ' + error;
-            // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
             this.alertService.addAlert({
                 type: 'danger',
                 message: errorMessage,
@@ -891,7 +890,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     onSubmitError(error: HttpErrorResponse) {
         const errorMessage = 'Submitting the quiz was not possible. ' + error.headers?.get('X-artemisApp-message') || error.message;
-        // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
         this.alertService.addAlert({
             type: 'danger',
             message: errorMessage,

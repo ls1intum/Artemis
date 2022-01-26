@@ -292,7 +292,7 @@ describe('QuizParticipationComponent', () => {
 
         it('should react to errors', () => {
             const alertService = fixture.debugElement.injector.get(AlertService);
-            const alertSpy = jest.spyOn(alertService, 'addAlert').mockReturnValue({ msg: '' } as any);
+            const alertSpy = jest.spyOn(alertService, 'addAlert');
             fixture.detectChanges();
 
             component.onSubmitError({ message: 'error' } as any);
