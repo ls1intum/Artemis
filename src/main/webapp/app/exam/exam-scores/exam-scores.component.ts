@@ -33,6 +33,7 @@ import { ScaleType, Color } from '@swimlane/ngx-charts';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { GraphColors } from 'app/entities/statistics.model';
+import { GradeStep } from 'app/entities/grade-step.model';
 
 export enum MedianType {
     PASSED,
@@ -55,7 +56,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     // TODO: Cache already calculated filter dependent statistics
     public aggregatedExamResults: AggregatedExamResult;
     public aggregatedExerciseGroupResults: AggregatedExerciseGroupResult[];
-    public binWidth = 5;
+    readonly binWidth = 5;
     public histogramData: number[] = Array(100 / this.binWidth).fill(0);
     public noOfExamsFiltered: number;
 
@@ -72,12 +73,12 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     } as Color;
     activeEntries: NgxDataEntry[] = [];
     dataLabelFormatting = this.formatDataLabel.bind(this);
-    showOverallMedian: boolean;
-    showOverallMedianCheckbox = true;
+    showOverallMedian: boolean; // Indicates whether the median of all exams is currently highlighted
+    showOverallMedianCheckbox = true; // Indicates whether the checkbox for toggling the highlighting of overallChartMedian is currently visible to the user
     overallChartMedian: number; // This value can vary as it depends on if the user only includes submitted exams or not
     overallChartMedianType: MedianType; // We need to distinguish the different overall medians for the toggling
-    showPassedMedian: boolean;
-    showPassedMedianCheckbox: boolean;
+    showPassedMedian: boolean; // Same as above for the median of all passed exams
+    showPassedMedianCheckbox: boolean; // Same as above for the checkbox corresponding to passedMedian
 
     readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
     readonly medianType = MedianType;
@@ -806,7 +807,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.ngxColor.domain = [];
         if (!this.gradingScaleExists) {
             for (let i = 0; i < 100 / this.binWidth; i++) {
-                if (i < 8) {
+                if (i < 40 / this.binWidth) {
                     this.ngxColor.domain.push(GraphColors.YELLOW);
                 } else {
                     this.ngxColor.domain.push(GraphColors.GREY);
@@ -814,20 +815,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
         } else {
             this.gradingScale!.gradeSteps.forEach((gradeStep) => {
-                let color;
-                if (this.isBonus) {
-                    if (gradeStep.gradeName === '0') {
-                        color = GraphColors.YELLOW;
-                    } else {
-                        color = GraphColors.GREY;
-                    }
-                } else {
-                    if (gradeStep.isPassingGrade) {
-                        color = GraphColors.GREY;
-                    } else {
-                        color = GraphColors.RED;
-                    }
-                }
+                const color = this.getGradeStepColor(gradeStep);
                 this.ngxColor.domain.push(color);
             });
         }
@@ -867,25 +855,24 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * @param medianType an enum indicating if the user toggles the overall median or the passed median
      */
     toggleMedian(medianType: MedianType): void {
-        let showMedian;
         switch (medianType) {
             case MedianType.PASSED:
-                this.showPassedMedian = showMedian = !this.showPassedMedian;
+                this.showPassedMedian = !this.showPassedMedian;
+                // The user selects the passed median to be highlighted, therefore we deactivate the highlighting of the other one
+                if (this.showPassedMedian) {
+                    this.showOverallMedian = false;
+                }
                 break;
             case MedianType.OVERALL:
             case MedianType.SUBMITTED:
-                this.showOverallMedian = showMedian = !this.showOverallMedian;
+                this.showOverallMedian = !this.showOverallMedian;
+                // The user selects the overall median to be highlighted, therefore we deactivate the highlighting of the other one
+                if (this.showOverallMedian) {
+                    this.showPassedMedian = false;
+                }
                 break;
         }
-        if (showMedian) {
-            // At max only one median should be highlighted at a time. Therefore we deactivate the other one if a highlighting is selected
-            if (medianType === MedianType.PASSED) {
-                // The user selects the passed median to be highlighted, therefore we deactivate the highlighting of the other one
-                this.showOverallMedian = false;
-            } else {
-                // The user selects the overall median to be highlighted, therefore we deactivate the highlighting of the other one
-                this.showPassedMedian = false;
-            }
+        if (this.showPassedMedian || this.showOverallMedian) {
             this.determineAndHighlightChartMedian(medianType);
         } else {
             this.activeEntries = [];
@@ -902,7 +889,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     private determineAndHighlightChartMedian(medianType: MedianType): void {
         let chartMedian;
         if (medianType === MedianType.PASSED) {
-            chartMedian = this.aggregatedExamResults.medianRelativePassed ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, this.course) : 0;
+            const passedMedian = this.aggregatedExamResults.medianRelativePassed;
+            chartMedian = passedMedian ? roundScoreSpecifiedByCourseSettings(passedMedian, this.course) : 0;
             this.showPassedMedian = true;
         } else {
             this.setOverallChartMedianDependingOfExamsIncluded(medianType);
@@ -914,6 +902,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
         // Highlighting a bar only makes sense if this bar is representing a value > 0
         if (medianChartBar.value === 0) {
+            // In addition, it would be confusing to give the user the opportunity to toggle a highlighting in this case so we hide the corresponding checkbox
             if (medianType === MedianType.PASSED) {
                 this.showPassedMedianCheckbox = false;
             } else {
@@ -940,12 +929,34 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      */
     private setOverallChartMedianDependingOfExamsIncluded(medianType: MedianType): void {
         if (medianType === MedianType.OVERALL) {
-            this.overallChartMedian = this.aggregatedExamResults.medianRelativeTotal
-                ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativeTotal, this.course)
-                : 0;
+            const overallMedian = this.aggregatedExamResults.medianRelativeTotal;
+            this.overallChartMedian = overallMedian ? roundScoreSpecifiedByCourseSettings(overallMedian, this.course) : 0;
         } else {
-            this.overallChartMedian = this.aggregatedExamResults.medianRelative ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelative, this.course) : 0;
+            const submittedMedian = this.aggregatedExamResults.medianRelative;
+            this.overallChartMedian = submittedMedian ? roundScoreSpecifiedByCourseSettings(submittedMedian, this.course) : 0;
         }
         this.overallChartMedianType = medianType;
+    }
+
+    /**
+     * Auxiliary method that returns the bar color of the grade step in the chart
+     * @param gradeStep the grade step that should be colored
+     * @returns string representation of the color
+     * @private
+     */
+    private getGradeStepColor(gradeStep: GradeStep): string {
+        if (this.isBonus) {
+            if (gradeStep.gradeName === '0') {
+                return GraphColors.YELLOW;
+            } else {
+                return GraphColors.GREY;
+            }
+        } else {
+            if (gradeStep.isPassingGrade) {
+                return GraphColors.GREY;
+            } else {
+                return GraphColors.RED;
+            }
+        }
     }
 }

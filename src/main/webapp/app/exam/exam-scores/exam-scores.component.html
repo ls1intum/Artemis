@@ -312,25 +312,23 @@
         <div #containerRef class="d-block">
             <label *ngIf="showPassedMedianCheckbox" class="d-flex align-items-center">
                 <input type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
-                <span class="ms-1">{{
-                    'artemisApp.examScores.highlightPassedMedian'
-                        | artemisTranslate
-                            : {
-                                  median: this.aggregatedExamResults.medianRelativePassed
-                                      ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, course)
-                                      : 0
-                              }
-                }}</span>
+                <span class="ms-1">
+                    {{
+                        'artemisApp.examScores.highlightPassedMedian'
+                            | artemisTranslate
+                                : {
+                                      median: this.aggregatedExamResults.medianRelativePassed
+                                          ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, course)
+                                          : 0
+                                  }
+                    }}
+                </span>
             </label>
             <label *ngIf="showOverallMedianCheckbox" class="d-flex align-items-center">
                 <input type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
-                <span class="ms-1">{{
-                    'artemisApp.examScores.highlightOverallMedian'
-                        | artemisTranslate
-                            : {
-                                  median: this.overallChartMedian
-                              }
-                }}</span>
+                <span class="ms-1">
+                    {{ 'artemisApp.examScores.highlightOverallMedian' | artemisTranslate: { median: this.overallChartMedian } }}
+                </span>
             </label>
             <!-- Histogram -->
             <ngx-charts-bar-vertical
