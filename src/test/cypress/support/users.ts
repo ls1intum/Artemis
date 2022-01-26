@@ -1,6 +1,5 @@
 import { Authority } from './../../../main/webapp/app/shared/constants/authority.constants';
 import { User } from './../../../main/webapp/app/core/user/user.model';
-import { CourseManagementRequests } from './requests/CourseManagementRequests';
 import { BASE_API, GET, USER_ID_SELECTOR } from './constants';
 
 /**
@@ -78,27 +77,6 @@ export class CypressUserManagement {
     public getAccountInfo(func: Function) {
         cy.request({ method: GET, url: BASE_API + 'account', log: false }).then((response) => {
             func(response.body);
-        });
-    }
-
-    public createRequiredUsers(requests: CourseManagementRequests) {
-        this.createUser(0, Authority.USER, requests);
-        this.createUser(1, Authority.USER, requests);
-        this.createUser(2, Authority.USER, requests);
-        this.createUser(3, Authority.INSTRUCTOR, requests);
-        this.createUser(4, Authority.TA, requests);
-    }
-
-    private createUser(id: number, role: Authority, requests: CourseManagementRequests) {
-        const user = this.generateUserWithId(id, role);
-        requests.createUser(user).then((request: any) => {
-            if (request.status == 400) {
-                expect(request.body.errorKey).to.eq('userexists');
-                cy.task('debug', 'Cypress user already exists. Skipping user creation!');
-            } else {
-                expect(request.status).to.eq(201);
-                cy.task('debug', 'Created new cypress user!');
-            }
         });
     }
 

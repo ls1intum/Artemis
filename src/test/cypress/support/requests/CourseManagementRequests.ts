@@ -491,16 +491,6 @@ export class CourseManagementRequests {
             body: lecture,
         });
     }
-
-    createUser(user: User) {
-        return cy.request({
-            url: `${BASE_API}users`,
-            method: POST,
-            body: user,
-            log: false,
-            failOnStatusCode: false,
-        });
-    }
 }
 
 /**
