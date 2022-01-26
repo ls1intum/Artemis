@@ -33,8 +33,10 @@ services:
             artemis.continuous-integration.password: "${CI_PASSWORD}"
             artemis.continuous-integration.token: "${CI_TOKEN}"
             artemis.continuous-integration.artemis-authentication-token-value: "${CI_AUTH_TOKEN}"
+            server.url: "${SERVER_URL}"
+            server.port: "${SERVER_PORT}"
         ports:
-            - 8080:8080
+            - ${SERVER_PORT}:8080
         networks:
             - artemis
         depends_on:
