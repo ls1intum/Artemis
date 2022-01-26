@@ -113,7 +113,6 @@ export class ResultDetailComponent implements OnInit {
     legendPosition = LegendPosition.Below;
     showOnlyPositiveFeedback = false;
     showOnlyNegativeFeedback = false;
-    filterApplied = false;
 
     get exercise(): Exercise | undefined {
         if (this.result.participation) {
@@ -570,25 +569,7 @@ export class ResultDetailComponent implements OnInit {
                 }
             });
         } else {
-            if (event.isPositive) {
-                this.showOnlyPositiveFeedback = !this.showOnlyPositiveFeedback;
-                if (this.showOnlyPositiveFeedback) {
-                    this.showOnlyNegativeFeedback = false;
-                    this.filteredFeedbackList = this.filteredFeedbackList.filter((feedback) => feedback.positive === true);
-                } else {
-                    this.filteredFeedbackList = this.backupFilteredFeedbackList;
-                }
-                this.filterApplied = this.showOnlyPositiveFeedback;
-            } else {
-                this.showOnlyNegativeFeedback = !this.showOnlyNegativeFeedback;
-                if (this.showOnlyNegativeFeedback) {
-                    this.showOnlyPositiveFeedback = false;
-                    this.filteredFeedbackList = this.filteredFeedbackList.filter((feedback) => feedback.positive === false && feedback.appliedCredits);
-                } else {
-                    this.filteredFeedbackList = this.backupFilteredFeedbackList;
-                }
-                this.filterApplied = this.showOnlyNegativeFeedback;
-            }
+            this.filterFeedbackListByChart(event.isPositive);
         }
     }
 
@@ -598,7 +579,30 @@ export class ResultDetailComponent implements OnInit {
     resetChartFilter() {
         this.showOnlyNegativeFeedback = false;
         this.showOnlyPositiveFeedback = false;
-        this.filterApplied = false;
         this.filteredFeedbackList = this.backupFilteredFeedbackList;
+    }
+
+    /**
+     * Auxiliary method that handles the filtering of the feedback items if a chart bar is clicked
+     * @param isPositive the indicator whether the bar representing the positive (point achieving) or the negative (point deducting) feedback is clicked
+     * @private
+     */
+    private filterFeedbackListByChart(isPositive: boolean) {
+        let filterPredicate;
+        if (isPositive) {
+            this.showOnlyPositiveFeedback = !this.showOnlyPositiveFeedback;
+            filterPredicate = (feedback: FeedbackItem) => feedback.positive === true;
+            this.showOnlyNegativeFeedback = false;
+        } else {
+            this.showOnlyNegativeFeedback = !this.showOnlyNegativeFeedback;
+            // by the second predicate we filter all feedback items that do not deduct any points
+            filterPredicate = (feedback: FeedbackItem) => feedback.positive === false && feedback.appliedCredits;
+            this.showOnlyPositiveFeedback = false;
+        }
+        // we reset the item list in order to make sure that maximal one feedback type is filtered at any time by the chart
+        this.filteredFeedbackList = this.backupFilteredFeedbackList;
+        if (this.showOnlyNegativeFeedback || this.showOnlyPositiveFeedback) {
+            this.filteredFeedbackList = this.filteredFeedbackList.filter(filterPredicate);
+        }
     }
 }
