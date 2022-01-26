@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService } from 'app/core/util/alert.service';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
@@ -307,7 +307,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     };
 
     private mapIssuesToAnnotations = (lineNumber: number, invalidTestCases?: string[], invalidHints?: string[]) => {
-        const mapIssues = (issues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + issues.join('\n - '), type: AlertType.WARNING });
+        const mapIssues = (issues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + issues.join('\n - '), type: 'warning' });
 
         const annotations = [];
         if (invalidTestCases) {
