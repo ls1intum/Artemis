@@ -944,7 +944,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * @returns string representation of the color
      * @private
      */
-    private getGradeStepColor(gradeStep: GradeStep): string {
+    private getGradeStepColor(gradeStep: GradeStep): GraphColors {
         if (this.isBonus) {
             if (gradeStep.gradeName === '0') {
                 return GraphColors.YELLOW;
