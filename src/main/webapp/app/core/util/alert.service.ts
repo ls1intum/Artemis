@@ -25,7 +25,7 @@ export class AlertType {
     public readonly buttonClassName: string;
 }
 
-interface AlertBaseInternal {
+interface AlertBase {
     type: AlertType;
     message?: string;
     timeout?: number;
@@ -34,23 +34,18 @@ interface AlertBaseInternal {
     dismissible?: boolean;
 }
 
-export interface AlertCreationProperties extends AlertBaseInternal {
+export interface AlertCreationProperties extends AlertBase {
     translationKey?: string;
     translationParams?: { [key: string]: unknown };
     disableTranslation?: boolean;
 }
 
-export interface Alert extends Readonly<AlertBaseInternal> {
-    readonly close: () => void;
-    readonly isOpen: boolean;
-}
-
-interface AlertInternal extends AlertBaseInternal {
-    closeFunction?: (callback: () => void) => void;
+interface AlertInternal extends AlertBase {
     close: () => void;
     isOpen: boolean;
-    action?: { label: string; callback: (alert: Alert) => void };
 }
+
+export interface Alert extends Readonly<AlertInternal> {}
 
 const DEFAULT_TIMEOUT = 8000;
 const DEFAULT_DISMISSIBLE = true;
@@ -145,8 +140,15 @@ export class AlertService {
      */
     addAlert(alert: AlertCreationProperties): Alert {
         // Defensive copy to prevent overwrites
-        const alertInternal = { ...alert } as AlertInternal;
-        alertInternal.isOpen = true;
+        const alertInternal: AlertInternal = {
+            type: alert.type,
+            message: alert.message,
+            timeout: alert.timeout,
+            action: alert.action,
+            onClose: alert.onClose,
+            dismissible: alert.dismissible,
+            isOpen: true,
+        } as AlertInternal;
 
         if (!alert.disableTranslation && (alert.translationKey || alert.message)) {
             // in case a translation key is defined, we use it to create the message

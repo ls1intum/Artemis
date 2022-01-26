@@ -7,12 +7,12 @@ import { EventManager } from 'app/core/util/event-manager.service';
 
 describe('Alert Service Test', () => {
     const alertSample = {
-        type: AlertType.SUCCESS as AlertType,
+        type: AlertType.SUCCESS,
         message: 'Hello Jhipster',
         timeout: 3000,
     };
     const alertSampleWithId = {
-        type: AlertType.SUCCESS as AlertType,
+        type: AlertType.SUCCESS,
         message: 'Hello Jhipster',
         timeout: 3000,
     };
