@@ -153,10 +153,9 @@ export class ExerciseDetailsStudentActionsComponent {
     shouldDisplayIDEButtons(): boolean {
         const status = participationStatus(this.exercise);
         return (
-            (status === ParticipationStatus.INITIALIZED || status === ParticipationStatus.INACTIVE) &&
+            (status === ParticipationStatus.INITIALIZED || (status === ParticipationStatus.INACTIVE && !isStartExerciseAvailable(this.exercise))) &&
             !!this.exercise.studentParticipations && // This seems weird but silences eslint
-            this.exercise.studentParticipations!.length > 0 &&
-            !isStartExerciseAvailable(this.exercise)
+            this.exercise.studentParticipations!.length > 0
         );
     }
 
