@@ -102,8 +102,8 @@ describe('Exam Group Resolve', () => {
         examObservable.subscribe((exam) => (receivedExamGroup = exam));
         tick();
 
-        expect(findSpy.mock.calls).toHaveLength(1);
-        expect(findSpy.mock.calls[0]).toEqual([1, 2, 3]);
+        expect(findSpy).toHaveBeenCalledTimes(1);
+        expect(findSpy).toHaveBeenCalledWith(1, 2, 3);
         expect(receivedExamGroup).toEqual({ id: 1 });
     }));
 
@@ -152,8 +152,8 @@ describe('Student Exam Resolve', () => {
         examObservable.subscribe((exam) => (receivedExam = exam));
         tick();
 
-        expect(findSpy.mock.calls).toHaveLength(1);
-        expect(findSpy.mock.calls[0]).toEqual([1, 2, 3]);
+        expect(findSpy).toHaveBeenCalledTimes(1);
+        expect(findSpy).toHaveBeenCalledWith(1, 2, 3);
         expect(receivedExam).toEqual({ id: 1 });
     }));
 

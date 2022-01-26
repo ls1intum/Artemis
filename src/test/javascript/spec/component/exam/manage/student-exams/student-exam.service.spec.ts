@@ -18,14 +18,14 @@ describe('Student Exam Service', () => {
 
     it('should call correct url if toggling submitted state and unsubmit is false', () => {
         service.toggleSubmittedState(1, 2, 3, false);
-        expect(httpClientPutSpy.mock.calls).toHaveLength(1);
+        expect(httpClientPutSpy).toHaveBeenCalledTimes(1);
         expect(httpClientPutSpy.mock.calls[0]).toHaveLength(3);
         expect(httpClientPutSpy.mock.calls[0][0]).toContain('toggle-to-submitted');
     });
 
     it('should call correct url if toggling submitted state and unsubmit is true', () => {
         service.toggleSubmittedState(1, 2, 3, true);
-        expect(httpClientPutSpy.mock.calls).toHaveLength(1);
+        expect(httpClientPutSpy).toHaveBeenCalledTimes(1);
         expect(httpClientPutSpy.mock.calls[0]).toHaveLength(3);
         expect(httpClientPutSpy.mock.calls[0][0]).toContain('toggle-to-unsubmitted');
     });
