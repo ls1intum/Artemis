@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Alert, AlertService } from 'app/core/util/alert.service';
-import { faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { animate, group, style, transition, trigger } from '@angular/animations';
 
 @Component({
@@ -50,10 +50,6 @@ export class AlertOverlayComponent implements OnInit, OnDestroy {
 
     constructor(private alertService: AlertService) {}
 
-    infoCircle = faInfoCircle;
-    exclamationCircle = faExclamationCircle;
-    exclamationTriangle = faExclamationTriangle;
-    checkCircle = faCheckCircle;
     times = faTimes;
 
     /**

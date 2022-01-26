@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
-import { Alert, AlertService } from 'app/core/util/alert.service';
+import { Alert, AlertService, AlertType } from 'app/core/util/alert.service';
 
 @Injectable({ providedIn: 'root' })
 export class ConnectionNotificationService {
@@ -37,7 +37,7 @@ export class ConnectionNotificationService {
     onConnect = () => {
         if (this.connected === false) {
             this.alert?.close();
-            this.alert = this.alertService.addAlert({ type: 'success', message: 'artemisApp.connectionAlert.reconnected', timeout: 10000 });
+            this.alert = this.alertService.addAlert({ type: AlertType.SUCCESS, message: 'artemisApp.connectionAlert.reconnected', timeout: 10000 });
         }
         this.connected = true;
     };
@@ -49,7 +49,7 @@ export class ConnectionNotificationService {
     onDisconnect = () => {
         if (this.connected === true) {
             this.alert?.close();
-            this.alert = this.alertService.addAlert({ type: 'danger', message: 'artemisApp.connectionAlert.disconnected', timeout: 0, dismissible: false });
+            this.alert = this.alertService.addAlert({ type: AlertType.DANGER, message: 'artemisApp.connectionAlert.disconnected', timeout: 0, dismissible: false });
             this.connected = false;
         }
     };

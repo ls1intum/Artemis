@@ -2,7 +2,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course } from 'app/entities/course.model';
@@ -280,7 +280,7 @@ export class CourseUpdateComponent implements OnInit {
         const errorMessage = error.error ? error.error.title : error.headers?.get('x-artemisapp-alert');
         if (errorMessage) {
             this.alertService.addAlert({
-                type: 'danger',
+                type: AlertType.DANGER,
                 message: errorMessage,
                 disableTranslation: true,
             });

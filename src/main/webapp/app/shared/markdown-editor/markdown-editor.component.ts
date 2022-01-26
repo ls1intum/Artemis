@@ -10,7 +10,7 @@ import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
@@ -444,7 +444,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
             if (this.acceptedFileExtensions.split(',').indexOf(extension) === -1) {
                 const errorMessage = `Unsupported file type! Only files of type ${this.acceptedFileExtensions} allowed.`;
                 this.alertService.addAlert({
-                    type: 'danger',
+                    type: AlertType.DANGER,
                     message: errorMessage,
                     disableTranslation: true,
                 });
@@ -460,7 +460,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
                     },
                     (error: Error) => {
                         this.alertService.addAlert({
-                            type: 'danger',
+                            type: AlertType.DANGER,
                             message: error.message,
                             disableTranslation: true,
                         });

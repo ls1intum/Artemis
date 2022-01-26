@@ -6,8 +6,24 @@ import { EventManager, EventWithContent } from 'app/core/util/event-manager.serv
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { Subscription } from 'rxjs';
 import { captureException } from '@sentry/browser';
+import { faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 
-export type AlertType = 'success' | 'danger' | 'warning' | 'info';
+export class AlertType {
+    public static readonly SUCCESS = new AlertType(faCheckCircle, 'success', 'btn-success');
+    public static readonly DANGER = new AlertType(faExclamationCircle, 'danger', 'btn-danger');
+    public static readonly WARNING = new AlertType(faExclamationTriangle, 'warning', 'btn-warning');
+    public static readonly INFO = new AlertType(faInfoCircle, 'info', 'btn-info');
+
+    private constructor(icon: IconDefinition, containerClassName: string, buttonClassName: string) {
+        this.icon = icon;
+        this.containerClassName = containerClassName;
+        this.buttonClassName = buttonClassName;
+    }
+
+    public readonly icon: IconDefinition;
+    public readonly containerClassName: string;
+    public readonly buttonClassName: string;
+}
 
 interface AlertBaseInternal {
     type: AlertType;
@@ -199,7 +215,7 @@ export class AlertService {
 
     success(message: string, translationParams?: { [key: string]: unknown }): Alert {
         return this.addAlert({
-            type: 'success',
+            type: AlertType.SUCCESS,
             message,
             translationParams,
         });
@@ -207,7 +223,7 @@ export class AlertService {
 
     error(message: string, translationParams?: { [key: string]: unknown }): Alert {
         return this.addAlert({
-            type: 'danger',
+            type: AlertType.DANGER,
             message,
             translationParams,
         });
@@ -215,7 +231,7 @@ export class AlertService {
 
     warning(message: string, translationParams?: { [key: string]: unknown }): Alert {
         return this.addAlert({
-            type: 'warning',
+            type: AlertType.WARNING,
             message,
             translationParams,
         });
@@ -223,13 +239,13 @@ export class AlertService {
 
     info(message: string, translationParams?: { [key: string]: unknown }): Alert {
         return this.addAlert({
-            type: 'info',
+            type: AlertType.INFO,
             message,
             translationParams,
         });
     }
 
     private addErrorAlert(message?: string, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
-        this.addAlert({ type: 'danger', message, translationKey, translationParams });
+        this.addAlert({ type: AlertType.DANGER, message, translationKey, translationParams });
     }
 }

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -205,7 +205,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id!).subscribe({
             next: (res) => {
                 this.alertService.addAlert({
-                    type: 'success',
+                    type: AlertType.SUCCESS,
                     message: res,
                     disableTranslation: true,
                 });
@@ -213,7 +213,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             error: (error) => {
                 const errorMessage = error.headers.get('X-artemisApp-alert');
                 this.alertService.addAlert({
-                    type: 'danger',
+                    type: AlertType.DANGER,
                     message: errorMessage,
                     disableTranslation: true,
                 });
@@ -225,7 +225,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.programmingExerciseService.recreateBuildPlans(this.programmingExercise.id!).subscribe({
             next: (res) => {
                 this.alertService.addAlert({
-                    type: 'success',
+                    type: AlertType.SUCCESS,
                     message: res,
                     disableTranslation: true,
                 });
@@ -233,7 +233,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             error: (error) => {
                 const errorMessage = error.headers.get('X-artemisApp-alert');
                 this.alertService.addAlert({
-                    type: 'danger',
+                    type: AlertType.DANGER,
                     message: errorMessage,
                     disableTranslation: true,
                 });
@@ -298,7 +298,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.programmingExerciseService.unlockAllRepositories(this.programmingExercise.id!).subscribe({
             next: (res) => {
                 this.alertService.addAlert({
-                    type: 'success',
+                    type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.unlockAllRepositoriesSuccess',
                     translationParams: { number: res?.body },
                     timeout: 10000,
@@ -332,7 +332,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.programmingExerciseService.lockAllRepositories(this.programmingExercise.id!).subscribe({
             next: (res) => {
                 this.alertService.addAlert({
-                    type: 'success',
+                    type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.lockAllRepositoriesSuccess',
                     translationParams: { number: res?.body },
                     timeout: 10000,

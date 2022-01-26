@@ -23,7 +23,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash-es';
@@ -335,7 +335,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
                         exercise.exerciseHints = [];
                     });
-                    this.alertService.addAlert({ type: 'success', message: 'artemisApp.studentExam.submitSuccessful', timeout: 20000 });
+                    this.alertService.addAlert({ type: AlertType.SUCCESS, message: 'artemisApp.studentExam.submitSuccessful', timeout: 20000 });
                 },
                 error: (error: Error) => {
                     // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible

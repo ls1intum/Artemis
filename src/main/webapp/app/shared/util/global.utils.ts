@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 
 /**
  * Prepares a string for insertion into a regex.
@@ -97,7 +97,7 @@ export const onError = (alertService: AlertService, error: HttpErrorResponse) =>
             break;
         default:
             alertService.addAlert({
-                type: 'danger',
+                type: AlertType.DANGER,
                 message: error.message,
                 disableTranslation: true,
             });

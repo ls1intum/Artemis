@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
@@ -774,7 +774,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         if (error) {
             const errorMessage = 'Saving answers failed: ' + error;
             this.alertService.addAlert({
-                type: 'danger',
+                type: AlertType.DANGER,
                 message: errorMessage,
                 disableTranslation: true,
             });
@@ -891,7 +891,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     onSubmitError(error: HttpErrorResponse) {
         const errorMessage = 'Submitting the quiz was not possible. ' + error.headers?.get('X-artemisApp-message') || error.message;
         this.alertService.addAlert({
-            type: 'danger',
+            type: AlertType.DANGER,
             message: errorMessage,
             disableTranslation: true,
         });

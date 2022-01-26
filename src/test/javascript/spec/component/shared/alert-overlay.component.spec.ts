@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { By } from '@angular/platform-browser';
@@ -53,7 +53,7 @@ describe('Alert Overlay Component Tests', () => {
 
         const callback = jest.fn();
         const alert = alertService.addAlert({
-            type: 'info',
+            type: AlertType.INFO,
             message: '123',
             action: {
                 label: 'button',
@@ -77,7 +77,7 @@ describe('Alert Overlay Component Tests', () => {
 
         const onClose = jest.fn();
         const alert = alertService.addAlert({
-            type: 'info',
+            type: AlertType.INFO,
             message: '123',
             onClose,
         });
@@ -99,7 +99,7 @@ describe('Alert Overlay Component Tests', () => {
         comp.ngOnInit();
 
         alertService.addAlert({
-            type: 'info',
+            type: AlertType.INFO,
             message: '123',
             dismissible: false,
         });

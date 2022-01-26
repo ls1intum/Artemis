@@ -235,9 +235,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         });
 
         const expectedWarnings = [
-            { column: 0, row: 0, text: ' - artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase', type: 'warning' },
-            { column: 0, row: 2, text: ' - artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase', type: 'warning' },
-            { column: 0, row: 2, text: ' - artemisApp.programmingExercise.hintsAnalysis.invalidHint', type: 'warning' },
+            { column: 0, row: 0, text: ' - artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase', type: AlertType.WARNING },
+            { column: 0, row: 2, text: ' - artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase', type: AlertType.WARNING },
+            { column: 0, row: 2, text: ' - artemisApp.programmingExercise.hintsAnalysis.invalidHint', type: AlertType.WARNING },
         ];
 
         comp.onAnalysisUpdate(analysis);
