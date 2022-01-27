@@ -11,8 +11,7 @@ import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { RouterTestingModule } from '@angular/router/testing';
-import { MockDirective } from 'ng-mocks/cjs/lib/mock-directive/mock-directive';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
