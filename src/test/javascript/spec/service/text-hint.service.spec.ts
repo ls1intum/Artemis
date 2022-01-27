@@ -53,6 +53,55 @@ describe('TextHint Service', () => {
         });
     });
 
+    it('should create a TextHint', () => {
+        const returnedFromService = Object.assign(
+            {
+                id: 0,
+                title: 'AAAAA',
+                content: 'BBBBBB',
+                exercise: {
+                    id: 1,
+                },
+            },
+            elemDefault,
+        );
+        const expected = Object.assign({}, returnedFromService);
+        service
+            .create(textHint)
+            .pipe(take(1))
+            .subscribe((resp) => (expectedResult = resp));
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+        expect(expectedResult.body).toEqual(expected);
+    });
+
+    it('should update a TextHint', () => {
+        const returnedFromService = Object.assign(
+            {
+                title: 'BBBBBB',
+                content: 'BBBBBB',
+            },
+            elemDefault,
+        );
+
+        const expected = Object.assign({}, returnedFromService);
+        service
+            .update(elemDefault)
+            .pipe(take(1))
+            .subscribe((resp) => (expectedResult = resp));
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush(returnedFromService);
+        expect(expectedResult.body).toEqual(expected);
+    });
+
+    it('should delete a TextHint', () => {
+        service.delete(123).subscribe((resp) => (expectedResult = resp.ok));
+
+        const req = httpMock.expectOne({ method: 'DELETE' });
+        req.flush({ status: 200 });
+        expect(expectedResult).toBe(true);
+    });
+
     afterEach(() => {
         httpMock.verify();
     });
