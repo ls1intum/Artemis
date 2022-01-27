@@ -46,7 +46,8 @@ module.exports = {
         'src/main/webapp/app/exam/exam-scores/exam-scores.route.ts',
         'src/main/webapp/app/exam/participate/exam-participation.route.ts',
         'src/main/webapp/app/exercises/file-upload/manage/file-upload-exercise-management.route.ts',
-        'src/main/webapp/app/exercises/modeling/manage/modeling-exercise.route.ts'
+        'src/main/webapp/app/exercises/modeling/manage/modeling-exercise.route.ts',
+        'src/main/webapp/app/exam/manage/exam-management.route.ts'
     ],
     coverageThreshold: {
         global: {
