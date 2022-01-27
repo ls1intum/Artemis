@@ -21,7 +21,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
@@ -50,9 +49,6 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Autowired
     private PasswordService passwordService;
-
-    @Autowired
-    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
     @BeforeEach
     public void setup() {
@@ -263,7 +259,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         bitbucketRequestMockProvider.mockUserExists("authenticateduser");
         bitbucketRequestMockProvider.mockUpdateUserDetails(user.getLogin(), user.getEmail(), updatedFirstName + " " + user.getLastName());
-        bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), ModelFactory.USER_PASSWORD);
+        bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), ModelFactory.USER_PASSWORD, true);
         User createdUser = userCreationService.createUser(new ManagedUserVM(user, user.getPassword()));
 
         // update FirstName
@@ -321,7 +317,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         bitbucketRequestMockProvider.mockUserExists("authenticateduser");
         bitbucketRequestMockProvider.mockUpdateUserDetails(user.getLogin(), user.getEmail(), user.getName());
-        bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), updatedPassword);
+        bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), updatedPassword, true);
         User createdUser = userCreationService.createUser(new ManagedUserVM(user));
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
@@ -409,7 +405,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         bitbucketRequestMockProvider.mockUserExists("authenticateduser");
         bitbucketRequestMockProvider.mockUpdateUserDetails(user.getLogin(), user.getEmail(), user.getName());
-        bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), newPassword);
+        bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), newPassword, true);
         User createdUser = userCreationService.createUser(new ManagedUserVM(user));
 
         Optional<User> userBefore = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());

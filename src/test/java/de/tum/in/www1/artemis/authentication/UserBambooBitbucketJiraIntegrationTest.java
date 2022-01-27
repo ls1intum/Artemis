@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.authentication;
 
-import static org.mockito.Mockito.verifyNoInteractions;
-
 import java.io.IOException;
 
 import org.junit.jupiter.api.AfterEach;
@@ -24,6 +22,7 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     public void setUp() throws Exception {
         userTestService.setup(this);
         jiraRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
@@ -34,6 +33,10 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUser_asAdmin_isSuccessful() throws Exception {
+        bitbucketRequestMockProvider.mockUpdateUserDetails(userTestService.student.getLogin(), "bonobo42@tum.com", "Bruce Wayne");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockRemoveUserFromGroup(userTestService.student.getLogin(), "testgroup");
+        bitbucketRequestMockProvider.mockRemoveUserFromGroup(userTestService.student.getLogin(), "tumuser");
         userTestService.updateUser_asAdmin_isSuccessful();
     }
 
@@ -52,6 +55,7 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUser_withNullPassword_oldPasswordNotChanged() throws Exception {
+        bitbucketRequestMockProvider.mockUpdateUserDetails(userTestService.student.getLogin(), userTestService.student.getEmail(), userTestService.student.getName());
         userTestService.updateUser_withNullPassword_oldPasswordNotChanged();
     }
 
@@ -70,13 +74,15 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUser_withExternalUserManagement_vcsManagementHasNotBeenCalled() throws Exception {
+        bitbucketRequestMockProvider.mockUpdateUserDetails(userTestService.student.getLogin(), userTestService.student.getEmail(),
+                "changed " + userTestService.student.getLastName());
         userTestService.updateUser_withExternalUserManagement();
-        verifyNoInteractions(versionControlService);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUser_asAdmin_isSuccessful() throws Exception {
+        bitbucketRequestMockProvider.mockUserExists("batman");
         userTestService.createUser_asAdmin_isSuccessful();
     }
 
@@ -89,6 +95,7 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUser_asAdmin_existingLogin() throws Exception {
+        bitbucketRequestMockProvider.mockUserExists("batman");
         userTestService.createUser_asAdmin_existingLogin();
     }
 
@@ -101,32 +108,38 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUser_withNullAsPassword_generatesRandomPassword() throws Exception {
+        bitbucketRequestMockProvider.mockUserExists("batman");
         userTestService.createUser_withNullAsPassword_generatesRandomPassword();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUser_withExternalUserManagement_vcsManagementHasNotBeenCalled() throws Exception {
+        bitbucketRequestMockProvider.mockUserExists("batman");
         userTestService.createUser_withExternalUserManagement();
-        verifyNoInteractions(versionControlService);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteUser_withExternalUserManagement_vcsManagementHasNotBeenCalled() throws Exception {
+        bitbucketRequestMockProvider.mockDeleteUser(userTestService.getStudent().getLogin());
+        bitbucketRequestMockProvider.mockEraseDeletedUser(userTestService.getStudent().getLogin());
         request.delete("/api/users/" + userTestService.getStudent().getLogin(), HttpStatus.OK);
-        verifyNoInteractions(versionControlService);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteUser_isSuccessful() throws Exception {
+        bitbucketRequestMockProvider.mockDeleteUser("student1");
+        bitbucketRequestMockProvider.mockEraseDeletedUser("student1");
         userTestService.deleteUser_isSuccessful();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteUser_doesntExistInUserManagement_isSuccessful() throws Exception {
+        bitbucketRequestMockProvider.mockDeleteUser(userTestService.getStudent().getLogin());
+        bitbucketRequestMockProvider.mockEraseDeletedUser(userTestService.getStudent().getLogin());
         userTestService.deleteUser_doesntExistInUserManagement_isSuccessful();
     }
 
@@ -211,6 +224,9 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void initializeUser() throws Exception {
+        bitbucketRequestMockProvider.mockUserExists(userTestService.student.getLogin());
+        bitbucketRequestMockProvider.mockUpdateUserDetails(userTestService.student.getLogin(), userTestService.student.getEmail(), userTestService.student.getName());
+        bitbucketRequestMockProvider.mockUpdateUserPassword(userTestService.student.getLogin(), "ThisIsAPassword", false);
         userTestService.initializeUser(false);
     }
 
