@@ -130,23 +130,27 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         userRepo.save(ModelFactory.generateActivatedUser("student42"));
         userRepo.save(ModelFactory.generateActivatedUser("tutor6"));
         userRepo.save(ModelFactory.generateActivatedUser("instructor6"));
+        bitbucketRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
     public void resetDatabase() {
+        bitbucketRequestMockProvider.reset();
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRegisterUserInExam_addedToCourseStudentsGroup() throws Exception {
+        User student42 = database.getUserByLogin("student42");
         jiraRequestMockProvider.enableMockingOfRequests();
         jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student42.getLogin(), student42.getEmail(), student42.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
 
         List<User> studentsInCourseBefore = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student42", null, HttpStatus.OK, null);
         List<User> studentsInCourseAfter = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
-        User student42 = database.getUserByLogin("student42");
         studentsInCourseBefore.add(student42);
         assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
     }
@@ -215,9 +219,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
         }
 
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student5.getLogin(), student5.getEmail(), student5.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+
         var student99 = ModelFactory.generateActivatedUser("student99");     // not registered for the course
         student99.setRegistrationNumber(registrationNumber99);
         userRepo.save(student99);
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student99.getLogin(), student99.getEmail(), student99.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
         student99 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student99").get();
         assertThat(student99.getGroups()).doesNotContain(course1.getStudentGroupName());
 
@@ -255,6 +264,20 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         studentDto6.setLogin(student6.getLogin());
         var studentsToRegister = List.of(studentDto1, studentDto2, studentDto3, studentDto5, studentDto99, studentDto100, studentDto6, studentDto7, studentDto8, studentDto9,
                 studentDto10);
+        bitbucketRequestMockProvider.mockUpdateUserDetails("student100", "student100@tum.de", "Student100 Student100");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student6.getLogin(), student6.getEmail(), student6.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student7.getLogin(), student7.getEmail(), student7.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student8.getLogin(), student8.getEmail(), student8.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student9.getLogin(), student9.getEmail(), student9.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student10.getLogin(), student10.getEmail(), student10.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails("student100", "student100@tum.de", "Student100 Student100");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
 
         // now we register all these students for the exam.
         List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
@@ -1287,7 +1310,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void unlockAllRepositories() throws Exception {
-
         assertThat(studentExamRepository.findStudentExam(new ProgrammingExercise(), null)).isEmpty();
 
         ExerciseGroup exerciseGroup1 = new ExerciseGroup();
@@ -1332,11 +1354,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St2)).isPresent();
         assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St2).get()).isEqualTo(studentExam2);
 
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bitbucketRequestMockProvider.mockUserExists(student1.getLogin());
         mockConfigureRepository(programmingExercise, "student1", Set.of(student1), false);
+        bitbucketRequestMockProvider.mockUserExists(student2.getLogin());
         mockConfigureRepository(programmingExercise, "student2", Set.of(student2), false);
 
+        bitbucketRequestMockProvider.mockUserExists(student1.getLogin());
         mockConfigureRepository(programmingExercise2, "student1", Set.of(student1), false);
+        bitbucketRequestMockProvider.mockUserExists(student2.getLogin());
         mockConfigureRepository(programmingExercise2, "student2", Set.of(student2), false);
 
         Integer numOfUnlockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/unlock-all-repositories",
