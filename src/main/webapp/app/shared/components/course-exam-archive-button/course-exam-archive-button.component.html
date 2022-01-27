@@ -78,12 +78,12 @@
         </div>
     </ng-template>
     <button *ngIf="canArchive()" [disabled]="isBeingArchived" type="button" class="btn btn-warning me-1 mb-1" (click)="openModal(archiveWarningPopup)">
-        <fa-icon [hidden]="!isBeingArchived" [spin]="true" [icon]="'circle-notch'"></fa-icon>
-        <fa-icon [hidden]="isBeingArchived" [icon]="'archive'"></fa-icon>&nbsp;
+        <fa-icon [hidden]="!isBeingArchived" [spin]="true" [icon]="faCircleNotch"></fa-icon>
+        <fa-icon [hidden]="isBeingArchived" [icon]="faArchive"></fa-icon>&nbsp;
         <span>{{ archiveButtonText }}</span>
     </button>
     <button *ngIf="displayDownloadArchiveButton" [disabled]="isBeingArchived" type="button" class="btn btn-primary me-1 mb-1" (click)="downloadArchive()">
-        <fa-icon [icon]="'download'"></fa-icon>&nbsp;
+        <fa-icon [icon]="faDownload"></fa-icon>&nbsp;
         <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive">Download Archive</span>
     </button>
     <button
@@ -98,6 +98,6 @@
         [dialogError]="dialogError$"
         deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
     >
-        <fa-icon [icon]="'eraser'"></fa-icon>
+        <fa-icon [icon]="faEraser"></fa-icon>
     </button>
 </ng-container>

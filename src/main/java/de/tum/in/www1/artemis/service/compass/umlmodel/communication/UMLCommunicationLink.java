@@ -12,11 +12,11 @@ public class UMLCommunicationLink extends UMLElement {
 
     public static final String UML_COMMUNICATION_LINK_TYPE = "CommunicationLink";
 
-    private UMLObject source;
+    private final UMLObject source;
 
-    private UMLObject target;
+    private final UMLObject target;
 
-    private List<UMLMessage> messages;
+    private final List<UMLMessage> messages;
 
     public UMLCommunicationLink(UMLObject source, UMLObject target, List<UMLMessage> messages, String jsonElementID) {
         super(jsonElementID);
@@ -28,18 +28,16 @@ public class UMLCommunicationLink extends UMLElement {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLCommunicationLink)) {
+        if (!(reference instanceof UMLCommunicationLink referenceLink)) {
             return 0;
         }
-
-        UMLCommunicationLink referenceLink = (UMLCommunicationLink) reference;
 
         double similarity = 0;
 
         double sourceWeight = CompassConfiguration.RELATION_ELEMENT_WEIGHT;
         double targetWeight = CompassConfiguration.RELATION_ELEMENT_WEIGHT;
 
-        // when there are not messages, we increase the weight so that the links can still have a similarity of 100%
+        // when there are no messages, we increase the weight so that the links can still have a similarity of 100%
         if (messages.isEmpty()) {
             sourceWeight = 0.5;
             targetWeight = 0.5;

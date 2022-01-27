@@ -1,17 +1,17 @@
 import { SimpleChanges } from '@angular/core';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
-import dayjs from 'dayjs';
-import { InitializationState } from 'app/entities/participation/participation.model';
+import dayjs from 'dayjs/esm';
+import { InitializationState, Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { hasResults } from 'app/overview/participation.utils';
 import { Observable, of, from } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseServicable } from 'app/exercises/shared/exercise/exercise.service';
 import { map, mergeWith, mergeMap, takeUntil } from 'rxjs/operators';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
+import { hasResults } from 'app/exercises/shared/participation/participation.utils';
 
 export enum EditType {
     IMPORT,
@@ -96,14 +96,33 @@ export const problemStatementHasChanged = (changes: SimpleChanges) => {
 /**
  * Checks if the due date of a given exercise lies in the past. If there is no due date it evaluates to false.
  *
- * @param exercise
- * @return {boolean}
+ * @param exercise the participation belongs to.
+ * @param participation needed to check for an individual due date.
+ * @return {boolean} true, if the (individual) due date is in the past.
  */
-export const hasExerciseDueDatePassed = (exercise: Exercise): boolean => {
-    if (exercise.dueDate == undefined) {
+export const hasExerciseDueDatePassed = (exercise: Exercise, participation?: Participation): boolean => {
+    if (exercise.dueDate === undefined) {
         return false;
     }
-    return dayjs(exercise.dueDate).isBefore(dayjs());
+
+    const referenceDate = getExerciseDueDate(exercise, participation)!;
+    return dayjs(referenceDate).isBefore(dayjs());
+};
+
+/**
+ * Returns the due date for an exercise.
+ *
+ * This might either be an individual due date for a participation, the
+ * exercise due date itself, or no due date if the exercise has none.
+ * @param exercise the participation belongs to.
+ * @param participation for which the due date should be found.
+ */
+export const getExerciseDueDate = (exercise: Exercise, participation?: Participation): dayjs.Dayjs | undefined => {
+    if (exercise.dueDate === undefined) {
+        return undefined;
+    } else {
+        return participation?.individualDueDate ?? exercise.dueDate;
+    }
 };
 
 /**
@@ -211,7 +230,7 @@ const participationStatusForModelingTextFileUploadExercise = (exercise: Exercise
     // A more detailed evaluation of active exercises takes place in the result component.
     // An exercise was missed (EXERCISE_MISSED) if it is initialized and has passed its due date (due date lies in the past).
     if (participation.initializationState === InitializationState.INITIALIZED) {
-        return hasExerciseDueDatePassed(exercise) ? ParticipationStatus.EXERCISE_MISSED : ParticipationStatus.EXERCISE_ACTIVE;
+        return hasExerciseDueDatePassed(exercise, participation) ? ParticipationStatus.EXERCISE_MISSED : ParticipationStatus.EXERCISE_ACTIVE;
     } else if (participation.initializationState === InitializationState.FINISHED) {
         // An exercise was submitted (EXERCISE_SUBMITTED) if the corresponding InitializationState is set to FINISHED
         return ParticipationStatus.EXERCISE_SUBMITTED;

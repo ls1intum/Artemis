@@ -1,0 +1,22 @@
+:host {
+    .treeview-container {
+        .row-item {
+            margin-bottom: 0.3rem;
+            flex-wrap: nowrap;
+            .bi {
+                cursor: pointer;
+                margin-right: 0.3rem;
+            }
+        }
+    }
+}
+
+.treeview-container {
+    overflow-y: auto;
+    padding-right: 0.3rem;
+}
+
+.treeview-text {
+    padding: 0.3rem 0;
+    white-space: nowrap;
+}

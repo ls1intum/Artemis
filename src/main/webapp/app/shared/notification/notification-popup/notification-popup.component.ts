@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router, UrlTree } from '@angular/router';
+import { IsActiveMatchOptions, Router, UrlTree } from '@angular/router';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -8,6 +8,7 @@ import { GroupNotification } from 'app/entities/group-notification.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { faCheckDouble, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -20,6 +21,11 @@ export class NotificationPopupComponent implements OnInit {
     LiveExamExerciseUpdateNotificationTitleHtmlConst = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
 
     private studentExamExerciseIds: number[];
+
+    // Icons
+    faTimes = faTimes;
+    faCheckDouble = faCheckDouble;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private accountService: AccountService,
@@ -108,9 +114,10 @@ export class NotificationPopupComponent implements OnInit {
             const notificationWithLiveQuizTarget = {
                 target: JSON.stringify(target),
             } as GroupNotification;
+            const matchOptions = { paths: 'exact', queryParams: 'exact', fragment: 'ignored', matrixParams: 'ignored' } as IsActiveMatchOptions; // corresponds to exact = true
             if (
-                !this.router.isActive(this.notificationTargetRoute(notification), true) &&
-                !this.router.isActive(this.notificationTargetRoute(notificationWithLiveQuizTarget) + '/live', true)
+                !this.router.isActive(this.notificationTargetRoute(notification), matchOptions) &&
+                !this.router.isActive(this.notificationTargetRoute(notificationWithLiveQuizTarget) + '/live', matchOptions)
             ) {
                 notification.target = notificationWithLiveQuizTarget.target;
                 this.notifications.unshift(notification);
@@ -132,7 +139,8 @@ export class NotificationPopupComponent implements OnInit {
             this.alertService.error(error);
         }
         // only show pop-up if explicit notification text was set and only inside exam mode
-        if (notification.text != undefined && this.router.isActive(this.notificationTargetRoute(notification), true)) {
+        const matchOptions = { paths: 'exact', queryParams: 'exact', fragment: 'ignored', matrixParams: 'ignored' } as IsActiveMatchOptions; // corresponds to exact = true
+        if (notification.text != undefined && this.router.isActive(this.notificationTargetRoute(notification), matchOptions)) {
             this.notifications.unshift(notification);
         }
     }

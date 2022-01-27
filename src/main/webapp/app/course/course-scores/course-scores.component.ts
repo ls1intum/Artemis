@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { forkJoin, of, Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { sum } from 'lodash-es';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExportToCsv } from 'export-to-csv';
@@ -20,6 +20,7 @@ import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
+import { faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -84,6 +85,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     averageGrade?: string;
 
     private languageChangeSubscription?: Subscription;
+
+    // Icons
+    faSort = faSort;
+    faDownload = faDownload;
+    faSpinner = faSpinner;
 
     constructor(
         private route: ActivatedRoute,

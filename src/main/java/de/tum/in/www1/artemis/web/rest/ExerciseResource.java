@@ -247,7 +247,7 @@ public class ExerciseResource {
      */
     @DeleteMapping(value = "/exercises/{exerciseId}/cleanup")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> cleanup(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", exerciseId, deleteRepositories);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -260,7 +260,7 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/details : sends exercise details including all results for the currently logged in user
+     * GET /exercises/:exerciseId/details : sends exercise details including all results for the currently logged-in user
      *
      * @param exerciseId the exerciseId of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
@@ -268,9 +268,7 @@ public class ExerciseResource {
     @GetMapping(value = "/exercises/{exerciseId}/details")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
-        long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("{} requested access for exercise with exerciseId {}", user.getLogin(), exerciseId);
 
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
 
@@ -298,6 +296,7 @@ public class ExerciseResource {
         }
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
+            // TODO: instead fetch the policy without programming exercise, should be faster
             SubmissionPolicy policy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
             programmingExercise.setSubmissionPolicy(policy);
             programmingExercise.checksAndSetsIfProgrammingExerciseIsLocalSimulation();
@@ -309,9 +308,7 @@ public class ExerciseResource {
             exercise.filterSensitiveInformation();
         }
 
-        log.debug("getResultsForCurrentUser took {}ms", System.currentTimeMillis() - start);
-
-        return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
+        return ResponseEntity.ok(exercise);
     }
 
     /**

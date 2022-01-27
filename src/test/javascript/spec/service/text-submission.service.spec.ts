@@ -1,56 +1,58 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import sinonChai from 'sinon-chai';
-import * as chai from 'chai';
-
-chai.use(sinonChai);
-
-const expect = chai.expect;
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 
 describe('TextSubmission Service', () => {
-    let injector: TestBed;
     let service: TextSubmissionService;
     let httpMock: HttpTestingController;
     let elemDefault: TextSubmission;
-    let mockResponse: any;
+
+    const mockResponse = {
+        submissionExerciseType: 'text',
+        id: 1,
+        submitted: true,
+        type: 'MANUAL',
+        participation: {
+            type: 'student',
+            id: 1,
+            initializationState: 'FINISHED',
+            initializationDate: '2020-07-07T14:34:18.067248+02:00',
+            exercise: {
+                type: 'text',
+                id: 1,
+            },
+            participantIdentifier: 'ga27der',
+            participantName: 'Jonas Petry',
+        },
+        result: {
+            id: 5,
+            assessmentType: 'MANUAL',
+        },
+        submissionDate: '2020-07-07T14:34:25.194518+02:00',
+        durationInMinutes: 0,
+        text: 'Test\n\nTest\n\nTest',
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-        });
-        injector = getTestBed();
-        service = injector.get(TextSubmissionService);
-        httpMock = injector.get(HttpTestingController);
+            providers: [{ provide: AccountService, useClass: MockAccountService }],
+        })
+            .compileComponents()
+            .then(() => {
+                service = TestBed.inject(TextSubmissionService);
+                httpMock = TestBed.inject(HttpTestingController);
 
-        elemDefault = new TextSubmission();
-        mockResponse = {
-            submissionExerciseType: 'text',
-            id: 1,
-            submitted: true,
-            type: 'MANUAL',
-            participation: {
-                type: 'student',
-                id: 1,
-                initializationState: 'FINISHED',
-                initializationDate: '2020-07-07T14:34:18.067248+02:00',
-                exercise: {
-                    type: 'text',
-                    id: 1,
-                },
-                participantIdentifier: 'ga27der',
-                participantName: 'Jonas Petry',
-            },
-            result: {
-                id: 5,
-                assessmentType: 'MANUAL',
-            },
-            submissionDate: '2020-07-07T14:34:25.194518+02:00',
-            durationInMinutes: 0,
-            text: 'Test\n\nTest\n\nTest',
-        };
+                elemDefault = new TextSubmission();
+            });
+    });
+
+    afterEach(() => {
+        httpMock.verify();
     });
 
     it('should create a TextSubmission', fakeAsync(() => {
@@ -64,7 +66,7 @@ describe('TextSubmission Service', () => {
             .create(new TextSubmission(), 1)
             .pipe(take(1))
             .subscribe((resp: any) => {
-                expect(resp.body).to.deep.equal(expected);
+                expect(resp.body).toEqual(expected);
             });
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
@@ -81,7 +83,7 @@ describe('TextSubmission Service', () => {
         service
             .update(expected, 1)
             .pipe(take(1))
-            .subscribe((resp: any) => expect(resp.body).to.deep.equal(expected));
+            .subscribe((resp: any) => expect(resp.body).toEqual(expected));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
         tick();
@@ -89,7 +91,7 @@ describe('TextSubmission Service', () => {
 
     it('should not parse jwt from header', fakeAsync(() => {
         service.getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(1).subscribe((textSubmission) => {
-            expect(textSubmission.atheneTextAssessmentTrackingToken).to.be.undefined;
+            expect(textSubmission.atheneTextAssessmentTrackingToken).toBe(undefined);
         });
 
         const mockRequest = httpMock.expectOne({ method: 'GET' });
@@ -99,7 +101,7 @@ describe('TextSubmission Service', () => {
 
     it('should parse jwt from header', fakeAsync(() => {
         service.getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(1).subscribe((textSubmission) => {
-            expect(textSubmission.atheneTextAssessmentTrackingToken).to.equal('12345');
+            expect(textSubmission.atheneTextAssessmentTrackingToken).toBe('12345');
         });
 
         const mockRequest = httpMock.expectOne({ method: 'GET' });
@@ -111,15 +113,17 @@ describe('TextSubmission Service', () => {
         const exerciseId = 1;
         elemDefault = new TextSubmission();
         elemDefault.latestResult = undefined;
+        elemDefault.participation = undefined;
         const returnedFromService = [elemDefault];
         const expected = returnedFromService;
+        let response: any;
         service
             .getTextSubmissionsForExerciseByCorrectionRound(exerciseId, {})
             .pipe(take(1))
-            .subscribe((resp) => (mockResponse = resp));
+            .subscribe((resp) => (response = resp));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        expect(mockResponse.body).to.deep.equal(expected);
+        expect(response.body).toEqual(expected);
         tick();
     }));
 
@@ -128,17 +132,14 @@ describe('TextSubmission Service', () => {
         elemDefault = new TextSubmission();
         const returnedFromService = { body: elemDefault };
         const expected = returnedFromService.body;
+        let response: any;
         service
             .getTextSubmission(exerciseId)
             .pipe(take(1))
-            .subscribe((resp) => (mockResponse = resp));
+            .subscribe((resp) => (response = resp));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        expect(mockResponse.body).to.deep.equal(expected);
+        expect(response.body).toEqual(expected);
         tick();
     }));
-
-    afterEach(() => {
-        httpMock.verify();
-    });
 });

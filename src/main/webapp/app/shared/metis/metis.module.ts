@@ -16,7 +16,6 @@ import { AnswerPostFooterComponent } from 'app/shared/metis/posting-footer/answe
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TagInputModule } from 'ngx-chips';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -30,6 +29,10 @@ import { PostingContentComponent } from './posting-content/posting-content.compo
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 @NgModule({
     imports: [
@@ -40,13 +43,16 @@ import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-p
         ArtemisCoursesRoutingModule,
         ReactiveFormsModule,
         FormsModule,
-        TagInputModule,
         ArtemisSharedComponentModule,
         PickerModule,
         EmojiModule,
         OverlayModule,
         CommonModule,
         FontAwesomeModule,
+        MatChipsModule,
+        MatAutocompleteModule,
+        MatSelectModule,
+        MatFormFieldModule,
     ],
     declarations: [
         PostingThreadComponent,

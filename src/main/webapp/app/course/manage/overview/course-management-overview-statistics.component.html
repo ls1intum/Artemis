@@ -1,4 +1,11 @@
-<h4 class="col-md-12 mt-3 text-center">{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h4>
+<div class="row justify-content-center chart-title-line">
+    <div class="d-inline-flex flex-nowrap justify-content-center align-items-center">
+        <a [routerLink]="['/course-management', course.id]" class="text-center">
+            <h4>{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h4>
+        </a>
+        <jhi-help-icon class="chart-explanation-tooltip headline-margin" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation"></jhi-help-icon>
+    </div>
+</div>
 <div #containerRef class="col-md-12 text-center">
     <ngx-charts-line-chart
         [view]="[containerRef.offsetWidth, 250]"
@@ -10,16 +17,18 @@
         [yScaleMax]="100"
         [yAxisTickFormatting]="formatYAxis"
         [rotateXAxisTicks]="false"
+        [curve]="curve"
     >
         <ng-template #tooltipTemplate let-model="model">
-            <h6 jhiTranslate="artemisApp.course.activeStudents" [translateValues]="{ students: model.absoluteValue }"></h6>
+            <b jhiTranslate="artemisApp.course.activeStudents" [translateValues]="{ students: model.absoluteValue }"></b>
+            <br />
             <span>{{ model.name }}</span>
         </ng-template>
         <ng-template #seriesTooltipTemplate let-model="model">
             <span> {{ model[0].name }}: {{ model[0].absoluteValue }} </span>
         </ng-template>
     </ngx-charts-line-chart>
-    <div *ngIf="loading" style="z-index: 1; position: absolute; font-size: large">
-        <fa-icon [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+    <div *ngIf="loading" class="overview-spinner">
+        <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
     </div>
 </div>

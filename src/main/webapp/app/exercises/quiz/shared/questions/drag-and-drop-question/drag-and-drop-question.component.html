@@ -5,13 +5,13 @@
     <div [hidden]="loadingState === 'success'">
         <h2 *ngIf="loadingState !== 'error'">
             <span style="color: grey"
-                ><fa-icon [icon]="'spinner'" [spin]="true"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
+                ><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
             >
         </h2>
         <div *ngIf="loadingState === 'error'">
             <h2>
                 <span style="color: grey"
-                    ><fa-icon [icon]="'exclamation-circle'"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.failed' | artemisTranslate }}</span></span
+                    ><fa-icon [icon]="faExclamationCircle"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.failed' | artemisTranslate }}</span></span
                 >
             </h2>
             <p>
@@ -29,7 +29,7 @@
         <span style="color: red" *ngIf="question.invalid" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
         <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
             <span class="label label-info" [ngbPopover]="renderedHint" placement="auto" triggers="mouseenter:mouseleave" *ngIf="question.hint">
-                <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
+                <fa-icon [icon]="faQuestionCircle"></fa-icon>
                 <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
             </span>
             <ng-template #renderedHint>
@@ -37,7 +37,7 @@
             </ng-template>
             <br />
             <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="auto" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
-                <fa-icon [icon]="'exclamation-circle'"></fa-icon>
+                <fa-icon [icon]="faExclamationCircle"></fa-icon>
                 <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
             </span>
             <ng-template #renderedExplanation>
@@ -75,12 +75,13 @@
                 </div>
             </div>
         </div>
-        <div class="drag-and-drop-area">
+        <div cdkDropListGroup class="drag-and-drop-area">
             <div class="background-area">
                 <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath" (endLoadingProcess)="changeLoading($event)"></jhi-secured-image>
                 <div class="click-layer">
                     <div *ngIf="!showResult">
                         <div
+                            id="drop-location"
                             class="drop-location"
                             *ngFor="let dropLocation of question.dropLocations"
                             [ngClass]="dropAllowed ? 'drop-allowed' : ''"
@@ -90,11 +91,11 @@
                                 width: dropLocation.width! / 2 + '%',
                                 height: dropLocation.height! / 2 + '%'
                             }"
-                            (onDropSuccess)="onDragDrop(dropLocation, $event)"
+                            (cdkDropListDropped)="onDragDrop(dropLocation, $event)"
                             (onDragEnter)="preventDefault($event)"
                             (onDragOver)="preventDefault($event)"
                             (onDragLeave)="preventDefault($event)"
-                            dnd-droppable
+                            cdkDropList
                         >
                             <jhi-drag-item
                                 (dragenter)="drag()"
@@ -133,7 +134,7 @@
                                         !question.invalid
                                     "
                                 >
-                                    <fa-icon [icon]="'exclamation-triangle'" size="2x" class="warning"></fa-icon>
+                                    <fa-icon [icon]="faExclamationTriangle" size="2x" class="warning"></fa-icon>
                                 </div>
                                 <div class="invalid">
                                     <span
@@ -152,7 +153,7 @@
                                         ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
                                         placement="top"
                                         style="color: black"
-                                        [icon]="'question-circle'"
+                                        [icon]="faQuestionCircle"
                                         *ngIf="dropLocation.invalid || question.invalid || invalidDragItemForDropLocation(dropLocation)"
                                     ></fa-icon>
                                 </div>
@@ -197,7 +198,7 @@
                                         !forceSampleSolution
                                     "
                                 >
-                                    <fa-icon [icon]="'exclamation-triangle'" size="2x" class="warning"></fa-icon>
+                                    <fa-icon [icon]="faExclamationTriangle" size="2x" class="warning"></fa-icon>
                                 </div>
                                 <div class="invalid">
                                     <span
@@ -212,7 +213,7 @@
                                         ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
                                         placement="top"
                                         style="color: black"
-                                        [icon]="'question-circle'"
+                                        [icon]="faQuestionCircle"
                                         *ngIf="dropLocation.invalid || question.invalid"
                                     ></fa-icon>
                                 </div>
@@ -238,17 +239,19 @@
                 <div
                     *ngIf="!showResult"
                     class="drag-items"
+                    id="drag-items"
                     [ngClass]="dropAllowed ? 'drop-allowed' : ''"
-                    (onDropSuccess)="onDragDrop(undefined, $event)"
+                    (cdkDropListDropped)="onDragDrop(undefined, $event)"
                     (onDragEnter)="preventDefault($event)"
                     (onDragOver)="preventDefault($event)"
                     (onDragLeave)="preventDefault($event)"
-                    dnd-droppable
+                    cdkDropList
                 >
                     <jhi-drag-item
+                        id="drag-item-{{ i }}"
                         (dragenter)="drag()"
                         (dragend)="drop()"
-                        *ngFor="let dragItem of getUnassignedDragItems()"
+                        *ngFor="let dragItem of getUnassignedDragItems(); let i = index"
                         [dragItem]="dragItem"
                         [clickDisabled]="clickDisabled"
                         [minWidth]="'160'"

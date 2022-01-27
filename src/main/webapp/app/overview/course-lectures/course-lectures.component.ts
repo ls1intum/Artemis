@@ -1,20 +1,22 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { faAngleDown, faAngleUp, faSortAmountDown, faSortAmountUp } from '@fortawesome/free-solid-svg-icons';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
 
 @Component({
     selector: 'jhi-course-lectures',
     templateUrl: './course-lectures.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseLecturesComponent implements OnInit, OnDestroy {
+export class CourseLecturesComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
     public readonly DUE_DATE_ASC = 1;
     public readonly DUE_DATE_DESC = -1;
     private courseId: number;
@@ -26,6 +28,20 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     public weeklyLecturesGrouped: object;
 
     public exerciseCountMap: Map<string, number>;
+
+    // Icons
+    faSortAmountUp = faSortAmountUp;
+    faSortAmountDown = faSortAmountDown;
+    faAngleUp = faAngleUp;
+    faAngleDown = faAngleDown;
+
+    // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
+    @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
+    // Provides the control configuration to be read and used by "CourseOverviewComponent"
+    public readonly controlConfiguration: BarControlConfiguration = {
+        subject: new Subject<TemplateRef<any>>(),
+        useIndentation: true,
+    };
 
     constructor(
         private courseService: CourseManagementService,
@@ -54,6 +70,13 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.groupLectures(this.DUE_DATE_DESC);
         });
+    }
+
+    ngAfterViewInit(): void {
+        // Send our controls template to parent so it will be rendered in the top bar
+        if (this.controls) {
+            this.controlConfiguration.subject!.next(this.controls);
+        }
     }
 
     ngOnDestroy(): void {

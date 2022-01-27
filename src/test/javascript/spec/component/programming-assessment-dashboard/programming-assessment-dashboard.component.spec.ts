@@ -63,7 +63,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
             declarations: [ProgrammingExerciseSubmissionsComponent],
             providers: [
                 JhiLanguageHelper,
-                { provide: Router, useClass: route },
+                { provide: Router, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -91,7 +91,8 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
                 programmingAssessmentService = fixture.debugElement.injector.get(ProgrammingAssessmentManualResultService);
                 accountService = fixture.debugElement.injector.get(AccountService);
                 sortService = fixture.debugElement.injector.get(SortService);
-            });
+            })
+            .catch((e) => console.error(e));
     });
 
     it('should set parameters and call functions on init', fakeAsync(() => {
@@ -144,7 +145,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
         exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
         getProgrammingSubmissionsForExerciseByCorrectionRoundStub.mockReturnValue(of(new HttpResponse({ body: [] })));
         isAtLeastInstructorInCourseStub.mockReturnValue(true);
-        // findExerciseStub.returns(of(new HttpResponse({ body: fileUploadExercise, headers: new HttpHeaders() })));
+        // findExerciseStub.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise, headers: new HttpHeaders() })));
         exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: programmingExercise2, headers: new HttpHeaders() })));
         jest.spyOn<any, any>(component, 'getSubmissions');
         component.exercise = programmingExercise2;

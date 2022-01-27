@@ -14,13 +14,15 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.env.Environment;
 
+import de.tum.in.www1.artemis.service.connectors.ProgrammingLanguageConfiguration;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
 @SpringBootApplication
-@EnableConfigurationProperties(LiquibaseProperties.class)
+@EnableConfigurationProperties({ LiquibaseProperties.class, ProgrammingLanguageConfiguration.class })
 public class ArtemisApp {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisApp.class);
@@ -57,16 +59,19 @@ public class ArtemisApp {
     public static void main(String[] args) {
         SpringApplication app = new SpringApplication(ArtemisApp.class);
         DefaultProfileUtil.addDefaultProfile(app);
-        Environment env = app.run(args).getEnvironment();
-        logApplicationStartup(env);
+        var context = app.run(args);
+        Environment env = context.getEnvironment();
+        var buildProperties = context.getBean(BuildProperties.class);
+        logApplicationStartup(env, buildProperties);
     }
 
-    private static void logApplicationStartup(Environment env) {
+    private static void logApplicationStartup(Environment env, BuildProperties buildProperties) {
         String protocol = "http";
         if (env.getProperty("server.ssl.key-store") != null) {
             protocol = "https";
         }
         String serverPort = env.getProperty("server.port");
+        String version = buildProperties.getVersion();
         String contextPath = env.getProperty("server.servlet.context-path");
         if (StringUtils.isBlank(contextPath)) {
             contextPath = "/";
@@ -81,13 +86,14 @@ public class ArtemisApp {
         log.info("""
 
                 ----------------------------------------------------------
-                \tApplication '{}' is running! Access URLs:
-                \tLocal: \t\t{}://localhost:{}{}
-                \tExternal: \t{}://{}:{}{}
-                \tProfile(s): \t{}
+                \t'{}' is running! Access URLs:
+                \tLocal:     {}://localhost:{}{}
+                \tExternal:  {}://{}:{}{}
+                \tProfiles:  {}
+                \tVersion:   {}
                 ----------------------------------------------------------
 
                 """, env.getProperty("spring.application.name"), protocol, serverPort, contextPath, protocol, hostAddress, serverPort, contextPath,
-                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles());
+                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(), version);
     }
 }

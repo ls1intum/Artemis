@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -120,7 +118,11 @@ public class QuizPointStatistic extends QuizStatistic {
      * @param countChange the int-value, which will be added to the Counter and participants
      */
     private void changeStatisticBasedOnResult(double score, Boolean rated, int countChange) {
-        double points = roundScoreSpecifiedByCourseSettings(quiz.getOverallQuizPoints() * (score / 100), quiz.getCourseViaExerciseGroupOrCourseMember());
+        /**
+          {@link de.tum.in.www1.artemis.service.util.RoundingUtil#roundScoreSpecifiedByCourseSettings}
+          is not applicable here, as we need to sort the points into existing integer buckets
+         */
+        double points = Math.round(quiz.getOverallQuizPoints() * (score / 100));
 
         if (Boolean.TRUE.equals(rated)) {
             // change rated participants

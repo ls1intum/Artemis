@@ -1,6 +1,5 @@
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { getTestBed, TestBed, tick, fakeAsync } from '@angular/core/testing';
-import * as chai from 'chai';
+import { TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
@@ -13,10 +12,7 @@ import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';
 import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
-const expect = chai.expect;
-
 describe('Submission Service', () => {
-    let injector: TestBed;
     let service: SubmissionService;
     let httpMock: HttpTestingController;
     let expectedResult: any;
@@ -46,9 +42,8 @@ describe('Submission Service', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(SubmissionService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(SubmissionService);
+        httpMock = TestBed.inject(HttpTestingController);
         expectedResult = {} as HttpResponse<Submission[]>;
     });
 
@@ -56,7 +51,7 @@ describe('Submission Service', () => {
         service.delete(187).subscribe((resp) => (expectedResult = resp.ok));
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
-        expect(expectedResult).to.be.true;
+        expect(expectedResult).toBeTrue();
     });
 
     it('should find all submissions of a given participation', fakeAsync(() => {
@@ -73,7 +68,7 @@ describe('Submission Service', () => {
         service
             .findAllSubmissionsOfParticipation(participationId)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
+            .subscribe((resp) => expect(resp.body).toEqual(expected));
         const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/participations/${participationId}/submissions`, method: 'GET' });
         req.flush(returnedFromService);
         tick();
@@ -93,7 +88,7 @@ describe('Submission Service', () => {
         service
             .getTestRunSubmissionsForExercise(exerciseId)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
+            .subscribe((resp) => expect(resp.body).toEqual(expected));
         const req = httpMock.expectOne({ url: `api/exercises/${exerciseId}/test-run-submissions`, method: 'GET' });
         req.flush(returnedFromService);
         tick();

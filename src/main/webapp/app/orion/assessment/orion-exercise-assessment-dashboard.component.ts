@@ -33,10 +33,10 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
 
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
-        this.exerciseService.getForTutors(this.exerciseId).subscribe(
-            (res) => (this.exercise = res.body!),
-            (error) => onError(this.alertService, error),
-        );
+        this.exerciseService.getForTutors(this.exerciseId).subscribe({
+            next: (res) => (this.exercise = res.body!),
+            error: (error) => onError(this.alertService, error),
+        });
 
         this.orionConnectorService.state().subscribe((state) => (this.orionState = state));
     }

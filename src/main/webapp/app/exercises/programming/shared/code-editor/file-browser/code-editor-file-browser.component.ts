@@ -3,7 +3,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, of, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { fromPairs, toPairs } from 'lodash-es';
-import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import {
@@ -22,6 +21,10 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 import { supportedTextFileExtensions } from 'app/exercises/programming/shared/code-editor/file-browser/supported-file-extensions';
+import { faAngleDoubleDown, faAngleDoubleUp, faChevronLeft, faChevronRight, faCircleNotch, faFile, faFolder, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { TreeItem, TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
+import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
+import { findItemInList } from 'app/exercises/programming/shared/code-editor/treeview/helpers/treeview-helper';
 
 export type InteractableEvent = {
     // Click event object; contains target information
@@ -31,6 +34,11 @@ export type InteractableEvent = {
     // The interactjs element, used to en-/disable resizing
     interactable: Interactable;
 };
+
+export interface FileTreeItem extends TreeItem<string> {
+    folder: File | string | undefined;
+    file: string;
+}
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
@@ -43,7 +51,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     FileType = FileType;
 
     @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
-    @ViewChild('treeview', { static: false }) treeview: TreeviewComponent;
+    @ViewChild('treeview', { static: false }) treeview: TreeviewComponent<string>;
 
     @Input()
     get selectedFile(): string | undefined {
@@ -81,7 +89,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     commitStateValue: CommitState;
     repositoryFiles: { [fileName: string]: FileType };
     repositoryFilesWithInformationAboutChange: { [fileName: string]: boolean } | undefined;
-    filesTreeViewItem: TreeviewItem[];
+    filesTreeViewItem: TreeviewItem<string>[];
     compressFolders = true;
 
     collapsed = false;
@@ -94,15 +102,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     // Tuple: [filePath, fileType]
     creatingFile?: [string, FileType];
 
-    /** Provide basic configuration for the TreeView (ngx-treeview) **/
-    treeviewConfig = TreeviewConfig.create({
-        hasAllCheckBox: false,
-        hasFilter: false,
-        hasCollapseExpand: false,
-        decoupleChildFromParent: false,
-        // Default limit is 500, as our styling makes tree item relatively large, we need to increase it a lot
-        maxHeight: 5000,
-    });
+    // Default limit is 500, as our styling makes tree item relatively large, we need to increase it a lot
+    treeViewMaxHeight: 5000;
 
     /** Resizable constants **/
     resizableMinWidth = 100;
@@ -110,6 +111,17 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     gitConflictState: GitConflictState;
     conflictSubscription: Subscription;
+
+    // Icons
+    faPlus = faPlus;
+    faFolderOpen = faFolderOpen;
+    faFolder = faFolder;
+    faChevronRight = faChevronRight;
+    faChevronLeft = faChevronLeft;
+    faCircleNotch = faCircleNotch;
+    faFile = faFile;
+    faAngleDoubleUp = faAngleDoubleUp;
+    faAngleDoubleDown = faAngleDoubleDown;
 
     set selectedFile(file: string | undefined) {
         this.selectedFileValue = file;
@@ -179,10 +191,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 }),
                 switchMap(() => {
                     if (this.commitState === CommitState.COULD_NOT_BE_RETRIEVED) {
-                        return throwError('couldNotBeRetrieved');
+                        return throwError(() => new Error('couldNotBeRetrieved'));
                     } else if (this.commitState === CommitState.CONFLICT) {
                         this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
-                        return throwError('repositoryInConflict');
+                        return throwError(() => new Error('repositoryInConflict'));
                     }
                     return this.loadFiles();
                 }),
@@ -203,13 +215,12 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     this.setupTreeview();
                 }),
             )
-            .subscribe(
-                () => {},
-                (error) => {
+            .subscribe({
+                error: (error: Error) => {
                     this.isLoadingFiles = false;
-                    this.onError.emit(error);
+                    this.onError.emit(error.message);
                 },
-            );
+            });
     };
 
     /**
@@ -252,12 +263,12 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @desc Callback function for when a node in the file tree view has been selected
      * @param item: Corresponding event object, holds the selected TreeViewItem
      */
-    handleNodeSelected(item: TreeviewItem) {
+    handleNodeSelected(item: TreeviewItem<string>) {
         if (item && item.value !== this.selectedFile) {
             item.checked = true;
             // If we had selected a file prior to this, we 'uncheck' it
             if (this.selectedFile) {
-                const priorFileSelection = TreeviewHelper.findItemInList(this.filesTreeViewItem, this.selectedFile);
+                const priorFileSelection = findItemInList(this.filesTreeViewItem, this.selectedFile);
                 // Avoid issues after file deletion
                 if (priorFileSelection) {
                     priorFileSelection.checked = false;
@@ -287,13 +298,13 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     /**
      * @function transformTreeToTreeViewItem
-     * @desc Converts a parsed filetree to a TreeViewItem[] which will then be used by the Treeviewer (ngx-treeview)
-     * @param tree: Filetree obtained by parsing the repository file list
+     * @desc Converts a parsed file tree to a TreeViewItem[] which will then be used by the Treeviewer
+     * @param tree: File tree obtained by parsing the repository file list
      */
-    transformTreeToTreeViewItem(tree: any): TreeviewItem[] {
-        const treeViewItem = new Array<TreeviewItem>();
+    transformTreeToTreeViewItem(tree: FileTreeItem[]): TreeviewItem<string>[] {
+        const treeViewItem = new Array<TreeviewItem<string>>();
         for (const node of tree) {
-            treeViewItem.push(new TreeviewItem(node));
+            treeViewItem.push(new TreeviewItem<string>(node));
         }
         return treeViewItem;
     }
@@ -305,7 +316,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @param tree {array of objects} Current tree structure
      * @param folder {string} Folder name
      */
-    buildTree(files: string[], tree?: any[], folder?: File) {
+    buildTree(files: string[], tree?: FileTreeItem[], folder?: File | string) {
         /**
          * Initialize tree if empty
          */
@@ -324,6 +335,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             // Path part doesn't exist => add it to tree
             if (!node) {
                 node = {
+                    children: [],
+                    file: '',
+                    folder: '',
+                    value: '',
                     text: fileSplit[0],
                 };
                 tree.push(node);
@@ -336,7 +351,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 // Directory node
                 node.checked = false;
                 // Recursive function call to process children
-                node.children = this.buildTree([fileSplit.join('/')], node.children, folder ? folder + '/' + node.text : node.text);
+                node.children = this.buildTree([fileSplit.join('/')], node.children as FileTreeItem[], folder ? folder + '/' + node.text : node.text);
                 node.folder = node.text;
                 node.value = folder ? `${folder}/${node.folder}` : node.folder;
             } else {
@@ -346,7 +361,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 node.value = node.file;
                 node.checked = false;
 
-                // Currently processed node selected?
+                // Currently, processed node selected?
                 if (node.file === this.selectedFile) {
                     folder = node.folder;
                     node.checked = true;
@@ -361,9 +376,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @desc Compresses the tree obtained by buildTree() to not contain nodes with only one directory child node
      * @param node Tree node
      */
-    compressTree(node: any): any {
+    compressTree(node: FileTreeItem): FileTreeItem {
         if (node.children && node.children.length === 1 && node.children[0].children) {
-            return this.compressTree({ ...node.children[0], text: node.text + '/' + node.children[0].text });
+            return this.compressTree({ ...node.children[0], text: node.text + '/' + node.children[0].text, folder: node.folder, file: node.file });
         } else if (node.children) {
             return { ...node, children: node.children.map(this.compressTree.bind(this)) };
         } else {
@@ -382,9 +397,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * Rename the file (if new fileName is different than old fileName and new fileName is not empty)
+     * Rename the file (if new fileName is different from old fileName and new fileName is not empty)
      * and emit the changes to the parent.
-     * After rename the rename state is exited.
+     * After rename the state is exited.
      **/
     onRenameFile(event: any) {
         const newFileName = event as string;
@@ -405,24 +420,24 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             return;
         }
 
-        this.renameFile(filePath, newFileName).subscribe(
-            () => {
+        this.renameFile(filePath, newFileName).subscribe({
+            next: () => {
                 this.handleFileChange(new RenameFileChange(fileType, filePath, newFilePath));
                 this.renamingFile = undefined;
             },
-            () => this.onError.emit('fileOperationFailed'),
-        );
+            error: () => this.onError.emit('fileOperationFailed'),
+        });
     }
 
     /**
      * Enter rename file mode and focus the created input.
      **/
-    setRenamingFile(item: TreeviewItem) {
+    setRenamingFile(item: TreeviewItem<string>) {
         this.renamingFile = [item.value, item.text, this.repositoryFiles[item.value]];
     }
 
     /**
-     * Set renamingFile to undefined to make the input disappear.
+     * Set renamingFile to undefined so that the input disappears.
      **/
     clearRenamingFile() {
         this.renamingFile = undefined;
@@ -448,28 +463,28 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
         const file = folderPath ? `${folderPath}/${fileName}` : fileName;
         if (fileType === FileType.FILE) {
-            this.createFile(file).subscribe(
-                () => {
+            this.createFile(file).subscribe({
+                next: () => {
                     this.handleFileChange(new CreateFileChange(FileType.FILE, file));
                     this.creatingFile = undefined;
                 },
-                () => this.onError.emit('fileOperationFailed'),
-            );
+                error: () => this.onError.emit('fileOperationFailed'),
+            });
         } else {
-            this.createFolder(file).subscribe(
-                () => {
+            this.createFolder(file).subscribe({
+                next: () => {
                     this.handleFileChange(new CreateFileChange(FileType.FOLDER, file));
                     this.creatingFile = undefined;
                 },
-                () => this.onError.emit('fileOperationFailed'),
-            );
+                error: () => this.onError.emit('fileOperationFailed'),
+            });
         }
     }
 
     /**
      * Enter rename file mode and focus the created input.
      **/
-    setCreatingFile({ item: { value: folder }, fileType }: { item: TreeviewItem; fileType: FileType }) {
+    setCreatingFile({ item: { value: folder }, fileType }: { item: TreeviewItem<string>; fileType: FileType }) {
         this.creatingFile = [folder, fileType];
     }
 
@@ -478,14 +493,14 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * Set creatingFile to undefined to make the input disappear.
+     * Set creatingFile to undefined so that the input disappears.
      **/
     clearCreatingFile() {
         this.creatingFile = undefined;
     }
 
     /**
-     * Load files from the participants repository.
+     * Load files from the participants' repository.
      * Files that are not relevant for the conduction of the exercise are removed from result.
      */
     loadFiles = (): Observable<{ [fileName: string]: FileType }> => {
@@ -505,7 +520,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                         .filter(([value]) => value),
                 ),
             ),
-            catchError(() => throwError('couldNotBeRetrieved')),
+            catchError(() => throwError(() => new Error('couldNotBeRetrieved'))),
         );
     };
 
@@ -524,7 +539,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                         .filter(([value]) => !value.includes('README.md')),
                 ),
             ),
-            catchError(() => throwError('couldNotBeRetrieved')),
+            catchError(() => throwError(() => new Error('couldNotBeRetrieved'))),
         );
     }
 
@@ -544,7 +559,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @function openDeleteFileModal
      * @desc Opens a popup to delete the selected repository file
      */
-    openDeleteFileModal(item: TreeviewItem) {
+    openDeleteFileModal(item: TreeviewItem<string>) {
         const { value: filePath } = item;
         const fileType = this.repositoryFiles[filePath];
         if (filePath) {

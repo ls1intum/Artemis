@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, EventEmitter, Output } from '@angular/core';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
 import { StudentWithTeam } from 'app/entities/team.model';
@@ -41,6 +42,9 @@ export class TeamsImportFromFileFormComponent {
     importFile?: File;
     importFileName: string;
     loading: boolean;
+
+    // Icons
+    faSpinner = faSpinner;
 
     constructor(private changeDetector: ChangeDetectorRef, private translate: TranslateService) {}
 

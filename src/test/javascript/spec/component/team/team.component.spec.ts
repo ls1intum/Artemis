@@ -20,7 +20,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
-import { restore, SinonStub, stub } from 'sinon';
 import { mockExercise, mockTeam, mockTeams, TeamRequestInterceptorMock } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
@@ -32,7 +31,7 @@ describe('TeamComponent', () => {
     let router: Router;
     const user = new User(99, 'newUser', 'UserFirstName', 'UserLastName');
     let accountService: AccountService;
-    let identityStub: SinonStub;
+    let identityStub: jest.SpyInstance;
     let exerciseService: ExerciseService;
     let teamService: TeamService;
     let alertService: AlertService;
@@ -75,7 +74,7 @@ describe('TeamComponent', () => {
             .compileComponents()
             .then(() => {
                 accountService = TestBed.inject(AccountService);
-                identityStub = stub(accountService, 'identity').returns(Promise.resolve(user));
+                identityStub = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
                 fixture = TestBed.createComponent(TeamComponent);
                 comp = fixture.componentInstance;
                 alertService = TestBed.inject(AlertService);
@@ -86,14 +85,14 @@ describe('TeamComponent', () => {
     });
 
     afterEach(() => {
-        restore();
+        jest.restoreAllMocks();
     });
 
     describe('ngOnInit', () => {
-        let alertServiceStub: SinonStub;
+        let alertServiceStub: jest.SpyInstance;
 
         afterEach(() => {
-            restore();
+            jest.restoreAllMocks();
         });
 
         it('should set team and exercise from services and call find on exerciseService to retreive exercise', () => {
@@ -106,8 +105,8 @@ describe('TeamComponent', () => {
         });
 
         it('should call alert service error when exercise service fails', () => {
-            const exerciseStub = stub(exerciseService, 'find').returns(throwError({ status: 404 }));
-            alertServiceStub = stub(alertService, 'error');
+            const exerciseStub = jest.spyOn(exerciseService, 'find').mockReturnValue(throwError(() => ({ status: 404 })));
+            alertServiceStub = jest.spyOn(alertService, 'error');
             waitForAsync(() => {
                 comp.ngOnInit();
                 expect(exerciseStub).toHaveBeenCalled();
@@ -117,8 +116,8 @@ describe('TeamComponent', () => {
         });
 
         it('should call alert service error when team service fails', () => {
-            const teamStub = stub(teamService, 'find').returns(throwError({ status: 404 }));
-            alertServiceStub = stub(alertService, 'error');
+            const teamStub = jest.spyOn(teamService, 'find').mockReturnValue(throwError(() => ({ status: 404 })));
+            alertServiceStub = jest.spyOn(alertService, 'error');
             waitForAsync(() => {
                 comp.ngOnInit();
                 expect(teamStub).toHaveBeenCalled();
@@ -131,7 +130,7 @@ describe('TeamComponent', () => {
     describe('ngOnInit with team owner', () => {
         it('should set team owner true if user is team owner', () => {
             waitForAsync(() => {
-                identityStub.returns(Promise.resolve({ ...user, id: 1 }));
+                identityStub.mockReturnValue(Promise.resolve({ ...user, id: 1 }));
                 fixture = TestBed.createComponent(TeamComponent);
                 comp = fixture.componentInstance;
                 comp.ngOnInit();

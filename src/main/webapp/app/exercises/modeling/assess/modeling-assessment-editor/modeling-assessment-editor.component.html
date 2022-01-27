@@ -6,7 +6,6 @@
     [isAssessor]="isAssessor"
     [isTestRun]="isTestRun"
     [exerciseDashboardLink]="exerciseDashboardLink"
-    [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"
     [result]="result"
     [assessmentsAreValid]="assessmentsAreValid"
@@ -21,7 +20,7 @@
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
     [(highlightDifferences)]="highlightDifferences"
     [correctionRound]="correctionRound"
-    (importExampleSubmission)="importStudentSubmissionAsExampleSubmission()"
+    (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
 >
     <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
 </jhi-assessment-layout>
@@ -39,7 +38,7 @@
             [maxScore]="modelingExercise?.maxPoints || 0"
             [maxBonusPoints]="modelingExercise?.bonusPoints || 0"
             [totalScore]="totalScore"
-            [model]="model!"
+            [umlModel]="model!"
             [readOnly]="readOnly"
             [resultFeedbacks]="result?.feedbacks || []"
             [highlightedElements]="highlightedElements"

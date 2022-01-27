@@ -36,15 +36,15 @@
                     />
                 </div>
                 <ng-template #exerciseLoading>
-                    <fa-icon [icon]="'circle-notch'" [spin]="true" class="mb-3 text-secondary"></fa-icon>
+                    <fa-icon [icon]="faCircleNotch" [spin]="true" class="mb-3 text-secondary"></fa-icon>
                 </ng-template>
             </div>
             <div>
                 <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                    <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
                 <button type="submit" id="save-entity" [disabled]="hintForm.invalid || isSaving || isLoading || exerciseNotFound" class="btn btn-primary">
-                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                    <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                 </button>
             </div>
         </form>

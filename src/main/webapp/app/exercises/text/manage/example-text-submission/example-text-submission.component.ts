@@ -26,6 +26,8 @@ import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } 
 import { filter, switchMap, tap } from 'rxjs/operators';
 import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { Observable, of } from 'rxjs';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
@@ -55,6 +57,11 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     SubmissionButtonStates = SubmissionButtonStates;
     AssessButtonStates = AssessButtonStates;
     UIStates = UIStates;
+
+    // Icons
+    faSave = faSave;
+    faEdit = faEdit;
+    farListAlt = faListAlt;
 
     constructor(
         alertService: AlertService,
@@ -162,30 +169,36 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         newExampleSubmission.submission = this.submission!;
         newExampleSubmission.exercise = this.exercise;
 
-        this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-            this.exampleSubmission = exampleSubmissionResponse.body!;
-            this.exampleSubmission.exercise = this.exercise;
-            this.exampleSubmissionId = this.exampleSubmission.id!;
-            this.submission = this.exampleSubmission.submission as TextSubmission;
-            this.isNewSubmission = false;
-            this.unsavedSubmissionChanges = false;
-            this.state.edit();
+        this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe({
+            next: (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+                this.exampleSubmission = exampleSubmissionResponse.body!;
+                this.exampleSubmission.exercise = this.exercise;
+                this.exampleSubmissionId = this.exampleSubmission.id!;
+                this.submission = this.exampleSubmission.submission as TextSubmission;
+                this.isNewSubmission = false;
+                this.unsavedSubmissionChanges = false;
+                this.state.edit();
 
-            // Update the url with the new id, without reloading the page, to make the history consistent
-            this.navigationUtilService.replaceNewWithIdInUrl(window.location.href, this.exampleSubmissionId);
+                // Update the url with the new id, without reloading the page, to make the history consistent
+                this.navigationUtilService.replaceNewWithIdInUrl(window.location.href, this.exampleSubmissionId);
 
-            this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
-        }, this.alertService.error);
+                this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
+            },
+            error: this.alertService.error,
+        });
     }
 
     /**
      * Updates the example submission.
      */
     updateExampleTextSubmission(): void {
-        this.saveSubmissionIfNeeded().subscribe(() => {
-            this.state.edit();
-            this.alertService.success('artemisApp.exampleSubmission.saveSuccessful');
-        }, this.alertService.error);
+        this.saveSubmissionIfNeeded().subscribe({
+            next: () => {
+                this.state.edit();
+                this.alertService.success('artemisApp.exampleSubmission.saveSuccessful');
+            },
+            error: this.alertService.error,
+        });
     }
 
     saveSubmissionIfNeeded(): Observable<ExampleSubmissionResponseType> {
@@ -224,12 +237,15 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
 
         this.saveSubmissionIfNeeded()
             .pipe(switchMap(() => this.assessmentsService.saveExampleAssessment(this.exerciseId, this.exampleSubmission.id!, this.assessments, this.textBlocksWithFeedback)))
-            .subscribe((response) => {
-                this.result = response.body!;
-                this.areNewAssessments = false;
-                this.state.assess();
-                this.alertService.success('artemisApp.textAssessment.saveSuccessful');
-            }, this.alertService.error);
+            .subscribe({
+                next: (response) => {
+                    this.result = response.body!;
+                    this.areNewAssessments = false;
+                    this.state.assess();
+                    this.alertService.success('artemisApp.textAssessment.saveSuccessful');
+                },
+                error: this.alertService.error,
+            });
     }
 
     /**

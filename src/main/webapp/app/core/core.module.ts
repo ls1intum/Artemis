@@ -8,19 +8,15 @@ import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.inter
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { NgbDateAdapter, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
 import { NgxWebstorageModule, SessionStorageService } from 'ngx-webstorage';
-import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
-import { fas } from '@fortawesome/free-solid-svg-icons';
 import locale from '@angular/common/locales/en';
-import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
 import { MissingTranslationHandler, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { RepositoryInterceptor } from 'app/exercises/shared/result/repository.service';
-import { CookieService } from 'ngx-cookie-service';
 import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { ArtemisVersionInterceptor } from 'app/core/interceptor/artemis-version.interceptor';
 import { missingTranslationHandler, translatePartialLoader } from './config/translation.config';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import './config/dayjs';
 import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 
@@ -49,7 +45,6 @@ import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
         { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
         { provide: ErrorHandler, useClass: SentryErrorHandler },
         DatePipe,
-        CookieService,
         /**
          * @description Interceptor declarations:
          * Interceptors are located at 'blocks/interceptor/.
@@ -102,10 +97,8 @@ import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
     ],
 })
 export class ArtemisCoreModule {
-    constructor(iconLibrary: FaIconLibrary, dpConfig: NgbDatepickerConfig, translateService: TranslateService, sessionStorageService: SessionStorageService) {
+    constructor(dpConfig: NgbDatepickerConfig, translateService: TranslateService, sessionStorageService: SessionStorageService) {
         registerLocaleData(locale);
-        iconLibrary.addIconPacks(fas);
-        iconLibrary.addIcons(...fontAwesomeIcons);
         dpConfig.minDate = { year: dayjs().subtract(100, 'year').year(), month: 1, day: 1 };
         translateService.setDefaultLang('en');
         const langKey = sessionStorageService.retrieve('locale') ?? 'en';

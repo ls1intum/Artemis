@@ -1,8 +1,6 @@
 import * as ace from 'brace';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { NgModel } from '@angular/forms';
@@ -29,9 +27,6 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { teamRoute } from 'app/exercises/shared/team/team.route';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('TeamsComponent', () => {
     // needed to make sure ace is defined
@@ -87,10 +82,10 @@ describe('TeamsComponent', () => {
         tick();
 
         // Make sure that all 3 teams were received for exercise
-        expect(comp.teams).to.have.length(mockTeams.length);
+        expect(comp.teams).toHaveLength(mockTeams.length);
 
         // Check that ngx-datatable is present
         const datatable = debugElement.query(By.css('jhi-data-table'));
-        expect(datatable).to.exist;
+        expect(datatable).not.toBeNull();
     }));
 });

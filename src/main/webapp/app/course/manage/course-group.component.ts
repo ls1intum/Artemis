@@ -16,6 +16,7 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/utils/icons.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
 
 const cssClasses = {
     alreadyMember: 'already-member',
@@ -51,6 +52,9 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     searchNoResults = false;
     isTransitioning = false;
     rowClass: string | undefined = undefined;
+
+    // Icons
+    faUserSlash = faUserSlash;
 
     constructor(
         private router: Router,
@@ -159,8 +163,8 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
         // If the user is not part of this course group yet, perform the server call to add them
         if (!this.allCourseGroupUsers.map((u) => u.id).includes(user.id) && user.login) {
             this.isTransitioning = true;
-            this.courseService.addUserToCourseGroup(this.course.id!, this.courseGroup, user.login).subscribe(
-                () => {
+            this.courseService.addUserToCourseGroup(this.course.id!, this.courseGroup, user.login).subscribe({
+                next: () => {
                     this.isTransitioning = false;
 
                     // Add newly added user to the list of all users in the course group
@@ -172,10 +176,10 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
                     // Flash green background color to signal to the user that this record was added
                     this.flashRowClass(cssClasses.newlyAddedMember);
                 },
-                () => {
+                error: () => {
                     this.isTransitioning = false;
                 },
-            );
+            });
         } else {
             // Hand back over to the data table
             callback(user);
@@ -189,13 +193,13 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
      */
     removeFromGroup(user: User) {
         if (user.login) {
-            this.courseService.removeUserFromCourseGroup(this.course.id!, this.courseGroup, user.login).subscribe(
-                () => {
+            this.courseService.removeUserFromCourseGroup(this.course.id!, this.courseGroup, user.login).subscribe({
+                next: () => {
                     this.allCourseGroupUsers = this.allCourseGroupUsers.filter((u) => u.login !== user.login);
                     this.dialogErrorSource.next('');
                 },
-                (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-            );
+                error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            });
         }
     }
 

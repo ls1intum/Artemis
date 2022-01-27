@@ -1,16 +1,14 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
 import { take } from 'rxjs/operators';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { MockProvider } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
 
 describe('ExerciseHint Service', () => {
-    let injector: TestBed;
     let service: ExerciseHintService;
     let httpMock: HttpTestingController;
     let elemDefault: ExerciseHint;
@@ -20,18 +18,11 @@ describe('ExerciseHint Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            providers: [
-                MockProvider(ExerciseService, {
-                    convertDateFromClient<E extends Exercise>(res: E): E {
-                        return res;
-                    },
-                }),
-            ],
+            providers: [{ provide: ExerciseService, useClass: MockExerciseService }],
         });
         expectedResult = {} as HttpResponse<ExerciseHint>;
-        injector = getTestBed();
-        service = injector.get(ExerciseHintService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(ExerciseHintService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.id = 1;

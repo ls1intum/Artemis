@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.*;
 
@@ -93,6 +94,12 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @Column(name = "last_notification_read")
     private ZonedDateTime lastNotificationRead = null;
+
+    // hides all notifications with a notification date until (before) the given date in the notification sidebar.
+    // if the value is null all notifications are displayed
+    @Nullable
+    @Column(name = "hide_notifications_until")
+    private ZonedDateTime hideNotificationsUntil = null;
 
     /**
      * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
@@ -225,6 +232,14 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.lastNotificationRead = lastNotificationRead;
     }
 
+    public ZonedDateTime getHideNotificationsUntil() {
+        return hideNotificationsUntil;
+    }
+
+    public void setHideNotificationsUntil(ZonedDateTime hideNotificationsUntil) {
+        this.hideNotificationsUntil = hideNotificationsUntil;
+    }
+
     public String getLangKey() {
         return langKey;
     }
@@ -312,16 +327,8 @@ public class User extends AbstractAuditingEntity implements Participant {
                 + '\'' + ", activated='" + activated + '\'' + ", langKey='" + langKey + '\'' + ", activationKey='" + activationKey + '\'' + "}";
     }
 
-    /**
-     * copy the basic user settings to hide not needed information before sending the user object to the client
-     * @return the basic user
-     */
-    public User copyBasicUser() {
-        User user = new User();
-        user.setId(getId());
-        user.setFirstName(getFirstName());
-        user.setLastName(getLastName());
-        user.setLogin(getLogin());
-        return user;
+    @JsonIgnore
+    public String toDatabaseString() {
+        return "Student: login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber + '\'';
     }
 }

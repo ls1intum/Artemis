@@ -3,7 +3,6 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
@@ -34,7 +33,7 @@ import { TextSubmissionService } from 'app/exercises/text/participate/text-submi
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockProvider, MockPipe } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
@@ -44,6 +43,7 @@ import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercise
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -104,7 +104,7 @@ describe('ExamParticipationComponent', () => {
                 courseExerciseService = TestBed.inject(CourseExerciseService);
                 textSubmissionService = TestBed.inject(TextSubmissionService);
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
-                alertService = fixture.debugElement.injector.get(AlertService);
+                alertService = TestBed.inject(AlertService);
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
                 fixture.detectChanges();
             });
@@ -112,6 +112,7 @@ describe('ExamParticipationComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        comp.ngOnDestroy();
     });
 
     it('should initialize', () => {
@@ -128,7 +129,7 @@ describe('ExamParticipationComponent', () => {
             expect(testRunRibbon).toBeDefined();
         });
         it('should initialize and not display test run ribbon', () => {
-            TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+            TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
             comp.ngOnInit();
             fixture.detectChanges();
             expect(fixture).toBeTruthy();
@@ -184,7 +185,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
         studentExam.workingTime = 100;
         const studentExamWithExercises = new StudentExam();
-        TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
         const loadStudentExamWithExercisesForSummary = jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
         comp.ngOnInit();
@@ -213,7 +214,7 @@ describe('ExamParticipationComponent', () => {
         const lastSaveFailedStub = jest.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(true);
         const loadLocalStudentExamStub = jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage').mockReturnValue(of(localStudentExam));
 
-        TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
 
         comp.ngOnInit();
 
@@ -285,7 +286,7 @@ describe('ExamParticipationComponent', () => {
 
     it('should initialize exercise without test run', () => {
         // Should calculate time from exam start date when no test run, rest does not get effected
-        TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         comp.ngOnInit();
         const startDate = dayjs();
         comp.exam = new Exam();
@@ -325,7 +326,7 @@ describe('ExamParticipationComponent', () => {
         comp.exam = new Exam();
         comp.exam.course = new Course();
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        const courseExerciseServiceStub = jest.spyOn(courseExerciseService, 'startExercise').mockReturnValue(throwError(httpError));
+        const courseExerciseServiceStub = jest.spyOn(courseExerciseService, 'startExercise').mockReturnValue(throwError(() => httpError));
         let index = 0;
         const states = ['generating', 'failed'];
         comp.generateParticipationStatus.subscribe((state) => {
@@ -416,7 +417,7 @@ describe('ExamParticipationComponent', () => {
 
     it('should show error', () => {
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(httpError));
+        const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
         const alertErrorSpy = jest.spyOn(alertService, 'error');
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalled();
@@ -459,7 +460,7 @@ describe('ExamParticipationComponent', () => {
     });
 
     const setComponentWithoutTestRun = () => {
-        TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         comp.ngOnInit();
         comp.exam = new Exam();
     };

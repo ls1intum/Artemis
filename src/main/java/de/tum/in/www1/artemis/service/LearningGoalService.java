@@ -10,6 +10,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.repository.*;
@@ -77,14 +78,14 @@ public class LearningGoalService {
     private void fillInScoreAchievedByStudentUsingParticipationsSubmissionsResults(User user,
             Map<Exercise, IndividualLearningGoalProgress.IndividualLectureUnitProgress> exerciseToLectureUnitProgress, List<Exercise> individualExercises,
             List<Exercise> teamExercises) {
-        // for all relevant exercises the participations with submissions and results will be batch loaded
+        // for all relevant exercises the participations with submissions and results will be batch-loaded
         List<StudentParticipation> participationsOfTheStudent = getStudentParticipationsWithSubmissionsAndResults(user, individualExercises, teamExercises);
 
         for (Exercise exercise : exerciseToLectureUnitProgress.keySet()) {
             // exercise -> participation -> submission -> result until possibly the latest result is found for the student
             Optional<Result> optionalResult = findLastResultOfExerciseInListOfParticipations(exercise, participationsOfTheStudent);
             exerciseToLectureUnitProgress.get(exercise).scoreAchievedByStudentInLectureUnit = optionalResult.isEmpty() || optionalResult.get().getScore() == null ? 0.0
-                    : optionalResult.get().getScore().doubleValue();
+                    : optionalResult.get().getScore();
         }
     }
 
@@ -93,14 +94,12 @@ public class LearningGoalService {
             List<Exercise> teamExercises) {
         for (Exercise exercise : individualExercises) {
             Optional<StudentScore> studentScoreOptional = studentScoreRepository.findStudentScoreByExerciseAndUserLazy(exercise, user);
-            exerciseToLectureUnitProgress.get(exercise).scoreAchievedByStudentInLectureUnit = studentScoreOptional.map(studentScore -> studentScore.getLastScore().doubleValue())
-                    .orElse(0.0);
+            exerciseToLectureUnitProgress.get(exercise).scoreAchievedByStudentInLectureUnit = studentScoreOptional.map(ParticipantScore::getLastScore).orElse(0.0);
         }
 
         for (Exercise exercise : teamExercises) {
             Optional<TeamScore> teamScoreOptional = teamScoreRepository.findTeamScoreByExerciseAndUserLazy(exercise, user);
-            exerciseToLectureUnitProgress.get(exercise).scoreAchievedByStudentInLectureUnit = teamScoreOptional.map(teamScore -> teamScore.getLastScore().doubleValue())
-                    .orElse(0.0);
+            exerciseToLectureUnitProgress.get(exercise).scoreAchievedByStudentInLectureUnit = teamScoreOptional.map(ParticipantScore::getLastScore).orElse(0.0);
         }
     }
 
@@ -118,7 +117,7 @@ public class LearningGoalService {
      */
     private Set<CourseLearningGoalProgress.CourseLectureUnitProgress> calculateExerciseUnitsProgressForCourse(List<ExerciseUnit> exerciseUnits, boolean useParticipantScoreTable) {
         List<ExerciseUnit> filteredExerciseUnits = exerciseUnits.stream()
-                .filter(exerciseUnit -> exerciseUnit.getExercise() != null && exerciseUnit.getExercise().isAssessmentDueDateOver()).collect(Collectors.toList());
+                .filter(exerciseUnit -> exerciseUnit.getExercise() != null && exerciseUnit.getExercise().isAssessmentDueDateOver()).toList();
         List<Long> exerciseIds = filteredExerciseUnits.stream().map(exerciseUnit -> exerciseUnit.getExercise().getId()).distinct().collect(Collectors.toList());
 
         Map<Long, CourseExerciseStatisticsDTO> exerciseIdToExerciseCourseStatistics = this.exerciseRepository.calculateExerciseStatistics(exerciseIds, useParticipantScoreTable)

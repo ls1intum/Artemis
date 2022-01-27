@@ -1,16 +1,18 @@
 <div
+    id="inline-feedback"
     class="border rounded"
     [style.max-width]="'780px'"
-    [class.alert-success]="feedback.credits! > 0"
-    [class.alert-danger]="feedback.credits! < 0"
-    [class.alert-warning]="!feedback.credits"
+    [class.alert-success]="feedback.credits! > 0 && feedback.isSubsequent === undefined"
+    [class.alert-danger]="feedback.credits! < 0 && feedback.isSubsequent === undefined"
+    [class.alert-warning]="!feedback.credits && feedback.isSubsequent === undefined"
+    [class.alert-secondary]="readOnly && feedback.isSubsequent"
 >
     <div *ngIf="!viewOnly; else readOnlyFeedback" class="m-2" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
         <div class="row align-items-start">
             <div class="form-group col-8 m-0">
                 <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
                 <div class="d-inline" *ngIf="feedback.gradingInstruction!">
-                    <fa-icon [icon]="'question-circle'" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate" container="body"></fa-icon>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate" container="body"></fa-icon>
                     <span>{{ feedback.gradingInstruction!.feedback }}</span>
                 </div>
             </div>
@@ -24,6 +26,7 @@
         <div class="row align-items-start">
             <div class="form-group col-8 p-2 m-0">
                 <textarea
+                    id="feedback-textarea"
                     class="form-control"
                     rows="5"
                     [(ngModel)]="feedback.detailText"
@@ -36,18 +39,25 @@
                 ></textarea>
             </div>
             <div class="form-group col-3 p-2 m-0">
-                <input class="form-control px-1" type="number" step="0.5" [(ngModel)]="feedback.credits" [readOnly]="viewOnly || feedback.gradingInstruction" />
+                <input
+                    id="feedback-points"
+                    class="form-control px-1"
+                    type="number"
+                    step="0.5"
+                    [(ngModel)]="feedback.credits"
+                    [readOnly]="viewOnly || feedback.gradingInstruction"
+                />
             </div>
         </div>
         <div>
             <button type="button" class="btn btn-secondary btn-sm" (click)="cancelFeedback()">
-                <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
             <button *ngIf="feedback.type === MANUAL" type="submit" (click)="deleteFeedback()" class="btn btn-danger btn-sm me-1">
-                <fa-icon [icon]="'trash-alt'"></fa-icon> <span jhiTranslate="entity.action.delete">Delete</span>
+                <fa-icon [icon]="faTrashAlt"></fa-icon> <span jhiTranslate="entity.action.delete">Delete</span>
             </button>
-            <button type="submit" [disabled]="feedback.credits == null" class="btn btn-primary btn-sm" (click)="updateFeedback()">
-                <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+            <button id="feedback-save" type="submit" [disabled]="feedback.credits == null" class="btn btn-primary btn-sm" (click)="updateFeedback()">
+                <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
             </button>
         </div>
         <div *ngIf="highlightDifferences">
@@ -61,16 +71,24 @@
         <div class="row align-items-center m-0">
             <div class="col ps-0 pt-1">
                 <h5 class="d-inline">
-                    <span class="badge" [class.bg-success]="feedback.credits! > 0" [class.bg-danger]="feedback.credits! < 0" [class.bg-warning]="feedback.credits === 0">{{
-                        roundScoreSpecifiedByCourseSettings(feedback.credits, course) + 'P'
-                    }}</span>
+                    <span
+                        class="badge"
+                        [class.bg-success]="feedback.credits! > 0 && feedback.isSubsequent === undefined"
+                        [class.bg-danger]="feedback.credits! < 0 && feedback.isSubsequent === undefined"
+                        [class.bg-warning]="feedback.credits === 0 && feedback.isSubsequent === undefined"
+                        [class.bg-secondary]="readOnly && feedback.isSubsequent"
+                        >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, course) + 'P' }}</span
+                    >
                 </h5>
                 <h6 class="d-inline" jhiTranslate="artemisApp.assessment.detail.tutorComment">Tutor Comment:</h6>
             </div>
             <div *ngIf="!readOnly" class="col d-flex justify-content-end pe-0 pt-1">
                 <button type="submit" (click)="editFeedback(codeLine)" class="btn btn-primary btn-sm">
-                    <fa-icon [icon]="'pencil-alt'"></fa-icon> <span jhiTranslate="entity.action.edit">Edit</span>
+                    <fa-icon [icon]="faPencilAlt"></fa-icon> <span jhiTranslate="entity.action.edit">Edit</span>
                 </button>
+            </div>
+            <div *ngIf="readOnly && feedback.isSubsequent" class="col d-flex justify-content-end pe-0 pt-1 text-secondary">
+                <fa-icon class="float-end" [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"></fa-icon>
             </div>
         </div>
         <div class="row ms-4 mt-2 pb-1"><span [innerHTML]="buildFeedbackTextForCodeEditor(feedback)"></span></div>

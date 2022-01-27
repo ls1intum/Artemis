@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.security.Principal;
@@ -23,6 +22,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.scheduled.AtheneScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -58,12 +58,14 @@ public class TextSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
+    private final PlagiarismService plagiarismService;
+
     private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository, TextExerciseRepository textExerciseRepository,
             AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, Optional<AtheneScheduleService> atheneScheduleService,
-            ExamSubmissionService examSubmissionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
+            ExamSubmissionService examSubmissionService, PlagiarismService plagiarismService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
         this.textExerciseRepository = textExerciseRepository;
@@ -74,6 +76,7 @@ public class TextSubmissionResource {
         this.atheneScheduleService = atheneScheduleService;
         this.textAssessmentService = textAssessmentService;
         this.examSubmissionService = examSubmissionService;
+        this.plagiarismService = plagiarismService;
         this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
     }
 
@@ -158,7 +161,7 @@ public class TextSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the textSubmission, or with status 404 (Not Found)
      */
     @GetMapping("/text-submissions/{submissionId}")
-    @PreAuthorize("hasRole('TA')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<TextSubmission> getTextSubmissionWithResults(@PathVariable Long submissionId) {
         log.debug("REST request to get TextSubmission : {}", submissionId);
         Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findWithEagerResultsById(submissionId);
@@ -168,7 +171,9 @@ public class TextSubmissionResource {
         }
         final var textSubmission = optionalTextSubmission.get();
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
-            return forbidden();
+            // anonymize and throw exception if not authorized to view submission
+            plagiarismService.anonymizeSubmissionForStudentView(textSubmission, userRepository.getUser().getLogin());
+            return ResponseEntity.ok(textSubmission);
         }
 
         // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
@@ -202,11 +207,11 @@ public class TextSubmissionResource {
         Exercise exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         if (assessedByTutor) {
             if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                throw new AccessForbiddenException(NOT_ALLOWED);
+                throw new AccessForbiddenException();
             }
         }
         else if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
 
         List<TextSubmission> textSubmissions;

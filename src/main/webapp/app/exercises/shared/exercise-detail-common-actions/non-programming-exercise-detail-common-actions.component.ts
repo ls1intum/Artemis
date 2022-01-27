@@ -9,6 +9,7 @@ import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faBook, faChartBar, faListAlt, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
@@ -32,6 +33,15 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     readonly ExerciseType = ExerciseType;
 
     readonly AssessmentType = AssessmentType;
+
+    // Icons
+    faTimes = faTimes;
+    faBook = faBook;
+    faWrench = faWrench;
+    faUsers = faUsers;
+    faTable = faTable;
+    faListAlt = faListAlt;
+    faChartBar = faChartBar;
 
     constructor(
         private textExerciseService: TextExerciseService,
@@ -60,8 +70,8 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     deleteExercise() {
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
-                this.textExerciseService.delete(this.exercise.id!).subscribe(
-                    () => {
+                this.textExerciseService.delete(this.exercise.id!).subscribe({
+                    next: () => {
                         this.eventManager.broadcast({
                             name: 'textExerciseListModification',
                             content: 'Deleted a textExercise',
@@ -69,12 +79,12 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                         this.dialogErrorSource.next('');
                         this.navigateToOverview();
                     },
-                    (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-                );
+                    error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                });
                 break;
             case ExerciseType.FILE_UPLOAD:
-                this.fileUploadExerciseService.delete(this.exercise.id!).subscribe(
-                    () => {
+                this.fileUploadExerciseService.delete(this.exercise.id!).subscribe({
+                    next: () => {
                         this.eventManager.broadcast({
                             name: 'fileUploadExerciseListModification',
                             content: 'Deleted an fileUploadExercise',
@@ -82,12 +92,12 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                         this.dialogErrorSource.next('');
                         this.navigateToOverview();
                     },
-                    (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-                );
+                    error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                });
                 break;
             case ExerciseType.MODELING:
-                this.modelingExerciseService.delete(this.exercise.id!).subscribe(
-                    () => {
+                this.modelingExerciseService.delete(this.exercise.id!).subscribe({
+                    next: () => {
                         this.eventManager.broadcast({
                             name: 'modelingExerciseListModification',
                             content: 'Deleted an modelingExercise',
@@ -95,8 +105,8 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                         this.dialogErrorSource.next('');
                         this.navigateToOverview();
                     },
-                    (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-                );
+                    error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                });
                 break;
             default:
         }

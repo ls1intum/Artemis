@@ -33,16 +33,19 @@ public class TextSubmissionService extends SubmissionService {
 
     private final SubmissionVersionService submissionVersionService;
 
+    private final ExerciseDateService exerciseDateService;
+
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
             UserRepository userRepository, Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService,
-            SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, ComplaintRepository complaintRepository) {
+            SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService,
+            CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                courseRepository, participationRepository, complaintRepository);
+                exerciseDateService, courseRepository, participationRepository, complaintRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
         this.submissionVersionService = submissionVersionService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -55,21 +58,20 @@ public class TextSubmissionService extends SubmissionService {
      */
     public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise textExercise, Principal principal) {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
-        final var dueDate = textExercise.getDueDate();
         final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(textExercise, principal.getName());
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + textExercise.getId());
         }
         final var participation = optionalParticipation.get();
+        final var dueDate = exerciseDateService.getDueDate(participation);
         // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
-        if (textExercise.isCourseExercise()) {
-            if (dueDate != null && participation.getInitializationDate().isBefore(dueDate) && dueDate.isBefore(ZonedDateTime.now())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-            }
+        if (textExercise.isCourseExercise() && dueDate.isPresent() && participation.getInitializationDate().isBefore(dueDate.get())
+                && dueDate.get().isBefore(ZonedDateTime.now())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (textExercise.isExamExercise() || !textExercise.isEnded()) {
+        if (textExercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
             textSubmission.setSubmitted(true);
         }
         textSubmission = save(textSubmission, participation, textExercise, principal);

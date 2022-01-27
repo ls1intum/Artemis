@@ -14,11 +14,11 @@
                 "registerSuccessful": "Registration successful",
                 "signUpForCourse": "Register",
                 "cancel": "Cancel",
-                "noCourse": "No courses available to register for",
+                "noCourse": "No courses available for registration",
                 "courseLoading": "Courses are loading...",
-                "pleaseSelectCourse": "# Select a course",
                 "courseSignupConfirmationTitle": "Confirm Course Registration"
-            }
+            },
+            "course": "Course"
         },
         "courseOverview": {
             "noDescription": "No description available",
@@ -117,7 +117,20 @@
                 "bonus": "Current bonus points",
                 "gradeInfo": "(based on attainable points)",
                 "gradeHelp": "The grade is based on your attainable points. It could change until the end of the course when more exercises have been assessed.",
-                "bonusHelp": "The bonus points are based on your attainable points. They could change until the end of the course when more exercises have been assessed."
+                "bonusHelp": "The bonus points are based on your attainable points. They could change until the end of the course when more exercises have been assessed.",
+                "programmingExerciseFailedTests": "{{ tests }} tests failed ({{ percentage }}%)",
+                "programmingExercisePassedTests": "{{ tests }} tests passed ({{ percentage }}%)",
+                "programmingPointLabel": "Programming Points",
+                "quizPointLabel": "Quiz Points",
+                "modelingPointLabel": "Modeling Points",
+                "textPointLabel": "Text Points",
+                "fileUploadPointLabel": "File upload Points",
+                "missingPointsLabel": "Missing Points",
+                "achievedPointsLabel": "Achieved Points",
+                "includeStandardCategories": "Hide Artemis standard categories:",
+                "includeIndividualCategories": "Include course specific categories:",
+                "includeAllCategories": "Select all options",
+                "exercisesWithNoCategories": "Exercises with no categories"
             },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",

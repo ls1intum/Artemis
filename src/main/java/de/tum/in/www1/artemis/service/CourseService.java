@@ -1,33 +1,42 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
+import static tech.jhipster.config.JHipsterConstants.*;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalField;
-import java.time.temporal.WeekFields;
+import java.time.temporal.IsoFields;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.core.env.Environment;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
+import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
+import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -36,6 +45,7 @@ import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * Service Implementation for managing Course.
@@ -47,6 +57,10 @@ public class CourseService {
     private String courseArchivesDirPath;
 
     private final Logger log = LoggerFactory.getLogger(CourseService.class);
+
+    private final Environment env;
+
+    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final ExerciseService exerciseService;
 
@@ -80,11 +94,18 @@ public class CourseService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
-            AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService, GroupNotificationRepository groupNotificationRepository,
-            ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository,
-            GroupNotificationService groupNotificationService, ExamService examService, ExamRepository examRepository, CourseExamExportService courseExamExportService,
-            GradingScaleRepository gradingScaleRepository) {
+    private final StatisticsRepository statisticsRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
+            ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
+            GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
+            UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
+            ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
+            StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository) {
+        this.env = env;
+        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -101,6 +122,39 @@ public class CourseService {
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
         this.gradingScaleRepository = gradingScaleRepository;
+        this.statisticsRepository = statisticsRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+    }
+
+    /**
+     * Note: The number of courses should not change
+     *
+     * @param courses           the courses for which the participations should be fetched
+     * @param user              the user for which the participations should be fetched
+     * @param startTimeInMillis start time for logging purposes
+     */
+    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, long startTimeInMillis) {
+        Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
+        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises);
+        if (participationsOfUserInExercises.isEmpty()) {
+            return;
+        }
+        for (Course course : courses) {
+            boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+            for (Exercise exercise : course.getExercises()) {
+                // add participation with submission and result to each exercise
+                exerciseService.filterForCourseDashboard(exercise, participationsOfUserInExercises, user.getLogin(), isStudent);
+                // remove sensitive information from the exercise for students
+                if (isStudent) {
+                    exercise.filterSensitiveInformation();
+                }
+            }
+        }
+        Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
+        int noOfIndividualExercises = Optional.ofNullable(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL)).orElse(List.of()).size();
+        int noOfTeamExercises = Optional.ofNullable(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM)).orElse(List.of()).size();
+        log.info("/courses/for-dashboard.done in {}ms for {} courses with {} individual exercises and {} team exercises for user {}",
+                System.currentTimeMillis() - startTimeInMillis, courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
     }
 
     /**
@@ -113,7 +167,7 @@ public class CourseService {
     public Course findOneWithExercisesAndLecturesAndExamsForUser(Long courseId, User user) {
         Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
         course.setExercises(exerciseService.findAllForCourse(course, user));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
@@ -131,7 +185,7 @@ public class CourseService {
      */
     public List<Course> findAllActiveForUser(User user) {
         return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()))
-                .filter(course -> isActiveCourseVisibleForUser(user, course)).collect(Collectors.toList());
+                .filter(course -> isCourseVisibleForUser(user, course)).collect(Collectors.toList());
     }
 
     /**
@@ -144,7 +198,7 @@ public class CourseService {
         return courseRepository.findAllActiveWithLecturesAndExams().stream()
                 // filter old courses and courses the user should not be able to see
                 // skip old courses that have already finished
-                .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isActiveCourseVisibleForUser(user, course))
+                .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isCourseVisibleForUser(user, course))
                 .peek(course -> {
                     course.setExercises(exerciseService.findAllForCourse(course, user));
                     course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
@@ -154,7 +208,7 @@ public class CourseService {
                 }).collect(Collectors.toList());
     }
 
-    private boolean isActiveCourseVisibleForUser(User user, Course course) {
+    private boolean isCourseVisibleForUser(User user, Course course) {
         // Instructors and TAs see all courses that have not yet finished
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return true;
@@ -250,7 +304,7 @@ public class CourseService {
 
     /**
      * If the exercise is part of an exam, retrieve the course through ExerciseGroup -> Exam -> Course.
-     * Otherwise the course is already set and the id can be used to retrieve the course from the database.
+     * Otherwise, the course is already set and the id can be used to retrieve the course from the database.
      *
      * @param exercise the Exercise for which the course is retrieved
      * @return the Course of the Exercise
@@ -297,8 +351,8 @@ public class CourseService {
      */
     public List<StudentDTO> registerUsersForCourseGroup(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
         var course = courseRepository.findByIdElseThrow(courseId);
-        String courseGroupName = defineCourseGroupName(course, courseGroup);
-        Role courseGroupRole = defineCourseRole(courseGroup);
+        String courseGroupName = course.defineCourseGroupName(courseGroup);
+        Role courseGroupRole = Role.fromString(courseGroup);
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         for (var studentDto : studentDTOs) {
             var registrationNumber = studentDto.getRegistrationNumber();
@@ -313,38 +367,9 @@ public class CourseService {
     }
 
     /**
-     * We want to add users to a group, however different courses might have different courseGroupNames, therefore we
-     * use this method to return the customized courseGroup name
-     *
-     * @param course the course we want to add a user to
-     * @param courseGroup the courseGroup we want to add the user to
-     *
-     * @return the customized userGroupName
-     */
-    private String defineCourseGroupName(Course course, String courseGroup) {
-        return switch (courseGroup) {
-            case "students" -> course.getStudentGroupName();
-            case "tutors" -> course.getTeachingAssistantGroupName();
-            case "instructors" -> course.getInstructorGroupName();
-            case "editors" -> course.getEditorGroupName();
-            default -> throw new IllegalArgumentException();
-        };
-    }
-
-    private Role defineCourseRole(String courseGroup) {
-        return switch (courseGroup) {
-            case "students" -> Role.STUDENT;
-            case "tutors" -> Role.TEACHING_ASSISTANT;
-            case "instructors" -> Role.INSTRUCTOR;
-            case "editors" -> Role.EDITOR;
-            default -> Role.ANONYMOUS;
-        };
-    }
-
-    /**
      * Fetches a list of Courses
      *
-     * @param onlyActive Whether or not to include courses with a past endDate
+     * @param onlyActive Whether to include courses with a past endDate
      * @return A list of Courses for the course management overview
      */
     public List<Course> getAllCoursesForManagementOverview(boolean onlyActive) {
@@ -359,14 +384,14 @@ public class CourseService {
      *
      * @param exerciseIds the ids to get the active students for
      * @param periodIndex the deviation from the current time
-     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 16 for the courde detail view
-     * @return An Integer array containing active students for each index. An index corresponds to a week
+     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 17 for the course detail view
+     * @param date the date for which the active students' calculation should end (e.g. now)
+     * @return An Integer list containing active students for each index. An index corresponds to a week
      */
-    public Integer[] getActiveStudents(Set<Long> exerciseIds, long periodIndex, int length) {
-        ZonedDateTime now = ZonedDateTime.now();
-        LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
-        LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
-        ZoneId zone = now.getZone();
+    public List<Integer> getActiveStudents(Set<Long> exerciseIds, long periodIndex, int length, ZonedDateTime date) {
+        LocalDateTime localStartDate = date.toLocalDateTime().with(DayOfWeek.MONDAY);
+        LocalDateTime localEndDate = date.toLocalDateTime().with(DayOfWeek.SUNDAY);
+        ZoneId zone = date.getZone();
         // startDate is the starting point of the data collection which is the Monday 3 weeks ago +/- the deviation from the current timeframe
         ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks((length - 1) + (length * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
         // the endDate depends on whether the current week is shown. If it is, the endDate is the Sunday of the current week at 23:59.
@@ -375,7 +400,9 @@ public class CourseService {
                 : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
         List<StatisticsEntry> outcome = courseRepository.getActiveStudents(exerciseIds, startDate, endDate);
         List<StatisticsEntry> distinctOutcome = removeDuplicateActiveUserRows(outcome, startDate);
-        return sortUserIntoWeeks(distinctOutcome, startDate, length);
+        List<Integer> result = new ArrayList<>(Collections.nCopies(length, 0));
+        statisticsRepository.sortDataIntoWeeks(distinctOutcome, result, startDate);
+        return result;
     }
 
     /**
@@ -388,77 +415,35 @@ public class CourseService {
      */
 
     private List<StatisticsEntry> removeDuplicateActiveUserRows(List<StatisticsEntry> activeUserRows, ZonedDateTime startDate) {
-        int startIndex = getWeekOfDate(startDate);
-        Map<Object, List<String>> usersByDate = new HashMap<>();
+        int startIndex = statisticsRepository.getWeekOfDate(startDate);
+        Map<Integer, List<String>> usersByDate = new HashMap<>();
         for (StatisticsEntry listElement : activeUserRows) {
             // listElement.date has the form "2021-05-04", to convert it to ZonedDateTime, it needs a time
             String dateOfElement = listElement.getDate() + " 10:00";
             var zone = startDate.getZone();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
             ZonedDateTime date = LocalDateTime.parse(dateOfElement, formatter).atZone(zone);
-            int index = getWeekOfDate(date);
-            // the database stores entries in UTC, so it can happen that entries have a date one date before the startDate
-            index = index == startIndex - 1 ? startIndex : index;
-            String username = listElement.getUsername();
-            List<String> usersInSameSlot = usersByDate.get(index);
-            // if this index is not yet existing in users
-            if (usersInSameSlot == null) {
-                usersInSameSlot = new ArrayList<>();
-                usersInSameSlot.add(username);
-                usersByDate.put(index, usersInSameSlot);
-            }   // if the value of the map for this index does not contain this username
-            else if (!usersInSameSlot.contains(username)) {
-                usersInSameSlot.add(username);
-            }
+            int index = statisticsRepository.getWeekOfDate(date);
+            /*
+             * The database stores entries in UTC, so it can happen that entries lay in the calendar week one week before the calendar week of the startDate If startDate lays in a
+             * calendar week other than the first one, we simply check whether the calendar week of the entry equals to the calendar week of startDate - 1. If startDate lays in the
+             * first calendar week, we check whether the calendar week of the entry equals the last calendar week of the prior year. In either case, if the condition resolves to
+             * true, we shift the index the submission is sorted in to the calendar week of startDate, as this is the first bucket in the timeframe of interest.
+             */
+            var unifiedDateWeekBeforeStartIndex = startIndex == 1 ? Math.toIntExact(IsoFields.WEEK_OF_WEEK_BASED_YEAR.rangeRefinedBy(startDate.minusWeeks(1)).getMaximum())
+                    : startIndex - 1;
+            index = index == unifiedDateWeekBeforeStartIndex ? startIndex : index;
+            statisticsRepository.addUserToTimeslot(usersByDate, listElement, index);
         }
         List<StatisticsEntry> returnList = new ArrayList<>();
         usersByDate.forEach((date, users) -> {
-            int year = (Integer) date < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
+            int year = date < statisticsRepository.getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
             ZonedDateTime firstDateOfYear = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone());
-            ZonedDateTime start = getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(((Integer) date) - 1) : firstDateOfYear.plusWeeks((Integer) date);
+            ZonedDateTime start = statisticsRepository.getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(date - 1) : firstDateOfYear.plusWeeks(date);
             StatisticsEntry listElement = new StatisticsEntry(start, users.size());
             returnList.add(listElement);
         });
         return returnList;
-    }
-
-    /**
-     * Gets a list of maps as parameter, each map describing an entry in the database. The map has the two keys "day" and "amount",
-     * which map to the date and the amount of the findings. This Map-List is taken and converted into an Integer array,
-     * containing the values for each point of the graph. In the course management overview, we want to display the last
-     * 4 weeks, each week represented by one point in the graph. (Beginning with the current week.) In the course detail view,
-     * we display 16 weeks at once.
-     *
-     * @param outcome A List<StatisticsEntry>, containing the content which should be refactored into an array
-     * @param startDate the startDate
-     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 16 for the courde detail view
-     * @return an array, containing the amount of active users. One entry corresponds to one week
-     */
-    private Integer[] sortUserIntoWeeks(List<StatisticsEntry> outcome, ZonedDateTime startDate, int length) {
-        Integer[] result = new Integer[length];
-        Arrays.fill(result, 0);
-        for (StatisticsEntry map : outcome) {
-            ZonedDateTime date = (ZonedDateTime) map.getDay();
-            int amount = Math.toIntExact(map.getAmount());
-            int dateWeek = getWeekOfDate(date);
-            int startDateWeek = getWeekOfDate(startDate);
-            int weeksDifference;
-            weeksDifference = dateWeek < startDateWeek ? dateWeek == startDateWeek - 1 ? 0 : dateWeek + 53 - startDateWeek : dateWeek - startDateWeek;
-            result[weeksDifference] += amount;
-        }
-        return result;
-    }
-
-    /**
-     * Gets the week of the given date
-     *
-     * @param date the date to get the week for
-     * @return the calendar week of the given date
-     */
-    private Integer getWeekOfDate(ZonedDateTime date) {
-        LocalDate localDate = date.toLocalDate();
-        TemporalField weekOfYear = WeekFields.of(DayOfWeek.MONDAY, 4).weekOfWeekBasedYear();
-        return localDate.get(weekOfYear);
     }
 
     /**
@@ -477,7 +462,7 @@ public class CourseService {
         dto.setNumberOfEditorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getEditorGroupName())));
         dto.setNumberOfInstructorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getInstructorGroupName())));
 
-        dto.setActiveStudents(getActiveStudents(exerciseIds, 0, 16));
+        dto.setActiveStudents(getActiveStudents(exerciseIds, 0, 17, ZonedDateTime.now()));
         return dto;
     }
 
@@ -506,7 +491,7 @@ public class CourseService {
             Files.createDirectories(Path.of(courseArchivesDirPath));
             log.info("Created the course archives directory at {} because it didn't exist.", courseArchivesDirPath);
 
-            // Export the course to the archives directory.
+            // Export the course to the archives' directory.
             var archivedCoursePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
 
             // Attach the path to the archive to the course and save it in the database
@@ -559,11 +544,134 @@ public class CourseService {
         log.info("The course {} has been cleaned up!", courseId);
     }
 
+    /**
+     * Returns all users in a course that belong to the given group
+     *
+     * @param course    the course
+     * @param groupName the name of the group
+     * @return list of users
+     */
+    @NotNull
+    public ResponseEntity<List<User>> getAllUsersInGroup(Course course, String groupName) {
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        var usersInGroup = userRepository.findAllInGroup(groupName);
+        usersInGroup.forEach(user -> {
+            // remove some values which are not needed in the client
+            user.setLastNotificationRead(null);
+            user.setActivationKey(null);
+            user.setLangKey(null);
+            user.setLastNotificationRead(null);
+            user.setLastModifiedBy(null);
+            user.setLastModifiedDate(null);
+            user.setCreatedBy(null);
+            user.setCreatedDate(null);
+        });
+        return ResponseEntity.ok().body(usersInGroup);
+    }
+
     public void addUserToGroup(User user, String group, Role role) {
         userService.addUserToGroup(user, group, role);
     }
 
     public void removeUserFromGroup(User user, String group, Role role) {
         userService.removeUserFromGroup(user, group, role);
+    }
+
+    /**
+     * checks if the given group exists in the authentication provider, only on production systems
+     * @param group the group that should be available
+     */
+    public void checkIfGroupsExists(String group) {
+        if (!Arrays.asList(env.getActiveProfiles()).contains(SPRING_PROFILE_PRODUCTION)) {
+            return;
+        }
+        // only execute this check in the production environment because normal developers (while testing) might not have the right to call this method on the authentication server
+        if (!artemisAuthenticationProvider.isGroupAvailable(group)) {
+            throw new ArtemisAuthenticationException("Cannot save! The group " + group + " does not exist. Please double check the group name!");
+        }
+    }
+
+    /**
+     * If the corresponding group (student, tutor, editor, instructor) is not defined, this method will create the default group.
+     * If the group is defined, it will check that the group exists
+     * @param course the course (typically created on the client and not yet existing) for which the groups should be validated
+     */
+    public void createOrValidateGroups(Course course) {
+        try {
+            // We use default names if a group was not specified by the ADMIN.
+            // NOTE: instructors cannot change the group of a course, because this would be a security issue!
+            // only create default group names, if the ADMIN has used a custom group names, we assume that it already exists.
+
+            if (!StringUtils.hasText(course.getStudentGroupName())) {
+                course.setStudentGroupName(course.getDefaultStudentGroupName());
+                artemisAuthenticationProvider.createGroup(course.getStudentGroupName());
+            }
+            else {
+                checkIfGroupsExists(course.getStudentGroupName());
+            }
+
+            if (!StringUtils.hasText(course.getTeachingAssistantGroupName())) {
+                course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
+                artemisAuthenticationProvider.createGroup(course.getTeachingAssistantGroupName());
+            }
+            else {
+                checkIfGroupsExists(course.getTeachingAssistantGroupName());
+            }
+
+            if (!StringUtils.hasText(course.getEditorGroupName())) {
+                course.setEditorGroupName(course.getDefaultEditorGroupName());
+                artemisAuthenticationProvider.createGroup(course.getEditorGroupName());
+            }
+            else {
+                checkIfGroupsExists(course.getEditorGroupName());
+            }
+
+            if (!StringUtils.hasText(course.getInstructorGroupName())) {
+                course.setInstructorGroupName(course.getDefaultInstructorGroupName());
+                artemisAuthenticationProvider.createGroup(course.getInstructorGroupName());
+            }
+            else {
+                checkIfGroupsExists(course.getInstructorGroupName());
+            }
+        }
+        catch (GroupAlreadyExistsException ex) {
+            throw new BadRequestAlertException(
+                    ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
+                            + "Please choose a different short name!",
+                    Course.ENTITY_NAME, "shortNameWasAlreadyUsed", true);
+        }
+        catch (ArtemisAuthenticationException ex) {
+            // a specified group does not exist, notify the client
+            throw new BadRequestAlertException(ex.getMessage(), Course.ENTITY_NAME, "groupNotFound", true);
+        }
+    }
+
+    /**
+     * Special case for editors: checks if the default editor group needs to be created when old courses are edited
+     * @param course the course for which the default editor group will be created if it does not exist
+     */
+    public void checkIfEditorGroupsNeedsToBeCreated(Course course) {
+        // Courses that have been created before Artemis version 4.11.9 do not have an editor group.
+        // The editor group would be need to be set manually by instructors for the course and manually added to Jira.
+        // To increase the usability the group is automatically generated when a user is added.
+        if (!StringUtils.hasText(course.getEditorGroupName())) {
+            try {
+                course.setEditorGroupName(course.getDefaultEditorGroupName());
+                if (!artemisAuthenticationProvider.isGroupAvailable(course.getDefaultEditorGroupName())) {
+                    artemisAuthenticationProvider.createGroup(course.getDefaultEditorGroupName());
+                }
+            }
+            catch (GroupAlreadyExistsException ex) {
+                throw new BadRequestAlertException(
+                        ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
+                                + "Please choose a different short name!",
+                        Course.ENTITY_NAME, "shortNameWasAlreadyUsed", true);
+            }
+            catch (ArtemisAuthenticationException ex) {
+                // a specified group does not exist, notify the client
+                throw new BadRequestAlertException(ex.getMessage(), Course.ENTITY_NAME, "groupNotFound", true);
+            }
+            courseRepository.save(course);
+        }
     }
 }

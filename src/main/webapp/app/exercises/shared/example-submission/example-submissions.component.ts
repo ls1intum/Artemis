@@ -10,6 +10,7 @@ import { ExampleSubmissionImportComponent } from 'app/exercises/shared/example-s
 import { Submission } from 'app/entities/submission.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
+import { faExclamationTriangle, faFont, faPlus, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
@@ -18,6 +19,13 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     exercise: Exercise;
     readonly exerciseType = ExerciseType;
     createdExampleAssessment: boolean[];
+
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faFont = faFont;
+    faQuestionCircle = faQuestionCircle;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private alertService: AlertService,
@@ -53,7 +61,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
      * Closes open modal on component destroy
      */
     ngOnDestroy() {
-        if (this.modalService.hasOpenModals()) {
+        if (this.modalService?.hasOpenModals()) {
             this.modalService.dismissAll();
         }
     }
@@ -64,15 +72,15 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
      */
     deleteExampleSubmission(index: number) {
         const submissionId = this.exercise.exampleSubmissions![index].id!;
-        this.exampleSubmissionService.delete(submissionId).subscribe(
-            () => {
+        this.exampleSubmissionService.delete(submissionId).subscribe({
+            next: () => {
                 this.exercise.exampleSubmissions!.splice(index, 1);
                 this.createdExampleAssessment.splice(index, 1);
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 this.alertService.error(error.message);
             },
-        );
+        });
     }
 
     /**
@@ -109,13 +117,13 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
         });
         exampleSubmissionImportModalRef.componentInstance.exercise = this.exercise;
         exampleSubmissionImportModalRef.result.then((selectedSubmission: Submission) => {
-            this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise.id!).subscribe(
-                () => {
+            this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise.id!).subscribe({
+                next: () => {
                     this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
                     location.reload();
                 },
-                (error: HttpErrorResponse) => onError(this.alertService, error),
-            );
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
         });
     }
 }

@@ -27,6 +27,7 @@
             "settingNames": {
                 "exerciseReleased": "Neue Aufgabe veröffentlicht",
                 "exerciseOpenForPractice": "Aufgabe zum Üben freigegeben",
+                "exerciseSubmissionAssessed": "Aufgabeneinreichung korrigiert",
                 "newExercisePost": "Neue Beiträge für Aufgaben",
                 "newReplyForExercisePost": "Neue Antworten für Aufgaben",
                 "attachmentChanges": "Änderungen von Anhängen",
@@ -42,6 +43,7 @@
             "settingDescriptions": {
                 "exerciseCreatedOrStartedDescription": "Erhalte eine Mitteilung wenn eine neue Aufgabe veröffentlicht wurde",
                 "exerciseOpenForPracticeDescription": "Erhalte eine Mitteilung, wenn eine Aufgabe zum Üben freigeschalten wurde (z.B. ein Quiz)",
+                "exerciseSubmissionAssessedDescription": "Erhalte eine Mitteilung, wenn deine eingereichten Aufgaben bewertet wurden",
                 "newExercisePostDescription": "Erhalte eine Mitteilung, wenn ein neuer Beitrag zu einer Aufgabe erstellt wurde",
                 "newReplyForExercisePostDescription": "Erhalte eine Mitteilung, wenn eine neue Antwort auf einen Beitrag, welcher Aufgaben betrifft, erstellt wurde",
                 "attachmentChangesDescription": "Erhalte eine Mitteilung, wenn ein Anhang aktualisiert wurde",

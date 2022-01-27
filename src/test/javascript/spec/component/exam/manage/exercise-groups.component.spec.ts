@@ -20,7 +20,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
@@ -33,6 +33,7 @@ import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/
 import { EventManager } from 'app/core/util/event-manager.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterTestingModule } from '@angular/router/testing';
+import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();
@@ -158,35 +159,35 @@ describe('Exercise Groups Component', () => {
     }));
 
     it('returns the exercise icon type quiz', () => {
-        const icon = 'check-double';
+        const icon = faCheckDouble;
         const exercise = { type: ExerciseType.QUIZ } as Exercise;
 
         expect(comp.exerciseIcon(exercise)).toBe(icon);
     });
 
     it('returns the exercise icon type file upload', () => {
-        const icon = 'file-upload';
+        const icon = faFileUpload;
         const exercise = { type: ExerciseType.FILE_UPLOAD } as Exercise;
 
         expect(comp.exerciseIcon(exercise)).toBe(icon);
     });
 
     it('returns the exercise icon type modeling', () => {
-        const icon = 'project-diagram';
+        const icon = faProjectDiagram;
         const exercise = { type: ExerciseType.MODELING } as Exercise;
 
         expect(comp.exerciseIcon(exercise)).toBe(icon);
     });
 
     it('returns the exercise icon type programming', () => {
-        const icon = 'keyboard';
+        const icon = faKeyboard;
         const exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
 
         expect(comp.exerciseIcon(exercise)).toBe(icon);
     });
 
     it('returns the exercise icon type text', () => {
-        const icon = 'font';
+        const icon = faFont;
         const exercise = { type: ExerciseType.TEXT } as Exercise;
 
         expect(comp.exerciseIcon(exercise)).toBe(icon);

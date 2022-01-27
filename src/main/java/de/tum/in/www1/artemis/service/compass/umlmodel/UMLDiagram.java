@@ -18,7 +18,7 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram>, Serializable
     }
 
     /**
-     * Gets an UML element of the UML model with the given id.
+     * Gets a UML element of the UML model with the given id.
      *
      * @param jsonElementId the id of the UML element
      * @return the UML element if one could be found for the given id, null otherwise
@@ -104,9 +104,9 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram>, Serializable
     }
 
     /**
-     * Get a human readable name of this diagram in the form "Model <submissionId>".
+     * Get a human-readable name of this diagram in the form "Model <submissionId>".
      *
-     * @return a human readable name of this diagram in the form "Model <submissionId>"
+     * @return a human-readable name of this diagram in the form "Model <submissionId>"
      */
     public String getName() {
         return "Model " + modelSubmissionId;

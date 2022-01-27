@@ -5,6 +5,7 @@
     <jhi-button
         submitbutton
         class="guided-tour submission-button"
+        id="submit-modeling-submission"
         [disabled]="(!isActive && !isLate) || !submission || !!result || (isLate && !!submission.submitted)"
         [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
         (onClick)="submit()"
@@ -41,7 +42,7 @@
                         [resizeOptions]="resizeOptions"
                         [savedStatus]="{ isChanged, isSaving }"
                     ></jhi-modeling-editor>
-                    <fa-icon [icon]="'grip-lines'" class="rg-bottom text-lightgrey"><span></span></fa-icon>
+                    <fa-icon [icon]="faGripLines" class="rg-bottom text-lightgrey"><span></span></fa-icon>
                     <jhi-team-submission-sync
                         *ngIf="modelingExercise.teamMode"
                         [exerciseType]="modelingExercise.type!"
@@ -53,7 +54,7 @@
                 <div *ngIf="(!isActive || result) && modelingExercise && (!isLate || submission.submitted)" class="col-9">
                     <div class="flex flex-column h-100">
                         <jhi-modeling-assessment
-                            [model]="umlModel"
+                            [umlModel]="umlModel"
                             [resultFeedbacks]="assessmentResult?.feedbacks || []"
                             [diagramType]="modelingExercise.diagramType!"
                             [maxScore]="modelingExercise.maxPoints || 0"
@@ -78,7 +79,7 @@
                     </p>
                     <ng-container *ngIf="assessmentResult && assessmentResult!.feedbacks && assessmentResult!.feedbacks!.length > 0">
                         <p jhiTranslate="artemisApp.modelingSubmission.assessment.instructions">Select elements in the editor to filter the assessment.</p>
-                        <table class="table">
+                        <table class="table" id="component-feedback-table">
                             <thead class="thead-light">
                                 <tr>
                                     <th jhiTranslate="artemisApp.modelingSubmission.assessment.element">Element</th>
@@ -93,11 +94,23 @@
                                         ><br *ngIf="feedback.reference" />
                                         <span
                                             *ngIf="feedback.text || feedback.detailText || feedback.gradingInstruction"
-                                            [ngClass]="{ 'text-success': feedback.credits! > 0, 'text-danger': feedback.credits! < 0 }"
+                                            [ngClass]="{
+                                                'text-secondary': feedback.isSubsequent,
+                                                'text-success': feedback.credits! > 0 && feedback.isSubsequent === undefined,
+                                                'text-danger': feedback.credits! < 0 && feedback.isSubsequent === undefined
+                                            }"
                                             ><strong>Feedback:</strong> <span [innerHTML]="buildFeedbackTextForReview(feedback)"></span
                                         ></span>
                                     </td>
-                                    <td class="text-center">{{ feedback.credits | number: '1.0-1' }}</td>
+                                    <td class="text-center">
+                                        {{ feedback.credits | number: '1.0-1' }}
+                                        <fa-icon
+                                            *ngIf="feedback.isSubsequent"
+                                            class="text-secondary"
+                                            [icon]="faExclamationTriangle"
+                                            [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
+                                        ></fa-icon>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -128,7 +141,7 @@
     </div>
     <!--endregion-->
     <!--region Right Panel-->
-    <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
+    <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
     <span right-header id="problem-statement" jhiTranslate="artemisApp.modelingSubmission.problemStatement">Problem Statement</span>
     <p right-body class="mb-3 markdown-preview" *ngIf="modelingExercise!.problemStatement">
         <span [innerHTML]="modelingExercise!.problemStatement! | htmlForMarkdown"></span>

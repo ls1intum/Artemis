@@ -10,6 +10,7 @@
             "feedbackCommentPlaceholder": "Du kannst hier ein Feedback abgeben...",
             "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
             "automaticGenerated": "Automatisch erstelltes Feedback",
+            "subsequentFeedback": "Dies ist ein zusätzliches Feedback, das nicht in die Gesamtbewertung eingeht.",
             "error": {
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."
             },
@@ -35,13 +36,15 @@
                 "overrideAssessment": "Bewertung überschreiben",
                 "nextSubmission": "Nächste Abgabe bewerten",
                 "resolveConflict": "Konflikte behandeln",
-                "importExampleSubmission": "Als Beispielabgabe importieren"
+                "useAsExampleSubmission": "Als Beispielabgabe verwenden"
             },
             "detail": {
                 "feedback": "Feedback",
+                "feedbackWithColon": "Feedback:",
                 "scoreFor": "Bewertung für",
                 "tutorComment": "Kommentar von Tutor:in:"
             },
+            "useAsExampleSubmissionVerificationQuestion": "Bist du dir sicher, dass du diese Abgabe als Beispielabgabe importieren möchtest?",
             "messages": {
                 "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutor:innen wieder zur Verfügung.",
                 "loadSubmissionFailed": "Laden der angefragten Abgabe ist fehlgeschlagen.",
@@ -54,6 +57,7 @@
             },
             "dashboard": {
                 "warning": "Achtung: Die Einreichungsfrist ist noch nicht abgelaufen und Studierende dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen.",
+                "warningIndividual": "Achtung: Die allgemeine Einreichungsfrist ist abgelaufen, aber manche Studierende mit verlängerter Bearbeitungszeit dürfen noch ihre Einreichungen abgeben. Bitte stelle vor Beginn einer Korrektur sicher, dass diese Studierenden nicht mehr abgeben können.",
                 "empty": "Keine Abgabe für diese Aufgabe!",
                 "loading": "Laden..",
                 "columns": {

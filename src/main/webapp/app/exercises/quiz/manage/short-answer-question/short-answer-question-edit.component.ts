@@ -27,6 +27,7 @@ import { cloneDeep } from 'lodash-es';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { markdownForHtml } from 'app/shared/util/markdown.conversion.util';
 import { generateTextHintExplanation, parseTextHintExplanation } from 'app/shared/util/markdown.util';
+import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -83,6 +84,17 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     textParts: (string | undefined)[][];
 
     backupQuestion: ShortAnswerQuestion;
+
+    // Icons
+    faBan = faBan;
+    faTrash = faTrash;
+    faUndo = faUndo;
+    faChevronUp = faChevronUp;
+    faChevronDown = faChevronDown;
+    faBars = faBars;
+    faUnlink = faUnlink;
+    faAngleRight = faAngleRight;
+    faAngleDown = faAngleDown;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,
@@ -487,7 +499,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param dragEvent {object} the solution involved (may be a copy at this point)
      */
     onDragDrop(spot: ShortAnswerSpot, dragEvent: any): void {
-        let dragItem = dragEvent.dragData;
+        let dragItem = dragEvent.item.data;
         // Replace dragItem with original (because it may be a copy)
         dragItem = this.shortAnswerQuestion.solutions?.find((originalDragItem) =>
             dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID,

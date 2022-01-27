@@ -1,25 +1,18 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { SimpleChange } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
-import dayjs from 'dayjs';
-import { MockPipe } from 'ng-mocks';
-import { ChartsModule } from 'ng2-charts';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import dayjs from 'dayjs/esm';
+import { MockModule, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
-import sinonChai from 'sinon-chai';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { BarChartModule } from '@swimlane/ngx-charts';
 
 describe('StatisticsGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsGraphComponent>;
@@ -29,20 +22,16 @@ describe('StatisticsGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), ChartsModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(BarChartModule)],
             declarations: [StatisticsGraphComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(StatisticsGraphComponent);
                 component = fixture.componentInstance;
                 service = TestBed.inject(StatisticsService);
-                httpMock = TestBed.get(HttpTestingController);
+                httpMock = TestBed.inject(HttpTestingController);
             });
     });
 
@@ -86,9 +75,11 @@ describe('StatisticsGraphComponent', () => {
             const changes = { currentSpan: { currentValue: span } as SimpleChange };
             component.ngOnChanges(changes);
 
-            expect(component.dataForSpanType).to.equal(graphData);
-            expect(component.chartData[0].data).to.equal(graphData);
-            expect(component.currentSpan).to.equal(span);
+            expect(component.dataForSpanType).toEqual(graphData);
+            graphData.forEach((data, index) => {
+                expect(component.ngxData[index].value).toBe(data);
+            });
+            expect(component.currentSpan).toEqual(span);
         }
     });
 
@@ -107,8 +98,8 @@ describe('StatisticsGraphComponent', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush([...graphData]);
 
-        expect(component.dataForSpanType).to.deep.equal(graphData);
-        expect(component.currentSpan).to.equal(SpanType.DAY);
+        expect(component.dataForSpanType).toEqual(graphData);
+        expect(component.currentSpan).toEqual(SpanType.DAY);
     });
 
     it('should switch time span', () => {
@@ -122,7 +113,6 @@ describe('StatisticsGraphComponent', () => {
 
         component.switchTimeSpan(true);
 
-        expect(component.dataForSpanType).to.equal(graphData);
-        expect(component).to.be.ok;
+        expect(component.dataForSpanType).toEqual(graphData);
     });
 });

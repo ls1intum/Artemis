@@ -1,4 +1,4 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 
@@ -14,7 +14,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
 
 describe('FileUploadExercise Service', () => {
-    let injector: TestBed;
     let service: FileUploadExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: FileUploadExercise;
@@ -34,9 +33,8 @@ describe('FileUploadExercise Service', () => {
                 { provide: ExerciseService, useClass: MockExerciseService },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(FileUploadExerciseService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(FileUploadExerciseService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         elemDefault = new FileUploadExercise(undefined, undefined);
     });
@@ -95,6 +93,13 @@ describe('FileUploadExercise Service', () => {
             },
             elemDefault,
         );
+        returnedFromService.assessmentDueDate = undefined;
+        returnedFromService.assessmentDueDateError = false;
+        returnedFromService.dueDate = undefined;
+        returnedFromService.dueDateError = false;
+        returnedFromService.releaseDate = undefined;
+        returnedFromService.studentParticipations = [];
+
         const expected = Object.assign({}, returnedFromService);
         service
             .query(expected)

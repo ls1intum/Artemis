@@ -1,50 +1,39 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges } from '@angular/core';
 import { ApollonEditor, ApollonMode, UMLDiagramType, UMLElementType, UMLModel, UMLRelationship, UMLRelationshipType } from '@ls1intum/apollon';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { MODELING_EDITOR_MAX_HEIGHT, MODELING_EDITOR_MAX_WIDTH, MODELING_EDITOR_MIN_HEIGHT, MODELING_EDITOR_MIN_WIDTH } from 'app/shared/constants/modeling.constants';
 import { isFullScreen } from 'app/shared/util/fullscreen.util';
-import interact from 'interactjs';
+import { faCheck, faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { ModelingComponent } from 'app/exercises/modeling/shared/modeling.component';
 
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
 })
-export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChanges {
-    @ViewChild('editorContainer', { static: false })
-    editorContainer: ElementRef;
-    @ViewChild('resizeContainer', { static: false })
-    resizeContainer: ElementRef;
-    @Input()
-    umlModel: UMLModel;
-    @Input()
-    diagramType?: UMLDiagramType;
-    @Input()
-    readOnly = false;
-    @Input()
-    resizeOptions: { horizontalResize?: boolean; verticalResize?: boolean };
-    @Input()
-    showHelpButton = true;
-    @Input()
-    withExplanation = false;
-    @Input()
-    explanation: string;
-    @Input()
-    savedStatus?: { isChanged?: boolean; isSaving?: boolean };
+export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
+    @Input() showHelpButton = true;
+    @Input() withExplanation = false;
+    @Input() savedStatus?: { isChanged?: boolean; isSaving?: boolean };
 
-    @Output()
-    private onModelChanged: EventEmitter<UMLModel> = new EventEmitter<UMLModel>();
+    @Output() private onModelChanged: EventEmitter<UMLModel> = new EventEmitter<UMLModel>();
 
-    @Output()
-    explanationChange = new EventEmitter();
+    @Output() explanationChange = new EventEmitter();
 
-    private apollonEditor?: ApollonEditor;
     private modelSubscription: number;
 
-    constructor(private alertService: AlertService, private renderer: Renderer2, private modalService: NgbModal, private guidedTourService: GuidedTourService) {}
+    // Icons
+    faCheck = faCheck;
+    faTimes = faTimes;
+    faCircleNotch = faCircleNotch;
+    farQuestionCircle = faQuestionCircle;
+
+    constructor(private alertService: AlertService, private renderer: Renderer2, private modalService: NgbModal, private guidedTourService: GuidedTourService) {
+        super();
+    }
 
     /**
      * Initializes the Apollon editor.
@@ -58,34 +47,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
                 this.assessModelForGuidedTour(key, this.getCurrentModel());
             }
         });
-        if (this.resizeOptions) {
-            interact('.resizable')
-                .resizable({
-                    edges: { left: false, right: this.resizeOptions.horizontalResize && '.draggable-right', bottom: this.resizeOptions.verticalResize, top: false },
-                    modifiers: [
-                        interact.modifiers!.restrictSize({
-                            min: { width: MODELING_EDITOR_MIN_WIDTH, height: MODELING_EDITOR_MIN_HEIGHT },
-                            max: { width: MODELING_EDITOR_MAX_WIDTH, height: MODELING_EDITOR_MAX_HEIGHT },
-                        }),
-                    ],
-                    inertia: true,
-                })
-                .on('resizestart', function (event: any) {
-                    event.target.classList.add('card-resizable');
-                })
-                .on('resizeend', function (event: any) {
-                    event.target.classList.remove('card-resizable');
-                })
-                .on('resizemove', (event: any) => {
-                    const target = event.target;
-                    if (this.resizeOptions.horizontalResize) {
-                        target.style.width = event.rect.width + 'px';
-                    }
-                    if (this.resizeOptions.verticalResize) {
-                        target.style.height = event.rect.height + 'px';
-                    }
-                });
-        }
+        this.setupInteract();
     }
 
     /**
@@ -98,7 +60,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
         }
 
         // Apollon doesn't need assessments in Modeling mode
-        this.removeAssessments(this.umlModel);
+        ModelingEditorComponent.removeAssessments(this.umlModel);
 
         if (this.editorContainer) {
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
@@ -121,11 +83,11 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
 
     /**
      * Removes the Assessments from a given UMLModel. In modeling mode the assessments are not needed.
-     * Also they should not be sent to the server and persisted as part of the model JSON.
+     * Also, they should not be sent to the server and persisted as part of the model JSON.
      *
      * @param umlModel the model for which the assessments should be removed
      */
-    private removeAssessments(umlModel: UMLModel) {
+    private static removeAssessments(umlModel: UMLModel) {
         if (umlModel) {
             umlModel.assessments = [];
         }
@@ -133,11 +95,11 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
 
     /**
      * Returns the current model of the Apollon editor. It removes the assessment first, as it should not be part
-     * of the model outside of Apollon.
+     * of the model outside Apollon.
      */
     getCurrentModel(): UMLModel {
         const currentModel = this.apollonEditor!.model;
-        this.removeAssessments(currentModel);
+        ModelingEditorComponent.removeAssessments(currentModel);
         return currentModel;
     }
 
@@ -149,7 +111,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     }
 
     /**
-     * If changes are made to the the uml model, update the model and remove assessments
+     * If changes are made to the uml model, update the model and remove assessments
      * @param {SimpleChanges} changes - Changes made
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -161,7 +123,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
         if (changes.umlModel && changes.umlModel.currentValue && this.apollonEditor) {
             this.umlModel = changes.umlModel.currentValue;
             // Apollon doesn't need assessments in Modeling mode
-            this.removeAssessments(this.umlModel);
+            ModelingEditorComponent.removeAssessments(this.umlModel);
             this.apollonEditor.model = this.umlModel;
         }
     }

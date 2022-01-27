@@ -1,7 +1,7 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 export const enum SubmissionType {
     MANUAL = 'MANUAL',
@@ -144,4 +144,17 @@ export function getFirstResultWithComplaint(submission: Submission | undefined):
             return resultsWithComplaint[0];
         }
     }
+}
+
+export function reconnectSubmissions(submissions: Submission[]): void {
+    return submissions.forEach((submission: Submission) => {
+        // reconnect some associations
+        const latestResult = getLatestSubmissionResult(submission);
+        if (latestResult) {
+            latestResult.submission = submission;
+            latestResult.participation = submission.participation;
+            submission.participation!.results = [latestResult!];
+            setLatestSubmissionResult(submission, latestResult);
+        }
+    });
 }

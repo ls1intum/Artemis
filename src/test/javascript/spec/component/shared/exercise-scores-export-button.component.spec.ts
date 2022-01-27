@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Result } from 'app/entities/result.model';
@@ -22,7 +22,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 
 describe('ExerciseScoresExportButtonComponent', () => {
     let component: ExerciseScoresExportButtonComponent;
@@ -96,11 +95,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [ExerciseScoresExportButtonComponent, MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
-            providers: [
-                { provide: AlertService, useClass: MockAlertService },
-                { provide: ResultService, useClass: MockResultService },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [MockProvider(AlertService), { provide: ResultService, useClass: MockResultService }, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseScoresExportButtonComponent);
@@ -108,7 +103,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         resultService = TestBed.inject(ResultService);
     });
 
-    afterEach(async () => {
+    beforeEach(() => {
         jest.restoreAllMocks();
     });
 

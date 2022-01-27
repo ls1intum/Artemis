@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
@@ -27,7 +26,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
-import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -71,15 +69,12 @@ public class QuizExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final InstanceMessageSendService instanceMessageSendService;
-
     private final StudentParticipationRepository studentParticipationRepository;
 
-    public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
+    public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService, UserRepository userRepository,
             ExerciseDeletionService exerciseDeletionServiceService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
-            UserRepository userRepository, ExamDateService examDateService, QuizMessagingService quizMessagingService, InstanceMessageSendService instanceMessageSendService,
-            StudentParticipationRepository studentParticipationRepository) {
+            ExamDateService examDateService, QuizMessagingService quizMessagingService, StudentParticipationRepository studentParticipationRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.exerciseDeletionService = exerciseDeletionServiceService;
@@ -93,7 +88,6 @@ public class QuizExerciseResource {
         this.examDateService = examDateService;
         this.courseRepository = courseRepository;
         this.quizMessagingService = quizMessagingService;
-        this.instanceMessageSendService = instanceMessageSendService;
         this.studentParticipationRepository = studentParticipationRepository;
     }
 
@@ -119,7 +113,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
-        exerciseService.validateScoreSettings(quizExercise);
+        quizExercise.validateScoreSettings();
 
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
@@ -163,7 +157,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
-        exerciseService.validateScoreSettings(quizExercise);
+        quizExercise.validateScoreSettings();
 
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
@@ -209,9 +203,9 @@ public class QuizExerciseResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
-        var quizExercises = quizExerciseRepository.findByCourseId(courseId);
+        var quizExercises = quizExerciseRepository.findByCourseIdWithCategories(courseId);
 
         for (QuizExercise quizExercise : quizExercises) {
             quizExercise.setQuizQuestions(null);
@@ -453,7 +447,7 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
-        exerciseService.validateScoreSettings(quizExercise);
+        quizExercise.validateScoreSettings();
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
     }

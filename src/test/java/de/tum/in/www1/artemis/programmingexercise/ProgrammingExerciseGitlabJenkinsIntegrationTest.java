@@ -117,6 +117,13 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans, false);
     }
 
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
+        programmingExerciseTestService.createAndImportJavaProgrammingExercise(staticCodeAnalysisEnabled);
+    }
+
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_enablePlanFails() throws Exception {
@@ -242,13 +249,13 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_mode_changedToIndividual() throws Exception {
         programmingExerciseTestService.testImportProgrammingExercise_individual_modeChange();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_mode_changedToTeam() throws Exception {
         programmingExerciseTestService.testImportProgrammingExercise_team_modeChange();
     }

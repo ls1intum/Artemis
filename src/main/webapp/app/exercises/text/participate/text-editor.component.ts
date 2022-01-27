@@ -7,7 +7,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { merge, Subject } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -17,7 +17,7 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
@@ -29,6 +29,7 @@ import { getUnreferencedFeedback } from 'app/exercises/shared/result/result.util
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -61,6 +62,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     isAfterPublishDate: boolean;
     isOwnerOfParticipation: boolean;
 
+    // Icon
+    farListAlt = faListAlt;
+
     constructor(
         private route: ActivatedRoute,
         private textExerciseService: TextExerciseService,
@@ -85,10 +89,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             return this.alertService.error('artemisApp.textExercise.error');
         }
 
-        this.textService.get(participationId).subscribe(
-            (data: StudentParticipation) => this.updateParticipation(data),
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+        this.textService.get(participationId).subscribe({
+            next: (data: StudentParticipation) => this.updateParticipation(data),
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     private updateParticipation(participation: StudentParticipation) {
@@ -157,7 +161,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     get isActive(): boolean {
         const isActive =
-            !this.examMode && !this.result && (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && dayjs(this.textExercise.dueDate).isSameOrAfter(dayjs())));
+            !this.examMode &&
+            !this.result &&
+            (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && !hasExerciseDueDatePassed(this.textExercise, this.participation)));
         return !!isActive;
     }
 
@@ -217,8 +223,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.submission = this.submissionForAnswer(this.answer);
         setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
 
-        this.textSubmissionService.update(this.submission, this.textExercise.id!).subscribe(
-            (response) => {
+        this.textSubmissionService.update(this.submission, this.textExercise.id!).subscribe({
+            next: (response) => {
                 this.submission = response.body!;
                 setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
                 this.submissionChange.next(this.submission);
@@ -241,11 +247,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     this.alertService.warning('entity.action.submitDeadlineMissedAlert');
                 }
             },
-            (err: HttpErrorResponse) => {
+            error: (err: HttpErrorResponse) => {
                 this.alertService.error(err.error.message);
                 this.isSaving = false;
             },
-        );
+        });
     }
 
     /**

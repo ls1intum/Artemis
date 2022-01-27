@@ -10,6 +10,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { forkJoin, combineLatest, from } from 'rxjs';
 import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
+import { faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-create-exercise-unit',
@@ -26,6 +27,9 @@ export class CreateExerciseUnitComponent implements OnInit {
     exercisesAvailableForUnitCreation: Exercise[] = [];
     exercisesToCreateUnitFor: Exercise[] = [];
 
+    // Icons
+    faSort = faSort;
+
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
@@ -38,7 +42,7 @@ export class CreateExerciseUnitComponent implements OnInit {
     ngOnInit(): void {
         this.isLoading = true;
         const lectureRoute = this.activatedRoute.parent!.parent!;
-        combineLatest(lectureRoute.paramMap, lectureRoute.parent!.paramMap)
+        combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap])
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
@@ -53,16 +57,16 @@ export class CreateExerciseUnitComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                ([courseResult, exerciseUnitResult]) => {
+            .subscribe({
+                next: ([courseResult, exerciseUnitResult]) => {
                     const allExercisesOfCourse = courseResult?.body?.exercises ? courseResult?.body?.exercises : [];
                     const idsOfExercisesAlreadyConnectedToUnit = exerciseUnitResult?.body
                         ? exerciseUnitResult?.body?.map((exerciseUnit: ExerciseUnit) => exerciseUnit.exercise?.id)
                         : [];
                     this.exercisesAvailableForUnitCreation = allExercisesOfCourse.filter((exercise: Exercise) => !idsOfExercisesAlreadyConnectedToUnit.includes(exercise.id));
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     createExerciseUnits() {
@@ -79,10 +83,9 @@ export class CreateExerciseUnitComponent implements OnInit {
                     this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                 }),
             )
-            .subscribe(
-                () => {},
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+            .subscribe({
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     sortRows() {

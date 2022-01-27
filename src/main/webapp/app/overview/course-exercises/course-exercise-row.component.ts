@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { HttpClient } from '@angular/common/http';
@@ -11,7 +11,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Exercise, ExerciseType, getIcon, getIconTooltip, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Component({
@@ -39,6 +39,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     getIconTooltip = getIconTooltip;
     public exerciseCategories: ExerciseCategory[];
     isAfterAssessmentDueDate: boolean;
+    dueDate?: dayjs.Dayjs;
 
     participationUpdateListener: Subscription;
 
@@ -55,6 +56,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         if (cachedParticipation) {
             this.exercise.studentParticipations = [cachedParticipation];
         }
+        this.dueDate = getExerciseDueDate(this.exercise, cachedParticipation);
+
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise!.id === this.exercise.id) {
                 this.exercise.studentParticipations =
@@ -64,11 +67,13 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
                           })
                         : [changedParticipation];
                 this.exercise.participationStatus = participationStatus(this.exercise);
+                this.dueDate = getExerciseDueDate(this.exercise, changedParticipation);
             }
         });
         this.exercise.participationStatus = participationStatus(this.exercise);
         if (this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
             this.exercise.studentParticipations[0].exercise = this.exercise;
+            this.dueDate = getExerciseDueDate(this.exercise, this.exercise.studentParticipations[0]);
         }
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);

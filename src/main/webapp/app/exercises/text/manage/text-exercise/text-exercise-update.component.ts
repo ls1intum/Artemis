@@ -21,6 +21,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -47,6 +48,10 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
+
+    // Icons
+    faSave = faSave;
+    faBan = faBan;
 
     constructor(
         private alertService: AlertService,
@@ -96,12 +101,12 @@ export class TextExerciseUpdateComponent implements OnInit {
                     if (!this.isExamMode) {
                         this.exerciseCategories = this.textExercise.categories || [];
                         if (this.examCourseId) {
-                            this.courseService.findAllCategoriesOfCourse(this.examCourseId).subscribe(
-                                (categoryRes: HttpResponse<string[]>) => {
+                            this.courseService.findAllCategoriesOfCourse(this.examCourseId).subscribe({
+                                next: (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                 },
-                                (error: HttpErrorResponse) => onError(this.alertService, error),
-                            );
+                                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                            });
                         }
                     } else {
                         // Lock individual mode for exam exercises
@@ -162,13 +167,13 @@ export class TextExerciseUpdateComponent implements OnInit {
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType)
             .save(this.textExercise, this.notificationText)
-            .subscribe(
-                (exercise: TextExercise) => this.onSaveSuccess(exercise.id!),
-                (error: HttpErrorResponse) => this.onSaveError(error),
-                () => {
+            .subscribe({
+                next: (exercise: TextExercise) => this.onSaveSuccess(exercise.id!),
+                error: (error: HttpErrorResponse) => this.onSaveError(error),
+                complete: () => {
                     this.isSaving = false;
                 },
-            );
+            });
     }
 
     private onSaveSuccess(exerciseId: number) {

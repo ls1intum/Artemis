@@ -12,7 +12,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation.utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
@@ -23,6 +23,8 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
+import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -43,6 +45,20 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
     @ContentChild('overrideButtons') overrideButtons: TemplateRef<any>;
     private buildPlanLinkTemplate: string;
+
+    // Icons
+    faSort = faSort;
+    faPlus = faPlus;
+    faDownload = faDownload;
+    faTimes = faTimes;
+    faBook = faBook;
+    faWrench = faWrench;
+    faCheckDouble = faCheckDouble;
+    faUsers = faUsers;
+    faTable = faTable;
+    faListAlt = faListAlt;
+    faPencilAlt = faPencilAlt;
+    faFileSignature = faFileSignature;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -70,8 +86,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     protected loadExercises(): void {
-        this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId).subscribe(
-            (res: HttpResponse<ProgrammingExercise[]>) => {
+        this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId).subscribe({
+            next: (res: HttpResponse<ProgrammingExercise[]>) => {
                 this.programmingExercises = res.body!;
                 this.profileService.getProfileInfo().subscribe((profileInfo) => {
                     this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
@@ -100,8 +116,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 this.applyFilter();
                 this.emitExerciseCount(this.programmingExercises.length);
             },
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     protected applyFilter(): void {
@@ -119,16 +135,16 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param event contains additional checks for deleting exercise
      */
     deleteProgrammingExercise(programmingExerciseId: number, event: { [key: string]: boolean }) {
-        return this.programmingExerciseService.delete(programmingExerciseId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe(
-            () => {
+        return this.programmingExerciseService.delete(programmingExerciseId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',
                     content: 'Deleted an programmingExercise',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     /**
@@ -136,10 +152,10 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param programmingExerciseId the id of the programming exercise that we want to delete
      */
     resetProgrammingExercise(programmingExerciseId: number) {
-        this.exerciseService.reset(programmingExerciseId).subscribe(
-            () => this.dialogErrorSource.next(''),
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+        this.exerciseService.reset(programmingExerciseId).subscribe({
+            next: () => this.dialogErrorSource.next(''),
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     protected getChangeEventName(): string {

@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleCha
 import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { ShowdownExtension } from 'showdown';
-import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, mergeMap, map, switchMap, tap } from 'rxjs/operators';
 import { merge, Observable, of, Subscription } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -18,10 +18,11 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { problemStatementHasChanged } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { hasParticipationChanged } from 'app/overview/participation.utils';
 import { Result } from 'app/entities/result.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { findLatestResult } from 'app/shared/util/utils';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -64,6 +65,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private injectableContentFoundSubscription: Subscription;
     private tasksSubscription: Subscription;
     private generateHtmlSubscription: Subscription;
+
+    // Icons
+    faSpinner = faSpinner;
 
     constructor(
         private translateService: TranslateService,
@@ -257,7 +261,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     loadLatestResult(): Observable<Result | undefined> {
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id!).pipe(
             catchError(() => of(undefined)),
-            flatMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
+            mergeMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
         );
     }
 

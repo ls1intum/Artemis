@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment } from 'app/entities/attachment.model';
@@ -12,6 +12,7 @@ import { DiscussionSectionComponent } from 'app/overview/discussion-section/disc
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-lecture-details',
@@ -28,6 +29,9 @@ export class CourseLectureDetailsComponent implements OnInit {
     hasPdfLectureUnit: boolean;
 
     readonly LectureUnitType = LectureUnitType;
+
+    // Icons
+    faSpinner = faSpinner;
 
     constructor(private alertService: AlertService, private lectureService: LectureService, private activatedRoute: ActivatedRoute, private fileService: FileService) {}
 
@@ -49,8 +53,8 @@ export class CourseLectureDetailsComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                (findLectureResult) => {
+            .subscribe({
+                next: (findLectureResult) => {
                     this.lecture = findLectureResult.body!;
                     if (this.lecture?.lectureUnits) {
                         this.lectureUnits = this.lecture.lectureUnits;
@@ -66,8 +70,8 @@ export class CourseLectureDetailsComponent implements OnInit {
                         this.discussionComponent.lecture = this.lecture;
                     }
                 },
-                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            );
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
     attachmentNotReleased(attachment: Attachment): boolean {
         return attachment.releaseDate != undefined && !dayjs(attachment.releaseDate).isBefore(dayjs())!;

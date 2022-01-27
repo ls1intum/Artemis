@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -23,6 +21,7 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -65,12 +64,14 @@ public class ProgrammingSubmissionResource {
 
     private final UserRepository userRepository;
 
+    private final ExerciseDateService exerciseDateService;
+
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseRepository exerciseRepository,
             ParticipationRepository participationRepository, AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<VersionControlService> versionControlService,
             UserRepository userRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, GradingCriterionRepository gradingCriterionRepository,
-            SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseRepository = exerciseRepository;
         this.participationRepository = participationRepository;
@@ -83,6 +84,7 @@ public class ProgrammingSubmissionResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.submissionRepository = submissionRepository;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -141,7 +143,7 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-build")
     @PreAuthorize("hasRole('USER')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         // this call supports TemplateProgrammingExerciseParticipation, SolutionProgrammingExerciseParticipation and ProgrammingExerciseStudentParticipation
@@ -182,7 +184,7 @@ public class ProgrammingSubmissionResource {
     // TODO: we should definitely change this URL, it does not make sense to use /programming-submissions/{participationId}
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-failed-build")
     @PreAuthorize("hasRole('USER')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
@@ -208,8 +210,7 @@ public class ProgrammingSubmissionResource {
             }
         }
         if (lastGraded && submission.get().getType() != SubmissionType.INSTRUCTOR && submission.get().getType() != SubmissionType.TEST
-                && submission.get().getParticipation().getExercise().getDueDate() != null
-                && submission.get().getParticipation().getExercise().getDueDate().isBefore(ZonedDateTime.now())) {
+                && exerciseDateService.isAfterDueDate(participation)) {
             // If the submission is not the latest but the last graded, there is no point in triggering the build again as this would build the most recent VCS commit.
             // This applies only to students submissions after the exercise due date.
             return notFound();
@@ -228,7 +229,7 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build-all")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
         try {
             Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -260,7 +261,7 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody Set<Long> participationIds) {
         if (participationIds.isEmpty()) {
             return badRequest();
@@ -275,8 +276,8 @@ public class ProgrammingSubmissionResource {
 
         log.info("Trigger (failed) instructor build for participations {} in exercise {} with id {}", participationIds, programmingExercise.getTitle(),
                 programmingExercise.getId());
-        var participations = programmingExerciseStudentParticipationRepository.findByExerciseIdAndParticipationIds(exerciseId, participationIds);
-        programmingSubmissionService.triggerBuildForParticipations(new ArrayList<>(participations));
+        var participations = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndParticipationIds(exerciseId, participationIds);
+        programmingSubmissionService.triggerBuildForParticipations(participations);
 
         return ResponseEntity.ok().build();
     }
@@ -340,7 +341,7 @@ public class ProgrammingSubmissionResource {
         Exercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
 
         final boolean examMode = exercise.isExamExercise();

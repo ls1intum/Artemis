@@ -1,5 +1,10 @@
 <div class="card" [class.guided-tour]="hasGuidedTour">
-    <div class="card-header text-white" [routerLink]="['/courses', course.id!]" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
+    <div
+        id="course-{{ course.id }}-header"
+        class="card-header text-white"
+        [routerLink]="['/courses', course.id!]"
+        [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }"
+    >
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="container">
             <div class="row d-flex">
@@ -34,19 +39,22 @@
                 <h2 class="text-center">{{ totalRelativeScore }}%</h2>
                 <h5 class="text-center points">{{ totalAbsoluteScore }} / {{ totalReachableScore }} Pts</h5>
             </div>
-            <canvas
-                baseChart
-                [routerLink]="['/courses', course.id!]"
+            <ngx-charts-pie-chart
                 id="score-chart"
-                height="175"
-                width="175"
-                [legend]="false"
-                [datasets]="doughnutChartData"
-                [options]="totalScoreOptions"
-                [colors]="doughnutChartColors"
-                [labels]="doughnutChartLabels"
-                [chartType]="'doughnut'"
-            ></canvas>
+                class="chart-level"
+                [view]="[200, 200]"
+                [results]="ngxDoughnutData"
+                [scheme]="ngxColor"
+                [doughnut]="true"
+                [animations]="false"
+                (select)="onSelect()"
+                (click)="onSelect()"
+            >
+                <ng-template #tooltipTemplate let-model="model">
+                    <span jhiTranslate="artemisApp.courseOverview.statistics.{{ model.name }}"></span>
+                    <span>: {{ model.value }}</span>
+                </ng-template>
+            </ngx-charts-pie-chart>
         </div>
         <ng-template #noStatistic>
             <h6 class="no-statistics" jhiTranslate="artemisApp.studentDashboard.noStatistics">No statistics available</h6>
@@ -70,10 +78,10 @@
                     ></fa-icon>
                     <span class="next-exercise-title">{{ nextRelevantExercise.title }}</span>
                 </div>
-                <div class="col-3 next-exercise-col">
-                    <div *ngIf="nextRelevantExercise.dueDate">
+                <div class="col-3 next-exercise-col text-nowrap">
+                    <div *ngIf="nextExerciseDueDate">
                         <h6>{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}:</h6>
-                        <h6>{{ nextRelevantExercise.dueDate | artemisTimeAgo }}</h6>
+                        <h6>{{ nextExerciseDueDate | artemisTimeAgo }}</h6>
                     </div>
                 </div>
             </div>

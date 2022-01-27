@@ -17,8 +17,9 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 import interact from 'interactjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { lastValueFrom } from 'rxjs';
+import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-text-feedback-conflicts',
@@ -48,6 +49,9 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
             .filter(({ block, feedback }) => block?.type === TextBlockType.AUTOMATIC || !!feedback)
             .map(({ block }) => block!);
     }
+
+    // Icons
+    faGripLinesVertical = faGripLinesVertical;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -197,10 +201,10 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
                 this.leftSubmission!.latestResult!.feedbacks!,
                 this.textBlocksWithFeedbackForLeftSubmission,
             )
-            .subscribe(
-                (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
-                (error: HttpErrorResponse) => this.handleError(error),
-            );
+            .subscribe({
+                next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
+                error: (error: HttpErrorResponse) => this.handleError(error),
+            });
     }
 
     /**
@@ -236,10 +240,10 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         }
 
         this.markBusy = true;
-        this.assessmentsService.solveFeedbackConflict(this.exercise!.id!, feedbackConflictId).subscribe(
-            (response) => this.handleSolveConflictsSuccessWithAlert(response, 'artemisApp.textAssessment.solveFeedbackConflictSuccessful'),
-            (error) => this.handleSolveConflictsError(error),
-        );
+        this.assessmentsService.solveFeedbackConflict(this.exercise!.id!, feedbackConflictId).subscribe({
+            next: (response) => this.handleSolveConflictsSuccessWithAlert(response, 'artemisApp.textAssessment.solveFeedbackConflictSuccessful'),
+            error: (error) => this.handleSolveConflictsError(error),
+        });
     }
 
     private prepareTextBlocksAndFeedbackFor(submission: TextSubmission, textBlockRefs: TextBlockRef[], unusedTextBlockRefs: TextBlockRef[]): void {

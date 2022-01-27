@@ -4,6 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-apollon-diagram-create-form',
@@ -14,6 +15,10 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
     apollonDiagram: ApollonDiagram;
     isSaving: boolean;
     @ViewChild('titleInput', { static: false }) titleInput: ElementRef;
+
+    // Icons
+    faBan = faBan;
+    faSave = faSave;
 
     constructor(private activeModal: NgbActiveModal, private apollonDiagramService: ApollonDiagramService, private router: Router, private alertService: AlertService) {}
 
@@ -29,17 +34,17 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
      */
     save() {
         this.isSaving = true;
-        this.apollonDiagramService.create(this.apollonDiagram, this.apollonDiagram.courseId!).subscribe(
-            (response) => {
+        this.apollonDiagramService.create(this.apollonDiagram, this.apollonDiagram.courseId!).subscribe({
+            next: (response) => {
                 const newDiagram = response.body as ApollonDiagram;
                 this.isSaving = false;
                 this.dismiss();
                 this.router.navigate(['course-management', newDiagram.courseId, 'apollon-diagrams', newDiagram.id]);
             },
-            () => {
+            error: () => {
                 this.alertService.error('artemisApp.apollonDiagram.create.error');
             },
-        );
+        });
     }
 
     /**

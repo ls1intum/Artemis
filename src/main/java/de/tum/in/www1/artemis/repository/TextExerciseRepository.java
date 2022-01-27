@@ -29,11 +29,11 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface TextExerciseRepository extends JpaRepository<TextExercise, Long> {
 
     @Query("""
-            SELECT e FROM TextExercise e
+            SELECT DISTINCT e FROM TextExercise e
             LEFT JOIN FETCH e.categories
             WHERE e.course.id = :#{#courseId}
             """)
-    List<TextExercise> findByCourseId(@Param("courseId") Long courseId);
+    List<TextExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories" })
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesById(Long exerciseId);

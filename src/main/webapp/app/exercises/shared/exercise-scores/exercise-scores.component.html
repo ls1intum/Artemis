@@ -41,7 +41,7 @@
                     [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'participations']"
                     class="btn btn-primary btn-sm me-1"
                 >
-                    <fa-icon [icon]="'list-alt'"></fa-icon>
+                    <fa-icon [icon]="faListAlt"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </a>
                 <a
@@ -59,12 +59,12 @@
                     ]"
                     class="btn btn-primary btn-sm me-1"
                 >
-                    <fa-icon [icon]="'list-alt'"></fa-icon>
+                    <fa-icon [icon]="faListAlt"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </a>
 
                 <button *ngIf="exercise.isAtLeastInstructor" class="btn btn-info btn-sm me-1" (click)="exportNames()">
-                    <fa-icon [icon]="'download'"></fa-icon>
+                    <fa-icon [icon]="faDownload"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportNames">Export Names</span>
                 </button>
                 <jhi-exercise-scores-export-button *ngIf="exercise.isAtLeastInstructor" [exercise]="exercise"></jhi-exercise-scores-export-button>
@@ -83,7 +83,7 @@
                     class="me-1"
                 ></jhi-exercise-submission-export>
                 <button class="btn btn-primary btn-sm" (click)="refresh()">
-                    <fa-icon [icon]="'sync'"></fa-icon>
+                    <fa-icon [icon]="faSync"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
                 </button>
             </div>
@@ -251,20 +251,20 @@
                 >
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <a *ngIf="getRepositoryLink(value)" class="btn btn-primary btn-sm me-1" href="{{ getRepositoryLink(value) }}">
-                            <fa-icon [icon]="'code-branch'" class="me-1"></fa-icon>
+                            <fa-icon [icon]="faCodeBranch" class="me-1"></fa-icon>
                             Repository
                         </a>
                         <a *ngIf="buildPlanId(value)" target="_blank" rel="noreferrer" href="{{ value.participation.buildPlanUrl }}" class="btn btn-primary btn-sm me-1">
-                            <fa-icon class="me-1" [icon]="['far', 'file-code']"></fa-icon>
+                            <fa-icon class="me-1" [icon]="farFileCode"></fa-icon>
                             Build plan
                         </a>
                         <a
                             [routerLink]="['/courses', course.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id]"
                             class="btn btn-info btn-sm me-1"
                             *ngIf="value.participation.exercise.allowOnlineEditor"
-                            [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
+                            [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                         >
-                            <fa-icon class="me-1" [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon class="me-1" [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                             Online editor
                         </a>
                         <a
@@ -272,7 +272,7 @@
                             [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             class="btn btn-primary btn-sm me-1"
                         >
-                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.programmingSubmission.view' | artemisTranslate }}
                         </a>
                         <a
@@ -297,7 +297,7 @@
                             ]"
                             class="btn btn-primary btn-sm me-1"
                         >
-                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.programmingSubmission.view' | artemisTranslate }}
                         </a>
                     </ng-template>
@@ -316,7 +316,7 @@
                             [routerLink]="['/course-management', exercise.course?.id, 'file-upload-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             class="btn btn-primary btn-sm me-1"
                         >
-                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.fileUploadSubmission.view' | artemisTranslate }}
                         </a>
                         <a
@@ -340,7 +340,7 @@
                             ]"
                             class="btn btn-primary btn-sm me-1"
                         >
-                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.fileUploadSubmission.view' | artemisTranslate }}
                         </a>
                     </ng-template>
@@ -354,7 +354,7 @@
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-primary btn-sm me-1"
                         >
-                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.modelingSubmission.view' | artemisTranslate }}
                         </a>
                         <a
@@ -379,7 +379,7 @@
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-primary btn-sm me-1"
                         >
-                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.modelingSubmission.view' | artemisTranslate }}
                         </a>
                     </ng-template>
@@ -402,7 +402,7 @@
                             ]"
                             class="btn btn-primary btn-sm me-1"
                         >
-                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.textSubmission.view' | artemisTranslate }}
                         </a>
                         <a
@@ -428,7 +428,7 @@
                             ]"
                             class="btn btn-primary btn-sm me-1"
                         >
-                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.textSubmission.view' | artemisTranslate }}
                         </a>
                     </ng-template>

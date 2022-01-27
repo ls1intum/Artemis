@@ -12,11 +12,12 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Router } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-overview',
@@ -34,6 +35,9 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     quizExercisesChannels: string[] = [];
 
     nextRelevantExercise?: Exercise;
+
+    // Icons
+    faPenAlt = faPenAlt;
 
     constructor(
         private courseService: CourseManagementService,
@@ -68,8 +72,8 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     loadAndFilterCourses() {
-        this.courseService.findAllForDashboard().subscribe(
-            (res: HttpResponse<Course[]>) => {
+        this.courseService.findAllForDashboard().subscribe({
+            next: (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
                 this.courseScoreCalculationService.setCourses(this.courses);
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour, true);
@@ -90,8 +94,8 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                 );
                 this.nextRelevantExercise = this.findNextRelevantExercise();
             },
-            (response: string) => this.onError(response),
-        );
+            error: (response: string) => this.onError(response),
+        });
     }
 
     private onError(error: string) {

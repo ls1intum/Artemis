@@ -6,30 +6,32 @@ import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage
  * A class which encapsulates UI selectors and actions for the text exercise assessment page.
  */
 export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
-    readonly feedbackEditorSelector = 'jhi-textblock-feedback-editor';
-
     getInstructionsRootElement() {
-        return cy.get('[jhitranslate="artemisApp.textAssessment.instructions"]').parents('.card');
+        return cy.get('#instructions-card');
     }
 
-    provideFeedbackOnTextSection(section: string, points: number, feedback: string) {
-        cy.contains(section).parents('jhi-textblock-assessment-card').first().click();
-        this.typeIntoFeedbackEditor(feedback);
-        this.typePointsIntoFeedbackEditor(points);
+    provideFeedbackOnTextSection(sectionIndex: number, points: number, feedback: string) {
+        this.getFeedbackSection(sectionIndex).click();
+        this.typeIntoFeedbackEditor(sectionIndex, feedback);
+        this.typePointsIntoFeedbackEditor(sectionIndex, points);
     }
 
-    private typeIntoFeedbackEditor(text: string) {
-        cy.get(this.feedbackEditorSelector).find('textarea').type(text, { parseSpecialCharSequences: false });
+    private typeIntoFeedbackEditor(sectionIndex: number, feedbackText: string) {
+        this.getFeedbackSection(sectionIndex).find('#feedback-editor-text-input').type(feedbackText, { parseSpecialCharSequences: false });
     }
 
-    private typePointsIntoFeedbackEditor(points: number) {
-        cy.get(this.feedbackEditorSelector).find('[type="number"]').clear().type(points.toString());
+    private typePointsIntoFeedbackEditor(sectionIndex: number, feedbackPoints: number) {
+        this.getFeedbackSection(sectionIndex).find('#feedback-editor-points-input').clear().type(feedbackPoints.toString());
+    }
+
+    private getFeedbackSection(sectionIndex: number) {
+        return cy.get('#text-feedback-block-' + sectionIndex);
     }
 
     submit() {
         // Feedback route is special for text exercises so we override parent here...
         cy.intercept(POST, BASE_API + 'participations/*/results/*/submit-text-assessment').as('submitFeedback');
-        cy.get('[jhitranslate="entity.action.submit"]').click();
+        cy.get('#submit').click();
         return cy.wait('@submitFeedback');
     }
 
@@ -39,5 +41,13 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
 
     acceptComplaint(response: string) {
         return super.acceptComplaint(response, CypressExerciseType.TEXT);
+    }
+
+    getWordCountElement() {
+        return cy.get('#text-assessment-word-count');
+    }
+
+    getCharacterCountElement() {
+        return cy.get('#text-assessment-character-count');
     }
 }

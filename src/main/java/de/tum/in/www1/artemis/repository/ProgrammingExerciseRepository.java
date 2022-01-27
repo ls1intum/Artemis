@@ -1,14 +1,19 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -21,6 +26,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -37,7 +43,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return all exercises for the given course with only the latest results for solution and template each (if present).
      */
     @Query("""
-            SELECT pe FROM ProgrammingExercise pe
+            SELECT DISTINCT pe FROM ProgrammingExercise pe
             LEFT JOIN FETCH pe.templateParticipation tp
             LEFT JOIN FETCH pe.solutionParticipation sp
             LEFT JOIN FETCH tp.results tpr
@@ -59,7 +65,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation.submissions.results", "solutionParticipation.submissions.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")
@@ -98,20 +104,23 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
-     * <ol>
-     * <li>The release date is in the future --> Schedule combine template commits</li>
+     * <ul>
+     * <li>The release date is in the future → Schedule combine template commits</li>
      * <li>The build and test student submissions after deadline date is in the future</li>
      * <li>Manual assessment is enabled and the due date is in the future</li>
-     * </ol>
+     * <li>There are participations in the exercise with individual due dates in the future</li>
+     * </ul>
      *
      * @param now the current time
      * @return List of the exercises that should be scheduled
      */
     @Query("""
             select distinct pe from ProgrammingExercise pe
+            left join pe.studentParticipations participation
             where pe.releaseDate > :#{#now}
                 or pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#now}
                 or (pe.assessmentType <> 'AUTOMATIC' and pe.dueDate > :#{#now})
+                or (participation.individualDueDate is not null and participation.individualDueDate > :#{#now})
             """)
     List<ProgrammingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
@@ -184,8 +193,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 OR pe.solutionParticipation.id = :#{#participationId}
             """)
     Optional<ProgrammingExercise> findByParticipationId(@Param("participationId") Long participationId);
-
-    ProgrammingExercise findOneBySubmissionPolicyId(Long submissionPolicyId);
 
     /**
      * Query which fetches all the programming exercises for which the user is instructor in the course and matching the search criteria.
@@ -382,8 +389,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * We therefore have to check here if any submission of the student was submitted before the deadline.
      *
      * @param examId the exam id we are interested in
-     * @return the number of latest submissions belonging to a participation belonging to the exam id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
-     *         due date at all (only exercises with manual or semi automatic correction are considered)
+     * @return the number of the latest submissions belonging to a participation belonging to the exam id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
+     *         due date at all (only exercises with manual or semi-automatic correction are considered)
      */
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
@@ -399,26 +406,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
      * We therefore have to check here if any submission of the student was submitted before the deadline.
      *
-     * @param courseId the course id we are interested in
-     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
-     *         due date at all (only exercises with manual or semi automatic correction are considered)
-     */
-    @Query("""
-            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
-            JOIN p.submissions s
-            WHERE p.exercise.assessmentType <> 'AUTOMATIC'
-                AND p.exercise.course.id = :#{#courseId}
-                AND s.submitted = TRUE
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
-            """)
-    long countLegalSubmissionsByCourseIdSubmitted(@Param("courseId") Long courseId);
-
-    /**
-     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here if any submission of the student was submitted before the deadline.
-     *
      * @param exerciseIds the exercise ids of the course we are interested in
-     * @return the number of submissions belonging to the course id, which have the submitted flag set to true (only exercises with manual or semi automatic correction are considered)
+     * @return the number of submissions belonging to the course id, which have the submitted flag set to true (only exercises with manual or semi-automatic correction are considered)
      */
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
@@ -457,14 +446,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
 
-    @Query("""
-            SELECT pe FROM ProgrammingExercise pe
-            LEFT JOIN FETCH pe.templateParticipation tp
-            LEFT JOIN FETCH pe.solutionParticipation sp
-            WHERE pe.course.id = :#{#courseId}
-            """)
-    List<ProgrammingExercise> findAllByCourseWithTemplateAndSolutionParticipation(@Param("courseId") Long courseId);
-
     long countByShortNameAndCourse(String shortName, Course course);
 
     long countByTitleAndCourse(String shortName, Course course);
@@ -480,16 +461,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     default List<ProgrammingExercise> findAllWithBuildAndTestAfterDueDateInFuture() {
         return findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
-    }
-
-    /**
-     * Find the ProgrammingExercise of the given Participation, which can be either a student, template or solution Participation
-     *
-     * @param participation The programming participation
-     * @return The ProgrammingExercise of the given Participation
-     */
-    default Optional<ProgrammingExercise> getExercise(ProgrammingExerciseParticipation participation) {
-        return findByParticipationId(participation.getId());
     }
 
     /**
@@ -647,5 +618,100 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationLatestResultById(programmingExerciseId);
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * Retrieve the programming exercise from a programming exercise participation. In case the programming exercise is null or not initialized,
+     * this method will load it properly from the database and connect it to the participation
+     * @param participation the programming exercise participation for which the programming exercise should be found
+     * @return the programming exercise
+     */
+    @Nullable
+    default ProgrammingExercise getProgrammingExerciseFromParticipation(ProgrammingExerciseParticipation participation) {
+        // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
+        if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
+            // Find the programming exercise for the given participation
+            var optionalProgrammingExercise = findByParticipationId(participation.getId());
+            if (optionalProgrammingExercise.isEmpty()) {
+                return null;
+            }
+            participation.setProgrammingExercise(optionalProgrammingExercise.get());
+        }
+        return participation.getProgrammingExercise();
+    }
+
+    /**
+     * Validate the programming exercise title.
+     * 1. Check presence and length of exercise title
+     * 2. Find forbidden patterns in exercise title
+     *  @param programmingExercise Programming exercise to be validated
+     * @param course              Course of the programming exercise
+     */
+    default void validateTitle(ProgrammingExercise programmingExercise, Course course) {
+        // Check if exercise title is set
+        if (programmingExercise.getTitle() == null || programmingExercise.getTitle().length() < 3) {
+            throw new BadRequestAlertException("The title of the programming exercise is too short", "Exercise", "programmingExerciseTitleInvalid");
+        }
+
+        // Check if the exercise title matches regex
+        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(programmingExercise.getTitle());
+        if (!titleMatcher.matches()) {
+            throw new BadRequestAlertException("The title is invalid", "Exercise", "titleInvalid");
+        }
+
+        // Check that the exercise title is unique among all programming exercises in the course, otherwise the corresponding project in the VCS system cannot be generated
+        long numberOfProgrammingExercisesWithSameTitle = countByTitleAndCourse(programmingExercise.getTitle(), course)
+                + countByTitleAndExerciseGroupExamCourse(programmingExercise.getTitle(), course);
+        if (numberOfProgrammingExercisesWithSameTitle > 0) {
+            throw new BadRequestAlertException("A programming exercise with the same title already exists. Please choose a different title.", "Exercise", "titleAlreadyExists");
+        }
+    }
+
+    /**
+     * Validates the course and programming exercise short name.
+     * 1. Check presence and length of exercise short name
+     * 2. Check presence and length of course short name
+     * 3. Find forbidden patterns in exercise short name
+     * 4. Check that the short name doesn't already exist withing course or exam exercises
+     *  @param programmingExercise Programming exercise to be validated
+     * @param course              Course of the programming exercise
+     */
+    default void validateCourseAndExerciseShortName(ProgrammingExercise programmingExercise, Course course) {
+        // Check if exercise shortname is set
+        if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
+            throw new BadRequestAlertException("The shortname of the programming exercise is not set or too short", "Exercise", "programmingExerciseShortnameInvalid");
+        }
+
+        // Check if the course shortname is set
+        if (course.getShortName() == null || course.getShortName().length() < 3) {
+            throw new BadRequestAlertException("The shortname of the course is not set or too short", "Exercise", "courseShortnameInvalid");
+        }
+
+        // Check if exercise shortname matches regex
+        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
+        if (!shortNameMatcher.matches()) {
+            throw new BadRequestAlertException("The shortname is invalid", "Exercise", "shortnameInvalid");
+        }
+
+        // NOTE: we have to cover two cases here: exercises directly stored in the course and exercises indirectly stored in the course (exercise -> exerciseGroup -> exam ->
+        // course)
+        long numberOfProgrammingExercisesWithSameShortName = countByShortNameAndCourse(programmingExercise.getShortName(), course)
+                + countByShortNameAndExerciseGroupExamCourse(programmingExercise.getShortName(), course);
+        if (numberOfProgrammingExercisesWithSameShortName > 0) {
+            throw new BadRequestAlertException("A programming exercise with the same short name already exists. Please choose a different short name.", "Exercise",
+                    "shortnameAlreadyExists");
+        }
+    }
+
+    /**
+     * Validate the general course settings.
+     * 1. Validate the title
+     * 2. Validate the course and programming exercise short name.
+     *  @param programmingExercise Programming exercise to be validated
+     * @param course              Course of the programming exercise
+     */
+    default void validateCourseSettings(ProgrammingExercise programmingExercise, Course course) {
+        validateTitle(programmingExercise, course);
+        validateCourseAndExerciseShortName(programmingExercise, course);
     }
 }

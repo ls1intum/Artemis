@@ -17,12 +17,13 @@ import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/m
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faAngleDown, faAngleUp, faCheckDouble, faFileUpload, faFont, faKeyboard, faPlus, faProjectDiagram, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -40,6 +41,18 @@ export class ExerciseGroupsComponent implements OnInit {
     exerciseType = ExerciseType;
     latestIndividualEndDate?: dayjs.Dayjs;
     exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
+
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faFont = faFont;
+    faWrench = faWrench;
+    faCheckDouble = faCheckDouble;
+    faFileUpload = faFileUpload;
+    faKeyboard = faKeyboard;
+    faProjectDiagram = faProjectDiagram;
+    faAngleUp = faAngleUp;
+    faAngleDown = faAngleDown;
 
     constructor(
         private route: ActivatedRoute,
@@ -60,16 +73,16 @@ export class ExerciseGroupsComponent implements OnInit {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         // Only take action when a response was received for both requests
-        forkJoin(this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()).subscribe(
-            ([examRes, examInfoDTO]) => {
+        forkJoin([this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()]).subscribe({
+            next: ([examRes, examInfoDTO]) => {
                 this.exam = examRes.body!;
                 this.exerciseGroups = this.exam.exerciseGroups;
                 this.course = this.exam.course!;
                 this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined;
                 this.setupExerciseGroupToExerciseTypesDict();
             },
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     /**
@@ -116,8 +129,8 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param event representation of users choices to delete the student repositories and base repositories
      */
     deleteExerciseGroup(exerciseGroupId: number, event: { [key: string]: boolean }) {
-        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe(
-            () => {
+        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'exerciseGroupOverviewModification',
                     content: 'Deleted an exercise group',
@@ -126,8 +139,8 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.exerciseGroups = this.exerciseGroups!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId);
                 delete this.exerciseGroupToExerciseTypesDict[exerciseGroupId];
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     /**
@@ -137,15 +150,15 @@ export class ExerciseGroupsComponent implements OnInit {
     exerciseIcon(exercise: Exercise): IconProp {
         switch (exercise.type) {
             case ExerciseType.QUIZ:
-                return 'check-double';
+                return faCheckDouble;
             case ExerciseType.FILE_UPLOAD:
-                return 'file-upload';
+                return faFileUpload;
             case ExerciseType.MODELING:
-                return 'project-diagram';
+                return faProjectDiagram;
             case ExerciseType.PROGRAMMING:
-                return 'keyboard';
+                return faKeyboard;
             default:
-                return 'font';
+                return faFont;
         }
     }
 
@@ -223,10 +236,10 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     private saveOrder(): void {
-        this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe(
-            (res) => (this.exerciseGroups = res.body!),
-            () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
-        );
+        this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe({
+            next: (res) => (this.exerciseGroups = res.body!),
+            error: () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
+        });
     }
 
     /**

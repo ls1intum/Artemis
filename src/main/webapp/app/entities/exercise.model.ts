@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
@@ -17,6 +17,7 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
 
 export enum DifficultyLevel {
     EASY = 'EASY',
@@ -36,6 +37,11 @@ export enum ExerciseType {
     QUIZ = 'quiz',
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload',
+}
+
+export interface ValidationReason {
+    translateKey: string;
+    translateValues: any;
 }
 
 export const exerciseTypes: string[] = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ];
@@ -153,15 +159,15 @@ export abstract class Exercise implements BaseEntity {
 
 export function getIcon(exerciseType?: ExerciseType): IconProp {
     if (!exerciseType) {
-        return 'question' as IconProp;
+        return faQuestion as IconProp;
     }
 
     const icons = {
-        [ExerciseType.PROGRAMMING]: 'keyboard',
-        [ExerciseType.MODELING]: 'project-diagram',
-        [ExerciseType.QUIZ]: 'check-double',
-        [ExerciseType.TEXT]: 'font',
-        [ExerciseType.FILE_UPLOAD]: 'file-upload',
+        [ExerciseType.PROGRAMMING]: faKeyboard,
+        [ExerciseType.MODELING]: faProjectDiagram,
+        [ExerciseType.QUIZ]: faCheckDouble,
+        [ExerciseType.TEXT]: faFont,
+        [ExerciseType.FILE_UPLOAD]: faFileUpload,
     };
 
     return icons[exerciseType] as IconProp;

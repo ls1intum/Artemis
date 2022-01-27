@@ -24,6 +24,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
+import { faChalkboardTeacher, faCheck, faCircle, faCodeBranch, faExclamation, faExclamationTriangle, faInfoCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({
@@ -60,25 +61,25 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     legend = [
         {
             text: 'artemisApp.exampleSubmission.legend.positiveScore',
-            icon: 'check' as IconProp,
+            icon: faCheck as IconProp,
             color: 'green',
             size: '2em',
         },
         {
             text: 'artemisApp.exampleSubmission.legend.negativeScore',
-            icon: 'times' as IconProp,
+            icon: faTimes as IconProp,
             color: 'red',
             size: '2em',
         },
         {
             text: 'artemisApp.exampleSubmission.legend.feedbackWithoutScore',
-            icon: 'exclamation' as IconProp,
+            icon: faExclamation as IconProp,
             color: 'blue',
             size: '1.66em',
         },
         {
             text: 'artemisApp.exampleSubmission.legend.incorrectAssessment',
-            icon: 'exclamation-triangle' as IconProp,
+            icon: faExclamationTriangle as IconProp,
             color: 'yellow',
             size: '2em',
         },
@@ -91,6 +92,14 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     get assessments(): Feedback[] {
         return [...this.referencedFeedback, ...this.unreferencedFeedback];
     }
+
+    // Icons
+    faSave = faSave;
+    faCircle = faCircle;
+    faInfoCircle = faInfoCircle;
+    faExclamation = faExclamation;
+    faCodeBranch = faCodeBranch;
+    faChalkboardTeacher = faChalkboardTeacher;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -185,8 +194,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         newExampleSubmission.exercise = this.exercise;
         newExampleSubmission.usedForTutorial = this.usedForTutorial;
 
-        this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe(
-            (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+        this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe({
+            next: (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                 this.exampleSubmission = exampleSubmissionResponse.body!;
                 this.exampleSubmissionId = this.exampleSubmission.id!;
                 if (this.exampleSubmission.submission) {
@@ -204,10 +213,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 this.navigationUtilService.replaceNewWithIdInUrl(window.location.href, this.exampleSubmissionId);
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 onError(this.alertService, error);
             },
-        );
+        });
     }
 
     private updateExampleModelingSubmission() {
@@ -228,8 +237,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         exampleSubmission.submission = this.modelingSubmission;
         exampleSubmission.exercise = this.exercise;
         exampleSubmission.usedForTutorial = this.usedForTutorial;
-        this.exampleSubmissionService.update(exampleSubmission, this.exerciseId).subscribe(
-            (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+        this.exampleSubmissionService.update(exampleSubmission, this.exerciseId).subscribe({
+            next: (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                 this.exampleSubmission = exampleSubmissionResponse.body!;
                 this.exampleSubmissionId = this.exampleSubmission.id!;
                 if (this.exampleSubmission.submission) {
@@ -245,10 +254,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
                 this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 onError(this.alertService, error);
             },
-        );
+        });
     }
 
     onReferencedFeedbackChanged(referencedFeedback: Feedback[]) {
@@ -312,15 +321,15 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 }),
                 concatMap(() => this.modelingAssessmentService.saveExampleAssessment(this.assessments, this.exampleSubmissionId)),
             )
-            .subscribe(
-                (result: Result) => {
+            .subscribe({
+                next: (result: Result) => {
                     this.updateAssessment(result);
                     this.alertService.success('modelingAssessmentEditor.messages.saveSuccessful');
                 },
-                () => {
+                error: () => {
                     this.alertService.error('modelingAssessmentEditor.messages.saveFailed');
                 },
-            );
+            });
     }
 
     /**
@@ -335,15 +344,15 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     private updateExampleAssessment() {
-        this.modelingAssessmentService.saveExampleAssessment(this.assessments, this.exampleSubmissionId).subscribe(
-            (result: Result) => {
+        this.modelingAssessmentService.saveExampleAssessment(this.assessments, this.exampleSubmissionId).subscribe({
+            next: (result: Result) => {
                 this.updateAssessment(result);
                 this.alertService.success('modelingAssessmentEditor.messages.saveSuccessful');
             },
-            () => {
+            error: () => {
                 this.alertService.error('modelingAssessmentEditor.messages.saveFailed');
             },
-        );
+        });
     }
 
     /**

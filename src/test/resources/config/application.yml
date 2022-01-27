@@ -23,6 +23,20 @@ artemis:
     external-system-request:
         batch-size: 1  # wait the time below after 1 requests (make it easier to test the corresponding code)
         batch-waiting-time: 5   # 5ms (make the tests faster)
+    continuous-integration:
+    # Defines the used docker images for certain programming languages
+        build:
+            images:
+                JAVA: "~~invalid~~"
+                KOTLIN: "~~invalid~~"
+                EMPTY: "~~invalid~~"
+                PYTHON: "~~invalid~~"
+                C: "~~invalid~~"
+                HASKELL: "~~invalid~~"
+                VHDL: "~~invalid~~"
+                ASSEMBLER: "~~invalid~~"
+                SWIFT: "~~invalid~~"
+                OCAML: "~~invalid~~"
 
 spring:
     application:
@@ -45,7 +59,7 @@ spring:
     jmx:
         enabled: false
     jpa:
-#        database-platform: tech.jhipster.domain.util.FixedH2Dialect
+        database-platform: tech.jhipster.domain.util.FixedH2Dialect
         open-in-view: false
         show-sql: false
         hibernate:
@@ -77,6 +91,10 @@ spring:
         host: localhost
     main:
         allow-bean-definition-overriding: true
+        allow-circular-references: true # TODO: we should deactivate this in the future, however currently securityConfiguration has a circular dependency to itself
+    mvc:
+        pathmatch:
+            matching-strategy: ant_path_matcher # TODO: we should update all paths to support PathPatternParser, in particular ClientForwardResource
     messages:
         basename: i18n/messages
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
@@ -126,6 +144,9 @@ management:
                 include: ["jhimetrics"]
     endpoint:
         jhimetrics:
+            enabled: true
+    info:
+        env:
             enabled: true
 
 sentry:

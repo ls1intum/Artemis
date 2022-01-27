@@ -11,6 +11,8 @@ import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, Connectio
 import { CommitState, EditorState, FileSubmission, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConfirmRefreshModalComponent } from './code-editor-confirm-refresh-modal.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
+import { faCircleNotch, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPlayCircle } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-actions',
@@ -59,6 +61,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     // autoTimerInterval in seconds
     autoSaveTimer = 0;
     autoSaveInterval: number;
+
+    // Icons
+    faTimes = faTimes;
+    faCircleNotch = faCircleNotch;
+    faSync = faSync;
+    farPlayCircle = faPlayCircle;
 
     set commitState(commitState: CommitState) {
         this.commitStateValue = commitState;
@@ -144,12 +152,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
 
     executeRefresh() {
         this.editorState = EditorState.REFRESHING;
-        this.repositoryService.pull().subscribe(
-            () => {
+        this.repositoryService.pull().subscribe({
+            next: () => {
                 this.onRefreshFiles.emit();
                 this.editorState = EditorState.CLEAN;
             },
-            (error: Error) => {
+            error: (error: Error) => {
                 this.editorState = EditorState.UNSAVED_CHANGES;
                 if (error.message === ConnectionError.message) {
                     this.onError.emit('refreshFailed' + error.message);
@@ -157,7 +165,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                     this.onError.emit('refreshFailed');
                 }
             },
-        );
+        });
     }
 
     onSave() {
@@ -178,14 +186,14 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                 tap((fileSubmission: FileSubmission) => {
                     this.onSavedFiles.emit(fileSubmission);
                 }),
-                catchError((error) => {
+                catchError((error: Error) => {
                     this.editorState = EditorState.UNSAVED_CHANGES;
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('saveFailed' + error.message);
                     } else {
                         this.onError.emit('saveFailed');
                     }
-                    return throwError(error);
+                    return throwError(() => error);
                 }),
             );
         }
@@ -224,9 +232,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                     }
                 }),
             )
-            .subscribe(
-                () => {},
-                (error) => {
+            .subscribe({
+                error: (error: Error) => {
                     this.commitState = CommitState.UNCOMMITTED_CHANGES;
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('commitFailed' + error.message);
@@ -234,21 +241,21 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                         this.onError.emit('commitFailed');
                     }
                 },
-            );
+            });
     }
 
     resetRepository() {
         const modal = this.modalService.open(CodeEditorResolveConflictModalComponent, { keyboard: true, size: 'lg' });
         modal.componentInstance.shouldReset.subscribe(() => {
-            this.repositoryService.resetRepository().subscribe(
-                () => {
+            this.repositoryService.resetRepository().subscribe({
+                next: () => {
                     this.conflictService.notifyConflictState(GitConflictState.OK);
                     this.executeRefresh();
                 },
-                () => {
+                error: () => {
                     this.onError.emit('resetFailed');
                 },
-            );
+            });
         });
     }
 }
