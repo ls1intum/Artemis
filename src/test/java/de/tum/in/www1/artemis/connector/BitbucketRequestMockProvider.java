@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import net.sf.json.JSONObject;
 
 @Component
 @Profile("bitbucket")
@@ -193,6 +194,27 @@ public class BitbucketRequestMockProvider {
                 .queryParam("emailAddress", emailAddress).queryParam("password", password).queryParam("displayName", displayName).queryParam("addToDefaultGroup", "true")
                 .queryParam("notify", "false").build().toUri();
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockUpdateUserDetails(String userName, String emailAddress, String displayName) throws JsonProcessingException {
+        final var path = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").build().toUri();
+        JSONObject body = new JSONObject();
+        body.put("name", userName);
+        body.put("email", emailAddress);
+        body.put("displayName", displayName);
+
+        mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockUpdateUserPassword(String userName, String password) throws JsonProcessingException {
+        final var path = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/credentials").build().toUri();
+        JSONObject body = new JSONObject();
+        body.put("name", userName);
+        body.put("password", password);
+        body.put("passwordConfirm", password);
+
+        mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(body)))
+                .andRespond(withStatus(HttpStatus.NO_CONTENT));
     }
 
     public void mockAddUserToGroups() throws URISyntaxException {

@@ -53,8 +53,6 @@ public class AccountResource {
 
     private final UserCreationService userCreationService;
 
-    private final PasswordService passwordService;
-
     private final MailService mailService;
 
     public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, MailService mailService,
@@ -63,7 +61,6 @@ public class AccountResource {
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.mailService = mailService;
-        this.passwordService = passwordService;
     }
 
     /**
