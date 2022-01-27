@@ -1,13 +1,16 @@
-package de.tum.in.www1.artemis.service.programming;
+package de.tum.in.www1.artemis.service.hestia;
 
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+/**
+ * Service for managing programming exercise solution entries.
+ */
 @Service
 public class ProgrammingExerciseSolutionEntryService {
 

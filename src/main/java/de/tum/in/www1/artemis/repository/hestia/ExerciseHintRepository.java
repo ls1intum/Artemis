@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.repository;
+package de.tum.in.www1.artemis.repository.hestia;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.hestia.TextHint;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
- * Spring Data  repository for the ExerciseHint entity.
+ * Spring Data repository for the ExerciseHint entity.
  */
 @SuppressWarnings("unused")
 @Repository

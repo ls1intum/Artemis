@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.repository;
+package de.tum.in.www1.artemis.repository.hestia;
 
 import java.util.Set;
 
@@ -11,6 +11,9 @@ import org.springframework.data.repository.query.Param;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+/**
+ * Spring Data repository for the CodeHint entity.
+ */
 public interface CodeHintRepository extends JpaRepository<CodeHint, Long> {
 
     Set<CodeHint> findByExerciseId(Long exerciseId);

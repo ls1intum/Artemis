@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.UrlService;

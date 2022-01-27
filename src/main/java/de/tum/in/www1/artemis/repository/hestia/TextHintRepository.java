@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.repository;
+package de.tum.in.www1.artemis.repository.hestia;
 
 import java.util.Set;
 
@@ -11,6 +11,9 @@ import org.springframework.data.repository.query.Param;
 import de.tum.in.www1.artemis.domain.hestia.TextHint;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+/**
+ * Spring Data repository for the TextHint entity.
+ */
 public interface TextHintRepository extends JpaRepository<TextHint, Long> {
 
     Set<TextHint> findByExerciseId(Long exerciseId);

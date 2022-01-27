@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 
 /**
- * A SolutionEntry.
+ * A ProgrammingExerciseSolutionEntry.
  */
 @Entity
 @Table(name = "programming_exercise_solution_entry")

@@ -1,13 +1,16 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.hestia;
 
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
-import de.tum.in.www1.artemis.repository.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+/**
+ * Service for managing code hints.
+ */
 @Service
 public class CodeHintService {
 

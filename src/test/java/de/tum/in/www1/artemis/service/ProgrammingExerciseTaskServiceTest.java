@@ -14,8 +14,8 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseTaskRepository;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTaskService;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
