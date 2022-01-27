@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.repository;
+package de.tum.in.www1.artemis.repository.hestia;
 
 import java.util.Optional;
 import java.util.Set;
@@ -12,16 +12,32 @@ import org.springframework.data.repository.query.Param;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+/**
+ * Spring Data repository for the ProgrammingExerciseTask entity.
+ */
 @SuppressWarnings("unused")
 public interface ProgrammingExerciseTaskRepository extends JpaRepository<ProgrammingExerciseTask, Long> {
 
     Set<ProgrammingExerciseTask> findByExerciseId(Long exerciseId);
 
+    /**
+     * Gets a task with its programming exercise, test cases and solution entries of the test cases
+     *
+     * @param entryId The id of the task
+     * @return The task with the given ID if found
+     * @throws EntityNotFoundException If no task with the given ID was found
+     */
     @NotNull
     default ProgrammingExerciseTask findByIdWithTestCaseAndSolutionEntriesAndProgrammingExerciseElseThrow(long entryId) throws EntityNotFoundException {
         return findByIdWithTestCaseAndSolutionEntriesAndProgrammingExercise(entryId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Task", entryId));
     }
 
+    /**
+     * Gets a task with its programming exercise, test cases and solution entries of the test cases
+     *
+     * @param entryId The id of the task
+     * @return The task with the given ID
+     */
     @Query("""
             SELECT t
             FROM ProgrammingExerciseTask t
@@ -31,6 +47,22 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
             WHERE t.id = :entryId
             """)
     Optional<ProgrammingExerciseTask> findByIdWithTestCaseAndSolutionEntriesAndProgrammingExercise(long entryId);
+
+    /**
+     * Gets a task by its name and associated programming exercise
+     *
+     * @param taskName The name of the task
+     * @param exerciseId The programming exercise the task should be associated with
+     * @return The task with the given name and programming exercise
+     */
+    @Query("""
+            SELECT t
+            FROM ProgrammingExerciseTask t
+            LEFT JOIN FETCH t.testCases tc
+            WHERE t.taskName = :taskName
+            AND t.exercise.id = :exerciseId
+            """)
+    Optional<ProgrammingExerciseTask> findByNameAndExerciseId(String taskName, long exerciseId);
 
     /**
      * Returns the task name with the given id

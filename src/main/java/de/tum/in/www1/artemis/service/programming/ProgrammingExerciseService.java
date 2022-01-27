@@ -11,6 +11,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -29,9 +32,11 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -86,13 +91,18 @@ public class ProgrammingExerciseService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
+    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
             ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -109,6 +119,8 @@ public class ProgrammingExerciseService {
         this.groupNotificationService = groupNotificationService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
+        this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
     }
 
     /**
@@ -952,5 +964,40 @@ public class ProgrammingExerciseService {
             throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");
         }
         // means the project does not exist in version control server and does not exist in continuous integration server
+    }
+
+    public void updateTasks(ProgrammingExercise exercise) {
+
+    }
+
+    public Set<ProgrammingExerciseTask> extractTasks(ProgrammingExercise exercise) {
+        String problemStatement = exercise.getProblemStatement();
+        Pattern pattern = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.+)\\)");
+        Matcher matcher = pattern.matcher(problemStatement);
+        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(exercise.getId()).stream()
+                .peek(testCase -> testCase.setTasks(new HashSet<>())).collect(Collectors.toSet());
+        Set<String> testCaseNames = testCases.stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.toSet());
+        Set<ProgrammingExerciseTask> tasks = new HashSet<>();
+        while (matcher.find()) {
+            String taskName = matcher.group("name");
+            String tests = matcher.group("tests");
+            // See if task already exists as needed
+            var existingTask = programmingExerciseTaskRepository.findByNameAndExerciseId(taskName, exercise.getId());
+            if (existingTask.isPresent()
+                    && testCaseNames.equals(existingTask.get().getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.toSet()))) {
+                tasks.add(existingTask.get());
+            }
+            else {
+                var task = new ProgrammingExerciseTask().taskName(taskName).exercise(exercise);
+                String[] testNames = tests.split(",");
+                for (String testName : testNames) {
+                    Optional<ProgrammingExerciseTestCase> testCaseOptional = testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst();
+                    testCaseOptional.ifPresent(testCase -> {
+                        testCase.getTasks().add(task);
+                    });
+                }
+            }
+        }
+        return tasks;
     }
 }

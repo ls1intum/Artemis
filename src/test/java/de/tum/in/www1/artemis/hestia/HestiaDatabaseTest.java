@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,9 @@ import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 
 public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -167,5 +171,19 @@ public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(codeHintRepository.findAll()).isEmpty();
         assertThat(programmingExerciseTestCaseRepository.findAll()).hasSize(3);
         assertThat(programmingExerciseSolutionEntryRepository.findAll()).hasSize(6);
+    }
+
+    @Test
+    void testy() {
+        var programmingExercise = programmingExerciseRepository.getById(programmingExerciseId);
+        database.addTestCasesToProgrammingExercise(programmingExercise);
+        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId);
+        assertThat(testCases).isNotEmpty();
+        var task = addTaskToProgrammingExercise("Task 1");
+        task.setTestCases(testCases);
+        task = programmingExerciseTaskRepository.save(task);
+        task = programmingExerciseTaskRepository.findByNameAndExerciseId("Task 1", programmingExerciseId).get();
+        assertThat(testCases.stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.toList()))
+                .isEqualTo(task.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.toList()));
     }
 }
