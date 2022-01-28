@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -405,8 +406,8 @@ public class ExamResource {
         log.debug("REST request to get all exams for Course : {}", courseId);
 
         examAccessService.checkCourseAccessForTeachingAssistantElseThrow(courseId);
-
-        List<Exam> exams = examRepository.findByCourseId(courseId);
+        // We need the exercise groups and exercises for the exam status now. As the database query does not remove duplicates, we have to
+        List<Exam> exams = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId).stream().distinct().collect(Collectors.toList());
         examRepository.setNumberOfRegisteredUsersForExams(exams);
         return ResponseEntity.ok(exams);
     }

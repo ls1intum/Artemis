@@ -1,0 +1,57 @@
+.exam-status-wrapper {
+    display: flex;
+    justify-content: space-between;
+    min-width: 400px;
+    margin-left: 40px;
+    margin-right: 40px;
+
+    .check {
+        color: #28a745;
+    }
+
+    .cross {
+        color: #ca2024;
+    }
+
+    li {
+        display: list-item !important;
+    }
+
+    .unset {
+        color: #ca2024;
+    }
+
+    .running {
+        color: #ffa500;
+    }
+
+    .planned,
+    .finished {
+        color: #28a745;
+    }
+
+    .connector {
+        width: 100%;
+        min-width: 50px;
+        border-top: 2px solid;
+        margin-top: 1.5em;
+    }
+
+    .status-step {
+        width: 30px;
+        overflow-x: visible;
+        justify-content: flex-start;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .status-step-content {
+            min-width: fit-content;
+            white-space: nowrap;
+        }
+    }
+
+    .header-icon {
+        font-size: 2em;
+    }
+}
