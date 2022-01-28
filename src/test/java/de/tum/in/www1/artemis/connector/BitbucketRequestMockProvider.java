@@ -423,7 +423,7 @@ public class BitbucketRequestMockProvider {
 
     public void mockSetRepositoryPermissionsToReadOnly(String repositorySlug, String projectKey, Set<User> users) throws URISyntaxException {
         for (User user : users) {
-            mockSetStudentRepositoryPermission(repositorySlug, projectKey, user.getLogin(), VersionControlRepositoryPermission.READ_ONLY);
+            mockSetStudentRepositoryPermission(repositorySlug, projectKey, user.getLogin(), VersionControlRepositoryPermission.REPO_READ);
         }
     }
 
