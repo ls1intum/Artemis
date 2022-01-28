@@ -67,6 +67,12 @@ describe('Category Selector Component', () => {
         expect(comp).not.toBeUndefined();
     });
 
+    it('should choose random color', () => {
+        const result = comp.chooseRandomColor();
+
+        expect(comp.categoryColors).toContain(result);
+    });
+
     it('should find existing category', () => {
         comp.existingCategories = [category3, category4];
         const result = comp.findExistingCategory('category3');

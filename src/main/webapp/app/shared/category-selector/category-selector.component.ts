@@ -130,7 +130,7 @@ export class CategorySelectorComponent implements OnChanges {
         return category;
     }
 
-    private chooseRandomColor() {
+    chooseRandomColor(): string {
         const randomIndex = Math.floor(Math.random() * this.categoryColors.length);
         return this.categoryColors[randomIndex];
     }
