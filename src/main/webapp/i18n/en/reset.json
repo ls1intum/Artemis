@@ -11,12 +11,13 @@
                 "notfound": "<strong>Email address isn't registered!</strong> Please check and try again"
             },
             "external": {
-                "explanation": "Your account credentials are not with Artemis but {{provider}}.",
+                "explanation": "Your account credentials are not stored in Artemis but {{provider}}.",
                 "noLink": "The password reset links for {{provider}} are not provided. Please notify the administrator. If you know how to reset your password for {{provider}} you can do it yourself.",
                 "hint": "Please reset your password using this link:",
                 "generalHint": "If you use your credentials from {{provider}} instead of Artemis, please reset your password here:",
                 "linkTitle": "Password Reset",
-                "confirm": "Confirm"
+                "confirm": "Confirm",
+                "modalHeader": "External Password Reset"
             }
         },
         "finish": {

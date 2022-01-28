@@ -89,7 +89,7 @@ You can override the following configuration options in this file.
        user-management:
            use-external: true
            password-reset:
-                credential-provider: <provider> # The credential provider which users can log in though (e.g. TUMOnline)
+                credential-provider: <provider> # The credential provider which users can log in though (e.g. TUMonline)
                 links: # The password reset links for different languages
                     en: '<link>'
                     de: '<link>'
