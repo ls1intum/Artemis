@@ -9,6 +9,9 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
+/**
+ * This migration separates the users into internal and external users and sets the newly created attribute isInternal in {@link User}
+ */
 @Component
 public class MigrationEntry20211214_184200 extends MigrationEntry {
 
@@ -21,11 +24,13 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
         this.passwordService = passwordService;
     }
 
+    /**
+     * Retrieves all users from the database and executes the processing method in batches of a 100 users to prevent database timeouts
+     */
     @Override
     public void execute() {
         int listSize = 100;
         List<User> users = userRepository.findAll();
-        // Cut list in parts to prevent any timeouts
         int remainder = users.size() % listSize;
         int listCount = (int) Math.floor(users.size() / 100f);
         for (int i = 0; i < listCount - 1; i++) {
@@ -38,6 +43,12 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
         }
     }
 
+    /**
+     * Sets a user internal if the password is decryptable and is not empty. Otherwise, the user is external.
+     * If the user is external, the password will be set to an empty encrypted password as a default. Additionally, password reset fields get set to default.
+     *
+     * @param userList a batch of at max 100 users to be processed
+     */
     private void processUsers(List<User> userList) {
         userList = userList.stream().peek(user -> {
             String encryptedPassword = user.getPassword();
