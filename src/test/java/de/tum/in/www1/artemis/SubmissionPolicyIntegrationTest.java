@@ -237,6 +237,7 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
         database.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, "commit3");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-student2";
         bitbucketRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.mockUserExists("student2");
         bitbucketRequestMockProvider.mockGiveWritePermission(programmingExercise, repositoryName, "student2", HttpStatus.OK);
         bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, repositoryName);
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(3).policy(), HttpStatus.OK);
