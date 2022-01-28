@@ -30,6 +30,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -41,7 +43,6 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermiss
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import net.sf.json.JSONObject;
 
 @Component
 @Profile("bitbucket")
@@ -211,10 +212,10 @@ public class BitbucketRequestMockProvider {
 
     public void mockUpdateUserDetails(String username, String emailAddress, String displayName) throws JsonProcessingException {
         final var path = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").build().toUri();
-        JSONObject body = new JSONObject();
-        body.put("name", username);
-        body.put("email", emailAddress);
-        body.put("displayName", displayName);
+        JsonObject body = new JsonObject();
+        body.addProperty("name", username);
+        body.addProperty("email", emailAddress);
+        body.addProperty("displayName", displayName);
 
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
     }
@@ -233,10 +234,10 @@ public class BitbucketRequestMockProvider {
             public boolean matches(Object actual) {
                 if (actual instanceof String) {
                     if (passwordShouldMatch) {
-                        JSONObject body = new JSONObject();
-                        body.put("name", username);
-                        body.put("password", password);
-                        body.put("passwordConfirm", password);
+                        JsonObject body = new JsonObject();
+                        body.addProperty("name", username);
+                        body.addProperty("password", password);
+                        body.addProperty("passwordConfirm", password);
                         try {
                             return actual.equals(mapper.writeValueAsString(body));
                         }
@@ -246,9 +247,10 @@ public class BitbucketRequestMockProvider {
                         }
                     }
                     else {
-                        JSONObject actualObject = JSONObject.fromObject(actual);
-                        return actualObject.getString("name").equals(username) && Objects.equals(actualObject.getString("password"), actualObject.getString("passwordConfirm"))
-                                && actualObject.getString("password") != null && !actualObject.getString("password").equals(password);
+                        JsonObject actualObject = JsonParser.parseString(actual.toString()).getAsJsonObject();
+                        return actualObject.get("name").getAsString().equals(username)
+                                && Objects.equals(actualObject.get("password").getAsString(), actualObject.get("passwordConfirm").getAsString())
+                                && actualObject.get("password").getAsString() != null && !actualObject.get("password").getAsString().equals(password);
                     }
                 }
                 return false;

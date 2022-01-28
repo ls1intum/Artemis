@@ -26,6 +26,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
@@ -35,7 +36,6 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import net.sf.json.JSONObject;
 
 @Service
 @Profile("bitbucket")
@@ -57,8 +57,6 @@ public class BitbucketService extends AbstractVersionControlService {
     @Value("${artemis.version-control.default-branch:master}")
     private String defaultBranch;
 
-    private final PasswordService passwordService;
-
     private final UserRepository userRepository;
 
     private final RestTemplate restTemplate;
@@ -68,7 +66,6 @@ public class BitbucketService extends AbstractVersionControlService {
     public BitbucketService(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRepository userRepository, UrlService urlService,
             @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, GitService gitService, ApplicationContext applicationContext) {
         super(applicationContext, gitService, urlService);
-        this.passwordService = passwordService;
         this.userRepository = userRepository;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
@@ -247,18 +244,18 @@ public class BitbucketService extends AbstractVersionControlService {
      */
     public void updateUser(String username, String password, String emailAddress, String displayName) throws BitbucketException {
         UriComponentsBuilder userDetailsBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users");
-        JSONObject userDetailsBody = new JSONObject();
-        userDetailsBody.put("name", username);
-        userDetailsBody.put("email", emailAddress);
-        userDetailsBody.put("displayName", displayName);
+        JsonObject userDetailsBody = new JsonObject();
+        userDetailsBody.addProperty("name", username);
+        userDetailsBody.addProperty("email", emailAddress);
+        userDetailsBody.addProperty("displayName", displayName);
         HttpEntity<Object> userDetailsEntity = new HttpEntity<>(userDetailsBody, null);
 
         UriComponentsBuilder passwordBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/credentials");
-        JSONObject passwordBody = new JSONObject();
-        passwordBody.put("name", username);
-        passwordBody.put("password", password);
-        passwordBody.put("passwordConfirm", password);
-        HttpEntity<JSONObject> passwordEntity = new HttpEntity<>(passwordBody, null);
+        JsonObject passwordBody = new JsonObject();
+        passwordBody.addProperty("name", username);
+        passwordBody.addProperty("password", password);
+        passwordBody.addProperty("passwordConfirm", password);
+        HttpEntity<JsonObject> passwordEntity = new HttpEntity<>(passwordBody, null);
 
         log.debug("Updating Bitbucket user {} ({})", username, emailAddress);
 
@@ -327,11 +324,11 @@ public class BitbucketService extends AbstractVersionControlService {
 
         try {
             for (String group : groups) {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("context", username);
-                jsonObject.put("itemName", group);
+                JsonObject jsonObject = new JsonObject();
+                jsonObject.addProperty("context", username);
+                jsonObject.addProperty("itemName", group);
 
-                HttpEntity<JSONObject> entity = new HttpEntity<>(jsonObject, null);
+                HttpEntity<JsonObject> entity = new HttpEntity<>(jsonObject, null);
                 UriComponentsBuilder userDetailsBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/remove-group")
                         .queryParam("context", username).queryParam("itemName", group);
                 restTemplate.exchange(userDetailsBuilder.build().toUri(), HttpMethod.POST, entity, Void.class);
