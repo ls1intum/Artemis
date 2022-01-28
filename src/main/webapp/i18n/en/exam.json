@@ -452,9 +452,9 @@
             "columnTitle": "Exam status",
             "preparation": {
                 "examPreparation": "Exam preparation",
-                "configureExercises": "Configure exercises",
-                "registerStudents": "Register students",
-                "generateStudentExams": "Generate student exams",
+                "configureExercises": "Configure exercises: {{ amount }} exercise groups",
+                "registerStudents": "Register students: {{ registered }} registered",
+                "generateStudentExams": "Generate student exams: {{ generated }} of {{ total }}",
                 "prepareExerciseStart": "Prepare exercise start"
             },
             "conduction": {

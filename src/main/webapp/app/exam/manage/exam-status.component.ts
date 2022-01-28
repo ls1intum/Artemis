@@ -5,7 +5,7 @@ import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-compo
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import dayjs from 'dayjs/esm';
 
-export enum ExamStatusTranslationSuffixes {
+export enum ExamConfigurationStep {
     CONFIGURE_EXERCISES = 'configureExercises',
     REGISTER_STUDENTS = 'registerStudents',
     GENERATE_STUDENT_EXAMS = 'generateStudentExams',
@@ -36,13 +36,13 @@ export class ExamStatusComponent implements OnChanges {
     @Input()
     public time: dayjs.Dayjs;
 
-    translationSuffixes = [
-        ExamStatusTranslationSuffixes.CONFIGURE_EXERCISES,
-        ExamStatusTranslationSuffixes.REGISTER_STUDENTS,
-        ExamStatusTranslationSuffixes.GENERATE_STUDENT_EXAMS,
-        ExamStatusTranslationSuffixes.PREPARE_EXERCISE_START,
+    examConfigurationSteps = [
+        ExamConfigurationStep.CONFIGURE_EXERCISES,
+        ExamConfigurationStep.REGISTER_STUDENTS,
+        ExamConfigurationStep.GENERATE_STUDENT_EXAMS,
+        ExamConfigurationStep.PREPARE_EXERCISE_START,
     ];
-    translationToFlagMap = new Map<string, boolean>();
+    configurationStepToFlagMap = new Map<ExamConfigurationStep, boolean>();
     examChecklist: ExamChecklist;
     numberOfGeneratedStudentExams: number;
 
@@ -50,7 +50,9 @@ export class ExamStatusComponent implements OnChanges {
     examConductionState: ExamConductionState;
     examReviewState: ExamReviewState;
 
-    readonly examConductionAndCorrectionStateEnum = ExamConductionState;
+    readonly examConfigurationStepEnum = ExamConfigurationStep;
+    readonly examConductionStateEnum = ExamConductionState;
+    readonly examReviewStateEnum = ExamReviewState;
 
     // Icons
     faTimes = faTimes;
@@ -65,13 +67,15 @@ export class ExamStatusComponent implements OnChanges {
 
     ngOnChanges(): void {
         // Step 1: Exam preparation
-
-        // Step 1.1: Configure Exercises
-        this.translationToFlagMap.set(ExamStatusTranslationSuffixes.CONFIGURE_EXERCISES, this.areAllExercisesConfigured());
-        this.translationToFlagMap.set(ExamStatusTranslationSuffixes.REGISTER_STUDENTS, this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam));
+        // Step 1.1: Configure exercises
+        this.configurationStepToFlagMap.set(ExamConfigurationStep.CONFIGURE_EXERCISES, this.areAllExercisesConfigured());
+        // Step 1.2: Register students
+        this.configurationStepToFlagMap.set(ExamConfigurationStep.REGISTER_STUDENTS, this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam));
         this.examChecklistService.getExamStatistics(this.exam).subscribe((examStats) => {
-            this.translationToFlagMap.set(ExamStatusTranslationSuffixes.GENERATE_STUDENT_EXAMS, this.examChecklistService.checkAllExamsGenerated(this.exam, examStats));
-            this.translationToFlagMap.set(ExamStatusTranslationSuffixes.PREPARE_EXERCISE_START, !!examStats.allExamExercisesAllStudentsPrepared);
+            // Step 1.3: Generate student exams
+            this.configurationStepToFlagMap.set(ExamConfigurationStep.GENERATE_STUDENT_EXAMS, this.examChecklistService.checkAllExamsGenerated(this.exam, examStats));
+            // Step 1.4: Prepare exercise start
+            this.configurationStepToFlagMap.set(ExamConfigurationStep.PREPARE_EXERCISE_START, !!examStats.allExamExercisesAllStudentsPrepared);
             this.examPreparationFinished = this.isExamPreparationFinished();
             this.examChecklist = examStats;
             this.numberOfGeneratedStudentExams = this.examChecklist.numberOfGeneratedStudentExams ?? 0;
@@ -92,7 +96,7 @@ export class ExamStatusComponent implements OnChanges {
      * 4. Within each exercise group, exercises have same maximum points
      * 5. Maximum points of exam are reachable
      * @private
-     * returns boolean indicating whether configuration is finished
+     * @returns boolean indicating whether configuration is finished
      */
     private areAllExercisesConfigured(): boolean {
         // 1.
@@ -118,7 +122,7 @@ export class ExamStatusComponent implements OnChanges {
      * @private
      */
     private isExamPreparationFinished(): boolean {
-        return this.translationSuffixes.every((suffix) => this.translationToFlagMap.get(suffix));
+        return this.examConfigurationSteps.every((suffix) => this.configurationStepToFlagMap.get(suffix));
     }
 
     /**
@@ -156,16 +160,17 @@ export class ExamStatusComponent implements OnChanges {
 
     /**
      * Indicates whether the exam already started
+     * @private
      */
-    examAlreadyStarted() {
+    private examAlreadyStarted() {
         return this.exam.startDate && this.exam.startDate.isBefore(this.time);
     }
 
     /**
      * Indicates whether the exam is already finished
+     * @private
      */
-    examAlreadyEnded() {
-        console.log(this.exam.endDate!.isAfter(this.time));
+    private examAlreadyEnded() {
         return this.exam.endDate && this.exam.endDate.isBefore(this.time);
     }
 }

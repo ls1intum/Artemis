@@ -1,9 +1,10 @@
 .exam-status-wrapper {
     display: flex;
     justify-content: space-between;
-    min-width: 400px;
-    margin-left: 40px;
-    margin-right: 40px;
+    min-width: 660px;
+    max-width: 800px;
+    margin-left: 130px;
+    margin-right: 100px;
 
     .check {
         color: #28a745;
@@ -38,7 +39,7 @@
     }
 
     .status-step {
-        width: 30px;
+        width: 25px;
         overflow-x: visible;
         justify-content: flex-start;
         display: flex;
@@ -52,6 +53,7 @@
     }
 
     .header-icon {
+        z-index: 2;
         font-size: 2em;
     }
 }
