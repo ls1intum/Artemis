@@ -121,15 +121,15 @@ public class BitbucketRequestMockProvider {
 
     public void mockGrantGroupPermissionToProject(ProgrammingExercise exercise, String groupName, BitbucketPermission permission) throws URISyntaxException {
         final var projectKey = exercise.getProjectKey();
-        final var permissionPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/permissions/groups/")
+        final var permissionPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/permissions/groups")
                 .queryParam("name", groupName).queryParam("permission", permission);
 
         mockServer.expect(ExpectedCount.once(), requestTo(permissionPath.build().toUri())).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockrevokeGroupPermissionFromProject(ProgrammingExercise exercise, String groupName) throws URISyntaxException {
+    public void mockRevokeGroupPermissionFromProject(ProgrammingExercise exercise, String groupName) throws URISyntaxException {
         final var projectKey = exercise.getProjectKey();
-        final var permissionPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/permissions/groups/")
+        final var permissionPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/permissions/groups")
                 .queryParam("name", groupName);
 
         mockServer.expect(ExpectedCount.once(), requestTo(permissionPath.build().toUri())).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
