@@ -65,7 +65,11 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     testCasesValue: ProgrammingExerciseTestCase[] = [];
     changedTestCaseIds: number[] = [];
-    filteredTestCases: ProgrammingExerciseTestCase[] = [];
+    // We have to separate these test cases in order to separate the table and chart presentation if the table is filtered by the chart
+    filteredTestCasesForTable: ProgrammingExerciseTestCase[] = [];
+    filteredTestCasesForCharts: ProgrammingExerciseTestCase[] = [];
+    // backup in order to restore the setting before filtering by chart interaction
+    backupTestCases: ProgrammingExerciseTestCase[] = [];
 
     staticCodeAnalysisCategories: StaticCodeAnalysisCategory[] = [];
     changedCategoryIds: number[] = [];
@@ -557,7 +561,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Executes filtering on all available test cases with the specified params.
      */
     updateTestCaseFilter = () => {
-        this.filteredTestCases = !this.showInactiveValue && this.testCases ? this.testCases.filter(({ active }) => active) : this.testCases;
+        this.filteredTestCasesForTable = !this.showInactiveValue && this.testCases ? this.testCases.filter(({ active }) => active) : this.testCases;
+        this.filteredTestCasesForCharts = this.filteredTestCasesForTable;
+        this.backupTestCases = this.filteredTestCasesForTable;
     };
 
     /**
@@ -750,5 +756,16 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     getEventValue(event: Event) {
         const element = event.target as HTMLInputElement;
         return element.value;
+    }
+
+    /**
+     * Auxiliary method that handles the filtering of the table if the user clicks a specific test case in weight and bonus chart
+     * @param id the id of the test case that is clicked
+     */
+    filterTestCasesByChart(id: any): void {
+        this.filteredTestCasesForTable = this.backupTestCases;
+        if (id !== -5) {
+            this.filteredTestCasesForTable = this.filteredTestCasesForTable.filter((testCase) => testCase.id === (id as number));
+        }
     }
 }
