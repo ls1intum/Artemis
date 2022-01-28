@@ -257,16 +257,16 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         return statusADate;
     }
 
-    public void setStatusADate(Instant finalStatusADate) {
-        this.statusADate = finalStatusADate;
+    public void setStatusADate(Instant statusADate) {
+        this.statusADate = statusADate;
     }
 
     public Instant getStatusBDate() {
         return statusBDate;
     }
 
-    public void setStatusBDate(Instant finalStatusBDate) {
-        this.statusBDate = finalStatusBDate;
+    public void setStatusBDate(Instant statusBDate) {
+        this.statusBDate = statusBDate;
     }
 
     public Instant getInstructorStatementADate() {
