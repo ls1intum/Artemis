@@ -421,6 +421,13 @@ public class ProgrammingExerciseGradingService {
         return Optional.of(result);
     }
 
+    /**
+     * Creates an audit event logging that a re-evaluation was triggered.
+     * @param user who triggered the re-evaluation.
+     * @param exercise for which the evaluation was triggered.
+     * @param course the exercise belongs to.
+     * @param results of the exercise.
+     */
     public void logReEvaluate(User user, ProgrammingExercise exercise, Course course, List<Result> results) {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.RE_EVALUATE_RESULTS, "exercise=" + exercise.getTitle(), "course=" + course.getTitle(),
                 "results=" + results.size());
@@ -503,18 +510,30 @@ public class ProgrammingExerciseGradingService {
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (!testCases.isEmpty() && !result.getFeedbacks().isEmpty() && !testCaseFeedback.isEmpty()) {
-            removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
-
-            // Add feedbacks for all duplicate test cases
-            boolean hasDuplicateTestCases = createFeedbackForDuplicateTests(result, exercise);
-
-            // In this case, test cases won't be displayed but static code analysis feedback must be shown in the result string.
-            updateResultString(result, Set.of(), Set.of(), staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
+            addFeedbackTestsNotExecuted(result, exercise, staticCodeAnalysisFeedback, applySubmissionPolicy);
         }
         // Case 3: If there is no test case feedback, the build has failed, or it has previously fallen under case 2. In this case we just return the original result without
         // changing it.
 
         return result;
+    }
+
+    /**
+     * Adds the appropriate feedback to the result in case the automatic tests were not executed.
+     * @param result to which the feedback should be added.
+     * @param exercise to which the result belongs to.
+     * @param staticCodeAnalysisFeedback that has been created for this result.
+     * @param applySubmissionPolicy if the submission policy of the exercise should be applied.
+     */
+    private void addFeedbackTestsNotExecuted(final Result result, final ProgrammingExercise exercise, final List<Feedback> staticCodeAnalysisFeedback,
+            boolean applySubmissionPolicy) {
+        removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
+
+        // Add feedbacks for all duplicate test cases
+        boolean hasDuplicateTestCases = createFeedbackForDuplicateTests(result, exercise);
+
+        // In this case, test cases won't be displayed but static code analysis feedback must be shown in the result string.
+        updateResultString(result, Set.of(), Set.of(), staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
     }
 
     /**
@@ -550,8 +569,7 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Check which tests were not executed and add a new Feedback for them to the exercise.
-     *
+     * Checks which tests were not executed and add a new Feedback for them to the exercise.
      * @param result   of the build run.
      * @param allTests of the given programming exercise.
      */
@@ -562,7 +580,7 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Check which feedback entries have the same name and therefore indicate multiple testcases with the same name.
+     * Checks which feedback entries have the same name and therefore indicate multiple testcases with the same name.
      * These duplicate testcases are added as a feedback element to the result.
      * The instructor and tutors are notified via a group notification.
      *
@@ -583,13 +601,17 @@ public class ProgrammingExerciseGradingService {
                     .map(feedbackName -> new Feedback().type(FeedbackType.AUTOMATIC).text(feedbackName + " - Duplicate Test Case!").detailText(duplicateDetailText).positive(false))
                     .toList();
             result.addFeedbacks(feedbacksForDuplicateTestCases);
+
             // Enables to view the result details in case all test cases are positive
             result.setHasFeedback(true);
             String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);
             groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
+
             return true;
         }
-        return false;
+        else {
+            return false;
+        }
     }
 
     /**
@@ -692,12 +714,27 @@ public class ProgrammingExerciseGradingService {
         return successfulTestPoints;
     }
 
+    /**
+     * Updates the feedback corresponding to the test case with the given credits.
+     * @param result which should be updated.
+     * @param testCase the feedback that should be updated corresponds to.
+     * @param credits that should be set in the feedback.
+     */
     private void setCreditsForTestCaseFeedback(final Result result, final ProgrammingExerciseTestCase testCase, double credits) {
         // We need to compare testcases ignoring the case, because the testcaseRepository is case-insensitive
         result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && fb.getText().equalsIgnoreCase(testCase.getTestName())).findFirst()
                 .ifPresent(feedback -> feedback.setCredits(credits));
     }
 
+    /**
+     * Calculates the points that should be awarded for a successful test case.
+     * @param result used to determine if the calculation is performed for the solution.
+     * @param programmingExercise the result belongs to.
+     * @param test for which the points should be calculated.
+     * @param totalTestCaseCount in the given exercise.
+     * @param weightSum of all test cases in the exercise.
+     * @return the points which should be awarded for successfully completing the test case.
+     */
     private double calculatePointsForSuccessfulTestCase(final Result result, final ProgrammingExercise programmingExercise, final ProgrammingExerciseTestCase test,
             int totalTestCaseCount, double weightSum) {
         final boolean isWeightSumZero = Precision.equals(weightSum, 0, 1E-8);
