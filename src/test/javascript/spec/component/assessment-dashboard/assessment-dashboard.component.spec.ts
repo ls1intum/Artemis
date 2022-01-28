@@ -67,6 +67,24 @@ describe('AssessmentDashboardInformationComponent', () => {
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
         secondCorrectionEnabled: false,
     } as ProgrammingExercise;
+    const programmingExerciseComplaintsOnAutomaticAssessment = {
+        id: 21,
+        type: ExerciseType.PROGRAMMING,
+        tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+        allowComplaintsForAutomaticAssessments: true,
+        secondCorrectionEnabled: false,
+        numberOfOpenComplaints: 0,
+        numberOfOpenMoreFeedbackRequests: 0,
+        // Normally only a small fraction of submissions is assessed by hand and accounted
+        numberOfSubmissions: {
+            inTime: 1234,
+            late: 0,
+        },
+        totalNumberOfAssessments: {
+            inTime: 12,
+            late: 0,
+        },
+    } as ProgrammingExercise;
     const modelingExercise = {
         id: 17,
         type: ExerciseType.MODELING,
@@ -92,8 +110,8 @@ describe('AssessmentDashboardInformationComponent', () => {
         includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS,
     } as FileUploadExercise;
 
-    const course = { id: 10, exercises: [programmingExercise, modelingExercise, textExercise, modelingExercise] } as Course;
-    const exercises = [programmingExercise, fileUploadExercise, modelingExercise, textExercise];
+    const course = { id: 10, exercises: [programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, modelingExercise, textExercise, modelingExercise] } as Course;
+    const exercises = [programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, fileUploadExercise, modelingExercise, textExercise];
     const exerciseGroup1 = { id: 141, exercises: [programmingExercise, modelingExercise] } as ExerciseGroup;
     const exerciseGroup2 = { id: 142, exercises: [textExercise, fileUploadExercise] } as ExerciseGroup;
     const exam = { id: 20, exerciseGroups: [exerciseGroup1, exerciseGroup2], course: { id: 10 } } as Exam;
@@ -224,7 +242,7 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(getCourseWithInterestingExercisesForTutorsStub).toHaveBeenCalledTimes(1);
         expect(getStatsForTutorsStub).toHaveBeenCalledTimes(1);
         expect(comp.course).toEqual(Course.from(course));
-        expect(comp.allExercises).toHaveLength(4);
+        expect(comp.allExercises).toHaveLength(5);
         expect(comp.currentlyShownExercises).toHaveLength(4);
     }));
 
@@ -241,16 +259,16 @@ describe('AssessmentDashboardInformationComponent', () => {
     });
 
     it('should update exercises when finished exercises are filtered', () => {
-        comp.allExercises = [programmingExercise, textExercise, modelingExercise, fileUploadExercise];
+        comp.allExercises = [programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, textExercise, modelingExercise, fileUploadExercise];
         comp.currentlyShownExercises = [programmingExercise, textExercise, modelingExercise];
         comp.triggerFinishedExercises(); // should now show all exercises
-        expect(comp.currentlyShownExercises).toEqual([programmingExercise, textExercise, modelingExercise, fileUploadExercise]);
+        expect(comp.currentlyShownExercises).toEqual([programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, textExercise, modelingExercise, fileUploadExercise]);
         comp.triggerFinishedExercises(); // should no longer show fileUploadExercise
         expect(comp.currentlyShownExercises).toEqual([programmingExercise, textExercise, modelingExercise]);
     });
 
     it('should update exercises when optional exercises are filtered', () => {
-        comp.allExercises = [programmingExercise, textExercise, modelingExercise, fileUploadExercise];
+        comp.allExercises = [programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, textExercise, modelingExercise, fileUploadExercise];
         comp.currentlyShownExercises = [programmingExercise, textExercise, modelingExercise];
         comp.triggerOptionalExercises();
         expect(comp.currentlyShownExercises).toEqual([programmingExercise, modelingExercise]);

@@ -12,7 +12,7 @@ export class TableEditableFieldComponent {
     @ViewChild('editingInput', { static: false }) editingInput: ElementRef;
 
     @Input() id: string;
-    @Input() pattern: RegExp;
+    @Input() pattern?: RegExp;
     @Input() isRequired: boolean;
     @Input() translationBase: string;
 
