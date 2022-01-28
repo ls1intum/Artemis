@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import de.tum.in.www1.artemis.util.CourseTestService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -144,6 +145,12 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testUpdateCourseGroups() throws Exception {
+        bitbucketRequestMockProvider.mockRevokeGroupPermissionFromAnyProject("instructor");
+        bitbucketRequestMockProvider.mockGrantGroupPermissionToAnyProject("new-instructor-group", BitbucketPermission.PROJECT_ADMIN);
+        bitbucketRequestMockProvider.mockRevokeGroupPermissionFromAnyProject("editor");
+        bitbucketRequestMockProvider.mockGrantGroupPermissionToAnyProject("new-editor-group", BitbucketPermission.PROJECT_WRITE);
+        bitbucketRequestMockProvider.mockRevokeGroupPermissionFromAnyProject("tutor");
+        bitbucketRequestMockProvider.mockGrantGroupPermissionToAnyProject("new-ta-group", BitbucketPermission.PROJECT_READ);
         courseTestService.testUpdateCourseGroups();
     }
 
@@ -306,6 +313,8 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "ab12cde")
     public void testRegisterForCourse() throws Exception {
+        bitbucketRequestMockProvider.mockUpdateUserDetails("ab12cde", "ab12cde@test.de", "ab12cdeFirst ab12cdeLast");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
         courseTestService.testRegisterForCourse();
     }
 
@@ -318,6 +327,12 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testAddTutorAndInstructorToCourse_failsToAddUserToGroup() throws Exception {
+        bitbucketRequestMockProvider.mockUpdateUserDetails("tutor1", "tutor1@test.de", "tutor1First tutor1Last");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails("editor1", "editor1@test.de", "editor1First editor1Last");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails("instructor1", "instructor1@test.de", "instructor1First instructor1Last");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
         courseTestService.testAddTutorAndEditorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus.OK);
     }
 
@@ -365,6 +380,14 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testAddStudentOrTutorOrEditorOrInstructorToCourse() throws Exception {
+        bitbucketRequestMockProvider.mockUpdateUserDetails("student1", "student1@test.de", "student1First student1Last");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails("tutor1", "tutor1@test.de", "tutor1First tutor1Last");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails("editor1", "editor1@test.de", "editor1First editor1Last");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails("instructor1", "instructor1@test.de", "instructor1First instructor1Last");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
         courseTestService.testAddStudentOrTutorOrEditorOrInstructorToCourse();
     }
 
@@ -389,6 +412,14 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRemoveStudentOrTutorOrInstructorFromCourse() throws Exception {
+        bitbucketRequestMockProvider.mockUpdateUserDetails("student1", "student1@test.de", "student1First student1Last");
+        bitbucketRequestMockProvider.mockRemoveUserFromGroup("student1", "tumuser");
+        bitbucketRequestMockProvider.mockUpdateUserDetails("tutor1", "tutor1@test.de", "tutor1First tutor1Last");
+        bitbucketRequestMockProvider.mockRemoveUserFromGroup("tutor1", "tutor");
+        bitbucketRequestMockProvider.mockUpdateUserDetails("editor1", "editor1@test.de", "editor1First editor1Last");
+        bitbucketRequestMockProvider.mockRemoveUserFromGroup("editor1", "editor");
+        bitbucketRequestMockProvider.mockUpdateUserDetails("instructor1", "instructor1@test.de", "instructor1First instructor1Last");
+        bitbucketRequestMockProvider.mockRemoveUserFromGroup("instructor1", "instructor");
         courseTestService.testRemoveStudentOrTutorOrInstructorFromCourse();
     }
 

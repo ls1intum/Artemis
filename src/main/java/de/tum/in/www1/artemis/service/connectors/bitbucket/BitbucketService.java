@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.bitbucket;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,7 +27,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
@@ -244,24 +244,23 @@ public class BitbucketService extends AbstractVersionControlService {
      */
     public void updateUser(String username, String password, String emailAddress, String displayName) throws BitbucketException {
         UriComponentsBuilder userDetailsBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users");
-        JsonObject userDetailsBody = new JsonObject();
-        userDetailsBody.addProperty("name", username);
-        userDetailsBody.addProperty("email", emailAddress);
-        userDetailsBody.addProperty("displayName", displayName);
-        HttpEntity<Object> userDetailsEntity = new HttpEntity<>(userDetailsBody, null);
-
-        UriComponentsBuilder passwordBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/credentials");
-        JsonObject passwordBody = new JsonObject();
-        passwordBody.addProperty("name", username);
-        passwordBody.addProperty("password", password);
-        passwordBody.addProperty("passwordConfirm", password);
-        HttpEntity<JsonObject> passwordEntity = new HttpEntity<>(passwordBody, null);
+        Map<String, Object> userDetailsBody = new HashMap<>();
+        userDetailsBody.put("name", username);
+        userDetailsBody.put("email", emailAddress);
+        userDetailsBody.put("displayName", displayName);
+        HttpEntity<Map<String, Object>> userDetailsEntity = new HttpEntity<>(userDetailsBody, null);
 
         log.debug("Updating Bitbucket user {} ({})", username, emailAddress);
 
         try {
             restTemplate.exchange(userDetailsBuilder.build().encode().toUri(), HttpMethod.PUT, userDetailsEntity, Void.class);
             if (password != null) {
+                UriComponentsBuilder passwordBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/credentials");
+                Map<String, Object> passwordBody = new HashMap<>();
+                passwordBody.put("name", username);
+                passwordBody.put("password", password);
+                passwordBody.put("passwordConfirm", password);
+                HttpEntity<Map<String, Object>> passwordEntity = new HttpEntity<>(passwordBody, null);
                 restTemplate.exchange(passwordBuilder.build().encode().toUri(), HttpMethod.PUT, passwordEntity, Void.class);
             }
         }
@@ -324,11 +323,11 @@ public class BitbucketService extends AbstractVersionControlService {
 
         try {
             for (String group : groups) {
-                JsonObject jsonObject = new JsonObject();
-                jsonObject.addProperty("context", username);
-                jsonObject.addProperty("itemName", group);
+                Map<String, Object> jsonObject = new HashMap<>();
+                jsonObject.put("context", username);
+                jsonObject.put("itemName", group);
 
-                HttpEntity<JsonObject> entity = new HttpEntity<>(jsonObject, null);
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(jsonObject, null);
                 UriComponentsBuilder userDetailsBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/remove-group")
                         .queryParam("context", username).queryParam("itemName", group);
                 restTemplate.exchange(userDetailsBuilder.build().toUri(), HttpMethod.POST, entity, Void.class);

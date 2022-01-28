@@ -128,12 +128,25 @@ public class BitbucketRequestMockProvider {
         mockServer.expect(ExpectedCount.once(), requestTo(permissionPath.build().toUri())).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
     }
 
+    public void mockGrantGroupPermissionToAnyProject(String groupName, BitbucketPermission permission) throws URISyntaxException {
+        mockServer
+                .expect(ExpectedCount.once(),
+                        requestTo(
+                                matchesPattern(bitbucketServerUrl.toURI() + "/rest/api/latest/projects/.*?/permissions/groups\\?name=" + groupName + "&permission=" + permission)))
+                .andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
+    }
+
     public void mockRevokeGroupPermissionFromProject(ProgrammingExercise exercise, String groupName) throws URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var permissionPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/permissions/groups")
                 .queryParam("name", groupName);
 
         mockServer.expect(ExpectedCount.once(), requestTo(permissionPath.build().toUri())).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockRevokeGroupPermissionFromAnyProject(String groupName) throws URISyntaxException {
+        mockServer.expect(ExpectedCount.once(), requestTo(matchesPattern(bitbucketServerUrl.toURI() + "/rest/api/latest/projects/.*?/permissions/groups\\?name=" + groupName)))
+                .andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockCreateRepository(ProgrammingExercise exercise, String repositoryName) throws URISyntaxException, IOException {
@@ -212,10 +225,10 @@ public class BitbucketRequestMockProvider {
 
     public void mockUpdateUserDetails(String username, String emailAddress, String displayName) throws JsonProcessingException {
         final var path = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").build().toUri();
-        JsonObject body = new JsonObject();
-        body.addProperty("name", username);
-        body.addProperty("email", emailAddress);
-        body.addProperty("displayName", displayName);
+        Map<String, Object> body = new HashMap<>();
+        body.put("name", username);
+        body.put("email", emailAddress);
+        body.put("displayName", displayName);
 
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
     }
@@ -234,10 +247,10 @@ public class BitbucketRequestMockProvider {
             public boolean matches(Object actual) {
                 if (actual instanceof String) {
                     if (passwordShouldMatch) {
-                        JsonObject body = new JsonObject();
-                        body.addProperty("name", username);
-                        body.addProperty("password", password);
-                        body.addProperty("passwordConfirm", password);
+                        Map<String, Object> body = new HashMap<>();
+                        body.put("name", username);
+                        body.put("password", password);
+                        body.put("passwordConfirm", password);
                         try {
                             return actual.equals(mapper.writeValueAsString(body));
                         }

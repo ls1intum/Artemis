@@ -160,14 +160,15 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
             }
             if (!oldEditorGroup.equals(updatedCourse.getEditorGroupName())) {
                 bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), oldEditorGroup, null);
-                bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), updatedCourse.getEditorGroupName(), BitbucketPermission.PROJECT_READ);
+                bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), updatedCourse.getEditorGroupName(), BitbucketPermission.PROJECT_WRITE);
             }
-            ZonedDateTime examEndDate = programmingExercise.getExerciseGroup().getExam().getStartDate()
-                    .plusMinutes(programmingExercise.getExerciseGroup().getExam().getStudentExams().stream().mapToInt(StudentExam::getWorkingTime).max().orElse(0));
+            boolean isCourseOrAfterExam = programmingExercise.isCourseExercise() || ZonedDateTime.now().isAfter(programmingExercise.getExerciseGroup().getExam().getStartDate()
+                    .plusMinutes(programmingExercise.getExerciseGroup().getExam().getStudentExams().stream().mapToInt(StudentExam::getWorkingTime).max().orElse(0)));
             if (!oldEditorGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
-                bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), oldEditorGroup, null);
-                if ((!programmingExercise.isExamExercise() || ZonedDateTime.now().isAfter(examEndDate))) {
-                    bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), updatedCourse.getEditorGroupName(), BitbucketPermission.PROJECT_READ);
+                bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), oldTeachingAssistantGroup, null);
+                if (isCourseOrAfterExam) {
+                    bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), updatedCourse.getTeachingAssistantGroupName(),
+                            BitbucketPermission.PROJECT_READ);
                 }
             }
         }
