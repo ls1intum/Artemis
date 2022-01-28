@@ -13,7 +13,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { ArtemisTestModule } from '../../test.module';

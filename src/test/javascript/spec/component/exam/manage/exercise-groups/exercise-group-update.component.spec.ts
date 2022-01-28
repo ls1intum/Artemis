@@ -15,9 +15,9 @@ import { AlertService } from 'app/core/util/alert.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockRouter } from '../../../../helpers/mocks/mock-router';
+import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 
 describe('ExerciseGroupUpdateComponent', () => {
     const course = { id: 456 } as Course;
