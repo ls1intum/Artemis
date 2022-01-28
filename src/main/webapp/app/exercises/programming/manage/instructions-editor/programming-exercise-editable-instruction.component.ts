@@ -39,9 +39,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     taskCommand = new TaskCommand();
     taskRegex = this.taskCommand.getTagRegex('g');
     testCaseCommand = new TestCaseCommand();
-    taskHintCommand = new ExerciseHintCommand();
+    exerciseHintCommand = new ExerciseHintCommand();
     katexCommand = new KatexCommand();
-    domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.taskHintCommand];
+    domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.exerciseHintCommand];
 
     savingInstructions = false;
     unsavedChangesValue = false;
@@ -89,7 +89,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             // Note: Exam exercises do not include hints at the moment, therefore, the markdown editor should not offer this command
             this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand];
         } else {
-            this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.taskHintCommand];
+            this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.exerciseHintCommand];
         }
         this.exerciseChange.emit(this.programmingExercise);
     }
@@ -197,7 +197,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Prepares the task hints using exerciseHints
      */
     private prepareTaskHints() {
-        this.taskHintCommand.setValues(this.exerciseHints.map(({ id, title }) => ({ id: id!.toString(10), value: title! })));
+        this.exerciseHintCommand.setValues(this.exerciseHints.map(({ id, title }) => ({ id: id!.toString(10), value: title! })));
     }
 
     /** Save the problem statement on the server.
