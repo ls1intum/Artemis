@@ -150,7 +150,7 @@ export class CategorySelectorComponent implements OnChanges {
         this.categoryCtrl.setValue(null);
     }
 
-    private findExistingCategory(categoryString: string) {
+    findExistingCategory(categoryString: string): ExerciseCategory | undefined {
         return this.existingCategories.find((existingCategory) => existingCategory.category?.toLowerCase() === categoryString.toLowerCase());
     }
 
