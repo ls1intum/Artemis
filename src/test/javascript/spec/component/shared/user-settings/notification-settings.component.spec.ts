@@ -5,7 +5,7 @@ import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/m
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { AlertService } from 'app/core/util/alert.service';
