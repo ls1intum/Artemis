@@ -120,12 +120,7 @@ public class ProgrammingExerciseGradingService {
             log.error("Result for participation " + participation.getId() + " could not be created", ex);
         }
 
-        if (newResult != null) {
-            return Optional.of(processNewProgrammingExerciseResult(participation, newResult));
-        }
-        else {
-            return Optional.empty();
-        }
+        return Optional.ofNullable(newResult).map(result -> processNewProgrammingExerciseResult(participation, result));
     }
 
     /**
@@ -413,7 +408,7 @@ public class ProgrammingExerciseGradingService {
      */
     private Optional<Result> updateLatestResult(ProgrammingExercise exercise, Participation participation, Set<ProgrammingExerciseTestCase> allTestCases,
             Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate, Set<ProgrammingExerciseTestCase> testCasesAfterDueDate, boolean applySubmissionPolicy) {
-        Result result = participation.findLatestLegalResult();
+        final Result result = participation.findLatestLegalResult();
         if (result == null) {
             return Optional.empty();
         }
@@ -422,6 +417,7 @@ public class ProgrammingExerciseGradingService {
         final Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = isBeforeDueDate ? testCasesBeforeDueDate : testCasesAfterDueDate;
 
         calculateScoreForResult(allTestCases, testCasesForCurrentDate, result, exercise, applySubmissionPolicy);
+
         return Optional.of(result);
     }
 
@@ -463,17 +459,13 @@ public class ProgrammingExerciseGradingService {
      */
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
             ProgrammingExercise exercise, boolean applySubmissionPolicy) {
-        // Distinguish between static code analysis feedback, test case feedback and manual feedback
         List<Feedback> testCaseFeedback = new ArrayList<>();
         List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
         for (var feedback : result.getFeedbacks()) {
-            if (feedback.getType() != FeedbackType.AUTOMATIC) {
-                continue;
-            }
             if (feedback.isStaticCodeAnalysisFeedback()) {
                 staticCodeAnalysisFeedback.add(feedback);
             }
-            else {
+            else if (FeedbackType.AUTOMATIC.equals(feedback.getType())) {
                 testCaseFeedback.add(feedback);
             }
         }
@@ -493,8 +485,6 @@ public class ProgrammingExerciseGradingService {
             // Copy the visibility from test case to corresponding feedback
             setVisibilityForFeedbacksWithTestCase(result, testCases);
 
-            Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(isSuccessful(result)).collect(Collectors.toSet());
-
             // Add feedbacks for tests that were not executed ("test was not executed").
             createFeedbackForNotExecutedTests(result, testCasesForCurrentDate);
 
@@ -506,12 +496,10 @@ public class ProgrammingExerciseGradingService {
                 submissionPolicyService.createFeedbackForPenaltyPolicy(result, penaltyPolicy);
             }
 
-            // Recalculate the achieved score by including the test cases individual weight.
             // The score is always calculated from ALL (except visibility=never) test cases, regardless of the current date!
-            updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
-
-            // Create a new result string that reflects passed, failed & not executed test cases.
-            updateResultString(result, successfulTestCases, testCasesForCurrentDate, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
+            final Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(isSuccessful(result)).collect(Collectors.toSet());
+            updateScore(result, testCases, successfulTestCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
+            updateResultString(result, testCasesForCurrentDate, successfulTestCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (!testCases.isEmpty() && !result.getFeedbacks().isEmpty() && !testCaseFeedback.isEmpty()) {
@@ -523,8 +511,9 @@ public class ProgrammingExerciseGradingService {
             // In this case, test cases won't be displayed but static code analysis feedback must be shown in the result string.
             updateResultString(result, Set.of(), Set.of(), staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
         }
-        // Case 3: If there is no test case feedback, the build has failed or it has previously fallen under case 2. In this case we just return the original result without
+        // Case 3: If there is no test case feedback, the build has failed, or it has previously fallen under case 2. In this case we just return the original result without
         // changing it.
+
         return result;
     }
 
@@ -607,21 +596,20 @@ public class ProgrammingExerciseGradingService {
      * Update the score given the positive tests score divided by all tests' score.
      * Takes weight, bonus multiplier and absolute bonus points into account.
      * All tests in this case does not include ones with visibility=never.
-     *
      * @param result                     of the build run.
+     * @param allTestCases               of a given programming exercise.
      * @param successfulTestCases        test cases with positive feedback.
-     * @param allTests                   of a given programming exercise.
      * @param staticCodeAnalysisFeedback of a given programming exercise.
      * @param programmingExercise        the given programming exercise.
      * @param hasDuplicateTestCases      indicates duplicate test cases.
      */
-    private void updateScore(final Result result, final Set<ProgrammingExerciseTestCase> successfulTestCases, final Set<ProgrammingExerciseTestCase> allTests,
+    private void updateScore(final Result result, final Set<ProgrammingExerciseTestCase> allTestCases, final Set<ProgrammingExerciseTestCase> successfulTestCases,
             final List<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
         if (hasDuplicateTestCases) {
             result.setScore(0D);
         }
         else {
-            double score = calculateScore(programmingExercise, allTests, result, successfulTestCases, staticCodeAnalysisFeedback, applySubmissionPolicy);
+            double score = calculateScore(programmingExercise, allTestCases, result, successfulTestCases, staticCodeAnalysisFeedback, applySubmissionPolicy);
             result.setScore(score);
         }
 
@@ -766,12 +754,10 @@ public class ProgrammingExerciseGradingService {
      * @return The sum of all penalties, capped at the maximum allowed penalty
      */
     private double calculateStaticCodeAnalysisPenalty(List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
+        final var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(Feedback::getStaticCodeAnalysisCategory));
         double codeAnalysisPenaltyPoints = 0;
 
-        var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(Feedback::getStaticCodeAnalysisCategory));
-
         for (var category : staticCodeAnalysisService.findByExerciseId(programmingExercise.getId())) {
-
             if (!category.getState().equals(CategoryState.GRADED)) {
                 continue;
             }
@@ -812,22 +798,21 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Update the result's result string given the successful tests vs. all tests (x of y passed).
-     *
      * @param result                of the build run.
+     * @param allTestCases          of the given programming exercise.
      * @param successfulTestCases   test cases with positive feedback.
-     * @param allTests              of the given programming exercise.
      * @param scaFeedback           for the result
      * @param exercise              to which this result and the test cases belong
      * @param hasDuplicateTestCases indicates duplicate test cases
      */
-    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests, List<Feedback> scaFeedback,
-            ProgrammingExercise exercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
+    private void updateResultString(final Result result, final Set<ProgrammingExerciseTestCase> allTestCases, final Set<ProgrammingExerciseTestCase> successfulTestCases,
+            final List<Feedback> scaFeedback, final ProgrammingExercise exercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
         if (hasDuplicateTestCases) {
             result.setResultString("Error: Found duplicated tests!");
         }
         else {
             // Create a new result string that reflects passed, failed & not executed test cases.
-            String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
+            String newResultString = successfulTestCases.size() + " of " + allTestCases.size() + " passed";
 
             // Show number of found quality issues if static code analysis is enabled
             if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
@@ -900,45 +885,33 @@ public class ProgrammingExerciseGradingService {
      * @return The statistics object
      */
     public ProgrammingExerciseGradingStatisticsDTO generateGradingStatistics(Long exerciseId) {
-        var statistics = new ProgrammingExerciseGradingStatisticsDTO();
-
-        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(exerciseId);
-
-        statistics.setNumParticipations(results.size());
-
-        var testCases = testCaseService.findByExerciseId(exerciseId);
-        var categories = staticCodeAnalysisService.findByExerciseId(exerciseId);
-
         // number of passed and failed tests per test case
-        var testCaseStatsMap = new HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats>();
-
-        // number of students per amount of detected issues per category
-        var categoryIssuesStudentsMap = new HashMap<String, Map<Integer, Integer>>();
-
-        // init for each test case
-        for (var testCase : testCases) {
+        final var testCases = testCaseService.findByExerciseId(exerciseId);
+        final var testCaseStatsMap = new HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats>();
+        for (ProgrammingExerciseTestCase testCase : testCases) {
             testCaseStatsMap.put(testCase.getTestName(), new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(0, 0));
         }
 
-        // init for each category
-        for (var category : categories) {
+        // number of students per amount of detected issues per category
+        final var categories = staticCodeAnalysisService.findByExerciseId(exerciseId);
+        final var categoryIssuesStudentsMap = new HashMap<String, Map<Integer, Integer>>();
+        for (StaticCodeAnalysisCategory category : categories) {
             categoryIssuesStudentsMap.put(category.getName(), new HashMap<>());
         }
 
-        for (var result : results) {
-
+        final var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(exerciseId);
+        for (Result result : results) {
             // number of detected issues per category for this result
-            var categoryIssuesMap = new HashMap<String, Integer>();
-
+            final var categoryIssuesMap = new HashMap<String, Integer>();
             for (var feedback : result.getFeedbacks()) {
-                // analyse the feedback and add to the statistics
                 addFeedbackToStatistics(categoryIssuesMap, testCaseStatsMap, feedback);
             }
 
-            // merge the student specific issue map with the overall students issue map
-            mergeCategoryIssuesMaps(categoryIssuesStudentsMap, categoryIssuesMap);
+            mergeCategoryIssuesMap(categoryIssuesStudentsMap, categoryIssuesMap);
         }
 
+        final var statistics = new ProgrammingExerciseGradingStatisticsDTO();
+        statistics.setNumParticipations(results.size());
         statistics.setTestCaseStatsMap(testCaseStatsMap);
         statistics.setCategoryIssuesMap(categoryIssuesStudentsMap);
 
@@ -946,30 +919,21 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Merge the result issues map with the overall issues map
-     * @param categoryIssuesStudentsMap The overall issues map for all students
-     * @param categoryIssuesMap The issues map for one students
+     * Merges the result map of a single student with the overall issues map
+     * @param issuesAllStudents The overall issues map for all students
+     * @param issuesSingleStudent The issues map for one student
      */
-    private void mergeCategoryIssuesMaps(Map<String, Map<Integer, Integer>> categoryIssuesStudentsMap, Map<String, Integer> categoryIssuesMap) {
-        for (var entry : categoryIssuesMap.entrySet()) {
-            // key: category, value: number of issues
+    private void mergeCategoryIssuesMap(final Map<String, Map<Integer, Integer>> issuesAllStudents, final Map<String, Integer> issuesSingleStudent) {
+        for (var entry : issuesSingleStudent.entrySet()) {
+            final String category = entry.getKey();
+            final Integer issueCount = entry.getValue();
 
-            if (categoryIssuesStudentsMap.containsKey(entry.getKey())) {
-                var issuesStudentsMap = categoryIssuesStudentsMap.get(entry.getKey());
-                // add 1 to the number of students for the category & issues
-                if (issuesStudentsMap.containsKey(entry.getValue())) {
-                    issuesStudentsMap.merge(entry.getValue(), 1, Integer::sum);
-                }
-                else {
-                    issuesStudentsMap.put(entry.getValue(), 1);
-                }
-            }
-            else {
-                // create a new issues map for this category
-                var issuesStudentsMap = new HashMap<Integer, Integer>();
-                issuesStudentsMap.put(entry.getValue(), 1);
-                categoryIssuesStudentsMap.put(entry.getKey(), issuesStudentsMap);
-            }
+            issuesAllStudents.putIfAbsent(category, new HashMap<>());
+
+            var issuesStudentsMap = issuesAllStudents.get(category);
+            issuesStudentsMap.putIfAbsent(issueCount, 0);
+            // add 1 to the number of students for the category & issues
+            issuesStudentsMap.merge(issueCount, 1, Integer::sum);
         }
     }
 
@@ -988,7 +952,7 @@ public class ProgrammingExerciseGradingService {
             }
             categoryIssuesMap.compute(categoryName, (category, count) -> count == null ? 1 : count + 1);
         }
-        else if (feedback.getType().equals(FeedbackType.AUTOMATIC)) {
+        else if (FeedbackType.AUTOMATIC.equals(feedback.getType())) {
             String testName = feedback.getText();
             testCaseStatsMap.putIfAbsent(testName, new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(0, 0));
             testCaseStatsMap.get(testName).updateWithFeedback(feedback);
