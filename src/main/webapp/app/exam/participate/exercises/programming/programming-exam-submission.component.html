@@ -55,7 +55,7 @@
             [exercise]="exercise"
             [participation]="studentParticipation"
             [personalParticipation]="true"
-            [textHints]="exercise.exerciseHints || []"
+            [exerciseHints]="exercise.exerciseHints || []"
             class="instructions-wrapper__content card-body p-0"
         ></jhi-programming-exercise-instructions>
     </jhi-code-editor-container>
@@ -83,7 +83,7 @@
     <jhi-programming-exercise-instructions
         *ngIf="exercise"
         [exercise]="exercise"
-        [textHints]="exercise.exerciseHints || []"
+        [exerciseHints]="exercise.exerciseHints || []"
         [participation]="studentParticipation"
         [personalParticipation]="true"
     ></jhi-programming-exercise-instructions>

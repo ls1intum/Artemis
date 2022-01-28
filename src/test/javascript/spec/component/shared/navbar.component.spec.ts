@@ -7,7 +7,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
-import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -262,12 +262,12 @@ describe('NavbarComponent', () => {
             expect(component.breadcrumbs[4]).toEqual(assessmentCrumb);
         });
 
-        it('programming exercise text hints', () => {
-            const testUrl = '/course-management/1/exercises/2/text-hints/3';
+        it('programming exercise hints', () => {
+            const testUrl = '/course-management/1/exercises/2/exercise-hints/3';
             router.setUrl(testUrl);
 
-            const hintService = fixture.debugElement.injector.get(TextHintService);
-            const hintsStub = jest.spyOn(hintService, 'getTitle').mockReturnValue(of({ body: 'Text Hint' } as HttpResponse<string>));
+            const hintService = fixture.debugElement.injector.get(ExerciseHintService);
+            const hintsStub = jest.spyOn(hintService, 'getTitle').mockReturnValue(of({ body: 'Exercise Hint' } as HttpResponse<string>));
 
             fixture.detectChanges();
 
@@ -278,13 +278,13 @@ describe('NavbarComponent', () => {
             const hintsCrumb = {
                 label: 'artemisApp.exerciseHint.home.title',
                 translate: true,
-                uri: '/course-management/1/exercises/2/text-hints/',
+                uri: '/course-management/1/exercises/2/exercise-hints/',
             } as MockBreadcrumb;
 
             const hintCrumb = {
-                label: 'Text Hint',
+                label: 'Exercise Hint',
                 translate: false,
-                uri: '/course-management/1/exercises/2/text-hints/3/',
+                uri: '/course-management/1/exercises/2/exercise-hints/3/',
             } as MockBreadcrumb;
 
             expect(component.breadcrumbs.length).toEqual(6);

@@ -17,7 +17,7 @@ export enum QuizQuestionType {
     SHORT_ANSWER = 'short-answer',
 }
 
-export interface TextHintExplanationInterface {
+export interface ExerciseHintExplanationInterface {
     text?: string;
     hint?: string;
     explanation?: string;
@@ -30,7 +30,7 @@ export class RenderedQuizQuestionMarkDownElement {
     renderedSubElements: RenderedQuizQuestionMarkDownElement[] = [];
 }
 
-export abstract class QuizQuestion implements BaseEntity, CanBecomeInvalid, TextHintExplanationInterface {
+export abstract class QuizQuestion implements BaseEntity, CanBecomeInvalid, ExerciseHintExplanationInterface {
     public id?: number;
     public title?: string;
     public text?: string;

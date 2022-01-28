@@ -13,7 +13,7 @@ import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.
 import { OrionState } from 'app/shared/orion/orion';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor-orion',
@@ -35,7 +35,7 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
         courseExerciseService: CourseExerciseService,
         domainService: DomainService,
         programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        textHintService: TextHintService,
+        exerciseHintService: ExerciseHintService,
         location: Location,
         participationService: ParticipationService,
         translateService: TranslateService,
@@ -48,7 +48,7 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
             courseExerciseService,
             domainService,
             programmingExerciseParticipationService,
-            textHintService,
+            exerciseHintService,
             location,
             participationService,
             route,

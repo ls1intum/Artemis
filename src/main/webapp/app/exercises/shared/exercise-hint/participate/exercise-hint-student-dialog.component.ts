@@ -5,9 +5,9 @@ import { catchError, map, tap } from 'rxjs/operators';
 
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
-import { TextHintService } from '../manage/text-hint.service';
+import { ExerciseHintService } from '../manage/exercise-hint.service';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
-import { TextHint } from 'app/entities/hestia/text-hint-model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 /**
  * This component is a modal that shows the exercise's hints.
@@ -17,8 +17,8 @@ import { TextHint } from 'app/entities/hestia/text-hint-model';
     templateUrl: './exercise-hint-student-dialog.component.html',
     styleUrls: ['./exercise-hint-student-dialog.scss'],
 })
-export class TextHintStudentDialogComponent {
-    @Input() textHints: TextHint[];
+export class ExerciseHintStudentDialogComponent {
+    @Input() exerciseHints: ExerciseHint[];
 
     constructor(public activeModal: NgbActiveModal) {}
 
@@ -37,7 +37,7 @@ export class TextHintStudentDialogComponent {
     selector: 'jhi-exercise-hint-student',
     template: `
         <fa-icon
-            *ngIf="textHints && textHints.length"
+            *ngIf="exerciseHints && exerciseHints.length"
             [icon]="farQuestionCircle"
             (click)="openModal()"
             class="hint-icon text-secondary"
@@ -46,26 +46,26 @@ export class TextHintStudentDialogComponent {
     `,
     styleUrls: ['./exercise-hint-student-dialog.scss'],
 })
-export class TextHintStudentComponent implements OnInit, OnDestroy {
+export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
     @Input() exerciseId: number;
-    @Input() textHints?: TextHint[];
+    @Input() exerciseHints?: ExerciseHint[];
     protected ngbModalRef: NgbModalRef | null;
 
     // Icons
     farQuestionCircle = faQuestionCircle;
 
-    constructor(protected textHintService: TextHintService, protected activatedRoute: ActivatedRoute, protected router: Router, protected modalService: NgbModal) {}
+    constructor(protected exerciseHintService: ExerciseHintService, protected activatedRoute: ActivatedRoute, protected router: Router, protected modalService: NgbModal) {}
 
     /**
-     * Fetches all text hints for an exercise from the server
+     * Fetches all exercise hints for an exercise from the server
      */
     ngOnInit() {
-        if (!this.textHints) {
-            this.textHintService
+        if (!this.exerciseHints) {
+            this.exerciseHintService
                 .findByExerciseId(this.exerciseId)
                 .pipe(
                     map(({ body }) => body),
-                    tap((hints: TextHint[]) => (this.textHints = hints)),
+                    tap((hints: ExerciseHint[]) => (this.exerciseHints = hints)),
                     catchError(() => of()),
                 )
                 .subscribe();
@@ -73,11 +73,11 @@ export class TextHintStudentComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Open the text hint student dialog (see component above).
+     * Open the exercise hint student dialog (see component above).
      */
     openModal() {
-        this.ngbModalRef = this.modalService.open(TextHintStudentDialogComponent as Component, { size: 'lg', backdrop: 'static' });
-        this.ngbModalRef.componentInstance.textHints = this.textHints;
+        this.ngbModalRef = this.modalService.open(ExerciseHintStudentDialogComponent as Component, { size: 'lg', backdrop: 'static' });
+        this.ngbModalRef.componentInstance.exerciseHints = this.exerciseHints;
         this.ngbModalRef.result.then(
             () => {
                 this.ngbModalRef = null;

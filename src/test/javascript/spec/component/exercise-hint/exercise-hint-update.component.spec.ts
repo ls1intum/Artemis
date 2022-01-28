@@ -3,39 +3,39 @@ import { HttpResponse } from '@angular/common/http';
 import { FormBuilder } from '@angular/forms';
 import { of } from 'rxjs';
 
-import { TextHintUpdateComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-update.component';
+import { ExerciseHintUpdateComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-update.component';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
-import { TextHint } from 'app/entities/hestia/text-hint-model';
-import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 describe('ExerciseHint Management Update Component', () => {
-    let comp: TextHintUpdateComponent;
-    let fixture: ComponentFixture<TextHintUpdateComponent>;
-    let service: TextHintService;
+    let comp: ExerciseHintUpdateComponent;
+    let fixture: ComponentFixture<ExerciseHintUpdateComponent>;
+    let service: ExerciseHintService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [TextHintUpdateComponent],
+            declarations: [ExerciseHintUpdateComponent],
             providers: [FormBuilder, MockProvider(TranslateService)],
         })
-            .overrideTemplate(TextHintUpdateComponent, '')
+            .overrideTemplate(ExerciseHintUpdateComponent, '')
             .compileComponents();
 
-        fixture = TestBed.createComponent(TextHintUpdateComponent);
+        fixture = TestBed.createComponent(ExerciseHintUpdateComponent);
         comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(TextHintService);
+        service = fixture.debugElement.injector.get(ExerciseHintService);
     });
 
     describe('save', () => {
         it('Should call update service on save for existing entity', fakeAsync(() => {
             // GIVEN
-            const entity = new TextHint();
+            const entity = new ExerciseHint();
             entity.id = 123;
             jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
-            comp.textHint = entity;
+            comp.exerciseHint = entity;
             comp.courseId = 1;
             comp.exerciseId = 2;
             // WHEN
@@ -49,9 +49,9 @@ describe('ExerciseHint Management Update Component', () => {
 
         it('Should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
-            const entity = new TextHint();
+            const entity = new ExerciseHint();
             jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
-            comp.textHint = entity;
+            comp.exerciseHint = entity;
             comp.courseId = 1;
             comp.exerciseId = 2;
             // WHEN

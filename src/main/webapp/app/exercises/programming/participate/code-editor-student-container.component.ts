@@ -15,7 +15,7 @@ import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -27,7 +27,7 @@ import { Course } from 'app/entities/course.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { TextHint } from 'app/entities/hestia/text-hint-model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -64,7 +64,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private guidedTourService: GuidedTourService,
-        private textHintService: TextHintService,
+        private exerciseHintService: ExerciseHintService,
         private submissionPolicyService: SubmissionPolicyService,
         private route: ActivatedRoute,
     ) {}
@@ -104,12 +104,12 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         }
                     }),
                     switchMap(() => {
-                        return this.loadTextHints();
+                        return this.loadExerciseHints();
                     }),
                 )
                 .subscribe({
-                    next: (textHints: TextHint[]) => {
-                        this.exercise.exerciseHints = textHints;
+                    next: (exerciseHints: ExerciseHint[]) => {
+                        this.exercise.exerciseHints = exerciseHints;
                         this.loadingParticipation = false;
                         this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour, true);
                     },
@@ -131,11 +131,11 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Load text hints. Take them from the exercise if available.
+     * Load exercise hints. Take them from the exercise if available.
      */
-    private loadTextHints() {
+    private loadExerciseHints() {
         if (!this.exercise.exerciseHints) {
-            return this.textHintService.findByExerciseId(this.exercise.id!).pipe(map(({ body }) => body || []));
+            return this.exerciseHintService.findByExerciseId(this.exercise.id!).pipe(map(({ body }) => body || []));
         }
         return of(this.exercise.exerciseHints);
     }

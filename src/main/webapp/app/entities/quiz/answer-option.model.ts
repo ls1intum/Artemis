@@ -1,9 +1,9 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { TextHintExplanationInterface } from 'app/entities/quiz/quiz-question.model';
+import { ExerciseHintExplanationInterface } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
 
-export class AnswerOption implements BaseEntity, CanBecomeInvalid, TextHintExplanationInterface {
+export class AnswerOption implements BaseEntity, CanBecomeInvalid, ExerciseHintExplanationInterface {
     public id?: number;
     public text?: string;
     public hint?: string;

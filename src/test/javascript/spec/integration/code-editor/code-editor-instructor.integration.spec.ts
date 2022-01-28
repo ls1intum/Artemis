@@ -52,7 +52,7 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
-import { TextHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
+import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
@@ -70,8 +70,8 @@ import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/p
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { MockTextHintService } from '../../helpers/mocks/service/mock-text-hint.service';
-import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
+import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 describe('CodeEditorInstructorIntegration', () => {
     // needed to make sure ace is defined
@@ -118,7 +118,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 ProgrammingExerciseInstructorExerciseStatusComponent,
                 UpdatingResultComponent,
                 MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
-                MockComponent(TextHintStudentComponent),
+                MockComponent(ExerciseHintStudentComponent),
                 ProgrammingExerciseEditableInstructionComponent,
                 MockComponent(MarkdownEditorComponent),
                 ProgrammingExerciseInstructionComponent,
@@ -147,7 +147,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 { provide: ParticipationService, useClass: MockParticipationService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
-                { provide: TextHintService, useClass: MockTextHintService },
+                { provide: ExerciseHintService, useClass: MockExerciseHintService },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
             ],
         })
@@ -166,7 +166,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 const programmingExerciseService = containerDebugElement.injector.get(ProgrammingExerciseService);
                 domainService = containerDebugElement.injector.get(DomainService);
                 route = containerDebugElement.injector.get(ActivatedRoute);
-                const textHintService = containerDebugElement.injector.get(TextHintService);
+                const exerciseHintService = containerDebugElement.injector.get(ExerciseHintService);
                 containerDebugElement.injector.get(Router);
 
                 checkIfRepositoryIsCleanSubject = new Subject<{ isClean: boolean }>();
@@ -186,7 +186,9 @@ describe('CodeEditorInstructorIntegration', () => {
                     .spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback')
                     .mockReturnValue(throwError(() => new Error('no result')));
                 getBuildLogsStub = jest.spyOn(buildLogService, 'getBuildLogs');
-                getHintsForExerciseStub = jest.spyOn(textHintService, 'findByExerciseId').mockReturnValue(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
+                getHintsForExerciseStub = jest
+                    .spyOn(exerciseHintService, 'findByExerciseId')
+                    .mockReturnValue(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
 
                 findWithParticipationsStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndResults');
                 findWithParticipationsStub.mockReturnValue(findWithParticipationsSubject);
@@ -280,7 +282,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(container.editableInstructions.participation).toEqual(exercise.templateParticipation);
         expect(container.resultComp).not.toBe(undefined); // Have to use this as it's a component
         expect(container.codeEditorContainer.buildOutput).not.toBe(undefined); // Have to use this as it's a component
-        expect(container.editableInstructions.textHints).toEqual(exerciseHints);
+        expect(container.editableInstructions.exerciseHints).toEqual(exerciseHints);
 
         // Called once by each build-output, instructions, result and twice by instructor-exercise-status (=templateParticipation,solutionParticipation) &
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(5);

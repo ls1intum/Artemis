@@ -1,9 +1,10 @@
 import { Exercise } from 'app/entities/exercise.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 
-export abstract class ExerciseHint implements BaseEntity {
+export class ExerciseHint implements BaseEntity {
     public id?: number;
     public type?: string;
     public title?: string;
+    public content?: string;
     public exercise?: Exercise;
 }

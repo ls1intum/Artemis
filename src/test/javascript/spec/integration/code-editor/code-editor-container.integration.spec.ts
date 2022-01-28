@@ -63,8 +63,8 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
-import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
-import { MockTextHintService } from '../../helpers/mocks/service/mock-text-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 
 describe('CodeEditorContainerIntegration', () => {
     // needed to make sure ace is defined
@@ -130,7 +130,7 @@ describe('CodeEditorContainerIntegration', () => {
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
-                { provide: TextHintService, useClass: MockTextHintService },
+                { provide: ExerciseHintService, useClass: MockExerciseHintService },
             ],
         })
             .compileComponents()

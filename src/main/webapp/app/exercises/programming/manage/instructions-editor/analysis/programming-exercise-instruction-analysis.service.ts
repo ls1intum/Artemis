@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { uniq } from 'lodash-es';
-import { TextHint } from 'app/entities/hestia/text-hint-model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { matchRegexWithLineNumbers, RegExpLineNumberMatchArray } from 'app/shared/util/global.utils';
 import {
     AnalysisItem,
@@ -28,14 +28,14 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * @param problemStatement  multiline string.
      * @param taskRegex         identifies tasks in a problem statement.
      * @param exerciseTestCases used to check if a test case is valid / missing.
-     * @param textHints     used to check if a hint is valid.
+     * @param exerciseHints     used to check if a hint is valid.
      */
-    public analyzeProblemStatement = (problemStatement: string, taskRegex: RegExp, exerciseTestCases: string[], textHints: TextHint[]) => {
+    public analyzeProblemStatement = (problemStatement: string, taskRegex: RegExp, exerciseTestCases: string[], exerciseHints: ExerciseHint[]) => {
         // Look for task regex matches in the problem statement including their line numbers.
         const tasksFromProblemStatement = matchRegexWithLineNumbers(problemStatement, taskRegex);
 
         const { invalidTestCases, missingTestCases, invalidTestCaseAnalysis } = this.analyzeTestCases(tasksFromProblemStatement, exerciseTestCases);
-        const { invalidHints, invalidHintAnalysis } = this.analyzeTextHints(tasksFromProblemStatement, textHints);
+        const { invalidHints, invalidHintAnalysis } = this.analyzeExerciseHints(tasksFromProblemStatement, exerciseHints);
 
         const completeAnalysis: ProblemStatementAnalysis = this.mergeAnalysis(invalidTestCaseAnalysis, invalidHintAnalysis);
         return { invalidTestCases, missingTestCases, invalidHints, completeAnalysis };
@@ -82,15 +82,15 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * Will also set the invalidHints attribute of the component.
      *
      * @param tasksFromProblemStatement to check if they contain hints.
-     * @param textHints to double check the exercise hints found in the problem statement.
+     * @param exerciseHints to double check the exercise hints found in the problem statement.
      */
-    private analyzeTextHints = (tasksFromProblemStatement: RegExpLineNumberMatchArray, textHints: TextHint[]) => {
+    private analyzeExerciseHints = (tasksFromProblemStatement: RegExpLineNumberMatchArray, exerciseHints: ExerciseHint[]) => {
         const hintsInMarkdown = this.extractRegexFromTasks(tasksFromProblemStatement, this.HINT_REGEX);
         const invalidHintAnalysis = hintsInMarkdown
             .map(
                 ([lineNumber, hints]): AnalysisItem => [
                     lineNumber,
-                    hints.filter((hint) => !textHints.some((textHint) => textHint.id!.toString(10) === hint)),
+                    hints.filter((hint) => !exerciseHints.some((exerciseHint) => exerciseHint.id!.toString(10) === hint)),
                     ProblemStatementIssue.INVALID_HINTS,
                 ],
             )

@@ -2,34 +2,34 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
-import { TextHintComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.component';
+import { ExerciseHintComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.component';
 import { ArtemisTestModule } from '../../test.module';
-import { TextHint } from 'app/entities/hestia/text-hint-model';
-import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
-describe('TextHint Management Component', () => {
-    let comp: TextHintComponent;
-    let fixture: ComponentFixture<TextHintComponent>;
-    let service: TextHintService;
+describe('ExerciseHint Management Component', () => {
+    let comp: ExerciseHintComponent;
+    let fixture: ComponentFixture<ExerciseHintComponent>;
+    let service: ExerciseHintService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [TextHintComponent],
+            declarations: [ExerciseHintComponent],
             providers: [],
         })
-            .overrideTemplate(TextHintComponent, '')
+            .overrideTemplate(ExerciseHintComponent, '')
             .compileComponents();
 
-        fixture = TestBed.createComponent(TextHintComponent);
+        fixture = TestBed.createComponent(ExerciseHintComponent);
         comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(TextHintService);
+        service = fixture.debugElement.injector.get(ExerciseHintService);
     });
 
     it('Should call load all on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
-        const hint = new TextHint();
+        const hint = new ExerciseHint();
         hint.id = 123;
 
         jest.spyOn(service, 'findByExerciseId').mockReturnValue(
@@ -46,6 +46,6 @@ describe('TextHint Management Component', () => {
 
         // THEN
         expect(service.findByExerciseId).toHaveBeenCalled();
-        expect(comp.textHints[0]).toEqual(expect.objectContaining({ id: 123 }));
+        expect(comp.exerciseHints[0]).toEqual(expect.objectContaining({ id: 123 }));
     });
 });

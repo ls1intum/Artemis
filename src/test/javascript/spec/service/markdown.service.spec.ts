@@ -1,6 +1,6 @@
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { parseTextHintExplanation } from 'app/shared/util/markdown.util';
+import { parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 describe('Markdown Service', () => {
@@ -9,35 +9,35 @@ describe('Markdown Service', () => {
     const explanationText = 'Add an explanation here (only visible in feedback after quiz has ended)';
     const markdownExplanation = '[exp] ' + explanationText;
 
-    it('should return correct parsed text hint and explanation for MC questions', () => {
+    it('should return correct parsed exercise hint and explanation for MC questions', () => {
         let markdownElement = new MultipleChoiceQuestion();
         const markdownString = '[ ] Enter a correct answer option here';
 
-        parseTextHintExplanation(markdownString, markdownElement);
+        parseExerciseHintExplanation(markdownString, markdownElement);
         expect(markdownElement.text).toEqual(markdownString);
         expect(markdownElement.hint).toBeUndefined();
         expect(markdownElement.explanation).toBeUndefined();
 
         markdownElement = new MultipleChoiceQuestion();
-        parseTextHintExplanation(`${markdownHint}`, markdownElement);
+        parseExerciseHintExplanation(`${markdownHint}`, markdownElement);
         expect(markdownElement.text).toEqual('');
         expect(markdownElement.hint).toEqual(hintText);
         expect(markdownElement.explanation).toBeUndefined();
 
         markdownElement = new MultipleChoiceQuestion();
-        parseTextHintExplanation(`${markdownExplanation}`, markdownElement);
+        parseExerciseHintExplanation(`${markdownExplanation}`, markdownElement);
         expect(markdownElement.text).toEqual('');
         expect(markdownElement.hint).toBeUndefined();
         expect(markdownElement.explanation).toEqual(explanationText);
 
         markdownElement = new MultipleChoiceQuestion();
-        parseTextHintExplanation(`${markdownString} ${markdownHint} ${markdownExplanation}`, markdownElement);
+        parseExerciseHintExplanation(`${markdownString} ${markdownHint} ${markdownExplanation}`, markdownElement);
         expect(markdownElement.text).toEqual(markdownString);
         expect(markdownElement.hint).toEqual(hintText);
         expect(markdownElement.explanation).toEqual(explanationText);
     });
 
-    it('should return correct parsed text hint and explanation for SA questions', () => {
+    it('should return correct parsed exercise hint and explanation for SA questions', () => {
         let markdownElement = new ShortAnswerQuestion();
         const markdownString =
             'Enter your long question if needed\n' +
@@ -45,25 +45,25 @@ describe('Markdown Service', () => {
             'You can define a input field like this: This [-spot 1] an [-spot 2] field.\n' +
             'To define the solution for the input fields you need to create a mapping (multiple mapping also possible):';
 
-        parseTextHintExplanation(markdownString, markdownElement);
+        parseExerciseHintExplanation(markdownString, markdownElement);
         expect(markdownElement.text).toEqual(markdownString);
         expect(markdownElement.hint).toBeUndefined();
         expect(markdownElement.explanation).toBeUndefined();
 
         markdownElement = new ShortAnswerQuestion();
-        parseTextHintExplanation(`${markdownHint}`, markdownElement);
+        parseExerciseHintExplanation(`${markdownHint}`, markdownElement);
         expect(markdownElement.text).toEqual('');
         expect(markdownElement.hint).toEqual(hintText);
         expect(markdownElement.explanation).toBeUndefined();
 
         markdownElement = new ShortAnswerQuestion();
-        parseTextHintExplanation(`${markdownExplanation}`, markdownElement);
+        parseExerciseHintExplanation(`${markdownExplanation}`, markdownElement);
         expect(markdownElement.text).toEqual('');
         expect(markdownElement.hint).toBeUndefined();
         expect(markdownElement.explanation).toEqual(explanationText);
 
         markdownElement = new ShortAnswerQuestion();
-        parseTextHintExplanation(`${markdownString} ${markdownHint} ${markdownExplanation}`, markdownElement);
+        parseExerciseHintExplanation(`${markdownString} ${markdownHint} ${markdownExplanation}`, markdownElement);
         expect(markdownElement.text).toEqual(markdownString);
         expect(markdownElement.hint).toEqual(hintText);
         expect(markdownElement.explanation).toEqual(explanationText);

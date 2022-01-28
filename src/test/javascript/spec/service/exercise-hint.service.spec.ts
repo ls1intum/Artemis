@@ -4,15 +4,15 @@ import { HttpResponse } from '@angular/common/http';
 import { take } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { TextHint } from 'app/entities/hestia/text-hint-model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
-import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
-describe('TextHint Service', () => {
-    let service: TextHintService;
+describe('ExerciseHint Service', () => {
+    let service: ExerciseHintService;
     let httpMock: HttpTestingController;
-    let elemDefault: TextHint;
-    let textHint: TextHint;
+    let elemDefault: ExerciseHint;
+    let exerciseHint: ExerciseHint;
     let expectedResult: any;
 
     beforeEach(() => {
@@ -20,23 +20,23 @@ describe('TextHint Service', () => {
             imports: [HttpClientTestingModule],
             providers: [{ provide: ExerciseService, useClass: MockExerciseService }],
         });
-        expectedResult = {} as HttpResponse<TextHint>;
-        service = TestBed.inject(TextHintService);
+        expectedResult = {} as HttpResponse<ExerciseHint>;
+        service = TestBed.inject(ExerciseHintService);
         httpMock = TestBed.inject(HttpTestingController);
 
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.id = 1;
 
-        elemDefault = new TextHint();
+        elemDefault = new ExerciseHint();
         elemDefault.id = 0;
         elemDefault.title = 'AAAAAAA';
         elemDefault.content = 'AAAAAAA';
         elemDefault.exercise = exercise;
 
-        textHint = new TextHint();
-        textHint.title = 'AAAAA';
-        textHint.content = 'BBBBB';
-        textHint.exercise = exercise;
+        exerciseHint = new ExerciseHint();
+        exerciseHint.title = 'AAAAA';
+        exerciseHint.content = 'BBBBB';
+        exerciseHint.exercise = exercise;
     });
 
     describe('Service methods', () => {
@@ -53,7 +53,7 @@ describe('TextHint Service', () => {
         });
     });
 
-    it('should create a TextHint', () => {
+    it('should create an ExerciseHint', () => {
         const returnedFromService = Object.assign(
             {
                 id: 0,
@@ -67,7 +67,7 @@ describe('TextHint Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         service
-            .create(textHint)
+            .create(exerciseHint)
             .pipe(take(1))
             .subscribe((resp) => (expectedResult = resp));
         const req = httpMock.expectOne({ method: 'POST' });
@@ -75,7 +75,7 @@ describe('TextHint Service', () => {
         expect(expectedResult.body).toEqual(expected);
     });
 
-    it('should update a TextHint', () => {
+    it('should update an ExerciseHint', () => {
         const returnedFromService = Object.assign(
             {
                 title: 'BBBBBB',
@@ -94,7 +94,7 @@ describe('TextHint Service', () => {
         expect(expectedResult.body).toEqual(expected);
     });
 
-    it('should delete a TextHint', () => {
+    it('should delete an ExerciseHint', () => {
         service.delete(123).subscribe((resp) => (expectedResult = resp.ok));
 
         const req = httpMock.expectOne({ method: 'DELETE' });

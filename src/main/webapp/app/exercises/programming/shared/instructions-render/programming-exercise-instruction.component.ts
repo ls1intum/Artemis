@@ -11,7 +11,7 @@ import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programmin
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { TextHint } from 'app/entities/hestia/text-hint-model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -19,7 +19,7 @@ import { RepositoryFileService } from 'app/exercises/shared/result/repository.se
 import { problemStatementHasChanged } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/entities/result.model';
-import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { findLatestResult } from 'app/shared/util/utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
@@ -32,7 +32,7 @@ import { hasParticipationChanged } from 'app/exercises/shared/participation/part
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
     @Input() public exercise: ProgrammingExercise;
     @Input() public participation: Participation;
-    @Input() public textHints: TextHint[];
+    @Input() public exerciseHints: ExerciseHint[];
     @Input() generateHtmlEvents: Observable<void>;
     @Input() personalParticipation: boolean;
     // If there are no instructions available (neither in the exercise problemStatement or the legacy README.md) emits an event
@@ -79,7 +79,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private programmingExerciseTaskWrapper: ProgrammingExerciseTaskExtensionWrapper,
         private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private textHintService: TextHintService,
+        private exerciseHintService: ExerciseHintService,
     ) {}
 
     /**
@@ -92,10 +92,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .pipe(
                 // Set up the markdown extensions if they are not set up yet so that tasks, UMLs, etc. can be parsed.
                 tap((markdownExtensionsInitialized: boolean) => !markdownExtensionsInitialized && this.setupMarkdownSubscriptions()),
-                switchMap(() => this.loadTextHints(this.exercise.id)),
-                tap((hints: TextHint[]) => {
-                    this.textHints = hints;
-                    this.programmingExerciseTaskWrapper.textHints = hints;
+                switchMap(() => this.loadExerciseHints(this.exercise.id)),
+                tap((hints: ExerciseHint[]) => {
+                    this.exerciseHints = hints;
+                    this.programmingExerciseTaskWrapper.exerciseHints = hints;
                 }),
                 // If the participation has changed, set up the websocket subscriptions.
                 map(() => hasParticipationChanged(changes)),
@@ -158,9 +158,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .subscribe();
     }
 
-    private loadTextHints(exerciseId: number | undefined) {
-        if (this.textHints) {
-            return of(this.textHints);
+    private loadExerciseHints(exerciseId: number | undefined) {
+        if (this.exerciseHints) {
+            return of(this.exerciseHints);
         }
 
         if (this.exercise && this.exercise.exerciseHints) {
@@ -171,7 +171,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             return of([]);
         }
 
-        return this.textHintService.findByExerciseId(exerciseId).pipe(
+        return this.exerciseHintService.findByExerciseId(exerciseId).pipe(
             map(({ body }) => body),
             catchError(() => of([])),
         );

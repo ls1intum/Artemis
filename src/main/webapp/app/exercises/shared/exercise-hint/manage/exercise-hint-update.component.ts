@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable, of, Subscription } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
-import { TextHintService } from './text-hint.service';
+import { ExerciseHintService } from './exercise-hint.service';
 import { EditorMode, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -12,19 +12,19 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faCircleNotch, faSave } from '@fortawesome/free-solid-svg-icons';
-import { TextHint } from 'app/entities/hestia/text-hint-model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
     templateUrl: './exercise-hint-update.component.html',
     styleUrls: ['./exercise-hint.scss'],
 })
-export class TextHintUpdateComponent implements OnInit, OnDestroy {
+export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     MarkdownEditorHeight = MarkdownEditorHeight;
 
     courseId: number;
     exerciseId: number;
-    textHint = new TextHint();
+    exerciseHint = new ExerciseHint();
 
     isSaving: boolean;
     isLoading: boolean;
@@ -42,13 +42,13 @@ export class TextHintUpdateComponent implements OnInit, OnDestroy {
     constructor(
         private route: ActivatedRoute,
         protected alertService: AlertService,
-        protected textHintService: TextHintService,
+        protected exerciseHintService: ExerciseHintService,
         protected exerciseService: ExerciseService,
         private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     /**
-     * Fetches the exercise from the server and assigns it on the text hint
+     * Fetches the exercise from the server and assigns it on the exercise hint
      */
     ngOnInit() {
         this.isLoading = true;
@@ -58,16 +58,16 @@ export class TextHintUpdateComponent implements OnInit, OnDestroy {
             this.isSaving = false;
             this.exerciseNotFound = false;
         });
-        this.route.data.subscribe(({ textHint }) => {
-            this.textHint = textHint;
+        this.route.data.subscribe(({ exerciseHint }) => {
+            this.exerciseHint = exerciseHint;
             // If the exercise was not yet created, load the exercise from the current route to set it as its exercise.
-            if (!this.textHint.id) {
+            if (!this.exerciseHint.id) {
                 this.exerciseService
                     .find(this.exerciseId)
                     .pipe(
                         map(({ body }) => body),
                         tap((res: Exercise) => {
-                            this.textHint.exercise = res;
+                            this.exerciseHint.exercise = res;
                         }),
                         catchError((error: HttpErrorResponse) => {
                             this.exerciseNotFound = true;
@@ -94,11 +94,11 @@ export class TextHintUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Setter to update the text hint content
+     * Setter to update the exercise hint content
      * @param newContent New value to set
      */
     updateHintContent(newContent: string) {
-        this.textHint.content = newContent;
+        this.exerciseHint.content = newContent;
     }
 
     /**
@@ -109,22 +109,22 @@ export class TextHintUpdateComponent implements OnInit, OnDestroy {
     previousState() {
         this.navigationUtilService.navigateBackWithOptional(
             ['course-management', this.courseId.toString(), 'programming-exercises', this.exerciseId.toString(), 'hints'],
-            this.textHint.id?.toString(),
+            this.exerciseHint.id?.toString(),
         );
     }
 
     /**
-     * Saves the text hint by creating or updating it on the server
+     * Saves the exercise hint by creating or updating it on the server
      */
     save() {
         this.isSaving = true;
-        if (this.textHint.id !== undefined) {
-            this.subscribeToSaveResponse(this.textHintService.update(this.textHint));
+        if (this.exerciseHint.id !== undefined) {
+            this.subscribeToSaveResponse(this.exerciseHintService.update(this.exerciseHint));
         } else {
-            this.subscribeToSaveResponse(this.textHintService.create(this.textHint));
+            this.subscribeToSaveResponse(this.exerciseHintService.create(this.exerciseHint));
         }
     }
-    protected subscribeToSaveResponse(result: Observable<HttpResponse<TextHint>>) {
+    protected subscribeToSaveResponse(result: Observable<HttpResponse<ExerciseHint>>) {
         result.subscribe({
             next: () => this.onSaveSuccess(),
             error: () => this.onSaveError(),

@@ -2,26 +2,26 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
-import { TextHintDetailComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-detail.component';
+import { ExerciseHintDetailComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-detail.component';
 import { ArtemisTestModule } from '../../test.module';
-import { TextHint } from 'app/entities/hestia/text-hint-model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
-describe('TextHint Management Detail Component', () => {
-    let comp: TextHintDetailComponent;
-    let fixture: ComponentFixture<TextHintDetailComponent>;
-    const textHint = new TextHint();
-    textHint.id = 123;
-    const route = { data: of({ textHint }), params: of({ exerciseId: 1 }) } as any as ActivatedRoute;
+describe('ExerciseHint Management Detail Component', () => {
+    let comp: ExerciseHintDetailComponent;
+    let fixture: ComponentFixture<ExerciseHintDetailComponent>;
+    const exerciseHint = new ExerciseHint();
+    exerciseHint.id = 123;
+    const route = { data: of({ exerciseHint }), params: of({ exerciseId: 1 }) } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [TextHintDetailComponent],
+            declarations: [ExerciseHintDetailComponent],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         })
-            .overrideTemplate(TextHintDetailComponent, '')
+            .overrideTemplate(ExerciseHintDetailComponent, '')
             .compileComponents();
-        fixture = TestBed.createComponent(TextHintDetailComponent);
+        fixture = TestBed.createComponent(ExerciseHintDetailComponent);
         comp = fixture.componentInstance;
     });
 
@@ -33,7 +33,7 @@ describe('TextHint Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(comp.textHint).toEqual(expect.objectContaining({ id: 123 }));
+            expect(comp.exerciseHint).toEqual(expect.objectContaining({ id: 123 }));
         });
     });
 });

@@ -50,7 +50,7 @@ import {
     faUserPlus,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -117,7 +117,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private courseManagementService: CourseManagementService,
         private exerciseService: ExerciseService,
-        private textHintService: TextHintService,
+        private exerciseHintService: ExerciseHintService,
         private apollonDiagramService: ApollonDiagramService,
         private lectureService: LectureService,
         private examService: ExamManagementService,
@@ -200,7 +200,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test_run_exercise_assessment_dashboard: 'artemisApp.exerciseAssessmentDashboard.home.title',
         lti_configuration: 'artemisApp.programmingExercise.home.title',
         teams: 'artemisApp.team.home.title',
-        text_hints: 'artemisApp.exerciseHint.home.title',
+        exercise_hints: 'artemisApp.exerciseHint.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
         goal_management: 'artemisApp.learningGoal.manageLearningGoals.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
@@ -317,8 +317,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'assessment-dashboard':
                 this.addResolvedTitleAsCrumb(this.exerciseService.getTitle(Number(segment)), currentPath, segment);
                 break;
-            case 'text-hints':
-                this.addResolvedTitleAsCrumb(this.textHintService.getTitle(Number(segment)), currentPath, segment);
+            case 'exercise-hints':
+                this.addResolvedTitleAsCrumb(this.exerciseHintService.getTitle(Number(segment)), currentPath, segment);
                 break;
             case 'apollon-diagrams':
                 this.addResolvedTitleAsCrumb(this.apollonDiagramService.getTitle(Number(segment)), currentPath, segment);

@@ -10,11 +10,11 @@ import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/exte
 import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { TextHint } from 'app/entities/hestia/text-hint-model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
-    public textHints: TextHint[] = [];
+    public exerciseHints: ExerciseHint[] = [];
     private latestResult?: Result;
     private exercise: Exercise;
 
@@ -73,7 +73,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
             // The same task could appear multiple times in the instructions (edge case).
             for (let i = 0; i < taskHtmlContainers.length; i++) {
                 const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionTaskStatusComponent).create(this.injector);
-                componentRef.instance.textHints = this.textHints.filter((hint) => hints.includes(hint.id!.toString(10)));
+                componentRef.instance.exerciseHints = this.exerciseHints.filter((hint) => hints.includes(hint.id!.toString(10)));
                 componentRef.instance.taskName = taskName;
                 componentRef.instance.latestResult = this.latestResult;
                 componentRef.instance.tests = tests;

@@ -3,14 +3,14 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import { faWrench } from '@fortawesome/free-solid-svg-icons';
-import { TextHint } from 'app/entities/hestia/text-hint-model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 @Component({
     selector: 'jhi-exercise-hint-detail',
     templateUrl: './exercise-hint-detail.component.html',
 })
-export class TextHintDetailComponent implements OnInit, OnDestroy {
-    textHint: TextHint;
+export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
+    exerciseHint: ExerciseHint;
 
     courseId: number;
     exerciseId: number;
@@ -30,8 +30,8 @@ export class TextHintDetailComponent implements OnInit, OnDestroy {
             this.courseId = params['courseId'];
             this.exerciseId = params['exerciseId'];
         });
-        this.route.data.subscribe(({ textHint }) => {
-            this.textHint = textHint;
+        this.route.data.subscribe(({ exerciseHint }) => {
+            this.exerciseHint = exerciseHint;
         });
     }
 

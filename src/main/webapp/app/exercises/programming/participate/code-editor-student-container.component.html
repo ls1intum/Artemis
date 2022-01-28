@@ -61,7 +61,7 @@
             [participation]="participation"
             [btnSize]="ButtonSize.MEDIUM"
         ></jhi-programming-exercise-student-trigger-build-button>
-        <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id!" [textHints]="exercise.exerciseHints || []" class="me-2"></jhi-exercise-hint-student>
+        <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id!" [exerciseHints]="exercise.exerciseHints || []" class="me-2"></jhi-exercise-hint-student>
     </div>
     <jhi-programming-exercise-instructions
         editorSidebar
@@ -69,7 +69,7 @@
         [exercise]="exercise"
         [participation]="participation"
         [personalParticipation]="true"
-        [textHints]="exercise.exerciseHints || []"
+        [exerciseHints]="exercise.exerciseHints || []"
         class="instructions-wrapper__content card-body p-0"
     ></jhi-programming-exercise-instructions>
 </jhi-code-editor-container>

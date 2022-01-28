@@ -1,22 +1,22 @@
 <div class="row justify-content-center">
     <div class="col-8">
-        <div *ngIf="textHint">
-            <h2><span jhiTranslate="artemisApp.exerciseHint.detail.title">Exercise Hint</span> {{ textHint.id }}</h2>
+        <div *ngIf="exerciseHint">
+            <h2><span jhiTranslate="artemisApp.exerciseHint.detail.title">Exercise Hint</span> {{ exerciseHint.id }}</h2>
             <hr />
             <jhi-alert-error></jhi-alert-error>
             <dl class="row-md jh-entity-details">
                 <dt><span jhiTranslate="artemisApp.exerciseHint.title">Title</span></dt>
                 <dd>
-                    <span>{{ textHint.title }}</span>
+                    <span>{{ exerciseHint.title }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exerciseHint.content">Content</span></dt>
                 <dd>
-                    <span *ngIf="textHint.content" [innerHTML]="textHint.content | htmlForMarkdown"></span>
+                    <span *ngIf="exerciseHint.content" [innerHTML]="exerciseHint.content | htmlForMarkdown"></span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exerciseHint.exercise">Exercise</span></dt>
                 <dd>
-                    <div *ngIf="textHint.exercise">
-                        <a [routerLink]="['/course-management', courseId, textHint.exercise.type + '-exercises', exerciseId]">{{ textHint.exercise?.id }}</a>
+                    <div *ngIf="exerciseHint.exercise">
+                        <a [routerLink]="['/course-management', courseId, exerciseHint.exercise.type + '-exercises', exerciseId]">{{ exerciseHint.exercise?.id }}</a>
                     </div>
                 </dd>
             </dl>

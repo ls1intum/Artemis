@@ -16,11 +16,11 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { TextHint } from 'app/entities/hestia/text-hint-model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
 import { Course } from 'app/entities/course.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 /**
  * Enumeration specifying the repository type
@@ -80,7 +80,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         private courseExerciseService: CourseExerciseService,
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private textHintService: TextHintService,
+        private exerciseHintService: ExerciseHintService,
         private location: Location,
         private participationService: ParticipationService,
         protected route: ActivatedRoute,
@@ -131,12 +131,12 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                         }
                     }),
                     switchMap(() => {
-                        return this.loadTextHints();
+                        return this.loadExerciseHints();
                     }),
                 )
                 .subscribe({
-                    next: (textHints: TextHint[]) => {
-                        this.exercise.exerciseHints = textHints;
+                    next: (exerciseHints: ExerciseHint[]) => {
+                        this.exercise.exerciseHints = exerciseHints;
                         this.loadingState = LOADING_STATE.CLEAR;
                     },
                     error: (err: Error) => {
@@ -245,11 +245,11 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     }
 
     /**
-     * Load text hints. Take them from the exercise if available.
+     * Load exercise hints. Take them from the exercise if available.
      */
-    private loadTextHints() {
+    private loadExerciseHints() {
         if (!this.exercise.exerciseHints) {
-            return this.textHintService.findByExerciseId(this.exercise.id!).pipe(map(({ body }) => body || []));
+            return this.exerciseHintService.findByExerciseId(this.exercise.id!).pipe(map(({ body }) => body || []));
         }
         return of(this.exercise.exerciseHints);
     }

@@ -44,7 +44,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { TextHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
+import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -67,7 +67,7 @@ import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-ed
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
-import { TextHintService } from 'app/exercises/shared/exercise-hint/manage/text-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -180,7 +180,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 MockComponent(CodeEditorInstructionsComponent),
                 MockComponent(ResultComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
-                MockComponent(TextHintStudentComponent),
+                MockComponent(ExerciseHintStudentComponent),
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
@@ -191,7 +191,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
-                { provide: TextHintService, useClass: TextHintService },
+                { provide: ExerciseHintService, useClass: ExerciseHintService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

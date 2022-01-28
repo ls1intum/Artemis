@@ -4,7 +4,7 @@ import { debounceTime, map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { TextHint } from 'app/entities/hestia/text-hint-model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instruction-instructor-analysis',
@@ -12,7 +12,7 @@ import { TextHint } from 'app/entities/hestia/text-hint-model';
 })
 export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, OnChanges, OnDestroy {
     @Input() exerciseTestCases: string[];
-    @Input() textHints: TextHint[];
+    @Input() exerciseHints: ExerciseHint[];
     @Input() problemStatement: string;
     @Input() taskRegex: RegExp;
 
@@ -40,7 +40,7 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
                         this.problemStatement,
                         this.taskRegex,
                         this.exerciseTestCases,
-                        this.textHints,
+                        this.exerciseHints,
                     );
                     this.missingTestCases = missingTestCases;
                     this.invalidTestCases = invalidTestCases;
@@ -56,7 +56,7 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
         if (
             (changes.problemStatement || changes.exerciseTestCases || changes.exerciseHints) &&
             this.exerciseTestCases &&
-            this.textHints &&
+            this.exerciseHints &&
             this.problemStatement &&
             this.taskRegex
         ) {
