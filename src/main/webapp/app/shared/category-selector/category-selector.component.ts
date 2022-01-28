@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
@@ -16,7 +16,7 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
     styleUrls: ['./category-selector.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class CategorySelectorComponent implements OnInit, OnChanges {
+export class CategorySelectorComponent implements OnChanges {
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
     // the selected categories, which can be manipulated by the user in the UI
@@ -38,8 +38,6 @@ export class CategorySelectorComponent implements OnInit, OnChanges {
 
     // Icons
     faTimes = faTimes;
-
-    ngOnInit() {}
 
     ngOnChanges() {
         this.uniqueCategoriesForAutocomplete = this.categoryCtrl.valueChanges.pipe(
