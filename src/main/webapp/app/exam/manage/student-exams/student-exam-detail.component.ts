@@ -20,6 +20,7 @@ import { Exercise } from 'app/entities/exercise.model';
 @Component({
     selector: 'jhi-student-exam-detail',
     templateUrl: './student-exam-detail.component.html',
+    styleUrls: ['./student-exam-detail.component.scss'],
     providers: [ArtemisDurationFromSecondsPipe],
 })
 export class StudentExamDetailComponent implements OnInit {
@@ -48,7 +49,7 @@ export class StudentExamDetailComponent implements OnInit {
         percent: 0,
     };
 
-    private normalWorkingTime = 0;
+    private regularExamWorkingTime = 0;
 
     // Icons
     faSave = faSave;
@@ -130,7 +131,7 @@ export class StudentExamDetailComponent implements OnInit {
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
 
-        this.normalWorkingTime = normalWorkingTime(this.studentExam.exam!)!;
+        this.regularExamWorkingTime = normalWorkingTime(this.studentExam.exam!)!;
         this.initWorkingTimeForm();
 
         this.maxTotalPoints = 0;
@@ -179,7 +180,7 @@ export class StudentExamDetailComponent implements OnInit {
      * Updates the working time duration values of the form whenever the percent value has been changed by the user.
      */
     updateWorkingTimeDuration() {
-        const seconds = Math.round(this.normalWorkingTime * (1.0 + this.workingTimeFormValues.percent / 100));
+        const seconds = Math.round(this.regularExamWorkingTime * (1.0 + this.workingTimeFormValues.percent / 100));
         this.setWorkingTimeDuration(seconds);
     }
 
@@ -217,7 +218,7 @@ export class StudentExamDetailComponent implements OnInit {
      * @private
      */
     private getWorkingTimePercentDifference(): number {
-        return Math.round((this.getWorkingTimeSeconds() / this.normalWorkingTime - 1.0) * 100);
+        return Math.round((this.getWorkingTimeSeconds() / this.regularExamWorkingTime - 1.0) * 100);
     }
 
     /**
@@ -248,15 +249,17 @@ export class StudentExamDetailComponent implements OnInit {
         if (this.studentExam.exam) {
             // only show the button when the exam is over
             return dayjs(this.studentExam.exam.endDate).add(this.studentExam.exam.gracePeriod!, 'seconds').isBefore(dayjs());
+        } else {
+            return false;
         }
-        // if exam is undefined, we do not want to show the button
-        return false;
     }
 
     getWorkingTimeToolTip(): string {
-        return this.canChangeExamWorkingTime()
-            ? 'You can change the individual working time of the student here.'
-            : 'You cannot change the individual working time after the exam has become visible.';
+        if (this.canChangeExamWorkingTime()) {
+            return 'You can change the individual working time of the student here.';
+        } else {
+            return 'You cannot change the individual working time after the exam has become visible.';
+        }
     }
 
     /**

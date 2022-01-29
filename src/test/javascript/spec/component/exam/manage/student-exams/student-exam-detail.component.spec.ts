@@ -207,7 +207,7 @@ describe('StudentExamDetailComponent', () => {
         expect(course.id).toBe(1);
         expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
         // @ts-ignore
-        expect(studentExamDetailComponent.normalWorkingTime).toBe(7200);
+        expect(studentExamDetailComponent.regularExamWorkingTime).toBe(7200);
 
         expectDuration(2, 0, 0);
         expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(0);

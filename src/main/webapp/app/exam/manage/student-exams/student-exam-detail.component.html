@@ -13,7 +13,7 @@
 <div>
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExamDetail.student">Student</span></h5>
-        <ol style="list-style-type: none">
+        <ol class="indented-list">
             <li>
                 <strong jhiTranslate="artemisApp.studentExamDetail.name">Name:</strong>
                 {{ student.name }}
@@ -36,7 +36,7 @@
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.workingTime" [ngbTooltip]="getWorkingTimeToolTip()">Working time</span></h5>
         <form #form="ngForm" (ngSubmit)="saveWorkingTime()">
-            <div class="mb-1" style="width: fit-content" [ngbTooltip]="getWorkingTimeToolTip()">
+            <div class="mb-1 working-time-form" [ngbTooltip]="getWorkingTimeToolTip()">
                 <div class="input-group mb-1 d-flex justify-content-between align-items-center">
                     <label class="me-4" jhiTranslate="artemisApp.studentExams.setWorkingTime">Absolute:</label>
                     <input
@@ -46,8 +46,7 @@
                         id="hours"
                         name="hours"
                         type="number"
-                        class="text-center form-control"
-                        style="width: 100px"
+                        class="text-center form-control form-number-input"
                         min="0"
                         step="1"
                         required
@@ -60,8 +59,7 @@
                         id="minutes"
                         name="minutes"
                         type="number"
-                        class="text-center form-control"
-                        style="width: 100px"
+                        class="text-center form-control form-number-input"
                         min="0"
                         max="59"
                         step="1"
@@ -75,8 +73,7 @@
                         id="seconds"
                         name="seconds"
                         type="number"
-                        class="text-center form-control"
-                        style="width: 100px"
+                        class="text-center form-control form-number-input"
                         min="0"
                         max="59"
                         step="1"
@@ -93,8 +90,7 @@
                         id="percent"
                         name="percent"
                         type="number"
-                        class="text-center form-control"
-                        style="width: 100px"
+                        class="text-center form-control form-number-input"
                         min="-100"
                         step="1"
                         required
@@ -112,7 +108,7 @@
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.participationStatus">Participation state</span></h5>
         <div class="me-2">
-            <ol style="list-style-type: none">
+            <ol class="indented-list">
                 <li>
                     <strong>{{ 'artemisApp.studentExams.started' | artemisTranslate }}:</strong>
                     {{ (studentExam.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
@@ -224,7 +220,7 @@
                         <td></td>
                         <td></td>
                         <td class="align-middle">
-                            <span style="text-decoration: underline" jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Points</span>
+                            <span class="text-decoration-underline" jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Points</span>
                         </td>
                         <td class="align-middle">
                             <u> {{ achievedTotalPoints }} </u>
