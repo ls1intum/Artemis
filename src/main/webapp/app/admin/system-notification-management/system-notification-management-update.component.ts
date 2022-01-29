@@ -60,15 +60,15 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.notification.id) {
-            this.systemNotificationService.update(this.notification).subscribe(
-                () => this.onSaveSuccess(),
-                () => this.onSaveError(),
-            );
+            this.systemNotificationService.update(this.notification).subscribe({
+                next: () => this.onSaveSuccess(),
+                error: () => this.onSaveError(),
+            });
         } else {
-            this.systemNotificationService.create(this.notification).subscribe(
-                () => this.onSaveSuccess(),
-                () => this.onSaveError(),
-            );
+            this.systemNotificationService.create(this.notification).subscribe({
+                next: () => this.onSaveSuccess(),
+                error: () => this.onSaveError(),
+            });
         }
     }
 

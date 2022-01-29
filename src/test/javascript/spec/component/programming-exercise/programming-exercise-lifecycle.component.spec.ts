@@ -8,8 +8,9 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
 import { NgModel } from '@angular/forms';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
-describe('ProgrammingExerciseTestSchedulePickerComponent', () => {
+describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
     let fixture: ComponentFixture<ProgrammingExerciseLifecycleComponent>;
 
@@ -59,5 +60,32 @@ describe('ProgrammingExerciseTestSchedulePickerComponent', () => {
 
         expect(comp.exercise.dueDate).toEqual(newRelease);
         expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(newRelease);
+    });
+
+    it('should change the value for allowing complaints for exercise with automatic assessment after toggling', () => {
+        comp.exercise = exercise;
+        comp.exercise.allowComplaintsForAutomaticAssessments = false;
+        comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
+        comp.toggleComplaintsType();
+
+        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBe(true);
+    });
+
+    it('should change assessment type from automatic to semi-automatic after toggling', () => {
+        comp.exercise = exercise;
+        comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
+        comp.toggleAssessmentType();
+
+        expect(comp.exercise.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
+        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBe(false);
+    });
+
+    it('should change assessment type from semi-automatic to automatic after toggling', () => {
+        comp.exercise = exercise;
+        comp.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        comp.toggleAssessmentType();
+
+        expect(comp.exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
+        expect(comp.exercise.assessmentDueDate).toBe(undefined);
     });
 });

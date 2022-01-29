@@ -131,7 +131,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @PostMapping(IMPORT)
     @PreAuthorize("hasRole('EDITOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise,
             @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean updateTemplate) {
         if (sourceExerciseId < 0) {
@@ -223,7 +223,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @GetMapping(EXPORT_INSTRUCTOR_EXERCISE)
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
@@ -253,7 +253,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @GetMapping(EXPORT_INSTRUCTOR_REPOSITORY)
     @PreAuthorize("hasRole('TA')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> exportInstructorRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
@@ -273,7 +273,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @GetMapping(EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY)
     @PreAuthorize("hasRole('TA')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> exportInstructorAuxiliaryRepository(@PathVariable long exerciseId, @PathVariable long repositoryId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
@@ -319,7 +319,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @PostMapping(EXPORT_SUBMISSIONS_BY_PARTICIPANTS)
     @PreAuthorize("hasRole('TA')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
@@ -364,7 +364,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @PostMapping(EXPORT_SUBMISSIONS_BY_PARTICIPATIONS)
     @PreAuthorize("hasRole('TA')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);

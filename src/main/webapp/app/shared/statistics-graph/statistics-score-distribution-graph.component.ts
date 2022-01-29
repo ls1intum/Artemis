@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { round } from 'app/shared/util/utils';
-import { ngxColor } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
+import { ngxColor } from 'app/entities/statistics.model';
 import { yAxisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 
 @Component({

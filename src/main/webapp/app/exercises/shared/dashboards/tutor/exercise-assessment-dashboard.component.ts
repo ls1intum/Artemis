@@ -45,6 +45,7 @@ import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/asses
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -249,8 +250,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * Loads all information from the server regarding this exercise that is needed for the tutor exercise dashboard
      */
     loadAll() {
-        this.exerciseService.getForTutors(this.exerciseId).subscribe(
-            (res: HttpResponse<Exercise>) => {
+        this.exerciseService.getForTutors(this.exerciseId).subscribe({
+            next: (res: HttpResponse<Exercise>) => {
                 this.exercise = res.body!;
                 this.secondCorrectionEnabled = this.exercise.secondCorrectionEnabled;
                 this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
@@ -319,26 +320,26 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
                 this.setupLinks();
             },
-            (response: string) => this.onError(response),
-        );
+            error: (response: string) => this.onError(response),
+        });
 
         if (!this.isTestRun) {
-            this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId).subscribe(
-                (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
+            this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId).subscribe({
+                next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithComplaints = res.body || [];
                 },
-                (error: HttpErrorResponse) => onError(this.alertService, error),
-            );
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
 
-            this.submissionService.getSubmissionsWithMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
-                (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
+            this.submissionService.getSubmissionsWithMoreFeedbackRequestsForTutor(this.exerciseId).subscribe({
+                next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithMoreFeedbackRequests = res.body || [];
                 },
-                (error: HttpErrorResponse) => onError(this.alertService, error),
-            );
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
 
-            this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
-                (res: HttpResponse<StatsForDashboard>) => {
+            this.exerciseService.getStatsForTutors(this.exerciseId).subscribe({
+                next: (res: HttpResponse<StatsForDashboard>) => {
                     this.statsForDashboard = StatsForDashboard.from(res.body!);
                     this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                     this.totalNumberOfAssessments = this.statsForDashboard.totalNumberOfAssessments;
@@ -389,13 +390,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
                     this.setupGraph();
                 },
-                (response: string) => this.onError(response),
-            );
+                error: (response: string) => this.onError(response),
+            });
         } else {
-            this.complaintService.getComplaintsForTestRun(this.exerciseId).subscribe(
-                (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
-                (error: HttpErrorResponse) => onError(this.alertService, error),
-            );
+            this.complaintService.getComplaintsForTestRun(this.exerciseId).subscribe({
+                next: (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
         }
     }
 
@@ -567,15 +568,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 break;
         }
 
-        submissionObservable.subscribe(
-            (submission: Submission) => {
+        submissionObservable.subscribe({
+            next: (submission: Submission) => {
                 if (submission) {
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     this.unassessedSubmissionByCorrectionRound!.set(correctionRound, submission);
                 }
                 this.submissionLockLimitReached = false;
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
                     if (this.unassessedSubmissionByCorrectionRound) {
@@ -587,18 +588,21 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                     this.onError(error?.error?.detail || error.message);
                 }
             },
-        );
+        });
     }
 
     /**
      * Called after the tutor has read the instructions and creates a new tutor participation
      */
     readInstruction() {
-        this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
-            this.tutorParticipation = res.body!;
-            this.tutorParticipationStatus = this.tutorParticipation.status!;
-            this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
-        }, this.onError);
+        this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe({
+            next: (res: HttpResponse<TutorParticipation>) => {
+                this.tutorParticipation = res.body!;
+                this.tutorParticipationStatus = this.tutorParticipation.status!;
+                this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
+            },
+            error: this.onError,
+        });
     }
 
     /**
@@ -769,6 +773,18 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 // lock-count from the remaining unassessed submissions of the current correction round.
                 this.firstRoundAssessments = this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i];
             }
+        }
+    }
+
+    /**
+     * Handles the click event of a user on a part of the chart.
+     * Given the user has the right permissions, navigates to the submissions page of the exercise
+     * @param event event that is delegated by ngx-charts. Used here to trigger the delegation only if the user clicks on the pie chart
+     * not the legend
+     */
+    navigateToExerciseSubmissionOverview(event: any): void {
+        if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
+            this.router.navigate(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
         }
     }
 }

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Data, ParamMap, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { User } from 'app/core/user/user.model';
@@ -67,16 +67,16 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                     }),
                 ),
             )
-            .subscribe(
-                (res: HttpResponse<User[]>) => {
+            .subscribe({
+                next: (res: HttpResponse<User[]>) => {
                     this.loadingSearchResult = false;
                     this.onSuccess(res.body || [], res.headers);
                 },
-                (res: HttpErrorResponse) => {
+                error: (res: HttpErrorResponse) => {
                     this.loadingSearchResult = false;
                     onError(this.alertService, res);
                 },
-            );
+            });
     }
 
     /**
@@ -147,14 +147,17 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     private handleNavigation(): void {
-        combineLatest(this.activatedRoute.data, this.activatedRoute.queryParamMap, (data: Data, params: ParamMap) => {
+        combineLatest({
+            data: this.activatedRoute.data,
+            params: this.activatedRoute.queryParamMap,
+        }).subscribe(({ data, params }) => {
             const page = params.get('page');
             this.page = page != undefined ? +page : 1;
             const sort = (params.get(SORT) ?? data['defaultSort']).split(',');
             this.predicate = sort[0];
             this.ascending = sort[1] === ASC;
             this.loadAll();
-        }).subscribe();
+        });
     }
 
     /**
@@ -162,16 +165,16 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param login of the user that should be deleted
      */
     deleteUser(login: string) {
-        this.userService.delete(login).subscribe(
-            () => {
+        this.userService.delete(login).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'userListModification',
                     content: 'Deleted a user',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     private onSuccess(users: User[], headers: HttpHeaders) {

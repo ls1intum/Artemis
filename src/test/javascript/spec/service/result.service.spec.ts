@@ -1,4 +1,4 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -36,8 +36,8 @@ describe('ResultService', () => {
             ],
         });
 
-        resultService = getTestBed().get(ResultService);
-        http = getTestBed().get(HttpClient);
+        resultService = TestBed.inject(ResultService);
+        http = TestBed.inject(HttpClient);
     });
 
     const rawExerciseReleaseDate = '2020-03-30T12:00:00Z';

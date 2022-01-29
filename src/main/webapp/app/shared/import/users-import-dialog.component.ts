@@ -43,7 +43,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     @ViewChild('importForm', { static: false }) importForm: NgForm;
 
     @Input() courseId: number;
-    @Input() courseGroup: String;
+    @Input() courseGroup: string;
     @Input() exam: Exam | undefined;
 
     usersToImport: StudentDTO[] = [];
@@ -186,15 +186,15 @@ export class UsersImportDialogComponent implements OnDestroy {
     importUsers() {
         this.isImporting = true;
         if (this.courseGroup && !this.exam) {
-            this.courseManagementService.addUsersToGroupInCourse(this.courseId, this.usersToImport, this.courseGroup).subscribe(
-                (res) => this.onSaveSuccess(res),
-                () => this.onSaveError(),
-            );
+            this.courseManagementService.addUsersToGroupInCourse(this.courseId, this.usersToImport, this.courseGroup).subscribe({
+                next: (res) => this.onSaveSuccess(res),
+                error: () => this.onSaveError(),
+            });
         } else if (!this.courseGroup && this.exam) {
-            this.examManagementService.addStudentsToExam(this.courseId, this.exam.id!, this.usersToImport).subscribe(
-                (res) => this.onSaveSuccess(res),
-                () => this.onSaveError(),
-            );
+            this.examManagementService.addStudentsToExam(this.courseId, this.exam.id!, this.usersToImport).subscribe({
+                next: (res) => this.onSaveSuccess(res),
+                error: () => this.onSaveError(),
+            });
         } else {
             this.alertService.error('importUsers.genericErrorMessage');
         }

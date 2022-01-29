@@ -3,8 +3,9 @@ import {
     ATTACHMENT_CHANGE_TITLE,
     COURSE_ARCHIVE_STARTED_TITLE,
     EXAM_ARCHIVE_STARTED_TITLE,
-    EXERCISE_RELEASED_TITLE,
     EXERCISE_PRACTICE_TITLE,
+    EXERCISE_RELEASED_TITLE,
+    EXERCISE_SUBMISSION_ASSESSED_TITLE,
     NEW_COURSE_POST_TITLE,
     NEW_EXERCISE_POST_TITLE,
     NEW_LECTURE_POST_TITLE,
@@ -25,6 +26,7 @@ export class NotificationSettingsService {
      * Each SettingIds can be based on multiple different notification titles (based on NotificationTypes)
      */
     private static NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TITLE_MAP: Map<SettingId, string[]> = new Map([
+        [SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED, [EXERCISE_SUBMISSION_ASSESSED_TITLE]],
         [SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED, [EXERCISE_RELEASED_TITLE]],
         [SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE, [EXERCISE_PRACTICE_TITLE]],
         [SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST, [NEW_EXERCISE_POST_TITLE]],
@@ -36,6 +38,17 @@ export class NotificationSettingsService {
         [SettingId.NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST, [NEW_REPLY_FOR_COURSE_POST_TITLE]],
         [SettingId.NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED, [EXAM_ARCHIVE_STARTED_TITLE, COURSE_ARCHIVE_STARTED_TITLE]],
     ]);
+
+    // needed to make it possible for other services to get the latest settings without calling the server additional times
+    private newestNotificationSettings: NotificationSetting[] = [];
+
+    public getNotificationSettings(): NotificationSetting[] {
+        return this.newestNotificationSettings;
+    }
+
+    public setNotificationSettings(notificationSettings: NotificationSetting[]) {
+        this.newestNotificationSettings = notificationSettings;
+    }
 
     /**
      * Creates an updates map that indicates which notifications (titles) are (de)activated in the current notification settings

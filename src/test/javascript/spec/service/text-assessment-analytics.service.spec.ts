@@ -1,4 +1,4 @@
-import { getTestBed, TestBed, fakeAsync } from '@angular/core/testing';
+import { TestBed, fakeAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
@@ -13,7 +13,6 @@ import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 
 describe('TextAssessmentAnalytics Service', () => {
-    let injector: TestBed;
     let service: TextAssessmentAnalytics;
     let httpMock: HttpTestingController;
 
@@ -27,9 +26,8 @@ describe('TextAssessmentAnalytics Service', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(TextAssessmentAnalytics);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(TextAssessmentAnalytics);
+        httpMock = TestBed.inject(HttpTestingController);
         httpMock.expectOne({ url: `${SERVER_API_URL}management/info`, method: 'GET' });
     });
 

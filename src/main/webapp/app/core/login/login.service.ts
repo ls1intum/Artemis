@@ -28,17 +28,17 @@ export class LoginService {
      */
     login(credentials: Credentials) {
         return new Promise<void>((resolve, reject) => {
-            this.authServerProvider.login(credentials).subscribe(
-                () => {
+            this.authServerProvider.login(credentials).subscribe({
+                next: () => {
                     this.accountService.identity(true).then(() => {
                         resolve();
                     });
                 },
-                (err) => {
+                error: (err) => {
                     this.logout(false);
                     reject(err);
                 },
-            );
+            });
         });
     }
 
@@ -48,17 +48,17 @@ export class LoginService {
      */
     loginSAML2(rememberMe: boolean) {
         return new Promise<void>((resolve, reject) => {
-            this.authServerProvider.loginSAML2(rememberMe).subscribe(
-                () => {
+            this.authServerProvider.loginSAML2(rememberMe).subscribe({
+                next: () => {
                     this.accountService.identity(true).then(() => {
                         resolve();
                     });
                 },
-                (err) => {
+                error: (err) => {
                     this.logout(false);
                     reject(err);
                 },
-            );
+            });
         });
     }
 

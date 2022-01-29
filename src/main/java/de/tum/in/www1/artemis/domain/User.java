@@ -327,16 +327,8 @@ public class User extends AbstractAuditingEntity implements Participant {
                 + '\'' + ", activated='" + activated + '\'' + ", langKey='" + langKey + '\'' + ", activationKey='" + activationKey + '\'' + "}";
     }
 
-    /**
-     * copy the basic user settings to hide not needed information before sending the user object to the client
-     * @return the basic user
-     */
-    public User copyBasicUser() {
-        User user = new User();
-        user.setId(getId());
-        user.setFirstName(getFirstName());
-        user.setLastName(getLastName());
-        user.setLogin(getLogin());
-        return user;
+    @JsonIgnore
+    public String toDatabaseString() {
+        return "Student: login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber + '\'';
     }
 }

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static java.time.ZonedDateTime.now;
 
 import java.io.File;
@@ -191,7 +190,7 @@ public class CourseResource {
                 return createCourse(updatedCourse);
             }
             else {
-                throw new AccessForbiddenException(NOT_ALLOWED);
+                throw new AccessForbiddenException();
             }
         }
 
@@ -947,7 +946,7 @@ public class CourseResource {
             return ResponseEntity.ok().body(null);
         }
         else {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
     }
 
@@ -1032,7 +1031,7 @@ public class CourseResource {
             return ResponseEntity.ok().body(null);
         }
         else {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
     }
 
@@ -1125,7 +1124,7 @@ public class CourseResource {
     public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 16, ZonedDateTime.now()));
+        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 17, ZonedDateTime.now()));
     }
 
     /**

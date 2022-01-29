@@ -1,4 +1,4 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { Reaction } from 'app/entities/metis/reaction.model';
@@ -6,7 +6,6 @@ import { ReactionService } from 'app/shared/metis/reaction.service';
 import { metisReactionToCreate, metisReactionUser2 } from '../../helpers/sample/metis-sample-data';
 
 describe('Reaction Service', () => {
-    let injector: TestBed;
     let service: ReactionService;
     let httpMock: HttpTestingController;
 
@@ -14,9 +13,8 @@ describe('Reaction Service', () => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
         });
-        injector = getTestBed();
-        service = injector.get(ReactionService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(ReactionService);
+        httpMock = TestBed.inject(HttpTestingController);
     });
 
     describe('Service methods', () => {

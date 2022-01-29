@@ -46,14 +46,14 @@ export class CourseRegistrationComponent implements OnInit {
     }
 
     registerForCourse(courseId: number) {
-        this.courseService.registerForCourse(courseId).subscribe(
-            () => {
+        this.courseService.registerForCourse(courseId).subscribe({
+            next: () => {
                 this.alertService.success('artemisApp.studentDashboard.register.registerSuccessful');
                 this.coursesToSelect = this.coursesToSelect.filter((course) => course.id !== courseId);
             },
-            (error: string) => {
+            error: (error: string) => {
                 this.alertService.error(error);
             },
-        );
+        });
     }
 }
