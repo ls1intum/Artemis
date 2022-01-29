@@ -8,18 +8,31 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
+import { NotificationSetting, notificationSettingsStructure } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { AlertService } from 'app/core/util/alert.service';
 import { UrlSerializer } from '@angular/router';
+import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 
 describe('NotificationSettingsComponent', () => {
     let comp: NotificationSettingsComponent;
     let fixture: ComponentFixture<NotificationSettingsComponent>;
 
+    let notificationSettingsServiceMock: NotificationSettingsService;
+
+    const settingId = SettingId.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES;
+    const webappStatus = true;
+    const notificationSettingA: NotificationSetting = {
+        settingId,
+        webapp: webappStatus,
+        email: false,
+        changed: false,
+    };
+
     const imports = [ArtemisTestModule];
     const declarations = [MockComponent(AlertComponent), NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
     const providers = [
         MockProvider(AlertService),
+        MockProvider(NotificationSettingsService),
         MockProvider(UrlSerializer),
         { provide: LocalStorageService, useClass: MockSyncStorage },
         { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -35,18 +48,11 @@ describe('NotificationSettingsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(NotificationSettingsComponent);
                 comp = fixture.componentInstance;
+                notificationSettingsServiceMock = TestBed.inject(NotificationSettingsService);
             });
     });
 
     it('should toggle setting', () => {
-        const settingId = SettingId.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES;
-        const webappStatus = true;
-        const notificationSettingA: NotificationSetting = {
-            settingId,
-            webapp: webappStatus,
-            email: false,
-            changed: false,
-        };
         comp.settings = [notificationSettingA];
         const event = {
             currentTarget: {
@@ -61,5 +67,13 @@ describe('NotificationSettingsComponent', () => {
         expect(notificationSettingA.webapp).not.toEqual(webappStatus);
         expect(notificationSettingA.changed).toBe(true);
         expect(comp.settingsChanged).toBe(true);
+    });
+
+    it('should reuse settings via service if they were already loaded', () => {
+        const settingGetMock = jest.spyOn(notificationSettingsServiceMock, 'getNotificationSettings').mockReturnValue([notificationSettingA]);
+        comp.ngOnInit();
+        expect(settingGetMock).toHaveBeenCalledTimes(1);
+        // check if current settings are not empty
+        expect(comp.userSettings).toEqual(notificationSettingsStructure);
     });
 });
