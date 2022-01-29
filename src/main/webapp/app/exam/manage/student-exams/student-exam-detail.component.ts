@@ -14,7 +14,7 @@ import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entiti
 import { GradeType } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
-import { normalWorkingTime } from 'app/exam/participate/exam.utils';
+import { getRelativeWorkingTimeExtension, normalWorkingTime } from 'app/exam/participate/exam.utils';
 import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
@@ -48,8 +48,6 @@ export class StudentExamDetailComponent implements OnInit {
         seconds: 0,
         percent: 0,
     };
-
-    private regularExamWorkingTime = 0;
 
     // Icons
     faSave = faSave;
@@ -131,7 +129,6 @@ export class StudentExamDetailComponent implements OnInit {
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
 
-        this.regularExamWorkingTime = normalWorkingTime(this.studentExam.exam!)!;
         this.initWorkingTimeForm();
 
         this.maxTotalPoints = 0;
@@ -180,7 +177,8 @@ export class StudentExamDetailComponent implements OnInit {
      * Updates the working time duration values of the form whenever the percent value has been changed by the user.
      */
     updateWorkingTimeDuration() {
-        const seconds = Math.round(this.regularExamWorkingTime * (1.0 + this.workingTimeFormValues.percent / 100));
+        const regularWorkingTime = normalWorkingTime(this.studentExam.exam!)!;
+        const seconds = Math.round(regularWorkingTime * (1.0 + this.workingTimeFormValues.percent / 100));
         this.setWorkingTimeDuration(seconds);
     }
 
@@ -200,7 +198,7 @@ export class StudentExamDetailComponent implements OnInit {
      * Uses the current durations saved in the form to update the extension percent value.
      */
     updateWorkingTimePercent() {
-        this.workingTimeFormValues.percent = this.getWorkingTimePercentDifference();
+        this.workingTimeFormValues.percent = getRelativeWorkingTimeExtension(this.studentExam.exam!, this.getWorkingTimeSeconds());
     }
 
     /**
@@ -208,17 +206,13 @@ export class StudentExamDetailComponent implements OnInit {
      * @private
      */
     private getWorkingTimeSeconds(): number {
-        return this.workingTimeFormValues.hours * 3600 + this.workingTimeFormValues.minutes * 60 + this.workingTimeFormValues.seconds;
-    }
-
-    /**
-     * Calculates the difference in whole percent between the regular working time and the currently set individual working time.
-     *
-     * E.g., with a regular time of "1h" and a current value of "1h30min" returns 50.
-     * @private
-     */
-    private getWorkingTimePercentDifference(): number {
-        return Math.round((this.getWorkingTimeSeconds() / this.regularExamWorkingTime - 1.0) * 100);
+        const duration = {
+            days: 0,
+            hours: this.workingTimeFormValues.hours,
+            minutes: this.workingTimeFormValues.minutes,
+            seconds: this.workingTimeFormValues.seconds,
+        };
+        return this.artemisDurationFromSecondsPipe.durationToSeconds(duration);
     }
 
     /**

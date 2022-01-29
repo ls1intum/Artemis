@@ -59,17 +59,4 @@ describe('StudentExamWorkingTimeComponent', () => {
         setExamWithWorkingTime(regularWorkingTime * 3);
         expect(comp.percentDifference).toBe(200);
     });
-
-    it('should round the difference to the nearest full percent', () => {
-        setExamWithWorkingTime(regularWorkingTime + 1);
-        expect(comp.percentDifference).toBe(0);
-
-        // 20min extra => 16.66%
-        setExamWithWorkingTime(regularWorkingTime + 1200);
-        expect(comp.percentDifference).toBe(17);
-
-        // 19min 40s extra => 16.38%
-        setExamWithWorkingTime(regularWorkingTime + 1180);
-        expect(comp.percentDifference).toBe(16);
-    });
 });

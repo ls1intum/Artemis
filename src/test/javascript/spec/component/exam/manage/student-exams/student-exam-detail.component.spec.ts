@@ -206,8 +206,6 @@ describe('StudentExamDetailComponent', () => {
         expect(gradeSpy).toHaveBeenCalledTimes(1);
         expect(course.id).toBe(1);
         expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
-        // @ts-ignore
-        expect(studentExamDetailComponent.regularExamWorkingTime).toBe(7200);
 
         expectDuration(2, 0, 0);
         expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(0);
@@ -315,11 +313,11 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.updateWorkingTimePercent();
         expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(-100);
 
-        // small change, not a full percent => should remain 0
+        // small change, not a full percent
         studentExamDetailComponent.workingTimeFormValues.hours = 2;
         studentExamDetailComponent.workingTimeFormValues.seconds = 12;
         studentExamDetailComponent.updateWorkingTimePercent();
-        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(0);
+        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(0.17);
     });
 
     it('should update the absolute working time when changing the percent difference', () => {

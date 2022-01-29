@@ -53,6 +53,14 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
     }
 
     /**
+     * Converts the duration into its total number of seconds.
+     * @param duration for which the total number of seconds should be determined.
+     */
+    public durationToSeconds(duration: Duration): number {
+        return duration.days * this.secondsInDay + duration.hours * this.secondsInHour + duration.minutes * this.secondsInMinute + duration.seconds;
+    }
+
+    /**
      * Converts the given duration into a human-readable short format as required by {@link transform}.
      * @param duration that should be converted into a human-readable format.
      * @private
