@@ -46,7 +46,7 @@ public class ExamSubmissionService {
      * @param exercise  the exercise for which a submission should be saved
      * @param user      the user that wants to submit
      */
-    public void checkSubmissionAllowance(Exercise exercise, User user) {
+    public void checkSubmissionAllowanceElseThrow(Exercise exercise, User user) {
         if (!isAllowedToSubmitDuringExam(exercise, user, false)) {
             throw new AccessForbiddenException();
         }

@@ -102,13 +102,13 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Apply further checks if it is an exam submission
-        examSubmissionService.checkSubmissionAllowance(exercise, user);
+        examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user);
 
         // Prevent multiple submissions (currently only for exam submissions)
         fileUploadSubmission = (FileUploadSubmission) examSubmissionService.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
 
         // Check if the user is allowed to submit
-        fileUploadSubmissionService.checkSubmissionAllowance(exercise, fileUploadSubmission, user);
+        fileUploadSubmissionService.checkSubmissionAllowanceElseThrow(exercise, fileUploadSubmission, user);
 
         // Check the file size
         if (file.getSize() > Constants.MAX_SUBMISSION_FILE_SIZE) {

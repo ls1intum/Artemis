@@ -127,13 +127,13 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Apply further checks if it is an exam submission
-        examSubmissionService.checkSubmissionAllowance(modelingExercise, user);
+        examSubmissionService.checkSubmissionAllowanceElseThrow(modelingExercise, user);
 
         // Prevent multiple submissions (currently only for exam submissions)
         modelingSubmission = (ModelingSubmission) examSubmissionService.preventMultipleSubmissions(modelingExercise, modelingSubmission, user);
 
         // Check if the user is allowed to submit
-        modelingSubmissionService.checkSubmissionAllowance(modelingExercise, modelingSubmission, user);
+        modelingSubmissionService.checkSubmissionAllowanceElseThrow(modelingExercise, modelingSubmission, user);
 
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
         modelingSubmissionService.hideDetails(modelingSubmission, user);

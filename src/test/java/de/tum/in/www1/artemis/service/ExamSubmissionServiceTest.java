@@ -76,7 +76,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         Course tmpCourse = database.addEmptyCourse();
         Exercise nonExamExercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), tmpCourse);
         // should not throw
-        examSubmissionService.checkSubmissionAllowance(nonExamExercise, user);
+        examSubmissionService.checkSubmissionAllowanceElseThrow(nonExamExercise, user);
         boolean result2 = examSubmissionService.isAllowedToSubmitDuringExam(nonExamExercise, user, false);
         assertThat(result2).isTrue();
     }
@@ -87,20 +87,20 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         // Should fail when submission is made before start date
         exam.setStartDate(ZonedDateTime.now().plusMinutes(5));
         examRepository.save(exam);
-        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowance(exercise, user));
+        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user));
         boolean result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false);
         assertThat(result2).isFalse();
         // Should fail when submission is made after (start date + working time)
         exam.setStartDate(ZonedDateTime.now().minusMinutes(130));
         examRepository.save(exam);
-        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowance(exercise, user));
+        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user));
         result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false);
         assertThat(result2).isFalse();
         // Should pass if submission is made in time
         exam.setStartDate(ZonedDateTime.now().minusMinutes(90));
         examRepository.save(exam);
         // should not throw
-        examSubmissionService.checkSubmissionAllowance(exercise, user);
+        examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user);
         result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false);
         assertThat(result2).isTrue();
         // Should fail when submission is made after end date (if no working time is set)
@@ -109,7 +109,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         exam.setStartDate(ZonedDateTime.now().minusMinutes(130));
         exam.setEndDate(ZonedDateTime.now().minusMinutes(120));
         examRepository.save(exam);
-        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowance(exercise, user));
+        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user));
         result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false);
         assertThat(result2).isFalse();
     }
@@ -122,13 +122,13 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         examRepository.save(exam);
         studentExam.setUser(null);
         studentExamRepository.save(studentExam);
-        assertThrows(EntityNotFoundException.class, () -> examSubmissionService.checkSubmissionAllowance(exercise, user));
+        assertThrows(EntityNotFoundException.class, () -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user));
         assertThrows(EntityNotFoundException.class, () -> examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false));
         // Should fail if the user's student exam does not have the exercise
         studentExam.setUser(user);
         studentExam.removeExercise(exercise);
         studentExamRepository.save(studentExam);
-        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowance(exercise, user));
+        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user));
         boolean result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false);
         assertThat(result2).isFalse();
     }

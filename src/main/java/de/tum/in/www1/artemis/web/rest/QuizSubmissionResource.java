@@ -222,7 +222,7 @@ public class QuizSubmissionResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Apply further checks if it is an exam submission
-        examSubmissionService.checkSubmissionAllowance(quizExercise, user);
+        examSubmissionService.checkSubmissionAllowanceElseThrow(quizExercise, user);
 
         // Prevent multiple submissions (currently only for exam submissions)
         quizSubmission = (QuizSubmission) examSubmissionService.preventMultipleSubmissions(quizExercise, quizSubmission, user);

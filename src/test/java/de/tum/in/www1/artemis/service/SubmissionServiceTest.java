@@ -134,7 +134,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     public void testCheckSubmissionAllowanceGroupCheck() {
         student1.setGroups(Collections.singleton("another-group"));
         userRepository.save(student1);
-        assertThrows(AccessForbiddenException.class, () -> submissionService.checkSubmissionAllowance(examTextExercise, null, student1));
+        assertThrows(AccessForbiddenException.class, () -> submissionService.checkSubmissionAllowanceElseThrow(examTextExercise, null, student1));
     }
 
     private void queryTestingBasics(Exercise exercise) {

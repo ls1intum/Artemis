@@ -85,7 +85,7 @@ public class SubmissionService {
      * @param submission    the submission that should be saved
      * @param currentUser   the current user with groups and authorities
      */
-    public void checkSubmissionAllowance(Exercise exercise, Submission submission, User currentUser) {
+    public void checkSubmissionAllowanceElseThrow(Exercise exercise, Submission submission, User currentUser) {
         // Fetch course from database to make sure client didn't change groups
         final var courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
         final var course = courseRepository.findByIdElseThrow(courseId);
@@ -692,13 +692,8 @@ public class SubmissionService {
         String searchTerm = search.getSearchTerm();
         Page<StudentParticipation> studentParticipationPage = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(exerciseId, searchTerm, sorted);
 
-        List<Submission> submissions = new ArrayList<>();
-        for (StudentParticipation participation : studentParticipationPage.getContent()) {
-            Optional<Submission> optionalSubmission = participation.findLatestSubmission();
-            optionalSubmission.ifPresent(submissions::add);
-        }
-
-        final Page<Submission> submissionPage = new PageImpl<>(submissions, sorted, submissions.size());
+        var latestSubmissions = studentParticipationPage.getContent().stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
+        final Page<Submission> submissionPage = new PageImpl<>(latestSubmissions, sorted, latestSubmissions.size());
         return new SearchResultPageDTO<>(submissionPage.getContent(), studentParticipationPage.getTotalPages());
     }
 }
