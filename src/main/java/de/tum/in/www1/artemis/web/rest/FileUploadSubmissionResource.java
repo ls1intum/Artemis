@@ -41,8 +41,6 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
 
-    private static final String ENTITY_NAME = "fileUploadSubmission";
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -211,7 +209,6 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/file-upload-submissions")
     @PreAuthorize("hasRole('TA')")
-    // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<Submission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all file upload submissions");
