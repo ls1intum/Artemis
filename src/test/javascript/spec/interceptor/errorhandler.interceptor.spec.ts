@@ -1,4 +1,4 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { throwError } from 'rxjs';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -26,7 +26,7 @@ describe(`ErrorHandlerInterceptor`, () => {
             handle: () => throwError(() => error),
         };
 
-        errorHandlerInterceptor.intercept(null as any, mockHandler).subscribe();
+        errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
         expect(eventManagerMock.broadcast).toHaveBeenCalledTimes(1);
         expect(eventManagerMock.broadcast).toHaveBeenCalledWith({
@@ -43,7 +43,7 @@ describe(`ErrorHandlerInterceptor`, () => {
             handle: () => throwError(() => error),
         };
 
-        errorHandlerInterceptor.intercept(null as any, mockHandler).subscribe();
+        errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
         expect(eventManagerMock.broadcast).toHaveBeenCalledTimes(0);
     });
@@ -54,7 +54,7 @@ describe(`ErrorHandlerInterceptor`, () => {
             handle: () => throwError(() => error),
         };
 
-        errorHandlerInterceptor.intercept(null as any, mockHandler).subscribe();
+        errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
         expect(eventManagerMock.broadcast).toHaveBeenCalledTimes(0);
     });

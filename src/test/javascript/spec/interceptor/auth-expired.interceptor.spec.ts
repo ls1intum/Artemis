@@ -1,4 +1,4 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { LoginService } from 'app/core/login/login.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
@@ -47,7 +47,7 @@ describe(`AuthExpiredInterceptor`, () => {
         };
         const tokenSpy = jest.spyOn(authServerProviderMock, 'getToken').mockReturnValue(token);
 
-        authInterceptor.intercept(null as any, mockHandler).subscribe();
+        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
         expect(tokenSpy).toHaveBeenCalledTimes(1);
         expect(loginServiceMock.logout).toHaveBeenCalledWith(false);
@@ -60,7 +60,7 @@ describe(`AuthExpiredInterceptor`, () => {
         };
         const tokenSpy = jest.spyOn(authServerProviderMock, 'getToken');
 
-        authInterceptor.intercept(null as any, mockHandler).subscribe();
+        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
         expect(tokenSpy).toHaveBeenCalledTimes(1);
         expect(loginServiceMock.logout).toHaveBeenCalledTimes(0);
@@ -73,7 +73,7 @@ describe(`AuthExpiredInterceptor`, () => {
         };
         const tokenSpy = jest.spyOn(authServerProviderMock, 'getToken').mockReturnValue(token);
 
-        authInterceptor.intercept(null as any, mockHandler).subscribe();
+        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
         expect(tokenSpy).toHaveBeenCalledTimes(0);
         expect(loginServiceMock.logout).toHaveBeenCalledTimes(0);
