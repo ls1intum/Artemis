@@ -20,18 +20,6 @@ public final class ResponseUtil implements tech.jhipster.web.util.ResponseUtil {
 
     private static final String applicationName = "artemisApp";
 
-    // Replace with AccessForbiddenException
-    @Deprecated(forRemoval = true, since = "5.2.0")
-    public static <X> ResponseEntity<X> forbidden() {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-    }
-
-    // Replace with AccessForbiddenException
-    @Deprecated(forRemoval = true, since = "5.2.0")
-    public static <X> ResponseEntity<X> forbidden(String entityName, String errorKey, String message) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).headers(HeaderUtil.createFailureAlert(applicationName, true, entityName, errorKey, message)).build();
-    }
-
     // Replace with BadRequestAlertException
     @Deprecated(forRemoval = true, since = "5.2.0")
     public static <X> ResponseEntity<X> badRequest() {

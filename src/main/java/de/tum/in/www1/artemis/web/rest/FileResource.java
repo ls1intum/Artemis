@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.io.File;
 import java.io.IOException;
-import java.net.*;
+import java.net.FileNameMap;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -43,6 +44,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
  * REST controller for managing Course.
@@ -278,7 +280,7 @@ public class FileResource {
             return ResponseEntity.ok(temporaryAccessToken);
         }
         catch (IllegalAccessException e) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
     }
 
@@ -299,7 +301,7 @@ public class FileResource {
             return ResponseEntity.ok(temporaryAccessToken);
         }
         catch (IllegalAccessException e) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
     }
 
@@ -523,15 +525,15 @@ public class FileResource {
 
             HttpHeaders headers = new HttpHeaders();
 
+            ContentDisposition contentDisposition;
             if (filename.endsWith("htm") || filename.endsWith("html") || filename.endsWith("svg") || filename.endsWith("svgz")) {
                 // attachment will force the user to download the file
-                ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(filename).build();
-                headers.setContentDisposition(contentDisposition);
+                contentDisposition = ContentDisposition.builder("attachment").filename(filename).build();
             }
             else {
-                ContentDisposition contentDisposition = ContentDisposition.builder("inline").filename(filename).build();
-                headers.setContentDisposition(contentDisposition);
+                contentDisposition = ContentDisposition.builder("inline").filename(filename).build();
             }
+            headers.setContentDisposition(contentDisposition);
 
             FileNameMap fileNameMap = URLConnection.getFileNameMap();
             String mimeType = fileNameMap.getContentTypeFor(filename);

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
@@ -161,7 +159,9 @@ public class ResultResource {
         catch (ContinuousIntegrationException cISException) {
             log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {} :"
                     + "Your CIS encountered an Exception while trying to retrieve the build plan ", cISException, requestBody);
-            return badRequest();
+            throw new BadRequestAlertException(
+                    "The continuous integration server encountered an exception when trying to retrieve the plan key from a request a new programming exercise result", "BuildPlan",
+                    "ciExceptionForBuildPlanKey");
         }
         log.info("Artemis received a new result for build plan {}", planKey);
 
@@ -418,7 +418,7 @@ public class ResultResource {
     public ResponseEntity<Void> deleteResult(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to delete Result : {}", resultId);
         Result result = getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
-        resultRepository.deleteById(resultId);
+        resultRepository.delete(result);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, resultId.toString())).build();
     }
 
@@ -437,8 +437,8 @@ public class ResultResource {
         log.debug("REST request to create a new example result for submission: {}", exampleSubmissionId);
         ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(exampleSubmissionId);
         if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
-            return badRequest("exerciseId", "400",
-                    "exerciseId of the path doesnt match the exerciseId of the exercise corresponding to the submission " + exampleSubmissionId + " !");
+            throw new BadRequestAlertException("exerciseId of the path doesnt match the exerciseId of the exercise corresponding to the submission " + exampleSubmissionId + "!",
+                    "Exercise", "400");
         }
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exampleSubmission.getExercise(), null);
         final var result = resultService.createNewExampleResultForSubmissionWithExampleSubmission(exampleSubmissionId, isProgrammingExerciseWithFeedback);
@@ -460,7 +460,7 @@ public class ResultResource {
             throws URISyntaxException {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
         if (result.getParticipation() != null && result.getParticipation().getExercise() != null && !result.getParticipation().getExercise().getId().equals(exerciseId)) {
-            return badRequest("exerciseId", "400", "exerciseId in RequestBody doesnt match exerciseId in path!");
+            throw new BadRequestAlertException("exerciseId in RequestBody doesnt match exerciseId in path!", "Exercise", "400");
         }
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);

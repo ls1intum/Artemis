@@ -92,7 +92,7 @@ public class VideoUnitResource {
             new URL(videoUnit.getSource());
         }
         catch (MalformedURLException exception) {
-            badRequest();
+            return badRequest();
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
@@ -126,7 +126,7 @@ public class VideoUnitResource {
             new URL(videoUnit.getSource());
         }
         catch (MalformedURLException exception) {
-            badRequest();
+            return badRequest();
         }
 
         Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
