@@ -469,10 +469,14 @@ public class ProgrammingExerciseGradingService {
         List<Feedback> testCaseFeedback = new ArrayList<>();
         List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
         for (var feedback : result.getFeedbacks()) {
+            if (feedback.getType() != FeedbackType.AUTOMATIC) {
+                continue;
+            }
+
             if (feedback.isStaticCodeAnalysisFeedback()) {
                 staticCodeAnalysisFeedback.add(feedback);
             }
-            else if (FeedbackType.AUTOMATIC.equals(feedback.getType())) {
+            else {
                 testCaseFeedback.add(feedback);
             }
         }
@@ -609,9 +613,8 @@ public class ProgrammingExerciseGradingService {
 
             return true;
         }
-        else {
-            return false;
-        }
+
+        return false;
     }
 
     /**
@@ -643,7 +646,7 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Calculates the score of automatic test casesfor the given result with possible penalties applied.
+     * Calculates the score of automatic test cases for the given result with possible penalties applied.
      * @param programmingExercise the result belongs to.
      * @param allTests that should be considered in the score calculation.
      * @param result for which a score should be calculated.
@@ -696,22 +699,32 @@ public class ProgrammingExerciseGradingService {
             return credits;
         }).sum();
 
-        /*
-         * The points are capped by the maximum achievable points. The cap is applied before the static code analysis penalty is subtracted as otherwise the penalty won't have any
-         * effect in some cases. For example with maxPoints=20, successfulTestPoints=30 and penalty=10, a student would still receive the full 20 points, if the points are not
-         * capped before the penalty is subtracted. With the implemented order in place successfulTestPoints will be capped to 20 points first, then the penalty is subtracted
-         * resulting in 10 points.
-         */
+        return capPointsAtMaximum(programmingExercise, successfulTestPoints);
+    }
+
+    /**
+     * Caps the points at the maximum achievable number.
+     *
+     * The cap should be applied before the static code analysis penalty is subtracted as otherwise the penalty won't have any effect in some cases.
+     * For example with maxPoints=20, points=30 and penalty=10, a student would still receive the full 20 points, if the points are not
+     * capped before the penalty is subtracted. With the implemented order in place points will be capped to 20 points first, then the penalty is subtracted
+     * resulting in 10 points.
+     *
+     * @param programmingExercise Used to determine the maximum allowed number of points.
+     * @param points A number of points that may potentially be higher than allowed.
+     * @return The number of points, but no more than the exercise allows for.
+     */
+    private double capPointsAtMaximum(final ProgrammingExercise programmingExercise, double points) {
         double maxPoints = programmingExercise.getMaxPoints() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
 
-        if (Double.isNaN(successfulTestPoints)) {
-            successfulTestPoints = 0;
+        if (Double.isNaN(points)) {
+            points = 0;
         }
-        else if (successfulTestPoints > maxPoints) {
-            successfulTestPoints = maxPoints;
+        else if (points > maxPoints) {
+            points = maxPoints;
         }
 
-        return successfulTestPoints;
+        return points;
     }
 
     /**
@@ -740,9 +753,12 @@ public class ProgrammingExerciseGradingService {
         final boolean isWeightSumZero = Precision.equals(weightSum, 0, 1E-8);
         final double testPoints;
 
-        // a non-zero score has to be calculated for the solution even if the weight sum is zero
-        // to avoid a warning to the instructor that the solution has faults
-        // => each test case receives a weight of one
+        // If the weight sum is zero, then the solution would receive zero points as well even if all tests pass, thus
+        // resulting in a warning to the instructor. The warning is wrong however, as setting a weight sum of zero is
+        // only possible for exercises with manual feedback, i.e., if all points should only be explicitly be awarded
+        // manually by tutors. This is obviously not possible for the solution.
+        // Giving each test case a weight of one makes sure that a score > 0% can be reached by the solution and the
+        // 100% needed to not generate a warning is only possible if all tests pass.
         if (isWeightSumZero && result.getParticipation() instanceof SolutionProgrammingExerciseParticipation) {
             testPoints = (1.0 / totalTestCaseCount) * programmingExercise.getMaxPoints();
         }
@@ -773,7 +789,8 @@ public class ProgrammingExerciseGradingService {
             boolean applySubmissionPolicy) {
         double penalty = 0;
 
-        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(1) > 0) {
+        int maxStaticCodeAnalysisPenalty = Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(100);
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && maxStaticCodeAnalysisPenalty > 0) {
             penalty += calculateStaticCodeAnalysisPenalty(staticCodeAnalysisFeedback, programmingExercise);
         }
 
@@ -790,7 +807,7 @@ public class ProgrammingExerciseGradingService {
      * @param programmingExercise The current exercise
      * @return The sum of all penalties, capped at the maximum allowed penalty
      */
-    private double calculateStaticCodeAnalysisPenalty(List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
+    private double calculateStaticCodeAnalysisPenalty(final List<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise) {
         final var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(Feedback::getStaticCodeAnalysisCategory));
         double codeAnalysisPenaltyPoints = 0;
 
