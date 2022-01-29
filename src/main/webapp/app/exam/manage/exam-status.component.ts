@@ -4,6 +4,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import dayjs from 'dayjs/esm';
+import { round } from 'app/shared/util/utils';
 
 export enum ExamConfigurationStep {
     CONFIGURE_EXERCISES = 'configureExercises',
@@ -53,6 +54,7 @@ export class ExamStatusComponent implements OnChanges {
     readonly examConfigurationStepEnum = ExamConfigurationStep;
     readonly examConductionStateEnum = ExamConductionState;
     readonly examReviewStateEnum = ExamReviewState;
+    readonly round = round;
 
     // Icons
     faTimes = faTimes;
@@ -75,7 +77,8 @@ export class ExamStatusComponent implements OnChanges {
             // Step 1.3: Generate student exams
             this.configurationStepToFlagMap.set(ExamConfigurationStep.GENERATE_STUDENT_EXAMS, this.examChecklistService.checkAllExamsGenerated(this.exam, examStats));
             // Step 1.4: Prepare exercise start
-            this.configurationStepToFlagMap.set(ExamConfigurationStep.PREPARE_EXERCISE_START, !!examStats.allExamExercisesAllStudentsPrepared);
+            const allExamsGenerated = this.configurationStepToFlagMap.get(ExamConfigurationStep.GENERATE_STUDENT_EXAMS)!;
+            this.configurationStepToFlagMap.set(ExamConfigurationStep.PREPARE_EXERCISE_START, !!examStats.allExamExercisesAllStudentsPrepared && allExamsGenerated);
             this.examPreparationFinished = this.isExamPreparationFinished();
             this.examChecklist = examStats;
             this.numberOfGeneratedStudentExams = this.examChecklist.numberOfGeneratedStudentExams ?? 0;

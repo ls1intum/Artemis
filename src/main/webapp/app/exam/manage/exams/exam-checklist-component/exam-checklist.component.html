@@ -178,7 +178,9 @@
                         <hr />
                         <ul class="list-unstyled">
                             <li *ngIf="examChecklist" class="list-group-item border-1">
-                                <jhi-exam-checklist-check [checkAttribute]="!!examChecklist.allExamExercisesAllStudentsPrepared"></jhi-exam-checklist-check>
+                                <jhi-exam-checklist-check
+                                    [checkAttribute]="!!examChecklist.allExamExercisesAllStudentsPrepared && this.allExamsGenerated"
+                                ></jhi-exam-checklist-check>
                                 <span>{{ 'artemisApp.examManagement.checklist.textitems.allExercisesPrepared' | artemisTranslate }}</span>
                             </li>
                         </ul>

@@ -14,7 +14,7 @@
                         'artemisApp.examStatus.preparation.' + step
                             | artemisTranslate
                                 : {
-                                      amount: exam.exerciseGroups! ? exam.exerciseGroups.length : 0,
+                                      amount: exam.exerciseGroups ? exam.exerciseGroups.length : 0,
                                       registered: exam.numberOfRegisteredUsers,
                                       generated: numberOfGeneratedStudentExams,
                                       total: exam.numberOfRegisteredUsers
@@ -48,14 +48,14 @@
                     <span
                         >{{ 'artemisApp.examStatus.conduction.startedExams' | artemisTranslate }}:
                         {{ examChecklist.numberOfExamsStarted }}
-                        ({{ numberOfGeneratedStudentExams > 0 ? (examChecklist.numberOfExamsStarted * 100) / examChecklist.numberOfGeneratedStudentExams! : 0 }}%)</span
+                        ({{ numberOfGeneratedStudentExams > 0 ? round((examChecklist.numberOfExamsStarted * 100) / examChecklist.numberOfGeneratedStudentExams!, 1) : 0 }}%)</span
                     >
                 </li>
                 <li>
                     <span
                         >{{ 'artemisApp.examStatus.conduction.submittedExams' | artemisTranslate }}:
                         {{ examChecklist.numberOfExamsSubmitted }}
-                        ({{ numberOfGeneratedStudentExams > 0 ? (examChecklist.numberOfExamsSubmitted * 100) / numberOfGeneratedStudentExams! : 0 }}%)</span
+                        ({{ numberOfGeneratedStudentExams > 0 ? round((examChecklist.numberOfExamsSubmitted * 100) / numberOfGeneratedStudentExams!, 1) : 0 }}%)</span
                     >
                 </li>
             </ol>
@@ -80,9 +80,8 @@
                 <div *ngIf="examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && examChecklist.numberOfExamsSubmitted !== 0">
                     <li *ngFor="let correctionRound of examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound; let i = index">
                         <span>
-                            {{ 'artemisApp.examStatus.correction.correctionRoundProgress' | artemisTranslate: { i: this.i } }}: ({{
-                                (correctionRound * 100) / examChecklist.numberOfTotalParticipationsForAssessment
-                            }}%)
+                            {{ 'artemisApp.examStatus.correction.correctionRoundProgress' | artemisTranslate: { index: i + 1 } }}:
+                            {{ round((correctionRound * 100) / examChecklist.numberOfTotalParticipationsForAssessment, 1) }}%
                         </span>
                     </li>
                 </div>
@@ -95,7 +94,7 @@
                         {{ 'artemisApp.examStatus.correction.complaints' | artemisTranslate }}:
                         {{
                             examChecklist.numberOfAllComplaintsDone && examChecklist.numberOfAllComplaints
-                                ? (examChecklist.numberOfAllComplaintsDone * 100) / examChecklist.numberOfAllComplaints
+                                ? round((examChecklist.numberOfAllComplaintsDone * 100) / examChecklist.numberOfAllComplaints, 1)
                                 : 0
                         }}%
                     </span>
