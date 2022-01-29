@@ -19,8 +19,13 @@
 
         <div class="d-flex mb-1">
             <h6 *ngIf="examScoreDTO.maxPoints">{{ 'artemisApp.examScores.maxPoints' | artemisTranslate }}: {{ localize(examScoreDTO.maxPoints) }},</h6>
-            <h6 class="ms-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | artemisTranslate }},</h6>
-            <h6 class="ms-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | artemisTranslate }}</h6>
+            <a [routerLink]="['/course-management', course!.id, 'exams', examScoreDTO.examId, 'exercise-groups']">
+                <h6 class="ms-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | artemisTranslate }}</h6>
+            </a>
+            <h6>,</h6>
+            <a [routerLink]="['/course-management', course!.id, 'exams', examScoreDTO.examId, 'students']">
+                <h6 class="ms-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | artemisTranslate }}</h6>
+            </a>
         </div>
 
         <div class="mb-2">
@@ -305,6 +310,26 @@
         </table>
 
         <div #containerRef class="d-block">
+            <label *ngIf="showPassedMedianCheckbox" class="d-flex align-items-center">
+                <input type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
+                <span class="ms-1">
+                    {{
+                        'artemisApp.examScores.highlightPassedMedian'
+                            | artemisTranslate
+                                : {
+                                      median: this.aggregatedExamResults.medianRelativePassed
+                                          ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, course)
+                                          : 0
+                                  }
+                    }}
+                </span>
+            </label>
+            <label *ngIf="showOverallMedianCheckbox" class="d-flex align-items-center">
+                <input type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
+                <span class="ms-1">
+                    {{ 'artemisApp.examScores.highlightOverallMedian' | artemisTranslate: { median: this.overallChartMedian } }}
+                </span>
+            </label>
             <!-- Histogram -->
             <ngx-charts-bar-vertical
                 [view]="[containerRef.offsetWidth, 400]"
@@ -319,6 +344,9 @@
                 [yScaleMax]="yScaleMax"
                 [dataLabelFormatting]="dataLabelFormatting"
                 [showDataLabel]="true"
+                [activeEntries]="activeEntries"
+                (select)="onSelect()"
+                class="row"
             >
                 <ng-template #tooltipTemplate let-model="model">
                     <b>{{ model.name }}</b
@@ -326,6 +354,23 @@
                     <span>{{ 'statistics.amountOfStudents' | artemisTranslate }}: {{ model.value }}</span>
                 </ng-template>
             </ngx-charts-bar-vertical>
+            <div *ngIf="gradingScaleExists && !isBonus" class="d-flex justify-content-center align-items-center">
+                <div class="color-box insufficient-performance"></div>
+                <span class="ms-2">{{ 'artemisApp.examScores.insufficientPerformance' | artemisTranslate }}</span>
+
+                <div class="ms-4 color-box sufficient-performance"></div>
+                <span class="ms-2">{{ 'artemisApp.examScores.sufficientPerformance' | artemisTranslate }}</span>
+                <jhi-help-icon class="ms-2" placement="right auto" text="artemisApp.examScores.gradingScaleExplanationNotBonus"></jhi-help-icon>
+            </div>
+            <div *ngIf="!gradingScaleExists || isBonus" class="d-flex justify-content-center align-items-center">
+                <div class="color-box critical-performance"></div>
+                <span class="ms-2">{{ 'artemisApp.examScores.criticalPerformance' | artemisTranslate }}</span>
+
+                <div class="ms-4 color-box sufficient-performance"></div>
+                <span class="ms-2">{{ 'artemisApp.examScores.uncriticalPerformance' | artemisTranslate }}</span>
+                <jhi-help-icon *ngIf="!isBonus" class="ms-2" placement="right auto" text="artemisApp.examScores.noGradingScaleExplanation"></jhi-help-icon>
+                <jhi-help-icon *ngIf="isBonus" class="ms-2" placement="right auto" text="artemisApp.examScores.gradingScaleExplanationBonus"></jhi-help-icon>
+            </div>
         </div>
 
         <!-- Exercise Statistics -->

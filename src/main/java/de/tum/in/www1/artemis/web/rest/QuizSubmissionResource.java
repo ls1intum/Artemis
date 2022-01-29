@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -223,10 +222,7 @@ public class QuizSubmissionResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Apply further checks if it is an exam submission
-        Optional<ResponseEntity<QuizSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(quizExercise, user);
-        if (examSubmissionAllowanceFailure.isPresent()) {
-            return examSubmissionAllowanceFailure.get();
-        }
+        examSubmissionService.checkSubmissionAllowanceElseThrow(quizExercise, user);
 
         // Prevent multiple submissions (currently only for exam submissions)
         quizSubmission = (QuizSubmission) examSubmissionService.preventMultipleSubmissions(quizExercise, quizSubmission, user);
