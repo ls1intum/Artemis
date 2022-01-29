@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
@@ -29,6 +31,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -106,14 +109,14 @@ public class ProgrammingSubmissionResource {
             ProgrammingSubmission submission = programmingSubmissionService.notifyPush(participationId, requestBody);
             // Remove unnecessary information from the new submission.
             submission.getParticipation().setSubmissions(null);
-
             programmingSubmissionService.notifyUserAboutSubmission(submission);
         }
         catch (IllegalArgumentException ex) {
             log.error(
                     "Exception encountered when trying to extract the commit hash from the request body: processing submission for participation {} failed with request object {}: {}",
                     participationId, requestBody, ex);
-            return badRequest();
+            throw new BadRequestAlertException("Exception encountered when trying to extract the commit hash from the request body " + ex.getMessage(), "ProgrammingSubmission",
+                    "extractCommitHashNotPossible");
         }
         catch (IllegalStateException ex) {
             if (!ex.getMessage().contains("empty setup commit")) {
@@ -125,7 +128,7 @@ public class ProgrammingSubmissionResource {
         catch (EntityNotFoundException ex) {
             log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request object {}: {}",
                     participationId, participationId, requestBody, ex);
-            return notFound();
+            throw ex;
         }
 
         // TODO: we should not really return status code other than 200, because Bitbucket might kill the webhook, if there are too many errors
@@ -148,11 +151,11 @@ public class ProgrammingSubmissionResource {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         // this call supports TemplateProgrammingExerciseParticipation, SolutionProgrammingExerciseParticipation and ProgrammingExerciseStudentParticipation
         if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
-            return notFound();
+            throw new EntityNotFoundException("Participation is not a ProgrammingExerciseParticipation");
         }
 
         if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         // The editor is allowed to trigger an instructor build for template and solution participations,
@@ -160,7 +163,7 @@ public class ProgrammingSubmissionResource {
         if (submissionType == SubmissionType.INSTRUCTOR && !authCheckService.isAtLeastInstructorForExercise(participation.getExercise())
                 && !(authCheckService.isAtLeastEditorForExercise(participation.getExercise())
                         && (participation instanceof TemplateProgrammingExerciseParticipation || participation instanceof SolutionProgrammingExerciseParticipation))) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         try {
@@ -168,7 +171,7 @@ public class ProgrammingSubmissionResource {
             programmingSubmissionService.triggerBuildAndNotifyUser(submission);
         }
         catch (IllegalStateException ex) {
-            return notFound();
+            throw new EntityNotFoundException(ex.getMessage());
         }
 
         return ResponseEntity.ok().build();
@@ -188,15 +191,13 @@ public class ProgrammingSubmissionResource {
     public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
-            return notFound();
+            throw new EntityNotFoundException("Participation is not a ProgrammingExerciseParticipation");
         }
         if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
-        Optional<ProgrammingSubmission> submission = programmingSubmissionService.getLatestPendingSubmission(participationId, lastGraded);
-        if (submission.isEmpty()) {
-            return badRequest();
-        }
+        ProgrammingSubmission submission = programmingSubmissionService.getLatestPendingSubmission(participationId, lastGraded)
+                .orElseThrow(() -> new EntityNotFoundException("No latest pending programming submission found for participationId " + participationId));
 
         // if the build plan was not cleaned yet, we can try to access the current build state, as the build might still be running (because it was slow or queued)
         if (programmingExerciseParticipation.getBuildPlanId() != null) {
@@ -205,18 +206,17 @@ public class ProgrammingSubmissionResource {
             if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
                 // We inform the user through the websocket that the submission is still in progress (build is running/queued, result should arrive soon).
                 // This resets the pending submission timer in the client.
-                programmingSubmissionService.notifyUserAboutSubmission(submission.get());
+                programmingSubmissionService.notifyUserAboutSubmission(submission);
                 return ResponseEntity.ok().build();
             }
         }
-        if (lastGraded && submission.get().getType() != SubmissionType.INSTRUCTOR && submission.get().getType() != SubmissionType.TEST
-                && exerciseDateService.isAfterDueDate(participation)) {
+        if (lastGraded && submission.getType() != SubmissionType.INSTRUCTOR && submission.getType() != SubmissionType.TEST && exerciseDateService.isAfterDueDate(participation)) {
             // If the submission is not the latest but the last graded, there is no point in triggering the build again as this would build the most recent VCS commit.
             // This applies only to students submissions after the exercise due date.
-            return notFound();
+            throw new EntityNotFoundException("Cannot trigger failed build. There is a submission after the exercise due date");
         }
         // If there is no result on the CIS, we trigger a new build and hope it will arrive in Artemis this time.
-        programmingSubmissionService.triggerBuildAndNotifyUser(submission.get());
+        programmingSubmissionService.triggerBuildAndNotifyUser(submission);
         return ResponseEntity.ok().build();
     }
 
@@ -231,22 +231,12 @@ public class ProgrammingSubmissionResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
-        try {
-            Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            User user = userRepository.getUserWithGroupsAndAuthorities();
-
-            if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-                return forbidden();
-            }
-
-            programmingSubmissionService.logTriggerInstructorBuild(user, exercise, course);
-            programmingSubmissionService.triggerInstructorBuildForExercise(exerciseId);
-            return ResponseEntity.ok().build();
-        }
-        catch (EntityNotFoundException ex) {
-            return notFound();
-        }
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
+        programmingSubmissionService.logTriggerInstructorBuild(user, exercise, exercise.getCourseViaExerciseGroupOrCourseMember());
+        programmingSubmissionService.triggerInstructorBuildForExercise(exerciseId);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -264,14 +254,11 @@ public class ProgrammingSubmissionResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody Set<Long> participationIds) {
         if (participationIds.isEmpty()) {
-            return badRequest();
+            throw new BadRequestAlertException("participationIds cannot be empty", "ProgrammingSubmission", "participationIdsEmpty");
         }
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        if (programmingExercise == null) {
-            return notFound();
-        }
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         log.info("Trigger (failed) instructor build for participations {} in exercise {} with id {}", participationIds, programmingExercise.getTitle(),
@@ -382,11 +369,11 @@ public class ProgrammingSubmissionResource {
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         if (!programmingExercise.areManualResultsAllowed()) {
-            return forbidden("assessment", "assessmentSaveNotAllowed", "Creating manual results is disabled for this exercise!");
+            throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
 
         long numberOfManualResults = programmingSubmission.getResults().stream().filter(Result::isManual).count();
@@ -435,7 +422,7 @@ public class ProgrammingSubmissionResource {
         programmingExercise.setGradingCriteria(gradingCriteria);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         // Check if tutors can start assessing the students submission
@@ -450,13 +437,10 @@ public class ProgrammingSubmissionResource {
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmissionWithoutResult(programmingExercise, correctionRound);
         }
         else {
-            Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionService.getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise,
-                    programmingExercise.isExamExercise(), correctionRound);
-            if (optionalProgrammingSubmission.isEmpty()) {
-                return notFound();
-            }
-            programmingSubmission = optionalProgrammingSubmission.get();
-
+            // TODO: in this case, we should simply return an empty response instead of not found, because this is an expected state and not an error state
+            programmingSubmission = programmingSubmissionService
+                    .getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise, programmingExercise.isExamExercise(), correctionRound)
+                    .orElseThrow(() -> new EntityNotFoundException("No more programming submissions without assessment"));
         }
 
         programmingSubmission.getParticipation().setExercise(programmingExercise);

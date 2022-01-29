@@ -36,12 +36,6 @@ public final class ResponseUtil implements tech.jhipster.web.util.ResponseUtil {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).headers(HeaderUtil.createFailureAlert(applicationName, true, entityName, errorKey, message)).build();
     }
 
-    // Replace with AccessForbiddenException
-    @Deprecated(forRemoval = true, since = "5.2.0")
-    public static <X> ResponseEntity<X> forbidden(String applicationName, String entityName, String errorKey, String message) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).headers(HeaderUtil.createFailureAlert(applicationName, true, entityName, errorKey, message)).build();
-    }
-
     // Replace with BadRequestAlertException
     @Deprecated(forRemoval = true, since = "5.2.0")
     public static <X> ResponseEntity<X> badRequest() {
@@ -58,12 +52,6 @@ public final class ResponseUtil implements tech.jhipster.web.util.ResponseUtil {
     @Deprecated(forRemoval = true, since = "5.2.0")
     public static <X> ResponseEntity<X> conflict() {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
-    }
-
-    // Replace with ConflictException
-    @Deprecated(forRemoval = true, since = "5.2.0")
-    public static <X> ResponseEntity<X> conflict(String entityName, String errorKey, String message) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).headers(HeaderUtil.createFailureAlert(applicationName, true, entityName, errorKey, message)).build();
     }
 
     /**
