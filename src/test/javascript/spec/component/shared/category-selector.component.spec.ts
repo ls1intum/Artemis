@@ -87,5 +87,33 @@ describe('Category Selector Component', () => {
         expect(result).toEqual(undefined);
     });
 
+    it('should convert categories to string array', () => {
+        comp.categories = [category1, category2];
+        const result = comp.categoriesAsStringArray();
+
+        expect(result).toEqual(['category1', 'category2']);
+    });
+
+    it('should convert categories to empty string array', () => {
+        comp.categories = [];
+        const result = comp.categoriesAsStringArray();
+
+        expect(result).toEqual([]);
+    });
+
+    it('should existing convert categories to string array', () => {
+        comp.existingCategories = [category1, category2];
+        const result = comp.existingCategoriesAsStringArray();
+
+        expect(result).toEqual(['category1', 'category2']);
+    });
+
+    it('should existing convert categories to empty string array', () => {
+        comp.existingCategories = [];
+        const result = comp.existingCategoriesAsStringArray();
+
+        expect(result).toEqual([]);
+    });
+
     it('should filter categories', () => {});
 });
