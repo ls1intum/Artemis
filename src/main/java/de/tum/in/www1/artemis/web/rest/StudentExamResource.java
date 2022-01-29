@@ -194,7 +194,7 @@ public class StudentExamResource {
         log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         boolean isTestRun = studentExam.isTestRun();
-        this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId(), currentUser, isTestRun);
+        this.studentExamAccessService.checkStudentExamAccessElseThrow(courseId, examId, studentExam.getId(), currentUser, isTestRun);
         // prevent manipulation of the user object that is attached to the student exam in the request body (which is saved later on into the database as part of this request)
         if (!Objects.equals(studentExam.getUser().getId(), currentUser.getId())) {
             throw new AccessForbiddenException();
@@ -237,7 +237,7 @@ public class StudentExamResource {
         // 1st: load the studentExam with all associated exercises
         StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId)
                 .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + user.getId()));
-        studentExamAccessService.checkCourseAndExamAccess(courseId, examId, user, studentExam.isTestRun());
+        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
 
         // students can not fetch the exam until 5 minutes before the exam start, we use the same constant in the client
         if (ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
@@ -277,7 +277,7 @@ public class StudentExamResource {
             return conflict();
         }
 
-        studentExamAccessService.checkCourseAndExamAccess(courseId, examId, currentUser, true);
+        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true);
         prepareStudentExamForConduction(request, currentUser, testRun);
 
         log.info("getTestRunForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, testRun.getExercises().size(), currentUser.getLogin());
@@ -303,7 +303,7 @@ public class StudentExamResource {
         // 1st: load the studentExam with all associated exercises
         StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId)
                 .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + user.getId()));
-        studentExamAccessService.checkCourseAndExamAccess(courseId, examId, user, studentExam.isTestRun());
+        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
         if (!studentExam.isSubmitted()) {
