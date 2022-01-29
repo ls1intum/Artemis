@@ -115,5 +115,18 @@ describe('Category Selector Component', () => {
         expect(result).toEqual([]);
     });
 
-    it('should filter categories', () => {});
+    it('should filter categories with result', () => {
+        comp.existingCategories = [category1, category2];
+        const result = comp.filterCategories('Gory1');
+
+        expect(result).toEqual([category1.category]);
+    });
+
+    it('should filter categories without result', () => {
+        comp.existingCategories = [category1, category2];
+
+        const result = comp.filterCategories('caTcaT');
+
+        expect(result).toEqual([]);
+    });
 });

@@ -65,7 +65,7 @@ export class CategorySelectorComponent implements OnChanges {
     }
 
     // if the user types in something, we need to filter for the matching categories
-    private filterCategories(value: string): string[] {
+    filterCategories(value: string): string[] {
         const filterValue = value.toLowerCase();
         return this.existingCategories.filter((category) => category.category!.toLowerCase().includes(filterValue)).map((category) => category.category!.toLowerCase());
     }
