@@ -81,7 +81,14 @@
                     <li *ngFor="let correctionRound of examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound; let i = index">
                         <span>
                             {{ 'artemisApp.examStatus.correction.correctionRoundProgress' | artemisTranslate: { index: i + 1 } }}:
-                            {{ round((correctionRound * 100) / examChecklist.numberOfTotalParticipationsForAssessment, 1) }}%
+                            {{
+                                Math.max(
+                                    examChecklist.numberOfTotalParticipationsForAssessment > 0
+                                        ? round((correctionRound * 100) / examChecklist.numberOfTotalParticipationsForAssessment, 1)
+                                        : 0,
+                                    0
+                                )
+                            }}%
                         </span>
                     </li>
                 </div>

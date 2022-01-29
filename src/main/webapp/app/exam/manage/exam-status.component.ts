@@ -55,6 +55,7 @@ export class ExamStatusComponent implements OnChanges {
     readonly examConductionStateEnum = ExamConductionState;
     readonly examReviewStateEnum = ExamReviewState;
     readonly round = round;
+    readonly Math = Math;
 
     // Icons
     faTimes = faTimes;
