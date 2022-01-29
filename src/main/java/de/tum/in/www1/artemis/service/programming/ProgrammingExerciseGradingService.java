@@ -716,15 +716,16 @@ public class ProgrammingExerciseGradingService {
      */
     private double capPointsAtMaximum(final ProgrammingExercise programmingExercise, double points) {
         double maxPoints = programmingExercise.getMaxPoints() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+        double cappedPoints = points;
 
         if (Double.isNaN(points)) {
-            points = 0;
+            cappedPoints = 0;
         }
         else if (points > maxPoints) {
-            points = maxPoints;
+            cappedPoints = maxPoints;
         }
 
-        return points;
+        return cappedPoints;
     }
 
     /**
