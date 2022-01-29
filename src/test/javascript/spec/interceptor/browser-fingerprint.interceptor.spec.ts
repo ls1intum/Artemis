@@ -32,19 +32,13 @@ describe(`BrowserFingerprintInterceptor`, () => {
         fingerprintInterceptor.intercept(requestMock, mockHandler);
 
         expect(cloneSpy).toHaveBeenCalledTimes(1);
+        expect(cloneSpy).toHaveBeenCalledWith({
+            setHeaders: {
+                'X-Artemis-Client-Instance-ID': localInstanceIdentifier,
+                'X-Artemis-Client-Fingerprint': localFingerprint,
+            },
+        });
         expect(mockHandler.handle).toHaveBeenCalledTimes(1);
-        expect(mockHandler.handle.mock.calls[0][0].headers.lazyUpdate).toEqual(
-            expect.arrayContaining([
-                expect.objectContaining({
-                    name: 'X-Artemis-Client-Instance-ID',
-                    value: localInstanceIdentifier,
-                }),
-                expect.objectContaining({
-                    name: 'X-Artemis-Client-Fingerprint',
-                    value: localFingerprint,
-                }),
-            ]),
-        );
     };
 
     it('should add fingerprint and instance ID if request goes to artemis', () => {

@@ -34,14 +34,12 @@ describe(`AuthInterceptor`, () => {
 
             expect(storageSpy).toHaveBeenCalledWith('authenticationToken');
             expect(cloneSpy).toHaveBeenCalledTimes(1);
-            expect(mockHandler.handle).toHaveBeenCalledTimes(1);
-            expect(mockHandler.handle.mock.calls[0][0].headers.lazyUpdate).toEqual([
-                {
-                    name: 'Authorization',
-                    op: 's',
-                    value: 'Bearer ' + token,
+            expect(cloneSpy).toHaveBeenCalledWith({
+                setHeaders: {
+                    Authorization: 'Bearer ' + token,
                 },
-            ]);
+            });
+            expect(mockHandler.handle).toHaveBeenCalledTimes(1);
 
             jest.restoreAllMocks();
         });
@@ -63,7 +61,6 @@ describe(`AuthInterceptor`, () => {
         expect(sessionStorageSpy).toHaveBeenCalledWith('authenticationToken');
         expect(cloneSpy).toHaveBeenCalledTimes(0);
         expect(mockHandler.handle).toHaveBeenCalledTimes(1);
-        expect(mockHandler.handle.mock.calls[0][0].headers.lazyUpdate).toBe(null);
     });
 
     it('should not add token to a request if it is not a request to artemis', () => {
@@ -80,6 +77,5 @@ describe(`AuthInterceptor`, () => {
         expect(localStorageSpy).toHaveBeenCalledTimes(0);
         expect(cloneSpy).toHaveBeenCalledTimes(0);
         expect(mockHandler.handle).toHaveBeenCalledTimes(1);
-        expect(mockHandler.handle.mock.calls[0][0].headers.lazyUpdate).toBe(null);
     });
 });

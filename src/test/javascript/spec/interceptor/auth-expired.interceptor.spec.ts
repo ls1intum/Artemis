@@ -13,6 +13,8 @@ describe(`AuthExpiredInterceptor`, () => {
     let stateStorageServiceMock: StateStorageService;
     let authServerProviderMock: AuthServerProvider;
 
+    const token = 'token-123';
+
     const routerMock = {
         routerState: {
             snapshot: {
@@ -43,7 +45,7 @@ describe(`AuthExpiredInterceptor`, () => {
         const mockHandler = {
             handle: () => throwError(() => new HttpErrorResponse({ status: 401 })),
         };
-        const tokenSpy = jest.spyOn(authServerProviderMock, 'getToken').mockReturnValue('token-123');
+        const tokenSpy = jest.spyOn(authServerProviderMock, 'getToken').mockReturnValue(token);
 
         authInterceptor.intercept(null as any, mockHandler).subscribe();
 
@@ -69,7 +71,7 @@ describe(`AuthExpiredInterceptor`, () => {
         const mockHandler = {
             handle: () => throwError(() => new HttpErrorResponse({ status: 400 })),
         };
-        const tokenSpy = jest.spyOn(authServerProviderMock, 'getToken').mockReturnValue('token-123');
+        const tokenSpy = jest.spyOn(authServerProviderMock, 'getToken').mockReturnValue(token);
 
         authInterceptor.intercept(null as any, mockHandler).subscribe();
 

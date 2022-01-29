@@ -20,14 +20,15 @@ describe(`ErrorHandlerInterceptor`, () => {
         jest.restoreAllMocks();
     });
 
-    it('should broadcast http errors', () => {
-        const error = new HttpErrorResponse({ status: 400 });
+    it.each([400, 401, 403, 404, 500])('should broadcast http errors', (status: number) => {
+        const error = new HttpErrorResponse({ status });
         const mockHandler = {
             handle: () => throwError(() => error),
         };
 
         errorHandlerInterceptor.intercept(null as any, mockHandler).subscribe();
 
+        expect(eventManagerMock.broadcast).toHaveBeenCalledTimes(1);
         expect(eventManagerMock.broadcast).toHaveBeenCalledWith({
             name: 'artemisApp.httpError',
             content: error,
