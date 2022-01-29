@@ -213,7 +213,7 @@ public class ProgrammingSubmissionResource {
         if (lastGraded && submission.getType() != SubmissionType.INSTRUCTOR && submission.getType() != SubmissionType.TEST && exerciseDateService.isAfterDueDate(participation)) {
             // If the submission is not the latest but the last graded, there is no point in triggering the build again as this would build the most recent VCS commit.
             // This applies only to students submissions after the exercise due date.
-            throw new EntityNotFoundException("Cannot trigger failed build. There is a submission after exercise duet date");
+            throw new EntityNotFoundException("Cannot trigger failed build. There is a submission after the exercise due date");
         }
         // If there is no result on the CIS, we trigger a new build and hope it will arrive in Artemis this time.
         programmingSubmissionService.triggerBuildAndNotifyUser(submission);
