@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -65,6 +66,7 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @Timeout(5)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtReleaseDate() {
         notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED));
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
@@ -75,6 +77,7 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @Timeout(5)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtAssessmentDueDate() {
         TextSubmission textSubmission = new TextSubmission();
         textSubmission.text("Text");
