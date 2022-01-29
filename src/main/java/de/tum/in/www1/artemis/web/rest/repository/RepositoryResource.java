@@ -31,6 +31,8 @@ import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.repository.util.RepositoryExecutor;
 
 /**
@@ -306,13 +308,13 @@ public abstract class RepositoryResource {
             return badRequest();
         }
         catch (IllegalAccessException ex) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         catch (FileNotFoundException ex) {
-            return notFound();
+            throw new EntityNotFoundException("File not found");
         }
         catch (GitAPIException | IOException | InterruptedException ex) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

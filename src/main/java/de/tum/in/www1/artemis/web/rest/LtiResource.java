@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +22,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -31,6 +30,7 @@ import de.tum.in.www1.artemis.service.TimeService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
  * Created by Josias Montag on 22.09.16.
@@ -182,25 +182,19 @@ public class LtiResource {
     @GetMapping(value = "/lti/configuration/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ExerciseLtiConfigurationDTO> exerciseLtiConfiguration(@PathVariable("exerciseId") Long exerciseId, HttpServletRequest request) {
-        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
-        if (exercise.isEmpty()) {
-            return notFound();
-        }
-
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise.get(), null)) {
-            return forbidden();
-        }
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         if (LTI_ID.isEmpty() || LTI_OAUTH_KEY.isEmpty() || LTI_OAUTH_SECRET.isEmpty()) {
             log.warn(
                     "lti/configuration is not supported on this Artemis instance, no artemis.lti.id, artemis.lti.oauth-key or artemis.lti.oauth-secret were specified in the yml configuration");
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         String launchUrl = request.getScheme() + // "https"
                 "://" +                                // "://"
                 request.getServerName() +              // "myhost" // ":"
-                (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/api/lti/launch/" + exercise.get().getId();
+                (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/api/lti/launch/" + exercise.getId();
 
         String ltiId = LTI_ID.get();
         String ltiPassport = ltiId + ":" + LTI_OAUTH_KEY.get() + ":" + LTI_OAUTH_SECRET.get();
