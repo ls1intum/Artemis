@@ -219,7 +219,7 @@ public class FileUploadExerciseResource {
         log.debug("REST request to get FileUploadExercise : {}", exerciseId);
         var exercise = fileUploadExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("FileUploadExercise", exerciseId));
-        // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
+        // If the exercise belongs to an exam, only editors or above are allowed to access it, otherwise also TA have access
         if (exercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
         }

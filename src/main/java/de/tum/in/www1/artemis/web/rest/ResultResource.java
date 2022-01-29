@@ -169,7 +169,7 @@ public class ResultResource {
         var participation = getParticipationWithResults(planKey);
         if (participation == null) {
             log.warn("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
-            throw new EntityNotFoundException("Participation for build plan" + planKey + " does not exist");
+            throw new EntityNotFoundException("Participation for build plan " + planKey + " does not exist");
         }
 
         // Process the new result from the build result.
@@ -337,7 +337,7 @@ public class ResultResource {
         Result result = resultRepository.findByIdElseThrow(resultId);
         Participation participation = result.getParticipation();
         if (!participation.getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + " !",
+            throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + "!",
                     "Participation", "400");
         }
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();

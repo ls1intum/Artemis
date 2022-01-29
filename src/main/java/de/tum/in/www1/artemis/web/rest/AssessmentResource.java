@@ -230,7 +230,7 @@ public abstract class AssessmentResource {
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         Participation participation = submission.getParticipation();
         if (!participation.getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId in path does not match the id of the participation to submission " + submissionId + " !", "Participation", "400");
+            throw new BadRequestAlertException("participationId in path does not match the id of the participation to submission " + submissionId + "!", "Participation", "400");
         }
         Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
