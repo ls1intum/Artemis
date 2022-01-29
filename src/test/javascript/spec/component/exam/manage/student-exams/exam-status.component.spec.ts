@@ -60,7 +60,7 @@ describe('ExamStatusComponent', () => {
     });
 
     it('should set examConductionState correctly if exam is started but not finished yet', () => {
-        prepareForExamConductionStateTest(dayjs(), 1, DateOffsetType.DAYS);
+        prepareForExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
 
         component.ngOnChanges();
 

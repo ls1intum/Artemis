@@ -3,19 +3,28 @@ import { Injectable } from '@angular/core';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ExamChecklistService {
     constructor(private examService: ExamManagementService) {}
+
     /**
-     * Set allExamsGenerated to true if all registered students have a student exam
+     * indicates whether all student exams are generated
+     * @param exam the corresponding exam
+     * @param examChecklist the examChecklist for the exam
      */
     checkAllExamsGenerated(exam: Exam, examChecklist: ExamChecklist): boolean {
         return examChecklist.numberOfGeneratedStudentExams === exam.numberOfRegisteredUsers;
     }
 
-    getExamStatistics(exam: Exam) {
+    /**
+     * Fetches examChecklist from the Server
+     * @param exam exam the checklist should be fetched
+     * @returns examChecklist as Observable
+     */
+    getExamStatistics(exam: Exam): Observable<ExamChecklist> {
         return this.examService.getExamStatistics(exam.course!.id!, exam.id!).pipe(
             filter((res) => !!res.body),
             map((examStatistics: HttpResponse<ExamChecklist>) => examStatistics.body!),
@@ -23,8 +32,9 @@ export class ExamChecklistService {
     }
 
     /**
-     * Set totalPointsMandatory to true if total points of exam is smaller or equal to all mandatory points
-     * Set checkTotalPointsMandatoryOptional to true if total points of exam is bigger or equal to all mandatory points
+     * indicates whether the max points of the exam can be reached by the current configuration
+     * @param pointsExercisesEqual flag indicating whether within every exercise groups the max points equal
+     * @param exam the corresponding exam
      */
     checkTotalPointsMandatory(pointsExercisesEqual: boolean, exam: Exam): boolean {
         let totalPointsMandatory = false;
@@ -55,7 +65,8 @@ export class ExamChecklistService {
     }
 
     /**
-     * Set pointsExercisesEqual to true if exercises have the same number of maxPoints within each exercise group
+     * indicates whether the max points within every exercise group equal
+     * @param exam the corresponding exam
      */
     checkPointsExercisesEqual(exam: Exam): boolean {
         let pointsExercisesEqual = true;
@@ -78,6 +89,10 @@ export class ExamChecklistService {
         return pointsExercisesEqual;
     }
 
+    /**
+     * indicates whether every exercise group of an exam contains at least one exercise
+     * @param exam the corresponding exam
+     */
     checkEachGroupContainsExercise(exam: Exam): boolean {
         if (!exam.exerciseGroups) {
             return false;
@@ -93,10 +108,18 @@ export class ExamChecklistService {
         return allGroupsContainExercise;
     }
 
+    /**
+     * indicates whether an exam has at least one exercise group
+     * @param exam the corresponding exam
+     */
     checkAtLeastOneExerciseGroup(exam: Exam): boolean {
         return (exam.exerciseGroups && exam.exerciseGroups.length > 0) ?? false;
     }
 
+    /**
+     * indicates whether the number of exam exercises is in range between the number of mandatory exercise groups and the number of all exercise groups
+     * @param exam the corresponding exam
+     */
     checkNumberOfExerciseGroups(exam: Exam): boolean {
         const numberOfMandatoryExerciseGroups = exam.exerciseGroups?.filter((group) => group.isMandatory).length ?? 0;
         return (
@@ -105,6 +128,10 @@ export class ExamChecklistService {
         );
     }
 
+    /**
+     * indicates whether at least one student is registered for an exam
+     * @param exam the corresponding exam
+     */
     checkAtLeastOneRegisteredStudent(exam: Exam): boolean {
         return !!exam.numberOfRegisteredUsers && exam.numberOfRegisteredUsers > 0;
     }
