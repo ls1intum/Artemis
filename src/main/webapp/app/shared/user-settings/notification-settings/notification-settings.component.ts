@@ -8,6 +8,7 @@ import { UserSettingsService } from 'app/shared/user-settings/user-settings.serv
 import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 
 export enum NotificationSettingsCommunicationChannel {
     WEBAPP,
@@ -24,7 +25,13 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
     faSave = faSave;
     faInfoCircle = faInfoCircle;
 
-    constructor(notificationService: NotificationService, userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: AlertService) {
+    constructor(
+        notificationService: NotificationService,
+        userSettingsService: UserSettingsService,
+        changeDetector: ChangeDetectorRef,
+        alertService: AlertService,
+        private notificationSettingsService: NotificationSettingsService,
+    ) {
         super(userSettingsService, alertService, changeDetector);
     }
 
@@ -37,7 +44,18 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
     ngOnInit(): void {
         this.userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
         this.changeEventMessage = reloadNotificationSideBarMessage;
-        super.ngOnInit();
+
+        // check if settings are already loaded
+        const newestNotificationSettings: NotificationSetting[] = this.notificationSettingsService.getNotificationSettings();
+        if (newestNotificationSettings.length === 0) {
+            // if no settings are already available load them from the server
+            super.ngOnInit();
+        } else {
+            // else reuse the already available/loaded ones
+            this.userSettings = this.userSettingsService.loadSettingsSuccessAsSettingsStructure(newestNotificationSettings, this.userSettingsCategory);
+            this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
+            this.changeDetector.detectChanges();
+        }
     }
 
     /**
