@@ -78,7 +78,7 @@ export class ExamChecklistService {
         return pointsExercisesEqual;
     }
 
-    checkAllGroupContainsExercise(exam: Exam): boolean {
+    checkEachGroupContainsExercise(exam: Exam): boolean {
         if (!exam.exerciseGroups) {
             return false;
         }

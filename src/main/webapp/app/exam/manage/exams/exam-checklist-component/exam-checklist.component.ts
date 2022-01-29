@@ -1,7 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
@@ -30,12 +28,12 @@ export class ExamChecklistComponent implements OnChanges {
     faListAlt = faListAlt;
     faThList = faThList;
 
-    constructor(private accountService: AccountService, private examService: ExamManagementService, private examChecklistService: ExamChecklistService) {}
+    constructor(private examChecklistService: ExamChecklistService) {}
 
     ngOnChanges() {
         this.pointsExercisesEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam);
         this.totalPoints = this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual, this.exam);
-        this.allGroupsContainExercise = this.examChecklistService.checkAllGroupContainsExercise(this.exam);
+        this.allGroupsContainExercise = this.examChecklistService.checkEachGroupContainsExercise(this.exam);
         this.countMandatoryExercises = this.exam.exerciseGroups?.filter((group) => group.isMandatory)?.length ?? 0;
         this.hasOptionalExercises = this.countMandatoryExercises < (this.exam.exerciseGroups?.length ?? 0);
         this.examChecklistService.getExamStatistics(this.exam).subscribe((examStats) => {
