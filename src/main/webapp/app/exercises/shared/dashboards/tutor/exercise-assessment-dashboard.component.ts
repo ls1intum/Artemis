@@ -45,6 +45,7 @@ import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/asses
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -772,6 +773,18 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 // lock-count from the remaining unassessed submissions of the current correction round.
                 this.firstRoundAssessments = this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i];
             }
+        }
+    }
+
+    /**
+     * Handles the click event of a user on a part of the chart.
+     * Given the user has the right permissions, navigates to the submissions page of the exercise
+     * @param event event that is delegated by ngx-charts. Used here to trigger the delegation only if the user clicks on the pie chart
+     * not the legend
+     */
+    navigateToExerciseSubmissionOverview(event: any): void {
+        if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
+            this.router.navigate(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
         }
     }
 }
