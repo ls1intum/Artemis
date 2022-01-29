@@ -1,10 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
@@ -24,6 +23,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
@@ -127,19 +127,13 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Apply further checks if it is an exam submission
-        Optional<ResponseEntity<ModelingSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(modelingExercise, user);
-        if (examSubmissionAllowanceFailure.isPresent()) {
-            return examSubmissionAllowanceFailure.get();
-        }
+        examSubmissionService.checkSubmissionAllowanceElseThrow(modelingExercise, user);
 
         // Prevent multiple submissions (currently only for exam submissions)
         modelingSubmission = (ModelingSubmission) examSubmissionService.preventMultipleSubmissions(modelingExercise, modelingSubmission, user);
 
         // Check if the user is allowed to submit
-        Optional<ResponseEntity<ModelingSubmission>> submissionAllowanceFailure = modelingSubmissionService.checkSubmissionAllowance(modelingExercise, modelingSubmission, user);
-        if (submissionAllowanceFailure.isPresent()) {
-            return submissionAllowanceFailure.get();
-        }
+        modelingSubmissionService.checkSubmissionAllowanceElseThrow(modelingExercise, modelingSubmission, user);
 
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
         modelingSubmissionService.hideDetails(modelingSubmission, user);
@@ -163,10 +157,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON), })
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasRole('TA')")
-    // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<Submission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
-
         log.debug("REST request to get all modeling upload submissions");
         return super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor, correctionRound);
     }
@@ -255,16 +247,12 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         log.debug("REST request to get a modeling submission without assessment");
         final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            return forbidden();
+        if (!(exercise instanceof final ModelingExercise modelingExercise)) {
+            throw new BadRequestAlertException("The exerciseId does not belong to a modeling exercise", ENTITY_NAME, "wrongExerciseType");
         }
 
-        if (!(exercise instanceof ModelingExercise)) {
-            return badRequest();
-        }
-
-        final var modelingExercise = (ModelingExercise) exercise;
         final var isExamMode = modelingExercise.isExamExercise();
 
         // Check if tutors can start assessing the students submission
@@ -317,12 +305,12 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // Students can only see their own models (to prevent cheating). TAs, instructors and admins can see all models.
         if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise))) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
         if (!authCheckService.isAllowedToGetExamResult(modelingExercise, user)) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         Optional<Submission> optionalSubmission = participation.findLatestSubmission();
@@ -344,7 +332,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // do not send the result to the client if the assessment is not finished
         if (modelingSubmission.getLatestResult() != null
                 && (modelingSubmission.getLatestResult().getCompletionDate() == null || modelingSubmission.getLatestResult().getAssessor() == null)) {
-            modelingSubmission.setResults(new ArrayList<Result>());
+            modelingSubmission.setResults(new ArrayList<>());
         }
 
         if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
@@ -352,11 +340,5 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         return ResponseEntity.ok(modelingSubmission);
-    }
-
-    private void checkAuthorization(ModelingExercise exercise, User user) {
-        if (!authCheckService.isAtLeastStudentForExercise(exercise, user)) {
-            throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
-        }
     }
 }

@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toList;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -15,7 +17,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -83,16 +84,13 @@ public class SubmissionService {
      * @param exercise      the exercise for which a submission should be saved
      * @param submission    the submission that should be saved
      * @param currentUser   the current user with groups and authorities
-     * @param <T>           The type of the return type of the requesting route so that the
-     *                      response can be returned there
-     * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
-    public <T> Optional<ResponseEntity<T>> checkSubmissionAllowance(Exercise exercise, Submission submission, User currentUser) {
+    public void checkSubmissionAllowanceElseThrow(Exercise exercise, Submission submission, User currentUser) {
         // Fetch course from database to make sure client didn't change groups
         final var courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
         final var course = courseRepository.findByIdElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
-            return Optional.of(forbidden());
+            throw new AccessForbiddenException();
         }
 
         // Fetch the submission with the corresponding participation if the id is set (on update) and check that the
@@ -101,24 +99,22 @@ public class SubmissionService {
         if (submission.getId() != null) {
             Optional<Submission> existingSubmission = submissionRepository.findById(submission.getId());
             if (existingSubmission.isEmpty()) {
-                return Optional.of(forbidden());
+                throw new AccessForbiddenException();
             }
 
             StudentParticipation participation = (StudentParticipation) existingSubmission.get().getParticipation();
             if (participation != null) {
                 Optional<User> user = participation.getStudent();
                 if (user.isPresent() && !user.get().equals(currentUser)) {
-                    return Optional.of(forbidden());
+                    throw new AccessForbiddenException();
                 }
 
                 Optional<Team> team = participation.getTeam();
                 if (team.isPresent() && !authCheckService.isStudentInTeam(course, team.get().getShortName(), currentUser)) {
-                    return Optional.of(forbidden());
+                    throw new AccessForbiddenException();
                 }
             }
         }
-
-        return Optional.empty();
     }
 
     /**
@@ -351,7 +347,7 @@ public class SubmissionService {
     /**
      * Copies the content of one result to another, and adds the second result to the submission.
      *
-     * @param submission the submission which both results belong to, the newResult comes after the oldResult in the resultlist
+     * @param submission the submission which both results belong to, the newResult comes after the oldResult in the result list
      * @param newResult the result where the content is set
      * @param oldResult the result from which the content is copied from
      * @return the newResult
@@ -694,21 +690,10 @@ public class SubmissionService {
         sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         PageRequest sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
         String searchTerm = search.getSearchTerm();
-
         Page<StudentParticipation> studentParticipationPage = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(exerciseId, searchTerm, sorted);
 
-        List<Submission> submissions = new ArrayList<>();
-
-        for (StudentParticipation participation : studentParticipationPage.getContent()) {
-            Optional<Submission> optionalSubmission = participation.findLatestSubmission();
-
-            if (!optionalSubmission.isEmpty()) {
-                submissions.add(optionalSubmission.get());
-            }
-        }
-
-        final Page<Submission> submissionPage = new PageImpl<>(submissions, sorted, submissions.size());
-
+        var latestSubmissions = studentParticipationPage.getContent().stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
+        final Page<Submission> submissionPage = new PageImpl<>(latestSubmissions, sorted, latestSubmissions.size());
         return new SearchResultPageDTO<>(submissionPage.getContent(), studentParticipationPage.getTotalPages());
     }
 }
