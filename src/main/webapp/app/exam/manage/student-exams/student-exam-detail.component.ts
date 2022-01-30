@@ -7,7 +7,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { User } from 'app/core/user/user.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/util/alert.service';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { round, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
@@ -178,7 +178,7 @@ export class StudentExamDetailComponent implements OnInit {
      */
     updateWorkingTimeDuration() {
         const regularWorkingTime = normalWorkingTime(this.studentExam.exam!)!;
-        const seconds = Math.round(regularWorkingTime * (1.0 + this.workingTimeFormValues.percent / 100));
+        const seconds = round(regularWorkingTime * (1.0 + this.workingTimeFormValues.percent / 100), 0);
         this.setWorkingTimeDuration(seconds);
     }
 
