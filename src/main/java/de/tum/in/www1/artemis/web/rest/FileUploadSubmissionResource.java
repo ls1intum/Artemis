@@ -88,7 +88,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         log.debug("REST request to submit new FileUploadSubmission : {}", fileUploadSubmission);
         long start = System.currentTimeMillis();
 
-        final var exercise = fileUploadExerciseRepository.findOneByIdElseThrow(exerciseId);
+        final var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
