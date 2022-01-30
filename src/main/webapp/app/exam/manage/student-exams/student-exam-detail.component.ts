@@ -233,10 +233,10 @@ export class StudentExamDetailComponent implements OnInit {
         } else if (this.studentExam.exam) {
             // for student exams it can only be changed before the student is able to see it
             return dayjs().isBefore(dayjs(this.studentExam.exam.visibleDate));
-        } else {
-            // if there is no exam, then it cannot be changed
-            return false;
         }
+
+        // if there is no exam, then it cannot be changed
+        return false;
     }
 
     examIsOver(): boolean {
