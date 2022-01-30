@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.security;
 
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -21,8 +19,6 @@ import de.tum.in.www1.artemis.service.user.UserCreationService;
 @Component
 @ConditionalOnProperty(value = "artemis.user-management.use-external", havingValue = "false")
 public class ArtemisInternalAuthenticationProvider extends ArtemisAuthenticationProviderImpl implements ArtemisAuthenticationProvider {
-
-    private final Logger log = LoggerFactory.getLogger(ArtemisInternalAuthenticationProvider.class);
 
     public ArtemisInternalAuthenticationProvider(UserRepository userRepository, PasswordService passwordService, UserCreationService userCreationService) {
         super(userRepository, passwordService, userCreationService);
@@ -50,7 +46,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         final var optionalUser = userRepository.findOneByLogin(authentication.getName().toLowerCase());
         final User user;
         if (optionalUser.isEmpty()) {
-            user = userCreationService.createInternalUser(authentication.getName(), password, null, firstName, lastName, email, null, null, "en");
+            user = userCreationService.createUser(authentication.getName(), password, null, firstName, lastName, email, null, null, "en", true);
         }
         else {
             user = optionalUser.get();

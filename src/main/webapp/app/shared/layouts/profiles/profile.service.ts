@@ -65,6 +65,10 @@ export class ProfileService {
                         profileInfo.versionControlUrl = data.versionControlUrl;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
                         profileInfo.textAssessmentAnalyticsEnabled = data['text-assessment-analytics-enabled'];
+
+                        profileInfo.useExternal = data.useExternal;
+                        profileInfo.externalCredentialProvider = data.externalCredentialProvider;
+                        profileInfo.externalPasswordResetLinkMap = data.externalPasswordResetLinkMap;
                         return profileInfo;
                     }),
                 )
