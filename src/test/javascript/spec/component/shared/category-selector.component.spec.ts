@@ -11,6 +11,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 describe('Category Selector Component', () => {
     let comp: CategorySelectorComponent;
     let fixture: ComponentFixture<CategorySelectorComponent>;
+    let emitSpy: jest.SpyInstance;
 
     const category1 = {
         color: '#6ae8ac',
@@ -55,6 +56,8 @@ describe('Category Selector Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CategorySelectorComponent);
                 comp = fixture.componentInstance;
+
+                emitSpy = jest.spyOn(comp.selectedCategories, 'emit');
             });
     });
 
@@ -95,7 +98,6 @@ describe('Category Selector Component', () => {
     });
 
     it('should convert categories to empty string array', () => {
-        comp.categories = [];
         const result = comp.categoriesAsStringArray();
 
         expect(result).toEqual([]);
@@ -109,7 +111,6 @@ describe('Category Selector Component', () => {
     });
 
     it('should existing convert categories to empty string array', () => {
-        comp.existingCategories = [];
         const result = comp.existingCategoriesAsStringArray();
 
         expect(result).toEqual([]);
@@ -128,5 +129,33 @@ describe('Category Selector Component', () => {
         const result = comp.filterCategories('caTcaT');
 
         expect(result).toEqual([]);
+    });
+
+    it('should create an exercise category', () => {
+        const result = comp.createCategory('Test');
+
+        expect(comp.categoryColors).toContain(result.color);
+        expect(result.category).toEqual('Test');
+    });
+
+    /*
+    it('should remove category', () => {
+        comp.categories = [category1, category2, category3];
+        comp.onItemRemove(category2);
+
+        expect(comp.categories).toEqual([category1, category3]);
+        expect(emitSpy).toHaveBeenCalledWith([category1, category3]);
+    });
+    */
+
+    it('should select color for category', () => {
+        comp.categories = [category1, category2, category3];
+        comp.selectedCategory = category2;
+        comp.onSelectedColor('#fff');
+        const expected = { category: 'category2', color: '#fff' };
+
+        expect(comp.selectedCategory).toEqual(expected);
+        expect(comp.categories).toEqual([category1, expected, category3]);
+        expect(emitSpy).toHaveBeenCalledWith([category1, expected, category3]);
     });
 });

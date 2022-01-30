@@ -84,7 +84,7 @@ export class CategorySelectorComponent implements OnChanges {
      * set color of selected category
      * @param {string} selectedColor
      */
-    onSelectedColor(selectedColor: string) {
+    onSelectedColor(selectedColor: string): void {
         this.selectedCategory.color = selectedColor;
         this.categories = this.categories.map((category) => {
             if (category.category === this.selectedCategory.category) {
@@ -123,7 +123,7 @@ export class CategorySelectorComponent implements OnChanges {
         this.categoryCtrl.setValue(null);
     }
 
-    private createCategory(categoryString: string) {
+    createCategory(categoryString: string): ExerciseCategory {
         const category = new ExerciseCategory();
         category.category = categoryString;
         category.color = this.chooseRandomColor();
@@ -158,7 +158,7 @@ export class CategorySelectorComponent implements OnChanges {
      * cancel colorSelector and remove exerciseCategory
      * @param {ExerciseCategory} categoryToRemove
      */
-    onItemRemove(categoryToRemove: ExerciseCategory) {
+    onItemRemove(categoryToRemove: ExerciseCategory): void {
         this.colorSelector.cancelColorSelector();
         this.categories = this.categories.filter((exerciseCategory) => exerciseCategory.category !== categoryToRemove.category);
         this.selectedCategories.emit(this.categories);
