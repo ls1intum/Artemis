@@ -21,16 +21,19 @@ import de.tum.in.www1.artemis.domain.Exercise;
 @Table(name = "exercise_hint")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
-@DiscriminatorValue("H")
+@DiscriminatorValue("T")
 @DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = TextHint.class, name = "text"), @JsonSubTypes.Type(value = CodeHint.class, name = "code") })
+@JsonSubTypes({ @JsonSubTypes.Type(value = ExerciseHint.class, name = "text"), @JsonSubTypes.Type(value = CodeHint.class, name = "code") })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class ExerciseHint extends DomainObject {
+public class ExerciseHint extends DomainObject {
 
     @Column(name = "title")
     private String title;
+
+    @Column(name = "content")
+    private String content;
 
     @ManyToOne
     @JsonIgnoreProperties("exerciseHints")
@@ -49,6 +52,19 @@ public abstract class ExerciseHint extends DomainObject {
         return this;
     }
 
+    public String getContent() {
+        return content;
+    }
+
+    public ExerciseHint content(String content) {
+        this.content = content;
+        return this;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
     public Exercise getExercise() {
         return exercise;
     }
@@ -62,5 +78,8 @@ public abstract class ExerciseHint extends DomainObject {
         return this;
     }
 
-    public abstract String toString();
+    @Override
+    public String toString() {
+        return "ExerciseHint{" + "title='" + title + '\'' + ", content='" + content + '\'' + ", exercise=" + exercise + '}';
+    }
 }

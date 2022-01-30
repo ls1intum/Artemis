@@ -63,7 +63,7 @@ public class ProgrammingExerciseTaskResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ProgrammingExerciseTask> getProgrammingExerciseTask(@PathVariable Long programmingExerciseTaskId) {
         log.debug("REST request to get ProgrammingExerciseTask : {}", programmingExerciseTaskId);
-        var task = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesAndProgrammingExerciseElseThrow(programmingExerciseTaskId);
+        var task = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(programmingExerciseTaskId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, task.getExercise(), null);
         return ResponseEntity.ok().body(task);
     }

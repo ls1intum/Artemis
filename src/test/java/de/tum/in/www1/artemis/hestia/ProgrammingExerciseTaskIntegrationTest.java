@@ -31,7 +31,9 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
         database.addUsers(2, 2, 1, 2);
 
         exercise = exerciseRepository.findAll().get(0);
-        var task = new ProgrammingExerciseTask().taskName("Test Task").exercise(exercise);
+        var task = new ProgrammingExerciseTask();
+        task.setTaskName("Test Task");
+        task.setExercise(exercise);
         programmingExerciseTaskRepository.save(task);
     }
 
@@ -115,7 +117,9 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
     }
 
     private void testGetTaskName() throws Exception {
-        var task = new ProgrammingExerciseTask().taskName("Test Task").exercise(exercise);
+        var task = new ProgrammingExerciseTask();
+        task.setTaskName("Test Task");
+        task.setExercise(exercise);
         programmingExerciseTaskRepository.save(task);
 
         var name = request.get("/api/programming-exercise-tasks/" + task.getId() + "/name", HttpStatus.OK, String.class);

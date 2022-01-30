@@ -20,6 +20,11 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
 
     Set<ProgrammingExerciseTask> findByExerciseId(Long exerciseId);
 
+    @NotNull
+    default ProgrammingExerciseTask findByIdElseThrow(long programmingExerciseTaskId) throws EntityNotFoundException {
+        return findById(programmingExerciseTaskId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Task", programmingExerciseTaskId));
+    }
+
     /**
      * Gets a task with its programming exercise, test cases and solution entries of the test cases
      *
@@ -28,8 +33,8 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
      * @throws EntityNotFoundException If no task with the given ID was found
      */
     @NotNull
-    default ProgrammingExerciseTask findByIdWithTestCaseAndSolutionEntriesAndProgrammingExerciseElseThrow(long entryId) throws EntityNotFoundException {
-        return findByIdWithTestCaseAndSolutionEntriesAndProgrammingExercise(entryId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Task", entryId));
+    default ProgrammingExerciseTask findByIdWithTestCaseAndSolutionEntriesElseThrow(long entryId) throws EntityNotFoundException {
+        return findByIdWithTestCaseAndSolutionEntries(entryId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Task", entryId));
     }
 
     /**
@@ -43,10 +48,9 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
             FROM ProgrammingExerciseTask t
             LEFT JOIN FETCH t.testCases tc
             LEFT JOIN FETCH tc.solutionEntries
-            LEFT JOIN FETCH t.exercise pe
             WHERE t.id = :entryId
             """)
-    Optional<ProgrammingExerciseTask> findByIdWithTestCaseAndSolutionEntriesAndProgrammingExercise(long entryId);
+    Optional<ProgrammingExerciseTask> findByIdWithTestCaseAndSolutionEntries(long entryId);
 
     /**
      * Gets a task by its name and associated programming exercise

@@ -11,9 +11,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -32,7 +29,6 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -964,40 +960,5 @@ public class ProgrammingExerciseService {
             throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");
         }
         // means the project does not exist in version control server and does not exist in continuous integration server
-    }
-
-    public void updateTasks(ProgrammingExercise exercise) {
-
-    }
-
-    public Set<ProgrammingExerciseTask> extractTasks(ProgrammingExercise exercise) {
-        String problemStatement = exercise.getProblemStatement();
-        Pattern pattern = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.+)\\)");
-        Matcher matcher = pattern.matcher(problemStatement);
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(exercise.getId()).stream()
-                .peek(testCase -> testCase.setTasks(new HashSet<>())).collect(Collectors.toSet());
-        Set<String> testCaseNames = testCases.stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.toSet());
-        Set<ProgrammingExerciseTask> tasks = new HashSet<>();
-        while (matcher.find()) {
-            String taskName = matcher.group("name");
-            String tests = matcher.group("tests");
-            // See if task already exists as needed
-            var existingTask = programmingExerciseTaskRepository.findByNameAndExerciseId(taskName, exercise.getId());
-            if (existingTask.isPresent()
-                    && testCaseNames.equals(existingTask.get().getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.toSet()))) {
-                tasks.add(existingTask.get());
-            }
-            else {
-                var task = new ProgrammingExerciseTask().taskName(taskName).exercise(exercise);
-                String[] testNames = tests.split(",");
-                for (String testName : testNames) {
-                    Optional<ProgrammingExerciseTestCase> testCaseOptional = testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst();
-                    testCaseOptional.ifPresent(testCase -> {
-                        testCase.getTasks().add(task);
-                    });
-                }
-            }
-        }
-        return tasks;
     }
 }

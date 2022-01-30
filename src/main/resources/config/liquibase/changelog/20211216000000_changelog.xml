@@ -17,9 +17,7 @@
                                  constraintName="fk_programming_exercise_task_exercise_id"
                                  referencedTableName="exercise"
                                  referencedColumnNames="id"/>
-    </changeSet>
 
-    <changeSet author="timor-morrien" id="20211216000000-2">
         <createTable tableName="programming_exercise_task_test_case">
             <column name="task_id" type="BIGINT">
                 <constraints nullable="false"/>
@@ -42,9 +40,7 @@
                                  initiallyDeferred="false"
                                  referencedTableName="programming_exercise_test_case"
                                  referencedColumnNames="id"/>
-    </changeSet>
 
-    <changeSet author="timor-morrien" id="20211216000000-3">
         <addColumn tableName="exercise_hint">
             <column name="task_id" type="BIGINT"/>
             <column name="discriminator" type="VARCHAR(31)">
@@ -56,18 +52,12 @@
                                  constraintName="fk_exercise_hint_task_id"
                                  referencedTableName="programming_exercise_task"
                                  referencedColumnNames="id"/>
-    </changeSet>
 
-    <changeSet author="timor-morrien" id="20211216000000-4">
-        <sql>update exercise_hint set discriminator = 'T', task_id = null;</sql>
-    </changeSet>
-
-    <changeSet author="timor-morrien" id="20211216000000-5">
         <createTable tableName="programming_exercise_solution_entry">
             <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="file" type="VARCHAR(512)"/>
+            <column name="filePath" type="VARCHAR(512)"/>
             <column name="line" type="INT"/>
             <column name="previous_line" type="INT"/>
             <column name="code" type="TEXT"/>
@@ -85,9 +75,7 @@
                                  constraintName="fk_programming_exercise_solution_entry_code_hint_id"
                                  referencedTableName="exercise_hint"
                                  referencedColumnNames="id"/>
-    </changeSet>
 
-    <changeSet author="timor-morrien" id="20211216000000-6">
         <addColumn tableName="programming_exercise_test_case">
             <column name="test_case_type" type="VARCHAR(31)">
                 <constraints nullable="false"/>
@@ -95,7 +83,8 @@
         </addColumn>
     </changeSet>
 
-    <changeSet author="timor-morrien" id="20211216000000-7">
+    <changeSet author="timor-morrien" id="20211216000000-2">
+        <sql>update exercise_hint set discriminator = 'T', task_id = null;</sql>
         <sql>update programming_exercise_test_case set test_case_type = 'BEHAVIORAL';</sql>
         <sql>update programming_exercise_test_case set test_case_type = 'STRUCTURAL' where test_name like 'testMethods[%]';</sql>
         <sql>update programming_exercise_test_case set test_case_type = 'STRUCTURAL' where test_name like 'testAttributes[%]';</sql>

@@ -27,7 +27,7 @@ public class ProgrammingExerciseTask extends DomainObject {
     @Column(name = "task_name")
     private String taskName;
 
-    @OneToMany(mappedBy = "task", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "task", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("programmingExerciseTask")
     private Set<CodeHint> codeHints = new HashSet<>();
 
@@ -36,17 +36,12 @@ public class ProgrammingExerciseTask extends DomainObject {
     @JsonIgnoreProperties("tasks")
     private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonIgnoreProperties("programmingExerciseTask")
     private ProgrammingExercise exercise;
 
     public String getTaskName() {
         return this.taskName;
-    }
-
-    public ProgrammingExerciseTask taskName(String taskName) {
-        this.taskName = taskName;
-        return this;
     }
 
     public void setTaskName(String taskName) {
@@ -57,11 +52,6 @@ public class ProgrammingExerciseTask extends DomainObject {
         return codeHints;
     }
 
-    public ProgrammingExerciseTask codeHints(Set<CodeHint> codeHints) {
-        this.codeHints = codeHints;
-        return this;
-    }
-
     public void setCodeHints(Set<CodeHint> codeHints) {
         this.codeHints = codeHints;
     }
@@ -70,22 +60,12 @@ public class ProgrammingExerciseTask extends DomainObject {
         return this.testCases;
     }
 
-    public ProgrammingExerciseTask testCases(Set<ProgrammingExerciseTestCase> testCases) {
-        this.testCases = testCases;
-        return this;
-    }
-
     public void setTestCases(Set<ProgrammingExerciseTestCase> testCases) {
         this.testCases = testCases;
     }
 
     public ProgrammingExercise getExercise() {
         return exercise;
-    }
-
-    public ProgrammingExerciseTask exercise(ProgrammingExercise exercise) {
-        this.exercise = exercise;
-        return this;
     }
 
     public void setExercise(ProgrammingExercise exercise) {

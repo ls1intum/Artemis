@@ -54,7 +54,9 @@ public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     ProgrammingExerciseTask addTaskToProgrammingExercise(String taskName) {
-        var task = new ProgrammingExerciseTask().taskName(taskName).exercise(programmingExerciseRepository.getById(programmingExerciseId));
+        var task = new ProgrammingExerciseTask();
+        task.setTaskName(taskName);
+        task.setExercise(programmingExerciseRepository.getById(programmingExerciseId));
         task = programmingExerciseTaskRepository.save(task);
         return task;
     }
@@ -62,7 +64,10 @@ public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucket
     ProgrammingExerciseSolutionEntry[] addSolutionEntriesToTestCase(int count, ProgrammingExerciseTestCase testCase) {
         var solutionEntries = new ProgrammingExerciseSolutionEntry[count];
         for (int i = 0; i < count; i++) {
-            var solutionEntry = new ProgrammingExerciseSolutionEntry().testCase(testCase).code("Code block 1").line(i);
+            var solutionEntry = new ProgrammingExerciseSolutionEntry();
+            solutionEntry.setTestCase(testCase);
+            solutionEntry.setCode("Code block 1");
+            solutionEntry.setLine(i);
             solutionEntry = programmingExerciseSolutionEntryRepository.save(solutionEntry);
             solutionEntries[i] = solutionEntry;
         }
@@ -130,16 +135,19 @@ public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucket
             assertThat(programmingExerciseSolutionEntryRepository.findByTestCaseId(testCase.getId())).hasSize(2).containsExactly(solutionEntries);
             allSolutionEntries.addAll(List.of(solutionEntries));
         }
-        var codeHint = (CodeHint) new CodeHint().programmingExerciseTask(task).exercise(programmingExercise).title("Code Hint 1");
+        var codeHint = (CodeHint) new CodeHint();
+        codeHint.setProgrammingExerciseTask(task);
+        codeHint.setExercise(programmingExercise);
+        codeHint.setTitle("Code Hint 1");
         codeHint = codeHintRepository.save(codeHint);
         for (ProgrammingExerciseSolutionEntry solutionEntry : allSolutionEntries) {
-            solutionEntry.codeHint(codeHint);
+            solutionEntry.setCodeHint(codeHint);
             programmingExerciseSolutionEntryRepository.save(solutionEntry);
         }
-        codeHint.solutionEntries(allSolutionEntries);
+        codeHint.setSolutionEntries(allSolutionEntries);
         codeHint = codeHintRepository.save(codeHint);
-        task.codeHints(Set.of(codeHint));
-        task = programmingExerciseTaskRepository.save(task);
+        task.setCodeHints(Set.of(codeHint));
+        programmingExerciseTaskRepository.save(task);
         assertThat(programmingExerciseSolutionEntryRepository.findByCodeHintId(codeHint.getId())).hasSize(6).isEqualTo(allSolutionEntries);
         assertThat(codeHintRepository.findByExerciseId(programmingExerciseId)).containsExactly(codeHint);
     }

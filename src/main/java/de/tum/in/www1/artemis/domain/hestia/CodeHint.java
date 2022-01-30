@@ -16,11 +16,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CodeHint extends ExerciseHint {
 
-    @OneToMany(mappedBy = "codeHint", cascade = { CascadeType.MERGE, CascadeType.PERSIST }, fetch = FetchType.LAZY)
+    // No CascadeType.REMOVE here, as we want to retain the solution entries when a code hint is deleted
+    @OneToMany(mappedBy = "codeHint", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("codeHint")
     private Set<ProgrammingExerciseSolutionEntry> solutionEntries = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonIgnoreProperties("codeHint")
     private ProgrammingExerciseTask task;
 
@@ -32,22 +33,12 @@ public class CodeHint extends ExerciseHint {
         this.solutionEntries = solutionEntries;
     }
 
-    public CodeHint solutionEntries(Set<ProgrammingExerciseSolutionEntry> solutionEntries) {
-        setSolutionEntries(solutionEntries);
-        return this;
-    }
-
     public ProgrammingExerciseTask getProgrammingExerciseTask() {
         return task;
     }
 
     public void setProgrammingExerciseTask(ProgrammingExerciseTask programmingExerciseTask) {
         this.task = programmingExerciseTask;
-    }
-
-    public CodeHint programmingExerciseTask(ProgrammingExerciseTask programmingExerciseTask) {
-        setProgrammingExerciseTask(programmingExerciseTask);
-        return this;
     }
 
     /**

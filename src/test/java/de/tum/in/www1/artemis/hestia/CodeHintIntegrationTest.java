@@ -38,9 +38,14 @@ public class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         exercise = exerciseRepository.findAll().get(0);
 
-        var task = new ProgrammingExerciseTask().taskName("Test Task").exercise(exercise);
+        var task = new ProgrammingExerciseTask();
+        task.setTaskName("Test Task");
+        task.setExercise(exercise);
         task = programmingExerciseTaskRepository.save(task);
-        var codeHint = new CodeHint().programmingExerciseTask(task).exercise(exercise).title("Test Code Hint");
+        var codeHint = new CodeHint();
+        codeHint.setProgrammingExerciseTask(task);
+        codeHint.setExercise(exercise);
+        codeHint.setTitle("Test Code Hint");
         exerciseHintRepository.save(codeHint);
     }
 

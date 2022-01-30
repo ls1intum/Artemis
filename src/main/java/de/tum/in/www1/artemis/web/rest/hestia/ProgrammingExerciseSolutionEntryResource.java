@@ -93,7 +93,7 @@ public class ProgrammingExerciseSolutionEntryResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<ProgrammingExerciseSolutionEntry>> getProgrammingSolutionEntryForProgrammingExerciseTask(@PathVariable Long taskId) {
         log.debug("REST request to get Programming Exercise Solution Entry : {}", taskId);
-        ProgrammingExerciseTask programmingExerciseTask = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesAndProgrammingExerciseElseThrow(taskId);
+        ProgrammingExerciseTask programmingExerciseTask = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(taskId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseTask.getExercise().getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, programmingExercise, null);
 

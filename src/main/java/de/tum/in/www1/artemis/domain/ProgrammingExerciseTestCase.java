@@ -138,22 +138,12 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         return tasks;
     }
 
-    public ProgrammingExerciseTestCase tasks(Set<ProgrammingExerciseTask> tasks) {
-        this.tasks = tasks;
-        return this;
-    }
-
     public void setTasks(Set<ProgrammingExerciseTask> tasks) {
         this.tasks = tasks;
     }
 
     public Set<ProgrammingExerciseSolutionEntry> getSolutionEntries() {
         return solutionEntries;
-    }
-
-    public ProgrammingExerciseTestCase solutionEntries(Set<ProgrammingExerciseSolutionEntry> solutionEntries) {
-        this.solutionEntries = solutionEntries;
-        return this;
     }
 
     public void setSolutionEntries(Set<ProgrammingExerciseSolutionEntry> solutionEntries) {

@@ -20,49 +20,44 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExerciseSolutionEntry extends DomainObject {
 
-    @Column(name = "file")
-    private String file;
+    @Column(name = "filePath")
+    private String filePath;
 
+    // The line where the old code segment is in the template
     @Column(name = "previous_line")
     private Integer previousLine;
 
+    // The line where the new code segment is in the solution
     @Column(name = "line")
     private Integer line;
 
+    // The old code segment to be replaced by the new code segment
     @Column(name = "previous_code")
     private String previousCode;
 
+    // The new code segment that replaces the old code segment
     @Column(name = "code")
     private String code;
 
+    // Fetched lazily, as we never need the code hint when fetching solution entries
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties("solutionEntries")
     private CodeHint codeHint;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonIgnoreProperties("solutionEntries")
     private ProgrammingExerciseTestCase testCase;
 
-    public String getFile() {
-        return file;
+    public String getFilePath() {
+        return filePath;
     }
 
-    public ProgrammingExerciseSolutionEntry file(String file) {
-        setFile(file);
-        return this;
-    }
-
-    public void setFile(String file) {
-        this.file = file;
+    public void setFilePath(String file) {
+        this.filePath = file;
     }
 
     public Integer getPreviousLine() {
         return previousLine;
-    }
-
-    public ProgrammingExerciseSolutionEntry previousLine(Integer previousLine) {
-        setPreviousLine(previousLine);
-        return this;
     }
 
     public void setPreviousLine(Integer previousLine) {
@@ -73,22 +68,12 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
         return line;
     }
 
-    public ProgrammingExerciseSolutionEntry line(Integer line) {
-        setLine(line);
-        return this;
-    }
-
     public void setLine(Integer line) {
         this.line = line;
     }
 
     public String getPreviousCode() {
         return previousCode;
-    }
-
-    public ProgrammingExerciseSolutionEntry previousCode(String previousCode) {
-        setPreviousCode(previousCode);
-        return this;
     }
 
     public void setPreviousCode(String previousCode) {
@@ -99,11 +84,6 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
         return code;
     }
 
-    public ProgrammingExerciseSolutionEntry code(String code) {
-        setCode(code);
-        return this;
-    }
-
     public void setCode(String code) {
         this.code = code;
     }
@@ -112,22 +92,12 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
         return codeHint;
     }
 
-    public ProgrammingExerciseSolutionEntry codeHint(CodeHint codeHint) {
-        setCodeHint(codeHint);
-        return this;
-    }
-
     public void setCodeHint(CodeHint codeHint) {
         this.codeHint = codeHint;
     }
 
     public ProgrammingExerciseTestCase getTestCase() {
         return this.testCase;
-    }
-
-    public ProgrammingExerciseSolutionEntry testCase(ProgrammingExerciseTestCase testCase) {
-        setTestCase(testCase);
-        return this;
     }
 
     public void setTestCase(ProgrammingExerciseTestCase testCase) {

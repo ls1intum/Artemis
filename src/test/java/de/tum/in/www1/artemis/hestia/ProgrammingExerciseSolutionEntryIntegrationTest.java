@@ -45,11 +45,20 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
         exercise = exerciseRepository.findAll().get(0);
         var testCases = programmingExerciseTestCaseRepository.findAll();
         for (ProgrammingExerciseTestCase testCase : testCases) {
-            var solutionEntry = new ProgrammingExerciseSolutionEntry().testCase(testCase).previousCode("No code").code("Some code").previousLine(1).codeHint(null).line(1)
-                    .file("code.java");
+            var solutionEntry = new ProgrammingExerciseSolutionEntry();
+            solutionEntry.setTestCase(testCase);
+            solutionEntry.setPreviousCode("No code");
+            solutionEntry.setCode("Some code");
+            solutionEntry.setPreviousLine(1);
+            solutionEntry.setCodeHint(null);
+            solutionEntry.setLine(1);
+            solutionEntry.setFilePath("code.java");
             programmingExerciseSolutionEntryRepository.save(solutionEntry);
         }
-        task = new ProgrammingExerciseTask().exercise(exercise).taskName("Task").testCases(new HashSet<>(testCases));
+        task = new ProgrammingExerciseTask();
+        task.setExercise(exercise);
+        task.setTaskName("Task");
+        task.setTestCases(new HashSet<>(testCases));
         task = programmingExerciseTaskRepository.save(task);
     }
 

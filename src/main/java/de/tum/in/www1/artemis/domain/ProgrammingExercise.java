@@ -512,11 +512,6 @@ public class ProgrammingExercise extends Exercise {
         return tasks;
     }
 
-    public ProgrammingExercise tasks(Set<ProgrammingExerciseTask> tasks) {
-        this.tasks = tasks;
-        return this;
-    }
-
     public void setTasks(Set<ProgrammingExerciseTask> tasks) {
         this.tasks = tasks;
     }

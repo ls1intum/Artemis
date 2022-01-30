@@ -15,11 +15,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
-import de.tum.in.www1.artemis.domain.hestia.TextHint;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 
-public class TextHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ExerciseHintRepository exerciseHintRepository;
@@ -52,13 +51,13 @@ public class TextHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void queryAllHintsForAnExerciseAsATutor() throws Exception {
-        request.getList("/api/exercises/" + exercise.getId() + "/text-hints", HttpStatus.OK, ExerciseHint.class);
+        request.getList("/api/exercises/" + exercise.getId() + "/exercise-hints", HttpStatus.OK, ExerciseHint.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void queryAllHintsForAnExerciseAsAnInstructor() throws Exception {
-        request.getList("/api/exercises/" + exercise.getId() + "/text-hints", HttpStatus.OK, ExerciseHint.class);
+        request.getList("/api/exercises/" + exercise.getId() + "/exercise-hints", HttpStatus.OK, ExerciseHint.class);
     }
 
     @Test
@@ -93,22 +92,22 @@ public class TextHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void createHintAsAStudentShouldReturnForbidden() throws Exception {
-        ExerciseHint exerciseHint = new TextHint().content("content 4").title("title 4").exercise(exercise);
-        request.post("/api/text-hints/", exerciseHint, HttpStatus.FORBIDDEN);
+        ExerciseHint exerciseHint = new ExerciseHint().content("content 4").title("title 4").exercise(exercise);
+        request.post("/api/exercise-hints/", exerciseHint, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void createHintAsTutorForbidden() throws Exception {
-        ExerciseHint exerciseHint = new TextHint().content("content 4").title("title 4").exercise(exercise);
-        request.post("/api/text-hints/", exerciseHint, HttpStatus.FORBIDDEN);
+        ExerciseHint exerciseHint = new ExerciseHint().content("content 4").title("title 4").exercise(exercise);
+        request.post("/api/exercise-hints/", exerciseHint, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     public void createHintAsEditor() throws Exception {
-        ExerciseHint exerciseHint = new TextHint().content("content 4").title("title 4").exercise(exercise);
-        request.post("/api/text-hints/", exerciseHint, HttpStatus.CREATED);
+        ExerciseHint exerciseHint = new ExerciseHint().content("content 4").title("title 4").exercise(exercise);
+        request.post("/api/exercise-hints/", exerciseHint, HttpStatus.CREATED);
 
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
         assertThat(exerciseHints).hasSize(4);
@@ -117,13 +116,13 @@ public class TextHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createHintAsInstructor() throws Exception {
-        ExerciseHint exerciseHint = new TextHint().content("content 4").title("title 4").exercise(exercise);
-        request.post("/api/text-hints/", exerciseHint, HttpStatus.CREATED);
+        ExerciseHint exerciseHint = new ExerciseHint().content("content 4").title("title 4").exercise(exercise);
+        request.post("/api/exercise-hints/", exerciseHint, HttpStatus.CREATED);
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
         assertThat(exerciseHints).hasSize(4);
 
         exerciseHint.setExercise(null);
-        request.post("/api/text-hints/", exerciseHint, HttpStatus.BAD_REQUEST);
+        request.post("/api/exercise-hints/", exerciseHint, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -134,18 +133,15 @@ public class TextHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     private void updateHintForbidden() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
-        assertThat(exerciseHint).isInstanceOf(TextHint.class);
-        if (exerciseHint instanceof TextHint textHint) {
-            String newContent = "new content value!";
-            String contentBefore = textHint.getContent();
-            textHint.setContent(newContent);
-            request.put("/api/text-hints/" + textHint.getId(), textHint, HttpStatus.FORBIDDEN);
+        String newContent = "new content value!";
+        String contentBefore = exerciseHint.getContent();
+        exerciseHint.setContent(newContent);
+        request.put("/api/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.FORBIDDEN);
 
-            Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(textHint.getId());
-            assertThat(hintAfterSave).isPresent();
-            assertThat(hintAfterSave.get()).isInstanceOf(TextHint.class);
-            assertThat(((TextHint) hintAfterSave.get()).getContent()).isEqualTo(contentBefore);
-        }
+        Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
+        assertThat(hintAfterSave).isPresent();
+        assertThat(hintAfterSave.get()).isInstanceOf(ExerciseHint.class);
+        assertThat((hintAfterSave.get()).getContent()).isEqualTo(contentBefore);
     }
 
     @Test
@@ -159,17 +155,13 @@ public class TextHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
     public void updateHintAsEditor() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
         String newContent = "new content value!";
-
-        assertThat(exerciseHint).isInstanceOf(TextHint.class);
-        if (exerciseHint instanceof TextHint textHint) {
-            textHint.setContent(newContent);
-            request.put("/api/text-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.OK);
-            request.put("/api/text-hints/" + 0L, exerciseHint, HttpStatus.BAD_REQUEST);
-            Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
-            assertThat(hintAfterSave).isPresent();
-            assertThat(hintAfterSave.get()).isInstanceOf(TextHint.class);
-            assertThat(((TextHint) hintAfterSave.get()).getContent()).isEqualTo(newContent);
-        }
+        exerciseHint.setContent(newContent);
+        request.put("/api/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.OK);
+        request.put("/api/exercise-hints/" + 0L, exerciseHint, HttpStatus.BAD_REQUEST);
+        Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
+        assertThat(hintAfterSave).isPresent();
+        assertThat(hintAfterSave.get()).isInstanceOf(ExerciseHint.class);
+        assertThat((hintAfterSave.get()).getContent()).isEqualTo(newContent);
     }
 
     @Test
@@ -178,26 +170,23 @@ public class TextHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
         String newContent = "new content value!";
 
-        assertThat(exerciseHint).isInstanceOf(TextHint.class);
-        if (exerciseHint instanceof TextHint textHint) {
-            textHint.setContent(newContent);
-            request.put("/api/text-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.OK);
+        exerciseHint.setContent(newContent);
+        request.put("/api/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.OK);
 
-            Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
-            assertThat(hintAfterSave).isPresent();
-            assertThat(hintAfterSave.get()).isInstanceOf(TextHint.class);
-            assertThat(((TextHint) hintAfterSave.get()).getContent()).isEqualTo(newContent);
-        }
+        Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
+        assertThat(hintAfterSave).isPresent();
+        assertThat(hintAfterSave.get()).isInstanceOf(ExerciseHint.class);
+        assertThat((hintAfterSave.get()).getContent()).isEqualTo(newContent);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteHintAsInstructor() throws Exception {
-        ExerciseHint exerciseHint = new TextHint().content("content 4").title("title 4").exercise(exercise);
-        request.delete("/api/text-hints/" + 0L, HttpStatus.NOT_FOUND);
-        request.post("/api/text-hints", exerciseHint, HttpStatus.CREATED);
+        ExerciseHint exerciseHint = new ExerciseHint().content("content 4").title("title 4").exercise(exercise);
+        request.delete("/api/exercise-hints/" + 0L, HttpStatus.NOT_FOUND);
+        request.post("/api/exercise-hints", exerciseHint, HttpStatus.CREATED);
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
-        request.delete("/api/text-hints/" + exerciseHints.get(0).getId(), HttpStatus.NO_CONTENT);
+        request.delete("/api/exercise-hints/" + exerciseHints.get(0).getId(), HttpStatus.NO_CONTENT);
     }
 
     @Test
@@ -222,7 +211,7 @@ public class TextHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     private void testGetHintTitle() throws Exception {
-        final var hint = new TextHint().title("Test Hint").exercise(exercise);
+        final var hint = new ExerciseHint().title("Test Hint").exercise(exercise);
         exerciseHintRepository.save(hint);
 
         final var title = request.get("/api/exercise-hints/" + hint.getId() + "/title", HttpStatus.OK, String.class);
