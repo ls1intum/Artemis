@@ -754,12 +754,8 @@ public class ProgrammingExerciseGradingService {
         final boolean isWeightSumZero = Precision.equals(weightSum, 0, 1E-8);
         final double testPoints;
 
-        // If the weight sum is zero, then the solution would receive zero points as well even if all tests pass, thus
-        // resulting in a warning to the instructor. The warning is wrong however, as setting a weight sum of zero is
-        // only possible for exercises with manual feedback, i.e., if all points should only be explicitly be awarded
-        // manually by tutors. This is obviously not possible for the solution.
-        // Giving each test case a weight of one makes sure that a score > 0% can be reached by the solution and the
-        // 100% needed to not generate a warning is only possible if all tests pass.
+        // A weight-sum of zero would let the solution show an error to the instructor as the solution score must be
+        // 100% of all reachable points. To prevent this, we weigh all test cases equally in such a case.
         if (isWeightSumZero && result.getParticipation() instanceof SolutionProgrammingExerciseParticipation) {
             testPoints = (1.0 / totalTestCaseCount) * programmingExercise.getMaxPoints();
         }
