@@ -120,7 +120,6 @@
             "type": "Typ",
             "mcqType": "Multiple-Choice Fragen",
             "dndType": "Drag und Drop Fragen",
-            "welcome": "<strong>Herzlich Willkommen bei Artemis!</strong> Wir haben automatisch ein Konto für dich erstellt. Klicke auf den Button <i>Aufgabe starten</i>!",
             "personalRepositoryClone": "Dein persönliches Repository wurde eingerichtet. Klicke auf den Button <i>Repository klonen</i>!",
             "personalRepositoryOnline": "Dein persönliches Repository wurde eingerichtet. Klicke auf den Button <i>Programmiereditor öffnen</i>!",
             "resumeProgrammingExercise": "Die Aufgabe wurde wieder aufgenommen. Du kannst nun weiterarbeiten!",
