@@ -39,6 +39,7 @@ public class Complaint extends DomainObject {
     @Column(name = "complaint_type")
     private ComplaintType complaintType;
 
+    // TODO: delete in the next major release
     @Deprecated
     @Column(name = "result_before_complaint")
     @Lob

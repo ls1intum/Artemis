@@ -120,7 +120,6 @@
             "type": "Type",
             "mcqType": "Multiple Choice Question",
             "dndType": "Drag and Drop Question",
-            "welcome": "<strong>Welcome to Artemis!</strong> We have automatically created an account for you. Click the button <i>Start Exercise</i>!",
             "personalRepositoryClone": "Your personal repository has been set up. Click the button <i>Clone repository</i>!",
             "personalRepositoryOnline": "Your personal repository has been set up. Click the button <i>Open code editor</i>!",
             "resumeProgrammingExercise": "The exercise has been resumed. You can now continue working on the exercise!",
