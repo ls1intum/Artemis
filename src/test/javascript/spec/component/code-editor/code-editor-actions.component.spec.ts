@@ -40,7 +40,6 @@ describe('CodeEditorActionsComponent', () => {
                 { provide: CodeEditorConflictStateService, useClass: MockCodeEditorConflictStateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
             .compileComponents()
