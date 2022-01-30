@@ -1,5 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -22,10 +22,8 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('Course Management Service', () => {
-    let injector: TestBed;
     let courseManagementService: CourseManagementService;
     let accountService: AccountService;
-    let exerciseService: ExerciseService;
     let lectureService: LectureService;
     let httpMock: HttpTestingController;
     let isAtLeastTutorInCourseSpy: jest.SpyInstance;
@@ -39,6 +37,7 @@ describe('Course Management Service', () => {
     let exercises: Exercise[];
     let returnedFromService: any;
     let participations: StudentParticipation[];
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -49,12 +48,10 @@ describe('Course Management Service', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
-        injector = getTestBed();
-        courseManagementService = injector.get(CourseManagementService);
-        httpMock = injector.get(HttpTestingController);
-        accountService = injector.get(AccountService);
-        exerciseService = injector.get(ExerciseService);
-        lectureService = injector.get(LectureService);
+        courseManagementService = TestBed.inject(CourseManagementService);
+        httpMock = TestBed.inject(HttpTestingController);
+        accountService = TestBed.inject(AccountService);
+        lectureService = TestBed.inject(LectureService);
 
         isAtLeastTutorInCourseSpy = jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
         isAtLeastEditorInCourseSpy = jest.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
@@ -71,7 +68,7 @@ describe('Course Management Service', () => {
         course.endDate = undefined;
         returnedFromService = { ...course } as Course;
         participations = [new StudentParticipation()];
-        convertExercisesDateFromServerSpy = jest.spyOn(exerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
+        convertExercisesDateFromServerSpy = jest.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
     });
 
     const expectDateConversionToBeCalled = (courseForConversion: Course) => {

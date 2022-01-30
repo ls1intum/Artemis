@@ -105,7 +105,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
-        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
+        featureToggleService.enableFeature(Feature.ProgrammingExercises);
     }
 
     @Test
@@ -169,11 +169,11 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student1")
     public void participateInProgrammingExercise_featureDisabled() throws Exception {
-        featureToggleService.disableFeature(Feature.PROGRAMMING_EXERCISES);
+        featureToggleService.disableFeature(Feature.ProgrammingExercises);
         request.post("/api/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
 
         // Reset
-        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
+        featureToggleService.enableFeature(Feature.ProgrammingExercises);
     }
 
     @Test

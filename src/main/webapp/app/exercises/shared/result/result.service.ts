@@ -10,6 +10,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { map, tap } from 'rxjs/operators';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -30,7 +31,7 @@ export class ResultService implements IResultService {
     private resultResourceUrl = SERVER_API_URL + 'api/results';
     private participationResourceUrl = SERVER_API_URL + 'api/participations';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(private http: HttpClient) {}
 
     find(resultId: number): Observable<EntityResponseType> {
         return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
@@ -118,9 +119,9 @@ export class ResultService implements IResultService {
 
     private convertParticipationDateFromServer(participation: StudentParticipation): StudentParticipation {
         if (participation) {
-            participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
+            ParticipationService.convertParticipationDatesFromServer(participation);
             if (participation.exercise) {
-                participation.exercise = this.exerciseService.convertExerciseDateFromServer(participation.exercise);
+                participation.exercise = ExerciseService.convertExerciseDateFromServer(participation.exercise);
             }
         }
         return participation;

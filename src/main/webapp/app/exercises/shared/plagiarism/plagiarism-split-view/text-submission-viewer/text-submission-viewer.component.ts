@@ -72,27 +72,27 @@ export class TextSubmissionViewerComponent implements OnChanges {
                 this.isProgrammingExercise = true;
 
                 this.repositoryService.setDomain([DomainType.PARTICIPATION, { id: currentPlagiarismSubmission.submissionId }]);
-                this.repositoryService.getRepositoryContent().subscribe(
-                    (files) => {
+                this.repositoryService.getRepositoryContent().subscribe({
+                    next: (files) => {
                         this.loading = false;
                         this.files = this.filterFiles(files);
                     },
-                    () => {
+                    error: () => {
                         this.loading = false;
                     },
-                );
+                });
             } else {
                 this.isProgrammingExercise = false;
 
-                this.textSubmissionService.getTextSubmission(currentPlagiarismSubmission.submissionId).subscribe(
-                    (submission: TextSubmission) => {
+                this.textSubmissionService.getTextSubmission(currentPlagiarismSubmission.submissionId).subscribe({
+                    next: (submission: TextSubmission) => {
                         this.loading = false;
                         this.fileContent = this.insertMatchTokens(submission.text || '');
                     },
-                    () => {
+                    error: () => {
                         this.loading = false;
                     },
-                );
+                });
             }
         }
     }
@@ -114,15 +114,15 @@ export class TextSubmissionViewerComponent implements OnChanges {
                 this.loading = false;
             } else {
                 this.binaryFile = false;
-                this.repositoryService.getFile(file).subscribe(
-                    ({ fileContent }) => {
+                this.repositoryService.getFile(file).subscribe({
+                    next: ({ fileContent }) => {
                         this.loading = false;
                         this.fileContent = this.insertMatchTokens(fileContent);
                     },
-                    () => {
+                    error: () => {
                         this.loading = false;
                     },
-                );
+                });
             }
         });
     }

@@ -101,7 +101,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             this.loadingState = LOADING_STATE.INITIALIZING;
             this.loadExercise(exerciseId)
                 .pipe(
-                    catchError(() => throwError('exerciseNotFound')),
+                    catchError(() => throwError(() => new Error('exerciseNotFound'))),
                     tap((exercise) => {
                         this.exercise = exercise;
                         this.course = exercise.course! ?? exercise.exerciseGroup!.exam!.course!;
@@ -121,7 +121,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                                     this.location.replaceState(parentUrl + `/${nextAvailableParticipation.id}`);
                                 }
                             } else {
-                                throwError('participationNotFound');
+                                throwError(() => new Error('participationNotFound'));
                             }
                         }
                     }),
@@ -134,16 +134,16 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                         return this.loadExerciseHints();
                     }),
                 )
-                .subscribe(
-                    (exerciseHints: ExerciseHint[]) => {
+                .subscribe({
+                    next: (exerciseHints: ExerciseHint[]) => {
                         this.exercise.exerciseHints = exerciseHints;
                         this.loadingState = LOADING_STATE.CLEAR;
                     },
-                    (err) => {
+                    error: (err: Error) => {
                         this.loadingState = LOADING_STATE.FETCHING_FAILED;
-                        this.onError(err);
+                        this.onError(err.message);
                     },
-                );
+                });
         });
     }
 
@@ -321,16 +321,15 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         return this.courseExerciseService
             .startExercise(this.exercise.id!)
             .pipe(
-                catchError(() => throwError('participationCouldNotBeCreated')),
+                catchError(() => throwError(() => new Error('participationCouldNotBeCreated'))),
                 tap((participation) => {
                     this.exercise.studentParticipations = [participation];
                     this.loadingState = LOADING_STATE.CLEAR;
                 }),
             )
-            .subscribe(
-                () => {},
-                (err) => this.onError(err),
-            );
+            .subscribe({
+                error: (err: Error) => this.onError(err.message),
+            });
     }
 
     /**
@@ -346,15 +345,14 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         this.exercise.studentParticipations = [];
         this.participationService!.delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
             .pipe(
-                catchError(() => throwError('participationCouldNotBeDeleted')),
+                catchError(() => throwError(() => new Error('participationCouldNotBeDeleted'))),
                 tap(() => {
                     this.loadingState = LOADING_STATE.CLEAR;
                 }),
             )
-            .subscribe(
-                () => {},
-                (err) => this.onError(err),
-            );
+            .subscribe({
+                error: (err: Error) => this.onError(err.message),
+            });
     }
 
     /**

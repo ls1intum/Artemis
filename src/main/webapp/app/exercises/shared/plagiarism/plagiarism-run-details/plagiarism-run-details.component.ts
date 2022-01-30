@@ -14,7 +14,7 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
      */
     @Input() plagiarismResult: TextPlagiarismResult | ModelingPlagiarismResult;
 
-    yAxisTicks: number[];
+    yScaleMax = 5;
 
     constructor() {
         super();
@@ -36,8 +36,6 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
      * @param data  - the updated data array
      */
     updateChartDataSet(data: number[]) {
-        const maxValue = Math.max(...data);
-        this.yAxisTicks = Array.from(new Array(maxValue + 1).keys());
         let ngxDataEntity;
         this.ngxData = [];
         data.forEach((value, position) => {

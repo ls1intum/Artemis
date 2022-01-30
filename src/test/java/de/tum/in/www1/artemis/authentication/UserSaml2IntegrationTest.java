@@ -28,14 +28,14 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 /**
  * Tests for {@link UserJWTController} and {@link SAML2Service}.
- *
- * @author Dominik Fuchss
  */
 public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
 
     private static final String STUDENT_NAME = "student1";
 
     private static final String STUDENT_PASSWORD = "test1234";
+
+    private static final String STUDENT_REGISTRATION_NUMBER = "12345678";
 
     @Autowired
     private TokenProvider tokenProvider;
@@ -46,6 +46,12 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
     @Autowired
     private PasswordService passwordService;
 
+    @AfterEach
+    public void clearAuthentication() {
+        TestSecurityContextHolder.clearContext();
+        this.database.resetDatabase();
+    }
+
     /**
      * This test checks the creation of a new SAML2 authenticated user.
      *
@@ -55,13 +61,55 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
     public void testValidSaml2Registration() throws Exception {
         assertStudentNotExists();
 
-        // Mock existing SAML2 Auth
-        mockSAMLAuthentication();
-        // Test whether authorizeSAML2 generates a valid token
-        UserJWTController.JWTToken result = request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.OK);
+        authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER));
 
-        assertValidToken(result);
         assertStudentExists();
+        assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+    }
+
+    /**
+     * This test checks that a new SAMl2 user is created with the extracted registration number.
+     *
+     * @throws Exception if something went wrong.
+     */
+    @Test
+    public void testValidSaml2RegistrationExtractingRegistrationNumber() throws Exception {
+        assertStudentNotExists();
+
+        authenticate(createPrincipal("somePrefix1234someSuffix"));
+
+        assertStudentExists();
+        assertRegistrationNumber("1234");
+    }
+
+    /**
+     * This test checks that a new SAMl2 user is created with the complete attribute value even if no extraction was possible.
+     *
+     * @throws Exception if something went wrong.
+     */
+    @Test
+    public void testValidSaml2RegistrationNonMatchingRegistrationNumberExtraction() throws Exception {
+        assertStudentNotExists();
+
+        authenticate(createPrincipal("nonMatchingRegNum"));
+
+        assertStudentExists();
+        assertRegistrationNumber("nonMatchingRegNum");
+    }
+
+    /**
+     * This test checks that a new SAMl2 user is created with an empty registration number if the attribute is empty.
+     *
+     * @throws Exception if something went wrong.
+     */
+    @Test
+    public void testValidSaml2RegistrationEmptyRegistrationNumber() throws Exception {
+        assertStudentNotExists();
+
+        authenticate(createPrincipal(""));
+
+        assertStudentExists();
+        assertThat(this.database.getUserByLogin(STUDENT_NAME).getRegistrationNumber()).isNull();
     }
 
     /**
@@ -80,12 +128,8 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
         createUser(identifyingEmail);
         assertStudentExists();
 
-        // Mock existing SAML2 Auth
-        mockSAMLAuthentication();
-        // Test whether authorizeSAML2 generates a valid token
-        UserJWTController.JWTToken result = request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.OK);
+        authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER));
 
-        assertValidToken(result);
         assertStudentExists();
         assertThat(this.database.getUserByLogin(STUDENT_NAME).getEmail()).as("Email identifies already created user").isEqualTo(identifyingEmail);
     }
@@ -141,14 +185,18 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
         assertStudentNotExists();
     }
 
-    @AfterEach
-    public void clearAuthentication() {
-        TestSecurityContextHolder.clearContext();
-        this.database.resetDatabase();
+    private void authenticate(Saml2AuthenticatedPrincipal principal) throws Exception {
+        mockSAMLAuthentication(principal);
+        UserJWTController.JWTToken result = request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.OK);
+        assertValidToken(result);
     }
 
     private void mockSAMLAuthentication() {
-        Authentication authentication = new Saml2Authentication(createPrincipal(), "Secret Credentials", null);
+        mockSAMLAuthentication(createPrincipal(STUDENT_REGISTRATION_NUMBER));
+    }
+
+    private void mockSAMLAuthentication(Saml2AuthenticatedPrincipal principal) {
+        Authentication authentication = new Saml2Authentication(principal, "Secret Credentials", null);
         TestSecurityContextHolder.setAuthentication(authentication);
     }
 
@@ -168,12 +216,13 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
         userRepository.save(user);
     }
 
-    private Saml2AuthenticatedPrincipal createPrincipal() {
+    private Saml2AuthenticatedPrincipal createPrincipal(String registrationNumber) {
         Map<String, List<Object>> attributes = new HashMap<>();
         attributes.put("uid", List.of(STUDENT_NAME));
         attributes.put("first_name", List.of("FirstName"));
         attributes.put("last_name", List.of("LastName"));
         attributes.put("email", List.of(STUDENT_NAME + "@invalid"));
+        attributes.put("registration_number", List.of(registrationNumber));
 
         return new DefaultSaml2AuthenticatedPrincipal(STUDENT_NAME, attributes);
     }
@@ -185,6 +234,10 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
 
     private void assertStudentExists() {
         assertThat(this.database.getUserByLogin(STUDENT_NAME)).as("User shall exist").isNotNull();
+    }
+
+    private void assertRegistrationNumber(String registrationNumber) {
+        assertThat(this.database.getUserByLogin(STUDENT_NAME).getRegistrationNumber()).isEqualTo(registrationNumber);
     }
 
     private void assertValidToken(UserJWTController.JWTToken token) {
