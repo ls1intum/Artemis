@@ -97,7 +97,7 @@ public class ComplaintResource {
             throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
         }
 
-        Result result = resultRepository.findOneElseThrow(complaint.getResult().getId());
+        Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getParticipation().getExercise(), null);
 
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
@@ -136,7 +136,7 @@ public class ComplaintResource {
             throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
         }
 
-        Result result = resultRepository.findOneElseThrow(complaint.getResult().getId());
+        Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
         authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getParticipation());
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
         String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;

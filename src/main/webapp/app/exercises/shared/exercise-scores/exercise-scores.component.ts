@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { forkJoin, of, Subscription, zip } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { take } from 'rxjs/operators';

@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
 import { SystemNotification } from 'app/entities/system-notification.model';

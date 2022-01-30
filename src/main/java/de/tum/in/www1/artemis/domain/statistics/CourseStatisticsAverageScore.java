@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
+
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CourseStatisticsAverageScore {
 
@@ -14,6 +16,8 @@ public class CourseStatisticsAverageScore {
     private final ZonedDateTime releaseDate;
 
     private double averageScore;
+
+    private ExerciseType exerciseType;
 
     public CourseStatisticsAverageScore(long exerciseId, String exerciseName, ZonedDateTime releaseDate, double averageScore) {
         this.exerciseId = exerciseId;
@@ -27,6 +31,7 @@ public class CourseStatisticsAverageScore {
         this.exerciseName = "";
         this.releaseDate = null;
         this.averageScore = 0.0;
+        this.exerciseType = null;
     }
 
     public String getExerciseName() {
@@ -45,7 +50,15 @@ public class CourseStatisticsAverageScore {
         return averageScore;
     }
 
+    public ExerciseType getExerciseType() {
+        return exerciseType;
+    }
+
     public void setAverageScore(double averageScore) {
         this.averageScore = averageScore;
+    }
+
+    public void setExerciseType(ExerciseType exerciseType) {
+        this.exerciseType = exerciseType;
     }
 }

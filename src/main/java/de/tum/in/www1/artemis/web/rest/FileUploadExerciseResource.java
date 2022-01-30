@@ -53,6 +53,8 @@ public class FileUploadExerciseResource {
 
     private final CourseRepository courseRepository;
 
+    private final ParticipationRepository participationRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     private final GroupNotificationService groupNotificationService;
@@ -68,7 +70,8 @@ public class FileUploadExerciseResource {
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository,
-            ExerciseGroupRepository exerciseGroupRepository, CourseRepository courseRepository, InstanceMessageSendService instanceMessageSendService) {
+            ExerciseGroupRepository exerciseGroupRepository, CourseRepository courseRepository, ParticipationRepository participationRepository,
+            InstanceMessageSendService instanceMessageSendService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -80,6 +83,7 @@ public class FileUploadExerciseResource {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
         this.courseRepository = courseRepository;
+        this.participationRepository = participationRepository;
         this.instanceMessageSendService = instanceMessageSendService;
     }
 
@@ -99,7 +103,7 @@ public class FileUploadExerciseResource {
         }
 
         // validates general settings: points, dates
-        exerciseService.validateGeneralSettings(fileUploadExercise);
+        fileUploadExercise.validateGeneralSettings();
 
         // Validate the new file upload exercise
         validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
@@ -115,7 +119,7 @@ public class FileUploadExerciseResource {
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
 
-        groupNotificationService.checkNotificationForExerciseRelease(fileUploadExercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(fileUploadExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -172,7 +176,7 @@ public class FileUploadExerciseResource {
         // Validate the updated file upload exercise
         validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
         // validates general settings: points, dates
-        exerciseService.validateGeneralSettings(fileUploadExercise);
+        fileUploadExercise.validateGeneralSettings();
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
@@ -190,6 +194,8 @@ public class FileUploadExerciseResource {
         FileUploadExercise updatedExercise = fileUploadExerciseRepository.save(fileUploadExercise);
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
+
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());
 
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText,
                 instanceMessageSendService);
@@ -212,7 +218,7 @@ public class FileUploadExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        List<FileUploadExercise> exercises = fileUploadExerciseRepository.findByCourseId(courseId);
+        List<FileUploadExercise> exercises = fileUploadExerciseRepository.findByCourseIdWithCategories(courseId);
         for (Exercise exercise : exercises) {
             // not required in the returned json body
             exercise.setStudentParticipations(null);

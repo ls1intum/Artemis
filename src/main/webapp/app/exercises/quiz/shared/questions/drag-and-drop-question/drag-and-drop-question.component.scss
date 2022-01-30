@@ -44,8 +44,8 @@
                     position: absolute;
                     display: flex;
                     flex-direction: row;
-                    align-items: flex-start;
-                    justify-content: flex-end;
+                    align-items: center;
+                    justify-content: center;
                     background: white;
                     border: 1px dashed black;
 
@@ -155,7 +155,7 @@
             }
 
             .drag-items {
-                background: #eee;
+                background: #eee !important;
                 display: flex;
                 flex-direction: row;
                 flex-wrap: wrap;
@@ -176,12 +176,16 @@
     }
 
     /* highlight drop location in light blue when selecting a drag item */
-    .drop-allowed {
+    .cdk-drop-list-receiving {
         background: rgba(173, 216, 230, 0.8) !important;
     }
     /* change highlight color to light green when dragging the item above a drop location */
-    .drop-hover,
-    .dnd-drag-over {
+    .cdk-drop-list-dragging {
         background: rgb(144, 238, 144) !important;
+        cursor: pointer;
+    }
+
+    .cdk-drag {
+        cursor: pointer;
     }
 }

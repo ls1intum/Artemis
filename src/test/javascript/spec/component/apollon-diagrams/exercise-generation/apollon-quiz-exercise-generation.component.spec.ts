@@ -1,5 +1,4 @@
 import { Course } from 'app/entities/course.model';
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -37,7 +36,7 @@ describe('ApollonQuizExerciseGeneration Component', () => {
     let courseManagementService: CourseManagementService;
     let ngbModal: NgbActiveModal;
     let fixture: ComponentFixture<ApollonQuizExerciseGenerationComponent>;
-    const sandbox = sinon.createSandbox();
+
     const course: Course = { id: 123, title: 'TestCourse' } as Course;
     const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
 
@@ -74,14 +73,14 @@ describe('ApollonQuizExerciseGeneration Component', () => {
             });
     });
 
-    afterEach(function () {
-        sandbox.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('ngOnInit', () => {
-        sandbox.stub(fixture.componentInstance, 'getCourseId').returns(course.id!);
+        jest.spyOn(fixture.componentInstance, 'getCourseId').mockReturnValue(course.id!);
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: course });
-        sandbox.stub(courseManagementService, 'find').returns(of(response));
+        jest.spyOn(courseManagementService, 'find').mockReturnValue(of(response));
 
         // test
         fixture.componentInstance.ngOnInit();
@@ -101,8 +100,8 @@ describe('ApollonQuizExerciseGeneration Component', () => {
 
         const quizExercise: QuizExercise = new QuizExercise(course, undefined);
         const module = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator');
-        sandbox.stub(module, 'generateDragAndDropQuizExercise').returns(quizExercise);
-        const ngbModalSpy = sandbox.spy(ngbModal, 'close');
+        jest.spyOn(module, 'generateDragAndDropQuizExercise').mockReturnValue(quizExercise);
+        const ngbModalSpy = jest.spyOn(ngbModal, 'close');
 
         // test
         await fixture.componentInstance.save();

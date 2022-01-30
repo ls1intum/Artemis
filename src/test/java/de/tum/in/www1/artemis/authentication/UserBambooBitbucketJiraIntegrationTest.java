@@ -33,19 +33,19 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUser_asAdmin_isSuccessful() throws Exception {
         userTestService.updateUser_asAdmin_isSuccessful();
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUserInvalidId() throws Exception {
         userTestService.updateUserInvalidId();
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUserExistingEmail() throws Exception {
         userTestService.updateUserExistingEmail();
     }
@@ -57,19 +57,19 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateUser_asInstructor_forbidden() throws Exception {
         request.put("/api/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void updateUser_asTutor_forbidden() throws Exception {
         request.put("/api/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUser_withExternalUserManagement_vcsManagementHasNotBeenCalled() throws Exception {
         userTestService.updateUser_withExternalUserManagement();
         verifyNoInteractions(versionControlService);
@@ -106,27 +106,27 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUser_withExternalUserManagement_vcsManagementHasNotBeenCalled() throws Exception {
         userTestService.createUser_withExternalUserManagement();
         verifyNoInteractions(versionControlService);
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteUser_withExternalUserManagement_vcsManagementHasNotBeenCalled() throws Exception {
         request.delete("/api/users/" + userTestService.getStudent().getLogin(), HttpStatus.OK);
         verifyNoInteractions(versionControlService);
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteUser_isSuccessful() throws Exception {
         userTestService.deleteUser_isSuccessful();
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteUser_doesntExistInUserManagement_isSuccessful() throws Exception {
         userTestService.deleteUser_doesntExistInUserManagement_isSuccessful();
     }

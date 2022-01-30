@@ -4,7 +4,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { flatten, maxBy, sum } from 'lodash-es';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -16,7 +16,10 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
+import { User } from 'app/core/user/user.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
 
 export enum ExerciseFilter {
@@ -42,6 +45,11 @@ export enum SortingAttribute {
     RELEASE_DATE = 1,
 }
 
+interface ExerciseWithDueDate {
+    exercise: Exercise;
+    dueDate?: dayjs.Dayjs;
+}
+
 @Component({
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
@@ -52,10 +60,11 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     private paramSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
+    private currentUser?: User;
     public course?: Course;
     public weeklyIndexKeys: string[];
     public weeklyExercisesGrouped: object;
-    public upcomingExercises: Exercise[] = [];
+    public upcomingExercises: ExerciseWithDueDate[] = [];
     public exerciseCountMap: Map<string, number>;
 
     readonly ASC = ExerciseSortingOrder.ASC;
@@ -67,7 +76,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     activeFilters: Set<ExerciseFilter>;
     numberOfExercises: number;
     exerciseForGuidedTour?: Exercise;
-    nextRelevantExercise?: Exercise;
+    nextRelevantExercise?: ExerciseWithDueDate;
     sortingAttribute: SortingAttribute;
 
     // Icons
@@ -129,7 +138,11 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         });
 
         this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
-        this.nextRelevantExercise = this.exerciseService.getNextExerciseForHours(this.course?.exercises);
+
+        this.accountService.identity().then((user) => {
+            this.currentUser = user;
+            this.updateNextRelevantExercise();
+        });
     }
 
     ngAfterViewInit(): void {
@@ -146,7 +159,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     }
 
     ngOnChanges() {
-        this.nextRelevantExercise = this.exerciseService.getNextExerciseForHours(this.course?.exercises);
+        this.updateNextRelevantExercise();
     }
 
     ngOnDestroy(): void {
@@ -162,6 +175,19 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
 
     private calcNumberOfExercises() {
         this.numberOfExercises = sum(Array.from(this.exerciseCountMap.values()));
+    }
+
+    private updateNextRelevantExercise() {
+        const nextExercise = this.exerciseService.getNextExerciseForHours(this.course?.exercises, 12, this.currentUser);
+        if (nextExercise) {
+            const dueDate = CourseExercisesComponent.exerciseDueDate(nextExercise);
+            this.nextRelevantExercise = {
+                exercise: nextExercise,
+                dueDate,
+            };
+        } else {
+            this.nextRelevantExercise = undefined;
+        }
     }
 
     /**
@@ -208,19 +234,25 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         const overdueFilterActive = this.activeFilters.has(ExerciseFilter.OVERDUE);
         const unreleasedFilterActive = this.activeFilters.has(ExerciseFilter.UNRELEASED);
         const optionalFilterActive = this.activeFilters.has(ExerciseFilter.OPTIONAL);
-        const filtered = this.course?.exercises?.filter(
-            (exercise) =>
+        const filtered = this.course?.exercises?.filter((exercise) => {
+            const participation = CourseExercisesComponent.studentParticipation(exercise);
+            return (
                 (!needsWorkFilterActive || this.needsWork(exercise)) &&
-                (!exercise.dueDate || !overdueFilterActive || exercise.dueDate.isAfter(dayjs(new Date()))) &&
+                (!exercise.dueDate || !overdueFilterActive || !hasExerciseDueDatePassed(exercise, participation)) &&
                 (!exercise.releaseDate || !unreleasedFilterActive || (exercise as QuizExercise)?.visibleToStudents) &&
                 (!optionalFilterActive || exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED) &&
-                (!isOrion || exercise.type === ExerciseType.PROGRAMMING),
-        );
+                (!isOrion || exercise.type === ExerciseType.PROGRAMMING)
+            );
+        });
         this.groupExercises(filtered);
     }
 
     private getSortingAttributeFromExercise(): (exercise: Exercise) => dayjs.Dayjs | undefined {
-        return this.sortingAttribute === this.DUE_DATE ? (exercise) => exercise.dueDate : (exercise) => exercise.releaseDate;
+        if (this.sortingAttribute === this.DUE_DATE) {
+            return CourseExercisesComponent.exerciseDueDate;
+        } else {
+            return (exercise) => exercise.releaseDate;
+        }
     }
 
     private loadOrderAndAttributeForSorting() {
@@ -243,13 +275,23 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     }
 
     private updateUpcomingExercises(upcomingExercises: Exercise[]) {
-        const sortedExercises = this.sortExercises((exercise) => exercise.dueDate, upcomingExercises) || [];
+        const sortedExercises = (this.sortExercises(CourseExercisesComponent.exerciseDueDate, upcomingExercises, ExerciseSortingOrder.ASC) || []).map((exercise) => {
+            return { exercise, dueDate: CourseExercisesComponent.exerciseDueDate(exercise) };
+        });
         if (upcomingExercises.length <= 5) {
             this.upcomingExercises = sortedExercises;
         } else {
             // sort after selected date and take the first 5 elements
             this.upcomingExercises = sortedExercises.slice(0, 5);
         }
+    }
+
+    private static exerciseDueDate(exercise: Exercise): dayjs.Dayjs | undefined {
+        return getExerciseDueDate(exercise, CourseExercisesComponent.studentParticipation(exercise));
+    }
+
+    private static studentParticipation(exercise: Exercise): StudentParticipation | undefined {
+        return exercise.studentParticipations && exercise.studentParticipations.length > 0 ? exercise.studentParticipations[0] : undefined;
     }
 
     private groupExercises(exercises?: Exercise[]) {
@@ -304,14 +346,15 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         this.calcNumberOfExercises();
     }
 
-    private sortExercises(byAttribute: (exercise: Exercise) => dayjs.Dayjs | undefined, exercises?: Exercise[]) {
+    private sortExercises(byAttribute: (exercise: Exercise) => dayjs.Dayjs | undefined, exercises?: Exercise[], sortOrder?: ExerciseSortingOrder) {
+        const sortingOrder = sortOrder ?? this.sortingOrder;
         return exercises?.sort((a, b) => {
             const sortingAttributeA = byAttribute(a);
             const sortingAttributeB = byAttribute(b);
             const aValue = sortingAttributeA ? sortingAttributeA.second(0).millisecond(0).valueOf() : dayjs().valueOf();
             const bValue = sortingAttributeB ? sortingAttributeB.second(0).millisecond(0).valueOf() : dayjs().valueOf();
             const titleSortValue = a.title && b.title ? a.title.localeCompare(b.title) : 0;
-            return this.sortingOrder.valueOf() * (aValue - bValue === 0 ? titleSortValue : aValue - bValue);
+            return sortingOrder.valueOf() * (aValue - bValue === 0 ? titleSortValue : aValue - bValue);
         });
     }
 }

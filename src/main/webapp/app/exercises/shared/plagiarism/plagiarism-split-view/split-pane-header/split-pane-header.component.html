@@ -5,12 +5,12 @@
             <span class="split-pane-header-selected-file">{{ getActiveFile() }}</span>
         </div>
 
-        <div>{{ studentLogin || ('artemisApp.plagiarism.unknown-student' | artemisTranslate) }}</div>
+        <div>{{ studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }}</div>
     </div>
 
     <ul *ngIf="showFiles" class="split-pane-header-files">
         <li *ngFor="let file of files; let idx = index" class="split-pane-header-file" (click)="handleFileSelect(file, idx)">{{ file }}</li>
 
-        <li *ngIf="!hasFiles()">{{ 'artemisApp.plagiarism.no-files-found' | artemisTranslate }}</li>
+        <li *ngIf="!hasFiles()">{{ 'artemisApp.plagiarism.noFilesFound' | artemisTranslate }}</li>
     </ul>
 </div>

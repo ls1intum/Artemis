@@ -91,9 +91,11 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         // Make both source and destination exercise team exercises
         sourceExercise = database.findModelingExerciseWithTitle(course.getExercises(), "Modeling");
-        sourceExercise = exerciseRepo.save(sourceExercise.mode(ExerciseMode.TEAM));
+        sourceExercise.setMode(ExerciseMode.TEAM);
+        sourceExercise = exerciseRepo.save(sourceExercise);
         destinationExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
-        destinationExercise = exerciseRepo.save(destinationExercise.mode(ExerciseMode.TEAM));
+        destinationExercise.setMode(ExerciseMode.TEAM);
+        destinationExercise = exerciseRepo.save(destinationExercise);
         Pair<List<Team>, List<Team>> importedTeamsWithBody = getImportedTeamsAndBody("import", "student", "R");
         importedTeams = importedTeamsWithBody.getFirst();
         importedTeamsBody = importedTeamsWithBody.getSecond();
@@ -258,23 +260,27 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         request.put(importFromExerciseUrl(destinationExercise), null, HttpStatus.BAD_REQUEST);
 
         // If the destination exercise is not a team exercise, the request should fail
-        exerciseRepo.save(destinationExercise.mode(ExerciseMode.INDIVIDUAL));
+        destinationExercise.setMode(ExerciseMode.INDIVIDUAL);
+        exerciseRepo.save(destinationExercise);
         request.put(importFromSourceExerciseUrl(), null, HttpStatus.BAD_REQUEST);
-        exerciseRepo.save(destinationExercise.mode(ExerciseMode.TEAM));
 
+        destinationExercise.setMode(ExerciseMode.TEAM);
+        exerciseRepo.save(destinationExercise);
         // If the source exercise is not a team exercise, the request should fail
-        exerciseRepo.save(sourceExercise.mode(ExerciseMode.INDIVIDUAL));
+        sourceExercise.setMode(ExerciseMode.INDIVIDUAL);
+        exerciseRepo.save(sourceExercise);
         request.put(importFromSourceExerciseUrl(), null, HttpStatus.BAD_REQUEST);
-        exerciseRepo.save(sourceExercise.mode(ExerciseMode.TEAM));
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testImportTeamsFromListBadRequests() throws Exception {
         // If the destination exercise is not a team exercise, the request should fail
-        exerciseRepo.save(destinationExercise.mode(ExerciseMode.INDIVIDUAL));
+        destinationExercise.setMode(ExerciseMode.INDIVIDUAL);
+        exerciseRepo.save(destinationExercise);
         request.put(importFromListUrl(), importedTeamsBody, HttpStatus.BAD_REQUEST);
-        exerciseRepo.save(destinationExercise.mode(ExerciseMode.TEAM));
+        destinationExercise.setMode(ExerciseMode.TEAM);
+        exerciseRepo.save(destinationExercise);
 
         // If user with given registration number does not exist, the request should fail
         List<Team> teams = new ArrayList<>();

@@ -10,10 +10,9 @@ export class AnswerOption implements BaseEntity, CanBecomeInvalid, TextHintExpla
     public explanation?: string;
     public isCorrect?: boolean;
     public question?: MultipleChoiceQuestion;
-    public invalid?: boolean;
+    public invalid = false; // default value
 
     constructor() {
         this.isCorrect = false; // default value
-        this.invalid = false; // default value
     }
 }
