@@ -166,18 +166,18 @@ public abstract class AssessmentResource {
      * @param submissionId the id of the example submission
      * @return the result linked to the example submission
      */
-    ResponseEntity<Result> getExampleAssessment(long exerciseId, long submissionId) {
+    protected ResponseEntity<Result> getExampleAssessment(long exerciseId, long submissionId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         final var exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        var isInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        var isTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
+        var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         // It is allowed to get the example assessment, if the user is an instructor or
         // if the user is a tutor and the submission is not used for tutorial in the assessment dashboard
         // The reason is that example submissions with isTutorial = false should be shown immediately (with the assessment) to the tutor and
         // for example submission with isTutorial = true, the assessment should not be shown to the tutor. Instead, the tutor should try to assess it him/herself
-        if (!(isInstructor || isTutor && !exampleSubmission.isUsedForTutorial())) {
+        if (!(isAtLeastInstructor || (isAtLeastTutor && !exampleSubmission.isUsedForTutorial()))) {
             throw new AccessForbiddenException();
         }
 

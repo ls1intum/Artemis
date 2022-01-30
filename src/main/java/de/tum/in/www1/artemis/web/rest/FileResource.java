@@ -525,15 +525,9 @@ public class FileResource {
 
             HttpHeaders headers = new HttpHeaders();
 
-            ContentDisposition contentDisposition;
-            if (filename.endsWith("htm") || filename.endsWith("html") || filename.endsWith("svg") || filename.endsWith("svgz")) {
-                // attachment will force the user to download the file
-                contentDisposition = ContentDisposition.builder("attachment").filename(filename).build();
-            }
-            else {
-                contentDisposition = ContentDisposition.builder("inline").filename(filename).build();
-            }
-            headers.setContentDisposition(contentDisposition);
+            // attachment will force the user to download the file
+            String contentType = filename.endsWith("htm") || filename.endsWith("html") || filename.endsWith("svg") || filename.endsWith("svgz") ? "attachment" : "inline";
+            headers.setContentDisposition(ContentDisposition.builder(contentType).filename(filename).build());
 
             FileNameMap fileNameMap = URLConnection.getFileNameMap();
             String mimeType = fileNameMap.getContentTypeFor(filename);
