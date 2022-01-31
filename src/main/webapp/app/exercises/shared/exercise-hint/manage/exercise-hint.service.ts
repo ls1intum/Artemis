@@ -75,7 +75,7 @@ export class ExerciseHintService implements IExerciseHintService {
      * @param exerciseHintId Id of exercise hint to find
      */
     find(exerciseId: number, exerciseHintId: number): Observable<ExerciseHintResponse> {
-        return this.http.get<ExerciseHint>(`${this.resourceUrl}/${exerciseHintId}`, { observe: 'response' });
+        return this.http.get<ExerciseHint>(`${this.resourceUrl}/${exerciseId}/exercise-hints/${exerciseHintId}`, { observe: 'response' });
     }
 
     /**
@@ -94,7 +94,7 @@ export class ExerciseHintService implements IExerciseHintService {
      * @return the title of the hint in an HttpResponse, or an HttpErrorResponse on error
      */
     getTitle(exerciseId: number, exerciseHintId: number): Observable<HttpResponse<string>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseHintId}/title`, { observe: 'response', responseType: 'text' });
+        return this.http.get(`${this.resourceUrl}/${exerciseHintId}/exercise-hints/title`, { observe: 'response', responseType: 'text' });
     }
 
     /**
