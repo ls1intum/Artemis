@@ -95,7 +95,7 @@ describe('ExerciseHint Service', () => {
     });
 
     it('should delete an ExerciseHint', () => {
-        service.delete(123).subscribe((resp) => (expectedResult = resp.ok));
+        service.delete(1, 123).subscribe((resp) => (expectedResult = resp.ok));
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });

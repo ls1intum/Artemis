@@ -35,8 +35,6 @@ public class ExerciseHintResource {
 
     private static final String ENTITY_NAME = "exerciseHint";
 
-    private static final String CODE_HINT_ENTITY_NAME = "codeHint";
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -57,17 +55,18 @@ public class ExerciseHintResource {
     }
 
     /**
-     * {@code POST  /exercise-hints} : Create a new exerciseHint.
+     * {@code POST  /exercises/:exerciseId/exercise-hints} : Create a new exerciseHint for an exercise.
      *
-     * @param exerciseHint the exerciseHint to create.
+     * @param exerciseHint the exerciseHint to create
+     * @param exerciseId the exerciseId of the exercise of which to create the exerciseHint
      * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the new exerciseHint,
-     * or with status {@code 400 (Bad Request)} if the exerciseHint has already an ID,
+     * or with status {@code 400 (Bad Request)} if the exerciseId is invalid,
      * or with status {@code 403 (Forbidden) if the exerciseHint is a codeHint}.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
-    @PostMapping("/exercise-hints")
+    @PostMapping("/exercises/{exerciseId}/exercise-hints")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<ExerciseHint> createExerciseHint(@RequestBody ExerciseHint exerciseHint) throws URISyntaxException {
+    public ResponseEntity<ExerciseHint> createExerciseHint(@RequestBody ExerciseHint exerciseHint, @PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to save ExerciseHint : {}", exerciseHint);
         if (exerciseHint instanceof CodeHint) {
             throw new AccessForbiddenException("A code hint cannot be created manually.");
@@ -76,6 +75,11 @@ public class ExerciseHintResource {
         if (exerciseHint.getExercise() == null) {
             throw new BadRequestAlertException("An exercise hint can only be created if the exercise is defined", ENTITY_NAME, "idnull");
         }
+
+        if (!exerciseHint.getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException("An exercise hint can only be created if the exerciseIds match.", ENTITY_NAME, "idnull");
+        }
+
         // Reload the exercise from the database as we can't trust data from the client
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseHint.getExercise().getId());
 
@@ -85,23 +89,25 @@ public class ExerciseHintResource {
         }
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
         ExerciseHint result = exerciseHintRepository.save(exerciseHint);
-        return ResponseEntity.created(new URI("/api/exercise-hints/" + result.getId()))
+        return ResponseEntity.created(new URI("/api/exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
-     * {@code PUT  /exercise-hints/{id}} : Updates an existing exerciseHint.
+     * {@code PUT  /exercises/:exerciseId/exercise-hints/{id}} : Updates an existing exerciseHint.
      *
-     * @param exerciseHint   the exerciseHint to update.
+     * @param exerciseHint the exerciseHint to update
+     * @param exerciseId the exerciseId of the exercise of which to update the exerciseHint
      * @param exerciseHintId the id to the exerciseHint
+     *
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated exerciseHint,
-     * or with status {@code 400 (Bad Request)} if the exerciseHint is not valid,
+     * or with status {@code 400 (Bad Request)} if the exerciseHint or exerciseId are not valid,
      * or with status {@code 403 (Forbidden) if the exerciseHint is a codeHint}.
      * or with status {@code 500 (Internal Server Error)} if the exerciseHint couldn't be updated.
      */
-    @PutMapping("/exercise-hints/{exerciseHintId}")
+    @PutMapping("/exercises/{exerciseId}/exercise-hints/{exerciseHintId}")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<ExerciseHint> updateExerciseHint(@RequestBody ExerciseHint exerciseHint, @PathVariable Long exerciseHintId) {
+    public ResponseEntity<ExerciseHint> updateExerciseHint(@RequestBody ExerciseHint exerciseHint, @PathVariable Long exerciseHintId, @PathVariable Long exerciseId) {
         log.debug("REST request to update ExerciseHint : {}", exerciseHint);
         if (exerciseHint instanceof CodeHint) {
             throw new AccessForbiddenException("A code hint cannot be updated manually.");
@@ -110,6 +116,11 @@ public class ExerciseHintResource {
         if (exerciseHint.getId() == null || !exerciseHintId.equals(exerciseHint.getId()) || exerciseHint.getExercise() == null) {
             throw new BadRequestAlertException("An exercise hint can only be changed if it has an ID and if the exercise is not null", ENTITY_NAME, "idnull");
         }
+
+        if (!exerciseHint.getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException("An exercise hint can only be updated if the exerciseIds match.", ENTITY_NAME, "idnull");
+        }
+
         var hintBeforeSaving = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
         // Reload the exercise from the database as we can't trust data from the client
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseHint.getExercise().getId());
@@ -125,38 +136,55 @@ public class ExerciseHintResource {
     }
 
     /**
-     * GET /exercise-hints/:hintId/title : Returns the title of the hint with the given id
+     * GET /exercises/:exerciseId/exercise-hints/:hintId/title : Returns the title of the hint with the given id
      *
-     * @param hintId the id of the hint
+     * @param hintId the id of the exerciseHint
+     * @param exerciseId the exerciseId of the exercise of which to retrieve the exerciseHints' title
      * @return the title of the hint wrapped in an ResponseEntity or 404 Not Found if no hint with that id exists
+     * or with status {@code 400 (Bad Request)} if the exerciseId is not valid,
      */
-    @GetMapping(value = "/exercise-hints/{hintId}/title")
+    @GetMapping(value = "/exercises/{exerciseId}/exercise-hints/{hintId}/title")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<String> getHintTitle(@PathVariable Long hintId) {
-        final var title = exerciseHintRepository.getHintTitle(hintId);
-        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    public ResponseEntity<String> getHintTitle(@PathVariable Long exerciseId, @PathVariable Long hintId) {
+        final var hint = exerciseHintRepository.findByIdElseThrow(hintId);
+
+        if (hint.getExercise() == null || !hint.getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException("An exercise hint can only be retrieved if the exerciseIds match.", ENTITY_NAME, "idnull");
+        }
+
+        return hint.getTitle() == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(hint.getTitle());
     }
 
     /**
-     * {@code GET  /exercise-hints/:id} : get the "id" exerciseHint.
+     * {@code GET  /exercises/:exerciseId/exercise-hints/:id} : get the "id" exerciseHint.
      *
      * @param exerciseHintId the id of the exerciseHint to retrieve.
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exerciseHint, or with status {@code 404 (Not Found)}.
+     * @param exerciseId the exerciseId of the exercise of which to retrieve the exerciseHint
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exerciseHint,
+     * or with status {@code 400 (Bad Request)} if the exerciseId is not valid,
+     * or with status {@code 404 (Not Found)}.
      */
-    @GetMapping("/exercise-hints/{exerciseHintId}")
+    @GetMapping("/exercises/{exerciseId}/exercise-hints/{exerciseHintId}")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<ExerciseHint> getExerciseHint(@PathVariable Long exerciseHintId) {
+    public ResponseEntity<ExerciseHint> getExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseHintId);
         var exerciseHint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
+
+        if (!exerciseHint.getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException("An exercise hint can only be retrieved if the exerciseIds match.", ENTITY_NAME, "idnull");
+        }
+
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exerciseHint.getExercise(), null);
         return ResponseEntity.ok().body(exerciseHint);
     }
 
     /**
-     * {@code GET  /exercises/:exerciseId/hints} : get the exerciseHints of a provided exercise.
+     * {@code GET  /exercises/:exerciseId/exercise-hints} : get the exerciseHints of a provided exercise.
      *
      * @param exerciseId the exercise id of which to retrieve the exercise hints.
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exerciseHint, or with status {@code 404 (Not Found)}.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exerciseHint,
+     * or with status {@code 400 (Bad Request)} if the exerciseId is not valid,
+     * or with status {@code 404 (Not Found)}.
      */
     @GetMapping("/exercises/{exerciseId}/exercise-hints")
     @PreAuthorize("hasRole('USER')")
@@ -169,19 +197,25 @@ public class ExerciseHintResource {
     }
 
     /**
-     * {@code DELETE  /exercise-hints/:id} : delete the "id" exerciseHint.
+     * {@code DELETE  /exercises/:exerciseId/exercise-hints/:id} : delete the "id" exerciseHint.
      *
-     * @param exerciseHintId the id of the exerciseHint to delete.
+     * @param exerciseHintId the id of the exerciseHint to delete
+     * @param exerciseId the exercise id of which to delete the exercise hint
      * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)}.
+     * or with status {@code 400 (Forbidden) if the exerciseId is not valid}
      * or with status {@code 403 (Forbidden) if the exerciseHint is a codeHint}.
      */
-    @DeleteMapping("/exercise-hints/{exerciseHintId}")
+    @DeleteMapping("/exercises/{exerciseId}/exercise-hints/{exerciseHintId}")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Void> deleteExerciseHint(@PathVariable Long exerciseHintId) {
+    public ResponseEntity<Void> deleteExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
         log.debug("REST request to delete ExerciseHint : {}", exerciseHintId);
         var exerciseHint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
         if (exerciseHint instanceof CodeHint) {
             throw new AccessForbiddenException("A code hint cannot be deleted manually.");
+        }
+
+        if (!exerciseHint.getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException("An exercise hint can only be deleted if the exerciseIds match.", ENTITY_NAME, "idnull");
         }
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exerciseHint.getExercise(), null);
