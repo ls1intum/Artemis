@@ -14,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
@@ -117,12 +118,26 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createHintAsInstructor() throws Exception {
         ExerciseHint exerciseHint = new ExerciseHint().content("content 4").title("title 4").exercise(exercise);
+
         request.post("/api/exercise-hints/", exerciseHint, HttpStatus.CREATED);
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
         assertThat(exerciseHints).hasSize(4);
 
         exerciseHint.setExercise(null);
         request.post("/api/exercise-hints/", exerciseHint, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createCodeHintShouldFail() throws Exception {
+        CodeHint codeHint = new CodeHint();
+        codeHint.setTitle("Hint 1");
+        codeHint.setExercise(exercise);
+
+        int sizeBefore = exerciseHintRepository.findAll().size();
+        request.post("/api/exercise-hints/", codeHint, HttpStatus.FORBIDDEN);
+        int sizeAfter = exerciseHintRepository.findAll().size();
+        assertThat(sizeAfter).isEqualTo(sizeBefore);
     }
 
     @Test
@@ -181,12 +196,43 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateCodeHintShouldFail() throws Exception {
+        CodeHint codeHint = new CodeHint();
+        codeHint.setTitle("Hint 1");
+        codeHint.setExercise(exercise);
+        exerciseHintRepository.save(codeHint);
+
+        codeHint.setTitle("New Title");
+
+        request.put("/api/exercise-hints/" + codeHint.getId(), codeHint, HttpStatus.FORBIDDEN);
+        Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(codeHint.getId());
+        assertThat(hintAfterSave).isPresent();
+        assertThat(hintAfterSave.get()).isInstanceOf(CodeHint.class);
+        assertThat((hintAfterSave.get()).getTitle()).isEqualTo("Hint 1");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteHintAsInstructor() throws Exception {
         ExerciseHint exerciseHint = new ExerciseHint().content("content 4").title("title 4").exercise(exercise);
         request.delete("/api/exercise-hints/" + 0L, HttpStatus.NOT_FOUND);
         request.post("/api/exercise-hints", exerciseHint, HttpStatus.CREATED);
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
         request.delete("/api/exercise-hints/" + exerciseHints.get(0).getId(), HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteCodeHintShouldFail() throws Exception {
+        CodeHint codeHint = new CodeHint();
+        codeHint.setTitle("Hint 1");
+        codeHint.setExercise(exercise);
+        exerciseHintRepository.save(codeHint);
+
+        int sizeBefore = exerciseHintRepository.findAll().size();
+        request.delete("/api/exercise-hints/" + codeHint.getId(), HttpStatus.FORBIDDEN);
+        int sizeAfter = exerciseHintRepository.findAll().size();
+        assertThat(sizeAfter).isEqualTo(sizeBefore);
     }
 
     @Test

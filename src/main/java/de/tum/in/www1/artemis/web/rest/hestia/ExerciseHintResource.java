@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -33,6 +34,8 @@ public class ExerciseHintResource {
     private final Logger log = LoggerFactory.getLogger(ExerciseHintResource.class);
 
     private static final String ENTITY_NAME = "exerciseHint";
+
+    private static final String CODE_HINT_ENTITY_NAME = "codeHint";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -57,13 +60,19 @@ public class ExerciseHintResource {
      * {@code POST  /exercise-hints} : Create a new exerciseHint.
      *
      * @param exerciseHint the exerciseHint to create.
-     * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the new exerciseHint, or with status {@code 400 (Bad Request)} if the exerciseHint has already an ID.
+     * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the new exerciseHint,
+     * or with status {@code 400 (Bad Request)} if the exerciseHint has already an ID,
+     * or with status {@code 403 (Forbidden) if the exerciseHint is a codeHint}.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PostMapping("/exercise-hints")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseHint> createExerciseHint(@RequestBody ExerciseHint exerciseHint) throws URISyntaxException {
         log.debug("REST request to save ExerciseHint : {}", exerciseHint);
+        if (exerciseHint instanceof CodeHint) {
+            throw new AccessForbiddenException("A code hint cannot be created manually.");
+        }
+
         if (exerciseHint.getExercise() == null) {
             throw new BadRequestAlertException("An exercise hint can only be created if the exercise is defined", ENTITY_NAME, "idnull");
         }
@@ -87,12 +96,17 @@ public class ExerciseHintResource {
      * @param exerciseHintId the id to the exerciseHint
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated exerciseHint,
      * or with status {@code 400 (Bad Request)} if the exerciseHint is not valid,
+     * or with status {@code 403 (Forbidden) if the exerciseHint is a codeHint}.
      * or with status {@code 500 (Internal Server Error)} if the exerciseHint couldn't be updated.
      */
     @PutMapping("/exercise-hints/{exerciseHintId}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseHint> updateExerciseHint(@RequestBody ExerciseHint exerciseHint, @PathVariable Long exerciseHintId) {
         log.debug("REST request to update ExerciseHint : {}", exerciseHint);
+        if (exerciseHint instanceof CodeHint) {
+            throw new AccessForbiddenException("A code hint cannot be updated manually.");
+        }
+
         if (exerciseHint.getId() == null || !exerciseHintId.equals(exerciseHint.getId()) || exerciseHint.getExercise() == null) {
             throw new BadRequestAlertException("An exercise hint can only be changed if it has an ID and if the exercise is not null", ENTITY_NAME, "idnull");
         }
@@ -159,12 +173,17 @@ public class ExerciseHintResource {
      *
      * @param exerciseHintId the id of the exerciseHint to delete.
      * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)}.
+     * or with status {@code 403 (Forbidden) if the exerciseHint is a codeHint}.
      */
     @DeleteMapping("/exercise-hints/{exerciseHintId}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> deleteExerciseHint(@PathVariable Long exerciseHintId) {
         log.debug("REST request to delete ExerciseHint : {}", exerciseHintId);
         var exerciseHint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
+        if (exerciseHint instanceof CodeHint) {
+            throw new AccessForbiddenException("A code hint cannot be deleted manually.");
+        }
+
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exerciseHint.getExercise(), null);
         exerciseHintRepository.deleteById(exerciseHintId);
         return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseHintId.toString())).build();
