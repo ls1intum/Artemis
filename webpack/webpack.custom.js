@@ -6,7 +6,6 @@ const MergeJsonWebpackPlugin = require('merge-jsons-webpack-plugin');
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const WebpackNotifierPlugin = require('webpack-notifier');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
 
 const environment = require('./environment');
@@ -19,22 +18,6 @@ module.exports = async (config, options, targetOptions) => {
         files: { include: ['*.json'] },
     });
 
-    config.cache = {
-        // 1. Set cache type to filesystem
-        type: 'filesystem',
-        cacheDirectory: path.resolve(__dirname, '../build/webpack'),
-        buildDependencies: {
-            // 2. Add your config as buildDependency to get cache invalidation on config change
-            config: [
-                __filename,
-                path.resolve(__dirname, 'webpack.custom.js'),
-                path.resolve(__dirname, '../angular.json'),
-                path.resolve(__dirname, '../tsconfig.app.json'),
-                path.resolve(__dirname, '../tsconfig.json'),
-            ],
-        },
-    };
-
     // PLUGINS
     if (config.mode === 'development') {
         config.plugins.push(
@@ -43,7 +26,7 @@ module.exports = async (config, options, targetOptions) => {
             }),
             new WebpackNotifierPlugin({
                 title: 'Artemis',
-                contentImage: path.join(__dirname, 'logo-jhipster.png'),
+                contentImage: path.join(__dirname, 'src/main/resources/public/images/logo.png'),
             })
         );
     }
@@ -97,14 +80,6 @@ module.exports = async (config, options, targetOptions) => {
                 reportFilename: '../stats.html',
             })
         );
-    }
-
-    const patterns = [
-        // jhipster-needle-add-assets-to-webpack - JHipster will add/remove third-party resources in this array
-    ];
-
-    if (patterns.length > 0) {
-        config.plugins.push(new CopyWebpackPlugin({ patterns }));
     }
 
     config.plugins.push(

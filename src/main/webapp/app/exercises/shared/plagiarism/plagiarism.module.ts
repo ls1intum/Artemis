@@ -13,9 +13,10 @@ import { ModelingSubmissionViewerComponent } from './plagiarism-split-view/model
 import { TextSubmissionViewerComponent } from './plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { SplitPaneHeaderComponent } from './plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { PlagiarismRunDetailsComponent } from './plagiarism-run-details/plagiarism-run-details.component';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisModelingEditorModule, FormsModule, RouterModule, TranslateModule],
+    imports: [ArtemisSharedModule, ArtemisModelingEditorModule, FormsModule, RouterModule, TranslateModule, NgxChartsModule],
     declarations: [
         PlagiarismDetailsComponent,
         PlagiarismHeaderComponent,
@@ -28,6 +29,6 @@ import { PlagiarismRunDetailsComponent } from './plagiarism-run-details/plagiari
         SplitPaneHeaderComponent,
         PlagiarismRunDetailsComponent,
     ],
-    exports: [PlagiarismInspectorComponent],
+    exports: [PlagiarismInspectorComponent, PlagiarismSplitViewComponent],
 })
 export class ArtemisPlagiarismModule {}

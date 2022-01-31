@@ -44,29 +44,29 @@ import org.springframework.stereotype.Service;
 @Service
 public class DatabaseUtilService {
 
-    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+    private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
 
-    private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+    private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
 
-    private static final Authority userAuthority = new Authority(Role.STUDENT.getAuthority());
+    private static final Authority USER_AUTHORITY = new Authority(Role.STUDENT.getAuthority());
 
-    private static final Authority tutorAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
+    private static final Authority TUTOR_AUTHORITY = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
 
-    private static final Authority editorAuthority = new Authority(Role.EDITOR.getAuthority());
+    private static final Authority EDITOR_AUTHORITY = new Authority(Role.EDITOR.getAuthority());
 
-    private static final Authority instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
+    private static final Authority INSTRUCTOR_AUTHORITY = new Authority(Role.INSTRUCTOR.getAuthority());
 
-    private static final Authority adminAuthority = new Authority(Role.ADMIN.getAuthority());
+    private static final Authority ADMIN_AUTHORITY = new Authority(Role.ADMIN.getAuthority());
 
-    private static final Set<Authority> studentAuthorities = Set.of(userAuthority);
+    private static final Set<Authority> STUDENT_AUTHORITIES = Set.of(USER_AUTHORITY);
 
-    private static final Set<Authority> tutorAuthorities = Set.of(userAuthority, tutorAuthority);
+    private static final Set<Authority> TUTOR_AUTHORITIES = Set.of(USER_AUTHORITY, TUTOR_AUTHORITY);
 
-    private static final Set<Authority> editorAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority);
+    private static final Set<Authority> EDITOR_AUTHORITIES = Set.of(USER_AUTHORITY, TUTOR_AUTHORITY, EDITOR_AUTHORITY);
 
-    private static final Set<Authority> instructorAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority);
+    private static final Set<Authority> INSTRUCTOR_AUTHORITIES = Set.of(USER_AUTHORITY, TUTOR_AUTHORITY, EDITOR_AUTHORITY, INSTRUCTOR_AUTHORITY);
 
-    private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority, adminAuthority);
+    private static final Set<Authority> ADMIN_AUTHORITIES = Set.of(USER_AUTHORITY, TUTOR_AUTHORITY, EDITOR_AUTHORITY, INSTRUCTOR_AUTHORITY, ADMIN_AUTHORITY);
 
     @Autowired
     private CourseRepository courseRepo;
@@ -101,17 +101,22 @@ public class DatabaseUtilService {
     @Autowired
     private DatabaseCleanupService databaseCleanupService;
 
+    /**
+     * Add users of all roles.
+     *
+     * @return the list of the newly created users
+     */
     public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
 
-        authorityRepository.saveAll(adminAuthorities);
+        authorityRepository.saveAll(ADMIN_AUTHORITIES);
 
-        List<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser", "testgroup" }, studentAuthorities, numberOfStudents);
-        List<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor", "testgroup" }, tutorAuthorities, numberOfTutors);
-        List<User> editors = ModelFactory.generateActivatedUsers("editor", new String[] { "editor", "testgroup" }, editorAuthorities, numberOfEditors);
-        List<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor", "testgroup" }, instructorAuthorities, numberOfInstructors);
+        List<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser", "testgroup" }, STUDENT_AUTHORITIES, numberOfStudents);
+        List<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor", "testgroup" }, TUTOR_AUTHORITIES, numberOfTutors);
+        List<User> editors = ModelFactory.generateActivatedUsers("editor", new String[] { "editor", "testgroup" }, EDITOR_AUTHORITIES, numberOfEditors);
+        List<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor", "testgroup" }, INSTRUCTOR_AUTHORITIES, numberOfInstructors);
         User admin = ModelFactory.generateActivatedUser("admin");
         admin.setGroups(Set.of("admin"));
-        admin.setAuthorities(adminAuthorities);
+        admin.setAuthorities(ADMIN_AUTHORITIES);
         List<User> usersToAdd = new ArrayList<>();
         usersToAdd.addAll(students);
         usersToAdd.addAll(tutors);
@@ -130,8 +135,13 @@ public class DatabaseUtilService {
         return users;
     }
 
+    /**
+     * Create a course and create a lecture assigned to the course.
+     *
+     * @return the created lecture
+     */
     public Lecture createCourseWithLecture(boolean saveLecture) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = ModelFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
         Lecture lecture = new Lecture();
         lecture.setDescription("Test Lecture");

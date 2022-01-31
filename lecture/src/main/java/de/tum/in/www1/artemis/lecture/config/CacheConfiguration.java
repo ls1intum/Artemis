@@ -4,6 +4,7 @@ import java.util.Collections;
 
 import javax.annotation.PreDestroy;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,7 +120,7 @@ public class CacheConfiguration {
             log.info("Configuring Hazelcast clustering for instanceId: {}", serviceId);
 
             // Bind to the interface specified in the config if the value is set
-            if (hazelcastInterface != null && !hazelcastInterface.isEmpty()) {
+            if (!StringUtils.isEmpty(hazelcastInterface)) {
                 // We should not prefer IPv4, this will ensure that both IPv4 and IPv6 work as none is preferred
                 System.setProperty("hazelcast.prefer.ipv4.stack", "false");
                 hazelcastBindOnlyOnInterface(hazelcastInterface, config);

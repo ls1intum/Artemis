@@ -1,7 +1,6 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
-import * as chai from 'chai';
 import { take } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -14,8 +13,6 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { getNamesForAssessments } from 'app/exercises/modeling/assess/modeling-assessment.util';
-
-const expect = chai.expect;
 
 describe('Modeling Assessment Service', () => {
     let injector: TestBed;
@@ -76,7 +73,7 @@ describe('Modeling Assessment Service', () => {
                     method: 'PUT',
                 });
                 req.flush(returnedFromService);
-                expect(expectedResult).to.deep.equal(elemDefault);
+                expect(expectedResult).toEqual(elemDefault);
             });
 
             it('should save an example assessment', async () => {
@@ -102,7 +99,7 @@ describe('Modeling Assessment Service', () => {
                     method: 'PUT',
                 });
                 req.flush(returnedFromService);
-                expect(expectedResult).to.deep.equal(elemDefault);
+                expect(expectedResult).toEqual(elemDefault);
             });
 
             it('should get an assessment', async () => {
@@ -117,7 +114,7 @@ describe('Modeling Assessment Service', () => {
                     method: 'GET',
                 });
                 req.flush(returnedFromService);
-                expect(expectedResult).to.deep.equal(elemDefault);
+                expect(expectedResult).toEqual(elemDefault);
             });
 
             it('should get an example assessment', async () => {
@@ -133,7 +130,7 @@ describe('Modeling Assessment Service', () => {
                     method: 'GET',
                 });
                 req.flush(returnedFromService);
-                expect(expectedResult).to.deep.equal(elemDefault);
+                expect(expectedResult).toEqual(elemDefault);
             });
 
             it('should update assessment after complaint', async () => {
@@ -160,7 +157,7 @@ describe('Modeling Assessment Service', () => {
                     .subscribe((resp) => (httpExpectedResult = resp));
                 const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/modeling-submissions/${submissionId}/assessment-after-complaint`, method: 'PUT' });
                 req.flush(returnedFromService);
-                expect(httpExpectedResult.body).to.deep.equal(expected);
+                expect(httpExpectedResult.body).toEqual(expected);
             });
 
             it('should get names for assessment', async () => {
@@ -215,7 +212,7 @@ describe('Modeling Assessment Service', () => {
                 } as unknown as UMLModel;
 
                 expectedResult = getNamesForAssessments(elemDefault, uml);
-                expect(expectedResult).to.deep.equal(expected);
+                expect(expectedResult).toEqual(expected);
             });
         });
 
@@ -237,9 +234,9 @@ describe('Modeling Assessment Service', () => {
                 } as Feedback,
             ];
             let result = service.isFeedbackTextValid(emptyfeedback);
-            expect(result).to.be.true;
+            expect(result).toBeTrue();
             result = service.isFeedbackTextValid(feedbacks);
-            expect(result).to.be.true;
+            expect(result).toBeTrue();
         });
     });
 });

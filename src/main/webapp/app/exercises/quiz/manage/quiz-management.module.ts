@@ -2,10 +2,9 @@ import { NgModule } from '@angular/core';
 import { MultipleChoiceQuestionEditComponent } from './multiple-choice-question/multiple-choice-question-edit.component';
 import { DragAndDropQuestionEditComponent } from './drag-and-drop-question/drag-and-drop-question-edit.component';
 import { ShortAnswerQuestionEditComponent } from './short-answer-question/short-answer-question-edit.component';
-import { AngularFittextModule } from 'angular-fittext';
-import { AceEditorModule } from 'ng2-ace-editor';
+import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { DndModule } from 'ng2-dnd';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisQuizStatisticModule } from 'app/exercises/quiz/manage/statistics/quiz-statistic.module';
@@ -29,6 +28,7 @@ import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/q
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 import { MatchPercentageInfoModalComponent } from 'app/exercises/quiz/manage/match-percentage-info-modal/match-percentage-info-modal.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.module';
 
 const ENTITY_STATES = [...quizManagementRoute];
 
@@ -36,8 +36,7 @@ const ENTITY_STATES = [...quizManagementRoute];
     imports: [
         ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        DndModule.forRoot(),
-        AngularFittextModule,
+        DragDropModule,
         AceEditorModule,
         FormDateTimePickerModule,
         ArtemisQuizQuestionTypesModule,
@@ -49,6 +48,7 @@ const ENTITY_STATES = [...quizManagementRoute];
         ArtemisIncludedInOverallScorePickerModule,
         ArtemisQuizParticipationModule,
         ArtemisMarkdownModule,
+        FitTextModule,
     ],
     declarations: [
         QuizExerciseComponent,

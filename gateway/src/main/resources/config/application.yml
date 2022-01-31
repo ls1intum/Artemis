@@ -33,7 +33,7 @@ eureka:
         lease-expiration-duration-in-seconds: 10
         status-page-url-path: ${management.endpoints.web.base-path}/info
         health-check-url-path: ${management.endpoints.web.base-path}/health
-        preferIpAddress: true
+#        preferIpAddress: true
         metadata-map:
             zone: primary # This is needed for the load balancer
             profile: ${spring.profiles.active}
@@ -70,6 +70,10 @@ management:
     info:
         git:
             mode: full
+        java:
+            enabled: true
+        env:
+            enabled: true
     health:
         group:
             liveness:
@@ -134,6 +138,15 @@ spring:
                     uri: lb://LECTURE
                     predicates:
                         - Path=/api/lectures/{segment}/attachment-units/**,/api/lectures/{segment}/text-units/**,/api/lectures/{segment}/video-units/**,/api/lectures/{segment}/exercise-units/**
+                -   id: usermanagement
+                    uri: lb://usermanagement
+                    predicates:
+                        - Path=/api/users, /api/users/**, /api/users/authorities, /api/guided-tour-settings/**
+                -   id: usermanagement
+                    uri: lb://usermanagement
+                    predicates:
+                        - Path=/api/authenticate
+                        - Method=GET
                 -   id: artemis
                     uri: lb://ARTEMIS
                     predicates:

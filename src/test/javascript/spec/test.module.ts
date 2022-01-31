@@ -7,16 +7,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from './helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from './helpers/mocks/activated-route/mock-activated-route';
 import { MockRouter } from './helpers/mocks/mock-router';
-import { MockActiveModal } from './helpers/mocks/service/mock-active-modal.service';
-import { MockEventManager } from './helpers/mocks/service/mock-event-manager.service';
-import { CookieService } from 'ngx-cookie-service';
-import { FaIconLibrary, FontAwesomeModule, FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { fas } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeModule, FaIconComponent } from '@fortawesome/angular-fontawesome';
 import locale from '@angular/common/locales/en';
-import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
-import dayjs from 'dayjs';
-import { MockComponent } from 'ng-mocks';
-import { MockAlertService } from './helpers/mocks/service/mock-alert.service';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,16 +21,9 @@ import { MockTranslateService } from './helpers/mocks/service/mock-translate.ser
     imports: [HttpClientTestingModule, FontAwesomeModule],
     providers: [
         DatePipe,
-        CookieService,
         ParseLinks,
-        {
-            provide: EventManager,
-            useClass: MockEventManager,
-        },
-        {
-            provide: NgbActiveModal,
-            useClass: MockActiveModal,
-        },
+        MockProvider(EventManager),
+        MockProvider(NgbActiveModal),
         {
             provide: ActivatedRoute,
             useValue: new MockActivatedRoute({ id: 123 }),
@@ -49,10 +36,7 @@ import { MockTranslateService } from './helpers/mocks/service/mock-translate.ser
             provide: AccountService,
             useClass: MockAccountService,
         },
-        {
-            provide: AlertService,
-            useClass: MockAlertService,
-        },
+        MockProvider(AlertService),
         {
             provide: TranslateService,
             useClass: MockTranslateService,
@@ -74,10 +58,8 @@ import { MockTranslateService } from './helpers/mocks/service/mock-translate.ser
     exports: [MockComponent(FaIconComponent)],
 })
 export class ArtemisTestModule {
-    constructor(iconLibrary: FaIconLibrary, dpConfig: NgbDatepickerConfig, translateService: TranslateService) {
+    constructor(dpConfig: NgbDatepickerConfig, translateService: TranslateService) {
         registerLocaleData(locale);
-        iconLibrary.addIconPacks(fas);
-        iconLibrary.addIcons(...fontAwesomeIcons);
         dpConfig.minDate = { year: dayjs().year() - 100, month: 1, day: 1 };
         translateService.setDefaultLang('en');
     }

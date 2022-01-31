@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -66,10 +67,10 @@ public class VideoUnitResource {
         }
         VideoUnit videoUnit = optionalVideoUnit.get();
         if (videoUnit.getLecture() == null || videoUnit.getLecture().getCourse() == null) {
-            throw new ConflictException();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         if (!videoUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         if (!authorizationCheckService.isAtLeastEditorInCourse(videoUnit.getLecture().getCourse(), null)) {
             throw new AccessForbiddenException(NOT_ALLOWED);
@@ -94,7 +95,7 @@ public class VideoUnitResource {
         }
 
         if (videoUnit.getLecture() == null || videoUnit.getLecture().getCourse() == null) {
-            throw new ConflictException();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         // Validate the URL
@@ -110,7 +111,7 @@ public class VideoUnitResource {
         }
 
         if (!videoUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         VideoUnit result = videoUnitRepository.save(videoUnit);
@@ -147,7 +148,7 @@ public class VideoUnitResource {
         }
         Lecture lecture = lectureOptional.get();
         if (lecture.getCourse() == null) {
-            throw new ConflictException();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         if (!authorizationCheckService.isAtLeastEditorInCourse(lecture.getCourse(), null)) {
             throw new AccessForbiddenException(NOT_ALLOWED);
@@ -155,9 +156,9 @@ public class VideoUnitResource {
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         videoUnit.setLecture(null);
-        videoUnit = videoUnitRepository.saveAndFlush(videoUnit);
-        videoUnit.setLecture(lecture);
-        lecture.addLectureUnit(videoUnit);
+        VideoUnit savedVideoUnit = videoUnitRepository.saveAndFlush(videoUnit);
+        savedVideoUnit.setLecture(lecture);
+        lecture.addLectureUnit(savedVideoUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
         VideoUnit persistedVideoUnit = (VideoUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
 

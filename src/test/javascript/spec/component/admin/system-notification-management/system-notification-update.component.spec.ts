@@ -8,17 +8,10 @@ import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import * as sinon from 'sinon';
-import { spy } from 'sinon';
-import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('SystemNotificationManagementUpdateComponent', () => {
     let updateComponentFixture: ComponentFixture<SystemNotificationManagementUpdateComponent>;
@@ -50,28 +43,28 @@ describe('SystemNotificationManagementUpdateComponent', () => {
             });
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         updateComponentFixture.detectChanges();
-        expect(updateComponent).to.be.ok;
+        expect(updateComponent).not.toBeNull();
     });
 
     it('navigate back if cancel is clicked', fakeAsync(() => {
-        const previousStateSpy = spy(updateComponent, 'previousState');
+        const previousStateSpy = jest.spyOn(updateComponent, 'previousState');
         updateComponentFixture.detectChanges();
 
         const button = updateComponentFixture.debugElement.nativeElement.querySelector('#cancelButton');
         button.click();
 
         tick();
-        expect(previousStateSpy).to.have.been.calledOnce;
+        expect(previousStateSpy).toHaveBeenCalledTimes(1);
     }));
 
     it('should update if save is clicked', fakeAsync(() => {
-        const saveSpy = spy(updateComponent, 'save');
+        const saveSpy = jest.spyOn(updateComponent, 'save');
         jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse<SystemNotification>()));
         updateComponentFixture.detectChanges();
 
@@ -79,11 +72,11 @@ describe('SystemNotificationManagementUpdateComponent', () => {
         button.click();
 
         tick();
-        expect(saveSpy).to.have.been.calledOnce;
+        expect(saveSpy).toHaveBeenCalledTimes(1);
     }));
 
     it('should create if save is clicked', fakeAsync(() => {
-        const saveSpy = spy(updateComponent, 'save');
+        const saveSpy = jest.spyOn(updateComponent, 'save');
         jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse<SystemNotification>()));
         updateComponentFixture.detectChanges();
 
@@ -95,6 +88,6 @@ describe('SystemNotificationManagementUpdateComponent', () => {
         button.click();
 
         tick();
-        expect(saveSpy).to.have.been.calledOnce;
+        expect(saveSpy).toHaveBeenCalledTimes(1);
     }));
 });

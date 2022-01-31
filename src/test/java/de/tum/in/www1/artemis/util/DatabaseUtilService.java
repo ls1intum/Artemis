@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.fail;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -535,7 +536,7 @@ public class DatabaseUtilService {
         List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations);
         Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         Lecture lecture1 = course1.getLectures().stream().findFirst().get();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
         VideoUnit videoUnit = createVideoUnit();
         TextUnit textUnit = createTextUnit();
         AttachmentUnit attachmentUnit = createAttachmentUnit();
@@ -1185,6 +1186,14 @@ public class DatabaseUtilService {
 
     public StudentExam addStudentExam(Exam exam) {
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
+        studentExamRepository.save(studentExam);
+        return studentExam;
+    }
+
+    public StudentExam addStudentExamWithUser(Exam exam, User user, int additionalWorkingTime) {
+        StudentExam studentExam = ModelFactory.generateStudentExam(exam);
+        studentExam.setUser(user);
+        studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds() + additionalWorkingTime);
         studentExamRepository.save(studentExam);
         return studentExam;
     }
@@ -3491,7 +3500,7 @@ public class DatabaseUtilService {
         storedFeedback.forEach(feedback -> assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType));
     }
 
-    public void createSubmissionForTextExercise(TextExercise textExercise, User user, String text) {
+    public TextSubmission createSubmissionForTextExercise(TextExercise textExercise, User user, String text) {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission(text, Language.ENGLISH, true);
         textSubmission = textSubmissionRepo.save(textSubmission);
 
@@ -3500,6 +3509,7 @@ public class DatabaseUtilService {
 
         studentParticipationRepo.save(studentParticipation);
         textSubmissionRepo.save(textSubmission);
+        return textSubmission;
     }
 
     public TextPlagiarismResult createTextPlagiarismResultForExercise(Exercise exercise) {
@@ -3590,7 +3600,7 @@ public class DatabaseUtilService {
     }
 
     public List<String[]> loadPercentagesAndGrades(String path) throws Exception {
-        try (CSVReader reader = new CSVReader(new FileReader(ResourceUtils.getFile("classpath:" + path)))) {
+        try (CSVReader reader = new CSVReader(new FileReader(ResourceUtils.getFile("classpath:" + path), StandardCharsets.UTF_8))) {
             List<String[]> rows = reader.readAll();
             // delete first row with column headers
             rows.remove(0);

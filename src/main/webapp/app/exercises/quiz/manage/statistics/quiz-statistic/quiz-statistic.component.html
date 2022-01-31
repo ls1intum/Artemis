@@ -6,10 +6,10 @@
                 <div class="col-md-4 text-start">
                     <h4 jhiTranslate="showStatistic.quizQuestions">Quiz questions</h4>
                     <ol *ngIf="quizExercise.quizQuestions">
-                        <li style="font-size: 15px" *ngFor="let question of quizExercise.quizQuestions">
+                        <li class="question-title" *ngFor="let question of quizExercise.quizQuestions">
                             <p>
                                 <span
-                                    >{{ question.title }}&nbsp; <span style="color: red" *ngIf="question.invalid" jhiTranslate="showStatistic.invalid"></span> &nbsp;({{
+                                    >{{ question.title }}&nbsp; <span class="invalid-question" *ngIf="question.invalid" jhiTranslate="showStatistic.invalid"></span> &nbsp;({{
                                         question.points
                                     }}P)</span
                                 >
@@ -17,26 +17,42 @@
                         </li>
                     </ol>
                 </div>
-                <div class="col-md-8 text-center">
+                <div #containerRef class="col-md-8 text-center">
                     <p>&nbsp;</p>
                     <div class="row">
                         <div class="col-md-7 text-start">
-                            <p id="text" style="font-size: large">
+                            <p id="text" class="chart-title-text">
                                 <span *ngIf="rated" jhiTranslate="showStatistic.quizStatistic.titleRated"></span>
                                 <span *ngIf="!rated" jhiTranslate="showStatistic.quizStatistic.titleUnrated"></span>
                             </p>
                         </div>
                         <div class="col-md-5 text-end">
-                            <p style="font-size: large">
+                            <p class="chart-title-text">
                                 <span>{{ participants }} </span><span jhiTranslate="showStatistic.participants"></span>
                             </p>
                         </div>
                     </div>
-                    <canvas baseChart [datasets]="datasets" [labels]="labels" [options]="options" [chartType]="chartType" [colors]="colors"> </canvas>
+                    <ngx-charts-bar-vertical
+                        [view]="[containerRef.offsetWidth, 500]"
+                        [results]="ngxData"
+                        [scheme]="ngxColor"
+                        [showDataLabel]="true"
+                        [showXAxisLabel]="true"
+                        [showYAxisLabel]="true"
+                        [xAxisLabel]="xAxisLabel"
+                        [yAxisLabel]="yAxisLabel"
+                        [xAxis]="true"
+                        [yAxis]="true"
+                        [yScaleMax]="maxScale"
+                        [tooltipDisabled]="true"
+                        [dataLabelFormatting]="bindFormatting"
+                        [roundEdges]="false"
+                    >
+                    </ngx-charts-bar-vertical>
 
                     <div class="col-md-12 text-center">
                         <button (click)="switchRated()" type="button" class="btn btn-primary">
-                            <fa-icon [icon]="'sync'"></fa-icon>&nbsp;
+                            <fa-icon [icon]="faSync"></fa-icon>&nbsp;
                             <span *ngIf="rated" jhiTranslate="showStatistic.switchToUnrated"></span>
                             <span *ngIf="!rated" jhiTranslate="showStatistic.switchToRated"></span>
                         </button>

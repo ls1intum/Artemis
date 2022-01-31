@@ -16,6 +16,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
+import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -37,6 +38,11 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     domainCommandsSampleSolution = [new KatexCommand()];
 
     saveCommand: SaveExerciseCommand<FileUploadExercise>;
+
+    // Icons
+    faQuestionCircle = faQuestionCircle;
+    faBan = faBan;
+    faSave = faSave;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,

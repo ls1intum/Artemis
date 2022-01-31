@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.VideoUnitRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-@Deprecated // Moved to Lecture microservice. To be removed
+// Moved to Lecture microservice. To be removed
 public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired

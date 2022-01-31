@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 
+@Deprecated // moved to user management microservice
 @Service
 @Profile("scheduling")
 public class UserScheduleService {

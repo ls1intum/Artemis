@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.errors;
 
 import java.io.Serial;
 
+@Deprecated // Moved to user management microservice. To be removed
 public class LoginAlreadyUsedException extends BadRequestAlertException {
 
     @Serial

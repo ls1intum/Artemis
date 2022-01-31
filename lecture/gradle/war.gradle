@@ -1,7 +1,7 @@
 apply plugin: "war"
 
 bootWar {
-    mainClassName = "de.tum.in.www1.artemis.lecture.LectureApp"
+    mainClass = "de.tum.in.www1.artemis.lecture.LectureApp"
     includes = ["WEB-INF/**", "META-INF/**"]
 }
 
@@ -9,5 +9,4 @@ war {
     enabled = true
     archiveExtension = "war.original"
     includes = ["WEB-INF/**", "META-INF/**"]
-
 }

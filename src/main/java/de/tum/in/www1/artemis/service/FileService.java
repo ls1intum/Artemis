@@ -16,6 +16,8 @@ import java.util.concurrent.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
@@ -196,10 +198,10 @@ public class FileService implements DisposableBean {
      * Generate the public path for the file at the given path
      *
      * @param actualPath the path to the file in the local filesystem
-     * @param entityId   the id of the entity associated with the file (may be null)
+     * @param entityId   the id of the entity associated with the file
      * @return the public file url that can be used by users to access the file from outside
      */
-    public String publicPathForActualPath(String actualPath, Long entityId) {
+    public String publicPathForActualPath(String actualPath, @Nullable Long entityId) {
         // first extract filename
         String filename = Paths.get(actualPath).getFileName().toString();
 
@@ -229,7 +231,7 @@ public class FileService implements DisposableBean {
             final var path = Paths.get(actualPath);
             final long exerciseId;
             try {
-                // The last name is the file name, the one one before that is the submissionId and the one before that is the exerciseId, in which we are interested
+                // The last name is the file name, the one before that is the submissionId and the one before that is the exerciseId, in which we are interested
                 final var shouldBeExerciseId = path.getName(path.getNameCount() - 3).toString();
                 exerciseId = Long.parseLong(shouldBeExerciseId);
             }
@@ -415,8 +417,8 @@ public class FileService implements DisposableBean {
         BufferedWriter writer;
 
         try {
-            fr = new FileReader(file);
-            fw = new FileWriter(tempFile);
+            fr = new FileReader(file, StandardCharsets.UTF_8);
+            fw = new FileWriter(tempFile, StandardCharsets.UTF_8);
         }
         catch (IOException ex) {
             throw new FilePathParsingException("File " + filePath + " should be updated but does not exist.");
@@ -488,7 +490,7 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * This replace all occurrences of the target String with the replacement String in the given directory (recursive!)
+     * This replaces all occurrences of the target String with the replacement String in the given directory (recursive!)
      *
      * @param startPath         the path where the file is located
      * @param targetString      the string that should be replaced
@@ -520,7 +522,7 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * This replace all occurrences of the target String with the replacement String within a source file of a given directory (recursive!)
+     * This replaces all occurrences of the target String with the replacement String within a source file of a given directory (recursive!)
      *
      * @param startPath         the path where the file is located
      * @param targetString      the string that should be replaced

@@ -97,12 +97,14 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities());
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, boolean skipPasswordCheck) {
         // NOTE: firstName, lastName, email is not needed in this case since we always get these values from Jira
         return getOrCreateUser(authentication, skipPasswordCheck);
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     private User getOrCreateUser(Authentication authentication, Boolean skipPasswordCheck) {
         String username = authentication.getName().toLowerCase();
         String password = authentication.getCredentials().toString();
@@ -182,6 +184,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
      * @param group    The JIRA group name
      * @throws ArtemisAuthenticationException if JIRA returns an error
      */
+    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public void addUserToGroup(User user, String group) throws ArtemisAuthenticationException {
         // then we also make sure to add it into JIRA so that the synchronization during the next login does not remove the group again
@@ -205,6 +208,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         }
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public void createUserInExternalUserManagement(User user) {
         log.info("Try to create user {} in JIRA", user.getLogin());
@@ -230,6 +234,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     // and the internal directory as second choice. However, users can only be created in the first user directory and there is no option
     // to create them in the second user directory
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public void createGroup(String groupName) {
         log.info("Create group {} in JIRA", groupName);
@@ -245,6 +250,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         }
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public void deleteGroup(String groupName) {
         // Important: only delete groups that have been created from artemis
@@ -266,6 +272,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         }
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public void removeUserFromGroup(User user, String group) {
         // then we also make sure to remove it in JIRA so that the synchronization during the next login does not add the group again
@@ -281,6 +288,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         }
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Override
     public boolean isGroupAvailable(String group) {
         try {

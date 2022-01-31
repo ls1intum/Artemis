@@ -5,7 +5,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
@@ -13,6 +13,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-complaint-list',
@@ -36,6 +37,9 @@ export class ListOfComplaintsComponent implements OnInit {
     showAddressedComplaints = false;
 
     loading = true;
+    // Icons
+    faSort = faSort;
+    faFolderOpen = faFolderOpen;
 
     constructor(
         private complaintService: ComplaintService,

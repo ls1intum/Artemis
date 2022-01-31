@@ -1,9 +1,11 @@
 buildscript {
     repositories {
-        gradlePluginPortal()
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://repo.spring.io/plugins-release" }
     }
     dependencies {
-        //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
+        classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
     }
 }
 
@@ -22,7 +24,6 @@ plugins {
     id "com.github.andygoossens.gradle-modernizer-plugin"
     id "org.openapi.generator" version "5.1.1" // version is included since the plugin is not used by Artemis
     id "io.spring.nohttp" version "0.0.8" // version is included since the plugin is not used by Artemis
-    //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
 group = "de.tum.in.www1.artemis"
@@ -78,6 +79,12 @@ sourceSets {
             include 'de/tum/in/www1/artemis/security/SecurityUtils.*'
             include 'de/tum/in/www1/artemis/security/UserNotActivatedException.*'
             include 'de/tum/in/www1/artemis/security/SpringSecurityAuditorAware.*'
+            include 'de/tum/in/www1/artemis/security/jwt/TokenProvider.*'
+            include 'de/tum/in/www1/artemis/security/jwt/JWTFilter.*'
+            include 'de/tum/in/www1/artemis/security/jwt/JWTConfigurer.*'
+
+            // de.tum.in.www1.artemis.management
+            include 'de/tum/in/www1/artemis/management/SecurityMetersService.*'
 
             // de.tum.in.www1.artemis.config
             include 'de/tum/in/www1/artemis/config/audit/AuditEventConverter.*'
@@ -95,12 +102,14 @@ sourceSets {
             include 'de/tum/in/www1/artemis/service/FileService.*'
             include 'de/tum/in/www1/artemis/service/ScoreService.*'
             include 'de/tum/in/www1/artemis/service/notifications/NotificationTargetService.*'
+            include 'de/tum/in/www1/artemis/service/notifications/NotificationTargetProvider.*'
             include 'de/tum/in/www1/artemis/service/compass/umlmodel/UMLElement.*'
             include 'de/tum/in/www1/artemis/service/compass/umlmodel/Similarity.*'
             include 'de/tum/in/www1/artemis/service/compass/assessment/Context.*'
             include 'de/tum/in/www1/artemis/service/dto/**'
             include 'de/tum/in/www1/artemis/service/util/**'
             include 'de/tum/in/www1/artemis/service/listeners/**'
+            include 'de/tum/in/www1/artemis/service/programming/ProgrammingLanguageFeature.*'
 
             // Include all DB entities. repositories and exceptions
             include 'de/tum/in/www1/artemis/domain/**'
@@ -112,6 +121,7 @@ sourceSets {
             include 'de/tum/in/www1/artemis/web/rest/dto/**'
             include 'de/tum/in/www1/artemis/web/rest/errors/EntityNotFoundException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/BadRequestAlertException.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/HttpStatusException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/FieldErrorVM.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/StudentsAlreadyAssignedException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/InternalServerErrorException.*'
@@ -207,7 +217,8 @@ apply from: "../gradle/dependencies.gradle"
 dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:${offbytwo_jenkins_client_version}"
     implementation "org.gitlab4j:gitlab4j-api:${gitlab4j_api_version}"
-    implementation files("../libs/jplag-${jplag_version}.jar")
+
+    implementation "de.jplag:jplag:3.0.0"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:${sourceforge_plantuml_version}"
@@ -248,7 +259,7 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-hystrix"
     implementation "org.springframework.retry:spring-retry"
     implementation "org.springframework.cloud:spring-cloud-starter-bootstrap"
-    implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
+    implementation "org.springframework.cloud:spring-cloud-starter-openfeign:3.1.0"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
     implementation "org.xmlbeam:xmlprojector:${xmlbeam_xmlprojector_version}"
     implementation "mysql:mysql-connector-java:${mysql_connector_java_version}"

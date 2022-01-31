@@ -77,6 +77,7 @@ spring:
         host: localhost
     main:
         allow-bean-definition-overriding: true
+        allow-circular-references: true # TODO: we should deactivate this in the future, however currently securityConfiguration has a circular dependency to itself
     messages:
         basename: i18n/messages
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
@@ -112,6 +113,12 @@ spring:
             addresses: ""
     hazelcast:
         interface: "127.0.0.1"
+    artemis: # ActiveMQ Artemis configuration
+        mode: native
+        host: localhost
+        port: 61616
+        user: guest
+        password: guest
 
 server:
     port: 8080

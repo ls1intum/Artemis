@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -10,6 +11,8 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -19,9 +22,11 @@ import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -37,7 +42,13 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
     private ResultRepository resultRepository;
 
     @Autowired
+    private ParticipationRepository participationRepository;
+
+    @Autowired
     private AssessmentService assessmentService;
+
+    @Autowired
+    private ExerciseDateService exerciseDateService;
 
     private final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
 
@@ -152,7 +163,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise);
+        resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
         assertThat(result.getResultString()).isEqualTo("6 of 7 points");
@@ -174,7 +185,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise);
+        resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
         assertThat(result.getResultString()).isEqualTo("6 of 7 points");
@@ -196,18 +207,20 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise);
+        resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
         assertThat(result.getResultString()).isEqualTo("6 of 7 points");
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testRatedAfterSubmitResultWithDueDateEqualsSubmissionDateOfResult() {
+    public void testRatedAfterSubmitResultWithDueDateEqualsSubmissionDateOfResult(boolean isDueDateIndividual) {
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
-        submissionWithoutResult.setSubmissionDate(futureTimestamp);
+        // comparison of dates including nanos would make this test flaky
+        submissionWithoutResult.setSubmissionDate(futureTimestamp.truncatedTo(ChronoUnit.MILLIS));
         submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
         database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
@@ -218,7 +231,22 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise);
+        if (isDueDateIndividual) {
+            // participation has exact same individual due date as submission time, submission should still be rated
+            Participation participation = result.getParticipation();
+            participation.setIndividualDueDate(submissionWithoutResult.getSubmissionDate());
+            result.setParticipation(participationRepository.save(participation));
+
+            // exercise due date itself should be before the submission time
+            exercise.setDueDate(submissionWithoutResult.getSubmissionDate().minusHours(1));
+        }
+        else {
+            // exercise has exact same due date as submission time, submission should still be rated
+            exercise.setDueDate(submissionWithoutResult.getSubmissionDate());
+        }
+        exercise = exerciseRepository.save(exercise);
+
+        resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
         assertThat(result.isRated()).isTrue();
@@ -240,7 +268,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise);
+        resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
         assertThat(result.isRated()).isFalse();
@@ -262,7 +290,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise);
+        resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
         assertThat(result.isRated()).isTrue();

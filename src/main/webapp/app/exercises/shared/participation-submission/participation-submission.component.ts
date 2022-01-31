@@ -11,7 +11,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,6 +27,8 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { HttpErrorResponse } from '@angular/common/http';
 import { createCommitUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -48,10 +50,14 @@ export class ParticipationSubmissionComponent implements OnInit {
     isTmpOrSolutionProgrParticipation = false;
     exercise?: Exercise;
     participation?: Participation;
+    dueDate?: dayjs.Dayjs;
     submissions?: Submission[];
     eventSubscriber: Subscription;
     isLoading = true;
     commitHashURLTemplate?: string;
+
+    // Icons
+    faTimes = faTimes;
 
     constructor(
         private route: ActivatedRoute,
@@ -93,7 +99,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 // Find programming exercise of template and solution programming participation
                 this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = dayjs(this.exercise.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
+                    this.exerciseStatusBadge = dayjs().isAfter(dayjs(this.exercise.dueDate!)) ? 'bg-danger' : 'bg-success';
                     const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
                     const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
 
@@ -118,7 +124,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 // Get exercise for release and due dates
                 this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = dayjs(this.exercise.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
+                    this.updateStatusBadgeColor();
                 });
                 this.fetchParticipationAndSubmissionsForStudent();
             }
@@ -144,6 +150,7 @@ export class ParticipationSubmissionComponent implements OnInit {
             .subscribe((participation) => {
                 if (participation) {
                     this.participation = participation;
+                    this.updateStatusBadgeColor();
                     this.isLoading = false;
                 }
             });
@@ -180,6 +187,19 @@ export class ParticipationSubmissionComponent implements OnInit {
 
     getCommitUrl(submission: ProgrammingSubmission): string | undefined {
         return createCommitUrl(this.commitHashURLTemplate, (this.exercise as ProgrammingExercise)?.projectKey, this.participation, submission);
+    }
+
+    private updateStatusBadgeColor() {
+        let afterDueDate = false;
+
+        if (this.exercise && this.participation) {
+            this.dueDate = getExerciseDueDate(this.exercise, this.participation);
+            afterDueDate = hasExerciseDueDatePassed(this.exercise, this.participation);
+        } else if (this.exercise) {
+            afterDueDate = dayjs().isAfter(dayjs(this.exercise.dueDate!));
+        }
+
+        this.exerciseStatusBadge = afterDueDate ? 'bg-danger' : 'bg-success';
     }
 
     /**

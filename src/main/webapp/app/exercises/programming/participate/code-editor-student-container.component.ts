@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { Subscription } from 'rxjs';
 import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
-import dayjs from 'dayjs';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
@@ -27,6 +26,8 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { Course } from 'app/entities/course.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
+import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -53,6 +54,10 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     latestResult: Result | undefined;
     hasTutorAssessment = false;
     isIllegalSubmission = false;
+
+    // Icons
+    faCircleNotch = faCircleNotch;
+    faTimesCircle = faTimesCircle;
 
     constructor(
         private resultService: ResultService,
@@ -81,7 +86,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.exercise = this.participation.exercise as ProgrammingExercise;
                         // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed or if they require manual assessment.
                         // (this should match ProgrammingExerciseParticipation.isLocked on the server-side)
-                        const dueDateHasPassed = !this.exercise.dueDate || dayjs(this.exercise.dueDate).isBefore(dayjs());
+                        const dueDateHasPassed = hasExerciseDueDatePassed(this.exercise, this.participation);
                         const isEditingAfterDueAllowed =
                             !this.exercise.buildAndTestStudentSubmissionsAfterDueDate &&
                             !this.exercise.allowComplaintsForAutomaticAssessments &&
