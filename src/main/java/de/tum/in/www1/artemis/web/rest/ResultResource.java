@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -19,15 +19,22 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -36,6 +43,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipati
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -136,7 +144,7 @@ public class ResultResource {
         log.debug("Received result notify (NEW)");
         if (token == null || !token.equals(artemisAuthenticationTokenValue)) {
             log.info("Cancelling request with invalid token {}", token);
-            return forbidden(); // Only allow endpoint when using correct token
+            throw new AccessForbiddenException(); // Only allow endpoint when using correct token
         }
 
         // No 'user' is properly logged into Artemis, this leads to an issue when accessing custom repository methods.
@@ -151,7 +159,9 @@ public class ResultResource {
         catch (ContinuousIntegrationException cISException) {
             log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {} :"
                     + "Your CIS encountered an Exception while trying to retrieve the build plan ", cISException, requestBody);
-            return badRequest();
+            throw new BadRequestAlertException(
+                    "The continuous integration server encountered an exception when trying to retrieve the plan key from a request a new programming exercise result", "BuildPlan",
+                    "ciExceptionForBuildPlanKey");
         }
         log.info("Artemis received a new result for build plan {}", planKey);
 
@@ -159,7 +169,7 @@ public class ResultResource {
         var participation = getParticipationWithResults(planKey);
         if (participation == null) {
             log.warn("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
-            return notFound();
+            throw new EntityNotFoundException("Participation for build plan " + planKey + " does not exist");
         }
 
         // Process the new result from the build result.
@@ -319,15 +329,20 @@ public class ResultResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> getResult(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
+        Result result = getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    private Result getResultForParticipationAndCheckAccess(Long participationId, Long resultId, Role role) {
         Result result = resultRepository.findByIdElseThrow(resultId);
         Participation participation = result.getParticipation();
         if (!participation.getId().equals(participationId)) {
-            return badRequest("participationId", "400",
-                    "participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + " !");
+            throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + "!",
+                    "Participation", "400");
         }
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        return new ResponseEntity<>(result, HttpStatus.OK);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
+        return result;
     }
 
     /**
@@ -346,7 +361,7 @@ public class ResultResource {
         if (participation instanceof StudentParticipation && !authCheckService.canAccessParticipation((StudentParticipation) participation)
                 || participation instanceof ProgrammingExerciseParticipation
                         && !programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         Result result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(participation.getId());
@@ -402,15 +417,8 @@ public class ResultResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> deleteResult(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to delete Result : {}", resultId);
-        Result result = resultRepository.findByIdElseThrow(resultId);
-        Participation participation = result.getParticipation();
-        if (!participation.getId().equals(participationId)) {
-            return badRequest("participationId", "400",
-                    "participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + " !");
-        }
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        resultRepository.deleteById(resultId);
+        Result result = getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
+        resultRepository.delete(result);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, resultId.toString())).build();
     }
 
@@ -429,8 +437,8 @@ public class ResultResource {
         log.debug("REST request to create a new example result for submission: {}", exampleSubmissionId);
         ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(exampleSubmissionId);
         if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
-            return badRequest("exerciseId", "400",
-                    "exerciseId of the path doesnt match the exerciseId of the exercise corresponding to the submission " + exampleSubmissionId + " !");
+            throw new BadRequestAlertException("exerciseId of the path doesnt match the exerciseId of the exercise corresponding to the submission " + exampleSubmissionId + "!",
+                    "Exercise", "400");
         }
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exampleSubmission.getExercise(), null);
         final var result = resultService.createNewExampleResultForSubmissionWithExampleSubmission(exampleSubmissionId, isProgrammingExerciseWithFeedback);
@@ -452,7 +460,7 @@ public class ResultResource {
             throws URISyntaxException {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
         if (result.getParticipation() != null && result.getParticipation().getExercise() != null && !result.getParticipation().getExercise().getId().equals(exerciseId)) {
-            return badRequest("exerciseId", "400", "exerciseId in RequestBody doesnt match exerciseId in path!");
+            throw new BadRequestAlertException("exerciseId in RequestBody doesnt match exerciseId in path!", "Exercise", "400");
         }
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);

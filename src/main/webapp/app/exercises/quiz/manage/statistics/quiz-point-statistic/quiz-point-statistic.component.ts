@@ -21,7 +21,7 @@ import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-sta
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
-    styleUrls: ['./quiz-point-statistic.component.scss'],
+    styleUrls: ['./quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
 })
 export class QuizPointStatisticComponent extends QuizStatisticsDirective implements OnInit, OnDestroy {
     readonly round = round;

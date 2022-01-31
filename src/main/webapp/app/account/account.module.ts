@@ -11,6 +11,7 @@ import { PasswordResetInitComponent } from './password-reset/init/password-reset
 import { PasswordResetFinishComponent } from './password-reset/finish/password-reset-finish.component';
 import { SettingsComponent } from './settings/settings.component';
 import { accountState } from './account.route';
+import { ExternalUserPasswordResetModalComponent } from 'app/account/password-reset/external/external-user-password-reset-modal.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule.forChild(accountState)],
@@ -21,6 +22,7 @@ import { accountState } from './account.route';
         PasswordStrengthBarComponent,
         PasswordResetInitComponent,
         PasswordResetFinishComponent,
+        ExternalUserPasswordResetModalComponent,
         SettingsComponent,
     ],
 })

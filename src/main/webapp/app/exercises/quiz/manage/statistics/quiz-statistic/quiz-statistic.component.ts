@@ -17,7 +17,7 @@ import { round } from 'app/shared/util/utils';
 @Component({
     selector: 'jhi-quiz-statistic',
     templateUrl: './quiz-statistic.component.html',
-    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss'],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
 })
 export class QuizStatisticComponent extends QuizStatisticsDirective implements OnInit, OnDestroy {
     quizExercise: QuizExercise;
