@@ -33,6 +33,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/entities/statistics.model';
+import { xAxisFormatting } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.utils';
+import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 export enum FeedbackItemType {
     Issue,
@@ -101,7 +103,7 @@ export class ResultDetailComponent implements OnInit {
     commitHash?: string;
     commitUrl?: string;
 
-    ngxData: any[] = [];
+    ngxData: NgxChartsMultiSeriesDataEntry[] = [];
     labels: string[];
     ngxColors = {
         name: 'Feedback Detail',
@@ -113,6 +115,8 @@ export class ResultDetailComponent implements OnInit {
     legendPosition = LegendPosition.Below;
     showOnlyPositiveFeedback = false;
     showOnlyNegativeFeedback = false;
+
+    readonly xAxisFormatting = xAxisFormatting;
 
     get exercise(): Exercise | undefined {
         if (this.result.participation) {
@@ -536,15 +540,6 @@ export class ResultDetailComponent implements OnInit {
     }
 
     /**
-     * Adds a percentage sign to every x axis tick
-     * @param tick the default x axis tick
-     * @returns string representing custom x axis tick
-     */
-    xAxisFormatting(tick: string): string {
-        return tick + '%';
-    }
-
-    /**
      * Handles the event if the user clicks on a part of the chart.
      * If the user clicks on a legend entry, the corresponding bar disappears.
      * If the user clicks on a bar, the feedback items get filtered accordingly:
@@ -562,7 +557,6 @@ export class ResultDetailComponent implements OnInit {
                     const color = this.ngxColors.domain[index];
                     // if the bar is not transparent yet, make it transparent. Else, reset the normal color
                     this.ngxColors.domain[index] = color !== 'rgba(255,255,255,0)' ? 'rgba(255,255,255,0)' : index === 0 ? GraphColors.GREEN : GraphColors.RED;
-                    // '#28a745' : '#dc3545';
 
                     // update is necessary for the colors to change
                     this.ngxData = [...this.ngxData];
