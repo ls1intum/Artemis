@@ -72,7 +72,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         group: ScaleType.Ordinal,
         domain: [],
     } as Color;
-    activeEntries: NgxDataEntry[] = [];
+    activeEntries: NgxChartsSingleSeriesDataEntry[] = [];
     dataLabelFormatting = this.formatDataLabel.bind(this);
     showOverallMedian: boolean; // Indicates whether the median of all exams is currently highlighted
     showOverallMedianCheckbox = true; // Indicates whether the checkbox for toggling the highlighting of overallChartMedian is currently visible to the user

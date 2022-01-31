@@ -50,7 +50,7 @@ export abstract class QuizStatisticsDirective {
     }
 
     /**
-     * Creates dedicated objects of type NgxDataEntry that can be processed by ngx-charts
+     * Creates dedicated objects of type NgxChartsSingleSeriesDataEntry that can be processed by ngx-charts
      * in order to visualize the scores and calculates the maximum value on the y axis
      * in order to ensure a shapely display.
      * @protected
