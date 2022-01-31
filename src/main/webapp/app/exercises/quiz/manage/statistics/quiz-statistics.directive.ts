@@ -1,9 +1,9 @@
 import { ChangeDetectorRef, Directive } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { round } from 'app/shared/util/utils';
-import { NgxDataEntry } from 'app/entities/course.model';
 import { QuizStatistic } from 'app/entities/quiz/quiz-statistic.model';
 import { TranslateService } from '@ngx-translate/core';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 @Directive()
 export abstract class QuizStatisticsDirective {
@@ -13,7 +13,7 @@ export abstract class QuizStatisticsDirective {
     rated = true;
     participants: number;
 
-    ngxData: NgxDataEntry[] = [];
+    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
     ngxColor = {
         name: 'quiz statistics',
         selectable: true,

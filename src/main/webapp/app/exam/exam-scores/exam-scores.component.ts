@@ -28,8 +28,9 @@ import { declareExerciseType } from 'app/entities/exercise.model';
 import { mean, median, standardDeviation, sum } from 'simple-statistics';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Course, NgxDataEntry } from 'app/entities/course.model';
+import { Course } from 'app/entities/course.model';
 import { ScaleType, Color } from '@swimlane/ngx-charts';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -51,7 +52,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public noOfExamsFiltered: number;
 
     // ngx
-    ngxData: NgxDataEntry[] = [];
+    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
     yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
     xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
     yScaleMax: number;
@@ -275,7 +276,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 this.ngxData.push({ name: i.toString(), value: 0 });
             }
         }
-        this.ngxData.forEach((gradingStep: NgxDataEntry) => (gradingStep.value = 0));
+        this.ngxData.forEach((gradingStep: NgxChartsSingleSeriesDataEntry) => (gradingStep.value = 0));
         this.histogramData.fill(0);
 
         // Create data structures holding the statistics for all exercise groups and exercises
