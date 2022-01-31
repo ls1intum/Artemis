@@ -45,16 +45,12 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     @Column(name = "bonus_points")
     private Double bonusPoints;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "test_case_type")
-    private ProgrammingExerciseTestCaseType testCaseType;
-
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "programming_exercise_task_test_case", joinColumns = @JoinColumn(name = "test_case_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "task_id", referencedColumnName = "id"))
     @JsonIgnoreProperties("testCases")
     private Set<ProgrammingExerciseTask> tasks = new HashSet<>();
 
-    @OneToMany(mappedBy = "testCase", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "testCase", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("programmingExerciseTestCase")
     private Set<ProgrammingExerciseSolutionEntry> solutionEntries = new HashSet<>();
 
@@ -119,19 +115,6 @@ public class ProgrammingExerciseTestCase extends DomainObject {
 
     public void setBonusPoints(Double bonusPoints) {
         this.bonusPoints = bonusPoints;
-    }
-
-    public ProgrammingExerciseTestCaseType getTestCaseType() {
-        return this.testCaseType;
-    }
-
-    public ProgrammingExerciseTestCase testCaseType(ProgrammingExerciseTestCaseType testCaseType) {
-        this.testCaseType = testCaseType;
-        return this;
-    }
-
-    public void setTestCaseType(ProgrammingExerciseTestCaseType testCaseType) {
-        this.testCaseType = testCaseType;
     }
 
     public Set<ProgrammingExerciseTask> getTasks() {

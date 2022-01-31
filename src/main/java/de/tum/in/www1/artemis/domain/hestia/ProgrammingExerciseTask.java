@@ -27,6 +27,7 @@ public class ProgrammingExerciseTask extends DomainObject {
     @Column(name = "task_name")
     private String taskName;
 
+    // No orphanRemoval here, as there should only be one parent-child relationship (which is ProgrammingExercise -> CodeHint)
     @OneToMany(mappedBy = "task", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("programmingExerciseTask")
     private Set<CodeHint> codeHints = new HashSet<>();

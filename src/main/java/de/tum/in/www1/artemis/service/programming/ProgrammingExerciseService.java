@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -87,18 +86,13 @@ public class ProgrammingExerciseService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
-
-    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
-
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
             ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -115,8 +109,6 @@ public class ProgrammingExerciseService {
         this.groupNotificationService = groupNotificationService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
-        this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
-        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
     }
 
     /**

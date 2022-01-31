@@ -43,13 +43,13 @@ public class ExerciseHint extends DomainObject {
         return title;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
     public ExerciseHint title(String title) {
         this.title = title;
         return this;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getContent() {
@@ -69,17 +69,17 @@ public class ExerciseHint extends DomainObject {
         return exercise;
     }
 
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
-    }
-
     public ExerciseHint exercise(Exercise exercise) {
         this.exercise = exercise;
         return this;
     }
 
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
+    }
+
     @Override
     public String toString() {
-        return "ExerciseHint{" + "title='" + title + '\'' + ", content='" + content + '\'' + ", exercise=" + exercise + '}';
+        return "ExerciseHint{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", content='" + getContent() + "'" + "}";
     }
 }

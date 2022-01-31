@@ -81,14 +81,6 @@
                 <constraints nullable="false"/>
             </column>
         </addColumn>
-    </changeSet>
-
-    <changeSet author="timor-morrien" id="20211216000000-2">
         <sql>update exercise_hint set discriminator = 'T', task_id = null;</sql>
-        <sql>update programming_exercise_test_case set test_case_type = 'BEHAVIORAL';</sql>
-        <sql>update programming_exercise_test_case set test_case_type = 'STRUCTURAL' where test_name like 'testMethods[%]';</sql>
-        <sql>update programming_exercise_test_case set test_case_type = 'STRUCTURAL' where test_name like 'testAttributes[%]';</sql>
-        <sql>update programming_exercise_test_case set test_case_type = 'STRUCTURAL' where test_name like 'testConstructors[%]';</sql>
-        <sql>update programming_exercise_test_case set test_case_type = 'STRUCTURAL' where test_name like 'testClass[%]';</sql>
     </changeSet>
 </databaseChangeLog>
