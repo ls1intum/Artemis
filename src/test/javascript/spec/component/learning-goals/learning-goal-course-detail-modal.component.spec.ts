@@ -52,7 +52,7 @@ describe('LearningGoalCourseDetailModalComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

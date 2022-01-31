@@ -71,7 +71,8 @@
                 }
             },
             "notLatestSubmission": "Hinweis: Dieses Ergebnis und Feedback bezieht sich <strong>nicht</strong> auf die letzte Einreichung.",
-            "seeMore": "Mehr anzeigen"
+            "seeMore": "Mehr anzeigen",
+            "afterDueDateFeedbackHidden": "Auch nach der Abgabefrist werden nicht immer Detailfeedbacks zu allen Testfällen angezeigt. Dies ist etwa der Fall wenn für andere Studierende eine spätere Abgabefrist gesetzt ist (z.B. zum Ausgleich von Krankheitstagen). Sobald alle Abgaben erfolgt sind, werden auch diese Feedbacks automatisch sichtbar."
         }
     }
 }

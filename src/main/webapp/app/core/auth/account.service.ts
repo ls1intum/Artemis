@@ -232,22 +232,26 @@ export class AccountService implements IAccountService {
         );
     }
 
-    /**
-     * Sets the appropriate access rights for the passed exercise.
-     *
-     * @param exercise for which the access rights shall be set
-     */
+    setAccessRightsForExerciseAndReferencedCourse(exercise: Exercise) {
+        this.setAccessRightsForExercise(exercise);
+        if (exercise.course) {
+            this.setAccessRightsForCourse(exercise.course);
+        }
+    }
+
+    setAccessRightsForCourseAndReferencedExercises(course: Course) {
+        this.setAccessRightsForCourse(course);
+        if (course.exercises) {
+            course.exercises.forEach((exercise: Exercise) => this.setAccessRightsForExercise(exercise));
+        }
+    }
+
     setAccessRightsForExercise(exercise: Exercise) {
         exercise.isAtLeastTutor = this.isAtLeastTutorForExercise(exercise);
         exercise.isAtLeastEditor = this.isAtLeastEditorForExercise(exercise);
         exercise.isAtLeastInstructor = this.isAtLeastInstructorForExercise(exercise);
     }
 
-    /**
-     * Sets the appropriate access rights for the passed course.
-     *
-     * @param course for which the access rights shall be set
-     */
     setAccessRightsForCourse(course: Course) {
         course.isAtLeastTutor = this.isAtLeastTutorInCourse(course);
         course.isAtLeastEditor = this.isAtLeastEditorInCourse(course);

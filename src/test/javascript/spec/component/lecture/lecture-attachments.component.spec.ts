@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick, getTestBed } from '@angular/core/testing';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';

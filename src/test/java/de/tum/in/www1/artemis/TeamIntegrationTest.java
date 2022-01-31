@@ -450,7 +450,10 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         ModelingExercise modelingExercise = (ModelingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise).findAny().orElseThrow();
 
         // make exercises team-based
-        Stream.of(programmingExercise, textExercise, modelingExercise).forEach(exercise -> exerciseRepo.save(exercise.mode(ExerciseMode.TEAM)));
+        Stream.of(programmingExercise, textExercise, modelingExercise).forEach(exercise -> {
+            exercise.setMode(ExerciseMode.TEAM);
+            exerciseRepo.save(exercise);
+        });
 
         String shortNamePrefix1 = "team";
         String shortNamePrefix2 = "otherTeam";

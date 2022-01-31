@@ -2,7 +2,7 @@
     <div class="d-flex">
         <h4 id="course-page-heading" jhiTranslate="artemisApp.examManagement.title">Exams</h4>
         <div class="ms-auto d-flex" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-            <a class="btn btn-primary jh-create-entity create-exam" *ngIf="course.isAtLeastInstructor" [routerLink]="['new']">
+            <a class="btn btn-primary jh-create-entity create-exam" id="create-exam" *ngIf="course.isAtLeastInstructor" [routerLink]="['new']">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span class="hidden-sm-down">{{ 'artemisApp.examManagement.createExam' | artemisTranslate }}</span>
             </a>
@@ -11,7 +11,7 @@
     <jhi-alert></jhi-alert>
     <div class="row"></div>
     <br />
-    <div class="table-responsive" *ngIf="exams">
+    <div class="table-responsive" id="exams-table" *ngIf="exams">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
@@ -158,13 +158,23 @@
                                 </a>
                             </div>
                             <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                <a *ngIf="course.isAtLeastInstructor" [routerLink]="[exam.id, 'student-exams']" class="btn btn-primary btn-sm me-1 mb-1">
+                                <a
+                                    *ngIf="course.isAtLeastInstructor"
+                                    [routerLink]="[exam.id, 'student-exams']"
+                                    class="btn btn-primary btn-sm me-1 mb-1"
+                                    id="student-exams-{{ exam.id }}"
+                                >
                                     <fa-icon [icon]="faEye"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
                                 </a>
                             </div>
                             <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                <a *ngIf="course.isAtLeastInstructor" [routerLink]="[exam.id, 'students']" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
+                                <a
+                                    *ngIf="course.isAtLeastInstructor"
+                                    [routerLink]="[exam.id, 'students']"
+                                    class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard"
+                                    id="student-button-{{ exam.id }}"
+                                >
                                     <fa-icon [icon]="faUser"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
                                 </a>
@@ -177,6 +187,7 @@
                             </div>
                             <div class="d-flex flex-column me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                 <button
+                                    id="delete-exam-{{ exam.id }}"
                                     *ngIf="course.isAtLeastInstructor && exam"
                                     jhiDeleteButton
                                     [entityTitle]="exam.title || ''"

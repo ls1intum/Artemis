@@ -181,3 +181,4 @@ repos-download/
 /src/test/cypress/screenshots/
 /src/test/cypress/videos/
 /src/test/cypress/build
+.env

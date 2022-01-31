@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -74,9 +75,10 @@ public class TextAssessmentResource extends AssessmentResource {
             TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionRepository gradingCriterionRepository, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
             Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository,
-            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository) {
+            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository,
+            SingleUserNotificationService singleUserNotificationService) {
         super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
-                submissionRepository);
+                submissionRepository, singleUserNotificationService);
 
         this.textAssessmentService = textAssessmentService;
         this.textBlockService = textBlockService;
@@ -108,7 +110,7 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
-        Result result = resultRepository.findOneElseThrow(resultId);
+        Result result = resultRepository.findByIdElseThrow(resultId);
         if (!result.getParticipation().getId().equals(participationId)) {
             return badRequest("participationId", "400", "participationId in Result of resultId " + resultId + "doesn't match the paths participationId!");
         }
@@ -217,7 +219,7 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
-        Result result = resultRepository.findOneElseThrow(resultId);
+        Result result = resultRepository.findByIdElseThrow(resultId);
         if (!(result.getParticipation().getExercise() instanceof TextExercise)) {
             return badRequest("Exercise", "400", "This exercise isn't a TextExercise!");
         }

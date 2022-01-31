@@ -75,12 +75,13 @@
                 </div>
             </div>
         </div>
-        <div class="drag-and-drop-area">
+        <div cdkDropListGroup class="drag-and-drop-area">
             <div class="background-area">
                 <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath" (endLoadingProcess)="changeLoading($event)"></jhi-secured-image>
                 <div class="click-layer">
                     <div *ngIf="!showResult">
                         <div
+                            id="drop-location"
                             class="drop-location"
                             *ngFor="let dropLocation of question.dropLocations"
                             [ngClass]="dropAllowed ? 'drop-allowed' : ''"
@@ -90,11 +91,11 @@
                                 width: dropLocation.width! / 2 + '%',
                                 height: dropLocation.height! / 2 + '%'
                             }"
-                            (onDropSuccess)="onDragDrop(dropLocation, $event)"
+                            (cdkDropListDropped)="onDragDrop(dropLocation, $event)"
                             (onDragEnter)="preventDefault($event)"
                             (onDragOver)="preventDefault($event)"
                             (onDragLeave)="preventDefault($event)"
-                            dnd-droppable
+                            cdkDropList
                         >
                             <jhi-drag-item
                                 (dragenter)="drag()"
@@ -238,17 +239,19 @@
                 <div
                     *ngIf="!showResult"
                     class="drag-items"
+                    id="drag-items"
                     [ngClass]="dropAllowed ? 'drop-allowed' : ''"
-                    (onDropSuccess)="onDragDrop(undefined, $event)"
+                    (cdkDropListDropped)="onDragDrop(undefined, $event)"
                     (onDragEnter)="preventDefault($event)"
                     (onDragOver)="preventDefault($event)"
                     (onDragLeave)="preventDefault($event)"
-                    dnd-droppable
+                    cdkDropList
                 >
                     <jhi-drag-item
+                        id="drag-item-{{ i }}"
                         (dragenter)="drag()"
                         (dragend)="drop()"
-                        *ngFor="let dragItem of getUnassignedDragItems()"
+                        *ngFor="let dragItem of getUnassignedDragItems(); let i = index"
                         [dragItem]="dragItem"
                         [clickDisabled]="clickDisabled"
                         [minWidth]="'160'"

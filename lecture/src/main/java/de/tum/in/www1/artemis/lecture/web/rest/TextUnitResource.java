@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -61,7 +62,7 @@ public class TextUnitResource {
         }
         TextUnit textUnit = optionalTextUnit.get();
         if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
         return ResponseEntity.ok().body(textUnit);
@@ -82,7 +83,7 @@ public class TextUnitResource {
             throw new BadRequestAlertException("A text unit must have an ID to be updated", ENTITY_NAME, "idnull");
         }
         if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
 
@@ -111,14 +112,14 @@ public class TextUnitResource {
         }
         Lecture lecture = lectureOptional.get();
         if (lecture.getCourse() == null || (textUnit.getLecture() != null && !lecture.getId().equals(textUnit.getLecture().getId()))) {
-            throw new ConflictException();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         textUnit.setLecture(null);
-        textUnit = textUnitRepository.saveAndFlush(textUnit);
-        textUnit.setLecture(lecture);
+        TextUnit savedTextUnit = textUnitRepository.saveAndFlush(textUnit);
+        savedTextUnit.setLecture(lecture);
         lecture.addLectureUnit(textUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
         TextUnit persistedTextUnit = (TextUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
