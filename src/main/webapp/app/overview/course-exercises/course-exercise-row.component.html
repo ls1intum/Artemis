@@ -1,4 +1,5 @@
-<div class="course-exercise-row row align-items-center mb-2 mt-2" (click)="showDetails($event)" [class.guided-tour]="hasGuidedTour">
+<div [id]="'exercise-card-' + exercise.id" class="course-exercise-row row align-items-center mb-2 mt-2 position-relative" [class.guided-tour]="hasGuidedTour">
+    <a class="stretched-link" [routerLink]="['/courses', course.id!, 'exercises', exercise.id!]"></a>
     <div class="col-auto d-none d-sm-block">
         <div class="exercise-row-icon">
             <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" size="2x" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
@@ -32,7 +33,7 @@
                 [smallColumns]="true"
                 [equalColumns]="false"
                 [exercise]="exercise"
-                [ngClass]="'mt-2 mb-2'"
+                [ngClass]="'mt-2 mb-2 raised-actions'"
                 *ngIf="!isPresentationMode"
             ></jhi-exercise-details-student-actions>
             <div class="exercise-tags col-auto col-sm d-flex justify-content-center mt-2">
@@ -54,9 +55,9 @@
                     <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
                 </h4>
             </div>
-            <div class="col-sm-auto mb-2" *ngIf="exercise.dueDate; else noDate" [ngClass]="getUrgentClass(exercise.dueDate ? exercise.dueDate : exercise.releaseDate) || ''">
+            <div class="col-sm-auto mb-2" *ngIf="dueDate; else noDate" [ngClass]="getUrgentClass(dueDate ?? exercise.releaseDate) || ''">
                 <span class="d-none d-sm-inline"> {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}: </span>
-                {{ (exercise.dueDate ? exercise.dueDate : exercise.releaseDate!) | artemisTimeAgo }}
+                {{ dueDate ?? exercise.releaseDate! | artemisTimeAgo }}
             </div>
             <ng-template #noDate>
                 <div class="col-auto mb-2">{{ 'artemisApp.courseOverview.exerciseList.noDueDate' | artemisTranslate }}</div>

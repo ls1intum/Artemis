@@ -51,6 +51,8 @@ public class ModelingExerciseResource {
 
     private final CourseRepository courseRepository;
 
+    private final ParticipationRepository participationRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     private final ModelingExerciseService modelingExerciseService;
@@ -80,8 +82,8 @@ public class ModelingExerciseResource {
     private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService,
-            PlagiarismResultRepository plagiarismResultRepository, ModelingExerciseImportService modelingExerciseImportService,
+            CourseRepository courseRepository, ParticipationRepository participationRepository, ModelingExerciseService modelingExerciseService,
+            ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
             ExampleSubmissionRepository exampleSubmissionRepository, InstanceMessageSendService instanceMessageSendService, ModelClusterRepository modelClusterRepository,
@@ -94,6 +96,7 @@ public class ModelingExerciseResource {
         this.modelingSubmissionExportService = modelingSubmissionExportService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
+        this.participationRepository = participationRepository;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
@@ -128,7 +131,7 @@ public class ModelingExerciseResource {
         var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         // validates general settings: points, dates
-        exerciseService.validateGeneralSettings(modelingExercise);
+        modelingExercise.validateGeneralSettings();
 
         // if exercise is created from scratch we create a new knowledge instance
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
@@ -137,7 +140,7 @@ public class ModelingExerciseResource {
 
         modelingExerciseService.scheduleOperations(result.getId());
 
-        groupNotificationService.checkNotificationForExerciseRelease(modelingExercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(modelingExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -180,7 +183,7 @@ public class ModelingExerciseResource {
         var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         // validates general settings: points, dates
-        exerciseService.validateGeneralSettings(modelingExercise);
+        modelingExercise.validateGeneralSettings();
 
         final ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
 
@@ -200,6 +203,8 @@ public class ModelingExerciseResource {
             updatedModelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
             updatedModelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
+
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedModelingExercise, modelingExerciseBeforeUpdate.getDueDate());
 
         modelingExerciseService.scheduleOperations(updatedModelingExercise.getId());
 
@@ -225,7 +230,7 @@ public class ModelingExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        List<ModelingExercise> exercises = modelingExerciseRepository.findByCourseId(courseId);
+        List<ModelingExercise> exercises = modelingExerciseRepository.findByCourseIdWithCategories(courseId);
         for (Exercise exercise : exercises) {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
@@ -354,7 +359,7 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
         // validates general settings: points, dates
-        exerciseService.validateGeneralSettings(importedExercise);
+        importedExercise.validateGeneralSettings();
 
         if (importedExercise.isExamExercise()) {
             log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());

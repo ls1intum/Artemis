@@ -89,12 +89,14 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
         sendMessageDelayed("programming-exercise-lock-repositories", exerciseId);
     }
 
+    @Deprecated // moved to user management microservice
     @Override
     public void sendRemoveNonActivatedUserSchedule(Long userId) {
         log.info("Sending remove non-activated user {} to broker.", userId);
         sendMessageDelayed("user-management-remove-non-activated-user", userId);
     }
 
+    @Deprecated // moved to user management microservice
     @Override
     public void sendCancelRemoveNonActivatedUserSchedule(Long userId) {
         log.info("Sending cancel removal of non-activated user {} to broker.", userId);
@@ -103,8 +105,14 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
 
     @Override
     public void sendExerciseReleaseNotificationSchedule(Long exerciseId) {
-        log.info("Sending prepare notification for exercise {} to broker.", exerciseId);
-        sendMessageDelayed("exercise-notification-schedule", exerciseId);
+        log.info("Sending prepare release notification for exercise {} to broker.", exerciseId);
+        sendMessageDelayed("exercise-released-schedule", exerciseId);
+    }
+
+    @Override
+    public void sendAssessedExerciseSubmissionNotificationSchedule(Long exerciseId) {
+        log.info("Sending prepare assessed exercise submitted notification for exercise {} to broker.", exerciseId);
+        sendMessageDelayed("assessed-exercise-submission-notification-schedule", exerciseId);
     }
 
     private void sendMessageDelayed(String destination, Long exerciseId) {

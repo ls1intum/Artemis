@@ -9,11 +9,12 @@ import { User } from 'app/core/user/user.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/util/alert.service';
 import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -39,6 +40,9 @@ export class StudentExamDetailComponent implements OnInit {
     grade?: string;
     isBonus = false;
     passed = false;
+
+    // Icons
+    faSave = faSave;
 
     constructor(
         private route: ActivatedRoute,
@@ -94,7 +98,7 @@ export class StudentExamDetailComponent implements OnInit {
      */
     saveWorkingTime() {
         this.isSavingWorkingTime = true;
-        const seconds = this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
+        const seconds = this.workingTimeForm.controls.hours.value * 3600 + this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
         this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, seconds).subscribe(
             (res) => {
                 if (res.body) {
@@ -140,18 +144,11 @@ export class StudentExamDetailComponent implements OnInit {
     }
 
     private initWorkingTimeForm() {
-        const workingTime = this.artemisDurationFromSecondsPipe.toHHmmNotation(this.studentExam.workingTime!);
-        const workingTimeParts = workingTime.split(':');
+        const workingTime = this.artemisDurationFromSecondsPipe.secondsToDuration(this.studentExam.workingTime!);
         this.workingTimeForm = new FormGroup({
-            minutes: new FormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: this.examIsVisible() }, [
-                Validators.min(0),
-                Validators.required,
-            ]),
-            seconds: new FormControl({ value: parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), disabled: this.examIsVisible() }, [
-                Validators.min(0),
-                Validators.max(59),
-                Validators.required,
-            ]),
+            hours: new FormControl({ value: workingTime.days * 24 + workingTime.hours, disabled: this.examIsVisible() }, [Validators.min(0), Validators.required]),
+            minutes: new FormControl({ value: workingTime.minutes, disabled: this.examIsVisible() }, [Validators.min(0), Validators.max(59), Validators.required]),
+            seconds: new FormControl({ value: workingTime.seconds, disabled: this.examIsVisible() }, [Validators.min(0), Validators.max(59), Validators.required]),
         });
     }
 

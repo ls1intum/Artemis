@@ -56,6 +56,9 @@ sourceSets {
             srcDir file("../src/main/java")
             include 'de/tum/in/www1/artemis/security/PBEPasswordEncoder.*'
             include 'de/tum/in/www1/artemis/security/Role.*'
+            include 'de/tum/in/www1/artemis/security/jwt/TokenProvider.*'
+            include 'de/tum/in/www1/artemis/management/SecurityMetersService.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/HttpStatusException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/BadRequestAlertException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/FieldErrorVM.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/ErrorConstants.*'
@@ -143,11 +146,8 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-hystrix"
     implementation "org.springframework.retry:spring-retry"
     implementation "org.springframework.cloud:spring-cloud-starter-bootstrap"
-    implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
     implementation "org.springframework.data:spring-data-jpa"
-    implementation "io.springfox:springfox-bean-validators:3.0.0"
 
-    implementation("io.springfox:springfox-oas")
     annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}")
 
     developmentOnly "org.springframework.boot:spring-boot-devtools:${spring_boot_version}"

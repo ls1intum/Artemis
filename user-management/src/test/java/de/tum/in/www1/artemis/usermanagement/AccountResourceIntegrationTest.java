@@ -1,0 +1,500 @@
+package de.tum.in.www1.artemis.usermanagement;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.net.URI;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Pattern;
+
+import de.tum.in.www1.artemis.usermanagement.service.user.UserCreationService;
+import de.tum.in.www1.artemis.usermanagement.web.rest.AccountResource;
+import de.tum.in.www1.artemis.usermanagement.web.rest.vm.KeyAndPasswordVM;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.util.LinkedMultiValueMap;
+
+import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
+import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.util.ConfigUtil;
+import de.tum.in.www1.artemis.util.ModelFactory;
+
+import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
+
+/**
+ * Tests {@link AccountResource}. Several Tests rely on overwriting AccountResource.registrationEnabled and other attributes with reflections. Any changes to the internal structure will cause these tests to fail.
+ */
+public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Autowired
+    private AccountResource accountResource;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private UserCreationService userCreationService;
+
+    @Autowired
+    private PasswordService passwordService;
+
+    @AfterEach
+    public void resetDatabase() {
+        database.resetDatabase();
+    }
+
+    private void testWithRegistrationDisabled(Executable test) throws Throwable {
+        ConfigUtil.testWithChangedConfig(accountResource, "registrationEnabled", Optional.of(Boolean.FALSE), test);
+    }
+
+    private String getValidPassword() {
+        // verify configuration is valid
+        assertThat(Constants.PASSWORD_MIN_LENGTH).isLessThan(Constants.PASSWORD_MAX_LENGTH);
+        assertThat(Constants.PASSWORD_MIN_LENGTH).isGreaterThanOrEqualTo(0);
+
+        // empty password will always get rejected
+        return "a".repeat(Math.max(1, Constants.PASSWORD_MIN_LENGTH));
+    }
+
+    @Test
+    public void registerAccount() throws Exception {
+        // setup user
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        ManagedUserVM userVM = new ManagedUserVM(user);
+        userVM.setPassword(getValidPassword());
+
+        // make request
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
+    }
+
+    @Test
+    public void registerAccountTooLongPassword() throws Exception {
+        // setup user
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        ManagedUserVM userVM = new ManagedUserVM(user);
+        assertThat(Constants.PASSWORD_MAX_LENGTH).isGreaterThan(0);
+        userVM.setPassword("e".repeat(Constants.PASSWORD_MAX_LENGTH + 1));
+
+        // make request
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    public void registerAccountTooShortPassword() throws Exception {
+        // setup user
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        ManagedUserVM userVM = new ManagedUserVM(user);
+        assertThat(Constants.PASSWORD_MIN_LENGTH).isGreaterThanOrEqualTo(0);
+        if (Constants.PASSWORD_MIN_LENGTH == 0) {
+            // if all lengths are accepted it cannot be tested for too short passwords
+            return;
+        }
+        userVM.setPassword("e".repeat(Constants.PASSWORD_MIN_LENGTH - 1));
+
+        // make request
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    public void registerAccountEmptyPassword() throws Exception {
+        // setup user
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        ManagedUserVM userVM = new ManagedUserVM(user);
+        userVM.setPassword("");
+
+        // make request
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    public void registerAccountRegistrationDisabled() throws Throwable {
+        testWithRegistrationDisabled(() -> {
+            // setup user
+            User user = ModelFactory.generateActivatedUser("ab123cd");
+            ManagedUserVM userVM = new ManagedUserVM(user);
+            userVM.setPassword(getValidPassword());
+
+            // make request
+            request.postWithoutLocation("/api/register", userVM, HttpStatus.FORBIDDEN, null);
+        });
+    }
+
+    @Test
+    public void registerAccountRegistrationConfigEmpty() throws Throwable {
+        ConfigUtil.testWithChangedConfig(accountResource, "registrationEnabled", Optional.empty(), () -> {
+            // setup user
+            User user = ModelFactory.generateActivatedUser("ab123cd");
+            ManagedUserVM userVM = new ManagedUserVM(user);
+            userVM.setPassword(getValidPassword());
+
+            // make request
+            request.postWithoutLocation("/api/register", userVM, HttpStatus.FORBIDDEN, null);
+        });
+    }
+
+    @Test
+    public void registerAccountInvalidEmail() throws Throwable {
+        // Inject email-pattern to be independent of the config
+        ConfigUtil.testWithChangedConfig(accountResource, "allowedEmailPattern", Optional.of(Pattern.compile("[a-zA-Z0-9_\\-.+]+@[a-zA-Z0-9_\\-.]+\\.[a-zA-Z]{2,5}")), () -> {
+            // setup user
+            User user = ModelFactory.generateActivatedUser("ab123cd");
+            user.setEmail("-");
+            ManagedUserVM userVM = new ManagedUserVM(user);
+            userVM.setPassword(getValidPassword());
+
+            // make request
+            request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+        });
+    }
+
+    @Test
+    public void registerAccountEmptyEmailPattern() throws Throwable {
+        ConfigUtil.testWithChangedConfig(accountResource, "allowedEmailPattern", Optional.empty(), () -> {
+            // setup user
+            User user = ModelFactory.generateActivatedUser("ab123cd");
+            user.setEmail("-");
+            ManagedUserVM userVM = new ManagedUserVM(user);
+            userVM.setPassword(getValidPassword());
+
+            // make request -> validation fails due to empty email is validated against min size
+            request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+        });
+    }
+
+    @Test
+    public void activateAccount() throws Exception {
+        // create unactivated user in repo
+        String testActivationKey = "testActivationKey";
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        user.setActivated(false);
+        user.setActivationKey(testActivationKey);
+        user = userRepository.save(user);
+
+        // make request
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("key", testActivationKey);
+        request.get("/api/activate", HttpStatus.OK, String.class, params);
+
+        // check result
+        Optional<User> updatedUser = userRepository.findById(user.getId());
+        assertThat(updatedUser).isPresent();
+        assertThat(updatedUser.get()).isNotNull();
+        assertThat(updatedUser.get().getActivated()).isTrue();
+        assertThat(updatedUser.get().getActivationKey()).isNull();
+    }
+
+    @Test
+    public void activateAccountRegistrationDisabled() throws Throwable {
+        testWithRegistrationDisabled(() -> {
+            String testActivationKey = "testActivationKey";
+
+            // make request
+            LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+            params.add("key", testActivationKey);
+            request.get("/api/activate", HttpStatus.FORBIDDEN, String.class, params);
+        });
+    }
+
+    @Test
+    public void activateAccountNoUser() throws Exception {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("key", "");
+        request.get("/api/activate", HttpStatus.INTERNAL_SERVER_ERROR, String.class, params);
+    }
+
+    @Test
+    @WithMockUser("authenticatedUser")
+    public void isAuthenticated() throws Exception {
+        String userLogin = request.get("/api/authenticate", HttpStatus.OK, String.class);
+        assertThat(userLogin).isNotNull();
+        assertThat(userLogin).isEqualTo("authenticatedUser");
+    }
+
+    @Test
+    public void isAuthenticatedWithoutLoggedInUser() throws Exception {
+        String user = request.get("/api/authenticate", HttpStatus.OK, String.class);
+        assertThat(user).isEmpty();
+    }
+
+    @Test
+    @WithMockUser("authenticateduser")
+    public void getAccount() throws Exception {
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        userRepository.save(user);
+        UserDTO account = request.get("/api/account", HttpStatus.OK, UserDTO.class);
+        assertThat(account).isNotNull();
+    }
+
+    @Test
+    @WithAnonymousUser
+    public void getAccountWithoutLoggedInUser() throws Exception {
+        UserDTO user = request.get("/api/account", HttpStatus.UNAUTHORIZED, UserDTO.class);
+        assertThat(user).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "authenticateduser")
+    public void getPassword() throws Exception {
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        userCreationService.createUser(new ManagedUserVM(user));
+
+        // make request
+        @SuppressWarnings("rawtypes")
+        Map response = request.get("/api/account/password", HttpStatus.OK, Map.class);
+        assertThat(response.get("password")).isNotNull();
+        assertThat(response.get("password")).isNotEqualTo("");
+    }
+
+    @Test
+    @WithMockUser(username = "authenticateduser")
+    public void saveAccount() throws Exception {
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+        // update FirstName
+        String updatedFirstName = "UpdatedFirstName";
+        createdUser.setFirstName(updatedFirstName);
+
+        // make request
+        request.put("/api/account", new UserDTO(createdUser), HttpStatus.OK);
+
+        // check if update successful
+        Optional<User> updatedUser = userRepository.findOneByLogin("authenticateduser");
+        assertThat(updatedUser).isPresent();
+        assertThat(updatedUser.get().getFirstName()).isEqualTo(updatedFirstName);
+    }
+
+    @Test
+    @WithMockUser(username = "authenticateduser")
+    public void saveAccountRegistrationDisabled() throws Throwable {
+        testWithRegistrationDisabled(() -> {
+            // create user in repo
+            User user = ModelFactory.generateActivatedUser("authenticateduser");
+            User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+            // update FirstName
+            String updatedFirstName = "UpdatedFirstName";
+            createdUser.setFirstName(updatedFirstName);
+
+            // make request
+            request.put("/api/account", new UserDTO(createdUser), HttpStatus.FORBIDDEN);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "authenticateduser")
+    public void saveAccountEmailInUse() throws Exception {
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+        User userSameEmail = ModelFactory.generateActivatedUser("sameemail");
+        User createdUserSameEmail = userCreationService.createUser(new ManagedUserVM(userSameEmail));
+        // update Email to one already used
+        createdUser.setEmail(createdUserSameEmail.getEmail());
+
+        // make request
+        request.put("/api/account", new UserDTO(createdUser), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "authenticateduser")
+    public void changePassword() throws Exception {
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+        // Password Data
+        String updatedPassword = "12345678password-reset-init.component.spec.ts";
+
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
+        // make request
+        request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK, null);
+
+        // check if update successful
+        Optional<User> updatedUser = userRepository.findOneByLogin("authenticateduser");
+        assertThat(updatedUser).isPresent();
+        assertThat(passwordService.decryptPassword(updatedUser.get().getPassword())).isEqualTo(updatedPassword);
+    }
+
+    @Test
+    @WithMockUser(username = "authenticateduser")
+    public void changePasswordRegistrationDisabled() throws Throwable {
+        testWithRegistrationDisabled(() -> {
+            // create user in repo
+            User user = ModelFactory.generateActivatedUser("authenticateduser");
+            User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+            // Password Data
+            String updatedPassword = "12345678password-reset-init.component.spec.ts";
+
+            PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
+            // make request
+            request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "authenticateduser")
+    public void changePasswordSaml2Disabled() throws Throwable {
+        testWithRegistrationDisabled(() -> {
+            ConfigUtil.testWithChangedConfig(accountResource, "saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
+                // create user in repo
+                User user = ModelFactory.generateActivatedUser("authenticateduser");
+                User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+                // Password Data
+                String updatedPassword = "12345678password-reset-init.component.spec.ts";
+
+                PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
+                // make request
+                request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
+            });
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "authenticateduser")
+    public void changePasswordSaml2ConfigEmpty() throws Throwable {
+        testWithRegistrationDisabled(() -> {
+            ConfigUtil.testWithChangedConfig(accountResource, "saml2EnablePassword", Optional.empty(), () -> {
+                // create user in repo
+                User user = ModelFactory.generateActivatedUser("authenticateduser");
+                User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+                // Password Data
+                String updatedPassword = "12345678password-reset-init.component.spec.ts";
+
+                PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
+                // make request
+                request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
+            });
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "authenticateduser")
+    public void changePasswordInvalidPassword() throws Exception {
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+        String updatedPassword = "";
+
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
+        // make request
+        request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    public void passwordReset() throws Exception {
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+
+        Optional<User> userBefore = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
+        assertThat(userBefore).isPresent();
+        String resetKeyBefore = userBefore.get().getResetKey();
+
+        // init password reset
+        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(createdUser.getEmail());
+        request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
+        ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
+
+        // check user data
+        Optional<User> userPasswordResetInit = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
+        assertThat(userPasswordResetInit).isPresent();
+        String resetKey = userPasswordResetInit.get().getResetKey();
+
+        // verify key has been changed by the request
+        assertThat(resetKey).isNotEqualTo(resetKeyBefore);
+
+        // finish password reset
+        String newPassword = getValidPassword();
+        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
+        finishResetData.setKey(resetKey);
+        finishResetData.setNewPassword(newPassword);
+
+        // finish password reset
+        request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.OK, null);
+
+        // get updated user
+        Optional<User> userPasswordResetFinished = userRepository.findOneByLogin("authenticateduser");
+        assertThat(userPasswordResetFinished).isPresent();
+        assertThat(passwordService.decryptPassword(userPasswordResetFinished.get().getPassword())).isEqualTo(newPassword);
+    }
+
+    @Test
+    public void passwordResetInvalidEmail() throws Exception {
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+
+        Optional<User> userBefore = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
+        assertThat(userBefore).isPresent();
+        String resetKeyBefore = userBefore.get().getResetKey();
+
+        // init password reset
+        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content("invalidemail");
+        request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
+        ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
+
+        // check user data
+        Optional<User> userPasswordResetInit = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
+        assertThat(userPasswordResetInit).isPresent();
+        String resetKey = userPasswordResetInit.get().getResetKey();
+
+        // verify key has not been changed by the invalid request
+        assertThat(resetKey).isEqualTo(resetKeyBefore);
+    }
+
+    @Test
+    public void passwordResetInitRegistrationDisabled() throws Throwable {
+        testWithRegistrationDisabled(() -> {
+            // attempt password reset
+            request.postWithoutLocation("/api/account/reset-password/init", "", HttpStatus.FORBIDDEN, null);
+        });
+    }
+
+    @Test
+    public void passwordResetInitSaml2Disabled() throws Throwable {
+        testWithRegistrationDisabled(() -> {
+            ConfigUtil.testWithChangedConfig(accountResource, "saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
+                // attempt password reset
+                request.postWithoutLocation("/api/account/reset-password/init", "", HttpStatus.FORBIDDEN, null);
+            });
+        });
+    }
+
+    @Test
+    @WithMockUser("authenticateduser")
+    public void passwordResetFinishRegistrationDisabled() throws Throwable {
+        testWithRegistrationDisabled(() -> {
+            KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
+            request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
+        });
+    }
+
+    @Test
+    @WithMockUser("authenticateduser")
+    public void passwordResetFinishInvalidPassword() throws Throwable {
+        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
+        finishResetData.setNewPassword("");
+        request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser("authenticateduser")
+    public void passwordResetFinishInvalidKey() throws Throwable {
+        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
+        finishResetData.setNewPassword(getValidPassword());
+        request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
+    }
+}

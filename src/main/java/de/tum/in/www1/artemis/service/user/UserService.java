@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.in.www1.artemis.security.Role.*;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,7 @@ import tech.jhipster.security.RandomUtil;
 /**
  * Service class for managing users.
  */
+@Deprecated // Moved to user management microservice. To be removed.
 @Service
 public class UserService {
 
@@ -591,7 +593,7 @@ public class UserService {
      *       @param courseGroupName        the courseGroup the user has to be added to
      *       @param courseGroupRole        the courseGroupRole enum
      *       @param login                  the login of the user
-     *       @return the found student, otherwise returns an emtpy optional
+     *       @return the found student, otherwise returns an empty optional
      *
      * */
     public Optional<User> findUserAndAddToCourse(String registrationNumber, String courseGroupName, Role courseGroupRole, String login) {
@@ -635,4 +637,7 @@ public class UserService {
         return Optional.empty();
     }
 
+    public void updateUserNotificationVisibility(Long userId, ZonedDateTime hideUntil) {
+        userRepository.updateUserNotificationVisibility(userId, hideUntil);
+    }
 }

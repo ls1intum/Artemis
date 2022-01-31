@@ -123,7 +123,8 @@
             "registered": "Registered Students",
             "noExerciseGroups": "Exercise Groups",
             "submittedColumn": "Submitted",
-            "totalColumn": "Total"
+            "totalColumn": "Total",
+            "exerciseGroupTitle": "Average scores of exercise group \"{{ groupTitle }}\" in comparison"
         },
         "examParticipation": {
             "timer": "Time left: ",

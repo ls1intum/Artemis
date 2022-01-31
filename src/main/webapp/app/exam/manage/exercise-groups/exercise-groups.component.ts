@@ -17,12 +17,13 @@ import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/m
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faAngleDown, faAngleUp, faCheckDouble, faFileUpload, faFont, faKeyboard, faPlus, faProjectDiagram, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -40,6 +41,18 @@ export class ExerciseGroupsComponent implements OnInit {
     exerciseType = ExerciseType;
     latestIndividualEndDate?: dayjs.Dayjs;
     exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
+
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faFont = faFont;
+    faWrench = faWrench;
+    faCheckDouble = faCheckDouble;
+    faFileUpload = faFileUpload;
+    faKeyboard = faKeyboard;
+    faProjectDiagram = faProjectDiagram;
+    faAngleUp = faAngleUp;
+    faAngleDown = faAngleDown;
 
     constructor(
         private route: ActivatedRoute,
@@ -137,15 +150,15 @@ export class ExerciseGroupsComponent implements OnInit {
     exerciseIcon(exercise: Exercise): IconProp {
         switch (exercise.type) {
             case ExerciseType.QUIZ:
-                return 'check-double';
+                return faCheckDouble;
             case ExerciseType.FILE_UPLOAD:
-                return 'file-upload';
+                return faFileUpload;
             case ExerciseType.MODELING:
-                return 'project-diagram';
+                return faProjectDiagram;
             case ExerciseType.PROGRAMMING:
-                return 'keyboard';
+                return faKeyboard;
             default:
-                return 'font';
+                return faFont;
         }
     }
 

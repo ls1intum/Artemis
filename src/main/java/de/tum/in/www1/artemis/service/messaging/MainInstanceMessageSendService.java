@@ -77,12 +77,14 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
         instanceMessageReceiveService.processLockAllRepositories(exerciseId);
     }
 
+    @Deprecated // moved to user management microservice
     @Override
     public void sendRemoveNonActivatedUserSchedule(Long userId) {
         // No need to go through the broker, pass it directly
         instanceMessageReceiveService.processRemoveNonActivatedUser(userId);
     }
 
+    @Deprecated // moved to user management microservice
     @Override
     public void sendCancelRemoveNonActivatedUserSchedule(Long userId) {
         // No need to go through the broker, pass it directly
@@ -90,8 +92,14 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
-    public void sendExerciseReleaseNotificationSchedule(Long userId) {
+    public void sendExerciseReleaseNotificationSchedule(Long exerciseId) {
         // No need to go through the broker, pass it directly
-        instanceMessageReceiveService.processScheduleNotification(userId);
+        instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exerciseId);
+    }
+
+    @Override
+    public void sendAssessedExerciseSubmissionNotificationSchedule(Long exerciseId) {
+        // No need to go through the broker, pass it directly
+        instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exerciseId);
     }
 }

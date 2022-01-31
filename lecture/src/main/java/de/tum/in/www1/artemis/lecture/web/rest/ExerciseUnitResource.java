@@ -4,6 +4,7 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.repository.ExerciseUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -12,6 +13,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -67,11 +69,9 @@ public class ExerciseUnitResource {
         }
         Lecture lecture = lectureOptional.get();
         if (lecture.getCourse() == null) {
-            throw new ConflictException();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
-        if (!authorizationCheckService.isAtLeastEditorInCourse(lecture.getCourse(), null)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         exerciseUnit.setLecture(null);
@@ -102,12 +102,9 @@ public class ExerciseUnitResource {
         }
         Lecture lecture = lectureOptional.get();
         if (lecture.getCourse() == null) {
-            throw new ConflictException();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
-        if (!authorizationCheckService.isAtLeastEditorInCourse(lecture.getCourse(), null)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
-        }
-
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
         List<ExerciseUnit> exerciseUnitsOfLecture = exerciseUnitRepository.findByLectureId(lectureId);
 
         return ResponseEntity.ok().body(exerciseUnitsOfLecture);

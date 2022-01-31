@@ -30,6 +30,10 @@
             "removePinPostTutorTooltip": "Klicke, um den Pin für diesen Beitrag zu entfernen",
             "removeArchivePostTutorTooltip": "Klicke, um den Post wieder chronologisch einzuordnen",
             "chooseReaction": "Wähle eine Reaktion...",
+            "you": "Du",
+            "and": " und ",
+            "reactedTooltip": " reagierte(n).",
+            "reactedTooltipTrimmed": " und {{ number }} weitere Person(en) haben reagiert.",
             "searchEmoji": "Emoji suchen",
             "courseEmojiSelectionCategory": "Ausgewählte Emojis für diesen Kurs",
             "discussion": {
@@ -71,7 +75,6 @@
                 "tags": "Tags",
                 "tagsTooltip": "Gib deinem Beitrag bis zu drei aussagekräftige und wiederverwendbare Tags. Tippe in das Eingabefeld und bestätige mit Enter, um ein Tag hinzuzufügen.",
                 "tagPlaceholder": "+ Tag",
-                "tagSecondaryPlaceholder": "Tag(s) hinzufügen",
                 "similarPosts": "Ähnliche Beiträge",
                 "similarPostsTooltip": "Der automatische Abgleich von Kursbeiträgen hat folgende Beiträge gefunden, die deinem Anliegen ähnlich sein könnten - bitte prüfe, ob deine Frage bereits gestellt und/oder beantwortet wurde. Klicke auf den Titel oder den Namen der Übung/Vorlesung vor dem Titel, um zum Beitrag bzw. der Übung/Vorlesung zu gelangen.",
                 "content": "Inhalt",

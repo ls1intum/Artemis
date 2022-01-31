@@ -56,7 +56,7 @@ public class AttachmentUnitResource {
         log.debug("REST request to get AttachmentUnit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
         if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null || !attachmentUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException();
+            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(attachmentUnit);
@@ -77,7 +77,7 @@ public class AttachmentUnitResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "id is null");
         }
         if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null || !attachmentUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException();
+            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
 
@@ -106,22 +106,22 @@ public class AttachmentUnitResource {
         }
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            throw new ConflictException();
+            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         attachmentUnit.setLecture(null);
-        attachmentUnit = attachmentUnitRepository.saveAndFlush(attachmentUnit);
-        attachmentUnit.setLecture(lecture);
-        lecture.addLectureUnit(attachmentUnit);
+        AttachmentUnit persistedAttachmentUnit = attachmentUnitRepository.saveAndFlush(attachmentUnit);
+        persistedAttachmentUnit.setLecture(lecture);
+        lecture.addLectureUnit(persistedAttachmentUnit);
         lectureRepository.save(lecture);
 
         // cleanup before sending to client
-        attachmentUnit.getLecture().setLectureUnits(null);
-        attachmentUnit.getLecture().setAttachments(null);
-        attachmentUnit.getLecture().setPosts(null);
-        return ResponseEntity.created(new URI("/api/attachment-units/" + attachmentUnit.getId()))
+        persistedAttachmentUnit.getLecture().setLectureUnits(null);
+        persistedAttachmentUnit.getLecture().setAttachments(null);
+        persistedAttachmentUnit.getLecture().setPosts(null);
+        return ResponseEntity.created(new URI("/api/attachment-units/" + persistedAttachmentUnit.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(attachmentUnit);
     }
 }

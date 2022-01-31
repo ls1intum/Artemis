@@ -39,11 +39,9 @@ public class UMLActivity extends UMLActivityElement implements Serializable {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLActivity)) {
+        if (!(reference instanceof UMLActivity referenceActivity)) {
             return 0;
         }
-
-        UMLActivity referenceActivity = (UMLActivity) reference;
 
         return NameSimilarity.levenshteinSimilarity(getName(), referenceActivity.getName());
     }

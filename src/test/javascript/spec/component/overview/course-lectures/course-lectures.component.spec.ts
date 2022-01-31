@@ -14,23 +14,16 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
-import * as chai from 'chai';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 @Component({ selector: 'jhi-course-lecture-row', template: '' })
 class CourseLectureRowStubComponent {
     @Input() lecture: Lecture;
     @Input() course: Course;
-    @Input() extendedLink = false;
 }
 
 class MockActivatedRoute {
@@ -113,13 +106,13 @@ describe('CourseLectures', () => {
             });
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         courseLecturesComponentFixture.detectChanges();
-        expect(courseLecturesComponent).to.be.ok;
+        expect(courseLecturesComponent).not.toBe(null);
         courseLecturesComponent.ngOnDestroy();
     });
 
@@ -127,15 +120,15 @@ describe('CourseLectures', () => {
         courseLecturesComponentFixture.detectChanges();
         const weeks = courseLecturesComponentFixture.debugElement.nativeElement.querySelectorAll('.exercise-row-container');
         const labelsOfWeeks = courseLecturesComponentFixture.debugElement.nativeElement.querySelectorAll('.exercise-row-container > .control-label');
-        expect(weeks).to.have.lengthOf(3);
-        expect(labelsOfWeeks).to.have.lengthOf(3);
+        expect(weeks).toHaveLength(3);
+        expect(labelsOfWeeks).toHaveLength(3);
         for (const label of labelsOfWeeks) {
             label.click();
         }
         courseLecturesComponentFixture.whenStable().then(() => {
             courseLecturesComponentFixture.detectChanges();
             const lectures = courseLecturesComponentFixture.debugElement.queryAll(By.directive(CourseLectureRowStubComponent));
-            expect(lectures).to.have.lengthOf(3);
+            expect(lectures).toHaveLength(3);
         });
     }));
 });

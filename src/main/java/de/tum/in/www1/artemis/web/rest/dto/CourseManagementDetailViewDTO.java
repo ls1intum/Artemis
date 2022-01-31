@@ -1,5 +1,11 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
+
+import java.util.List;
+
+import de.tum.in.www1.artemis.domain.Course;
+
 public class CourseManagementDetailViewDTO {
 
     private Integer numberOfStudentsInCourse;
@@ -38,7 +44,7 @@ public class CourseManagementDetailViewDTO {
 
     private Double currentMaxAverageScore;
 
-    private Integer[] activeStudents;
+    private List<Integer> activeStudents;
 
     public Integer getNumberOfStudentsInCourse() {
         return numberOfStudentsInCourse;
@@ -168,11 +174,28 @@ public class CourseManagementDetailViewDTO {
         this.currentMaxAverageScore = currentMaxAverageScore;
     }
 
-    public Integer[] getActiveStudents() {
+    public List<Integer> getActiveStudents() {
         return activeStudents;
     }
 
-    public void setActiveStudents(Integer[] activeStudents) {
+    public void setActiveStudents(List<Integer> activeStudents) {
         this.activeStudents = activeStudents;
+    }
+
+    /**
+     *  Helper method for setting the average score in the CourseManagementDetailViewDTO
+     * @param reachablePoints the reachable points in a course
+     * @param averageScoreForCourse the average score in a course
+     * @param course the course
+     */
+    public void setAverageScore(double reachablePoints, Double averageScoreForCourse, Course course) {
+        setCurrentMaxAverageScore(reachablePoints);
+        setCurrentAbsoluteAverageScore(roundScoreSpecifiedByCourseSettings((averageScoreForCourse / 100.0) * reachablePoints, course));
+        if (reachablePoints > 0.0) {
+            setCurrentPercentageAverageScore(roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course));
+        }
+        else {
+            setCurrentPercentageAverageScore(0.0);
+        }
     }
 }

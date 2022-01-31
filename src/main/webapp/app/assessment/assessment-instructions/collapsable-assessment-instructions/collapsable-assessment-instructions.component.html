@@ -1,20 +1,25 @@
 <div *ngIf="!collapsed; else collapsedInstructions" class="expanded-instructions instructions-container">
-    <div class="draggable-left"><fa-icon [icon]="'grip-lines-vertical'"></fa-icon></div>
+    <div class="draggable-left"><fa-icon [icon]="faGripLinesVertical"></fa-icon></div>
     <div class="card">
         <div class="card-header text-white bg-primary" (click)="collapsed = !collapsed">
             <h3 class="card-title">
-                <fa-icon [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
+                <fa-icon [icon]="farListAlt"></fa-icon>&nbsp;
                 <span jhiTranslate="assessmentInstructions.instructions.instructions"> &nbsp; Instructions &nbsp; </span>
             </h3>
-            <fa-icon [icon]="'chevron-right'"></fa-icon>
+            <fa-icon [icon]="faChevronRight"></fa-icon>
         </div>
-        <jhi-assessment-instructions [readOnly]="readOnly" class="card-body markdown-preview" [exercise]="exercise"></jhi-assessment-instructions>
+        <jhi-assessment-instructions
+            [readOnly]="readOnly"
+            class="card-body markdown-preview"
+            [exercise]="exercise"
+            [isAssessmentTraining]="isAssessmentTraining"
+        ></jhi-assessment-instructions>
     </div>
 </div>
 <ng-template #collapsedInstructions>
     <div class="collapsed-instructions instructions-container text-white bg-primary" (click)="collapsed = !collapsed">
-        <fa-icon [icon]="'chevron-left'"></fa-icon>
+        <fa-icon [icon]="faChevronLeft"></fa-icon>
         <span jhiTranslate="assessmentInstructions.instructions.instructions"> &nbsp; Instructions &nbsp; </span>
-        <fa-icon [icon]="'chevron-left'"></fa-icon>
+        <fa-icon [icon]="faChevronLeft"></fa-icon>
     </div>
 </ng-template>

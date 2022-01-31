@@ -6,6 +6,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -36,6 +37,8 @@ public class SubmissionService {
 
     private final ExamDateService examDateService;
 
+    private final ExerciseDateService exerciseDateService;
+
     private final CourseRepository courseRepository;
 
     protected final SubmissionRepository submissionRepository;
@@ -58,8 +61,8 @@ public class SubmissionService {
 
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
-            ComplaintRepository complaintRepository) {
+            FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository,
+            ParticipationRepository participationRepository, ComplaintRepository complaintRepository) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -68,6 +71,7 @@ public class SubmissionService {
         this.participationService = participationService;
         this.feedbackRepository = feedbackRepository;
         this.examDateService = examDateService;
+        this.exerciseDateService = exerciseDateService;
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
         this.complaintRepository = complaintRepository;
@@ -178,9 +182,7 @@ public class SubmissionService {
      * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise exercise, boolean examMode, int correctionRound) {
-        Random random = new Random();
-        List<StudentParticipation> participations;
-
+        final List<StudentParticipation> participations;
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
             // No manual result means that no user has started an assessment for the corresponding submission yet.
@@ -188,10 +190,11 @@ public class SubmissionService {
                     correctionRound);
         }
         else {
-            // Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for
-            // the
-            // corresponding submission yet.
-            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId());
+            // Get all participations of submissions that are submitted and do not already have a manual result.
+            // No manual result means that no user has started an assessment for the corresponding submission yet.
+            // Does not fetch participations for which the due date has not yet passed.
+            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDate(exercise.getId(),
+                    ZonedDateTime.now());
         }
 
         List<Submission> submissionsWithoutResult = participations.stream().map(Participation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
@@ -204,14 +207,16 @@ public class SubmissionService {
                     .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userRepository.getUser())).collect(Collectors.toList());
         }
 
+        if (exercise.getDueDate() != null) {
+            submissionsWithoutResult = selectOnlySubmissionsBeforeDueDate(submissionsWithoutResult);
+        }
+
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
         }
-
-        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, exercise.getDueDate());
-
-        var submissionWithoutResult = submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
-        return Optional.of(submissionWithoutResult);
+        else {
+            return Optional.of(submissionsWithoutResult.get(ThreadLocalRandom.current().nextInt(submissionsWithoutResult.size())));
+        }
     }
 
     /**
@@ -518,24 +523,27 @@ public class SubmissionService {
      * Filters the submissions to contain only in-time submissions if there are any.
      * If not, the original list is returned.
      * @param submissions The submissions to filter
-     * @param dueDate The due-date to filter by
      * @param <T> Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}
      * @return The filtered list of submissions
      */
-    protected <T extends Submission> List<T> selectOnlySubmissionsBeforeDueDateOrAll(List<T> submissions, ZonedDateTime dueDate) {
-        if (dueDate == null) {
-            // this is an edge case, then basically all submissions are before due date
-            return submissions;
-        }
-
-        boolean hasInTimeSubmissions = submissions.stream().anyMatch(submission -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(dueDate));
-        if (hasInTimeSubmissions) {
-            return submissions.stream().filter(submission -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(dueDate))
-                    .collect(Collectors.toList());
+    protected <T extends Submission> List<T> selectOnlySubmissionsBeforeDueDate(List<T> submissions) {
+        final List<T> submissionsBeforeDueDate = submissions.stream().filter(this::isBeforeDueDate).toList();
+        if (!submissionsBeforeDueDate.isEmpty()) {
+            return submissionsBeforeDueDate;
         }
         else {
             return submissions;
         }
+    }
+
+    /**
+     * Checks if the submission was created before the due date of the exercise.
+     * @param submission a student’s submission
+     * @return true, if the submission date was before the due date or the exercise has no due date.
+     */
+    private boolean isBeforeDueDate(Submission submission) {
+        return exerciseDateService.getDueDate(submission.getParticipation())
+                .map(dueDate -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(dueDate)).orElse(true);
     }
 
     /**
