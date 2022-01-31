@@ -4,10 +4,12 @@ import { MockMetisService } from '../../../../../helpers/mocks/service/mock-meti
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockModule, MockPipe } from 'ng-mocks';
-import { By } from '@angular/platform-browser';
-import { TagInputModule } from 'ngx-chips';
 import { FormsModule } from '@angular/forms';
 import { metisTags } from '../../../../../helpers/sample/metis-sample-data';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatSelectModule } from '@angular/material/select';
 
 describe('PostTagSelectorComponent', () => {
     let component: PostTagSelectorComponent;
@@ -17,7 +19,7 @@ describe('PostTagSelectorComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(TagInputModule), MockModule(FormsModule)],
+            imports: [MockModule(MatChipsModule), MockModule(MatIconModule), MockModule(MatAutocompleteModule), MockModule(MatSelectModule), MockModule(FormsModule)],
             providers: [{ provide: MetisService, useClass: MockMetisService }],
             declarations: [PostTagSelectorComponent, MockPipe(ArtemisTranslatePipe)],
         })
@@ -43,16 +45,10 @@ describe('PostTagSelectorComponent', () => {
     it('should be initialized with existing list of tags', fakeAsync(() => {
         tick();
         expect(metisServiceGetTagSpy).toHaveBeenCalled();
-        expect(component.existingPostTags).toEqual(metisTags);
+        component.existingPostTags.subscribe((tags) => {
+            expect(tags).toEqual(metisTags);
+        });
     }));
 
-    it('should update tags', fakeAsync(() => {
-        fixture.detectChanges();
-        const onPostTagsChangeSpy = jest.spyOn(component, 'onPostTagsChange');
-        const tagInput = fixture.debugElement.query(By.css('tag-input')).nativeElement;
-        tagInput.value = 'new tag';
-        tagInput.dispatchEvent(new Event('ngModelChange'));
-        fixture.detectChanges();
-        expect(onPostTagsChangeSpy).toHaveBeenCalled();
-    }));
+    // TODO: implement a test which removes a category and one which adds a category
 });

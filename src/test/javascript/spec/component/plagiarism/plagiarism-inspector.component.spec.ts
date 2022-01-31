@@ -128,19 +128,19 @@ describe('Plagiarism Inspector Component', () => {
     it('should get the minimumSize tootip', () => {
         comp.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
 
-        expect(comp.getMinimumSizeTooltip()).toEqual('artemisApp.plagiarism.minimum-size-tooltip');
+        expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltip');
     });
 
     it('should get the minimumSize tootip for modeling', () => {
         comp.exercise = { type: ExerciseType.MODELING } as Exercise;
 
-        expect(comp.getMinimumSizeTooltip()).toEqual('artemisApp.plagiarism.minimum-size-tooltip-modeling');
+        expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipModeling');
     });
 
     it('should get the minimumSize tootip for text', () => {
         comp.exercise = { type: ExerciseType.TEXT } as Exercise;
 
-        expect(comp.getMinimumSizeTooltip()).toEqual('artemisApp.plagiarism.minimum-size-tooltip-text');
+        expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipText');
     });
 
     it('should fetch the plagiarism detection results for modeling exercises', () => {

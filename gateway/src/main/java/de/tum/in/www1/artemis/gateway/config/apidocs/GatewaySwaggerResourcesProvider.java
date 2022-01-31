@@ -31,12 +31,8 @@ public class GatewaySwaggerResourcesProvider implements SwaggerResourcesProvider
 
     private final RouteLocator routeLocator;
 
-    @Qualifier("swaggerResources")
-    private final SwaggerResourcesProvider swaggerResourcesProvider;
-
-    public GatewaySwaggerResourcesProvider(RouteLocator routeLocator, SwaggerResourcesProvider swaggerResourcesProvider) {
+    public GatewaySwaggerResourcesProvider(RouteLocator routeLocator) {
         this.routeLocator = routeLocator;
-        this.swaggerResourcesProvider = swaggerResourcesProvider;
     }
 
     @Override

@@ -1,9 +1,10 @@
+import { GET, BASE_API } from './../../constants';
 /**
  * A class which encapsulates UI selectors and actions for the exercise result page.
  */
 export class ExerciseResultPage {
     shouldShowProblemStatement(problemStatement: string) {
-        cy.get('.problem-statement').contains(problemStatement).should('be.visible');
+        cy.get('#problem-statement').contains(problemStatement).should('be.visible');
     }
 
     shouldShowExerciseTitle(title: string) {
@@ -15,10 +16,12 @@ export class ExerciseResultPage {
     }
 
     clickViewSubmission() {
-        cy.contains('View submission').click();
+        cy.intercept(GET, BASE_API + 'results/*/rating').as('getResults');
+        cy.get('#view-submission').click();
+        return cy.wait('@getResults');
     }
 
-    clickOpenCodeEditor(exerciseId: string) {
+    clickOpenCodeEditor(exerciseId: number) {
         cy.get('#open-exercise-' + exerciseId).click();
     }
 }

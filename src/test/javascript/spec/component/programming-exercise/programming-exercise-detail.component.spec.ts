@@ -1,9 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import sinonChai from 'sinon-chai';
-import * as chai from 'chai';
-import * as sinon from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -12,20 +9,16 @@ import { Course } from 'app/entities/course.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
-import { SinonStub } from 'sinon';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { Exam } from 'app/entities/exam.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
     let statisticsService: StatisticsService;
 
-    let statisticsServiceStub: SinonStub;
+    let statisticsServiceStub: jest.SpyInstance;
 
     const exerciseStatistics = {
         averageScoreOfExercise: 50,
@@ -55,11 +48,11 @@ describe('ProgrammingExercise Management Detail Component', () => {
         fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
         comp = fixture.componentInstance;
         statisticsService = fixture.debugElement.injector.get(StatisticsService);
-        statisticsServiceStub = sinon.stub(statisticsService, 'getExerciseStatistics').returns(of(exerciseStatistics));
+        statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(exerciseStatistics));
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     describe('OnInit for course exercise', () => {
@@ -76,12 +69,12 @@ describe('ProgrammingExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(statisticsServiceStub).to.have.been.called;
-            expect(comp.programmingExercise).to.equal(programmingExercise);
-            expect(comp.isExamExercise).to.be.false;
-            expect(comp.doughnutStats.participationsInPercent).to.equal(100);
-            expect(comp.doughnutStats.resolvedPostsInPercent).to.equal(50);
-            expect(comp.doughnutStats.absoluteAveragePoints).to.equal(5);
+            expect(statisticsServiceStub).toHaveBeenCalled();
+            expect(comp.programmingExercise).toEqual(programmingExercise);
+            expect(comp.isExamExercise).toBeFalse();
+            expect(comp.doughnutStats.participationsInPercent).toEqual(100);
+            expect(comp.doughnutStats.resolvedPostsInPercent).toEqual(50);
+            expect(comp.doughnutStats.absoluteAveragePoints).toEqual(5);
         });
     });
 
@@ -102,9 +95,9 @@ describe('ProgrammingExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(statisticsServiceStub).to.have.been.called;
-            expect(comp.programmingExercise).to.equal(programmingExercise);
-            expect(comp.isExamExercise).to.be.true;
+            expect(statisticsServiceStub).toHaveBeenCalled();
+            expect(comp.programmingExercise).toEqual(programmingExercise);
+            expect(comp.isExamExercise).toBeTrue();
         });
     });
 });

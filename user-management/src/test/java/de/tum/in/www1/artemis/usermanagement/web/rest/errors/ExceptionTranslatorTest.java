@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @WithMockUser
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis"})
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis" })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 class ExceptionTranslatorTest {
 

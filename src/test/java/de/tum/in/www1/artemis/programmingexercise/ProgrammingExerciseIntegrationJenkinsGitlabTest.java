@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
-import static org.assertj.core.api.Assertions.assertThat;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,7 +21,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 
 public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -29,7 +29,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     private ProgrammingExerciseIntegrationTestService programmingExerciseIntegrationTestService;
 
     @Autowired
-    private ProgrammingExerciseResource programmingExerciseResource;
+    private ProgrammingExerciseService programmingExerciseService;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -307,6 +307,18 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
+        programmingExerciseIntegrationTestService.updateExerciseDueDateWithIndividualDueDateUpdate();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateExerciseRemoveDueDate() throws Exception {
+        programmingExerciseIntegrationTestService.updateExerciseRemoveDueDate();
+    }
+
+    @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.updateTimeline_intructorNotInCourse_forbidden();
@@ -352,16 +364,13 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
         gitlabRequestMockProvider.mockCheckIfProjectExists(programmingExercise, false);
         jenkinsRequestMockProvider.mockCheckIfProjectExistsJobIsNull(programmingExercise);
 
-        var existsOpt = programmingExerciseResource.checkIfProjectExists(programmingExercise);
-        assertThat(existsOpt).isEmpty();
+        assertDoesNotThrow(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
 
         jenkinsRequestMockProvider.mockCheckIfProjectExistsJobUrlEmptyOrNull(programmingExercise, true);
-        existsOpt = programmingExerciseResource.checkIfProjectExists(programmingExercise);
-        assertThat(existsOpt).isEmpty();
+        assertDoesNotThrow(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
 
         jenkinsRequestMockProvider.mockCheckIfProjectExistsJobUrlEmptyOrNull(programmingExercise, false);
-        existsOpt = programmingExerciseResource.checkIfProjectExists(programmingExercise);
-        assertThat(existsOpt).isEmpty();
+        assertDoesNotThrow(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
     }
 
     @Test
@@ -800,31 +809,31 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCheckPlagiarism() throws Exception {
         programmingExerciseIntegrationTestService.testCheckPlagiarism();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCheckPlagiarismJplagReport() throws Exception {
         programmingExerciseIntegrationTestService.testCheckPlagiarismJplagReport();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetPlagiarismResult() throws Exception {
         programmingExerciseIntegrationTestService.testGetPlagiarismResult();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetPlagiarismResultWithoutResult() throws Exception {
         programmingExerciseIntegrationTestService.testGetPlagiarismResultWithoutResult();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetPlagiarismResultWithoutExercise() throws Exception {
         programmingExerciseIntegrationTestService.testGetPlagiarismResultWithoutExercise();
     }

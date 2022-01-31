@@ -69,7 +69,8 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
         // Initialize with 3 max team complaints and 7 days max complaint deadline
         course = database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
-        modelingExercise = (ModelingExercise) exerciseRepo.save(modelingExercise.mode(ExerciseMode.TEAM));
+        modelingExercise.setMode(ExerciseMode.TEAM);
+        modelingExercise = exerciseRepo.save(modelingExercise);
         team = database.addTeamForExercise(modelingExercise, database.getUserByLogin("tutor1"));
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);

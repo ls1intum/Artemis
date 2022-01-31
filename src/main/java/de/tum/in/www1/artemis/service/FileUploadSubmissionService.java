@@ -34,14 +34,17 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     private final FileService fileService;
 
+    private final ExerciseDateService exerciseDateService;
+
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, FileService fileService,
-            AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, ComplaintRepository complaintRepository) {
+            AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService,
+            CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                courseRepository, participationRepository, complaintRepository);
+                exerciseDateService, courseRepository, participationRepository, complaintRepository);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileService = fileService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -98,8 +101,8 @@ public class FileUploadSubmissionService extends SubmissionService {
      */
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
             throws IOException, EmptyFileException {
-        final var exerciseDueDate = exercise.getDueDate();
-        if (exerciseDueDate != null && exerciseDueDate.isBefore(ZonedDateTime.now()) && participation.getInitializationDate().isBefore(exerciseDueDate)) {
+        final Optional<ZonedDateTime> dueDate = exerciseDateService.getDueDate(participation);
+        if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         if (file.isEmpty()) {
@@ -124,7 +127,7 @@ public class FileUploadSubmissionService extends SubmissionService {
 
         // Note: we can only delete the file, if the file name was changed (i.e. the new file name is different), otherwise this will cause issues
         if (oldFilePath != null) {
-            // check if we already had file associated with this submission
+            // check if we already had a file associated with this submission
             if (!oldFilePath.equals(newFilePath)) { // different name
                 // IMPORTANT: only delete the file when it has changed the name
                 fileUploadSubmission.onDelete();
@@ -136,7 +139,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (exercise.isExamExercise() || !exercise.isEnded()) {
+        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
             fileUploadSubmission.setSubmitted(true);
         }
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -170,7 +173,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         final var submissionId = submission.getId();
         var filename = file.getOriginalFilename();
         if (filename.contains("\\")) {
-            // this can happen on windows computers, then we want to take the last element of the file path
+            // this can happen on Windows computers, then we want to take the last element of the file path
             var components = filename.split("\\\\");
             filename = components[components.length - 1];
         }
@@ -204,7 +207,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @return the locked file upload submission
      */
     public FileUploadSubmission lockAndGetFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise, int correctionRound) {
-        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository.findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
+        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(submissionId);
 
         if (fileUploadSubmission.getLatestResult() == null || fileUploadSubmission.getLatestResult().getAssessor() == null) {
             checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());

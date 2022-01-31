@@ -24,11 +24,11 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface FileUploadExerciseRepository extends JpaRepository<FileUploadExercise, Long> {
 
     @Query("""
-            SELECT e FROM FileUploadExercise e
+            SELECT DISTINCT e FROM FileUploadExercise e
             LEFT JOIN FETCH e.categories
             WHERE e.course.id = :#{#courseId}
             """)
-    List<FileUploadExercise> findByCourseId(@Param("courseId") Long courseId);
+    List<FileUploadExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories" })
     Optional<FileUploadExercise> findWithEagerTeamAssignmentConfigAndCategoriesById(Long exerciseId);

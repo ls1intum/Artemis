@@ -51,7 +51,7 @@ public class AutomaticTextFeedbackService {
             // if TextBlock is part of a cluster and the cluster is not disabled, we try to find an existing Feedback Element
             if (cluster != null && !cluster.isDisabled()) {
                 // Find all Feedbacks for other Blocks in Cluster.
-                final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().filter(elem -> !elem.equals(block)).collect(toList());
+                final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().filter(elem -> !elem.equals(block)).toList();
                 final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackRepository.getFeedbackForTextExerciseInCluster(cluster);
 
                 if (feedbackForTextExerciseInCluster.size() != 0) {
@@ -67,11 +67,11 @@ public class AutomaticTextFeedbackService {
                             && cluster.distanceBetweenBlocks(block, mostSimilarBlockInClusterWithFeedback.get()) < DISTANCE_THRESHOLD) {
                         final Feedback similarFeedback = feedbackForTextExerciseInCluster.get(mostSimilarBlockInClusterWithFeedback.get().getId());
                         String originBlockReference = mostSimilarBlockInClusterWithFeedback.get().getId();
-                        Long originSubmissionReference = mostSimilarBlockInClusterWithFeedback.get().getSubmission().getId();
-                        Long originparticipationReference = mostSimilarBlockInClusterWithFeedback.get().getSubmission().getParticipation().getId();
+                        Long originSubmissionId = mostSimilarBlockInClusterWithFeedback.get().getSubmission().getId();
+                        Long originParticipationId = mostSimilarBlockInClusterWithFeedback.get().getSubmission().getParticipation().getId();
 
                         Feedback feedback = new Feedback().reference(block.getId()).credits(similarFeedback.getCredits())
-                                .suggestedFeedbackOrigin(originBlockReference, originSubmissionReference, originparticipationReference).type(FeedbackType.AUTOMATIC);
+                                .suggestedFeedbackOrigin(originBlockReference, originSubmissionId, originParticipationId).type(FeedbackType.AUTOMATIC);
 
                         if (similarFeedback.getGradingInstruction() != null) {
                             feedback.setGradingInstruction(similarFeedback.getGradingInstruction());

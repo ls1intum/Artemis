@@ -64,10 +64,9 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    public BitbucketService(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRepository userRepository,
-            @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, UrlService urlService, GitService gitService,
-            ApplicationContext applicationContext) {
-        super(applicationContext, urlService, gitService);
+    public BitbucketService(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRepository userRepository, UrlService urlService,
+            @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, GitService gitService, ApplicationContext applicationContext) {
+        super(applicationContext, gitService, urlService);
         this.passwordService = passwordService;
         this.userRepository = userRepository;
         this.restTemplate = restTemplate;
@@ -90,7 +89,7 @@ public class BitbucketService extends AbstractVersionControlService {
                     createUser(username, passwordService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
 
                     try {
-                        // NOTE: we need to refetch the user here to make sure that the groups are not lazy loaded.
+                        // NOTE: we need to fetch the user here again to make sure that the groups are not lazy loaded.
                         user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
                         addUserToGroups(username, user.getGroups());
                     }
@@ -609,7 +608,6 @@ public class BitbucketService extends AbstractVersionControlService {
     private void createWebHook(String projectKey, String repositorySlug, String notificationUrl, String webHookName) {
         log.debug("Creating WebHook for Repository {}-{} ({})", projectKey, repositorySlug, notificationUrl);
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
-
         final var body = new BitbucketWebHookDTO(webHookName, notificationUrl, List.of("repo:refs_changed"));
         // TODO: We might want to add a token to ensure the notification is valid
 

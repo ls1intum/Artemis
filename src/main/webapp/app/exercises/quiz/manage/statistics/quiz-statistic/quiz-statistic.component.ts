@@ -13,14 +13,6 @@ import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/qu
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
 
-/**
- * this interface is adapted from chart.js
- */
-export interface DataSet {
-    data: number[];
-    backgroundColor: string[];
-}
-
 @Component({
     selector: 'jhi-quiz-statistic',
     templateUrl: './quiz-statistic.component.html',

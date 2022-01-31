@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -56,7 +57,7 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
      * Post-process the Problem payload to add the message key for the front-end if needed.
      */
     @Override
-    public ResponseEntity<Problem> process(@Nullable ResponseEntity<Problem> entity, NativeWebRequest request) {
+    public ResponseEntity<Problem> process(@Nullable ResponseEntity<Problem> entity, @NotNull NativeWebRequest request) {
         if (entity == null) {
             return null;
         }
@@ -114,6 +115,13 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     @ExceptionHandler
     public ResponseEntity<Problem> handleBadRequestAlertException(BadRequestAlertException ex, NativeWebRequest request) {
         return create(ex, request, HeaderUtil.createFailureAlert(applicationName, true, ex.getEntityName(), ex.getErrorKey(), ex.getMessage()));
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleConflictException(ConflictException ex, NativeWebRequest request) {
+        Problem problem = Problem.builder().withStatus(Status.CONFLICT).with(MESSAGE_KEY, ex.getMessage()).with("X-" + applicationName + "-error", "error." + ex.getErrorKey())
+                .with("X-" + applicationName + "-params", ex.getEntityName()).build();
+        return create(ex, problem, request);
     }
 
     @ExceptionHandler

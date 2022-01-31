@@ -71,7 +71,7 @@ public class QuizStatisticService {
             // update all Results of a participation
             for (Result result : resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId())) {
 
-                // find latest rated Result
+                // find the latest rated Result
                 if (Boolean.TRUE.equals(result.isRated()) && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
                     latestRatedResult = result;
                 }
@@ -80,7 +80,7 @@ public class QuizStatisticService {
                     latestUnratedResult = result;
                 }
             }
-            // update statistics with latest rated und unrated Result
+            // update statistics with the latest rated und unrated Result
             quizExercise.addResultToAllStatistics(latestRatedResult);
             quizExercise.addResultToAllStatistics(latestUnratedResult);
         }
