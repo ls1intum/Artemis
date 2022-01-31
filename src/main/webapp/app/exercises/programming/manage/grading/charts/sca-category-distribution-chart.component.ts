@@ -24,7 +24,7 @@ enum ScaChartBarTitle {
                 <div class="d-flex justify-content-between">
                     <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.title' | artemisTranslate }}</h4>
                     <button *ngIf="tableFiltered" type="button" class="btn btn-info" (click)="resetTableFilter()">
-                        {{ 'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.resetFilter' | artemisTranslate }}
+                        {{ 'artemisApp.programmingExercise.configureGrading.charts.resetFilter' | artemisTranslate }}
                     </button>
                 </div>
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.description' | artemisTranslate"></p>
