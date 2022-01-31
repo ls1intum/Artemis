@@ -76,11 +76,6 @@
                                  referencedTableName="exercise_hint"
                                  referencedColumnNames="id"/>
 
-        <addColumn tableName="programming_exercise_test_case">
-            <column name="test_case_type" type="VARCHAR(31)">
-                <constraints nullable="false"/>
-            </column>
-        </addColumn>
         <sql>update exercise_hint set discriminator = 'T', task_id = null;</sql>
     </changeSet>
 </databaseChangeLog>
