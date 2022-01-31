@@ -82,12 +82,8 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringDevelopmentTest
         var persistedAttachmentUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class,
                 HttpStatus.CREATED);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
-        this.attachment.setAttachmentUnit(persistedAttachmentUnit);
-        var persistedAttachment = attachmentRepository.save(attachment);
-        assertThat(persistedAttachment.getId()).isNotNull();
-        assertThat(persistedAttachment.getAttachmentUnit()).isEqualTo(persistedAttachmentUnit);
         var updatedAttachmentUnit = attachmentUnitRepository.findById(persistedAttachmentUnit.getId()).get();
-        assertThat(updatedAttachmentUnit.getAttachment()).isEqualTo(persistedAttachment);
+        assertThat(updatedAttachmentUnit.getAttachment()).isEqualTo(persistedAttachmentUnit.getAttachment());
     }
 
     @Test
