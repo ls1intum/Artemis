@@ -70,6 +70,8 @@ public class DatabaseUtilService {
 
     /**
      * Add users of all roles.
+     *
+     * @return the list of the newly created users
      */
     public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
 
@@ -102,6 +104,8 @@ public class DatabaseUtilService {
 
     /**
      * Create a course and create a lecture assigned to the course.
+     *
+     * @return the created lecture
      */
     public Lecture createCourseWithLecture(boolean saveLecture) {
         Course course = ModelFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
