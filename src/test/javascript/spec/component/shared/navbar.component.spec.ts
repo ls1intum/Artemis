@@ -438,7 +438,7 @@ describe('NavbarComponent', () => {
             expect(lectureStub).toHaveBeenCalledWith(2);
 
             const unitManagementCrumb = {
-                label: 'artemisApp.lectureUnit.home.title',
+                label: 'lectureApp.lectureUnit.home.title',
                 translate: true,
                 uri: '/course-management/1/lectures/2/unit-management/',
             } as MockBreadcrumb;

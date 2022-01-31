@@ -2,7 +2,7 @@
     <div class="row">
         <div class="col text-center">
             <h4 class="font-weight-bold">
-                {{ 'artemisApp.lectureUnit.unitCreationCard.title' | artemisTranslate }}
+                {{ 'lectureApp.lectureUnit.unitCreationCard.title' | artemisTranslate }}
             </h4>
         </div>
     </div>
@@ -10,19 +10,19 @@
         <div class="col text-center">
             <a id="createTextUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['text-units', 'create']">
                 <fa-icon [icon]="faScroll"></fa-icon>
-                <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.text">text</span>
+                <span class="ms-1" jhiTranslate="lectureApp.lectureUnit.unitCreationCard.text">text</span>
             </a>
             <a id="createExerciseUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['exercise-units', 'create']">
                 <fa-icon [icon]="faCheck"></fa-icon>
-                <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.exercise">Exercise</span>
+                <span class="ms-1" jhiTranslate="lectureApp.lectureUnit.unitCreationCard.exercise">Exercise</span>
             </a>
             <a id="createVideoUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['video-units', 'create']">
                 <fa-icon [icon]="faVideo"></fa-icon>
-                <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.video">Video</span>
+                <span class="ms-1" jhiTranslate="lectureApp.lectureUnit.unitCreationCard.video">Video</span>
             </a>
             <a id="createFileUploadUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['attachment-units', 'create']">
                 <fa-icon [icon]="faFileUpload"></fa-icon>
-                <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.file">File</span>
+                <span class="ms-1" jhiTranslate="lectureApp.lectureUnit.unitCreationCard.file">File</span>
             </a>
         </div>
     </div>

@@ -44,7 +44,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     @ViewChild('fileInput', { static: false })
     fileInput: ElementRef;
     file: File | Blob;
-    readonly fileNamePlaceholder = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.chooseFile');
+    readonly fileNamePlaceholder = this.translateService.instant('lectureApp.attachmentUnit.createAttachmentUnit.chooseFile');
     fileName: string = this.fileNamePlaceholder;
     fileInputTouched = false;
 

@@ -7,12 +7,12 @@
 <div *ngIf="!isLoading" class="container">
     <div class="row">
         <div class="col-12 mx-auto">
-            <h2>{{ 'artemisApp.exerciseUnit.createExerciseUnit.headline' | artemisTranslate }}</h2>
+            <h2>{{ 'lectureApp.exerciseUnit.createExerciseUnit.headline' | artemisTranslate }}</h2>
         </div>
     </div>
     <div class="row">
         <div class="col-sm-6 mx-auto">
-            <p>{{ 'artemisApp.exerciseUnit.createExerciseUnit.description' | artemisTranslate }}</p>
+            <p>{{ 'lectureApp.exerciseUnit.createExerciseUnit.description' | artemisTranslate }}</p>
         </div>
         <div class="col-sm-6 mx-auto text-end">
             <button id="createButton" type="button" class="btn btn-primary" [disabled]="exercisesToCreateUnitFor.length === 0" (click)="createExerciseUnits()">
