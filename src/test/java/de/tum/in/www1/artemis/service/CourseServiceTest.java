@@ -144,7 +144,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         var exerciseList = new HashSet<Long>();
         exerciseList.add(exercise.getId());
-        var activeStudents = courseService.getActiveStudents(exerciseList, 0, 4, ZonedDateTime.now());
+        var activeStudents = courseService.getActiveStudents(exerciseList, 0, 4, ZonedDateTime.of(2022, 1, 25, 0, 0, 0, 0, ZonedDateTime.now().getZone()));
         assertThat(activeStudents.size()).isEqualTo(4);
         assertThat(activeStudents).containsExactly(1, 0, 0, 0);
     }
