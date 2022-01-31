@@ -34,8 +34,6 @@ export enum ExamConductionState {
 export class ExamStatusComponent implements OnChanges {
     @Input()
     public exam: Exam;
-    @Input()
-    public time: dayjs.Dayjs;
 
     examConfigurationSteps = [
         ExamConfigurationStep.CONFIGURE_EXERCISES,
@@ -151,11 +149,11 @@ export class ExamStatusComponent implements OnChanges {
         if (!this.exam.examStudentReviewEnd) {
             this.examReviewState = ExamReviewState.UNSET;
         } else if (
-            (!this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd && this.exam.examStudentReviewEnd.isAfter(this.time)) ||
-            (this.exam.examStudentReviewStart && this.exam.examStudentReviewStart.isBefore(this.time) && this.exam.examStudentReviewEnd.isAfter(this.time))
+            (!this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd && this.exam.examStudentReviewEnd.isAfter(dayjs())) ||
+            (this.exam.examStudentReviewStart && this.exam.examStudentReviewStart.isBefore(dayjs()) && this.exam.examStudentReviewEnd.isAfter(dayjs()))
         ) {
             this.examReviewState = ExamReviewState.RUNNING;
-        } else if (this.exam.examStudentReviewEnd.isBefore(this.time)) {
+        } else if (this.exam.examStudentReviewEnd.isBefore(dayjs())) {
             this.examReviewState = ExamReviewState.FINISHED;
         } else {
             this.examReviewState = ExamReviewState.PLANNED;
@@ -167,7 +165,7 @@ export class ExamStatusComponent implements OnChanges {
      * @private
      */
     private examAlreadyStarted() {
-        return this.exam.startDate && this.exam.startDate.isBefore(this.time);
+        return this.exam.startDate && this.exam.startDate.isBefore(dayjs());
     }
 
     /**
@@ -175,6 +173,6 @@ export class ExamStatusComponent implements OnChanges {
      * @private
      */
     private examAlreadyEnded() {
-        return this.exam.endDate && this.exam.endDate.isBefore(this.time);
+        return this.exam.endDate && this.exam.endDate.isBefore(dayjs());
     }
 }

@@ -31,13 +31,11 @@ describe('ExamStatusComponent', () => {
         exam.startDate = startDate;
         exam.endDate = dayjs().add(endDateOffset, offsetType);
         component.exam = exam;
-        component.time = dayjs();
     };
 
     const prepareForExamReviewStateTest = (endDate: dayjs.Dayjs) => {
         exam.examStudentReviewEnd = endDate;
         component.exam = exam;
-        component.time = dayjs();
     };
 
     beforeEach(() => {
