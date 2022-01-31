@@ -43,7 +43,7 @@ describe('ExerciseHint Service', () => {
         it('should find an element', () => {
             const returnedFromService = Object.assign({}, elemDefault);
             service
-                .find(123)
+                .find(1, 123)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
 
