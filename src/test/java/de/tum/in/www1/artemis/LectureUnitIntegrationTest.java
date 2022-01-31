@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-@Deprecated // Moved to Lecture microservice. To be removed
+// Moved to Lecture microservice. To be removed
 public class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired

@@ -9,12 +9,12 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -67,20 +67,20 @@ public class LectureUnitResource {
         }
         Lecture lecture = lectureOptional.get();
         if (lecture.getCourse() == null) {
-            throw new ConflictException();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         // Ensure that exactly as many lecture units have been received as are currently related to the lecture
         if (orderedLectureUnits.size() != lecture.getLectureUnits().size()) {
-            throw new ConflictException();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         // Ensure that all received lecture units are already related to the lecture
         for (LectureUnit lectureUnit : orderedLectureUnits) {
             if (!lecture.getLectureUnits().contains(lectureUnit)) {
-                throw new ConflictException();
+                return new ResponseEntity<>(HttpStatus.CONFLICT);
             }
             // Set the lecture manually as it won't be included in orderedLectureUnits
             lectureUnit.setLecture(lecture);
@@ -115,10 +115,10 @@ public class LectureUnitResource {
         LectureUnit lectureUnit = lectureUnitOptional.get();
 
         if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
-            throw new ConflictException();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         if (!lectureUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, lectureUnit.getLecture().getCourse(), null);
