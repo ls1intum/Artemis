@@ -204,14 +204,18 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
             this.testCaseColorsChange.emit(testCaseColors);
         } else {
             // update values in-place
-            for (let i = 0; i < testCaseScores.length; i++) {
-                const element = testCaseScores[i];
-                this.ngxWeightData[0].series[i].value = Math.max(element.relWeight, 0);
-                this.ngxWeightData[0].series[i].bonus = Math.max(element.relScore, 0);
-                this.ngxWeightData[1].series[i].value = Math.max(element.relScore, 0);
-                this.ngxWeightData[1].series[i].weight = Math.max(element.relWeight, 0);
-                this.ngxPointsData[0].series[i].value = Math.max(element.relPoints, 0);
-            }
+            testCaseScores.forEach((score) => {
+                this.ngxWeightData[0].series.forEach((weight, index) => {
+                    if (weight.id === score.id) {
+                        weight.value = Math.max(score.relWeight, 0);
+                        weight.bonus = Math.max(score.relScore, 0);
+                        // the bars are set up symmetrically, which means if we have the index of the corresponding test case in one bar, it is the same for all other bars
+                        this.ngxWeightData[1].series[index].value = Math.max(score.relScore, 0);
+                        this.ngxWeightData[1].series[index].weight = Math.max(score.relWeight, 0);
+                        this.ngxPointsData[0].series[index].value = Math.max(score.relPoints, 0);
+                    }
+                });
+            });
         }
 
         this.ngxWeightData = [...this.ngxWeightData];
