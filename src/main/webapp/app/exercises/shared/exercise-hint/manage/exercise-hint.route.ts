@@ -21,9 +21,10 @@ export class ExerciseHintResolve implements Resolve<ExerciseHint> {
      * @param route Route which to resolve
      */
     resolve(route: ActivatedRouteSnapshot) {
-        const id = route.params['hintId'] ? route.params['hintId'] : undefined;
-        if (id) {
-            return this.service.find(id).pipe(
+        const exerciseId = route.params['exerciseId'] ? route.params['exerciseId'] : undefined;
+        const hintId = route.params['hintId'] ? route.params['hintId'] : undefined;
+        if (exerciseId && hintId) {
+            return this.service.find(exerciseId, hintId).pipe(
                 filter((response: HttpResponse<ExerciseHint>) => response.ok),
                 map((exerciseHint: HttpResponse<ExerciseHint>) => exerciseHint.body!),
             );

@@ -273,7 +273,7 @@ describe('NavbarComponent', () => {
 
             expect(courseManagementStub).toHaveBeenCalledWith(1);
             expect(exerciseStub).toHaveBeenCalledWith(2);
-            expect(hintsStub).toHaveBeenCalledWith(3);
+            expect(hintsStub).toHaveBeenCalledWith(2, 3);
 
             const hintsCrumb = {
                 label: 'artemisApp.exerciseHint.home.title',
