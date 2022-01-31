@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsAlreadyAssignedException;
 
 /**
@@ -115,5 +116,9 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
             }
         });
         return conflicts;
+    }
+
+    default Team findByIdElseThrow(long teamId) throws EntityNotFoundException {
+        return findById(teamId).orElseThrow(() -> new EntityNotFoundException("Team", teamId));
     }
 }

@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.OrganizationService;
 import de.tum.in.www1.artemis.web.rest.dto.OrganizationCountDTO;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -88,7 +89,7 @@ public class OrganizationResource {
     }
 
     /**
-     * POST organizations/:organizationId/users/:userlogin :
+     * POST organizations/:organizationId/users/:userLogin :
      * Add a user to an organization
      *
      * @param userLogin the login of the user to add
@@ -154,10 +155,10 @@ public class OrganizationResource {
     public ResponseEntity<Organization> updateOrganization(@PathVariable Long organizationId, @RequestBody Organization organization) {
         log.debug("REST request to update organization : {}", organization);
         if (organization.getId() == null) {
-            return badRequest("organization.Id", "400", "The ID of the organization in the RequestBody isn't set!");
+            throw new BadRequestAlertException("The ID of the organization in the RequestBody isn't set!", ENTITY_NAME, "noId");
         }
         if (!organization.getId().equals(organizationId)) {
-            return badRequest("organizationId", "400", "organizationId in path doesn't match the one in the RequestBody!");
+            throw new BadRequestAlertException("organizationId in path doesn't match the one in the RequestBody!", ENTITY_NAME, "organizationIdDoesNotMatch");
         }
         organizationRepository.findByIdElseThrow(organization.getId());
         Organization updated = organizationService.update(organization);

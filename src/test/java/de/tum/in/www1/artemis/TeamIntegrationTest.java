@@ -94,7 +94,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(exercise);
         assertThat(teamAssignmentConfig.getExercise()).isEqualTo(exercise);
-        System.out.println(teamAssignmentConfig.toString());
+        System.out.println(teamAssignmentConfig);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         exercise.setTeamAssignmentConfig(teamAssignmentConfig);
@@ -222,7 +222,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // It should not be allowed to change a team's short name (unique identifier) after creation
         Team team = database.addTeamForExercise(exercise, tutor);
         team.setShortName(team.getShortName() + " Updated");
-        request.putWithResponseBody(resourceUrl() + "/" + team.getId(), team, Team.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody(resourceUrl() + "/" + team.getId(), team, Team.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -465,9 +465,9 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Team team2a = database.addTeamsForExercise(programmingExercise, shortNamePrefix2, "team2astudent", 1, null).get(0);
         Team team2b = database.addTeamsForExercise(textExercise, shortNamePrefix2, "team2bstudent", 1, null).get(0);
 
-        assertThat(List.of(team1a, team1b, team1c).stream().map(Team::getShortName).distinct()).as("Teams 1 need the same short name for this test").hasSize(1);
-        assertThat(List.of(team2a, team2b).stream().map(Team::getShortName).distinct()).as("Teams 2 need the same short name for this test").hasSize(1);
-        assertThat(List.of(team1a, team1b, team1c, team2a, team2b).stream().map(Team::getShortName).distinct()).as("Teams 1 and Teams 2 need different short names").hasSize(2);
+        assertThat(Stream.of(team1a, team1b, team1c).map(Team::getShortName).distinct()).as("Teams 1 need the same short name for this test").hasSize(1);
+        assertThat(Stream.of(team2a, team2b).map(Team::getShortName).distinct()).as("Teams 2 need the same short name for this test").hasSize(1);
+        assertThat(Stream.of(team1a, team1b, team1c, team2a, team2b).map(Team::getShortName).distinct()).as("Teams 1 and Teams 2 need different short names").hasSize(2);
 
         database.addTeamParticipationForExercise(programmingExercise, team1a.getId());
         database.addTeamParticipationForExercise(textExercise, team1b.getId());
