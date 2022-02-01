@@ -62,8 +62,9 @@ public class ProgrammingLanguageConfiguration {
         var image = this.images.get(programmingLanguage.name());
         if (projectType.isPresent()) {
             var languageWithType = programmingLanguage.name() + "_" + projectType.get().name();
-            if (images.containsKey(languageWithType))
+            if (images.containsKey(languageWithType)) {
                 image = images.get(languageWithType);
+            }
         }
         return image;
     }
