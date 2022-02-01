@@ -1,7 +1,4 @@
 <div *ngIf="exercise">
-    <div class="alert" *ngIf="showWelcomeAlert" [ngClass]="'alert-info'" style="bottom: 11px">
-        <div [innerHTML]="'artemisApp.exercise.welcome' | artemisTranslate"></div>
-    </div>
     <!-- HEADER INFORMATION START -->
     <jhi-header-exercise-page-with-details
         [exercise]="exercise"
@@ -241,4 +238,5 @@
             <router-outlet *ngIf="exercise.course && exercise.course.postsEnabled" (activate)="onChildActivate($event)"></router-outlet>
         </div>
     </div>
+    <jhi-lti-initializer></jhi-lti-initializer>
 </div>

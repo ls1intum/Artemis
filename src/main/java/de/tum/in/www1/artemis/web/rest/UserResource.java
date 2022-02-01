@@ -26,9 +26,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -79,13 +81,16 @@ public class UserResource {
 
     private final AuthorityRepository authorityRepository;
 
+    private final LtiUserIdRepository ltiUserIdRepository;
+
     public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository, LtiUserIdRepository ltiUserIdRepository) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.authorityRepository = authorityRepository;
+        this.ltiUserIdRepository = ltiUserIdRepository;
     }
 
     private static void checkUsernameAndPasswordValidity(String username, String password) {
@@ -108,7 +113,7 @@ public class UserResource {
     }
 
     /**
-     * POST /users : Creates a new user.
+     * POST users : Creates a new user.
      * <p>
      * Creates a new user if the login and email are not already used, and sends an mail with an activation link. The user needs to be activated on creation.
      *
@@ -117,7 +122,7 @@ public class UserResource {
      * @throws URISyntaxException       if the Location URI syntax is incorrect
      * @throws BadRequestAlertException 400 (Bad Request) if the login or email is already in use
      */
-    @PostMapping("/users")
+    @PostMapping("users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
 
@@ -149,14 +154,14 @@ public class UserResource {
     }
 
     /**
-     * PUT /users : Updates an existing User.
+     * PUT users : Updates an existing User.
      *
      * @param managedUserVM the user to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated user
      * @throws EmailAlreadyUsedException 400 (Bad Request) if the email is already in use
      * @throws LoginAlreadyUsedException 400 (Bad Request) if the login is already in use
      */
-    @PutMapping("/users")
+    @PutMapping("users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) {
         checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
@@ -192,12 +197,12 @@ public class UserResource {
     }
 
     /**
-     * GET /users : get all users.
+     * GET users : get all users.
      *
      * @param userSearch the pagination information for user search
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
-    @GetMapping("/users")
+    @GetMapping("users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserDTO>> getAllUsers(@ApiParam PageableSearchDTO<String> userSearch) {
         final Page<UserDTO> page = userRepository.getAllManagedUsers(userSearch);
@@ -206,12 +211,12 @@ public class UserResource {
     }
 
     /**
-     * GET /users/search : search all users by login or name (result size is limited though on purpose, see below)
+     * GET users/search : search all users by login or name (result size is limited though on purpose, see below)
      *
      * @param loginOrName the login or name by which to search users
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
-    @GetMapping("/users/search")
+    @GetMapping("users/search")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<UserDTO>> searchAllUsers(@RequestParam("loginOrName") String loginOrName) {
         log.debug("REST request to search all Users for {}", loginOrName);
@@ -237,19 +242,19 @@ public class UserResource {
     /**
      * @return a string list of the all of the roles
      */
-    @GetMapping("/users/authorities")
+    @GetMapping("users/authorities")
     @PreAuthorize("hasRole('ADMIN')")
     public List<String> getAuthorities() {
         return authorityRepository.getAuthorities();
     }
 
     /**
-     * GET /users/:login : get the "login" user.
+     * GET users/:login : get the "login" user.
      *
      * @param login the login of the user to find
      * @return the ResponseEntity with status 200 (OK) and with body the "login" user, or with status 404 (Not Found)
      */
-    @GetMapping("/users/{login:" + Constants.LOGIN_REGEX + "}")
+    @GetMapping("users/{login:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<UserDTO> getUser(@PathVariable String login) {
         log.debug("REST request to get User : {}", login);
@@ -257,12 +262,12 @@ public class UserResource {
     }
 
     /**
-     * DELETE /users/:login : delete the "login" User.
+     * DELETE users/:login : delete the "login" User.
      *
      * @param login the login of the user to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/users/{login:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping("users/{login:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable String login) {
         log.debug("REST request to delete User: {}", login);
@@ -270,7 +275,7 @@ public class UserResource {
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.deleted", login)).build();
     }
 
-    @PutMapping("/users/notification-date")
+    @PutMapping("users/notification-date")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> updateUserNotificationDate() {
         log.debug("REST request to update notification date for logged in user");
@@ -285,7 +290,7 @@ public class UserResource {
      * @param showAllNotifications is true if all notifications should be displayed in the sidebar else depending on the HideNotificationsUntil property
      * @return void
      */
-    @PutMapping("/users/notification-visibility")
+    @PutMapping("users/notification-visibility")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> updateUserNotificationVisibility(@RequestBody boolean showAllNotifications) {
         log.debug("REST request to update notification visibility for logged in user");
@@ -294,5 +299,27 @@ public class UserResource {
         ZonedDateTime hideUntil = showAllNotifications ? null : ZonedDateTime.now();
         userService.updateUserNotificationVisibility(user.getId(), hideUntil);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Initialises users that are flagged as such and are LTI users by setting a new password that gets returned
+     *
+     * @return The ResponseEntity with a status 200 (Ok) and either an empty password or the newly created password
+     */
+    @PutMapping("users/initialize")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<UserInitializationDTO> initializeUser() {
+        User user = userRepository.getUser();
+        if (user.getActivated()) {
+            return ResponseEntity.ok().body(new UserInitializationDTO());
+        }
+        if (ltiUserIdRepository.findByUser(user).isEmpty() || !user.isInternal()) {
+            user.setActivated(true);
+            userRepository.save(user);
+            return ResponseEntity.ok().body(new UserInitializationDTO());
+        }
+
+        String result = userCreationService.setRandomPasswordAndReturn(user);
+        return ResponseEntity.ok().body(new UserInitializationDTO(result));
     }
 }

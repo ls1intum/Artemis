@@ -53,9 +53,9 @@ module.exports = {
         global: {
             // TODO: in the future, the following values should be increase to at least 80%
             statements: 78.9,
-            branches: 66.2,
+            branches: 66.4,
             functions: 70.7,
-            lines: 78.5,
+            lines: 78.6,
         },
     },
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
