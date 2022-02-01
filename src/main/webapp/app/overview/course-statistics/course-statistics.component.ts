@@ -334,7 +334,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                                 this.pushToData(exercise, series);
                             } else {
                                 series[5].value = 100;
-                                series[5].afterDueDate = true;
+                                // If the user only presses "start exercise", there is still no participation
+                                if (participation.initializationState === InitializationState.INITIALIZED) {
+                                    series[5].afterDueDate = false;
+                                    series[5].notParticipated = true;
+                                } else {
+                                    series[5].afterDueDate = true;
+                                }
                                 series[5].exerciseTitle = exercise.title;
                                 series[5].exerciseId = exercise.id;
                                 this.pushToData(exercise, series);
