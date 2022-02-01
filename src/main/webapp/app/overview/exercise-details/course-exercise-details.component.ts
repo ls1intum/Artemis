@@ -79,7 +79,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     isAfterAssessmentDueDate: boolean;
     allowComplaintsForAutomaticAssessments: boolean;
     public gradingCriteria: GradingCriterion[];
-    showWelcomeAlert = false;
     private discussionComponent?: DiscussionSectionComponent;
     baseResource: string;
     isExamExercise: boolean;
@@ -142,14 +141,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
             if (didExerciseChange || didCourseChange) {
                 this.loadExercise();
-            }
-        });
-
-        this.route.queryParams.subscribe((queryParams) => {
-            if (queryParams['welcome'] === '') {
-                setTimeout(() => {
-                    this.showWelcomeAlert = true;
-                }, 500);
             }
         });
 

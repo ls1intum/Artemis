@@ -9,6 +9,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 
 import javax.mail.internet.MimeMessage;
 
@@ -17,13 +18,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
 
 public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -50,14 +51,11 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
         user = database.getUserByLogin("student1");
         database.addCourseWithFileUploadExercise();
         exercise = exerciseRepository.findAll().get(0);
-        ZonedDateTime exerciseDate = ZonedDateTime.now().plusSeconds(1); // 1 millisecond is not enough
+        ZonedDateTime exerciseDate = ZonedDateTime.now().plus(500, ChronoUnit.MILLIS); // 1 millisecond is not enough
         exercise.setReleaseDate(exerciseDate);
         exercise.setAssessmentDueDate(exerciseDate);
         exerciseRepository.save(exercise);
-
-        SecurityUtils.setAuthorizationObject();
         assertThat(notificationRepository.count()).isEqualTo(0);
-
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
@@ -68,6 +66,7 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @Timeout(5)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtReleaseDate() {
         notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED));
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
@@ -78,6 +77,7 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @Timeout(5)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtAssessmentDueDate() {
         TextSubmission textSubmission = new TextSubmission();
         textSubmission.text("Text");

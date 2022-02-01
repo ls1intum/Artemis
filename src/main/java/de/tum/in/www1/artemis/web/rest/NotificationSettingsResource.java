@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -79,14 +80,14 @@ public class NotificationSettingsResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<NotificationSetting[]> saveNotificationSettingsForCurrentUser(@NotNull @RequestBody NotificationSetting[] notificationSettings) {
         if (notificationSettings.length == 0) {
-            return badRequest("notificationSettings", "400", "Can not save non existing Notification Settings");
+            throw new BadRequestAlertException("Cannot save non existing Notification Settings", "NotificationSettings", "notificationSettingsEmpty");
         }
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to save NotificationSettings : {} for current user {}", notificationSettings, currentUser);
         notificationSettingsService.setCurrentUser(notificationSettings, currentUser);
         List<NotificationSetting> resultAsList = notificationSettingRepository.saveAll(Arrays.stream(notificationSettings).toList());
         if (resultAsList.isEmpty()) {
-            return badRequest("notificationSettings", "500", "Error occurred during saving of Notification Settings");
+            throw new BadRequestAlertException("Error occurred during saving of Notification Settings", "NotificationSettings", "notificationSettingsEmptyAfterSave");
         }
         NotificationSetting[] resultAsArray = resultAsList.toArray(new NotificationSetting[0]);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "notificationSetting", "test")).body(resultAsArray);

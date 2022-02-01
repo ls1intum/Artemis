@@ -1,0 +1,18 @@
+{
+    "artemisApp": {
+        "lti": {
+            "initializationError": "Die Initialisierung deines Benutzers wurde gestartet aber dein LTI-Konto wurde möglicherweise nicht korrekt erstellt. Bitte benachrichtige deine Übungsleitung falls du dein Artemis-Passwort bisher nicht erhalten hast.",
+            "initialization": {
+                "header": "LTI Benutzer Initialisierung",
+                "body": {
+                    "welcome": "Herzlich Willkommen bei Artemis! Wir haben automatisch ein Konto für dich erstellt.",
+                    "passwordLabel": "Dein Passwort",
+                    "passwordHint": "Merk dir das Passwort gut. Du wirst es benötigen um dich manuell einzuloggen oder für unsere Programmieraufgaben.<br>Wenn du dein Passwort vergessen hast oder ändern möchtest kannst du es auf der Login-Seite zurücksetzen. Du kannst das Passwort auch sofort ändern:",
+                    "passwordChange": "Passwort ändern",
+                    "confirm": "Bestätigen"
+                }
+            },
+            "startExercise": "<strong>Herzlich Willkommen bei Artemis!</strong> Klicke auf den Button <i>Aufgabe starten</i>!"
+        }
+    }
+}

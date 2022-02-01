@@ -1,0 +1,22 @@
+<div>
+    <div class="modal-header">
+        <h4 class="modal-title"><span jhiTranslate="artemisApp.lti.initialization.header">LTI User Initialization</span></h4>
+    </div>
+    <div class="modal-body">
+        <span jhiTranslate="artemisApp.lti.initialization.body.welcome">Welcome to Artemis! We have automatically created an account for you.</span>
+        <div class="row mb-3 mt-3">
+            <label class="col-sm-2 col-form-label" for="userPassword"> <span jhiTranslate="artemisApp.lti.initialization.body.passwordLabel">Your password</span>: </label>
+            <div class="col-sm-10">
+                <input id="userPassword" type="text" class="form-control" disabled [(ngModel)]="password" />
+            </div>
+        </div>
+        <p>
+            <span jhiTranslate="artemisApp.lti.initialization.body.passwordHint">
+                Make sure to remember your password as you will need it to log in manually or connect with our services for programming exercises.<br />
+                If you forget your password, you can reset it on the login page. You can also change your password now:
+            </span>
+            <a target="_blank" [routerLink]="this.passwordResetLocation" jhiTranslate="artemisApp.lti.initialization.body.passwordChange">Change password</a>
+        </p>
+        <button type="button" class="btn btn-primary" data-dismiss="modal" (click)="clear()" jhiTranslate="artemisApp.lti.initialization.body.confirm">Confirm</button>
+    </div>
+</div>
