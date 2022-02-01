@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -20,7 +18,9 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public abstract class AssessmentResource {
 
@@ -79,11 +79,11 @@ public abstract class AssessmentResource {
 
         Result result = submission.getLatestResult();
         if (result == null) {
-            return notFound();
+            throw new EntityNotFoundException("Result with submission", submissionId);
         }
 
         if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         // remove sensitive information for students
@@ -114,7 +114,7 @@ public abstract class AssessmentResource {
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         if (!assessmentService.isAllowedToCreateOrOverrideResult(submission.getLatestResult(), exercise, studentParticipation, user, isAtLeastInstructor)) {
             log.debug("The user {} is not allowed to override the assessment for the submission {}", user.getLogin(), submission.getId());
-            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
+            throw new AccessForbiddenException("The user is not allowed to override the assessment");
         }
 
         Result result = assessmentService.saveManualAssessment(submission, feedbackList, resultId);
@@ -166,16 +166,19 @@ public abstract class AssessmentResource {
      * @param submissionId the id of the example submission
      * @return the result linked to the example submission
      */
-    ResponseEntity<Result> getExampleAssessment(long exerciseId, long submissionId) {
+    protected ResponseEntity<Result> getExampleAssessment(long exerciseId, long submissionId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         final var exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
 
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         // It is allowed to get the example assessment, if the user is an instructor or
         // if the user is a tutor and the submission is not used for tutorial in the assessment dashboard
-        boolean isAllowed = authCheckService.isAtLeastInstructorForExercise(exercise)
-                || authCheckService.isAtLeastTeachingAssistantForExercise(exercise) && !Boolean.TRUE.equals(exampleSubmission.isUsedForTutorial());
-        if (!isAllowed) {
-            forbidden();
+        // The reason is that example submissions with isTutorial = false should be shown immediately (with the assessment) to the tutor and
+        // for example submission with isTutorial = true, the assessment should not be shown to the tutor. Instead, the tutor should try to assess it him/herself
+        if (!(isAtLeastInstructor || (isAtLeastTutor && !exampleSubmission.isUsedForTutorial()))) {
+            throw new AccessForbiddenException();
         }
 
         return ResponseEntity.ok(assessmentService.getExampleAssessment(submissionId));
@@ -214,7 +217,7 @@ public abstract class AssessmentResource {
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         if (!(isAtLeastInstructor || userRepository.getUser().getId().equals(submission.getLatestResult().getAssessor().getId()))) {
             // tutors cannot cancel the assessment of other tutors (only instructors can)
-            return forbidden();
+            throw new AccessForbiddenException();
         }
         assessmentService.cancelAssessmentOfSubmission(submission);
         return ResponseEntity.ok().build();
@@ -227,7 +230,7 @@ public abstract class AssessmentResource {
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         Participation participation = submission.getParticipation();
         if (!participation.getId().equals(participationId)) {
-            return badRequest("participationId", "400", "participationId in path does not match the id of the participation to submission " + submissionId + " !");
+            throw new BadRequestAlertException("participationId in path does not match the id of the participation to submission " + submissionId + "!", "Participation", "400");
         }
         Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);

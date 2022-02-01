@@ -194,6 +194,14 @@ public class Feedback extends DomainObject {
         this.credits = credits;
     }
 
+    /**
+     * Returns if this is a positive feedback.
+     *
+     * This value can actually be {@code null} for feedbacks that are neither positive nor negative, e.g. when this is a
+     * feedback for a programming exercise test case that has not been executed for the submission.
+     *
+     * @return true, if this is a positive feedback.
+     */
     public Boolean isPositive() {
         return positive;
     }
