@@ -13,6 +13,7 @@ export class StudentExamService {
 
     constructor(private router: Router, private http: HttpClient) {}
 
+    /* istanbul ignore next */
     /**
      * Find a student exam on the server using a GET request.
      * @param courseId The course id.
@@ -23,6 +24,7 @@ export class StudentExamService {
         return this.http.get<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}`, { observe: 'response' });
     }
 
+    /* istanbul ignore next */
     /**
      * Find all student exams for the given exam.
      * @param courseId The course id.
@@ -32,6 +34,7 @@ export class StudentExamService {
         return this.http.get<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams`, { observe: 'response' });
     }
 
+    /* istanbul ignore next */
     /**
      * Update the working time of the given student exam.
      * @param courseId The course id.

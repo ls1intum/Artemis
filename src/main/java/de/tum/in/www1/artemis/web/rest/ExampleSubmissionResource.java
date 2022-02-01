@@ -1,10 +1,6 @@
 
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
-import java.util.Optional;
-
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -24,7 +20,6 @@ import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing ExampleSubmission.
@@ -70,7 +65,6 @@ public class ExampleSubmissionResource {
         if (exampleSubmission.getId() != null) {
             throw new BadRequestAlertException("A new exampleSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
-
         return handleExampleSubmission(exerciseId, exampleSubmission);
     }
 
@@ -90,15 +84,12 @@ public class ExampleSubmissionResource {
         if (exampleSubmission.getId() == null) {
             return createExampleSubmission(exerciseId, exampleSubmission);
         }
-
         return handleExampleSubmission(exerciseId, exampleSubmission);
     }
 
     @NotNull
     private ResponseEntity<ExampleSubmission> handleExampleSubmission(Long exerciseId, ExampleSubmission exampleSubmission) {
-        if (!authCheckService.isAtLeastEditorForExercise(exampleSubmission.getExercise())) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
         if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The exercise id in the path does not match the exercise id of the submission", ENTITY_NAME, "idsNotMatching");
         }
@@ -107,49 +98,36 @@ public class ExampleSubmissionResource {
     }
 
     /**
-     * GET /example-submissions/:id : get the "id" exampleSubmission.
+     * GET /example-submissions/:exampleSubmissionId : get the "id" exampleSubmission.
      *
-     * @param id the id of the exampleSubmission to retrieve
+     * @param exampleSubmissionId the id of the exampleSubmission to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exampleSubmission, or with status 404 (Not Found)
      */
-    @GetMapping("/example-submissions/{id}")
+    @GetMapping("/example-submissions/{exampleSubmissionId}")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<ExampleSubmission> getExampleSubmission(@PathVariable Long id) {
-        log.debug("REST request to get ExampleSubmission : {}", id);
-        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(id);
-
-        if (exampleSubmission.isPresent()) {
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exampleSubmission.get().getExercise())) {
-                return forbidden();
-            }
-        }
-
-        return ResponseUtil.wrapOrNotFound(exampleSubmission);
+    public ResponseEntity<ExampleSubmission> getExampleSubmission(@PathVariable Long exampleSubmissionId) {
+        log.debug("REST request to get ExampleSubmission : {}", exampleSubmissionId);
+        ExampleSubmission exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(exampleSubmissionId)
+                .orElseThrow(() -> new EntityNotFoundException("ExampleSubmission", exampleSubmissionId));
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exampleSubmission.getExercise(), null);
+        return ResponseEntity.ok(exampleSubmission);
     }
 
     /**
-     * DELETE /example-submissions/:id : delete the "id" exampleSubmission.
+     * DELETE /example-submissions/:exampleSubmissionId : delete the "id" exampleSubmission.
      *
-     * @param id the id of the exampleSubmission to delete
+     * @param exampleSubmissionId the id of the exampleSubmission to delete
      * @return the ResponseEntity with status 200 (OK), or with status 404 (Not Found)
      */
-    @DeleteMapping("/example-submissions/{id}")
+    @DeleteMapping("/example-submissions/{exampleSubmissionId}")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Void> deleteExampleSubmission(@PathVariable Long id) {
-        log.debug("REST request to delete ExampleSubmission : {}", id);
-        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(id);
-
-        if (exampleSubmission.isEmpty()) {
-            throw new EntityNotFoundException("ExampleSubmission with " + id + " was not found!");
-        }
-
-        if (!authCheckService.isAtLeastEditorForExercise(exampleSubmission.get().getExercise())) {
-            return forbidden();
-        }
-
-        exampleSubmissionService.deleteById(exampleSubmission.get().getId());
-
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+    public ResponseEntity<Void> deleteExampleSubmission(@PathVariable Long exampleSubmissionId) {
+        log.debug("REST request to delete ExampleSubmission : {}", exampleSubmissionId);
+        ExampleSubmission exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(exampleSubmissionId)
+                .orElseThrow(() -> new EntityNotFoundException("ExampleSubmission", exampleSubmissionId));
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
+        exampleSubmissionService.deleteById(exampleSubmission.getId());
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exampleSubmissionId.toString())).build();
     }
 
     /**
@@ -163,13 +141,9 @@ public class ExampleSubmissionResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId, @PathVariable Long sourceSubmissionId) {
         log.debug("REST request to import Student Submission as ExampleSubmission : {}", sourceSubmissionId);
-
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-
         ExampleSubmission exampleSubmission = exampleSubmissionService.importStudentSubmissionAsExampleSubmission(sourceSubmissionId, exercise);
-
         return ResponseEntity.ok(exampleSubmission);
     }
 }

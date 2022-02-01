@@ -619,17 +619,7 @@ public class ExamService {
      * @return number of exercises for which the repositories are unlocked
      */
     public Integer unlockAllRepositories(Long examId) {
-        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
-
-        // Collect all programming exercises for the given exam
-        Set<ProgrammingExercise> programmingExercises = new HashSet<>();
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            for (Exercise exercise : exerciseGroup.getExercises()) {
-                if (exercise instanceof ProgrammingExercise) {
-                    programmingExercises.add((ProgrammingExercise) exercise);
-                }
-            }
-        }
+        var programmingExercises = getAllProgrammingExercisesForExam(examId);
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are unlocked as fast as possible
@@ -639,13 +629,7 @@ public class ExamService {
         return programmingExercises.size();
     }
 
-    /**
-     * Locks all repositories of an exam
-     *
-     * @param examId id of the exam for which the repositories should be locked
-     * @return number of exercises for which the repositories are locked
-     */
-    public Integer lockAllRepositories(Long examId) {
+    private Set<ProgrammingExercise> getAllProgrammingExercisesForExam(Long examId) {
         var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         // Collect all programming exercises for the given exam
@@ -657,6 +641,17 @@ public class ExamService {
                 }
             }
         }
+        return programmingExercises;
+    }
+
+    /**
+     * Locks all repositories of an exam
+     *
+     * @param examId id of the exam for which the repositories should be locked
+     * @return number of exercises for which the repositories are locked
+     */
+    public Integer lockAllRepositories(Long examId) {
+        var programmingExercises = getAllProgrammingExercisesForExam(examId);
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are locked as fast as possible
