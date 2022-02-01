@@ -11,6 +11,8 @@ import { Result } from 'app/entities/result.model';
 describe('AssessmentFiltersComponent', () => {
     let component: AssessmentFiltersComponent;
     let fixture: ComponentFixture<AssessmentFiltersComponent>;
+    let textSubmission1: TextSubmission;
+    let textSubmission2: TextSubmission;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -22,15 +24,15 @@ describe('AssessmentFiltersComponent', () => {
                 fixture = TestBed.createComponent(AssessmentFiltersComponent);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
+                textSubmission1 = { id: 23, participation: { exercise: { id: 1 }, id: 2 }, submissionExerciseType: SubmissionExerciseType.TEXT } as TextSubmission;
+                textSubmission2 = { id: 24, participation: { exercise: { id: 1 }, id: 2 }, submissionExerciseType: SubmissionExerciseType.TEXT } as TextSubmission;
             });
     });
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('should update fitler when being called', () => {
-        const textSubmission1 = { id: 23, participation: { exercise: { id: 1 }, id: 2 }, results: {}, submissionExerciseType: SubmissionExerciseType.TEXT } as TextSubmission;
-        const textSubmission2 = { id: 24, participation: { exercise: { id: 1 }, id: 2 }, results: {}, submissionExerciseType: SubmissionExerciseType.TEXT } as TextSubmission;
+    it('should set filter properly when being called', () => {
         component.submissions = [textSubmission1, textSubmission2];
         const submissions = [textSubmission1, textSubmission2];
         component.submissions = submissions;
@@ -40,8 +42,6 @@ describe('AssessmentFiltersComponent', () => {
     });
 
     it('emitting the changes should not change the underlying submission list', () => {
-        const textSubmission1 = { id: 23, participation: { exercise: { id: 1 }, id: 2 }, submissionExerciseType: SubmissionExerciseType.TEXT } as TextSubmission;
-        const textSubmission2 = { id: 24, participation: { exercise: { id: 1 }, id: 2 }, submissionExerciseType: SubmissionExerciseType.TEXT } as TextSubmission;
         const submissions = [textSubmission1, textSubmission2];
         textSubmission1.results = [];
         textSubmission2.results = [];
