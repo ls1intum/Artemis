@@ -113,7 +113,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.params.subscribe((params) => {
             this.courseService.findWithExercises(params['courseId']).subscribe((findWithExercisesResult) => {
                 this.initializeWithCourse(findWithExercisesResult.body!);
-                this.exerciseTypesWithExercises = this.filterExercisesTypesWithExercises();
             });
         });
 
@@ -217,8 +216,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const gradingScaleObservable = this.gradingSystemService.findGradingScaleForCourse(courseId).pipe(catchError(() => of(new HttpResponse<GradingScale>())));
         forkJoin([findParticipationsObservable, courseScoresObservable, gradingScaleObservable]).subscribe(([participationsOfCourse, courseScoresResult, gradingScaleResponse]) => {
             this.allParticipationsOfCourse = participationsOfCourse;
+
             this.calculateExerciseLevelStatistics();
+            this.exerciseTypesWithExercises = this.filterExercisesTypesWithExercises();
+
             this.calculateStudentLevelStatistics();
+
             // if grading scale exists set properties
             if (gradingScaleResponse.body) {
                 this.calculateGradingScaleInformation(gradingScaleResponse.body);
