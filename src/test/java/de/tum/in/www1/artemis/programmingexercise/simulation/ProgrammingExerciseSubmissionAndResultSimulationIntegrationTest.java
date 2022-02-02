@@ -33,19 +33,16 @@ public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest ext
 
     private Long exerciseId;
 
-    private ProgrammingExercise exercise;
-
     @BeforeEach
     void setUp() {
         database.addUsers(3, 2, 1, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
         database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         database.addStudentParticipationForProgrammingExercise(exercise, "student2");
 
         exerciseId = exercise.getId();
-        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
     }
 
     @AfterEach
@@ -100,6 +97,6 @@ public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest ext
     @Test
     @WithMockUser(username = "tutor1", roles = "EDITOR")
     void shouldCreateResultWithoutConnectionToVCSandCI_forbidden() throws Exception {
-        request.post(ROOT + RESULTS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null, HttpStatus.FORBIDDEN);
+        request.post(ROOT + RESULTS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null, HttpStatus.NOT_FOUND);
     }
 }
