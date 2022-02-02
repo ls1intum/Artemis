@@ -338,7 +338,7 @@ public class ProgrammingExerciseTestService {
     public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language, ProgrammingLanguageFeature programmingLanguageFeature)
             throws Exception {
         exercise.setProgrammingLanguage(language);
-        if (language == ProgrammingLanguage.SWIFT) {
+        if (language == SWIFT) {
             exercise.setPackageName("swiftTest");
         }
         exercise.setProjectType(programmingLanguageFeature.getProjectTypes().size() > 0 ? programmingLanguageFeature.getProjectTypes().get(0) : null);
@@ -361,11 +361,11 @@ public class ProgrammingExerciseTestService {
             throws Exception {
         exercise.setStaticCodeAnalysisEnabled(true);
         exercise.setProgrammingLanguage(language);
-        if (language == ProgrammingLanguage.SWIFT) {
+        if (language == SWIFT) {
             exercise.setPackageName("swiftTest");
         }
         // Exclude ProjectType FACT as SCA is not supported
-        if (language == ProgrammingLanguage.C) {
+        if (language == C) {
             exercise.setProjectType(ProjectType.GCC);
         }
         else {
