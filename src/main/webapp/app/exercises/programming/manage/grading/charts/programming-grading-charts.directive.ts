@@ -14,7 +14,7 @@ export class ProgrammingGradingChartsDirective {
     } as Color;
 
     readonly xAxisFormatting = xAxisFormatting;
-    readonly RESET_TABLE = -5; // we use the number -5 in order to indicate programming-exercise-configure-grading.component.ts to reset the corresponding table
+    static RESET_TABLE = -5; // we use the number -5 in order to indicate programming-exercise-configure-grading.component.ts to reset the corresponding table
 
     resetTableFilter() {
         this.tableFiltered = false;

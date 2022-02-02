@@ -190,7 +190,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
      */
     resetTableFilter(): void {
         super.resetTableFilter();
-        this.scaCategoryFilter.emit(this.RESET_TABLE);
+        this.scaCategoryFilter.emit(ProgrammingGradingChartsDirective.RESET_TABLE);
     }
 
     /**

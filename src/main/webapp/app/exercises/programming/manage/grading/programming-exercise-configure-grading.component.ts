@@ -24,6 +24,7 @@ import {
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
 
 /**
  * Describes the editableField
@@ -81,7 +82,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     // backup in order to restore the setting before filtering by chart interaction
     backupTestCases: ProgrammingExerciseTestCase[] = [];
 
-    readonly RESET_TABLE = -5; // The event emitters emit this number in order to indicate this component to reset the corresponding table view
+    // The event emitters emit this value in order to indicate this component to reset the corresponding table view
+    readonly RESET_TABLE = ProgrammingGradingChartsDirective.RESET_TABLE;
     readonly chartFilterType = ChartFilterType;
 
     // We have to separate these test cases in order to separate the table and chart presentation if the table is filtered by the chart
@@ -293,7 +295,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             // Only mark the testcase as changed, if the field has changed.
             if (newValue !== editedTestCase[field]) {
                 this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id!) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id!];
-                // this.testCases = this.testCases.map((testCase) => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue }));
                 this.updateAllTestCaseViewsAfterEditing(editedTestCase, field, newValue);
             }
             return newValue;
