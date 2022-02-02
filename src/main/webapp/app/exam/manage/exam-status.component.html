@@ -52,11 +52,11 @@
                     </span>
                 </li>
                 <li>
-                    <span
-                        >{{ 'artemisApp.examStatus.conduction.submittedExams' | artemisTranslate }}:
+                    <span>
+                        {{ 'artemisApp.examStatus.conduction.submittedExams' | artemisTranslate }}:
                         {{ examChecklist.numberOfExamsSubmitted }}
-                        ({{ numberOfGeneratedStudentExams > 0 ? round((examChecklist.numberOfExamsSubmitted * 100) / numberOfGeneratedStudentExams!, 1) : 0 }}%)</span
-                    >
+                        ({{ numberOfGeneratedStudentExams > 0 ? round((examChecklist.numberOfExamsSubmitted * 100) / numberOfGeneratedStudentExams!, 1) : 0 }}%)
+                    </span>
                 </li>
             </ol>
         </div>
