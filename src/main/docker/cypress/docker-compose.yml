@@ -60,7 +60,7 @@ services:
             - CYPRESS_editorGroupName
             - CYPRESS_instructorGroupName
         # Give Artemis 120 seconds to start
-        command: sh -c "sleep 120 && cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci &&npm run cypress:run"
+        command: sh -c "sleep 120 && cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci &&npm run cypress:run -- --config video=true,screenshotOnRunFailure=true,videoUploadOnPasses=false"
         volumes:
             - ../../../../:/app/artemis
         networks:
