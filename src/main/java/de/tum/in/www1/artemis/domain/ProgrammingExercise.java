@@ -713,7 +713,7 @@ public class ProgrammingExercise extends Exercise {
         }
 
         // Check that FACT has no SCA enabled
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled() && ProjectType.FACT.equals(getProjectType()))) {
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && ProjectType.FACT.equals(getProjectType())) {
             throw new BadRequestAlertException("The static code analysis is not supported for FACT programming exercises", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
         }
 

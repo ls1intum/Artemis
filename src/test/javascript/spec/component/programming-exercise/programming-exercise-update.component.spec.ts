@@ -308,7 +308,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
-            expect(comp.selectedProjectType).toEqual(ProjectType.GCC);
+            expect(comp.selectedProjectType).toBe(ProjectType.GCC);
             expect(comp.staticCodeAnalysisAllowed).toBe(true);
         }));
 
@@ -332,10 +332,10 @@ describe('ProgrammingExercise Management Update Component', () => {
             comp.onProjectTypeChange(ProjectType.FACT);
 
             // THEN
-            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.C);
-            expect(comp.selectedProjectType).toEqual(ProjectType.FACT);
-            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toEqual(false);
-            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toEqual(undefined);
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
+            expect(comp.selectedProjectType).toBe(ProjectType.FACT);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(false);
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
         }));
     });
 
