@@ -594,7 +594,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
             const exercisePointValues = student.pointsPerExerciseType.get(exerciseType)!;
             exerciseTitleKeys.forEach((title, index) => {
-                const points = roundScorePercentSpecifiedByCourseSettings(exercisePointValues[index], this.course);
+                const points = roundScoreSpecifiedByCourseSettings(exercisePointValues[index], this.course);
                 rowData.setLocalized(title, points);
             });
 
