@@ -475,7 +475,7 @@
             },
             "correction": {
                 "examCorrection": "Exam correction",
-                "correctionRoundProgress": "Correction progress round {{ index }}",
+                "correctionRoundProgress": "Correction progress in round {{ index }}",
                 "examReview": "Exam review",
                 "unset": "Unset",
                 "planned": "Planned",
