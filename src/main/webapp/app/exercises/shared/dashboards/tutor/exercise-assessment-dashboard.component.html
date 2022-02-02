@@ -522,12 +522,25 @@
                 <div class="table-responsive">
                     <table class="table table-striped exercise-table" *ngIf="submissionsWithComplaints && submissionsWithComplaints!.length > 0; else noComplaints">
                         <thead>
-                            <tr>
+                            <tr jhiSort [(predicate)]="sortComplaintPredicate" [(ascending)]="reverseComplaintOrder" (sortChange)="sortComplaintRows()">
                                 <th>#</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.submissionDate' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.result' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.status' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</th>
+
+                                <th jhiSortBy="complaint.submittedTime">
+                                    <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.submissionDate' | artemisTranslate }}</a>
+                                    <fa-icon [icon]="faSort"></fa-icon>
+                                </th>
+                                <th jhiSortBy="submission.latestResult.score">
+                                    <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.result' | artemisTranslate }}</a>
+                                    <fa-icon [icon]="faSort"></fa-icon>
+                                </th>
+                                <!--<th jhiSortBy="status">
+                                    <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.status' | artemisTranslate }}</a>
+                                    <fa-icon [icon]="faSort"></fa-icon>
+                                </th>-->
+                                <th jhiSortBy="complaint.accepted">
+                                    <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</a>
+                                    <fa-icon [icon]="faSort"></fa-icon>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -541,9 +554,9 @@
                                         [exercise]="exercise"
                                     ></jhi-result>
                                 </td>
-                                <td>
+                                <!--<td>
                                     {{ calculateComplaintStatus(submissionWithComplaint.complaint) }}
-                                </td>
+                                </td>-->
                                 <td>
                                     <ng-container
                                         *jhiExtensionPoint="
@@ -609,12 +622,24 @@
                         *ngIf="submissionsWithMoreFeedbackRequests && submissionsWithMoreFeedbackRequests!.length > 0; else noMoreFeedbackRequests"
                     >
                         <thead>
-                            <tr>
+                            <tr jhiSort [(predicate)]="sortMoreFeedbackPredicate" [(ascending)]="reverseMoreFeedbackOrder" (sortChange)="sortMoreFeedbackRows()">
                                 <th>#</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.submissionDate' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.result' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.status' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</th>
+                                <th jhiSortBy="complaint.submittedTime">
+                                    <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.submissionDate' | artemisTranslate }}</a>
+                                    <fa-icon [icon]="faSort"></fa-icon>
+                                </th>
+                                <th jhiSortBy="submission.latestResult.score">
+                                    <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.result' | artemisTranslate }}</a>
+                                    <fa-icon [icon]="faSort"></fa-icon>
+                                </th>
+                                <!--<th jhiSortBy="status">
+                                    <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.status' | artemisTranslate }}</a>
+                                    <fa-icon [icon]="faSort"></fa-icon>
+                                </th>-->
+                                <th jhiSortBy="complaint.accepted">
+                                    <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</a>
+                                    <fa-icon [icon]="faSort"></fa-icon>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -624,6 +649,7 @@
                                 <td>
                                     <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise"></jhi-result>
                                 </td>
+                                <!--
                                 <td>
                                     <span *ngIf="moreFeedbackRequest.complaint.accepted !== undefined">{{
                                         'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestEvaluated' | artemisTranslate
@@ -632,6 +658,7 @@
                                         >{{ 'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestNotEvaluated' | artemisTranslate }}
                                     </span>
                                 </td>
+                                -->
                                 <td>
                                     <ng-container
                                         *jhiExtensionPoint="

@@ -44,7 +44,7 @@ import { LegendPosition } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner, faSort } from '@fortawesome/free-solid-svg-icons';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 export interface ExampleSubmissionQueryParams {
@@ -162,6 +162,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     faQuestionCircle = faQuestionCircle;
     faCheckCircle = faCheckCircle;
     faFolderOpen = faFolderOpen;
+    faSort = faSort;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -786,5 +787,19 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
             this.router.navigate(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
         }
+    }
+
+    sortComplaintPredicate = 'complaint.submittedTime';
+    reverseComplaintOrder = false;
+
+    sortComplaintRows() {
+        this.sortService.sortByProperty(this.submissionsWithComplaints, this.sortComplaintPredicate, this.reverseComplaintOrder);
+    }
+
+    sortMoreFeedbackPredicate = 'complaint.submittedTime';
+    reverseMoreFeedbackOrder = false;
+
+    sortMoreFeedbackRows() {
+        this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, this.sortMoreFeedbackPredicate, this.reverseMoreFeedbackOrder);
     }
 }
