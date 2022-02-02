@@ -4,17 +4,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { NgModel } from '@angular/forms';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { Submission } from 'app/entities/submission.model';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 
 describe('AssessmentFiltersComponent', () => {
     let component: AssessmentFiltersComponent;
     let fixture: ComponentFixture<AssessmentFiltersComponent>;
-    let textSubmissionWithLock: TextSubmission;
-    let textSubmissionWithoutResult: TextSubmission;
-    let textSubmissionWithResult: TextSubmission;
+
     let submissions: Submission[];
 
     beforeEach(() => {
@@ -27,10 +24,6 @@ describe('AssessmentFiltersComponent', () => {
                 fixture = TestBed.createComponent(AssessmentFiltersComponent);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
-                textSubmissionWithLock = { id: 23, participation: { exercise: { id: 1 }, id: 2 }, submissionExerciseType: SubmissionExerciseType.TEXT } as TextSubmission;
-                textSubmissionWithoutResult = { id: 24, participation: { exercise: { id: 1 }, id: 3 }, submissionExerciseType: SubmissionExerciseType.TEXT } as TextSubmission;
-                textSubmissionWithResult = { id: 25, participation: { exercise: { id: 1 }, id: 4 }, submissionExerciseType: SubmissionExerciseType.TEXT } as TextSubmission;
-                submissions = [textSubmissionWithLock, textSubmissionWithoutResult, textSubmissionWithResult];
             });
     });
     afterEach(() => {
@@ -38,25 +31,27 @@ describe('AssessmentFiltersComponent', () => {
     });
 
     it('should set filter properly when being called', () => {
+        submissions = [];
         component.submissions = submissions;
         const emitSpy = jest.spyOn(component.filterChange, 'emit');
+        component.updateFilter(component.FilterProp.LOCKED);
+        expect(component.filterProp).toBe(component.FilterProp.LOCKED);
         component.updateFilter(component.FilterProp.ALL);
         expect(component.filterProp).toBe(component.FilterProp.ALL);
         expect(component.submissions).toBe(submissions);
-        expect(emitSpy).toHaveBeenCalledTimes(1);
+        expect(emitSpy).toHaveBeenCalledTimes(2);
         expect(emitSpy).toHaveBeenCalledWith(submissions);
     });
 
     it('should filter for the right submissions', () => {
-        textSubmissionWithLock.results = [];
-        textSubmissionWithoutResult.results = [];
-        textSubmissionWithResult.results = [];
-        textSubmissionWithLock.results = [new Result()];
-        const result3 = new Result();
-        result3.completionDate = dayjs().add(5, 'minutes');
-        textSubmissionWithResult.results.push(result3);
+        const submissionWithLock = { results: [new Result()] } as Submission;
+        const resultWithCompletionDate = new Result();
+        resultWithCompletionDate.completionDate = dayjs();
+        const unlockedSubmissionWithResult = { results: [resultWithCompletionDate] } as Submission;
+        const submissionWithoutResult = {} as Submission;
+        submissions = [unlockedSubmissionWithResult, submissionWithLock, submissionWithoutResult];
         component.submissions = submissions;
-        const expectedResult = [textSubmissionWithLock];
+        const expectedResult = [submissionWithLock];
         const emitSpy = jest.spyOn(component.filterChange, 'emit');
         component.updateFilter(component.FilterProp.LOCKED);
         expect(component.filterProp).toBe(component.FilterProp.LOCKED);
