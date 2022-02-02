@@ -501,7 +501,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.students.forEach((student) => rows.push(this.generateStudentStatisticsCsvRow(student)));
 
         // empty row as separator
-        rows.push(this.prepareEmptyCsvRow(''));
+        rows.push(this.prepareEmptyCsvRow('').build());
 
         rows.push(this.generateCsvRowMaxValues());
         rows.push(this.generateCsvRowAverageValues());
