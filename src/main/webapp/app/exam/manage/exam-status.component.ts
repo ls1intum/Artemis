@@ -67,20 +67,12 @@ export class ExamStatusComponent implements OnChanges {
     constructor(private examChecklistService: ExamChecklistService) {}
 
     ngOnChanges(): void {
-        // Step 1: Exam preparation
-        // Step 1.1: Configure exercises
-        this.configurationStepToFlagMap.set(ExamConfigurationStep.CONFIGURE_EXERCISES, this.areAllExercisesConfigured());
-        // Step 1.2: Register students
-        this.configurationStepToFlagMap.set(ExamConfigurationStep.REGISTER_STUDENTS, this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam));
         this.examChecklistService.getExamStatistics(this.exam).subscribe((examStats) => {
-            // Step 1.3: Generate student exams
-            this.configurationStepToFlagMap.set(ExamConfigurationStep.GENERATE_STUDENT_EXAMS, this.examChecklistService.checkAllExamsGenerated(this.exam, examStats));
-            // Step 1.4: Prepare exercise start
-            const allExamsGenerated = this.configurationStepToFlagMap.get(ExamConfigurationStep.GENERATE_STUDENT_EXAMS)!;
-            this.configurationStepToFlagMap.set(ExamConfigurationStep.PREPARE_EXERCISE_START, !!examStats.allExamExercisesAllStudentsPrepared && allExamsGenerated);
-            this.examPreparationFinished = this.isExamPreparationFinished();
             this.examChecklist = examStats;
             this.numberOfGeneratedStudentExams = this.examChecklist.numberOfGeneratedStudentExams ?? 0;
+
+            // Step 1:
+            this.setExamPreparation();
         });
 
         // Step 2: Exam conduction
@@ -91,29 +83,19 @@ export class ExamStatusComponent implements OnChanges {
     }
 
     /**
-     * Auxiliary method that determines if all configuration steps for the exam exercises are finished. There are 5 requirements that have to be fulfilled:
-     * 1. The exam has at least one exercise group
-     * 2. The number of exam exercises equals number of exercise groups
-     * 3. Each exercise group contains at least one exercise
-     * 4. Within each exercise group, exercises have same maximum points
-     * 5. Maximum points of exam are reachable
+     * Auxiliary method that determines if all configuration steps for the exam exercises are finished
      * @private
      * @returns boolean indicating whether configuration is finished
      */
     private areAllExercisesConfigured(): boolean {
-        // 1.
         const atLeastOneGroup = this.examChecklistService.checkAtLeastOneExerciseGroup(this.exam);
 
-        // 2.
         const numberOfExercisesEqual = this.examChecklistService.checkNumberOfExerciseGroups(this.exam);
 
-        // 3.
         const noEmptyExerciseGroup = this.examChecklistService.checkEachGroupContainsExercise(this.exam);
 
-        // 4.
         const maximumPointsEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam);
 
-        // 5.
         const examPointsReachable = this.examChecklistService.checkTotalPointsMandatory(maximumPointsEqual, this.exam);
 
         return atLeastOneGroup && noEmptyExerciseGroup && numberOfExercisesEqual && maximumPointsEqual && examPointsReachable;
@@ -148,10 +130,7 @@ export class ExamStatusComponent implements OnChanges {
     private setReviewState(): void {
         if (!this.exam.examStudentReviewEnd) {
             this.examReviewState = ExamReviewState.UNSET;
-        } else if (
-            (!this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd && this.exam.examStudentReviewEnd.isAfter(dayjs())) ||
-            (this.exam.examStudentReviewStart && this.exam.examStudentReviewStart.isBefore(dayjs()) && this.exam.examStudentReviewEnd.isAfter(dayjs()))
-        ) {
+        } else if (this.isExamReviewRunning()) {
             this.examReviewState = ExamReviewState.RUNNING;
         } else if (this.exam.examStudentReviewEnd.isBefore(dayjs())) {
             this.examReviewState = ExamReviewState.FINISHED;
@@ -161,18 +140,48 @@ export class ExamStatusComponent implements OnChanges {
     }
 
     /**
+     * Auxiliary method that determines the state of the different sub steps of exam preparation and stores them in a map
+     * Finally determines whether every sub step is sufficiently fulfilled and therefore exam preparation is finished
+     * @private
+     */
+    private setExamPreparation(): void {
+        // Step 1.1: Configure exercises
+        this.configurationStepToFlagMap.set(ExamConfigurationStep.CONFIGURE_EXERCISES, this.areAllExercisesConfigured());
+        // Step 1.2: Register students
+        this.configurationStepToFlagMap.set(ExamConfigurationStep.REGISTER_STUDENTS, this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam));
+        // Step 1.3: Generate student exams
+        this.configurationStepToFlagMap.set(ExamConfigurationStep.GENERATE_STUDENT_EXAMS, this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist));
+        // Step 1.4: Prepare exercise start
+        const allExamsGenerated = this.configurationStepToFlagMap.get(ExamConfigurationStep.GENERATE_STUDENT_EXAMS)!;
+        this.configurationStepToFlagMap.set(ExamConfigurationStep.PREPARE_EXERCISE_START, !!this.examChecklist.allExamExercisesAllStudentsPrepared && allExamsGenerated);
+        this.examPreparationFinished = this.isExamPreparationFinished();
+    }
+
+    /**
      * Indicates whether the exam already started
      * @private
      */
-    private examAlreadyStarted() {
-        return this.exam.startDate && this.exam.startDate.isBefore(dayjs());
+    private examAlreadyStarted(): boolean {
+        return this.exam.startDate! && this.exam.startDate!.isBefore(dayjs());
     }
 
     /**
      * Indicates whether the exam is already finished
      * @private
      */
-    private examAlreadyEnded() {
-        return this.exam.endDate && this.exam.endDate.isBefore(dayjs());
+    private examAlreadyEnded(): boolean {
+        return this.exam.endDate! && this.exam.endDate!.isBefore(dayjs());
+    }
+
+    /**
+     * Indicates whether exam review is already running
+     * @private
+     */
+    private isExamReviewRunning(): boolean {
+        return (
+            ((!this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd && this.exam.examStudentReviewEnd.isAfter(dayjs())) ||
+                (this.exam.examStudentReviewStart && this.exam.examStudentReviewStart.isBefore(dayjs()) && this.exam.examStudentReviewEnd!.isAfter(dayjs()))) ??
+            false
+        );
     }
 }
