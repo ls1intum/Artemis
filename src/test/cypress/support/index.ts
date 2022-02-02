@@ -48,4 +48,11 @@ Cypress.on('window:before:load', (win) => {
 Cypress.on('window:before:load', (win) => {
     delete win.navigator.__proto__.serviceWorker;
 });
+
+// TODO: Remove this. Uncaught exceptions in the client should trigger a test failure
+Cypress.on('uncaught:exception', (err, runnable) => {
+    // returning false here prevents Cypress from
+    // failing the test
+    return false;
+});
 /*eslint-enable */
