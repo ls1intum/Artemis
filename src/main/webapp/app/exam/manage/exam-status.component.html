@@ -45,11 +45,11 @@
             </div>
             <ol *ngIf="examChecklist">
                 <li>
-                    <span
-                        >{{ 'artemisApp.examStatus.conduction.startedExams' | artemisTranslate }}:
+                    <span>
+                        {{ 'artemisApp.examStatus.conduction.startedExams' | artemisTranslate }}:
                         {{ examChecklist.numberOfExamsStarted }}
-                        ({{ numberOfGeneratedStudentExams > 0 ? round((examChecklist.numberOfExamsStarted * 100) / examChecklist.numberOfGeneratedStudentExams!, 1) : 0 }}%)</span
-                    >
+                        ({{ numberOfGeneratedStudentExams > 0 ? round((examChecklist.numberOfExamsStarted * 100) / examChecklist.numberOfGeneratedStudentExams!, 1) : 0 }}%)
+                    </span>
                 </li>
                 <li>
                     <span
