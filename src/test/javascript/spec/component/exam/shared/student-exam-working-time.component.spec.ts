@@ -59,4 +59,20 @@ describe('StudentExamWorkingTimeComponent', () => {
         setExamWithWorkingTime(regularWorkingTime * 3);
         expect(comp.percentDifference).toBe(200);
     });
+
+    it('should only count exams as test runs if they explicitly are', () => {
+        comp.studentExam = studentExam;
+
+        studentExam.testRun = undefined;
+        comp.ngOnInit();
+        expect(comp.isTestRun).toBe(false);
+
+        studentExam.testRun = false;
+        comp.ngOnInit();
+        expect(comp.isTestRun).toBe(false);
+
+        studentExam.testRun = true;
+        comp.ngOnInit();
+        expect(comp.isTestRun).toBe(true);
+    });
 });
