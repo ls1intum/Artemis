@@ -237,6 +237,8 @@
             "unlockAllRepositoriesFailure": "There was an error during the unlocking of the programming exercises:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were locked.",
             "lockAllRepositoriesFailure": "There was an error during the locking of the programming exercises:\n {{message}}",
+            "setWorkingTime": "Absolute:",
+            "setWorkingTimeRelative": "Addition relative to regular working time:",
             "removeAllStudents": {
                 "title": "Remove all students",
                 "question": "Are you sure you want to remove <strong class='text-danger'>all students</strong> from the exam?",
