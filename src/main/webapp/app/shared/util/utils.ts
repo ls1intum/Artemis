@@ -93,10 +93,10 @@ export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: any, c
 };
 
 /**
- * Rounds the given value to the specified amount in the course object
- * @param value The value of the student
- * @param course The course in which the score is displayed. The attribute accuracyOfScores determines the accuracy
- * @returns The rounded value of the student
+ * Rounds the given value to the accuracy defined by the course.
+ * @param value The value that should be rounded.
+ * @param course The course which defines the accuracy to which the value should be rounded.
+ * @returns The rounded value.
  */
 export const roundValueSpecifiedByCourseSettings = (value: any, course?: Course) => {
     if (!course) {
