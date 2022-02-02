@@ -158,7 +158,7 @@ export class ExamStatusComponent implements OnChanges {
      * @private
      */
     private examAlreadyStarted(): boolean {
-        return this.exam.startDate! && this.exam.startDate!.isBefore(dayjs());
+        return this.exam.startDate! && this.exam.startDate.isBefore(dayjs());
     }
 
     /**
@@ -166,7 +166,7 @@ export class ExamStatusComponent implements OnChanges {
      * @private
      */
     private examAlreadyEnded(): boolean {
-        return this.exam.endDate! && this.exam.endDate!.isBefore(dayjs());
+        return this.exam.endDate! && this.exam.endDate.isBefore(dayjs());
     }
 
     /**
