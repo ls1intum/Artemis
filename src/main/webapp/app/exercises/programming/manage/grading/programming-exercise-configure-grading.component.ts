@@ -41,6 +41,7 @@ export enum ChartFilterType {
     TEST_CASES,
     CATEGORIES,
 }
+
 enum TestCaseView {
     TABLE,
     CHART,
