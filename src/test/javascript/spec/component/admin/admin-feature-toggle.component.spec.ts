@@ -27,8 +27,7 @@ describe('AdminFeatureToggleComponentTest', () => {
     });
 
     it('constructor', () => {
-        const componentInstance = new AdminFeatureToggleComponent(service);
-        expect(componentInstance.availableToggles).toHaveLength(0);
+        expect(comp.availableToggles).toHaveLength(0);
     });
 
     it('onInit test if features mapped successfully', () => {
