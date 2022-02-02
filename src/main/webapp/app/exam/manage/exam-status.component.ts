@@ -89,13 +89,9 @@ export class ExamStatusComponent implements OnChanges {
      */
     private areAllExercisesConfigured(): boolean {
         const atLeastOneGroup = this.examChecklistService.checkAtLeastOneExerciseGroup(this.exam);
-
         const numberOfExercisesEqual = this.examChecklistService.checkNumberOfExerciseGroups(this.exam);
-
         const noEmptyExerciseGroup = this.examChecklistService.checkEachGroupContainsExercise(this.exam);
-
         const maximumPointsEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam);
-
         const examPointsReachable = this.examChecklistService.checkTotalPointsMandatory(maximumPointsEqual, this.exam);
 
         return atLeastOneGroup && noEmptyExerciseGroup && numberOfExercisesEqual && maximumPointsEqual && examPointsReachable;
