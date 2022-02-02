@@ -12,7 +12,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { roundScorePercentSpecifiedByCourseSettings, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { captureException } from '@sentry/browser';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -258,7 +258,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * @private
      */
     private checkStudentScoreCalculation(student: CourseScoresStudentStatistics) {
-        const overAllPoints = roundScoreSpecifiedByCourseSettings(student.overallPoints, this.course);
+        const overAllPoints = roundValueSpecifiedByCourseSettings(student.overallPoints, this.course);
         const overallScore = roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course);
         const regularCalculation = {
             scoreAchieved: overallScore,
@@ -274,8 +274,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             const errorMessage = `User scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
             this.logErrorOnSentry(errorMessage);
         } else {
-            courseScoreDTO.scoreAchieved = roundScoreSpecifiedByCourseSettings(courseScoreDTO.scoreAchieved, this.course);
-            courseScoreDTO.pointsAchieved = roundScoreSpecifiedByCourseSettings(courseScoreDTO.pointsAchieved, this.course);
+            courseScoreDTO.scoreAchieved = roundValueSpecifiedByCourseSettings(courseScoreDTO.scoreAchieved, this.course);
+            courseScoreDTO.pointsAchieved = roundValueSpecifiedByCourseSettings(courseScoreDTO.pointsAchieved, this.course);
 
             if (Math.abs(courseScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 0.1) {
                 const errorMessage = `Different course points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
@@ -433,7 +433,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             // In the client, these are now displayed rounded as 1.1 points.
             // If the student adds up the displayed points, he gets a total of 5.5 points.
             // In order to get the same total result as the student, we have to round before summing.
-            const pointsAchievedByStudentInExercise = roundScoreSpecifiedByCourseSettings((result.score! * relevantMaxPoints) / 100, this.course);
+            const pointsAchievedByStudentInExercise = roundValueSpecifiedByCourseSettings((result.score! * relevantMaxPoints) / 100, this.course);
             student.overallPoints += pointsAchievedByStudentInExercise;
             student.pointsPerExercise.set(exercise.id!, pointsAchievedByStudentInExercise);
             student.sumPointsPerExerciseType.set(exercise.type!, student.sumPointsPerExerciseType.get(exercise.type!)! + pointsAchievedByStudentInExercise);
@@ -594,7 +594,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
             const exercisePointValues = student.pointsPerExerciseType.get(exerciseType)!;
             exerciseTitleKeys.forEach((title, index) => {
-                const points = roundScoreSpecifiedByCourseSettings(exercisePointValues[index], this.course);
+                const points = roundValueSpecifiedByCourseSettings(exercisePointValues[index], this.course);
                 rowData.setLocalized(title, points);
             });
 
@@ -657,7 +657,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             const exerciseAveragePoints = this.exerciseAveragePointsPerType.get(exerciseType)!;
 
             exerciseTitleKeys.forEach((title, index) => {
-                const points = roundScoreSpecifiedByCourseSettings(exerciseAveragePoints[index], this.course);
+                const points = roundValueSpecifiedByCourseSettings(exerciseAveragePoints[index], this.course);
                 rowData.setLocalized(title, points);
             });
 
