@@ -20,7 +20,7 @@ public class BambooProgrammingLanguageFeatureService extends ProgrammingLanguage
         programmingLanguageFeatures.put(EMPTY, new ProgrammingLanguageFeature(EMPTY, false, false, false, false, false, List.of()));
         programmingLanguageFeatures.put(JAVA, new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(ECLIPSE, MAVEN)));
         programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, true, false, true, false, false, List.of()));
-        programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, true, true, false, false, List.of()));
+        programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, true, true, false, false, List.of(FACT, GCC)));
         programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, true, false, false, false, true, List.of()));
         programmingLanguageFeatures.put(KOTLIN, new ProgrammingLanguageFeature(KOTLIN, true, false, false, true, false, List.of()));
         programmingLanguageFeatures.put(VHDL, new ProgrammingLanguageFeature(VHDL, false, false, false, false, false, List.of()));

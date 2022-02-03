@@ -1,0 +1,4 @@
+<span>
+    {{ studentExam.workingTime! | artemisDurationFromSeconds }}
+    <ng-container *ngIf="!isTestRun && percentDifference !== 0">({{ percentDifference > 0 ? '+' : '' }}{{ percentDifference }}&thinsp;%)</ng-container>
+</span>
