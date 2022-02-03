@@ -632,33 +632,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         return !(tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!));
     }
 
-    calculateComplaintStatus(complaint: Complaint) {
-        // a complaint is handled if it is either accepted or denied and a complaint response exists
-        const handled = complaint.accepted !== undefined && complaint.complaintResponse !== undefined;
-        if (handled) {
-            return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.complaintEvaluated');
-        } else {
-            if (this.complaintService.isComplaintLocked(complaint)) {
-                if (this.complaintService.isComplaintLockedByLoggedInUser(complaint)) {
-                    const endDate = this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate);
-                    return this.translateService.instant('artemisApp.locks.lockInformationYou', {
-                        endDate,
-                    });
-                } else {
-                    const endDate = this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate);
-                    const user = complaint.complaintResponse?.reviewer?.login;
-
-                    return this.translateService.instant('artemisApp.locks.lockInformation', {
-                        endDate,
-                        user,
-                    });
-                }
-            } else {
-                return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.complaintNotEvaluated');
-            }
-        }
-    }
-
     /**
      * Uses the router to navigate to a given example submission
      * @param submissionId Id of submission where to navigate to

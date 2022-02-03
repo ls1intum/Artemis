@@ -380,19 +380,6 @@
                                             [exercise]="exercise"
                                         ></jhi-result>
                                     </td>
-                                    <!--
-                                    <td>
-                                        {{ calculateSubmissionStatusIsDraft(submission, correctionRound) ? 'DRAFT' : 'DONE' }}
-                                    </td>
-                                    <td>
-                                        <span
-                                            *ngIf="
-                                                !!submission.results && submission.results[correctionRound] != undefined && submission.results[correctionRound]!.score != undefined
-                                            "
-                                            >{{ roundScoreSpecifiedByCourseSettings(submission.results![correctionRound]!.score, getCourseFromExercise(exercise)) }} %</span
-                                        >
-                                    </td>
-                                    -->
                                     <td *ngIf="exercise.type === ExerciseType.TEXT">
                                         <jhi-language-table-cell [submission]="submission"></jhi-language-table-cell>
                                     </td>
@@ -446,14 +433,10 @@
                                     <tr>
                                         <td></td>
                                         <td>{{ unassessedSubmissionByCorrectionRound.get(correctionRound)?.submissionDate | artemisDate }}</td>
-
-                                        <td></td>
-                                        <td>{{ 'artemisApp.exerciseAssessmentDashboard.new' | artemisTranslate }}</td>
                                         <td></td>
                                         <td *ngIf="exercise.type === ExerciseType.TEXT">
                                             <jhi-language-table-cell [submission]="unassessedSubmissionByCorrectionRound.get(correctionRound)!"></jhi-language-table-cell>
                                         </td>
-
                                         <td>
                                             <a
                                                 *jhiExtensionPoint="
@@ -544,10 +527,6 @@
                                     <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.result' | artemisTranslate }}</a>
                                     <fa-icon [icon]="faSort"></fa-icon>
                                 </th>
-                                <!--<th jhiSortBy="status">
-                                    <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.status' | artemisTranslate }}</a>
-                                    <fa-icon [icon]="faSort"></fa-icon>
-                                </th>-->
                                 <th jhiSortBy="complaint.accepted">
                                     <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</a>
                                     <fa-icon [icon]="faSort"></fa-icon>
@@ -565,9 +544,6 @@
                                         [exercise]="exercise"
                                     ></jhi-result>
                                 </td>
-                                <!--<td>
-                                    {{ calculateComplaintStatus(submissionWithComplaint.complaint) }}
-                                </td>-->
                                 <td>
                                     <ng-container
                                         *jhiExtensionPoint="
@@ -643,10 +619,6 @@
                                     <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.result' | artemisTranslate }}</a>
                                     <fa-icon [icon]="faSort"></fa-icon>
                                 </th>
-                                <!--<th jhiSortBy="status">
-                                    <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.status' | artemisTranslate }}</a>
-                                    <fa-icon [icon]="faSort"></fa-icon>
-                                </th>-->
                                 <th jhiSortBy="complaint.accepted">
                                     <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</a>
                                     <fa-icon [icon]="faSort"></fa-icon>
@@ -660,16 +632,6 @@
                                 <td>
                                     <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise"></jhi-result>
                                 </td>
-                                <!--
-                                <td>
-                                    <span *ngIf="moreFeedbackRequest.complaint.accepted !== undefined">{{
-                                        'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestEvaluated' | artemisTranslate
-                                    }}</span>
-                                    <span *ngIf="moreFeedbackRequest.complaint.accepted === undefined"
-                                        >{{ 'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestNotEvaluated' | artemisTranslate }}
-                                    </span>
-                                </td>
-                                -->
                                 <td>
                                     <ng-container
                                         *jhiExtensionPoint="
