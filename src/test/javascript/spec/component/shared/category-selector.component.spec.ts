@@ -1,13 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
-import { MockComponent, MockModule } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSelectModule } from '@angular/material/select';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Category Selector Component', () => {
     let comp: CategorySelectorComponent;
@@ -50,13 +53,16 @@ describe('Category Selector Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
+                FontAwesomeTestingModule,
                 MockModule(MatAutocompleteModule),
                 MockModule(MatFormFieldModule),
                 MockModule(MatChipsModule),
                 MockModule(MatSelectModule),
                 MockModule(ArtemisColorSelectorModule),
+                MockModule(ReactiveFormsModule),
+                MockModule(FormsModule),
             ],
-            declarations: [CategorySelectorComponent, MockComponent(ColorSelectorComponent)],
+            declarations: [CategorySelectorComponent, MockComponent(ColorSelectorComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [],
         })
             .compileComponents()
@@ -156,6 +162,16 @@ describe('Category Selector Component', () => {
         expect(emitSpy).toHaveBeenCalledWith([category1, category3]);
     });
 
+    it('should open color selector', () => {
+        fixture.detectChanges();
+        const mouseEvent = { x: 1, y: 2 } as MouseEvent;
+        const openColorSelectorSpy = jest.spyOn(comp.colorSelector, 'openColorSelector');
+        comp.openColorSelector(mouseEvent, category5);
+
+        expect(comp.selectedCategory).toEqual(category5);
+        expect(openColorSelectorSpy).toHaveBeenCalledWith(mouseEvent, undefined, 150);
+    });
+
     it('should select color for category', () => {
         comp.categories = [category1, category2, category3];
         comp.selectedCategory = category2;
@@ -165,5 +181,32 @@ describe('Category Selector Component', () => {
         expect(comp.selectedCategory).toEqual(expected);
         expect(comp.categories).toEqual([category1, expected, category3]);
         expect(emitSpy).toHaveBeenCalledWith([category1, expected, category3]);
+    });
+
+    it('should create new item on select', () => {
+        comp.categories = [category6];
+        comp.existingCategories = [category6, category7, category8];
+        const event = { option: { value: 'category9' } } as MatAutocompleteSelectedEvent;
+        fixture.detectChanges();
+        comp.onItemSelect(event);
+
+        const categoryColor = comp.categories[1].color;
+        expect(comp.categories).toEqual([category6, { category: 'category9', color: categoryColor }]);
+        expect(emitSpy).toHaveBeenCalledWith([category6, { category: 'category9', color: categoryColor }]);
+        expect(comp.categoryInput.nativeElement.value).toBe('');
+        expect(comp.categoryCtrl.value).toBe(null);
+    });
+
+    it('should not create new item on select', () => {
+        comp.categories = [category6];
+        comp.existingCategories = [category7, category8];
+        const event = { option: { value: 'category7' } } as MatAutocompleteSelectedEvent;
+        fixture.detectChanges();
+        comp.onItemSelect(event);
+
+        expect(comp.categories).toEqual([category6, category7]);
+        expect(emitSpy).toHaveBeenCalledWith([category6, category7]);
+        expect(comp.categoryInput.nativeElement.value).toBe('');
+        expect(comp.categoryCtrl.value).toBe(null);
     });
 });
