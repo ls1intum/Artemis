@@ -363,6 +363,10 @@
                                         <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.language' | artemisTranslate }}</a>
                                         <fa-icon [icon]="faSort"></fa-icon>
                                     </th>
+                                    <th jhiSortBy="results[correctionRound].completionDate">
+                                        <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</a>
+                                        <fa-icon [icon]="faSort"></fa-icon>
+                                    </th>
                                     <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</th>
                                 </tr>
                             </thead>

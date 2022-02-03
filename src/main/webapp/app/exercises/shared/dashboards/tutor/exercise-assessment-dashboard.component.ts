@@ -794,7 +794,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     sortSubmissionRows(correctionRound: number) {
-        this.sortService.sortByProperty(this.submissionsByCorrectionRound.get(correctionRound)!, this.sortPredicates[0], this.reverseOrders[0]);
+        this.sortService.sortByProperty(
+            this.submissionsByCorrectionRound.get(correctionRound)!,
+            this.sortPredicates[0].replace('correctionRound', correctionRound + ''),
+            this.reverseOrders[0],
+        );
     }
 
     sortComplaintRows() {
