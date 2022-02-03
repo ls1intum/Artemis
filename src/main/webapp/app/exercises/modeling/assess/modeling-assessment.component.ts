@@ -1,9 +1,8 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ModelElementCount } from 'app/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/exercises/modeling/shared/modeling.component';
@@ -49,7 +48,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     firstCorrectionRoundColor = '#3e8acc';
     secondCorrectionRoundColor = '#ffa561';
 
-    constructor(private alertService: AlertService, private renderer: Renderer2, private artemisTranslatePipe: ArtemisTranslatePipe) {
+    constructor(private artemisTranslatePipe: ArtemisTranslatePipe) {
         super();
     }
 
@@ -141,7 +140,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * element feedback mapping.
      * Returns an array containing all feedback entries from the mapping.
      */
-    private generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
+    generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
         const newElementFeedback = new Map();
         for (const assessment of assessments) {
             let feedback = this.elementFeedback.get(assessment.modelElementId);
@@ -272,18 +271,16 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             return;
         }
 
-        this.umlModel.assessments = feedbacks.map<Assessment>((feedback) => {
-            return {
-                modelElementId: feedback.referenceId!,
-                elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
-                score: feedback.credits!,
-                feedback: feedback.text || undefined,
-                label: this.calculateLabel(feedback),
-                labelColor: this.calculateLabelColor(feedback),
-                correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
-                dropInfo: this.calculateDropInfo(feedback),
-            };
-        });
+        this.umlModel.assessments = feedbacks.map<Assessment>((feedback) => ({
+            modelElementId: feedback.referenceId!,
+            elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
+            score: feedback.credits!,
+            feedback: feedback.text || undefined,
+            label: this.calculateLabel(feedback),
+            labelColor: this.calculateLabelColor(feedback),
+            correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
+            dropInfo: this.calculateDropInfo(feedback),
+        }));
         if (this.apollonEditor) {
             this.apollonEditor!.model = this.umlModel;
         }

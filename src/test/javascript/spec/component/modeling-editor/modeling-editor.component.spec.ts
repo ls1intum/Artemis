@@ -2,7 +2,7 @@ import { Course } from 'app/entities/course.model';
 import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
@@ -17,6 +17,7 @@ import { SimpleChange } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
 import { ApollonEditor } from '@ls1intum/apollon';
+import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
@@ -224,5 +225,38 @@ describe('ModelingEditorComponent', () => {
 
         const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
         expect(spanText).toBe('Saving...');
+    });
+
+    it('should handle explanation input change', () => {
+        fixture.detectChanges();
+        const spy = jest.spyOn(fixture.componentInstance.explanationChange, 'emit');
+
+        const newExplanation = 'New Explanation';
+        fixture.componentInstance.onExplanationInput(newExplanation);
+
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(newExplanation);
+        expect(fixture.componentInstance.explanation).toBe(newExplanation);
+    });
+
+    it('should assess model for guided tour for all UML types', () => {
+        const guidedTourService = TestBed.inject(GuidedTourService);
+        const subject = new Subject<string>();
+        jest.spyOn(guidedTourService, 'checkModelingComponent').mockImplementation(() => subject.asObservable());
+        fixture.detectChanges();
+        const updateSpy = jest.spyOn(guidedTourService, 'updateModelingResult');
+        updateSpy.mockReturnThis();
+
+        let currentUmlName = personUML.name;
+        subject.next(currentUmlName);
+        expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
+
+        currentUmlName = studentUML.name;
+        subject.next(currentUmlName);
+        expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
+
+        currentUmlName = associationUML.name;
+        subject.next(currentUmlName);
+        expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
     });
 });
