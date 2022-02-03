@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSelectModule } from '@angular/material/select';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
 
 describe('Category Selector Component', () => {
     let comp: CategorySelectorComponent;
@@ -48,7 +49,13 @@ describe('Category Selector Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(MatAutocompleteModule), MockModule(MatFormFieldModule), MockModule(MatChipsModule), MockModule(MatSelectModule)],
+            imports: [
+                MockModule(MatAutocompleteModule),
+                MockModule(MatFormFieldModule),
+                MockModule(MatChipsModule),
+                MockModule(MatSelectModule),
+                MockModule(ArtemisColorSelectorModule),
+            ],
             declarations: [CategorySelectorComponent, MockComponent(ColorSelectorComponent)],
             providers: [],
         })
@@ -138,15 +145,16 @@ describe('Category Selector Component', () => {
         expect(result.category).toEqual('Test');
     });
 
-    /*
     it('should remove category', () => {
+        fixture.detectChanges();
         comp.categories = [category1, category2, category3];
+        const cancelColorSelectorSpy = jest.spyOn(comp.colorSelector, 'cancelColorSelector');
         comp.onItemRemove(category2);
 
         expect(comp.categories).toEqual([category1, category3]);
+        expect(cancelColorSelectorSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith([category1, category3]);
     });
-    */
 
     it('should select color for category', () => {
         comp.categories = [category1, category2, category3];
