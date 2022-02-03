@@ -9,11 +9,15 @@ import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programmin
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { Router } from '@angular/router';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 describe('Test case distribution chart', () => {
     const programmingExercise = new ProgrammingExercise(undefined, undefined);
     let component: TestCaseDistributionChartComponent;
     let fixture: ComponentFixture<TestCaseDistributionChartComponent>;
+
+    let router: Router;
 
     const configureComponent = (testCases: ProgrammingExerciseTestCase[]) => {
         configureProgrammingExercise();
@@ -69,11 +73,16 @@ describe('Test case distribution chart', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(BarChartModule)],
             declarations: [TestCaseDistributionChartComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TestCaseDistributionChartComponent);
         component = fixture.componentInstance;
+
+        router = TestBed.inject(Router);
     });
 
     it('should handle no test cases appropriately', () => {
@@ -165,5 +174,37 @@ describe('Test case distribution chart', () => {
         expect(component.ngxWeightData[0].series[0].value).toBe(0);
         expect(component.ngxWeightData[1].series[0].value).toBe(0);
         expect(component.ngxPointsData[0].series[0].value).toBe(0);
+    });
+
+    it('should delegate the user correctly if clicked on points chart', () => {
+        programmingExercise.id = 4;
+        programmingExercise.course = { id: 42 };
+        component.exercise = programmingExercise;
+        const routerSpy = jest.spyOn(router, 'navigate');
+        const expectedUrl = ['course-management', 42, 'programming-exercises', 4, 'exercise-statistics'];
+
+        component.onSelectPoints();
+
+        expect(routerSpy).toHaveBeenCalledWith(expectedUrl);
+    });
+
+    it('should emit the correct test case id if clicked on weight and bonus chart', () => {
+        const event = { id: 5 };
+        const emitStub = jest.spyOn(component.testCaseRowFilter, 'emit').mockImplementation();
+
+        component.onSelectWeight(event);
+
+        expect(emitStub).toHaveBeenCalledWith(5);
+        expect(component.tableFiltered).toBe(true);
+    });
+
+    it('should reset table correctly', () => {
+        component.tableFiltered = true;
+        const emitStub = jest.spyOn(component.testCaseRowFilter, 'emit').mockImplementation();
+
+        component.resetTableFilter();
+
+        expect(emitStub).toHaveBeenCalledWith(-5);
+        expect(component.tableFiltered).toBe(false);
     });
 });
