@@ -17,8 +17,6 @@ import { CommitState, EditorState } from 'app/exercises/programming/shared/code-
 import { MockModule } from 'ng-mocks';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 
 describe('CodeEditorActionsComponent', () => {

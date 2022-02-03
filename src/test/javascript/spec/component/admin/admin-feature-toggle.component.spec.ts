@@ -7,7 +7,6 @@ import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-featu
 describe('AdminFeatureToggleComponentTest', () => {
     let fixture: ComponentFixture<AdminFeatureToggleComponent>;
     let comp: AdminFeatureToggleComponent;
-    let service: FeatureToggleService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -18,7 +17,6 @@ describe('AdminFeatureToggleComponentTest', () => {
             .then(() => {
                 fixture = TestBed.createComponent(AdminFeatureToggleComponent);
                 comp = fixture.componentInstance;
-                service = TestBed.inject(FeatureToggleService);
             });
     });
 
@@ -26,7 +24,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         jest.restoreAllMocks();
     });
 
-    it('constructor', () => {
+    it('constructor should not load toggles', () => {
         expect(comp.availableToggles).toHaveLength(0);
     });
 
