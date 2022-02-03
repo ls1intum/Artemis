@@ -176,7 +176,6 @@ dependencies {
     implementation "org.apache.pdfbox:pdfbox:${apache_pdfbox_version}"
     implementation "com.google.protobuf:protobuf-java:${google_protobuf_java_version}"
     implementation "org.commonmark:commonmark:${commonmark_version}"
-
     implementation "org.springframework.boot:spring-boot-starter-artemis:${spring_boot_version}"
 
     implementation "de.tum.in.ase.athene:client:${athene_client_version}"

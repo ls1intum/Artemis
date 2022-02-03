@@ -7,6 +7,7 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
 # Add an artemis user to run our application so that it doesn't need to run as root
 RUN adduser artemis
 WORKDIR /home/artemis
+RUN touch application-dev.yml application-prod.yml application-artemis.yml
 USER artemis
 
 ARG WAR_PATH=build/libs

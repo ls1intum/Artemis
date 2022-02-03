@@ -108,6 +108,7 @@ sourceSets {
             include 'de/tum/in/www1/artemis/service/dto/**'
             include 'de/tum/in/www1/artemis/service/util/**'
             include 'de/tum/in/www1/artemis/service/listeners/**'
+            include 'de/tum/in/www1/artemis/service/programming/ProgrammingLanguageFeature.*'
 
             // Include all DB entities. repositories and exceptions
             include 'de/tum/in/www1/artemis/domain/**'
@@ -119,6 +120,7 @@ sourceSets {
             include 'de/tum/in/www1/artemis/web/rest/dto/**'
             include 'de/tum/in/www1/artemis/web/rest/errors/EntityNotFoundException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/BadRequestAlertException.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/HttpStatusException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/FieldErrorVM.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/StudentsAlreadyAssignedException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/InternalServerErrorException.*'
