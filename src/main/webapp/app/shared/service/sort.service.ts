@@ -7,20 +7,26 @@ import dayjs from 'dayjs/esm';
 export class SortService {
     constructor() {}
 
-    sortByProperty<T>(array: T[], key: string, asc: boolean): T[] {
+    sortByProperty<T>(array: T[], key: string, ascending: boolean): T[] {
         return array.sort((a: T, b: T) => {
-            const valueA = this.customGet(a, key, undefined);
-            const valueB = this.customGet(b, key, undefined);
+            const valueA = SortService.customGet(a, key, undefined);
+            const valueB = SortService.customGet(b, key, undefined);
+
+            let compareValue;
 
             if (valueA == undefined || valueB == undefined) {
-                return SortService.compareWithUndefinedNull(valueA, valueB);
+                compareValue = SortService.compareWithUndefinedNull(valueA, valueB);
+            } else if (dayjs.isDayjs(valueA) && dayjs.isDayjs(valueB)) {
+                compareValue = SortService.compareDayjs(valueA, valueB);
+            } else {
+                compareValue = SortService.compareBasic(valueA, valueB);
             }
 
-            if (dayjs.isDayjs(valueA) && dayjs.isDayjs(valueB)) {
-                return SortService.compareDayjs(valueA, valueB, asc);
+            if (!ascending) {
+                compareValue = -compareValue;
             }
 
-            return SortService.compareBasic(valueA, valueB, asc);
+            return compareValue;
         });
     }
 
@@ -34,27 +40,23 @@ export class SortService {
         }
     }
 
-    private static compareDayjs(valueA: dayjs.Dayjs, valueB: dayjs.Dayjs, ascending: boolean) {
+    private static compareDayjs(valueA: dayjs.Dayjs, valueB: dayjs.Dayjs) {
         if (valueA.isSame(valueB)) {
             return 0;
-        } else if (ascending) {
-            return valueA.isBefore(valueB) ? -1 : 1;
         } else {
-            return valueA.isBefore(valueB) ? 1 : -1;
+            return valueA.isBefore(valueB) ? -1 : 1;
         }
     }
 
-    private static compareBasic(valueA: any, valueB: any, ascending: boolean) {
+    private static compareBasic(valueA: any, valueB: any) {
         if (valueA === valueB) {
             return 0;
-        } else if (ascending) {
-            return valueA < valueB ? -1 : 1;
         } else {
-            return valueA < valueB ? 1 : -1;
+            return valueA < valueB ? -1 : 1;
         }
     }
 
-    private customGet(object: any, path: string, defaultValue: any) {
+    private static customGet(object: any, path: string, defaultValue: any) {
         const pathArray = path.split('.').filter((key) => key);
         const value = pathArray.reduce((obj, key) => {
             if (!obj) {

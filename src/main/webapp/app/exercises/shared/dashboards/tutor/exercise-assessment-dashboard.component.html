@@ -355,7 +355,7 @@
                                         <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.submissionDate' | artemisTranslate }}</a>
                                         <fa-icon [icon]="faSort"></fa-icon>
                                     </th>
-                                    <th jhiSortBy="results[correctionRound].score">
+                                    <th jhiSortBy="results.correctionRound.score">
                                         <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.result' | artemisTranslate }}</a>
                                         <fa-icon [icon]="faSort"></fa-icon>
                                     </th>
@@ -363,11 +363,10 @@
                                         <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.language' | artemisTranslate }}</a>
                                         <fa-icon [icon]="faSort"></fa-icon>
                                     </th>
-                                    <th jhiSortBy="results[correctionRound].completionDate">
+                                    <th jhiSortBy="results.correctionRound.completionDate">
                                         <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</a>
                                         <fa-icon [icon]="faSort"></fa-icon>
                                     </th>
-                                    <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</th>
                                 </tr>
                             </thead>
                             <tbody>
