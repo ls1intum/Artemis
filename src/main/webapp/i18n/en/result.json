@@ -59,7 +59,9 @@
             "chart": {
                 "points": "Points",
                 "deductions": "Deductions",
-                "tooltip": "Your deductions are limited in order to soften the effect of repeating issues. Be aware that you might have to solve multiple code issues to increase your score."
+                "tooltip": "Your deductions are limited in order to soften the effect of repeating issues. Be aware that you might have to solve multiple code issues to increase your score.",
+                "filterApplied": "A filter is applied to your feedback.",
+                "reset": "Reset"
             },
             "linkedCommit": "This result is linked to the following commit:",
             "missing": {
