@@ -112,6 +112,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     notYetAssessed: number[] = [];
     firstRoundAssessments: number;
 
+    // attributes for sorting the tables
+    sortPredicates = ['submissionDate', 'complaint.submittedTime', 'complaint.submittedTime'];
+    reverseOrders = [false, false, false];
+
     readonly ExerciseType = ExerciseType;
 
     stats = {
@@ -789,17 +793,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         }
     }
 
-    sortComplaintPredicate = 'complaint.submittedTime';
-    reverseComplaintOrder = false;
-
-    sortComplaintRows() {
-        this.sortService.sortByProperty(this.submissionsWithComplaints, this.sortComplaintPredicate, this.reverseComplaintOrder);
+    sortSubmissionRows(correctionRound: number) {
+        this.sortService.sortByProperty(this.submissionsByCorrectionRound.get(correctionRound)!, this.sortPredicates[0], this.reverseOrders[0]);
     }
 
-    sortMoreFeedbackPredicate = 'complaint.submittedTime';
-    reverseMoreFeedbackOrder = false;
+    sortComplaintRows() {
+        this.sortService.sortByProperty(this.submissionsWithComplaints, this.sortPredicates[1], this.reverseOrders[1]);
+    }
 
     sortMoreFeedbackRows() {
-        this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, this.sortMoreFeedbackPredicate, this.reverseMoreFeedbackOrder);
+        this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, this.sortPredicates[2], this.reverseOrders[2]);
     }
 }
