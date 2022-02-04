@@ -4,7 +4,7 @@ import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatChipsModule } from '@angular/material/chips';
+import { MatChipInput, MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
 import { MatSelectModule } from '@angular/material/select';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
@@ -207,6 +207,56 @@ describe('Category Selector Component', () => {
         expect(comp.categories).toEqual([category6, category7]);
         expect(emitSpy).toHaveBeenCalledWith([category6, category7]);
         expect(comp.categoryInput.nativeElement.value).toBe('');
+        expect(comp.categoryCtrl.value).toBe(null);
+    });
+
+    it('should not create duplicate item on add', () => {
+        comp.categories = [category6];
+        const event = { value: 'category6', chipInput: { clear: () => {} } as MatChipInput } as MatChipInputEvent;
+        fixture.detectChanges();
+        comp.onItemAdd(event);
+
+        expect(comp.categories).toEqual([category6]);
+        expect(emitSpy).not.toHaveBeenCalled();
+        expect(comp.categoryCtrl.value).toBe(null);
+    });
+
+    it('should save exiting category on add', () => {
+        comp.categories = [category6];
+        comp.existingCategories = [category7, category8];
+        const event = { value: 'category8', chipInput: { clear: () => {} } as MatChipInput } as MatChipInputEvent;
+        fixture.detectChanges();
+        comp.onItemAdd(event);
+
+        const categoryColor = comp.categories[1].color;
+        expect(comp.categories).toEqual([category6, category8]);
+        expect(emitSpy).toHaveBeenCalledWith([category6, category8]);
+        expect(comp.categoryCtrl.value).toBe(null);
+    });
+
+    it('should create new item on add for existing categories', () => {
+        comp.categories = [category6];
+        comp.existingCategories = [];
+        const event = { value: 'category9', chipInput: { clear: () => {} } as MatChipInput } as MatChipInputEvent;
+        fixture.detectChanges();
+        comp.onItemAdd(event);
+
+        const categoryColor = comp.categories[1].color;
+        expect(comp.categories).toEqual([category6, { category: 'category9', color: categoryColor }]);
+        expect(emitSpy).toHaveBeenCalledWith([category6, { category: 'category9', color: categoryColor }]);
+        expect(comp.categoryCtrl.value).toBe(null);
+    });
+
+    it('should create new item on add for empty categories', () => {
+        comp.categories = [];
+        comp.existingCategories = [];
+        const event = { value: 'category6', chipInput: { clear: () => {} } as MatChipInput } as MatChipInputEvent;
+        fixture.detectChanges();
+        comp.onItemAdd(event);
+
+        const categoryColor = comp.categories[0].color;
+        expect(comp.categories).toEqual([{ category: 'category6', color: categoryColor }]);
+        expect(emitSpy).toHaveBeenCalledWith([{ category: 'category6', color: categoryColor }]);
         expect(comp.categoryCtrl.value).toBe(null);
     });
 });
