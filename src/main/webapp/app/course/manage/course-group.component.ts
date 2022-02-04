@@ -300,7 +300,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
             quoteStrings: '"',
             showLabels: true,
             showTitle: false,
-            filename: this.courseGroupEntityName.charAt(0).toUpperCase() + this.courseGroupEntityName.slice(1) + 's ' + this.course.title,
+            filename: this.courseGroupEntityName.charAt(0).toUpperCase() + this.courseGroupEntityName.slice(1) + ' ' + this.course.title,
             useTextFile: false,
             useBom: true,
             headers: keys,
