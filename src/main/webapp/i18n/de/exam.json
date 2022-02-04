@@ -466,7 +466,9 @@
                 "examPreparation": "Klausurvorbereitung",
                 "configureExercises": "Konfiguriere Klausuraufgaben: {{ amount }} Aufgabengruppen",
                 "registerStudents": "Registriere Studierende: {{ registered }} registiert",
-                "generateStudentExams": "Generiere Klausuren: {{ generated }} von {{ total }}",
+                "generateStudentExams": "Generiere Klausuren: ",
+                "registered": "{{ generated }} von {{ total }}",
+                "notRegistered": "Keine Studierenden registriert",
                 "prepareExerciseStart": "Bereite Aufgabenstart vor"
             },
             "conduction": {

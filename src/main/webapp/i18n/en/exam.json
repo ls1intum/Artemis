@@ -467,7 +467,9 @@
                 "examPreparation": "Exam preparation",
                 "configureExercises": "Configure exercises: {{ amount }} exercise groups",
                 "registerStudents": "Register students: {{ registered }} registered",
-                "generateStudentExams": "Generate student exams: {{ generated }} of {{ total }}",
+                "generateStudentExams": "Generate student exams: ",
+                "registered": "{{ generated }} of {{ total }}",
+                "notRegistered": "No students registered",
                 "prepareExerciseStart": "Prepare exercise start"
             },
             "conduction": {

@@ -1,5 +1,5 @@
 import { ArtemisTestModule } from '../../../../test.module';
-import { ExamConductionState, ExamConfigurationStep, ExamReviewState, ExamStatusComponent } from 'app/exam/manage/exam-status.component';
+import { ExamConductionState, ExamReviewState, ExamStatusComponent } from 'app/exam/manage/exam-status.component';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { MockPipe } from 'ng-mocks';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -130,10 +130,10 @@ describe('ExamStatusComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.configurationStepToFlagMap.get(ExamConfigurationStep.CONFIGURE_EXERCISES)).toBe(true);
-        expect(component.configurationStepToFlagMap.get(ExamConfigurationStep.REGISTER_STUDENTS)).toBe(true);
-        expect(component.configurationStepToFlagMap.get(ExamConfigurationStep.GENERATE_STUDENT_EXAMS)).toBe(true);
-        expect(component.configurationStepToFlagMap.get(ExamConfigurationStep.PREPARE_EXERCISE_START)).toBe(true);
+        expect(component.configureExercises).toBe(true);
+        expect(component.registerStudents).toBe(true);
+        expect(component.generateExams).toBe(true);
+        expect(component.prepareExerciseStart).toBe(true);
         expect(component.numberOfGeneratedStudentExams).toBe(42);
         expect(component.examPreparationFinished).toBe(true);
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);

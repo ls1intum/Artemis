@@ -6,13 +6,6 @@ import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
 
-export enum ExamConfigurationStep {
-    CONFIGURE_EXERCISES = 'configureExercises',
-    REGISTER_STUDENTS = 'registerStudents',
-    GENERATE_STUDENT_EXAMS = 'generateStudentExams',
-    PREPARE_EXERCISE_START = 'prepareExerciseStart',
-}
-
 export enum ExamReviewState {
     UNSET = 'unset',
     PLANNED = 'planned',
@@ -35,21 +28,18 @@ export class ExamStatusComponent implements OnChanges {
     @Input()
     public exam: Exam;
 
-    examConfigurationSteps = [
-        ExamConfigurationStep.CONFIGURE_EXERCISES,
-        ExamConfigurationStep.REGISTER_STUDENTS,
-        ExamConfigurationStep.GENERATE_STUDENT_EXAMS,
-        ExamConfigurationStep.PREPARE_EXERCISE_START,
-    ];
-    configurationStepToFlagMap = new Map<ExamConfigurationStep, boolean>();
     examChecklist: ExamChecklist;
     numberOfGeneratedStudentExams: number;
+
+    configureExercises: boolean;
+    registerStudents: boolean;
+    generateExams: boolean;
+    prepareExerciseStart: boolean;
 
     examPreparationFinished = false;
     examConductionState: ExamConductionState;
     examReviewState: ExamReviewState;
 
-    readonly examConfigurationStepEnum = ExamConfigurationStep;
     readonly examConductionStateEnum = ExamConductionState;
     readonly examReviewStateEnum = ExamReviewState;
     readonly round = round;
@@ -102,7 +92,7 @@ export class ExamStatusComponent implements OnChanges {
      * @private
      */
     private isExamPreparationFinished(): boolean {
-        return this.examConfigurationSteps.every((suffix) => this.configurationStepToFlagMap.get(suffix));
+        return this.configureExercises && this.registerStudents && this.generateExams && this.prepareExerciseStart;
     }
 
     /**
@@ -141,15 +131,14 @@ export class ExamStatusComponent implements OnChanges {
      * @private
      */
     private setExamPreparation(): void {
-        // Step 1.1: Configure exercises
-        this.configurationStepToFlagMap.set(ExamConfigurationStep.CONFIGURE_EXERCISES, this.areAllExercisesConfigured());
-        // Step 1.2: Register students
-        this.configurationStepToFlagMap.set(ExamConfigurationStep.REGISTER_STUDENTS, this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam));
-        // Step 1.3: Generate student exams
-        this.configurationStepToFlagMap.set(ExamConfigurationStep.GENERATE_STUDENT_EXAMS, this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist));
-        // Step 1.4: Prepare exercise start
-        const allExamsGenerated = this.configurationStepToFlagMap.get(ExamConfigurationStep.GENERATE_STUDENT_EXAMS)!;
-        this.configurationStepToFlagMap.set(ExamConfigurationStep.PREPARE_EXERCISE_START, !!this.examChecklist.allExamExercisesAllStudentsPrepared && allExamsGenerated);
+        // Step 1.1:
+        this.configureExercises = this.areAllExercisesConfigured();
+        // Step 1.2:
+        this.registerStudents = this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam);
+        // Step 1.3:
+        this.generateExams = this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist) && this.registerStudents;
+        // Step 1.4:
+        this.prepareExerciseStart = !!this.examChecklist.allExamExercisesAllStudentsPrepared && this.generateExams;
         this.examPreparationFinished = this.isExamPreparationFinished();
     }
 
