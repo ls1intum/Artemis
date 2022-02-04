@@ -412,4 +412,28 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
 
         verify(gitlabRequestMockProvider.getMockedUserApi()).blockUser(anyInt());
     }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void initializeUser() throws Exception {
+        userTestService.initializeUser(true);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void initializeUserWithoutFlag() throws Exception {
+        userTestService.initializeUserWithoutFlag();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void initializeUserNonLTI() throws Exception {
+        userTestService.initializeUserNonLTI();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void initializeUserExternal() throws Exception {
+        userTestService.initializeUserExternal();
+    }
 }

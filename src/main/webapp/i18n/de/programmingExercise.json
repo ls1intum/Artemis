@@ -163,6 +163,7 @@
                 "charts": {
                     "title": "Diagramme",
                     "preview": "Vorschau",
+                    "resetFilter": "Filter zurücksetzen",
                     "testCaseWeights": {
                         "title": "Gewichtungs-Verteilung",
                         "description": "Die Verteilung der Gewichtungen der Testfälle auf die Aufgabe. Dies zeigt den Einfluss eines Testfalls auf das Ergebnis einer/s Studierenden. Der erste Balken betrachtet nur die Gewichtung eines Testfalls, während der zweite Balken auch die jeweiligen Bonuspunkte einbezieht.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen.",

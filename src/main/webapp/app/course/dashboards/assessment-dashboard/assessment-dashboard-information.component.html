@@ -5,7 +5,15 @@
 
         <!-- chart -->
         <div *ngIf="numberOfSubmissions.total !== 0" class="pie-chart pb-2" style="margin-top: -10px">
-            <ngx-charts-pie-chart [customColors]="customColors" [view]="view" [results]="assessments" [legend]="true" [legendPosition]="legendPosition" [animations]="false">
+            <ngx-charts-pie-chart
+                [customColors]="customColors"
+                [view]="view"
+                [results]="assessments"
+                [legend]="true"
+                [legendTitle]="''"
+                [legendPosition]="legendPosition"
+                [animations]="false"
+            >
                 <ng-template #tooltipTemplate let-model="model"> {{ ((model.value * 100) / this.numberOfSubmissions.total).toFixed(2) }}% </ng-template>
             </ngx-charts-pie-chart>
         </div>
