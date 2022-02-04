@@ -28,9 +28,9 @@
             >
                 <ng-template #tooltipTemplate let-model="model">
                     <b>{{ 'artemisApp.plagiarism.numberIdentifiedPairs' | artemisTranslate: { amount: model.value } }} </b> <br />
-                    <span> {{ 'artemisApp.plagiarism.confirmed' | artemisTranslate: { amount: getAdditionalInformation(model.label).confirmed } }}</span> <br />
-                    <span> {{ 'artemisApp.plagiarism.denied' | artemisTranslate: { amount: getAdditionalInformation(model.label).denied } }}</span> <br />
-                    <span> {{ 'artemisApp.plagiarism.open' | artemisTranslate: { amount: getAdditionalInformation(model.label).open } }}</span> <br />
+                    <span> {{ 'artemisApp.plagiarism.confirmed' | artemisTranslate: { amount: getBucketDTO(model.label).confirmed } }}</span> <br />
+                    <span> {{ 'artemisApp.plagiarism.denied' | artemisTranslate: { amount: getBucketDTO(model.label).denied } }}</span> <br />
+                    <span> {{ 'artemisApp.plagiarism.open' | artemisTranslate: { amount: getBucketDTO(model.label).open } }}</span> <br />
                     <span>{{ 'artemisApp.plagiarism.withSimilarity' | artemisTranslate: { range: model.name } }}</span> <br />
                     <b>{{
                         'artemisApp.plagiarism.portionOfAllCases'

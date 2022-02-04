@@ -4,6 +4,11 @@ import { SimilarityRange } from 'app/exercises/shared/plagiarism/plagiarism-run-
 
 @Injectable({ providedIn: 'root' })
 export class PlagiarismInspectorService {
+    /**
+     * Filters the given comparisons and returns only those that have a similarity within the range [minimumSimilarity, maximumSimilarity)
+     * @param range the similarity range the comparisons should be filtered against
+     * @param comparisons the comparisons that should be filtered
+     */
     filterComparisons(range: SimilarityRange, comparisons?: PlagiarismComparison<any>[]): PlagiarismComparison<any>[] {
         if (!comparisons) {
             return [];

@@ -13,6 +13,12 @@ export interface SimilarityRange {
     maximumSimilarity: number;
 }
 
+interface SimilarityRangeComparisonStateDTO {
+    confirmed: number;
+    denied: number;
+    open: number;
+}
+
 @Component({
     selector: 'jhi-plagiarism-run-details',
     styleUrls: ['./plagiarism-run-details.component.scss', '../../../../shared/chart/vertical-bar-chart.scss'],
@@ -27,10 +33,9 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
 
     yScaleMax = 5;
     totalDetectedPlagiarisms: number;
-    additionalInformation: any[] = [];
+    bucketDTOs: SimilarityRangeComparisonStateDTO[] = [];
 
     readonly round = round;
-    readonly stringify = JSON.stringify;
 
     constructor(private inspectorService: PlagiarismInspectorService) {
         super();
@@ -43,7 +48,7 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.plagiarismResult) {
-            this.setAdditionalInformation(changes.plagiarismResult.currentValue.comparisons || []);
+            this.setBucketDTOs(changes.plagiarismResult.currentValue.comparisons || []);
             this.updateChartDataSet(changes.plagiarismResult.currentValue.similarityDistribution || []);
         }
     }
@@ -67,7 +72,15 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
         this.ngxData = [...this.ngxData];
     }
 
-    private setAdditionalInformation(comparisons: PlagiarismComparison<any>[]) {
+    /**
+     * Auxiliary method that sets the comparison dtos for the different chart buckets. These are used for the chart tooltips
+     * to show the number of confirmed, denied and open plagiarism cases
+     * @param comparisons the pairs identified by the detection tool
+     * @private
+     */
+    private setBucketDTOs(comparisons: PlagiarismComparison<any>[]): void {
+        this.bucketDTOs = [];
+        // we use this array as minimum similarities for the filtering
         const steps = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90];
         let comparisonsWithinRange;
         let additionInformationEntry;
@@ -78,22 +91,29 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
                 denied: comparisonsWithinRange.filter((comparison) => comparison.status === PlagiarismStatus.DENIED).length,
                 open: comparisonsWithinRange.filter((comparison) => comparison.status === PlagiarismStatus.NONE).length,
             };
-            this.additionalInformation.push(additionInformationEntry);
+            this.bucketDTOs.push(additionInformationEntry);
         });
     }
 
-    getAdditionalInformation(label: string) {
+    /**
+     * Returns the DTO for a specific bucket
+     * @param label the bar label the DTO should be returned for
+     */
+    getBucketDTO(label: string): SimilarityRangeComparisonStateDTO {
         const index = this.ngxChartLabels.indexOf(label);
-        console.log(this.additionalInformation[index]);
-        return this.additionalInformation[index];
+        return this.bucketDTOs[index];
     }
 
-    onSelect(event: any) {
+    /**
+     * Handles the click on a specific chart bar
+     * Emits the selected range to {@link PlagiarismInspectorComponent#filterByChart} so that the comparisons shown in the sidebar can be filtered accordingly
+     * @param event the event that is passed by ngx-charts
+     */
+    onSelect(event: any): void {
         const interval = event.name as string;
         const separatorIndex = interval.indexOf('-');
         const minimumSimilarity = parseInt(interval.slice(1, separatorIndex), 10);
         const maximumSimilarity = parseInt(interval.slice(separatorIndex + 1, interval.length - 2), 10);
-        console.log(minimumSimilarity + ' - ' + maximumSimilarity);
 
         this.similaritySelected.emit({ maximumSimilarity, minimumSimilarity });
     }

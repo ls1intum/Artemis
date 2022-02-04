@@ -76,18 +76,18 @@
 
     <div class="plagiarism-body" *ngIf="plagiarismResult && !detectionInProgress">
         <jhi-plagiarism-sidebar
-            [(showRunDetails)]="showRunDetails"
+            [showRunDetails]="showRunDetails"
+            (showRunDetailsChange)="showSimilarityDistribution($event)"
             [comparisons]="visibleComparisons"
+            [offset]="sidebarOffset"
             (selectIndex)="selectComparisonAtIndex($event)"
-            [activeIndex]="selectedComparisonIndex"
+            [activeID]="selectedComparisonId"
             [casesFiltered]="chartFilterApplied"
         ></jhi-plagiarism-sidebar>
 
         <jhi-plagiarism-details
             [hidden]="showRunDetails"
-            [comparison]="
-                plagiarismResult.comparisons && plagiarismResult.comparisons.length > selectedComparisonIndex ? plagiarismResult!.comparisons[selectedComparisonIndex] : undefined
-            "
+            [comparison]="plagiarismResult.comparisons ? getSelectedComparison() : undefined"
             [exercise]="exercise"
         ></jhi-plagiarism-details>
 

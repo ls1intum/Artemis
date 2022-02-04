@@ -11,9 +11,10 @@ import { faArrowLeft, faArrowRight, faChevronRight, faExclamationTriangle } from
     templateUrl: './plagiarism-sidebar.component.html',
 })
 export class PlagiarismSidebarComponent implements OnChanges {
-    @Input() activeIndex: number;
+    @Input() activeID: number;
     @Input() comparisons?: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[];
     @Input() casesFiltered = false;
+    @Input() offset = 0;
 
     @Input() showRunDetails: boolean;
     @Output() showRunDetailsChange = new EventEmitter<boolean>();
