@@ -138,15 +138,15 @@ public class ExerciseHintResource {
     /**
      * GET /exercises/:exerciseId/exercise-hints/:hintId/title : Returns the title of the hint with the given id
      *
-     * @param hintId the id of the exerciseHint
+     * @param exerciseHintId the id of the exerciseHint
      * @param exerciseId the exerciseId of the exercise of which to retrieve the exerciseHints' title
      * @return the title of the hint wrapped in an ResponseEntity or 404 Not Found if no hint with that id exists
      * or with status {@code 400 (Bad Request)} if the exerciseId is not valid,
      */
-    @GetMapping(value = "/exercises/{exerciseId}/exercise-hints/{hintId}/title")
+    @GetMapping(value = "/exercises/{exerciseId}/exercise-hints/{exerciseHintId}/title")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<String> getHintTitle(@PathVariable Long exerciseId, @PathVariable Long hintId) {
-        final var hint = exerciseHintRepository.findByIdElseThrow(hintId);
+    public ResponseEntity<String> getHintTitle(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
+        final var hint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
 
         if (hint.getExercise() == null || !hint.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("An exercise hint can only be retrieved if the exerciseIds match.", ENTITY_NAME, "idnull");
@@ -156,7 +156,7 @@ public class ExerciseHintResource {
     }
 
     /**
-     * {@code GET  /exercises/:exerciseId/exercise-hints/:id} : get the "id" exerciseHint.
+     * {@code GET  /exercises/:exerciseId/exercise-hints/:exerciseHintId} : get the exerciseHint with the given id.
      *
      * @param exerciseHintId the id of the exerciseHint to retrieve.
      * @param exerciseId the exerciseId of the exercise of which to retrieve the exerciseHint
@@ -197,7 +197,7 @@ public class ExerciseHintResource {
     }
 
     /**
-     * {@code DELETE  /exercises/:exerciseId/exercise-hints/:id} : delete the "id" exerciseHint.
+     * {@code DELETE  /exercises/:exerciseId/exercise-hints/:exerciseHintId} : delete the exerciseHint with given id.
      *
      * @param exerciseHintId the id of the exerciseHint to delete
      * @param exerciseId the exercise id of which to delete the exercise hint
