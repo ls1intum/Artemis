@@ -3,7 +3,7 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
-import { faArrowLeft, faArrowRight, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faChevronRight, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-plagiarism-sidebar',
@@ -13,6 +13,7 @@ import { faArrowLeft, faArrowRight, faChevronRight } from '@fortawesome/free-sol
 export class PlagiarismSidebarComponent implements OnChanges {
     @Input() activeIndex: number;
     @Input() comparisons?: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[];
+    @Input() casesFiltered = false;
 
     @Input() showRunDetails: boolean;
     @Output() showRunDetailsChange = new EventEmitter<boolean>();
@@ -21,6 +22,8 @@ export class PlagiarismSidebarComponent implements OnChanges {
 
     readonly CONFIRMED = PlagiarismStatus.CONFIRMED;
     readonly DENIED = PlagiarismStatus.DENIED;
+
+    faExclamationTriangle = faExclamationTriangle;
 
     /**
      * Index of the currently selected result page.

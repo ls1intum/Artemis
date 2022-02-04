@@ -19,6 +19,8 @@ import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { SimilarityRange } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
+import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 
 export type PlagiarismCheckState = {
     state: 'COMPLETED' | 'RUNNING';
@@ -93,6 +95,9 @@ export class PlagiarismInspectorComponent implements OnInit {
      */
     enableMinimumSize = false;
 
+    visibleComparisons?: PlagiarismComparison<any>[];
+    chartFilterApplied = false;
+
     readonly FeatureToggle = FeatureToggle;
 
     // Icons
@@ -108,6 +113,7 @@ export class PlagiarismInspectorComponent implements OnInit {
         private textExerciseService: TextExerciseService,
         private websocketService: JhiWebsocketService,
         private translateService: TranslateService,
+        private inspectorService: PlagiarismInspectorService,
     ) {}
 
     ngOnInit() {
@@ -283,6 +289,7 @@ export class PlagiarismInspectorComponent implements OnInit {
 
         this.plagiarismResult = result;
         this.selectedComparisonIndex = 0;
+        this.visibleComparisons = result.comparisons;
     }
 
     sortComparisonsForResult(result: PlagiarismResult<any>) {
@@ -352,5 +359,15 @@ export class PlagiarismInspectorComponent implements OnInit {
                 return tooltip;
             }
         }
+    }
+
+    filterByChart(range: SimilarityRange) {
+        this.visibleComparisons = this.inspectorService.filterComparisons(range, this.plagiarismResult?.comparisons);
+        this.chartFilterApplied = true;
+    }
+
+    resetFilter() {
+        this.visibleComparisons = this.plagiarismResult?.comparisons;
+        this.chartFilterApplied = false;
     }
 }
