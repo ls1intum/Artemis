@@ -35,7 +35,7 @@ describe('Category Selector Component', () => {
     } as ExerciseCategory;
     const category5 = {
         color: '#ad5658',
-        category: 'category4',
+        category: 'category5',
     } as ExerciseCategory;
     const category6 = {
         color: '#1b97ca',
@@ -228,7 +228,6 @@ describe('Category Selector Component', () => {
         fixture.detectChanges();
         comp.onItemAdd(event);
 
-        const categoryColor = comp.categories[1].color;
         expect(comp.categories).toEqual([category6, category8]);
         expect(emitSpy).toHaveBeenCalledWith([category6, category8]);
         expect(comp.categoryCtrl.value).toBe(null);
@@ -248,7 +247,6 @@ describe('Category Selector Component', () => {
     });
 
     it('should create new item on add for empty categories', () => {
-        comp.categories = [];
         comp.existingCategories = [];
         const event = { value: 'category6', chipInput: { clear: () => {} } as MatChipInput } as MatChipInputEvent;
         fixture.detectChanges();
@@ -258,5 +256,15 @@ describe('Category Selector Component', () => {
         expect(comp.categories).toEqual([{ category: 'category6', color: categoryColor }]);
         expect(emitSpy).toHaveBeenCalledWith([{ category: 'category6', color: categoryColor }]);
         expect(comp.categoryCtrl.value).toBe(null);
+    });
+
+    it('should set categories for autocomplete on changes', () => {
+        comp.existingCategories = [category3, category4, category5];
+        comp.categories = [category3];
+        comp.ngOnChanges();
+
+        let result;
+        comp.uniqueCategoriesForAutocomplete.subscribe((value) => (result = value));
+        expect(result).toEqual(['category4', 'category5']);
     });
 });
