@@ -299,7 +299,14 @@ export class PlagiarismInspectorComponent implements OnInit {
     }
 
     sortComparisonsForResult(result: PlagiarismResult<any>) {
-        result.comparisons = result.comparisons.sort((a, b) => b.similarity - a.similarity);
+        result.comparisons = result.comparisons.sort((a, b) => {
+            // if the cases share the same similarity, we sort by the id
+            if (b.similarity - a.similarity === 0) {
+                return b.id - a.id;
+            } else {
+                return b.similarity - a.similarity;
+            }
+        });
     }
 
     /**
