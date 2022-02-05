@@ -16,7 +16,9 @@ export class LectureManagementPage {
     }
 
     getLectureRow(lectureIndex: number) {
-        return cy.get('#lecture-row-' + lectureIndex);
+        const selector = '#lecture-row-' + lectureIndex;
+        cy.reloadUntilFound(selector);
+        return cy.get(selector);
     }
 
     getLectureSelector(lectureTitle: string) {
