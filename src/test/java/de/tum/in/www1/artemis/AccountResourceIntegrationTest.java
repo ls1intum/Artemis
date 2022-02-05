@@ -454,6 +454,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         assertThat(resetKey).isNotEqualTo(resetKeyBefore);
 
         // finish password reset
+        String newPassword = getValidPassword();
         KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
         finishResetData.setKey(resetKey);
         finishResetData.setNewPassword(newPassword);
