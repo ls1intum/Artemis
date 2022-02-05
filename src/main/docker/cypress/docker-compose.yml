@@ -62,7 +62,8 @@ services:
             - CYPRESS_PROJECT_ID
             - CYPRESS_RECORD_KEY
         # Give Artemis 120 seconds to start
-        command: sh -c "sleep 120 && cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci &&npm run cypress:run -- --record --config video=true,screenshotOnRunFailure=true,videoUploadOnPasses=false"
+        command: sh -c "sleep 120 && cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci &&npm run cypress:run"
+        # command: sh -c "sleep 120 && cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci &&npm run cypress:run -- --record --config video=true,screenshotOnRunFailure=true,videoUploadOnPasses=false"
         volumes:
             - ../../../../:/app/artemis
         networks:
