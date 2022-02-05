@@ -263,11 +263,32 @@ public class UserTestService {
     }
 
     // Test
-    public void createUser_asAdmin_isSuccessful() throws Exception {
+    public void createExternalUser_asAdmin_isSuccessful() throws Exception {
         student.setId(null);
         student.setLogin("batman");
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
+
+        mockDelegate.mockCreateUserInUserManagement(student, false);
+
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
+        assertThat(response).isNotNull();
+        final var userInDB = userRepository.findById(response.getId()).get();
+        userInDB.setPassword(passwordService.decryptPasswordByLogin(userInDB.getLogin()).get());
+        student.setId(response.getId());
+        response.setPassword("foobar");
+
+        assertThat(student).as("New user is equal to request response").isEqualTo(response);
+        assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
+    }
+
+    // Test
+    public void createInternalUser_asAdmin_isSuccessful() throws Exception {
+        student.setId(null);
+        student.setLogin("batman");
+        student.setPassword("foobar");
+        student.setEmail("batman@secret.invalid");
+        student.setInternal(true);
 
         mockDelegate.mockCreateUserInUserManagement(student, false);
 
