@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.repository.metis;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,13 +24,20 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     List<Post> findPostsByExerciseId(Long exerciseId);
 
+    Page<Post> findPostsByExerciseId(Pageable pageable, Long exerciseId);
+
     List<Post> findPostsByLectureId(Long lectureId);
 
+    Page<Post> findPostsByLectureId(Pageable pageable, Long lectureId);
+
     @Query("select distinct post from Post post left join post.lecture lecture left join post.exercise exercise where ( post.courseWideContext = :#{#courseWideContext} and (lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} or post.course.id = :#{#courseId} ))")
-    List<Post> findPostsForCourseWideContext(@Param("courseId") Long courseId, @Param("courseWideContext") CourseWideContext courseWideContext);
+    Page<Post> findPostsForCourseWideContext(Pageable pageable, @Param("courseId") Long courseId, @Param("courseWideContext") CourseWideContext courseWideContext);
 
     @Query("select distinct post from Post post left join post.lecture lecture left join post.exercise exercise where ( lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} or post.course.id = :#{#courseId} )")
     List<Post> findPostsForCourse(@Param("courseId") Long courseId);
+
+    @Query("select distinct post from Post post left join post.lecture lecture left join post.exercise exercise where ( lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} or post.course.id = :#{#courseId} )")
+    Page<Post> findPostsForCourse(Pageable pageable, @Param("courseId") Long courseId);
 
     @Query("select distinct tag from Post post left join post.tags tag left join post.lecture lecture left join post.exercise exercise where ( lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} or post.course.id = :#{#courseId} )")
     List<String> findPostTagsForCourse(@Param("courseId") Long courseId);

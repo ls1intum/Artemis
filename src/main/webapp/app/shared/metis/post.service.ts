@@ -47,6 +47,11 @@ export class PostService extends PostingService<Post> {
         if (postContextFilter.exerciseId) {
             params = params.set('exerciseId', postContextFilter.exerciseId.toString());
         }
+        if (!!postContextFilter.pagingEnabled) {
+            params = params.set('pagingEnabled', postContextFilter.pagingEnabled);
+            params = params.set('page', postContextFilter.page!);
+            params = params.set('size', postContextFilter.pageSize!);
+        }
         return this.http
             .get<Post[]>(`${this.resourceUrl}${courseId}/posts`, {
                 params,

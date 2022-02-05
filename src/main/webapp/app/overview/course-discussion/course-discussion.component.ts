@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { CourseWideContext, DisplayPriority, PageType, PostSortCriterion, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
+import { CourseWideContext, DisplayPriority, PageType, PostContextFilter, PostSortCriterion, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { combineLatest, map, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -14,13 +14,7 @@ import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
-
-interface ContextFilterOption {
-    courseId?: number;
-    lectureId?: number;
-    exerciseId?: number;
-    courseWideContext?: CourseWideContext;
-}
+import { ITEMS_PER_PAGE_COURSE_DISCUSSION } from 'app/shared/constants/pagination.constants';
 
 interface ContentFilterOption {
     searchText?: string;
@@ -33,10 +27,13 @@ interface ContentFilterOption {
     providers: [MetisService],
 })
 export class CourseDiscussionComponent implements OnInit, OnDestroy {
+    entitiesPerPageTranslation = 'organizationManagement.userSearch.usersPerPage';
+    showAllEntitiesTranslation = 'organizationManagement.userSearch.showAllUsers';
+
     course?: Course;
     exercises?: Exercise[];
     lectures?: Lecture[];
-    currentPostContextFilter: ContextFilterOption;
+    currentPostContextFilter: PostContextFilter;
     currentSortCriterion = PostSortCriterion.CREATION_DATE;
     currentSortDirection = SortDirection.DESC;
     currentPostContentFilter: ContentFilterOption;
@@ -48,6 +45,10 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     createdPost: Post;
     posts: Post[];
     isLoading = true;
+    totalItems = 0;
+    pagingEnabled = true;
+    itemsPerPage = ITEMS_PER_PAGE_COURSE_DISCUSSION;
+    page = 0;
     readonly CourseWideContext = CourseWideContext;
     readonly SortBy = PostSortCriterion;
     readonly SortDirection = SortDirection;
@@ -57,6 +58,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
 
     private postsSubscription: Subscription;
     private paramSubscription: Subscription;
+    private totalItemsSubscription: Subscription;
 
     // Icons
     faPlus = faPlus;
@@ -97,7 +99,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
                     }
                     this.metisService.setCourse(this.course!);
                     this.metisService.setPageType(this.pageType);
-                    this.metisService.getFilteredPosts({ courseId: this.course!.id });
+                    this.metisService.getFilteredPosts({ courseId: this.course!.id, pagingEnabled: this.pagingEnabled, page: this.page, pageSize: this.itemsPerPage });
                     this.resetCurrentFilter();
                     this.createEmptyPost();
                     this.resetFormGroup();
@@ -110,6 +112,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.filter(this.filterFn).sort(this.overviewSortFn))).subscribe((posts: Post[]) => {
             this.posts = posts;
             this.isLoading = false;
+        });
+        this.totalItemsSubscription = this.metisService.totalItems.pipe().subscribe((totalItems: number) => {
+            this.totalItems = totalItems;
         });
     }
 
@@ -188,7 +193,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      * required for distinguishing different select options for the context selector,
      * Angular needs to be able to identify the currently selected option
      */
-    compareContextFilterOptionFn(option1: ContextFilterOption, option2: ContextFilterOption) {
+    compareContextFilterOptionFn(option1: PostContextFilter, option2: PostContextFilter) {
         if (option1.exerciseId && option2.exerciseId) {
             return option1.exerciseId === option2.exerciseId;
         } else if (option1.lectureId && option2.lectureId) {
@@ -362,6 +367,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             courseWideContext: undefined,
             exerciseId: undefined,
             lectureId: undefined,
+            pagingEnabled: this.pagingEnabled,
+            page: this.page - 1,
+            pageSize: this.itemsPerPage,
             ...this.formGroup.get('context')?.value,
         };
         this.currentSortCriterion = this.formGroup.get('sortBy')?.value;

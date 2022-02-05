@@ -7,16 +7,22 @@ import java.util.List;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.service.metis.PostService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.swagger.annotations.ApiParam;
+import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller for managing Post.
@@ -100,6 +106,7 @@ public class PostResource {
      * GET /courses/{courseId}/posts : Get all posts for a course by its id
      *
      * @param courseId          id of the course the fetch posts for
+     * @param pageable          pagination settings to fetch posts in smaller batches
      * @param courseWideContext optional request param if a course-wide topic is the targeted context
      * @param exerciseId        optional request param if a certain exercise is the targeted context
      * @param lectureId         optional request param if a certain lecture is the targeted context
@@ -108,10 +115,18 @@ public class PostResource {
      */
     @GetMapping("courses/{courseId}/posts")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Post>> getPostsInCourse(@PathVariable Long courseId, @RequestParam(required = false) CourseWideContext courseWideContext,
-            @RequestParam(required = false) Long exerciseId, @RequestParam(required = false) Long lectureId) {
-        List<Post> coursePosts = postService.getPostsInCourse(courseId, courseWideContext, exerciseId, lectureId);
-        return new ResponseEntity<>(coursePosts, null, HttpStatus.OK);
+    public ResponseEntity<List<Post>> getPostsInCourse(@PathVariable Long courseId, @ApiParam Pageable pageable, @RequestParam(defaultValue = "false") boolean pagingEnabled,
+            @RequestParam(required = false) CourseWideContext courseWideContext, @RequestParam(required = false) Long exerciseId, @RequestParam(required = false) Long lectureId) {
+
+        // pageable object is not null by default
+        if (!pagingEnabled) {
+            pageable = null;
+        }
+
+        Page<Post> coursePosts = postService.getPostsInCourse(pageable, courseId, courseWideContext, exerciseId, lectureId);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
+
+        return new ResponseEntity<>(coursePosts.getContent(), headers, HttpStatus.OK);
     }
 
     /**

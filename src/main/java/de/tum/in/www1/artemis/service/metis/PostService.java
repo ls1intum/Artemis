@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -195,28 +197,29 @@ public class PostService extends PostingService {
     }
 
     /**
+     * @param pageable          pagination settings to fetch posts in smaller batches
      * @param courseId          id of the course the fetch posts for
      * @param courseWideContext course-wide context for which the posts should be fetched
      * @param exerciseId        id of the exercise for which the posts should be fetched
      * @param lectureId         id of the lecture for which the posts should be fetched
-     * @return list of posts that match the given context
+     * @return page of posts that match the given context
      */
-    public List<Post> getPostsInCourse(Long courseId, CourseWideContext courseWideContext, Long exerciseId, Long lectureId) {
+    public Page<Post> getPostsInCourse(Pageable pageable, Long courseId, CourseWideContext courseWideContext, Long exerciseId, Long lectureId) {
         // no filter -> get all posts in course
         if (courseWideContext == null && exerciseId == null && lectureId == null) {
-            return this.getAllCoursePosts(courseId);
+            return this.getAllCoursePostsPage(pageable, courseId);
         }
         // filter by course-wide context
         else if (courseWideContext != null && exerciseId == null && lectureId == null) {
-            return this.getAllPostsByCourseWideContext(courseId, courseWideContext);
+            return this.getAllPostsByCourseWideContext(pageable, courseId, courseWideContext);
         }
         // filter by exercise
         else if (courseWideContext == null && exerciseId != null && lectureId == null) {
-            return this.getAllExercisePosts(courseId, exerciseId);
+            return this.getAllExercisePosts(pageable, courseId, exerciseId);
         }
         // filter by lecture
         else if (courseWideContext == null && exerciseId == null && lectureId != null) {
-            return this.getAllLecturePosts(courseId, lectureId);
+            return this.getAllLecturePostsPage(pageable, courseId, lectureId);
         }
         else {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
@@ -248,14 +251,14 @@ public class PostService extends PostingService {
 
     /**
      * Checks course, user and post validity,
-     * retrieves all posts with a certain course-wide context by course id
+     * retrieves all posts for a course by its id
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId          id of the course the post belongs to
-     * @param courseWideContext specific course-wide context to filter course get posts for
-     * @return list of posts for a certain course-wide context
+     * @param pageable pagination settings to fetch posts in smaller batches
+     * @param courseId id of the course the post belongs to
+     * @return page of posts that belong to the course
      */
-    public List<Post> getAllPostsByCourseWideContext(Long courseId, CourseWideContext courseWideContext) {
+    public Page<Post> getAllCoursePostsPage(Pageable pageable, Long courseId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
@@ -263,7 +266,32 @@ public class PostService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         // retrieve posts
-        List<Post> coursePosts = postRepository.findPostsForCourseWideContext(courseId, courseWideContext);
+        Page<Post> coursePosts = postRepository.findPostsForCourse(pageable, courseId);
+        // protect sample solution, grading instructions, etc.
+        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+
+        return coursePosts;
+    }
+
+    /**
+     * Checks course, user and post validity,
+     * retrieves all posts with a certain course-wide context by course id
+     * and ensures that sensitive information is filtered out
+     *
+     * @param pageable          pagination settings to fetch posts in smaller batches
+     * @param courseId          id of the course the post belongs to
+     * @param courseWideContext specific course-wide context to filter course get posts for
+     * @return page of posts for a certain course-wide context
+     */
+    public Page<Post> getAllPostsByCourseWideContext(Pageable pageable, Long courseId, CourseWideContext courseWideContext) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        final Course course = preCheckUserAndCourse(user, courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        // retrieve posts
+        Page<Post> coursePosts = postRepository.findPostsForCourseWideContext(pageable, courseId, courseWideContext);
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 
@@ -275,11 +303,12 @@ public class PostService extends PostingService {
      * retrieves all posts for an exercise by its id
      * and ensures that sensitive information is filtered out
      *
+     * @param pageable   pagination settings to fetch posts in smaller batches
      * @param courseId   id of the course the post belongs to
      * @param exerciseId id of the exercise for which the posts should be retrieved
-     * @return list of posts that belong to the exercise
+     * @return page of posts that belong to the exercise
      */
-    public List<Post> getAllExercisePosts(Long courseId, Long exerciseId) {
+    public Page<Post> getAllExercisePosts(Pageable pageable, Long courseId, Long exerciseId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
@@ -287,7 +316,7 @@ public class PostService extends PostingService {
         preCheckExercise(user, courseId, exerciseId);
 
         // retrieve posts
-        List<Post> exercisePosts = postRepository.findPostsByExerciseId(exerciseId);
+        Page<Post> exercisePosts = postRepository.findPostsByExerciseId(pageable, exerciseId);
         // protect sample solution, grading instructions, etc.
         exercisePosts.forEach(post -> post.getExercise().filterSensitiveInformation());
 
@@ -299,11 +328,12 @@ public class PostService extends PostingService {
      * retrieves all posts for a lecture by its id
      * and ensures that sensitive information is filtered out
      *
+     * @param pageable  pagination settings to fetch posts in smaller batches
      * @param courseId  id of the course the post belongs to
      * @param lectureId id of the lecture for which the posts should be retrieved
-     * @return list of posts that belong to the lecture
+     * @return page of posts that belong to the lecture
      */
-    public List<Post> getAllLecturePosts(Long courseId, Long lectureId) {
+    public Page<Post> getAllLecturePostsPage(Pageable pageable, Long courseId, Long lectureId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
@@ -311,7 +341,7 @@ public class PostService extends PostingService {
         preCheckLecture(user, courseId, lectureId);
 
         // retrieve posts
-        List<Post> lecturePosts = postRepository.findPostsByLectureId(lectureId);
+        Page<Post> lecturePosts = postRepository.findPostsByLectureId(pageable, lectureId);
         // protect sample solution, grading instructions, etc.
         lecturePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 

@@ -47,6 +47,9 @@ export interface PostContextFilter {
     courseWideContext?: CourseWideContext;
     exerciseId?: number;
     lectureId?: number;
+    pagingEnabled?: boolean;
+    page?: number;
+    pageSize?: number;
 }
 
 /**
