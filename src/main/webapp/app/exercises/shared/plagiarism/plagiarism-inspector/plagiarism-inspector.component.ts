@@ -229,7 +229,7 @@ export class PlagiarismInspectorComponent implements OnInit {
         }
     }
 
-    selectComparisonAtIndex(id: number) {
+    selectComparisonWithID(id: number) {
         this.selectedComparisonId = id;
         this.showRunDetails = false;
     }
@@ -374,7 +374,8 @@ export class PlagiarismInspectorComponent implements OnInit {
      */
     filterByChart(range: SimilarityRange): void {
         this.visibleComparisons = this.inspectorService.filterComparisons(range, this.plagiarismResult?.comparisons);
-        this.sidebarOffset = this.plagiarismResult?.comparisons.indexOf(this.visibleComparisons[0]) ?? 0;
+        const index = this.plagiarismResult?.comparisons.indexOf(this.visibleComparisons[0]) ?? 0;
+        this.sidebarOffset = index !== -1 ? index : 0;
         this.chartFilterApplied = true;
     }
 

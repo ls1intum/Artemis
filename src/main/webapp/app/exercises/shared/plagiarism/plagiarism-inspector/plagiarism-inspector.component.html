@@ -80,7 +80,7 @@
             (showRunDetailsChange)="showSimilarityDistribution($event)"
             [comparisons]="visibleComparisons"
             [offset]="sidebarOffset"
-            (selectIndex)="selectComparisonAtIndex($event)"
+            (selectIndex)="selectComparisonWithID($event)"
             [activeID]="selectedComparisonId"
             [casesFiltered]="chartFilterApplied"
         ></jhi-plagiarism-sidebar>
