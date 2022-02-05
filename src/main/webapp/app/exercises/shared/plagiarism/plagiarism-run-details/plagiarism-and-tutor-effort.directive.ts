@@ -17,13 +17,4 @@ export abstract class PlagiarismAndTutorEffortDirective {
         domain: [],
     } as Color;
     readonly yAxisTickFormatting = yAxisTickFormatting;
-
-    /**
-     * Formats the labels on the y axis in order to display only integer values
-     * @param tick the default y axis tick
-     * @returns modified y axis tick
-     */
-    /*yAxisTickFormatting(tick: string): string {
-        return parseFloat(tick).toFixed(0);
-    }*/
 }
