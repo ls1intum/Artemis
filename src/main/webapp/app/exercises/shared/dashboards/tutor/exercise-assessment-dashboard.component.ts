@@ -113,8 +113,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     firstRoundAssessments: number;
 
     // attributes for sorting the tables
-    sortPredicates = ['submissionDate', 'complaint.submittedTime', 'complaint.submittedTime'];
-    reverseOrders = [false, false, false];
+    sortPredicates = ['submissionDate', 'complaint.accepted', 'complaint.accepted'];
+    reverseOrders = [false, true, true];
 
     readonly ExerciseType = ExerciseType;
 
@@ -633,6 +633,20 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     /**
+     * Returns the time needed to evaluate the complaint. If it hasn't been evaluated yet, the difference between the submission time and now is used.
+     * @param complaint for which the response time should be calculated
+     */
+    getResponseTimeInHours(complaint: Complaint): number {
+        let responseTime;
+        if (complaint.accepted !== undefined) {
+            responseTime = complaint.complaintResponse?.submittedTime?.diff(complaint.submittedTime, 'seconds');
+        } else {
+            responseTime = dayjs().diff(complaint.submittedTime, 'seconds');
+        }
+        return responseTime ? responseTime : NaN;
+    }
+
+    /**
      * Uses the router to navigate to a given example submission
      * @param submissionId Id of submission where to navigate to
      * @param readOnly Flag whether the view should be opened in read-only mode
@@ -775,10 +789,22 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     sortComplaintRows() {
-        this.sortService.sortByProperty(this.submissionsWithComplaints, this.sortPredicates[1], this.reverseOrders[1]);
+        // If the selected sort predicate is indifferent about two elements, the one submitted earlier should be diplayed on top
+        this.sortService.sortByProperty(this.submissionsWithComplaints, 'complaint.submittedTime', true);
+        if (this.sortPredicates[1] === 'responseTime') {
+            this.sortService.sortByFunction(this.submissionsWithComplaints, (element) => this.getResponseTimeInHours(element.complaint), this.reverseOrders[1]);
+        } else {
+            this.sortService.sortByProperty(this.submissionsWithComplaints, this.sortPredicates[1], this.reverseOrders[1]);
+        }
     }
 
     sortMoreFeedbackRows() {
-        this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, this.sortPredicates[2], this.reverseOrders[2]);
+        // If the selected sort predicate is indifferent about two elements, the one submitted earlier should be diplayed on top
+        this.sortService.sortByProperty(this.submissionsWithComplaints, 'complaint.submittedTime', true);
+        if (this.sortPredicates[1] === 'responseTime') {
+            this.sortService.sortByFunction(this.submissionsWithComplaints, (element) => this.getResponseTimeInHours(element.complaint), this.reverseOrders[2]);
+        } else {
+            this.sortService.sortByProperty(this.submissionsWithComplaints, this.sortPredicates[2], this.reverseOrders[2]);
+        }
     }
 }

@@ -7,10 +7,26 @@ import dayjs from 'dayjs/esm';
 export class SortService {
     constructor() {}
 
+    /**
+     * Sorts the given array based on the defined key
+     * @param array The array that should be sorted
+     * @param key The attribute of the elements that should be used for determining the order
+     * @param ascending Decides if the biggest value comes last (ascending) or first (descending)
+     */
     sortByProperty<T>(array: T[], key: string, ascending: boolean): T[] {
+        return this.sortByFunction(array, (element) => SortService.customGet(element, key, undefined), ascending);
+    }
+
+    /**
+     * Sorts the given array based on the defined key
+     * @param array The array that should be sorted
+     * @param func The function that returns a value based on which the elements should be sorted
+     * @param ascending Decides if the biggest value comes last (ascending) or first (descending)
+     */
+    sortByFunction<T>(array: T[], func: { (parameter: T): any }, ascending: boolean): T[] {
         return array.sort((a: T, b: T) => {
-            const valueA = SortService.customGet(a, key, undefined);
-            const valueB = SortService.customGet(b, key, undefined);
+            const valueA = func(a);
+            const valueB = func(b);
 
             let compareValue;
 

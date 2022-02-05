@@ -99,7 +99,8 @@
             "noSubmissionsBecauseFirstAssessedByYourself": "Nur Einreichungen, die du nicht selbst in der ersten Korrekturrunde bearbeitet hast, können korrigiert werden.",
             "openAssessments": "Offene Abgaben",
             "closedAssessments": "Bewertete Abgaben",
-            "ratings": "Ratings"
+            "ratings": "Ratings",
+            "responseTime": "Bearbeitungszeit"
         }
     }
 }

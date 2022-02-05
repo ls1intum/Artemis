@@ -99,7 +99,8 @@
             "noSubmissionsBecauseFirstAssessedByYourself": "In the second correction round you may only assess submissions which you did not assess in the first round.",
             "openAssessments": "Open assessments",
             "closedAssessments": "Closed assessments",
-            "ratings": "Ratings"
+            "ratings": "Ratings",
+            "responseTime": "Response time"
         }
     }
 }
