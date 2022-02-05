@@ -101,6 +101,14 @@ describe('Sort Service', () => {
                 expect(arr).toEqual([e1, e5, e2, e6, e3, e4]);
             }),
         );
+
+        it(
+            'should sort array using a function for the compare value',
+            repeatWithRandomArray(10, (arr) => {
+                service.sortByFunction(arr, (element) => 2 * element.a - 5, true);
+                expect(arr).toEqual([e3, e6, e1, e5, e2, e4]);
+            }),
+        );
     });
 
     function repeatWithRandomArray(times: number, fn: (arr: TestObject[]) => void) {

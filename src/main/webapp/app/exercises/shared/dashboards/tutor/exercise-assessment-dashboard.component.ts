@@ -114,7 +114,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     // attributes for sorting the tables
     sortPredicates = ['submissionDate', 'complaint.accepted', 'complaint.accepted'];
-    reverseOrders = [false, true, true];
+    reverseOrders = [false, false, false];
 
     readonly ExerciseType = ExerciseType;
 
@@ -789,7 +789,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     sortComplaintRows() {
-        // If the selected sort predicate is indifferent about two elements, the one submitted earlier should be diplayed on top
+        // If the selected sort predicate is indifferent about two elements, the one submitted earlier should be displayed on top
         this.sortService.sortByProperty(this.submissionsWithComplaints, 'complaint.submittedTime', true);
         if (this.sortPredicates[1] === 'responseTime') {
             this.sortService.sortByFunction(this.submissionsWithComplaints, (element) => this.getResponseTimeInHours(element.complaint), this.reverseOrders[1]);
@@ -799,12 +799,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     sortMoreFeedbackRows() {
-        // If the selected sort predicate is indifferent about two elements, the one submitted earlier should be diplayed on top
-        this.sortService.sortByProperty(this.submissionsWithComplaints, 'complaint.submittedTime', true);
+        // If the selected sort predicate is indifferent about two elements, the one submitted earlier should be displayed on top
+        this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, 'complaint.submittedTime', true);
         if (this.sortPredicates[1] === 'responseTime') {
-            this.sortService.sortByFunction(this.submissionsWithComplaints, (element) => this.getResponseTimeInHours(element.complaint), this.reverseOrders[2]);
+            this.sortService.sortByFunction(this.submissionsWithMoreFeedbackRequests, (element) => this.getResponseTimeInHours(element.complaint), this.reverseOrders[2]);
         } else {
-            this.sortService.sortByProperty(this.submissionsWithComplaints, this.sortPredicates[2], this.reverseOrders[2]);
+            this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, this.sortPredicates[2], this.reverseOrders[2]);
         }
     }
 }
