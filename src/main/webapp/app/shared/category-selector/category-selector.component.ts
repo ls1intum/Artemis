@@ -50,14 +50,14 @@ export class CategorySelectorComponent implements OnChanges {
         );
     }
 
-    categoriesAsStringArray(): string[] {
+    private categoriesAsStringArray(): string[] {
         if (!this.categories) {
             return [];
         }
         return this.categories.map((exerciseCategory) => exerciseCategory.category!.toLowerCase());
     }
 
-    existingCategoriesAsStringArray(): string[] {
+    private existingCategoriesAsStringArray(): string[] {
         if (!this.existingCategories) {
             return [];
         }
@@ -65,7 +65,7 @@ export class CategorySelectorComponent implements OnChanges {
     }
 
     // if the user types in something, we need to filter for the matching categories
-    filterCategories(value: string): string[] {
+    private filterCategories(value: string): string[] {
         const filterValue = value.toLowerCase();
         return this.existingCategories.filter((category) => category.category!.toLowerCase().includes(filterValue)).map((category) => category.category!.toLowerCase());
     }
@@ -123,14 +123,14 @@ export class CategorySelectorComponent implements OnChanges {
         this.categoryCtrl.setValue(null);
     }
 
-    createCategory(categoryString: string): ExerciseCategory {
+    private createCategory(categoryString: string): ExerciseCategory {
         const category = new ExerciseCategory();
         category.category = categoryString;
         category.color = this.chooseRandomColor();
         return category;
     }
 
-    chooseRandomColor(): string {
+    private chooseRandomColor(): string {
         const randomIndex = Math.floor(Math.random() * this.categoryColors.length);
         return this.categoryColors[randomIndex];
     }
@@ -150,7 +150,7 @@ export class CategorySelectorComponent implements OnChanges {
         this.categoryCtrl.setValue(null);
     }
 
-    findExistingCategory(categoryString: string): ExerciseCategory | undefined {
+    private findExistingCategory(categoryString: string): ExerciseCategory | undefined {
         return this.existingCategories.find((existingCategory) => existingCategory.category?.toLowerCase() === categoryString.toLowerCase());
     }
 
