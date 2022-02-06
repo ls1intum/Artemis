@@ -39,7 +39,7 @@ export class MockComplaintService implements IComplaintService {
     create(complaint: Complaint): Observable<EntityResponseType> {
         return of();
     }
-    find(id: number): Observable<EntityResponseType> {
+    find(complaintId: number): Observable<EntityResponseType> {
         return of();
     }
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
