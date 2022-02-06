@@ -148,7 +148,7 @@ public class ExerciseDeletionService {
         // delete all plagiarism results belonging to this exercise
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);
 
-        // delete all participations belonging to this quiz
+        // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
         // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table
         // to avoid a ConcurrentModificationException, we need to use a copy of the set
@@ -209,7 +209,7 @@ public class ExerciseDeletionService {
         // delete all plagiarism results for this exercise
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exercise.getId());
 
-        // delete all participations for this exercise
+        // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
         participationService.deleteAllByExerciseId(exercise.getId(), true, true);
 
         if (exercise instanceof QuizExercise) {
