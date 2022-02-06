@@ -1,4 +1,4 @@
-import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
+import { Component, ContentChild, OnInit, TemplateRef, ChangeDetectorRef } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -186,6 +186,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
+        private changeDetector: ChangeDetectorRef,
     ) {}
 
     /**
@@ -208,12 +209,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.setupGraph();
         });
 
-        // Sort the tables
-        for (let i = 0; i < this.numberOfAssessmentsOfCorrectionRounds.length; i++) {
-            this.sortSubmissionRows(i);
-        }
-        this.sortComplaintRows();
-        this.sortMoreFeedbackRows();
+        this.sortAllTables();
     }
 
     setupGraph() {
@@ -506,7 +502,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         return submission;
                     });
 
-                this.submissionsByCorrectionRound!.set(correctionRound, sub);
+                this.submissionsByCorrectionRound.set(correctionRound, sub);
             });
     }
 
@@ -785,6 +781,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
             this.router.navigate(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
         }
+    }
+
+    sortAllTables() {
+        for (let i = 0; i < this.numberOfAssessmentsOfCorrectionRounds.length; i++) {
+            this.sortSubmissionRows(i);
+        }
+        this.sortComplaintRows();
+        this.sortMoreFeedbackRows();
+        this.changeDetector.detectChanges();
     }
 
     sortSubmissionRows(correctionRound: number) {
