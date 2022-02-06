@@ -82,12 +82,16 @@
     height: 100px;
 }
 
-::ng-deep .legend-labels {
+:host::ng-deep .legend-labels {
     background-color: transparent !important;
     text-align: center !important;
     font-weight: bolder;
 }
 
-::ng-deep .legend-label {
+:host::ng-deep .legend-label {
     color: $artemis-dark !important;
+}
+
+:host::ng-deep .legend-label-color {
+    border: 1px solid;
 }

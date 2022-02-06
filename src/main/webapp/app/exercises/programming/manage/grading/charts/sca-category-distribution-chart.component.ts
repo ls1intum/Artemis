@@ -2,9 +2,11 @@ import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
-import { getColor, xAxisFormatting } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.utils';
+import { getColor } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.utils';
+import { Router } from '@angular/router';
+import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
+import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 enum ScaChartBarTitle {
     PENALTY = 'Penalty',
@@ -19,7 +21,12 @@ enum ScaChartBarTitle {
     template: `
         <div>
             <div>
-                <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.title' | artemisTranslate }}</h4>
+                <div class="d-flex justify-content-between">
+                    <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.title' | artemisTranslate }}</h4>
+                    <button *ngIf="tableFiltered" type="button" class="btn btn-info" (click)="resetTableFilter()">
+                        {{ 'artemisApp.programmingExercise.configureGrading.charts.resetFilter' | artemisTranslate }}
+                    </button>
+                </div>
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.description' | artemisTranslate"></p>
             </div>
             <div #containerRef class="chart bg-light">
@@ -30,6 +37,7 @@ enum ScaChartBarTitle {
                     [xAxis]="true"
                     [yAxis]="true"
                     [xAxisTickFormatting]="xAxisFormatting"
+                    (select)="onSelect($event)"
                 >
                     <ng-template #tooltipTemplate let-model="model">
                         <b>{{ model.name }}</b>
@@ -81,27 +89,25 @@ enum ScaChartBarTitle {
         </div>
     `,
 })
-export class ScaCategoryDistributionChartComponent implements OnChanges {
+export class ScaCategoryDistributionChartComponent extends ProgrammingGradingChartsDirective implements OnChanges {
     @Input() categories: StaticCodeAnalysisCategory[];
     @Input() categoryIssuesMap?: CategoryIssuesMap;
     @Input() exercise: ProgrammingExercise;
 
     @Output() categoryColorsChange = new EventEmitter<{}>();
+    @Output() scaCategoryFilter = new EventEmitter<number>();
 
     readonly scaChartBarTitle = ScaChartBarTitle;
 
     // ngx
-    ngxData: any[] = [];
-    ngxColors = {
-        name: 'category distribution',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [],
-    } as Color;
+    ngxData: NgxChartsMultiSeriesDataEntry[] = [];
 
-    readonly xAxisFormatting = xAxisFormatting;
-
-    constructor(private translateService: TranslateService) {}
+    constructor(private translateService: TranslateService, private router: Router) {
+        super();
+        translateService.onLangChange.subscribe(() => {
+            this.updateTranslations();
+        });
+    }
 
     ngOnChanges(): void {
         this.ngxData = [];
@@ -149,7 +155,7 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
             const penaltyPoints = totalPenaltyPoints > 0 ? Math.max((element.penaltyPoints / totalPenaltyPoints) * 100, 0) : 0;
             const color = getColor(index / this.categories.length, 50);
 
-            penalty.series.push({ name: element.category.name, value: penaltyScore, issues: issuesScore, points: penaltyPoints });
+            penalty.series.push({ name: element.category.name, value: penaltyScore, issues: issuesScore, points: penaltyPoints, isPenalty: true, id: element.category.id });
             issue.series.push({ name: element.category.name, value: issuesScore, penalty: penaltyScore, points: penaltyPoints });
             deductions.series.push({ name: element.category.name, value: penaltyPoints, penalty: penaltyScore, issues: issuesScore });
 
@@ -162,5 +168,44 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
         this.ngxData = [...this.ngxData];
 
         this.categoryColorsChange.emit(categoryColors);
+    }
+
+    /**
+     * Handles the click on a specific category in a specific line of the chart
+     * If the user clicks a category within the penalty bar, the user is delegated to the scores page of the exercise
+     * If the user clicks a category within one of the other two bars, the corresponding table is filtered in order to show this category
+     * @param event the event delegated by ngx-charts after the user clicked a part of the chart
+     */
+    onSelect(event: any): void {
+        if (!event.isPenalty) {
+            this.router.navigate(['course-management', this.exercise.course!.id, 'programming-exercises', this.exercise.id, 'scores']);
+        } else {
+            this.tableFiltered = true;
+            this.scaCategoryFilter.emit(event.id);
+        }
+    }
+
+    /**
+     * Auxiliary method for the reset button to reset the table view
+     */
+    resetTableFilter(): void {
+        super.resetTableFilter();
+        this.scaCategoryFilter.emit(ProgrammingGradingChartsDirective.RESET_TABLE);
+    }
+
+    /**
+     * Auxiliary method in order to keep the translation of the bar labels up to date
+     */
+    updateTranslations(): void {
+        const penaltyLabel = this.translateService.instant('artemisApp.programmingAssessment.penalty');
+        const issueLabel = this.translateService.instant('artemisApp.programmingAssessment.issues');
+        const deductionsLabel = this.translateService.instant('artemisApp.programmingAssessment.deductions');
+
+        const labels = [penaltyLabel, issueLabel, deductionsLabel];
+
+        this.ngxData.forEach((category, index) => {
+            category.name = labels[index];
+        });
+        this.ngxData = [...this.ngxData];
     }
 }
