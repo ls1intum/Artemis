@@ -85,11 +85,11 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
 
     /**
      * Navigates to the detail view of the example submission
-     * @param id id of the submission or new for a new submission
+     * @param exampleSubmissionId id of the submission or new for a new submission
      */
-    getLinkToExampleSubmission(id: number | 'new') {
+    getLinkToExampleSubmission(exampleSubmissionId: number | 'new') {
         if (!this.exercise.exerciseGroup) {
-            return ['/course-management', this.exercise.course!.id, this.exercise.type + '-exercises', this.exercise.id, 'example-submissions', id];
+            return ['/course-management', this.exercise.course!.id, this.exercise.type + '-exercises', this.exercise.id, 'example-submissions', exampleSubmissionId];
         } else {
             return [
                 '/course-management',
@@ -101,7 +101,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
                 this.exercise.type + '-exercises',
                 this.exercise.id,
                 'example-submissions',
-                id,
+                exampleSubmissionId,
             ];
         }
     }

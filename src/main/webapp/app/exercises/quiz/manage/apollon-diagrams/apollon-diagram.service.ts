@@ -35,11 +35,11 @@ export class ApollonDiagramService {
 
     /**
      * Finds diagram.
-     * @param id - id of diagram to be found.
+     * @param diagramId - id of diagram to be found.
      * @param courseId - id of the course.
      */
-    find(id: number, courseId: number): Observable<EntityResponseType> {
-        return this.http.get<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams/${id}`, { observe: 'response' });
+    find(diagramId: number, courseId: number): Observable<EntityResponseType> {
+        return this.http.get<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`, { observe: 'response' });
     }
 
     /**
@@ -54,11 +54,11 @@ export class ApollonDiagramService {
 
     /**
      * Deletes diagram with that id.
-     * @param id - id of diagram to be deleted.
+     * @param diagramId - id of diagram to be deleted.
      * @param courseId - id of the course.
      */
-    delete(id: number, courseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams/${id}`, { observe: 'response' });
+    delete(diagramId: number, courseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`, { observe: 'response' });
     }
 
     /**
