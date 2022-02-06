@@ -289,9 +289,9 @@ describe('ParticipationComponent', () => {
         expect(component.participationsChangedDueDate).toEqual(new Map());
     }));
 
-    const participationWithIndividualDueDate = (id: number, dueDate?: dayjs.Dayjs): StudentParticipation => {
+    const participationWithIndividualDueDate = (participationId: number, dueDate?: dayjs.Dayjs): StudentParticipation => {
         const participation = new StudentParticipation();
-        participation.id = id;
+        participation.id = participationId;
         participation.individualDueDate = dueDate;
         return participation;
     };

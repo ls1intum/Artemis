@@ -36,13 +36,13 @@ export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 export class CourseManagementRequests {
     /**
      * Deletes the course with the specified id.
-     * @param id the course id
+     * @param courseId the course id
      * @returns <Chainable> request response
      */
-    deleteCourse(id: number) {
+    deleteCourse(courseId: number) {
         // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
         cy.wait(100);
-        return cy.request({ method: DELETE, url: COURSE_BASE + id });
+        return cy.request({ method: DELETE, url: COURSE_BASE + courseId });
     }
 
     /**

@@ -48,9 +48,9 @@ export class CypressUserManagement {
         return this.getUserWithId('101');
     }
 
-    private getUserWithId(id: string): CypressCredentials {
-        const username = this.getUsernameTemplate().replace(USER_ID_SELECTOR, id);
-        const password = this.getPasswordTemplate().replace(USER_ID_SELECTOR, id);
+    private getUserWithId(userId: string): CypressCredentials {
+        const username = this.getUsernameTemplate().replace(USER_ID_SELECTOR, userId);
+        const password = this.getPasswordTemplate().replace(USER_ID_SELECTOR, userId);
         return { username, password };
     }
 
