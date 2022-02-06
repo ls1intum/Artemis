@@ -39,6 +39,7 @@ import {
     faUserCheck,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
+import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -64,6 +65,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     lockingOrUnlockingRepositories = false;
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
+
+    isAdmin = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -103,6 +106,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.programmingExercise = programmingExercise;
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
             this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
+            this.isAdmin = this.accountService.isAdmin();
 
             const auxiliaryRepositories = this.programmingExercise.auxiliaryRepositories;
             this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
@@ -221,6 +225,51 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             next: (res) => {
                 const jhiAlert = this.alertService.success(res);
                 jhiAlert.message = res;
+            },
+            error: (error) => {
+                const errorMessage = error.headers.get('X-artemisApp-alert');
+                // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
+                const jhiAlert = this.alertService.error(errorMessage);
+                jhiAlert.message = errorMessage;
+            },
+        });
+    }
+
+    /**
+     * Parse tasks and corresponding test cases from problem statement for this exercise
+     */
+    createTasksFromProblemStatement() {
+        this.programmingExerciseService.createTasksFromProblemStatement(this.programmingExercise.id!).subscribe({
+            next: (res) => {
+                this.alertService.addAlert({
+                    type: 'success',
+                    message: this.buildTaskCreationMessage(res),
+                    // long timeout in order to test properly
+                    timeout: 10000000,
+                });
+            },
+            error: (error) => {
+                const errorMessage = error.headers.get('X-artemisApp-alert');
+                // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
+                const jhiAlert = this.alertService.error(errorMessage);
+                jhiAlert.message = errorMessage;
+            },
+        });
+    }
+
+    private buildTaskCreationMessage(tasks: Task[]): string {
+        let message = 'Parsed ' + tasks.length + ' tasks from the problem statement:\n';
+        message += tasks.map((task) => '"' + task.taskName + '": ' + task.tests).join('\n');
+        return message;
+    }
+
+    /**
+     * Delete all tasks and solution entries for this exercise
+     */
+    deleteTasksWithSolutionEntries() {
+        this.programmingExerciseService.deleteTasksWithSolutionEntries(this.programmingExercise.id!).subscribe({
+            next: (res) => {
+                this.alertService.success('Deletion of tasks and solution entries was successful.');
             },
             error: (error) => {
                 const errorMessage = error.headers.get('X-artemisApp-alert');

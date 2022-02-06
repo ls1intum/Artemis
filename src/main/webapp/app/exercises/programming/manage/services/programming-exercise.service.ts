@@ -13,6 +13,8 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { Submission } from 'app/entities/submission.model';
+import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -390,5 +392,44 @@ export class ProgrammingExerciseService {
         ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.exerciseService.setAccessRightsExerciseEntityResponseType(exerciseRes);
         return exerciseRes;
+    }
+
+    /**
+     * Parse tasks from problem statement and map to test cases.
+     * This method and all helper methods are only for testing reason and will be removed later on.
+     * @param exerciseId the exercise id
+     */
+    createTasksFromProblemStatement(exerciseId: number): Observable<Task[]> {
+        return this.http.put(`${this.resourceUrl}/${exerciseId}/tasks`, {}, { observe: 'response' }).pipe(map((res: any) => this.processServerSideTasks(res)));
+    }
+
+    /**
+     * Map server response to tasks
+     * @param response the server response
+     * @private
+     */
+    private processServerSideTasks(response: any): Task[] {
+        return response.body.map((task: any) => this.convertServerToClientTask(task));
+    }
+
+    /**
+     * Map server side task representation to client side task representation
+     * @param serverTask the server side representation of a task
+     * @private
+     */
+    private convertServerToClientTask(serverTask: any): Task {
+        return {
+            id: serverTask.id,
+            taskName: serverTask.taskName,
+            tests: serverTask.testCases.map((testCase: ProgrammingExerciseTestCase) => testCase.testName),
+        } as Task;
+    }
+
+    /**
+     * Delete all tasks and solution entries
+     * @param exerciseId the exercise id
+     */
+    deleteTasksWithSolutionEntries(exerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/tasks`, { observe: 'response' });
     }
 }
