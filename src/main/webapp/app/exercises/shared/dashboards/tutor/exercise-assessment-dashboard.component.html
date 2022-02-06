@@ -338,7 +338,7 @@
                     </h4>
                     <div class="table-responsive" *ngIf="tutorParticipationStatus === TRAINED || isAtLeastInstructor || tutorParticipationStatus === COMPLETED || isTestRun">
                         <table
-                            class="table table-striped exercise-table"
+                            class="table exercise-table"
                             *ngIf="
                                 ((unassessedSubmissionByCorrectionRound &&
                                     unassessedSubmissionByCorrectionRound!.get(correctionRound) &&
@@ -363,10 +363,7 @@
                                         <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.language' | artemisTranslate }}</a>
                                         <fa-icon [icon]="faSort"></fa-icon>
                                     </th>
-                                    <th jhiSortBy="results.correctionRound.completionDate">
-                                        <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</a>
-                                        <fa-icon [icon]="faSort"></fa-icon>
-                                    </th>
+                                    <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -515,7 +512,7 @@
                 </h4>
                 <fa-icon class="text-secondary" [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate"></fa-icon>
                 <div class="table-responsive">
-                    <table class="table table-striped exercise-table" *ngIf="submissionsWithComplaints && submissionsWithComplaints!.length > 0; else noComplaints">
+                    <table class="table exercise-table" *ngIf="submissionsWithComplaints && submissionsWithComplaints!.length > 0; else noComplaints">
                         <thead>
                             <tr jhiSort [(predicate)]="sortPredicates[1]" [(ascending)]="reverseOrders[1]" (sortChange)="sortComplaintRows()">
                                 <th>#</th>
@@ -555,6 +552,12 @@
                                 <td>
                                     <ng-container *ngIf="submissionWithComplaint.complaint.accepted === undefined"> &gt;= </ng-container>
                                     {{ getResponseTimeInSeconds(submissionWithComplaint.complaint) | artemisDurationFromSeconds: true }}
+                                    <fa-icon
+                                        *ngIf="shouldHighlightComplaint(submissionWithComplaint.complaint)"
+                                        [icon]="faExclamationTriangle"
+                                        class="text-warning"
+                                        ngbTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
+                                    ></fa-icon>
                                 </td>
                                 <td>
                                     <span class="text-warning" *ngIf="submissionWithComplaint.complaint.accepted == undefined">
@@ -627,10 +630,7 @@
                     [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestHint' | artemisTranslate"
                 ></fa-icon>
                 <div class="table-responsive">
-                    <table
-                        class="table table-striped exercise-table"
-                        *ngIf="submissionsWithMoreFeedbackRequests && submissionsWithMoreFeedbackRequests!.length > 0; else noMoreFeedbackRequests"
-                    >
+                    <table class="table exercise-table" *ngIf="submissionsWithMoreFeedbackRequests && submissionsWithMoreFeedbackRequests!.length > 0; else noMoreFeedbackRequests">
                         <thead>
                             <tr jhiSort [(predicate)]="sortPredicates[2]" [(ascending)]="reverseOrders[2]" (sortChange)="sortMoreFeedbackRows()">
                                 <th>#</th>
@@ -666,6 +666,12 @@
                                 <td>
                                     <ng-container *ngIf="moreFeedbackRequest.complaint.accepted === undefined"> &gt;= </ng-container>
                                     {{ getResponseTimeInSeconds(moreFeedbackRequest.complaint) | artemisDurationFromSeconds: true }}
+                                    <fa-icon
+                                        *ngIf="shouldHighlightComplaint(moreFeedbackRequest.complaint)"
+                                        [icon]="faExclamationTriangle"
+                                        class="text-warning"
+                                        ngbTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
+                                    ></fa-icon>
                                 </td>
                                 <td>
                                     <span class="text-warning" *ngIf="moreFeedbackRequest.complaint.accepted == undefined">

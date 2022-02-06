@@ -44,7 +44,7 @@ import { LegendPosition } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner, faSort, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 export interface ExampleSubmissionQueryParams {
@@ -169,6 +169,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     faCheckCircle = faCheckCircle;
     faFolderOpen = faFolderOpen;
     faSort = faSort;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private exerciseService: ExerciseService,

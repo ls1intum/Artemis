@@ -121,6 +121,12 @@
                         <span>
                             <ng-container *ngIf="complaint.accepted === undefined"> &gt;= </ng-container>
                             {{ getResponseTimeInSeconds(complaint) | artemisDurationFromSeconds: true }}
+                            <fa-icon
+                                *ngIf="shouldHighlightComplaint(complaint)"
+                                [icon]="faExclamationTriangle"
+                                class="text-warning"
+                                ngbTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
+                            ></fa-icon>
                         </span>
                     </td>
                     <td>
