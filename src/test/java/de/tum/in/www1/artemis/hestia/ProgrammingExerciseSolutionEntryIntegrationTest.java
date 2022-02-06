@@ -109,10 +109,17 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetSolutionEntryByIdWithInvalidExerciseId() throws Exception {
         Long entryId = programmingExerciseSolutionEntryRepository.findAll().get(0).getId();
         request.get("/api/programming-exercises/" + Long.MAX_VALUE + "/solution-entries/" + entryId, HttpStatus.BAD_REQUEST, ProgrammingExerciseSolutionEntry.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetSolutionEntryByIdWithInvalidExerciseIdAsStudent() throws Exception {
+        Long entryId = programmingExerciseSolutionEntryRepository.findAll().get(0).getId();
+        request.get("/api/programming-exercises/" + Long.MAX_VALUE + "/solution-entries/" + entryId, HttpStatus.FORBIDDEN, ProgrammingExerciseSolutionEntry.class);
     }
 
     @Test
