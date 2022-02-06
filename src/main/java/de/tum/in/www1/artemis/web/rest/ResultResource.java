@@ -142,7 +142,6 @@ public class ResultResource {
     @PostMapping(Constants.NEW_RESULT_RESOURCE_PATH)
     public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
         log.debug("Received result notify (NEW)");
-        log.info("Received result notify (NEW) from CI: {}", requestBody);
         if (token == null || !token.equals(artemisAuthenticationTokenValue)) {
             log.info("Cancelling request with invalid token {}", token);
             throw new AccessForbiddenException(); // Only allow endpoint when using correct token

@@ -190,7 +190,7 @@ public class UserCreationService {
 
         addUserToGroupsInternal(user, userDTO.getGroups());
 
-        log.info("Created Information for User: {}", user);
+        log.debug("Created Information for User: {}", user);
         return user;
     }
 

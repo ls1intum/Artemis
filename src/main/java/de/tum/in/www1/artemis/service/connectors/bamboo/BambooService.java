@@ -81,10 +81,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
         this.mapper = mapper;
         this.urlService = urlService;
         this.exerciseDateService = exerciseDateService;
-        log.debug("DEBUG is printed");
-        log.info("INFO is printed");
-        log.warn("WARN is printed");
-        log.error("ERROR is printed");
     }
 
     @Override
@@ -575,7 +571,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
             health = status.getBody().get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
         }
         catch (Exception emAll) {
-            log.error("Bamboo service connection is down!", emAll);
             health = new ConnectorHealth(emAll);
         }
 
@@ -737,7 +732,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
             return "The project " + projectKey + " already exists in the CI Server. Please choose a different short name!";
         }
         catch (HttpClientErrorException e) {
-            log.error("Encountered http exception when querying for project!", e);
             log.debug("Bamboo project {} does not exit", projectKey);
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 // only if this is the case, we additionally check that the project name is unique

@@ -532,7 +532,6 @@ public class UserService {
         }
         catch (ArtemisAuthenticationException e) {
             // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
-            log.error("Error while adding user {} to group {}", user.getLogin(), group);
         }
         // e.g. Gitlab: TODO: include the role to distinguish more cases
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(), Set.of(group), false));
@@ -546,7 +545,7 @@ public class UserService {
      * @param group the group
      */
     private void addUserToGroupInternal(User user, String group) {
-        log.info("Add user {} to internal group {}", user.getLogin(), group);
+        log.debug("Add user {} to group {}", user.getLogin(), group);
         if (!user.getGroups().contains(group)) {
             user.getGroups().add(group);
             user.setAuthorities(authorityService.buildAuthorities(user));
@@ -604,7 +603,6 @@ public class UserService {
             var optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
             if (optionalStudent.isPresent()) {
                 var student = optionalStudent.get();
-                log.info("Found user {} in local Artemis DB", student.getLogin());
                 // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the
                 // course)
                 if (!student.getGroups().contains(courseGroupName)) {
@@ -618,7 +616,6 @@ public class UserService {
             optionalStudent = this.createUserFromLdap(registrationNumber);
             if (optionalStudent.isPresent()) {
                 var student = optionalStudent.get();
-                log.info("Found user {} in ldap", student.getLogin());
                 // the newly created user needs to get the rights to access the course
                 this.addUserToGroup(student, courseGroupName, courseGroupRole);
                 return optionalStudent;
