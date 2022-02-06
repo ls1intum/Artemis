@@ -532,13 +532,17 @@
                                     <fa-icon [icon]="faSort"></fa-icon>
                                 </th>
                                 <th jhiSortBy="complaint.accepted">
-                                    <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</a>
+                                    <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.status' | artemisTranslate }}</a>
                                     <fa-icon [icon]="faSort"></fa-icon>
                                 </th>
+                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr *ngFor="let submissionWithComplaint of submissionsWithComplaints; let i = index">
+                            <tr
+                                *ngFor="let submissionWithComplaint of submissionsWithComplaints; let i = index"
+                                [ngClass]="{ 'table-warning': shouldHighlightComplaint(submissionWithComplaint.complaint) }"
+                            >
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ submissionWithComplaint.complaint.submittedTime | artemisDate }}</td>
                                 <td>
@@ -548,7 +552,21 @@
                                         [exercise]="exercise"
                                     ></jhi-result>
                                 </td>
-                                <td>{{ getResponseTimeInHours(submissionWithComplaint.complaint) | artemisDurationFromSeconds: true }}</td>
+                                <td>
+                                    <ng-container *ngIf="submissionWithComplaint.complaint.accepted === undefined"> &gt;= </ng-container>
+                                    {{ getResponseTimeInSeconds(submissionWithComplaint.complaint) | artemisDurationFromSeconds: true }}
+                                </td>
+                                <td>
+                                    <span class="text-warning" *ngIf="submissionWithComplaint.complaint.accepted == undefined">
+                                        {{ 'artemisApp.complaint.listOfComplaints.noReply' | artemisTranslate }}
+                                    </span>
+                                    <span class="text-success" *ngIf="submissionWithComplaint.complaint.accepted == true">
+                                        {{ 'artemisApp.complaint.listOfComplaints.accepted' | artemisTranslate }}
+                                    </span>
+                                    <span class="text-danger" *ngIf="submissionWithComplaint.complaint.accepted == false">
+                                        {{ 'artemisApp.complaint.listOfComplaints.rejected' | artemisTranslate }}
+                                    </span>
+                                </td>
                                 <td>
                                     <ng-container
                                         *jhiExtensionPoint="
@@ -629,19 +647,37 @@
                                     <fa-icon [icon]="faSort"></fa-icon>
                                 </th>
                                 <th jhiSortBy="complaint.accepted">
-                                    <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</a>
+                                    <a class="th-link">{{ 'artemisApp.exerciseAssessmentDashboard.status' | artemisTranslate }}</a>
                                     <fa-icon [icon]="faSort"></fa-icon>
                                 </th>
+                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr *ngFor="let moreFeedbackRequest of submissionsWithMoreFeedbackRequests; let i = index">
+                            <tr
+                                *ngFor="let moreFeedbackRequest of submissionsWithMoreFeedbackRequests; let i = index"
+                                [ngClass]="{ 'table-warning': shouldHighlightComplaint(moreFeedbackRequest.complaint) }"
+                            >
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ moreFeedbackRequest.complaint.submittedTime | artemisDate }}</td>
                                 <td>
                                     <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise"></jhi-result>
                                 </td>
-                                <td>{{ getResponseTimeInHours(moreFeedbackRequest.complaint) | artemisDurationFromSeconds: true }}</td>
+                                <td>
+                                    <ng-container *ngIf="moreFeedbackRequest.complaint.accepted === undefined"> &gt;= </ng-container>
+                                    {{ getResponseTimeInSeconds(moreFeedbackRequest.complaint) | artemisDurationFromSeconds: true }}
+                                </td>
+                                <td>
+                                    <span class="text-warning" *ngIf="moreFeedbackRequest.complaint.accepted == undefined">
+                                        {{ 'artemisApp.complaint.listOfComplaints.noReply' | artemisTranslate }}
+                                    </span>
+                                    <span class="text-success" *ngIf="moreFeedbackRequest.complaint.accepted == true">
+                                        {{ 'artemisApp.moreFeedback.accepted' | artemisTranslate }}
+                                    </span>
+                                    <span class="text-danger" *ngIf="moreFeedbackRequest.complaint.accepted == false">
+                                        {{ 'artemisApp.complaint.listOfComplaints.rejected' | artemisTranslate }}
+                                    </span>
+                                </td>
                                 <td>
                                     <ng-container
                                         *jhiExtensionPoint="

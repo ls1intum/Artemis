@@ -38,6 +38,7 @@
                 "actions": "Aktionen",
                 "title": "Liste der Beschwerden",
                 "dateAndTime": "Datum und Uhrzeit",
+                "responseTime": "Bearbeitungszeit",
                 "status": "Status",
                 "noReply": "Noch keine Antwort",
                 "accepted": "Angenommen",

@@ -51,6 +51,8 @@
             "studentsSubmissions": "Students' submissions",
             "testRunSubmissions": "Test Run submissions",
             "submissionDate": "Submission date",
+            "responseTime": "Response time",
+            "status": "Status",
             "pleaseContactIfUnclear": "In case something is unclear, please contact an instructor before you start assessing.",
             "result": "Result",
             "score": "Score",
@@ -99,8 +101,7 @@
             "noSubmissionsBecauseFirstAssessedByYourself": "In the second correction round you may only assess submissions which you did not assess in the first round.",
             "openAssessments": "Open assessments",
             "closedAssessments": "Closed assessments",
-            "ratings": "Ratings",
-            "responseTime": "Response time"
+            "ratings": "Ratings"
         }
     }
 }

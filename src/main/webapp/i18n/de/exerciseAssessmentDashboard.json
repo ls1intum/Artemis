@@ -39,7 +39,7 @@
             "readAndUnderstood": "Ich habe die Anleitung gelesen und verstanden.",
             "toRead": "zum Lesen",
             "toReview": "zur Überprüfung",
-            "totalExampleSubmissions": "Es gibt {{total}} Beispielabgaben: {{toRead}} zum Lesen und {{toAssess}} zur Bewertung.",
+            "totalExamples": "Es gibt {{total}} Beispielabgaben: {{toRead}} zum Lesen und {{toAssess}} zur Bewertung.",
             "readSubmissions": "Überprüfung von Beispielabgaben",
             "start": "",
             "continue": "",
@@ -51,6 +51,8 @@
             "studentsSubmissions": "Abgaben der Studierenden",
             "testRunSubmissions": "Testlaufabgaben",
             "submissionDate": "Abgabedatum",
+            "responseTime": "Bearbeitungszeit",
+            "status": "Status",
             "pleaseContactIfUnclear": "Falls etwas unklar ist, kontaktiere bitte einen Lehrenden, bevor du mit dem Bewerten beginnst.",
             "result": "Ergebnis",
             "score": "Ergebnis",
@@ -99,8 +101,7 @@
             "noSubmissionsBecauseFirstAssessedByYourself": "Nur Einreichungen, die du nicht selbst in der ersten Korrekturrunde bearbeitet hast, können korrigiert werden.",
             "openAssessments": "Offene Abgaben",
             "closedAssessments": "Bewertete Abgaben",
-            "ratings": "Ratings",
-            "responseTime": "Bearbeitungszeit"
+            "ratings": "Ratings"
         }
     }
 }

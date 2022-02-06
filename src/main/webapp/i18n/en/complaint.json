@@ -38,6 +38,7 @@
                 "actions": "Actions",
                 "title": "List of complaints",
                 "dateAndTime": "Date and Time",
+                "responseTime": "Response time",
                 "status": "Status",
                 "noReply": "No reply yet",
                 "accepted": "Accepted",
