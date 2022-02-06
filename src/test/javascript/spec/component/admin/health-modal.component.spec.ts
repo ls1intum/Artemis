@@ -37,20 +37,18 @@ describe('HealthModalComponentTest', () => {
         expect(JSON.parse(result)).toEqual(object);
     });
 
-    describe('Diskspace parsing', () => {
-        it('should parse GB-value to String', () => {
-            comp.health = { key: 'diskSpace' as HealthKey, value: {} as HealthDetails };
-            const gbValueInByte = 4156612385;
-            const expectedString = '3.87 GB';
-            expect(comp.readableValue(gbValueInByte)).toBe(expectedString);
-        });
+    it('should parse GB-value to String', () => {
+        comp.health = { key: 'diskSpace' as HealthKey, value: {} as HealthDetails };
+        const gbValueInByte = 4156612385;
+        const expectedString = '3.87 GB';
+        expect(comp.readableValue(gbValueInByte)).toBe(expectedString);
+    });
 
-        it('should parse MB-value to String', () => {
-            comp.health = { key: 'diskSpace' as HealthKey, value: {} as HealthDetails };
-            const gbValueInByte = 41566;
-            const expectedString = '0.04 MB';
-            expect(comp.readableValue(gbValueInByte)).toBe(expectedString);
-        });
+    it('should parse MB-value to String', () => {
+        comp.health = { key: 'diskSpace' as HealthKey, value: {} as HealthDetails };
+        const gbValueInByte = 41566;
+        const expectedString = '0.04 MB';
+        expect(comp.readableValue(gbValueInByte)).toBe(expectedString);
     });
 
     it('should dismiss the modal if close button is clicked', () => {
