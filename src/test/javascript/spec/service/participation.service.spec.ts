@@ -113,7 +113,7 @@ describe('Participation Service', () => {
             type: ParticipationType.PROGRAMMING,
             repositoryUrl: 'repo-url',
             buildPlanId: 'build-plan-id',
-            student: { id: 1, login: 'student1', guidedTourSettings: [] },
+            student: { id: 1, login: 'student1', guidedTourSettings: [], isInternal: true },
             team: { id: 1, name: 'team1' },
             results: [{ id: 3 }],
             submissions: [{ id: 1 }],
@@ -124,7 +124,7 @@ describe('Participation Service', () => {
             type: ParticipationType.PROGRAMMING,
             repositoryUrl: 'repo-url-1',
             buildPlanId: 'build-plan-id-1',
-            student: { id: 2, login: 'student2', guidedTourSettings: [] },
+            student: { id: 2, login: 'student2', guidedTourSettings: [], isInternal: true },
             results: [{ id: 1 }, { id: 2 }],
             submissions: [{ id: 2 }, { id: 3 }],
         };
@@ -143,7 +143,7 @@ describe('Participation Service', () => {
         const participation1: StudentParticipation = {
             id: 1,
             type: ParticipationType.STUDENT,
-            student: { id: 1, login: 'student1', guidedTourSettings: [] },
+            student: { id: 1, login: 'student1', guidedTourSettings: [], isInternal: true },
             results: [{ id: 3 }],
             submissions: [{ id: 1 }],
         };
@@ -151,7 +151,7 @@ describe('Participation Service', () => {
         const participation2: StudentParticipation = {
             id: 2,
             type: ParticipationType.STUDENT,
-            student: { id: 2, login: 'student2', guidedTourSettings: [] },
+            student: { id: 2, login: 'student2', guidedTourSettings: [], isInternal: true },
             results: [{ id: 1 }, { id: 2 }],
             submissions: [{ id: 2 }, { id: 3 }],
         };
@@ -168,7 +168,7 @@ describe('Participation Service', () => {
         const participation: StudentParticipation = {
             id: 1,
             type: ParticipationType.SOLUTION,
-            student: { id: 1, login: 'student1', guidedTourSettings: [] },
+            student: { id: 1, login: 'student1', guidedTourSettings: [], isInternal: true },
             results: [{ id: 3 }],
             submissions: [{ id: 1 }],
         };

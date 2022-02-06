@@ -43,7 +43,7 @@ const modelingExerciseOfExam = {
     numberOfAssessmentsOfCorrectionRounds: [],
     secondCorrectionEnabled: true,
 };
-const modelingSubmission = { id: 1, submitted: true, results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [] } }] };
+const modelingSubmission = { id: 1, submitted: true, results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [], isInternal: true } }] };
 
 describe('ModelingAssessmentDashboardComponent', () => {
     let component: ModelingAssessmentDashboardComponent;
