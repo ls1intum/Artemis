@@ -55,7 +55,7 @@ describe('HealthModalComponentTest', () => {
         const dismissSpy = jest.spyOn(activeModal, 'dismiss');
 
         const button = fixture.debugElement.query(By.css('button.btn-close'));
-        expect(button).not.toBe(undefined);
+        expect(button).not.toBe(null);
 
         expect(dismissSpy).toHaveBeenCalledTimes(0);
         button.nativeElement.click();
