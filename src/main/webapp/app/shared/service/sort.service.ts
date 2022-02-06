@@ -47,9 +47,9 @@ export class SortService {
     }
 
     private static compareWithUndefinedNull(valueA: any, valueB: any) {
-        if (!valueA && !valueB) {
+        if (valueA == null && valueB == null) {
             return 0;
-        } else if (!valueA) {
+        } else if (valueA == null) {
             return 1;
         } else {
             return -1;
