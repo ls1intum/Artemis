@@ -60,8 +60,8 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
 
                 try {
                     // NOTE: we need to fetch the user here again to make sure that the groups are not lazy loaded.
-                    user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
-                    bitbucketService.addUserToGroups(user.getLogin(), user.getGroups());
+                    User repoUser = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
+                    bitbucketService.addUserToGroups(repoUser.getLogin(), repoUser.getGroups());
                 }
                 catch (BitbucketException e) {
                     /*
@@ -91,7 +91,10 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
      */
     @Override
     public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword) {
-        bitbucketService.updateUser(vcsLogin, user.isInternal() && shouldSynchronizePassword ? passwordService.decryptPassword(user) : null, user.getEmail(), user.getName());
+        bitbucketService.updateUserDetails(vcsLogin, user.getEmail(), user.getName());
+        if (user.isInternal() && shouldSynchronizePassword) {
+            bitbucketService.updateUserPassword(vcsLogin, passwordService.decryptPassword(user));
+        }
         if (addedGroups != null && !addedGroups.isEmpty()) {
             bitbucketService.addUserToGroups(user.getLogin(), addedGroups);
         }

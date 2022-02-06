@@ -237,12 +237,11 @@ public class BitbucketService extends AbstractVersionControlService {
      * Updates an user on Bitbucket
      *
      * @param username     The username of the user
-     * @param password     if null, password won't get updated
      * @param emailAddress The new email address
      * @param displayName  The new display name
      * @throws BitbucketException
      */
-    public void updateUser(String username, String password, String emailAddress, String displayName) throws BitbucketException {
+    public void updateUserDetails(String username, String emailAddress, String displayName) throws BitbucketException {
         UriComponentsBuilder userDetailsBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users");
         Map<String, Object> userDetailsBody = new HashMap<>();
         userDetailsBody.put("name", username);
@@ -254,15 +253,30 @@ public class BitbucketService extends AbstractVersionControlService {
 
         try {
             restTemplate.exchange(userDetailsBuilder.build().encode().toUri(), HttpMethod.PUT, userDetailsEntity, Void.class);
-            if (password != null) {
-                UriComponentsBuilder passwordBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/credentials");
-                Map<String, Object> passwordBody = new HashMap<>();
-                passwordBody.put("name", username);
-                passwordBody.put("password", password);
-                passwordBody.put("passwordConfirm", password);
-                HttpEntity<Map<String, Object>> passwordEntity = new HttpEntity<>(passwordBody, null);
-                restTemplate.exchange(passwordBuilder.build().encode().toUri(), HttpMethod.PUT, passwordEntity, Void.class);
-            }
+        }
+        catch (HttpClientErrorException e) {
+            log.error("Could not update Bitbucket user " + username, e);
+            throw new BitbucketException("Error while updating user", e);
+        }
+    }
+
+    /**
+     * @param username The username of the user to update
+     * @param password The new password
+     * @throws BitbucketException
+     */
+    public void updateUserPassword(String username, String password) throws BitbucketException {
+        UriComponentsBuilder passwordBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/credentials");
+        Map<String, Object> passwordBody = new HashMap<>();
+        passwordBody.put("name", username);
+        passwordBody.put("password", password);
+        passwordBody.put("passwordConfirm", password);
+        HttpEntity<Map<String, Object>> passwordEntity = new HttpEntity<>(passwordBody, null);
+
+        log.debug("Updating Bitbucket user password {}", username);
+
+        try {
+            restTemplate.exchange(passwordBuilder.build().encode().toUri(), HttpMethod.PUT, passwordEntity, Void.class);
         }
         catch (HttpClientErrorException e) {
             log.error("Could not update Bitbucket user " + username, e);
