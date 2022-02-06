@@ -399,7 +399,7 @@ export class ProgrammingExerciseService {
      * This method and all helper methods are only for testing reason and will be removed later on.
      * @param exerciseId the exercise id
      */
-    createTasksFromProblemStatement(exerciseId: number): Observable<Task[]> {
+    extractTasksFromProblemStatement(exerciseId: number): Observable<Task[]> {
         return this.http.put(`${this.resourceUrl}/${exerciseId}/extract-tasks`, {}, { observe: 'response' }).pipe(map((res: any) => this.processServerSideTasks(res)));
     }
 

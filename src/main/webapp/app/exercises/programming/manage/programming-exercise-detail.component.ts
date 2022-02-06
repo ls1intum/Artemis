@@ -238,13 +238,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     /**
      * Parse tasks and corresponding test cases from problem statement for this exercise
      */
-    createTasksFromProblemStatement() {
-        this.programmingExerciseService.createTasksFromProblemStatement(this.programmingExercise.id!).subscribe({
+    extractTasksFromProblemStatement() {
+        this.programmingExerciseService.extractTasksFromProblemStatement(this.programmingExercise.id!).subscribe({
             next: (res) => {
                 this.alertService.addAlert({
                     type: 'success',
-                    message: this.buildTaskCreationMessage(res),
+                    message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccessHeader',
                     // long timeout in order to test properly
+                    translationParams: { numberTasks: res.length, testCases: this.buildTaskCreationMessage(res) },
                     timeout: 10000000,
                 });
             },
@@ -258,7 +259,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     private buildTaskCreationMessage(tasks: Task[]): string {
-        let message = 'Parsed ' + tasks.length + ' tasks from the problem statement:\n';
+        let message = '';
         message += tasks.map((task) => '"' + task.taskName + '": ' + task.tests).join('\n');
         return message;
     }
@@ -269,7 +270,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     deleteTasksWithSolutionEntries() {
         this.programmingExerciseService.deleteTasksWithSolutionEntries(this.programmingExercise.id!).subscribe({
             next: (res) => {
-                this.alertService.success('Deletion of tasks and solution entries was successful.');
+                this.alertService.addAlert({
+                    type: 'success',
+                    message: 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesSuccess',
+                    // long timeout in order to test properly
+                    timeout: 10000,
+                });
             },
             error: (error) => {
                 const errorMessage = error.headers.get('X-artemisApp-alert');

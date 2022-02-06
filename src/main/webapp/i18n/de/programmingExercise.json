@@ -100,6 +100,7 @@
             "combineTemplateCommitsSuccess": "Template-Repository-Commits wurden zusammengeführt.",
             "extractTasksFromProblemStatementWarning": "Nur zu Testzwecken: Extrahiere alle Aufgaben und Tests aus der Aufgabenstellung.",
             "extractTasksFromProblemStatementTitle": "Extrahiere Aufgaben",
+            "deleteTasksAndSolutionEntriesSuccess": "Alle Aufgaben und Solution Entries wurden gelöscht..",
             "deleteTasksAndSolutionEntriesWarning": "Nur zu Testzwecken: Lösche alle Aufgaben und Solution Entries.",
             "deleteTasksAndSolutionEntriesTitle": "Lösche Aufgaben",
             "editable": {
