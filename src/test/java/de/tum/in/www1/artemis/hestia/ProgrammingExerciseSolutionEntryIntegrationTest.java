@@ -44,11 +44,7 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
 
     private ProgrammingExercise programmingExercise;
 
-    private ProgrammingExerciseTask task;
-
     private CodeHint codeHint;
-
-    private Set<ProgrammingExerciseTestCase> testCases;
 
     @BeforeEach
     public void initTestCase() {
@@ -56,7 +52,7 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
         database.addUsers(2, 2, 1, 2);
 
         programmingExercise = exerciseRepository.findAll().get(0);
-        testCases = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId());
 
         codeHint = new CodeHint();
         codeHint.setExercise(programmingExercise);
@@ -75,7 +71,7 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
             solutionEntry.setFilePath("code.java");
             programmingExerciseSolutionEntryRepository.save(solutionEntry);
         }
-        task = new ProgrammingExerciseTask();
+        ProgrammingExerciseTask task = new ProgrammingExerciseTask();
         task.setExercise(programmingExercise);
         task.setTaskName("Task");
         task.setTestCases(new HashSet<>(testCases));

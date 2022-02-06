@@ -143,7 +143,7 @@ public class ExerciseHintResource {
      * @return the title of the hint wrapped in an ResponseEntity or 404 Not Found if no hint with that id exists
      * or with status {@code 400 (Bad Request)} if the exerciseId is not valid,
      */
-    @GetMapping(value = "/exercises/{exerciseId}/exercise-hints/{exerciseHintId}/title")
+    @GetMapping("/exercises/{exerciseId}/exercise-hints/{exerciseHintId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getHintTitle(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
         final var hint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);

@@ -33,7 +33,7 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseHintResource.class);
 
-    private final String ENTITY_NAME = "programmingExerciseSolutionEntry";
+    private static final String ENTITY_NAME = "programmingExerciseSolutionEntry";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -125,6 +125,7 @@ public class ProgrammingExerciseSolutionEntryResource {
      * POST /programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries : Create a solution entry for a test case
      * @param exerciseId of the exercise
      * @param testCaseId of the test case
+     * @param programmingExerciseSolutionEntry the solution entry to be created
      * @return the {@link ResponseEntity} with status {@code 201} and with body the created solution entry,
      * or with status {@code 400 (Bad Request) if the exerciseId, testcaseId, or solution entry are not valid}.
      */
