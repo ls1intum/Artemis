@@ -7,12 +7,11 @@ import { PasswordResetInitService } from 'app/account/password-reset/init/passwo
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockDirective, MockProvider } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { By } from '@angular/platform-browser';
 
 describe('PasswordResetInitComponent', () => {
@@ -22,7 +21,7 @@ describe('PasswordResetInitComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [PasswordResetInitComponent, TranslatePipeMock, MockComponent(AlertComponent), MockDirective(NgModel)],
+            declarations: [PasswordResetInitComponent, TranslatePipeMock, MockDirective(NgModel)],
             providers: [
                 FormBuilder,
                 { provide: ProfileService, useClass: MockProfileService },
