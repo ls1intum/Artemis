@@ -1,4 +1,3 @@
-import { User } from 'app/core/user/user.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exam } from 'app/entities/exam.model';

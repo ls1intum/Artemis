@@ -79,31 +79,6 @@ export class CypressUserManagement {
             func(response.body);
         });
     }
-
-    private generateUserWithId(id: number, role: Authority): User {
-        const cred = this.getUserWithId(id.toString());
-        const firstName = `tester_${id}`;
-        const lastName = 'cypress';
-        const email = `${firstName}@in.tum.de`;
-        return new User(
-            undefined,
-            cred.username,
-            firstName,
-            lastName,
-            email,
-            true,
-            undefined,
-            [role],
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            cred.password,
-        );
-    }
 }
 
 /**
