@@ -1,4 +1,4 @@
-import { Component, ContentChild, OnInit, TemplateRef, ChangeDetectorRef } from '@angular/core';
+import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -114,7 +114,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     // attributes for sorting the tables
     sortPredicates = ['submissionDate', 'complaint.accepted', 'complaint.accepted'];
-    reverseOrders = [false, false, false];
+    reverseOrders = [true, false, false];
 
     readonly ExerciseType = ExerciseType;
 
@@ -186,7 +186,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
-        private changeDetector: ChangeDetectorRef,
     ) {}
 
     /**
@@ -208,8 +207,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
         });
-
-        this.sortAllTables();
     }
 
     setupGraph() {
@@ -335,6 +332,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId).subscribe({
                 next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithComplaints = res.body || [];
+                    this.sortComplaintRows();
                 },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
@@ -342,6 +340,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.submissionService.getSubmissionsWithMoreFeedbackRequestsForTutor(this.exerciseId).subscribe({
                 next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithMoreFeedbackRequests = res.body || [];
+                    this.sortMoreFeedbackRows();
                 },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
@@ -503,6 +502,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                     });
 
                 this.submissionsByCorrectionRound.set(correctionRound, sub);
+                this.sortSubmissionRows(correctionRound);
             });
     }
 
@@ -781,15 +781,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
             this.router.navigate(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
         }
-    }
-
-    sortAllTables() {
-        for (let i = 0; i < this.numberOfAssessmentsOfCorrectionRounds.length; i++) {
-            this.sortSubmissionRows(i);
-        }
-        this.sortComplaintRows();
-        this.sortMoreFeedbackRows();
-        this.changeDetector.detectChanges();
     }
 
     sortSubmissionRows(correctionRound: number) {
