@@ -1,5 +1,3 @@
-import { Authority } from './../../../main/webapp/app/shared/constants/authority.constants';
-import { User } from './../../../main/webapp/app/core/user/user.model';
 import { BASE_API, GET, USER_ID_SELECTOR } from './constants';
 
 /**

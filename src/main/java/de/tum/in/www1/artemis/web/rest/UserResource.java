@@ -125,6 +125,7 @@ public class UserResource {
     @PostMapping("users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
+
         checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
 
         log.debug("REST request to save User : {}", managedUserVM);
