@@ -84,7 +84,7 @@
             </thead>
 
             <tbody>
-                <tr *ngFor="let complaint of complaintsToShow" [ngClass]="{ 'table-warning': shouldHighlightComplaint(complaint) }">
+                <tr *ngFor="let complaint of complaintsToShow">
                     <td>
                         {{ complaint.id }}
                     </td>

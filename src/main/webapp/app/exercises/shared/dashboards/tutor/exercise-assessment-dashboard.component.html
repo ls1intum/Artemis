@@ -536,10 +536,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr
-                                *ngFor="let submissionWithComplaint of submissionsWithComplaints; let i = index"
-                                [ngClass]="{ 'table-warning': shouldHighlightComplaint(submissionWithComplaint.complaint) }"
-                            >
+                            <tr *ngFor="let submissionWithComplaint of submissionsWithComplaints; let i = index">
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ submissionWithComplaint.complaint.submittedTime | artemisDate }}</td>
                                 <td>
@@ -654,10 +651,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr
-                                *ngFor="let moreFeedbackRequest of submissionsWithMoreFeedbackRequests; let i = index"
-                                [ngClass]="{ 'table-warning': shouldHighlightComplaint(moreFeedbackRequest.complaint) }"
-                            >
+                            <tr *ngFor="let moreFeedbackRequest of submissionsWithMoreFeedbackRequests; let i = index">
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ moreFeedbackRequest.complaint.submittedTime | artemisDate }}</td>
                                 <td>
