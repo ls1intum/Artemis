@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { PasswordResetInitService } from './password-reset-init.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -14,13 +14,9 @@ import { ExternalUserPasswordResetModalComponent } from 'app/account/password-re
     templateUrl: './password-reset-init.component.html',
 })
 export class PasswordResetInitComponent implements OnInit, AfterViewInit {
-    @ViewChild('email', { static: false })
-    email?: ElementRef;
-
-    success = false;
-    resetRequestForm = this.fb.group({
-        email: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email]],
-    });
+    @ViewChild('emailUsername', { static: false })
+    emailUsernameElement?: ElementRef;
+    emailUsernameValue = '';
     useExternal: boolean;
     externalCredentialProvider: string;
     externalPasswordResetLink?: string;
@@ -52,16 +48,19 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit(): void {
-        if (this.email) {
-            this.email.nativeElement.focus();
+        if (this.emailUsernameElement) {
+            this.emailUsernameElement.nativeElement.focus();
         }
     }
 
     requestReset(): void {
-        this.passwordResetInitService.save(this.resetRequestForm.get(['email'])!.value).subscribe({
+        if (!this.emailUsernameValue) {
+            this.alertService.error('reset.request.messages.info');
+            return;
+        }
+        this.passwordResetInitService.save(this.emailUsernameValue).subscribe({
             next: () => {
                 this.alertService.success('reset.request.messages.success');
-                this.success = true;
             },
             error: (err: HttpErrorResponse) => {
                 if (this.useExternal && err?.error?.errorKey === 'externalUser') {

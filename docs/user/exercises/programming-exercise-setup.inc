@@ -47,6 +47,8 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
   | C                    | no                   | yes                  | yes              | no           | no           | no                           |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
+  | C (FACT framework)   | no                   | no                   | no               | no           | no           | no                           |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
   | Haskell              | yes                  | no                   | no               | no           | no           | yes                          |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
   | Kotlin               | yes                  | no                   | no               | yes          | no           | no                           |
@@ -75,6 +77,9 @@ Instructors can still use those templates to generate programming exercises and 
 
 .. note::
   Instructors are still able to extend the generated programming exercises with additional features that are not available in one specific template.
+
+.. note::
+  Documentation for FACT framework can be found here: https://fact.readthedocs.io/en/latest/
 
 We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the Github repository.
 

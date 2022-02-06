@@ -32,6 +32,9 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { GraphColors } from 'app/entities/statistics.model';
+import { xAxisFormatting } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.utils';
+import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 export enum FeedbackItemType {
     Issue,
@@ -91,6 +94,7 @@ export class ResultDetailComponent implements OnInit {
     loadingFailed = false;
     feedbackList: FeedbackItem[];
     filteredFeedbackList: FeedbackItem[];
+    backupFilteredFeedbackList: FeedbackItem[];
     buildLogs: BuildLogEntryArray;
 
     showScoreChartTooltip = false;
@@ -99,16 +103,20 @@ export class ResultDetailComponent implements OnInit {
     commitHash?: string;
     commitUrl?: string;
 
-    ngxData: any[] = [];
+    ngxData: NgxChartsMultiSeriesDataEntry[] = [];
     labels: string[];
     ngxColors = {
         name: 'Feedback Detail',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['#28a745', '#dc3545'], // colors: green, red
+        domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
     xScaleMax = 100;
     legendPosition = LegendPosition.Below;
+    showOnlyPositiveFeedback = false;
+    showOnlyNegativeFeedback = false;
+
+    readonly xAxisFormatting = xAxisFormatting;
 
     get exercise(): Exercise | undefined {
         if (this.result.participation) {
@@ -161,6 +169,7 @@ export class ResultDetailComponent implements OnInit {
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
                         this.feedbackList = this.createFeedbackItems(filteredFeedback);
                         this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
+                        this.backupFilteredFeedbackList = this.filteredFeedbackList;
                         if (this.showScoreChart) {
                             this.updateChart(this.feedbackList);
                         }
@@ -497,8 +506,8 @@ export class ResultDetailComponent implements OnInit {
             {
                 name: 'Score',
                 series: [
-                    { name: this.labels[0], value: 0 },
-                    { name: this.labels[1], value: 0 },
+                    { name: this.labels[0], value: 0, isPositive: true },
+                    { name: this.labels[1], value: 0, isPositive: false },
                 ],
             },
         ];
@@ -531,16 +540,12 @@ export class ResultDetailComponent implements OnInit {
     }
 
     /**
-     * Adds a percentage sign to every x axis tick
-     * @param tick the default x axis tick
-     * @returns string representing custom x axis tick
-     */
-    xAxisFormatting(tick: string): string {
-        return tick + '%';
-    }
-
-    /**
-     * Handles the event if the user clicks on a legend entry. Then, the corresponding bar should disappear
+     * Handles the event if the user clicks on a part of the chart.
+     * If the user clicks on a legend entry, the corresponding bar disappears.
+     * If the user clicks on a bar, the feedback items get filtered accordingly:
+     * Click on the green bar -> Only the positive feedback is shown
+     * Click in the red bar -> Only the feedback concerning deductions is shown
+     * In order to prevent confusion, additionally a disclaimer is shown that states that the feedback items are currently filtered.
      * @param event the information that is delegated by the chart framework. It is dependent on the spot
      * the user clicks
      */
@@ -551,12 +556,47 @@ export class ResultDetailComponent implements OnInit {
                 if (points.name === name) {
                     const color = this.ngxColors.domain[index];
                     // if the bar is not transparent yet, make it transparent. Else, reset the normal color
-                    this.ngxColors.domain[index] = color !== 'rgba(255,255,255,0)' ? 'rgba(255,255,255,0)' : index === 0 ? '#28a745' : '#dc3545';
+                    this.ngxColors.domain[index] = color !== 'rgba(255,255,255,0)' ? 'rgba(255,255,255,0)' : index === 0 ? GraphColors.GREEN : GraphColors.RED;
 
                     // update is necessary for the colors to change
                     this.ngxData = [...this.ngxData];
                 }
             });
+        } else {
+            this.filterFeedbackListByChart(event.isPositive);
+        }
+    }
+
+    /**
+     * Method that handles the filter reset applied by the chart
+     */
+    resetChartFilter() {
+        this.showOnlyNegativeFeedback = false;
+        this.showOnlyPositiveFeedback = false;
+        this.filteredFeedbackList = this.backupFilteredFeedbackList;
+    }
+
+    /**
+     * Auxiliary method that handles the filtering of the feedback items if a chart bar is clicked
+     * @param isPositive the indicator whether the bar representing the positive (point achieving) or the negative (point deducting) feedback is clicked
+     * @private
+     */
+    private filterFeedbackListByChart(isPositive: boolean) {
+        let filterPredicate;
+        if (isPositive) {
+            this.showOnlyPositiveFeedback = !this.showOnlyPositiveFeedback;
+            filterPredicate = (feedback: FeedbackItem) => feedback.positive === true;
+            this.showOnlyNegativeFeedback = false;
+        } else {
+            this.showOnlyNegativeFeedback = !this.showOnlyNegativeFeedback;
+            // by the second predicate we filter all feedback items that do not deduct any points
+            filterPredicate = (feedback: FeedbackItem) => feedback.positive === false && feedback.appliedCredits;
+            this.showOnlyPositiveFeedback = false;
+        }
+        // we reset the item list in order to make sure that maximal one feedback type is filtered at any time by the chart
+        this.filteredFeedbackList = this.backupFilteredFeedbackList;
+        if (this.showOnlyNegativeFeedback || this.showOnlyPositiveFeedback) {
+            this.filteredFeedbackList = this.filteredFeedbackList.filter(filterPredicate);
         }
     }
 }

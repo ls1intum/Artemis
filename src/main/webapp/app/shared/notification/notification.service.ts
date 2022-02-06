@@ -58,11 +58,11 @@ export class NotificationService {
 
     /**
      * Delete notification by id.
-     * @param {number} id
+     * @param {number} notificationId
      * @return Observable<HttpResponse<any>>
      */
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(notificationId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<any>(`${this.resourceUrl}/${notificationId}`, { observe: 'response' });
     }
 
     /**

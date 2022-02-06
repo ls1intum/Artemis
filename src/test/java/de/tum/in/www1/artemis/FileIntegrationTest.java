@@ -76,7 +76,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testGetTemplateFile() throws Exception {
         String javaReadme = request.get("/api/files/templates/JAVA/ECLIPSE/readme", HttpStatus.OK, String.class);
         assertThat(javaReadme).isNotEmpty();
-        String cReadme = request.get("/api/files/templates/C/readme", HttpStatus.OK, String.class);
+        String cReadme = request.get("/api/files/templates/C/GCC/readme", HttpStatus.OK, String.class);
         assertThat(cReadme).isNotEmpty();
         String pythonReadme = request.get("/api/files/templates/PYTHON/readme", HttpStatus.OK, String.class);
         assertThat(pythonReadme).isNotEmpty();

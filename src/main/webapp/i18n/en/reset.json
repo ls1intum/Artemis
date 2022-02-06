@@ -3,12 +3,12 @@
         "request": {
             "title": "Reset your password",
             "form": {
-                "button": "Reset password"
+                "button": "Reset password",
+                "emailUsername": "Email/Username"
             },
             "messages": {
-                "info": "Enter the email address you used to register",
-                "success": "Check your email for details on how to reset your password.",
-                "notfound": "<strong>Email address isn't registered!</strong> Please check and try again"
+                "info": "Enter the email address you used to register or your username.",
+                "success": "Check your email for details on how to reset your password. For security reasons, this hint is visible even if the account doesn't exist. Recheck your input if you don't receive an email."
             },
             "external": {
                 "explanation": "Your account credentials are not stored in Artemis but {{provider}}.",
