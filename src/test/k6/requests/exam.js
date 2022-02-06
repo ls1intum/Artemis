@@ -28,7 +28,7 @@ export function newExam(artemis, course) {
         numberOfExercisesInExam: 4,
         randomizeExerciseOrder: false,
         started: false,
-        title: 'exam' + nextAlphanumeric(5),
+        title: 'Exam K6 ' + nextAlphanumeric(5),
         visible: false,
         gracePeriod: 180,
     };
@@ -50,7 +50,7 @@ export function newExerciseGroup(artemis, exam, mandatory = true) {
     const exerciseGroup = {
         exam: exam,
         isMandatory: mandatory,
-        title: 'group' + nextAlphanumeric(5),
+        title: 'Group K6 ' + nextAlphanumeric(5),
     };
 
     const res = artemis.post(EXERCISE_GROUPS(exam.course.id, exam.id), exerciseGroup);
