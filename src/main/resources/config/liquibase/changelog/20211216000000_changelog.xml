@@ -57,7 +57,7 @@
             <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="filePath" type="VARCHAR(512)"/>
+            <column name="file_path" type="VARCHAR(512)"/>
             <column name="line" type="INT"/>
             <column name="previous_line" type="INT"/>
             <column name="code" type="TEXT"/>
