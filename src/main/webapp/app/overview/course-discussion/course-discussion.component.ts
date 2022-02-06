@@ -48,7 +48,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     totalItems = 0;
     pagingEnabled = true;
     itemsPerPage = ITEMS_PER_PAGE_COURSE_DISCUSSION;
-    page = 0;
+    page = 1;
     readonly CourseWideContext = CourseWideContext;
     readonly SortBy = PostSortCriterion;
     readonly SortDirection = SortDirection;
@@ -141,6 +141,17 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      * they are sorted on return
      */
     onSelectContext(): void {
+        this.page = 1;
+
+        this.setFilterAndSort();
+        this.metisService.getFilteredPosts(this.currentPostContextFilter);
+    }
+
+    /**
+     * ????????????????????????
+     * ????????????????????????
+     */
+    onSelectPage(): void {
         this.setFilterAndSort();
         this.metisService.getFilteredPosts(this.currentPostContextFilter);
     }
@@ -370,6 +381,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             pagingEnabled: this.pagingEnabled,
             page: this.page - 1,
             pageSize: this.itemsPerPage,
+            filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
+            filterToOwn: this.formGroup.get('filterToOwn')?.value,
+            filterToAnsweredOrReacted: this.formGroup.get('filterToAnsweredOrReacted')?.value,
             ...this.formGroup.get('context')?.value,
         };
         this.currentSortCriterion = this.formGroup.get('sortBy')?.value;

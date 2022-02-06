@@ -57,16 +57,16 @@
                         <!-- attribute filter -->
                         <div class="col-auto px-0 selection-prefix">
                             <fa-icon [icon]="faFilter"></fa-icon>
-                            <input class="form-check-input" type="checkbox" formControlName="filterToUnresolved" name="filterToUnresolved" (change)="onFilterChange()" />
+                            <input class="form-check-input" type="checkbox" formControlName="filterToUnresolved" name="filterToUnresolved" (change)="onSelectContext()" />
                             <span class="px-1">{{ 'artemisApp.metis.overview.filterToUnresolved' | artemisTranslate }}</span>
-                            <input class="form-check-input" type="checkbox" formControlName="filterToOwn" name="filterToOwn" (change)="onFilterChange()" />
+                            <input class="form-check-input" type="checkbox" formControlName="filterToOwn" name="filterToOwn" (change)="onSelectContext()" />
                             <span class="px-1">{{ 'artemisApp.metis.overview.filterToOwn' | artemisTranslate }}</span>
                             <input
                                 class="form-check-input"
                                 type="checkbox"
                                 formControlName="filterToAnsweredOrReacted"
                                 name="filterToAnsweredOrReacted"
-                                (change)="onFilterChange()"
+                                (change)="onSelectContext()"
                             />
                             <span class="px-1">{{ 'artemisApp.metis.overview.filterToAnsweredOrReacted' | artemisTranslate }}</span>
                         </div>
@@ -126,7 +126,7 @@
                     [maxSize]="5"
                     [rotate]="true"
                     [boundaryLinks]="true"
-                    (pageChange)="onSelectContext()"
+                    (pageChange)="onSelectPage()"
                 ></ngb-pagination>
             </div>
         </div>

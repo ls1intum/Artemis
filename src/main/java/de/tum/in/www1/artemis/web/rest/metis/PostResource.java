@@ -116,14 +116,17 @@ public class PostResource {
     @GetMapping("courses/{courseId}/posts")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Post>> getPostsInCourse(@PathVariable Long courseId, @ApiParam Pageable pageable, @RequestParam(defaultValue = "false") boolean pagingEnabled,
-            @RequestParam(required = false) CourseWideContext courseWideContext, @RequestParam(required = false) Long exerciseId, @RequestParam(required = false) Long lectureId) {
+            @RequestParam(required = false) CourseWideContext courseWideContext, @RequestParam(required = false) Long exerciseId, @RequestParam(required = false) Long lectureId,
+            @RequestParam(required = false) boolean filterToUnresolved, @RequestParam(required = false) boolean filterToOwn,
+            @RequestParam(required = false) boolean filterToAnsweredOrReacted) {
 
         // pageable object is not null by default
         if (!pagingEnabled) {
             pageable = null;
         }
 
-        Page<Post> coursePosts = postService.getPostsInCourse(pageable, courseId, courseWideContext, exerciseId, lectureId);
+        Page<Post> coursePosts = postService.getPostsInCourse(pageable, courseId, courseWideContext, exerciseId, lectureId, filterToUnresolved, filterToOwn,
+                filterToAnsweredOrReacted);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
 
         return new ResponseEntity<>(coursePosts.getContent(), headers, HttpStatus.OK);

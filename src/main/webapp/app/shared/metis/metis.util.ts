@@ -47,6 +47,9 @@ export interface PostContextFilter {
     courseWideContext?: CourseWideContext;
     exerciseId?: number;
     lectureId?: number;
+    filterToUnresolved?: boolean;
+    filterToOwn?: boolean;
+    filterToAnsweredOrReacted?: boolean;
     pagingEnabled?: boolean;
     page?: number;
     pageSize?: number;

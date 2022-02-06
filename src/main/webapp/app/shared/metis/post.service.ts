@@ -47,6 +47,15 @@ export class PostService extends PostingService<Post> {
         if (postContextFilter.exerciseId) {
             params = params.set('exerciseId', postContextFilter.exerciseId.toString());
         }
+        if (postContextFilter.filterToUnresolved) {
+            params = params.set('filterToUnresolved', postContextFilter.filterToUnresolved);
+        }
+        if (postContextFilter.filterToOwn) {
+            params = params.set('filterToOwn', postContextFilter.filterToOwn);
+        }
+        if (postContextFilter.filterToAnsweredOrReacted) {
+            params = params.set('filterToAnsweredOrReacted', postContextFilter.filterToAnsweredOrReacted);
+        }
         if (!!postContextFilter.pagingEnabled) {
             params = params.set('pagingEnabled', postContextFilter.pagingEnabled);
             params = params.set('page', postContextFilter.page!);
