@@ -6,7 +6,7 @@ type TestObject = {
     a: number;
     b: string;
     c: dayjs.Dayjs;
-    d?: number | null;
+    d: number | null | undefined;
     e: Map<string, number>;
 };
 
@@ -57,6 +57,7 @@ describe('Sort Service', () => {
             a: 7,
             b: 'tiger',
             c: dayjs().subtract(5, 'minutes'),
+            d: undefined,
             e: new Map().set('f', 16),
         };
     });
@@ -87,10 +88,21 @@ describe('Sort Service', () => {
         );
 
         it(
-            'should sort array with null properties',
+            'should sort array with null properties ascending',
             repeatWithRandomArray(10, (arr) => {
                 service.sortByProperty(arr, 'd', true);
                 expect(arr.slice(0, 4)).toEqual([e4, e1, e5, e2]);
+                expect(arr.slice(4, 6)).toIncludeSameMembers([e3, e6]);
+            }),
+        );
+
+        it(
+            'should sort array with null properties descending',
+            repeatWithRandomArray(10, (arr) => {
+                service.sortByProperty(arr, 'd', false);
+                expect(arr.length).toEqual(6);
+                expect(arr.slice(0, 2)).toIncludeSameMembers([e3, e6]);
+                expect(arr.slice(2, 6)).toEqual([e2, e5, e1, e4]);
             }),
         );
 

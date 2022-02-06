@@ -114,7 +114,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     // attributes for sorting the tables
     sortPredicates = ['submissionDate', 'complaint.accepted', 'complaint.accepted'];
-    reverseOrders = [false, true, true];
+    reverseOrders = [false, false, false];
 
     readonly ExerciseType = ExerciseType;
 
