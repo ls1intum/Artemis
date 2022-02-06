@@ -1,5 +1,5 @@
 import { Observable, of } from 'rxjs';
-import { Injectable, Injector } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
 import { ITeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -175,7 +175,7 @@ export class MockTeamService implements ITeamService {
 
 @Injectable()
 export class TeamRequestInterceptorMock implements HttpInterceptor {
-    constructor(private injector: Injector) {}
+    constructor() {}
 
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         if (request.url && request.url.indexOf(`${TeamService.resourceUrl(mockExercise.id!)}/${mockTeamFromServer.id}`) > -1) {

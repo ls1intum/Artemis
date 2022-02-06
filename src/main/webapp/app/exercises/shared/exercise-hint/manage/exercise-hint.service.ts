@@ -23,9 +23,9 @@ export interface IExerciseHintService {
     /**
      * Finds an exercise hint
      * @param exerciseId Id of the exercise of which to retrieve the hint
-     * @param hintId Id of exercise hint to find
+     * @param exerciseHintId Id of exercise hint to find
      */
-    find(exerciseId: number, hintId: number): Observable<ExerciseHintResponse>;
+    find(exerciseId: number, exerciseHintId: number): Observable<ExerciseHintResponse>;
 
     /**
      * Finds all exercise hints by exercise id
@@ -36,9 +36,9 @@ export interface IExerciseHintService {
     /**
      * Deletes an exercise hint
      * @param exerciseId Id of the exercise of which to delete the hint
-     * @param hintId Id of exercise hint to delete
+     * @param exerciseHintId Id of exercise hint to delete
      */
-    delete(exerciseId: number, hintId: number): Observable<HttpResponse<void>>;
+    delete(exerciseId: number, exerciseHintId: number): Observable<HttpResponse<void>>;
 }
 
 @Injectable({ providedIn: 'root' })

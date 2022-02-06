@@ -11,11 +11,11 @@ export class MockExerciseHintService implements IExerciseHintService {
         return of({ body: this.exerciseHintDummy }) as Observable<ExerciseHintResponse>;
     }
 
-    delete(exerciseId: number, hintId: number): Observable<HttpResponse<any>> {
+    delete(exerciseId: number, exerciseHintId: number): Observable<HttpResponse<any>> {
         return of();
     }
 
-    find(exerciseId: number, id: number): Observable<ExerciseHintResponse> {
+    find(exerciseId: number, exerciseHintId: number): Observable<ExerciseHintResponse> {
         return of({ body: this.exerciseHintDummy }) as Observable<ExerciseHintResponse>;
     }
 
