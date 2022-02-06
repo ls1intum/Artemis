@@ -22,11 +22,12 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
 
     @Query("""
             SELECT DISTINCT p FROM Participation p
-            LEFT JOIN FETCH p.submissions
             LEFT JOIN FETCH p.results
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results
             WHERE p.id = :#{#participationId}
             """)
-    Participation getOneWithEagerSubmissionsAndResults(@Param("participationId") Long participationId);
+    Optional<Participation> findByIdWithResultsAndSubmissionsResults(@Param("participationId") Long participationId);
 
     @Query("""
             SELECT p FROM Participation p
@@ -44,13 +45,6 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
     Optional<Participation> findWithEagerLegalSubmissionsById(@Param("participationId") Long participationId);
-
-    @Query("""
-            SELECT COUNT(p)
-            FROM Participation p JOIN p.exercise e
-            WHERE e.id = :#{#exerciseId}
-            """)
-    long getNumberOfParticipationsForExercise(@Param("exerciseId") Long exerciseId);
 
     @NotNull
     default Participation findByIdWithLegalSubmissionsElseThrow(long participationId) {
