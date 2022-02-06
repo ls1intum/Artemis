@@ -104,19 +104,19 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testTaskExtractionAsStudent() throws Exception {
-        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", null, HttpStatus.FORBIDDEN);
+        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/extract-tasks", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testTaskExtractionAsTutor() throws Exception {
-        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", null, HttpStatus.FORBIDDEN);
+        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/extract-tasks", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testTaskExtractionAsEditor() throws Exception {
-        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", null, HttpStatus.OK);
+        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/extract-tasks", null, HttpStatus.OK);
     }
 
     // TODO: uncomment after service for problem statement has been implemented
@@ -128,7 +128,7 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
      * "First, we need to implement two sorting algorithms, in this case `MergeSort` and `BubbleSort`.\n" + "\n" + "**You have the following tasks:**\n" + "\n" + "1. [task][" +
      * taskName1 + "](testClass[BubbleSort])\n" + "Implement the class `BubbleSort`.\n" + "2. [task][" + taskName2 + "](testMethods[Context],testMethods[Policy],)\n" +
      * "Implement the classes `Context` and `Policy`. Make sure to follow.."); programmingExerciseRepository.save(programmingExercise); request.put("/api/programming-exercises/" +
-     * programmingExercise.getId() + "/tasks", null, HttpStatus.OK); Set<ProgrammingExerciseTask> extractedTasks =
+     * programmingExercise.getId() + "/extract-tasks", null, HttpStatus.OK); Set<ProgrammingExerciseTask> extractedTasks =
      * programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(programmingExercise.getId()); Optional<ProgrammingExerciseTask> task1Optional =
      * extractedTasks.stream().filter(task -> task.getTaskName().equals(taskName1)).findFirst(); Optional<ProgrammingExerciseTask> task2Optional =
      * extractedTasks.stream().filter(task -> task.getTaskName().equals(taskName2)).findFirst(); assertThat(task1Optional).isPresent(); assertThat(task2Optional).isPresent();
@@ -146,7 +146,7 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
         programmingExercise.setProblemStatement("");
         programmingExerciseRepository.save(programmingExercise);
 
-        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", null, HttpStatus.OK);
+        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/extract-tasks", null, HttpStatus.OK);
 
         assertThat(programmingExerciseTaskRepository.findAll()).hasSize(0);
     }

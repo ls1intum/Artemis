@@ -707,7 +707,7 @@ public class ProgrammingExerciseResource {
      * @return the {@link ResponseEntity} with status {@code 200} and with body the tasks with test cases,
      * or with status {@code 400 (Bad Request) if the exerciseId is not valid}.
      */
-    @PutMapping(TASKS)
+    @PutMapping(EXTRACT_TASKS)
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Set<ProgrammingExerciseTask>> createTasksFromProblemStatement(@PathVariable Long exerciseId) {

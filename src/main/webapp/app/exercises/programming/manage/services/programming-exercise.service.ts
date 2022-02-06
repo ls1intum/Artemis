@@ -400,7 +400,7 @@ export class ProgrammingExerciseService {
      * @param exerciseId the exercise id
      */
     createTasksFromProblemStatement(exerciseId: number): Observable<Task[]> {
-        return this.http.put(`${this.resourceUrl}/${exerciseId}/tasks`, {}, { observe: 'response' }).pipe(map((res: any) => this.processServerSideTasks(res)));
+        return this.http.put(`${this.resourceUrl}/${exerciseId}/extract-tasks`, {}, { observe: 'response' }).pipe(map((res: any) => this.processServerSideTasks(res)));
     }
 
     /**
