@@ -4,7 +4,7 @@ import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model'
 import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute } from '@angular/router';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -52,8 +52,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     protected loadExercises(): void {
-        this.quizExerciseService.findForCourse(this.courseId).subscribe(
-            (res: HttpResponse<QuizExercise[]>) => {
+        this.quizExerciseService.findForCourse(this.courseId).subscribe({
+            next: (res: HttpResponse<QuizExercise[]>) => {
                 this.quizExercises = res.body!;
                 // reconnect exercise with course
                 this.quizExercises.forEach((exercise) => {
@@ -66,8 +66,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 this.emitExerciseCount(this.quizExercises.length);
                 this.applyFilter();
             },
-            (res: HttpErrorResponse) => this.onError(res),
-        );
+            error: (res: HttpErrorResponse) => this.onError(res),
+        });
     }
 
     protected applyFilter(): void {
@@ -121,15 +121,15 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * @param quizExerciseId the quiz exercise id to start
      */
     openForPractice(quizExerciseId: number) {
-        this.quizExerciseService.openForPractice(quizExerciseId).subscribe(
-            (res: HttpResponse<QuizExercise>) => {
+        this.quizExerciseService.openForPractice(quizExerciseId).subscribe({
+            next: (res: HttpResponse<QuizExercise>) => {
                 this.handleNewQuizExercise(res.body!);
             },
-            (res: HttpErrorResponse) => {
+            error: (res: HttpErrorResponse) => {
                 this.onError(res);
                 this.loadOne(quizExerciseId);
             },
-        );
+        });
     }
 
     /**
@@ -145,15 +145,15 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * @param quizExerciseId the quiz exercise id to start
      */
     startQuiz(quizExerciseId: number) {
-        this.quizExerciseService.start(quizExerciseId).subscribe(
-            (res: HttpResponse<QuizExercise>) => {
+        this.quizExerciseService.start(quizExerciseId).subscribe({
+            next: (res: HttpResponse<QuizExercise>) => {
                 this.handleNewQuizExercise(res.body!);
             },
-            (res: HttpErrorResponse) => {
+            error: (res: HttpErrorResponse) => {
                 this.onError(res);
                 this.loadOne(quizExerciseId);
             },
-        );
+        });
     }
 
     /**
@@ -198,15 +198,15 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * @param quizExerciseId the quiz exercise id to start
      */
     showQuiz(quizExerciseId: number) {
-        this.quizExerciseService.setVisible(quizExerciseId).subscribe(
-            (res: HttpResponse<QuizExercise>) => {
+        this.quizExerciseService.setVisible(quizExerciseId).subscribe({
+            next: (res: HttpResponse<QuizExercise>) => {
                 this.handleNewQuizExercise(res.body!);
             },
-            (res: HttpErrorResponse) => {
+            error: (res: HttpErrorResponse) => {
                 this.onError(res);
                 this.loadOne(quizExerciseId);
             },
-        );
+        });
     }
 
     /**
@@ -214,16 +214,16 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * @param quizExerciseId id of the quiz exercise that will be deleted
      */
     deleteQuizExercise(quizExerciseId: number) {
-        return this.quizExerciseService.delete(quizExerciseId).subscribe(
-            () => {
+        return this.quizExerciseService.delete(quizExerciseId).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
                     content: 'Deleted an quizExercise',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
+        });
     }
 
     /**
@@ -231,16 +231,16 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * @param quizExerciseId id of the quiz exercise that will be deleted
      */
     resetQuizExercise(quizExerciseId: number) {
-        this.quizExerciseService.reset(quizExerciseId).subscribe(
-            () => {
+        this.quizExerciseService.reset(quizExerciseId).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
                     content: 'Reset an quizExercise',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
+        });
     }
 
     public sortRows() {

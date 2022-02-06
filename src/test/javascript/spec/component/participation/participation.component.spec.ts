@@ -10,7 +10,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { of } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { Team } from 'app/entities/team.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
@@ -291,9 +291,9 @@ describe('ParticipationComponent', () => {
         expect(component.participationsChangedDueDate).toEqual(new Map());
     }));
 
-    const participationWithIndividualDueDate = (id: number, dueDate?: dayjs.Dayjs): StudentParticipation => {
+    const participationWithIndividualDueDate = (participationId: number, dueDate?: dayjs.Dayjs): StudentParticipation => {
         const participation = new StudentParticipation();
-        participation.id = id;
+        participation.id = participationId;
         participation.individualDueDate = dueDate;
         return participation;
     };

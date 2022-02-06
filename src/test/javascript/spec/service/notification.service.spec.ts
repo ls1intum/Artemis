@@ -17,7 +17,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { Course } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.service';
 
@@ -83,7 +83,7 @@ describe('Notification Service', () => {
             .then(() => {
                 notificationService = TestBed.inject(NotificationService);
                 httpMock = TestBed.inject(HttpTestingController);
-                router = TestBed.get(Router);
+                router = TestBed.inject(Router);
 
                 websocketService = TestBed.inject(JhiWebsocketService);
                 wsSubscribeStub = jest.spyOn(websocketService, 'subscribe');

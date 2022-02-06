@@ -15,7 +15,7 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { QuizPointStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-point-statistic/quiz-point-statistic.component';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { MockProvider } from 'ng-mocks';
@@ -78,7 +78,7 @@ describe('QuizExercise Point Statistic Component', () => {
         quizExercise = { id: 42, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
     });
 
-    describe('OnInit', function () {
+    describe('OnInit', () => {
         it('should call functions on Init', fakeAsync(() => {
             // setup
             jest.useFakeTimers();
@@ -119,7 +119,7 @@ describe('QuizExercise Point Statistic Component', () => {
         }));
     });
 
-    describe('updateDisplayedTimes', function () {
+    describe('updateDisplayedTimes', () => {
         it('should update remaining time ', () => {
             // setup
             quizExercise.adjustedDueDate = dayjs();
@@ -130,7 +130,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
             // check
             expect(comp.remainingTimeSeconds).toEqual(-1);
-            expect(comp.remainingTimeText).toEqual(translateService.instant('showStatistic.quizhasEnded'));
+            expect(comp.remainingTimeText).toEqual(translateService.instant('showStatistic.quizHasEnded'));
         });
 
         it('should show remaining time as zero if time unknown', () => {
@@ -146,18 +146,7 @@ describe('QuizExercise Point Statistic Component', () => {
         });
     });
 
-    it('should return remaining Time', () => {
-        // only minutes if time > 2min 30sec
-        expect(comp.relativeTimeText(220)).toEqual('4 min');
-
-        // minutes and seconds if time in minutes between 1 <= x < 2.5
-        expect(comp.relativeTimeText(130)).toEqual('2 min 10 s');
-
-        // only seconds if time < 1min
-        expect(comp.relativeTimeText(50)).toEqual('50 s');
-    });
-
-    describe('loadQuizSuccess', function () {
+    describe('loadQuizSuccess', () => {
         let loadDataSpy: jest.SpyInstance;
         let routerSpy: jest.SpyInstance;
 
@@ -201,6 +190,17 @@ describe('QuizExercise Point Statistic Component', () => {
         });
     });
 
+    it('should return remaining Time', () => {
+        // only minutes if time > 2min 30sec
+        expect(comp.relativeTimeText(220)).toEqual('4 min');
+
+        // minutes and seconds if time in minutes between 1 <= x < 2.5
+        expect(comp.relativeTimeText(130)).toEqual('2 min 10 s');
+
+        // only seconds if time < 1min
+        expect(comp.relativeTimeText(50)).toEqual('50 s');
+    });
+
     it('should calculate the MaxScore if no quiz questions are contained', () => {
         // setup
         quizExercise.quizQuestions = undefined;
@@ -217,19 +217,20 @@ describe('QuizExercise Point Statistic Component', () => {
         expect(comp.maxScore).toBe(42);
     });
 
-    describe('loadData', function () {
+    describe('loadData', () => {
         it('should set data', () => {
             // setup
             const loadDataInDiagramSpy = jest.spyOn(comp, 'loadDataInDiagram');
             comp.quizPointStatistic = new QuizPointStatistic();
             comp.quizPointStatistic.pointCounters = pointCounters;
+            comp.maxScore = 4;
 
             // call
             comp.loadData();
 
             // check
             expect(loadDataInDiagramSpy).toHaveBeenCalled();
-            expect(comp.label).toEqual(['1', '4']);
+            expect(comp.label).toEqual(['[0.5 - 1.5)', '[3.5 - 4]']);
             expect(comp.ratedData).toEqual([2, 5]);
             expect(comp.unratedData).toEqual([3, 6]);
         });

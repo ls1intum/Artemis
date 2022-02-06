@@ -25,13 +25,12 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * @param textExercise that should be stored of type {TextExercise}
      */
     create(textExercise: TextExercise): Observable<EntityResponseType> {
-        let copy = this.exerciseService.convertDateFromClient(textExercise);
-        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http.post<TextExercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        let copy = ExerciseService.convertDateFromClient(textExercise);
+        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        return this.http
+            .post<TextExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -42,13 +41,12 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * (like the old ID) will be handled by the server.
      */
     import(adaptedSourceTextExercise: TextExercise) {
-        let copy = this.exerciseService.convertDateFromClient(adaptedSourceTextExercise);
-        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http.post<TextExercise>(`${this.resourceUrl}/import/${adaptedSourceTextExercise.id}`, copy, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        let copy = ExerciseService.convertDateFromClient(adaptedSourceTextExercise);
+        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        return this.http
+            .post<TextExercise>(`${this.resourceUrl}/import/${adaptedSourceTextExercise.id}`, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -58,25 +56,22 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      */
     update(textExercise: TextExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = this.exerciseService.convertDateFromClient(textExercise);
-        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http.put<TextExercise>(this.resourceUrl, copy, { params: options, observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        let copy = ExerciseService.convertDateFromClient(textExercise);
+        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        return this.http
+            .put<TextExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
-     * Finds the text exercise of the given id.
-     * @param id of text exercise of type {number}
+     * Finds the text exercise of the given exerciseId.
+     * @param exerciseId of text exercise of type {number}
      */
-    find(id: number): Observable<EntityResponseType> {
-        return this.http.get<TextExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.checkPermission(res)),
-        );
+    find(exerciseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<TextExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -85,18 +80,17 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      */
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
-        return this.http.get<TextExercise[]>(this.resourceUrl, { params: options, observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)),
-        );
+        return this.http
+            .get<TextExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
     }
 
     /**
      * Deletes the text exercise with the given id.
-     * @param id of the text exercise of type {number}
+     * @param exerciseId of the text exercise of type {number}
      */
-    delete(id: number): Observable<HttpResponse<{}>> {
-        return this.http.delete(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(exerciseId: number): Observable<HttpResponse<{}>> {
+        return this.http.delete(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 
     /**
@@ -137,13 +131,12 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      */
     reevaluateAndUpdate(textExercise: TextExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = this.exerciseService.convertDateFromClient(textExercise);
-        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http.put<TextExercise>(`${this.resourceUrl}/${textExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        let copy = ExerciseService.convertDateFromClient(textExercise);
+        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        return this.http
+            .put<TextExercise>(`${this.resourceUrl}/${textExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**

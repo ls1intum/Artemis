@@ -42,21 +42,30 @@ export class ExamManagementPage {
     /**
      * Opens the exercise groups page.
      */
-    openExerciseGroups(examId: string) {
+    openExerciseGroups(examId: number) {
         cy.get(`#exercises-button-${examId}-groups`).click();
     }
 
     /**
      * Opens the student registration page.
      */
-    openStudentRegistration(examId: string) {
+    openStudentRegistration(examId: number) {
         cy.get(`#student-button-${examId}`).click();
     }
 
     /**
      * Opens the student exams page.
      */
-    openStudenExams(examId: string) {
+    openStudenExams(examId: number) {
         cy.get(`#student-exams-${examId}`).click();
+    }
+
+    /**
+     * Opens the exam assessment dashboard
+     * @param examId the id of the exam
+     * @param timeout how long to wait for the assessment dashboard button
+     */
+    openAssessmentDashboard(examId: string, timeout: number) {
+        cy.get('#exercises-button-' + examId, { timeout }).click();
     }
 }

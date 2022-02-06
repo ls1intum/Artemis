@@ -9,7 +9,7 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faExclamationTriangle, faEye, faFileExport, faFileSignature, faPencilAlt, faSignal, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -88,8 +88,8 @@ export class ExamExerciseRowButtonsComponent {
     }
 
     private deleteTextExercise() {
-        this.textExerciseService.delete(this.exercise.id!).subscribe(
-            () => {
+        this.textExerciseService.delete(this.exercise.id!).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'textExerciseListModification',
                     content: 'Deleted a textExercise',
@@ -97,13 +97,13 @@ export class ExamExerciseRowButtonsComponent {
                 this.dialogErrorSource.next('');
                 this.onDeleteExercise.emit();
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     private deleteModelingExercise() {
-        this.modelingExerciseService.delete(this.exercise.id!).subscribe(
-            () => {
+        this.modelingExerciseService.delete(this.exercise.id!).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'modelingExerciseListModification',
                     content: 'Deleted a modelingExercise',
@@ -111,13 +111,13 @@ export class ExamExerciseRowButtonsComponent {
                 this.dialogErrorSource.next('');
                 this.onDeleteExercise.emit();
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     private deleteFileUploadExercise() {
-        this.fileUploadExerciseService.delete(this.exercise.id!).subscribe(
-            () => {
+        this.fileUploadExerciseService.delete(this.exercise.id!).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'fileUploadExerciseListModification',
                     content: 'Deleted a fileUploadExercise',
@@ -125,13 +125,13 @@ export class ExamExerciseRowButtonsComponent {
                 this.dialogErrorSource.next('');
                 this.onDeleteExercise.emit();
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     private deleteQuizExercise() {
-        this.quizExerciseService.delete(this.exercise.id!).subscribe(
-            () => {
+        this.quizExerciseService.delete(this.exercise.id!).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
                     content: 'Deleted a quiz',
@@ -139,13 +139,13 @@ export class ExamExerciseRowButtonsComponent {
                 this.dialogErrorSource.next('');
                 this.onDeleteExercise.emit();
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     public deleteProgrammingExercise(event: { [key: string]: boolean }) {
-        this.programmingExerciseService.delete(this.exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe(
-            () => {
+        this.programmingExerciseService.delete(this.exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',
                     content: 'Deleted a programming exercise',
@@ -153,8 +153,8 @@ export class ExamExerciseRowButtonsComponent {
                 this.dialogErrorSource.next('');
                 this.onDeleteExercise.emit();
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     /**

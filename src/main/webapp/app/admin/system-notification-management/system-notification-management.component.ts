@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
 import { SystemNotification } from 'app/entities/system-notification.model';
@@ -96,16 +96,16 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * @param notificationId the id of the notification that we want to delete
      */
     deleteNotification(notificationId: number) {
-        this.systemNotificationService.delete(notificationId).subscribe(
-            () => {
+        this.systemNotificationService.delete(notificationId).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'notificationListModification',
                     content: 'Deleted a system notification',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     /**
@@ -118,10 +118,10 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
                 size: this.itemsPerPage,
                 sort: this.sort(),
             })
-            .subscribe(
-                (res: HttpResponse<SystemNotification[]>) => this.onSuccess(res.body!, res.headers),
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+            .subscribe({
+                next: (res: HttpResponse<SystemNotification[]>) => this.onSuccess(res.body!, res.headers),
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     /**

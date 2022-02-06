@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, ReplaySubject } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { map } from 'rxjs/operators';
 
 import { createRequestOption } from 'app/shared/util/request.util';
@@ -58,11 +58,11 @@ export class NotificationService {
 
     /**
      * Delete notification by id.
-     * @param {number} id
+     * @param {number} notificationId
      * @return Observable<HttpResponse<any>>
      */
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(notificationId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<any>(`${this.resourceUrl}/${notificationId}`, { observe: 'response' });
     }
 
     /**

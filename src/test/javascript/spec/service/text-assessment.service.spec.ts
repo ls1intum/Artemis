@@ -1,4 +1,4 @@
-import { getTestBed, TestBed, tick, fakeAsync } from '@angular/core/testing';
+import { TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -8,9 +8,10 @@ import { Feedback } from 'app/entities/feedback.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { TextAssessmentEvent } from 'app/entities/text-assesment-event.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 
 describe('TextAssessment Service', () => {
-    let injector: TestBed;
     let service: TextAssessmentService;
     let httpMock: HttpTestingController;
     let textSubmission: TextSubmission;
@@ -19,10 +20,10 @@ describe('TextAssessment Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
+            providers: [{ provide: AccountService, useClass: MockAccountService }],
         });
-        injector = getTestBed();
-        service = injector.get(TextAssessmentService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(TextAssessmentService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         textSubmission = new TextSubmission();
 

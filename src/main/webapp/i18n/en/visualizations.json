@@ -7,7 +7,18 @@
             "maximumScoreLabel": "Best score",
             "yAxis": "Score (%)",
             "xAxis": "Exercises",
-            "exerciseType": "Exercise Type: {{ type }}"
+            "exerciseType": "Exercise Type:",
+            "text": "Text Exercise",
+            "file_upload": "File Upload Exercise",
+            "programming": "Programming Exercise",
+            "modeling": "Modelling Exercise",
+            "quiz": "Quiz Exercise",
+            "includeType": "Include exercise type:",
+            "textPlural": "text exercises",
+            "file_uploadPlural": "file upload exercises",
+            "programmingPlural": "programming exercises",
+            "modelingPlural": "modelling exercises",
+            "quizPlural": "quiz exercises"
         }
     }
 }

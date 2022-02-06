@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
 import { Course, CourseGroup } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { User } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -31,7 +30,7 @@ export class CourseManagementService {
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
     private fetchingCoursesForNotifications = false;
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService, private lectureService: LectureService, private accountService: AccountService) {}
+    constructor(private http: HttpClient, private lectureService: LectureService, private accountService: AccountService) {}
 
     /**
      * creates a course using a POST request
@@ -166,7 +165,12 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     findAllResultsOfCourseForExerciseAndCurrentUser(courseId: number): Observable<Course> {
-        return this.http.get<Course>(`${this.resourceUrl}/${courseId}/results`).pipe(map((res: Course) => this.setAccessRightsCourse(res)));
+        return this.http.get<Course>(`${this.resourceUrl}/${courseId}/results`).pipe(
+            map((res: Course) => {
+                this.accountService.setAccessRightsForCourseAndReferencedExercises(res);
+                return res;
+            }),
+        );
     }
 
     /**
@@ -174,7 +178,7 @@ export class CourseManagementService {
      */
     findAllToRegister(): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Course[]>(`${this.resourceUrl}/to-register`, { observe: 'response' })
+            .get<Course[]>(`${this.resourceUrl}/for-registration`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)));
     }
 
@@ -358,7 +362,7 @@ export class CourseManagementService {
 
     /**
      * Add users to the registered users for a course.
-     * @param courseId The course id.
+     * @param courseId to which the users shall be added.
      * @param studentDtos Student DTOs of users to add to the course.
      * @param courseGroup the course group into which the user should be added
      * @return studentDtos of users that were not found in the system.
@@ -387,12 +391,12 @@ export class CourseManagementService {
         setTimeout(() => {
             // Retrieve courses if no courses were fetched before and are not queried at the moment.
             if (!this.fetchingCoursesForNotifications && !this.coursesForNotifications.getValue()) {
-                this.findAllForNotifications().subscribe(
-                    (res: HttpResponse<Course[]>) => {
+                this.findAllForNotifications().subscribe({
+                    next: (res: HttpResponse<Course[]>) => {
                         this.coursesForNotifications.next(res.body || undefined);
                     },
-                    () => (this.fetchingCoursesForNotifications = false),
-                );
+                    error: () => (this.fetchingCoursesForNotifications = false),
+                });
             }
         }, 500);
         return this.coursesForNotifications;
@@ -459,7 +463,7 @@ export class CourseManagementService {
      */
     private convertExerciseCategoriesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body && res.body.exercises) {
-            res.body.exercises.forEach((exercise) => this.exerciseService.parseExerciseCategories(exercise));
+            res.body.exercises.forEach((exercise) => ExerciseService.parseExerciseCategories(exercise));
         }
         return res;
     }
@@ -473,7 +477,7 @@ export class CourseManagementService {
         if (res.body) {
             res.body.forEach((course: Course) => {
                 if (course.exercises) {
-                    course.exercises.forEach((exercise) => this.exerciseService.parseExerciseCategories(exercise));
+                    course.exercises.forEach((exercise) => ExerciseService.parseExerciseCategories(exercise));
                 }
             });
         }
@@ -483,14 +487,14 @@ export class CourseManagementService {
     private setCourseDates(course: Course) {
         course.startDate = course.startDate ? dayjs(course.startDate) : undefined;
         course.endDate = course.endDate ? dayjs(course.endDate) : undefined;
-        course.exercises = this.exerciseService.convertExercisesDateFromServer(course.exercises);
+        course.exercises = ExerciseService.convertExercisesDateFromServer(course.exercises);
         course.lectures = this.lectureService.convertDatesForLecturesFromServer(course.lectures);
     }
 
     private setAccessRightsCourseEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((course: Course) => {
-                this.setAccessRightsCourse(course);
+                this.accountService.setAccessRightsForCourseAndReferencedExercises(course);
             });
         }
         return res;
@@ -498,30 +502,9 @@ export class CourseManagementService {
 
     private setAccessRightsCourseEntityResponseType(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.setAccessRightsCourse(res.body);
+            this.accountService.setAccessRightsForCourseAndReferencedExercises(res.body);
         }
         return res;
-    }
-
-    /**
-     * To reduce the error proneness the access rights for exercises and their
-     * referenced course are set in addition to the course access rights itself.
-     * @param course the course for which the access rights are set
-     * @private
-     */
-    private setAccessRightsCourse(course: Course): Course {
-        if (course) {
-            this.accountService.setAccessRightsForCourse(course);
-            if (course.exercises) {
-                course.exercises.forEach((exercise: Exercise) => {
-                    this.accountService.setAccessRightsForExercise(exercise);
-                    if (exercise.course) {
-                        this.accountService.setAccessRightsForCourse(exercise.course);
-                    }
-                });
-            }
-        }
-        return course;
     }
 
     private setParticipationStatusForExercisesInCourse(res: EntityResponseType): EntityResponseType {

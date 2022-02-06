@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement } from '@angular/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
@@ -272,7 +272,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const problemstatement = 'lorem ipsum';
         const exercise = { id: 3, course: { id: 4 }, problemStatement: problemstatement } as ProgrammingExercise;
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
-        getLatestResultWithFeedbacks.mockReturnValue(throwError('fatal error'));
+        getLatestResultWithFeedbacks.mockReturnValue(throwError(() => new Error('fatal error')));
         comp.participation = participation;
         comp.exercise = exercise;
         comp.isInitial = true;

@@ -28,18 +28,9 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
         confirmPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
     });
 
-    passwordResetEnabled = false;
-
     constructor(private passwordResetFinishService: PasswordResetFinishService, private route: ActivatedRoute, private profileService: ProfileService, private fb: FormBuilder) {}
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.passwordResetEnabled = profileInfo.registrationEnabled || false;
-                this.passwordResetEnabled ||= profileInfo.saml2?.enablePassword || false;
-            }
-        });
-
         this.route.queryParams.subscribe((params) => {
             if (params['key']) {
                 this.key = params['key'];
@@ -64,10 +55,10 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
         if (newPassword !== confirmPassword) {
             this.doNotMatch = true;
         } else {
-            this.passwordResetFinishService.save(this.key, newPassword).subscribe(
-                () => (this.success = true),
-                () => (this.error = true),
-            );
+            this.passwordResetFinishService.save(this.key, newPassword).subscribe({
+                next: () => (this.success = true),
+                error: () => (this.error = true),
+            });
         }
     }
 }

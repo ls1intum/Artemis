@@ -4,6 +4,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import { Interactable } from '@interactjs/core/Interactable';
 import { InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
+import { CollapsableCodeEditorElement } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 
 const fileBrowserWindowName = 'FileBrowser';
 const instructionsWindowName = 'Instructions';
@@ -27,19 +28,19 @@ describe('CodeEditorGridComponent', () => {
 
     describe('Hide draggable icons', () => {
         it('should hide draggable icon for file browser', () => {
-            executeHideDraggableIconTestForWindow(fileBrowserWindowName);
+            executeHideDraggableIconTestForWindow(fileBrowserWindowName, CollapsableCodeEditorElement.FileBrowser);
         });
 
         // right panel = Instruction / Problem Statement
         it('should hide draggable icon for right panel', () => {
-            executeHideDraggableIconTestForWindow(instructionsWindowName);
+            executeHideDraggableIconTestForWindow(instructionsWindowName, CollapsableCodeEditorElement.Instructions);
         });
 
         it('should hide draggable icon for build output', () => {
-            executeHideDraggableIconTestForWindow(buildOutputWindowName);
+            executeHideDraggableIconTestForWindow(buildOutputWindowName, CollapsableCodeEditorElement.BuildOutput);
         });
 
-        const executeHideDraggableIconTestForWindow = (windowName: string) => {
+        const executeHideDraggableIconTestForWindow = (windowName: string, collapsableElement: CollapsableCodeEditorElement) => {
             fixture.detectChanges();
             let draggableIconForWindow = getDebugElement(windowName);
 
@@ -55,7 +56,7 @@ describe('CodeEditorGridComponent', () => {
 
             expectWindowToBeCollapsed(windowName, false);
 
-            comp.toggleCollapse(windowCollapseEvent);
+            comp.toggleCollapse(windowCollapseEvent, collapsableElement);
 
             fixture.detectChanges();
 

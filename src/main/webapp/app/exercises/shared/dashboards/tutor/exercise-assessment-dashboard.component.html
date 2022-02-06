@@ -48,15 +48,17 @@
                     </div>
                 </div>
 
-                <div *ngIf="numberOfSubmissions.total > 0" class="col-4 pie-chart pb-2" style="margin-top: -20px">
+                <div *ngIf="numberOfSubmissions.total > 0" class="col-4 pie-chart pb-2 d-flex justify-content-end" style="margin-top: -20px">
                     <ngx-charts-pie-chart
                         [customColors]="customColors"
                         [view]="view"
                         [results]="assessments"
                         [legend]="true"
+                        [legendTitle]="''"
                         [legendPosition]="legendPosition"
                         [animations]="false"
                         [trimLabels]="false"
+                        (select)="navigateToExerciseSubmissionOverview($event)"
                     >
                         <ng-template #tooltipTemplate let-model="model"> {{ ((model.value * 100) / this.numberOfSubmissions.total).toFixed(2) }}% </ng-template>
                     </ngx-charts-pie-chart>
@@ -321,7 +323,7 @@
             </div>
             <div *ngFor="let roundState of numberOfAssessmentsOfCorrectionRounds; let correctionRound = index">
                 <ng-container *ngIf="numberOfCorrectionRoundsEnabled > correctionRound">
-                    <ng-container *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isTestRun">
+                    <ng-container *ngIf="(tutorParticipationStatus === TRAINED || isAtLeastInstructor || tutorParticipationStatus === COMPLETED) && !isTestRun">
                         <h4 *ngIf="!isExamMode">
                             {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | artemisTranslate }}
                         </h4>
@@ -334,7 +336,7 @@
                     <h4 *ngIf="isTestRun">
                         {{ 'artemisApp.exerciseAssessmentDashboard.testRunSubmissions' | artemisTranslate }}
                     </h4>
-                    <div class="table-responsive" *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED || isTestRun">
+                    <div class="table-responsive" *ngIf="tutorParticipationStatus === TRAINED || isAtLeastInstructor || tutorParticipationStatus === COMPLETED || isTestRun">
                         <table
                             class="table table-striped exercise-table"
                             *ngIf="
@@ -512,7 +514,7 @@
                 </ng-template>
             </div>
             <!-- Complaints -->
-            <ng-container *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED || isTestRun">
+            <ng-container *ngIf="tutorParticipationStatus === TRAINED || isAtLeastInstructor || tutorParticipationStatus === COMPLETED || isTestRun">
                 <h4 class="d-inline-block">
                     {{ 'artemisApp.exerciseAssessmentDashboard.complaints' | artemisTranslate }}
                 </h4>
@@ -592,7 +594,7 @@
             </ng-container>
 
             <!-- More Feedback Requests -->
-            <ng-container *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isExamMode">
+            <ng-container *ngIf="(tutorParticipationStatus === TRAINED || isAtLeastInstructor || tutorParticipationStatus === COMPLETED) && !isExamMode">
                 <h4 class="d-inline-block">
                     {{ 'artemisApp.exerciseAssessmentDashboard.moreFeedback' | artemisTranslate }}
                 </h4>

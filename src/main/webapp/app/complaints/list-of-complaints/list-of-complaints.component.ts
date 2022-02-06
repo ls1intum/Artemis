@@ -5,7 +5,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
@@ -30,7 +30,7 @@ export class ListOfComplaintsComponent implements OnInit {
     private exerciseId: number;
     private tutorId: number;
     private examId?: number;
-    private correctionRound?: number;
+    correctionRound?: number;
     complaintsSortingPredicate = 'id';
     complaintsReverseOrder = false;
     complaintsToShow: Complaint[] = [];
@@ -88,18 +88,18 @@ export class ListOfComplaintsComponent implements OnInit {
             }
         }
 
-        complaintResponse.subscribe(
-            (res) => {
+        complaintResponse.subscribe({
+            next: (res) => {
                 this.complaints = res.body!;
                 this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
 
-                if (this.complaints.length > 0 && this.complaints[0].student) {
+                if (this.complaints.some((complaint) => complaint.student)) {
                     this.hasStudentInformation = true;
                 }
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-            () => (this.loading = false),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            complete: () => (this.loading = false),
+        });
     }
 
     openAssessmentEditor(complaint: Complaint) {

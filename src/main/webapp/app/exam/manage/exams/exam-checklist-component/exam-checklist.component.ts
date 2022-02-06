@@ -14,7 +14,6 @@ import { faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-
 export class ExamChecklistComponent implements OnChanges {
     @Input() exam: Exam;
     @Input() getExamRoutesByIdentifier: any;
-    @Input() isAtLeastInstructor = false;
 
     examChecklist: ExamChecklist;
     isLoading = false;

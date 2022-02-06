@@ -1,10 +1,10 @@
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
-import { Course } from '../../../../main/webapp/app/entities/course.model';
-import { ExerciseGroup } from '../../../../main/webapp/app/entities/exercise-group.model';
-import { Exam } from '../../../../main/webapp/app/entities/exam.model';
 
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;

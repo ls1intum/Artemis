@@ -1,7 +1,6 @@
 {
     "rulesDirectory": [
-        "node_modules/codelyzer",
-        "tslint-no-unused-expression-chai"
+        "node_modules/codelyzer"
     ],
     "extends": [
         "tslint-config-prettier"
@@ -46,8 +45,6 @@
         "no-string-literal": false,
         "no-switch-case-fall-through": true,
         "no-trailing-whitespace": true,
-        "no-unused-expression-chai": true,
-//        "no-unused-expression": true,
         "no-var-keyword": true,
         "object-literal-sort-keys": false,
         "one-line": [
@@ -109,6 +106,5 @@
         "use-pipe-transform-interface": false,
         "component-class-suffix": true,
         "directive-class-suffix": true
-//        "typedef": [true, "call-signature"]
     }
 }

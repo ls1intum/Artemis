@@ -14,7 +14,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { AlertService } from 'app/core/util/alert.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 describe('QuizExercise Management Component', () => {
     let comp: QuizExerciseComponent;
@@ -120,7 +120,7 @@ describe('QuizExercise Management Component', () => {
                 }),
             ),
         );
-        jest.spyOn(service, 'openForPractice').mockReturnValue(throwError(new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
+        jest.spyOn(service, 'openForPractice').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
         jest.spyOn(alertService, 'error');
 
         comp.ngOnInit();
@@ -159,7 +159,7 @@ describe('QuizExercise Management Component', () => {
                 }),
             ),
         );
-        jest.spyOn(service, 'start').mockReturnValue(throwError(new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
+        jest.spyOn(service, 'start').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
         jest.spyOn(alertService, 'error');
 
         comp.ngOnInit();
@@ -198,7 +198,7 @@ describe('QuizExercise Management Component', () => {
                 }),
             ),
         );
-        jest.spyOn(service, 'setVisible').mockReturnValue(throwError(new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
+        jest.spyOn(service, 'setVisible').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
         jest.spyOn(alertService, 'error');
 
         comp.ngOnInit();

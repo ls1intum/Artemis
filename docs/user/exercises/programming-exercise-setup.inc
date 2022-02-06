@@ -47,6 +47,8 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
   | C                    | no                   | yes                  | yes              | no           | no           | no                           |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
+  | C (FACT framework)   | no                   | no                   | no               | no           | no           | no                           |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
   | Haskell              | yes                  | no                   | no               | no           | no           | yes                          |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
   | Kotlin               | yes                  | no                   | no               | yes          | no           | no                           |
@@ -75,6 +77,9 @@ Instructors can still use those templates to generate programming exercises and 
 
 .. note::
   Instructors are still able to extend the generated programming exercises with additional features that are not available in one specific template.
+
+.. note::
+  Documentation for FACT framework can be found here: https://fact.readthedocs.io/en/latest/
 
 We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the Github repository.
 
@@ -506,6 +511,14 @@ Exercise Creation
       - **Always**: Feedback associated with this test case is visible to students directly after the automatic grading process for their submission.
       - **After Due Date**: Feedback associated with this test case is visible to students only after the due date for this exercise has passed.
         Tutors and Instructors are able to see the feedback before the due date.
+
+        If for some students an individual due date is set, the detailed feedback for those tests is invisible to all other students until the exercise submission is no longer possible for all students.
+        Other students can however still see if the tests passed or failed and receive points accordingly, even if the latest individual due has not passed yet.
+
+        .. warning ::
+          For manual assessments all feedback details will be visible to this student, even if the due date has not passed yet for others.
+          Tutors can start the manual assessment for all students with the regular due date as soon as it has passed.
+          Set an appropriate assessment due date in the exercise settings to make sure that students cannot tell still working students about the test case details.
       - **Never**: Feedback associated with this test case is *never* visible to students even after the due date for this exercise has passed.
         Tutors and Instructors are able to see the feedback before and after the due date, e.g. when manually assessing submissions.
         Additionally, results of this test case are *not* considered in the student score calculation.

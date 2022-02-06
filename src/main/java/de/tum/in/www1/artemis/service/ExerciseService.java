@@ -76,12 +76,15 @@ public class ExerciseService {
 
     private final RatingService ratingService;
 
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, QuizScheduleService quizScheduleService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             LtiOutcomeUrlRepository ltiOutcomeUrlRepository, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
-            GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService) {
+            GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService,
+            ExampleSubmissionRepository exampleSubmissionRepository) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -101,6 +104,7 @@ public class ExerciseService {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDateService = exerciseDateService;
         this.ratingService = ratingService;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
     }
 
     /**
@@ -152,7 +156,7 @@ public class ExerciseService {
      *
      * @param exercise - the exercise we are interested in
      * @param examMode - flag to determine if test run submissions should be deducted from the statistics
-     * @return a object node with the stats
+     * @return an object node with the stats
      */
     public StatsForDashboardDTO populateCommonStatistics(Exercise exercise, boolean examMode) {
         final Long exerciseId = exercise.getId();
@@ -290,7 +294,7 @@ public class ExerciseService {
                 exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
             }
 
-            // students for this course might not have the right to see it so we have to
+            // students for this course might not have the right to see it, so we have to
             // filter out exercises that are not released (or explicitly made visible to students) yet
             exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
         }
@@ -348,6 +352,20 @@ public class ExerciseService {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.EDIT_EXERCISE, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has updated {} {} with id {}", user.getLogin(), exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
+    }
+
+    /**
+     * checks the example submissions of the exercise and removes unnecessary associations to other objects
+     * @param exercise the exercise for which example submissions should be checked
+     */
+    public void checkExampleSubmissions(Exercise exercise) {
+        // Avoid recursions
+        if (exercise.getExampleSubmissions().size() != 0) {
+            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
+            exercise.setExampleSubmissions(exampleSubmissionsWithResults);
+            exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
+            exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
+        }
     }
 
     /**
@@ -518,35 +536,13 @@ public class ExerciseService {
             exerciseStatisticsDTO.setExerciseId(exerciseId);
             exerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxPoints());
 
-            setAverageScoreForStatisticsDTO(exerciseStatisticsDTO, averageScoreById, exercise);
+            participantScoreRepository.setAverageScoreForStatisticsDTO(exerciseStatisticsDTO, averageScoreById, exercise);
             setStudentsAndParticipationsAmountForStatisticsDTO(exerciseStatisticsDTO, amountOfStudentsInCourse, exercise);
             setAssessmentsAndSubmissionsForStatisticsDTO(exerciseStatisticsDTO, exercise);
 
             statisticsDTOS.add(exerciseStatisticsDTO);
         }
         return statisticsDTOS;
-    }
-
-    /**
-     * Sets the average for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>
-     * using the value provided in averageScoreById
-     *
-     * Quiz Exercises are a special case: They don't have a due date set in the database,
-     * therefore it is hard to tell if they are over, so always calculate a score for them
-     *
-     * @param exerciseStatisticsDTO the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
-     * @param averageScoreById the average score for each exercise indexed by exerciseId
-     * @param exercise the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
-     */
-    private void setAverageScoreForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Map<Long, Double> averageScoreById, Exercise exercise) {
-        Double averageScore;
-        if (exercise instanceof QuizExercise) {
-            averageScore = participantScoreRepository.findAverageScoreForExercise(exercise.getId());
-        }
-        else {
-            averageScore = averageScoreById.get(exercise.getId());
-        }
-        exerciseStatisticsDTO.setAverageScoreInPercent(averageScore != null ? averageScore : 0.0);
     }
 
     /**
@@ -607,39 +603,6 @@ public class ExerciseService {
         }
     }
 
-    public void validateGeneralSettings(Exercise exercise) {
-        validateScoreSettings(exercise);
-        exercise.validateDates();
-    }
-
-    /**
-     * Validates score settings
-     * 1. The maxScore needs to be greater than 0
-     * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
-     *
-     * @param exercise exercise to validate
-     */
-    public void validateScoreSettings(Exercise exercise) {
-        // Check if max score is set
-        if (exercise.getMaxPoints() == null || exercise.getMaxPoints() <= 0) {
-            throw new BadRequestAlertException("The max score needs to be greater than 0", "Exercise", "maxScoreInvalid");
-        }
-
-        if (exercise.getBonusPoints() == null) {
-            // make sure the default value is set properly
-            exercise.setBonusPoints(0.0);
-        }
-
-        // Check IncludedInOverallScore
-        if (exercise.getIncludedInOverallScore() == null) {
-            throw new BadRequestAlertException("The IncludedInOverallScore-property must be set", "Exercise", "includedInOverallScoreNotSet");
-        }
-
-        if (!exercise.getIncludedInOverallScore().validateBonusPoints(exercise.getBonusPoints())) {
-            throw new BadRequestAlertException("The provided bonus points are not allowed", "Exercise", "bonusPointsInvalid");
-        }
-    }
-
     /**
      * Checks the exercise structured grading instructions if any of them is associated with the feedback
      * then, sets the corresponding exercise field
@@ -684,7 +647,10 @@ public class ExerciseService {
 
         List<Feedback> feedbackToBeDeleted = getFeedbackToBeDeletedAfterGradingInstructionUpdate(deleteFeedbackAfterGradingInstructionUpdate, gradingInstructions, exercise);
 
-        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackAndParticipationByParticipationExerciseId(exercise.getId());
+        // update the grading criteria to re-calculate the results considering the updated usage limits
+        gradingCriterionRepository.saveAll(exercise.getGradingCriteria());
+
+        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
 
         // add example submission results that belong exercise
         if (!exercise.getExampleSubmissions().isEmpty()) {

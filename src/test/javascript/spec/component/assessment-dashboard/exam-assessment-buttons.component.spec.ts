@@ -10,7 +10,7 @@ import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam.model';
 import { User } from 'app/core/user/user.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AccountService } from 'app/core/auth/account.service';
@@ -168,7 +168,7 @@ describe('ExamAssessmentButtons', () => {
         expect(examAssessmentButtonsComponent.isLoading).toEqual(false);
         expect(examAssessmentButtonsComponent.isExamOver).toEqual(true);
         expect(course).toBeTruthy();
-        jest.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations').mockReturnValue(throwError(httpError));
+        jest.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations').mockReturnValue(throwError(() => httpError));
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
         expect(assessButton).toBeTruthy();
         assessButton.nativeElement.click();
@@ -208,7 +208,7 @@ describe('ExamAssessmentButtons', () => {
         expect(course).toBeTruthy();
 
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        jest.spyOn(examManagementService, 'evaluateQuizExercises').mockReturnValue(throwError(httpError));
+        jest.spyOn(examManagementService, 'evaluateQuizExercises').mockReturnValue(throwError(() => httpError));
         examAssessmentButtonsFixture.detectChanges();
 
         const alertServiceSpy = jest.spyOn(alertService, 'error');

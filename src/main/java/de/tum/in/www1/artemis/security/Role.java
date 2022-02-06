@@ -28,4 +28,19 @@ public enum Role {
     public String toString() {
         return role;
     }
+
+    /**
+     * creates a role from a string
+     * @param courseGroup the group of the course
+     * @return the corresponding role
+     */
+    public static Role fromString(String courseGroup) {
+        return switch (courseGroup.toLowerCase()) {
+            case "students" -> STUDENT;
+            case "tutors" -> TEACHING_ASSISTANT;
+            case "instructors" -> INSTRUCTOR;
+            case "editors" -> EDITOR;
+            default -> ANONYMOUS;
+        };
+    }
 }

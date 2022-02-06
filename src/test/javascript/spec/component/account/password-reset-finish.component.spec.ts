@@ -40,7 +40,6 @@ describe('Component Tests', () => {
         beforeEach(() => {
             fixture = TestBed.createComponent(PasswordResetFinishComponent);
             comp = fixture.componentInstance;
-            comp.passwordResetEnabled = true;
             comp.ngOnInit();
         });
 
@@ -92,7 +91,7 @@ describe('Component Tests', () => {
         it('should notify of generic error', inject(
             [PasswordResetFinishService],
             fakeAsync((service: PasswordResetFinishService) => {
-                jest.spyOn(service, 'save').mockReturnValue(throwError('ERROR'));
+                jest.spyOn(service, 'save').mockReturnValue(throwError(() => new Error('ERROR')));
                 comp.passwordForm.patchValue({
                     newPassword: 'password',
                     confirmPassword: 'password',

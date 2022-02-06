@@ -70,6 +70,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             """)
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingReleaseDate(@Param("now") ZonedDateTime now);
 
+    @Query("""
+            SELECT e FROM Exercise e
+            WHERE e.course.testCourse = FALSE
+            	AND e.assessmentDueDate >= :#{#now}
+            ORDER BY e.dueDate ASC
+            """)
+    Set<Exercise> findAllExercisesWithCurrentOrUpcomingAssessmentDueDate(@Param("now") ZonedDateTime now);
+
     /**
      * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)
      * @param courseId the id of the course
@@ -87,28 +95,28 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Set<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("login") String login);
 
     @Query("""
-            SELECT DISTINCT c FROM Exercise e JOIN e.categories c
-            WHERE e.course.id = :#{#courseId}
-                """)
+             SELECT DISTINCT c FROM Exercise e JOIN e.categories c
+             WHERE e.course.id = :#{#courseId}
+            """)
     Set<String> findAllCategoryNames(@Param("courseId") Long courseId);
 
     @Query("""
-            SELECT DISTINCT e FROM Exercise e
-            LEFT JOIN FETCH e.studentParticipations
-            WHERE e.id = :#{#exerciseId}
-                """)
+             SELECT DISTINCT e FROM Exercise e
+             LEFT JOIN FETCH e.studentParticipations
+             WHERE e.id = :#{#exerciseId}
+            """)
     Optional<Exercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig" })
     Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
 
     @Query("""
-            SELECT DISTINCT e from Exercise e
-            LEFT JOIN FETCH e.exampleSubmissions examplesub
-            LEFT JOIN FETCH examplesub.submission exsub
-            LEFT JOIN FETCH exsub.results
-            WHERE e.id = :#{#exerciseId}
-                """)
+             SELECT DISTINCT e from Exercise e
+             LEFT JOIN FETCH e.exampleSubmissions examplesub
+             LEFT JOIN FETCH examplesub.submission exsub
+             LEFT JOIN FETCH exsub.results
+             WHERE e.id = :#{#exerciseId}
+            """)
     Optional<Exercise> findByIdWithEagerExampleSubmissions(@Param("exerciseId") Long exerciseId);
 
     @Query("""

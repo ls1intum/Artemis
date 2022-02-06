@@ -1,5 +1,5 @@
 import { Pipe, ChangeDetectorRef, PipeTransform, OnDestroy, NgZone } from '@angular/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { isDate } from 'app/shared/util/utils';
 
 @Pipe({
@@ -18,8 +18,8 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
 
     constructor(private cdRef: ChangeDetectorRef, private ngZone: NgZone) {}
 
-    format(m: dayjs.Dayjs) {
-        return m.from(dayjs(), this.lastOmitSuffix);
+    format(date: dayjs.Dayjs) {
+        return date.from(dayjs(), this.lastOmitSuffix);
     }
 
     transform(value: dayjs.ConfigType, omitSuffix?: boolean, formatFn?: (m: dayjs.Dayjs) => string): string {

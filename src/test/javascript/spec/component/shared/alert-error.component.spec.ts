@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -13,7 +13,7 @@ describe('Alert Error Component', () => {
     let eventManager: EventManager;
     let alertService: AlertService;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot()],
             declarations: [AlertErrorComponent],
@@ -21,7 +21,7 @@ describe('Alert Error Component', () => {
         })
             .overrideTemplate(AlertErrorComponent, '')
             .compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(AlertErrorComponent);

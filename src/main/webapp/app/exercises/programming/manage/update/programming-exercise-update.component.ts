@@ -264,11 +264,18 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private updateProjectTypeSettings(type: ProjectType) {
         if (ProjectType.XCODE === type) {
             // Disable SCA for Xcode
-            this.programmingExercise.staticCodeAnalysisEnabled = false;
-            this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
+            this.disableStaticCodeAnalysis();
             // Disable Online Editor
             this.programmingExercise.allowOnlineEditor = false;
+        } else if (ProjectType.FACT === type) {
+            // Disallow SCA for C (FACT)
+            this.disableStaticCodeAnalysis();
         }
+    }
+
+    private disableStaticCodeAnalysis() {
+        this.programmingExercise.staticCodeAnalysisEnabled = false;
+        this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
     }
 
     /**
@@ -304,12 +311,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                 this.isExamMode = false;
                                 this.programmingExercise.course = res.body!;
                                 this.exerciseCategories = this.programmingExercise.categories || [];
-                                this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course!.id!).subscribe(
-                                    (categoryRes: HttpResponse<string[]>) => {
+                                this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course!.id!).subscribe({
+                                    next: (categoryRes: HttpResponse<string[]>) => {
                                         this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                     },
-                                    (error: HttpErrorResponse) => onError(this.alertService, error),
-                                );
+                                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                                });
                             });
                         }
                     }
@@ -464,10 +471,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
-        result.subscribe(
-            () => this.onSaveSuccess(),
-            (error: HttpErrorResponse) => this.onSaveError(error),
-        );
+        result.subscribe({
+            next: () => this.onSaveSuccess(),
+            error: (error: HttpErrorResponse) => this.onSaveError(error),
+        });
     }
 
     private onSaveSuccess() {
@@ -572,16 +579,16 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
         this.programmingExercise.projectType = type;
-        this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe(
-            (file) => {
+        this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
+            next: (file) => {
                 this.programmingExercise.problemStatement = file;
                 this.problemStatementLoaded = true;
             },
-            () => {
+            error: () => {
                 this.programmingExercise.problemStatement = '';
                 this.problemStatementLoaded = true;
             },
-        );
+        });
     }
 
     /**
@@ -602,128 +609,154 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * Get a list of all reasons that describe why the current input to update is invalid
      */
     getInvalidReasons(): ValidationReason[] {
-        const result: ValidationReason[] = [];
+        const validationErrorReasons: ValidationReason[] = [];
+
+        this.validateExerciseTitle(validationErrorReasons);
+        this.validateExerciseShortName(validationErrorReasons);
+        this.validateExercisePoints(validationErrorReasons);
+        this.validateExerciseBonusPoints(validationErrorReasons);
+        this.validateExerciseSCAMaxPenalty(validationErrorReasons);
+        this.validateExercisePackageName(validationErrorReasons);
+        this.validateExerciseSubmissionLimit(validationErrorReasons);
+        this.validateExerciseAuxiliryRepositories(validationErrorReasons);
+        this.validateExerciseIdeSelection(validationErrorReasons);
+
+        return validationErrorReasons;
+    }
+
+    private validateExerciseTitle(validationErrorReasons: ValidationReason[]): void {
         if (this.programmingExercise.title === undefined || this.programmingExercise.title === '') {
-            result.push({
+            validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.undefined',
                 translateValues: {},
             });
         } else if (this.programmingExercise.title.match(this.titleNamePattern) === null || this.programmingExercise.title?.match(this.titleNamePattern)?.length === 0) {
-            result.push({
+            validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.pattern',
                 translateValues: {},
             });
         }
+    }
+
+    private validateExerciseShortName(validationErrorReasons: ValidationReason[]): void {
         if (this.programmingExercise.shortName === undefined || this.programmingExercise.shortName === '') {
-            result.push({
+            validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.shortName.undefined',
                 translateValues: {},
             });
         } else {
             if (this.programmingExercise.shortName.length < 3) {
-                result.push({
+                validationErrorReasons.push({
                     translateKey: 'artemisApp.exercise.form.shortName.minlength',
                     translateValues: {},
                 });
             }
             const shortNamePatternMatch = this.programmingExercise.shortName.match(this.shortNamePattern);
             if (shortNamePatternMatch === null || shortNamePatternMatch.length === 0) {
-                result.push({
+                validationErrorReasons.push({
                     translateKey: 'artemisApp.exercise.form.shortName.pattern',
                     translateValues: {},
                 });
             }
         }
+    }
 
+    private validateExercisePoints(validationErrorReasons: ValidationReason[]): void {
         if (this.programmingExercise.maxPoints === undefined) {
-            result.push({
+            validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.points.undefined',
                 translateValues: {},
             });
         } else if (this.programmingExercise.maxPoints < 1) {
-            result.push({
+            validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.points.customMin',
                 translateValues: {},
             });
         } else if (this.programmingExercise.maxPoints > 9999) {
-            result.push({
+            validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.points.customMax',
                 translateValues: {},
             });
         }
+    }
 
+    private validateExerciseBonusPoints(validationErrorReasons: ValidationReason[]) {
         if (this.programmingExercise.bonusPoints === undefined || typeof this.programmingExercise.bonusPoints !== 'number') {
-            result.push({
+            validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.bonusPoints.undefined',
                 translateValues: {},
             });
         } else if (this.programmingExercise.bonusPoints! < 0) {
-            result.push({
+            validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.bonusPoints.customMin',
                 translateValues: {},
             });
         } else if (this.programmingExercise.bonusPoints! > 9999) {
-            result.push({
+            validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.bonusPoints.customMax',
                 translateValues: {},
             });
         }
+    }
 
+    private validateExerciseSCAMaxPenalty(validationErrorReasons: ValidationReason[]) {
         const maxStaticCodeAnalysisPenaltyPatternMatch = this.programmingExercise.maxStaticCodeAnalysisPenalty?.toString().match(this.maxPenaltyPattern);
         if (maxStaticCodeAnalysisPenaltyPatternMatch === null || maxStaticCodeAnalysisPenaltyPatternMatch?.length === 0) {
-            result.push({
+            validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.maxPenalty.pattern',
                 translateValues: {},
             });
         }
+    }
 
-        // validation on package name has not to be performed for languages Empty, C and Python
+    private validateExercisePackageName(validationErrorReasons: ValidationReason[]): void {
+        // validation on package name has only to be performed for Java, Kotlin and Swift
         if (
-            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.C &&
-            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.PYTHON &&
-            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.EMPTY
+            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.JAVA &&
+            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.KOTLIN &&
+            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.SWIFT
         ) {
-            if (this.programmingExercise.packageName === undefined || this.programmingExercise.packageName === '') {
-                result.push({
-                    translateKey: 'artemisApp.exercise.form.packageName.undefined',
-                    translateValues: {},
-                });
-            } else {
-                const patternMatchJavaKotlin: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.packageNamePatternForJavaKotlin);
-                const patternMatchSwift: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.appNamePatternForSwift);
-                // window.alert(patternMatchJavaKotlin + ' ; ' + patternMatchSwift);
-                if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)) {
-                    result.push({
-                        translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA',
-                        translateValues: {},
-                    });
-                } else if (
-                    this.programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN &&
-                    (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)
-                ) {
-                    result.push({
-                        translateKey: 'artemisApp.exercise.form.packageName.pattern.KOTLIN',
-                        translateValues: {},
-                    });
-                } else if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.SWIFT && (patternMatchSwift === null || patternMatchSwift.length === 0)) {
-                    result.push({
-                        translateKey: 'artemisApp.exercise.form.packageName.pattern.SWIFT',
-                        translateValues: {},
-                    });
-                }
-            }
+            return;
         }
 
+        if (this.programmingExercise.packageName === undefined || this.programmingExercise.packageName === '') {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        } else {
+            const patternMatchJavaKotlin: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.packageNamePatternForJavaKotlin);
+            const patternMatchSwift: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.appNamePatternForSwift);
+            if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)) {
+                validationErrorReasons.push({
+                    translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                    translateValues: {},
+                });
+            } else if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN && (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)) {
+                validationErrorReasons.push({
+                    translateKey: 'artemisApp.exercise.form.packageName.pattern.KOTLIN',
+                    translateValues: {},
+                });
+            } else if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.SWIFT && (patternMatchSwift === null || patternMatchSwift.length === 0)) {
+                validationErrorReasons.push({
+                    translateKey: 'artemisApp.exercise.form.packageName.pattern.SWIFT',
+                    translateValues: {},
+                });
+            }
+        }
+    }
+
+    private validateExerciseSubmissionLimit(validationErrorReasons: ValidationReason[]): void {
         // verifying submission limit value
         if (this.programmingExercise.submissionPolicy !== undefined && this.programmingExercise.submissionPolicy !== SubmissionPolicyType.NONE) {
             const submissionLimit = this.programmingExercise.submissionPolicy?.submissionLimit;
             if (submissionLimit === undefined || typeof submissionLimit !== 'number') {
-                result.push({
+                validationErrorReasons.push({
                     translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.required',
                     translateValues: {},
                 });
             } else if (submissionLimit < 1 || submissionLimit > 500 || submissionLimit % 1 !== 0) {
-                result.push({
+                validationErrorReasons.push({
                     translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.pattern',
                     translateValues: {},
                 });
@@ -734,32 +767,34 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.programmingExercise.submissionPolicy?.type === SubmissionPolicyType.SUBMISSION_PENALTY) {
             const exceedingPenalty = this.programmingExercise.submissionPolicy?.exceedingPenalty;
             if (exceedingPenalty === undefined || typeof exceedingPenalty !== 'number') {
-                result.push({
+                validationErrorReasons.push({
                     translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.required',
                     translateValues: {},
                 });
             } else if (exceedingPenalty <= 0) {
-                result.push({
+                validationErrorReasons.push({
                     translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.pattern',
                     translateValues: {},
                 });
             }
         }
+    }
 
+    private validateExerciseAuxiliryRepositories(validationErrorReasons: ValidationReason[]): void {
         if (!this.auxiliaryRepositoriesValid) {
-            result.push({
+            validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.auxiliaryRepository.error',
                 translateValues: {},
             });
         }
+    }
 
+    private validateExerciseIdeSelection(validationErrorReasons: ValidationReason[]): void {
         if (!this.validIdeSelection()) {
-            result.push({
+            validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
                 translateValues: {},
             });
         }
-
-        return result;
     }
 }

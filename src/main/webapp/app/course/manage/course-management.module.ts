@@ -5,8 +5,7 @@ import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-up
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
-import { ImageCropperModule } from 'ngx-image-cropper';
-import { TagInputModule } from 'ngx-chips';
+import { MatChipsModule } from '@angular/material/chips';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
@@ -54,6 +53,8 @@ import { CourseManagementExercisesSearchComponent } from 'app/course/manage/cour
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
+import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
+import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 
 @NgModule({
     imports: [
@@ -63,9 +64,10 @@ import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
         ReactiveFormsModule,
         ImageCropperModule,
         OrionModule,
-        TagInputModule,
+        MatChipsModule,
         ArtemisExerciseModule,
         ArtemisLectureModule,
+        ArtemisFullscreenModule,
         ArtemisCourseScoresModule,
         ArtemisLearningGoalsModule,
         ArtemisExerciseScoresModule,

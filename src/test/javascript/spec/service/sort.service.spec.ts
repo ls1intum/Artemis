@@ -1,5 +1,5 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
-import dayjs from 'dayjs';
+import { TestBed } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
 import { SortService } from 'app/shared/service/sort.service';
 
 type TestObject = {
@@ -11,14 +11,12 @@ type TestObject = {
 };
 
 describe('Sort Service', () => {
-    let injector: TestBed;
     let service: SortService;
     let e1: TestObject, e2: TestObject, e3: TestObject, e4: TestObject, e5: TestObject, e6: TestObject;
 
     beforeEach(() => {
         TestBed.configureTestingModule({});
-        injector = getTestBed();
-        service = injector.get(SortService);
+        service = TestBed.inject(SortService);
 
         e1 = {
             a: 10,

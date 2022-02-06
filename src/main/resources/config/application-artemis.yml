@@ -9,6 +9,11 @@ artemis:
     encryption-password: <encrypt-password>         # arbitrary password for encrypting database values
     user-management:
         use-external: true
+        password-reset:
+            credential-provider: <provider> # The credential provider which users can log in though (e.g. TUMonline)
+            links: # The password reset links for different languages
+                en: '<link>'
+                de: '<link>'
         external:
             url: https://jira.ase.in.tum.de
             user: <username>        # e.g. ga12abc
@@ -76,6 +81,7 @@ artemis:
         # Jenkins: The token value you use for the Server Notification Plugin and is stored under the notification-token credential above
         artemis-authentication-token-value: <token>
         build-timeout: 30 # Does cancel jenkins builds after 30 minutes to remove build that get stuck
+
     lti: # only important for online courses that use LTI, can typically be ignored
         id: artemis_lti
         oauth-key: artemis_lti_key

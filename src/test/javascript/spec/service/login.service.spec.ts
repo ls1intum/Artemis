@@ -3,7 +3,6 @@ import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.se
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { MockAuthServerProviderService } from '../helpers/mocks/service/mock-auth-server-provider.service';
-import { MockAlertService } from '../helpers/mocks/service/mock-alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { LoginService } from 'app/core/login/login.service';
@@ -13,6 +12,7 @@ import { TestBed } from '@angular/core/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { Router } from '@angular/router';
+import { MockProvider } from 'ng-mocks';
 
 describe('LoginService', () => {
     let accountService: AccountService;
@@ -36,7 +36,7 @@ describe('LoginService', () => {
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
                 { provide: AuthServerProvider, useClass: MockAuthServerProviderService },
                 { provide: Router, useClass: MockRouter },
-                { provide: AlertService, useClass: MockAlertService },
+                MockProvider(AlertService),
                 { provide: NotificationService, useClass: MockNotificationService },
             ],
         })
@@ -74,7 +74,7 @@ describe('LoginService', () => {
     it('should emit an error when an action fails', () => {
         const error = 'fatal error';
         removeAuthTokenFromCachesStub.mockReturnValue(of(undefined));
-        authenticateStub.mockReturnValue(throwError(error));
+        authenticateStub.mockReturnValue(throwError(() => error));
         loginService.logout(true);
 
         commonExpects();

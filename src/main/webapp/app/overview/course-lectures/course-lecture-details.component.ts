@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment } from 'app/entities/attachment.model';
@@ -53,8 +53,8 @@ export class CourseLectureDetailsComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                (findLectureResult) => {
+            .subscribe({
+                next: (findLectureResult) => {
                     this.lecture = findLectureResult.body!;
                     if (this.lecture?.lectureUnits) {
                         this.lectureUnits = this.lecture.lectureUnits;
@@ -70,8 +70,8 @@ export class CourseLectureDetailsComponent implements OnInit {
                         this.discussionComponent.lecture = this.lecture;
                     }
                 },
-                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            );
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
     attachmentNotReleased(attachment: Attachment): boolean {
         return attachment.releaseDate != undefined && !dayjs(attachment.releaseDate).isBefore(dayjs())!;

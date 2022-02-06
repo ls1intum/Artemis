@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Subject } from 'rxjs';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
@@ -116,13 +116,13 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     }
 
     deleteAttachment(attachment: Attachment) {
-        this.attachmentService.delete(attachment.id!).subscribe(
-            () => {
+        this.attachmentService.delete(attachment.id!).subscribe({
+            next: () => {
                 this.attachments = this.attachments.filter((el) => el.id !== attachment.id);
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     cancel() {

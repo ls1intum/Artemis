@@ -1,7 +1,7 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
@@ -10,7 +10,6 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { HttpResponse } from '@angular/common/http';
 
 describe('Modeling Assessment Service', () => {
-    let injector: TestBed;
     let httpMock: HttpTestingController;
     let service: FileUploadAssessmentService;
     let expectedResult: any;
@@ -21,9 +20,8 @@ describe('Modeling Assessment Service', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
         });
-        injector = getTestBed();
-        service = injector.get(FileUploadAssessmentService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(FileUploadAssessmentService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         expectedResult = {} as Result;
         httpExpectedResult = {} as HttpResponse<Result>;

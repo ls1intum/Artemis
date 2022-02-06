@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_C
 
 import java.util.*;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
@@ -117,13 +118,22 @@ public class Feedback extends DomainObject {
         return detailText;
     }
 
-    public Feedback detailText(String detailText) {
-        this.detailText = detailText;
+    public Feedback detailText(@Nullable String detailText) {
+        this.setDetailText(detailText);
         return this;
     }
 
-    public void setDetailText(String detailText) {
-        this.detailText = detailText;
+    /**
+     * sets the detail text of the feedback. In case the detail text is longer than 5000 characters, the additional characters are cut off to avoid database issues
+     * @param detailText the new detail text for the feedback, can be null
+     */
+    public void setDetailText(@Nullable String detailText) {
+        if (detailText == null || detailText.length() <= FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
+            this.detailText = detailText;
+        }
+        else {
+            this.detailText = detailText.substring(0, FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
+        }
     }
 
     public String getReference() {
@@ -184,6 +194,14 @@ public class Feedback extends DomainObject {
         this.credits = credits;
     }
 
+    /**
+     * Returns if this is a positive feedback.
+     *
+     * This value can actually be {@code null} for feedbacks that are neither positive nor negative, e.g. when this is a
+     * feedback for a programming exercise test case that has not been executed for the submission.
+     *
+     * @return true, if this is a positive feedback.
+     */
     public Boolean isPositive() {
         return positive;
     }
@@ -288,14 +306,14 @@ public class Feedback extends DomainObject {
      *  This function sets the described parameters and then returns the current instance with the updated references.
      *
      * @param suggestedFeedbackOriginBlockReference - Block reference of the suggested (automatic) feedback
-     * @param submissionReference - Submission reference where the suggested feedback was generated from
-     * @param suggestedFeedbackParticipationReference - respective participation reference
+     * @param submissionId - Submission reference where the suggested feedback was generated from
+     * @param suggestedFeedbackParticipationId - respective participation reference
      * @return updated Feedback
      */
-    public Feedback suggestedFeedbackOrigin(String suggestedFeedbackOriginBlockReference, Long submissionReference, Long suggestedFeedbackParticipationReference) {
+    public Feedback suggestedFeedbackOrigin(String suggestedFeedbackOriginBlockReference, Long submissionId, Long suggestedFeedbackParticipationId) {
         this.suggestedFeedbackReference = suggestedFeedbackOriginBlockReference;
-        this.suggestedFeedbackOriginSubmissionReference = submissionReference;
-        this.suggestedFeedbackParticipationReference = suggestedFeedbackParticipationReference;
+        this.suggestedFeedbackOriginSubmissionReference = submissionId;
+        this.suggestedFeedbackParticipationReference = suggestedFeedbackParticipationId;
         return this;
     }
 
@@ -317,7 +335,7 @@ public class Feedback extends DomainObject {
 
     /**
      * Checks whether the feedback was created by static code analysis
-     * @return true if the it is static code analysis feedback else false
+     * @return true if it is static code analysis feedback else false
      */
     @JsonIgnore
     public boolean isStaticCodeAnalysisFeedback() {
@@ -336,19 +354,6 @@ public class Feedback extends DomainObject {
             return this.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
         }
         return "";
-    }
-
-    /**
-     * Checks whether the feedback was created by a submission policy
-     * @return true if the it is submission policy feedback else false
-     */
-    @JsonIgnore
-    public boolean isSubmissionPolicyFeedback() {
-        return this.text != null && this.text.startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
-    }
-
-    public boolean referenceEquals(Feedback otherFeedback) {
-        return reference.equals(otherFeedback.reference);
     }
 
     /**
@@ -389,11 +394,11 @@ public class Feedback extends DomainObject {
             var encounters = gradingInstructions.get(getGradingInstruction().getId());
             if (maxCount > 0) {
                 if (encounters >= maxCount) {
-                    // the structured grading instruction was applied on assessment models more often that the usageCount limit allows so we don't sum the feedback credit
+                    // the structured grading instruction was applied on assessment models more often that the usageCount limit allows, so we don't sum the feedback credit
                     gradingInstructions.put(getGradingInstruction().getId(), encounters + 1);
                 }
                 else {
-                    // the usageCount limit was not exceeded yet so we add the credit and increase the nrOfEncounters counter
+                    // the usageCount limit was not exceeded yet, so we add the credit and increase the nrOfEncounters counter
                     gradingInstructions.put(getGradingInstruction().getId(), encounters + 1);
                     totalScore += getGradingInstruction().getCredits();
                 }

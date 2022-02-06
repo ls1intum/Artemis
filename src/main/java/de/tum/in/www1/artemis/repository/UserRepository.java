@@ -70,6 +70,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select count(*) from User user where :#{#groupName} member of user.groups")
     Long countByGroupsIsContaining(@Param("groupName") String groupName);
 
+    @Query("select user from User user where lower(user.email) = lower(:#{#searchInput}) or lower(user.login) = lower(:#{#searchInput})")
+    List<User> findAllByEmailOrUsernameIgnoreCase(@Param("searchInput") String searchInput);
+
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     @Query("select user from User user where :#{#groupName} member of user.groups")
     List<User> findAllInGroupWithAuthorities(@Param("groupName") String groupName);

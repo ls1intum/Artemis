@@ -2,13 +2,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
@@ -22,38 +24,38 @@ export type BuildArtifact = {
 export class ParticipationService {
     public resourceUrl = SERVER_API_URL + 'api/participations';
 
-    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
+    constructor(private http: HttpClient, private submissionService: SubmissionService, private accountService: AccountService) {}
 
     update(exercise: Exercise, participation: StudentParticipation): Observable<EntityResponseType> {
-        // make sure participation and exercise are connected, because this is expected by the server
-        participation.exercise = exercise;
-        const copy = this.convertDateFromClient(participation);
+        const copy = this.convertParticipationForServer(participation, exercise);
         return this.http
             .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exercise.id}/participations`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     updateIndividualDueDates(exercise: Exercise, participations: StudentParticipation[]): Observable<EntityArrayResponseType> {
-        const copies = participations.map((participation) => {
-            // make sure participation and exercise are connected, because this is expected by the server
-            participation.exercise = exercise;
-            return this.convertDateFromClient(participation);
-        });
+        const copies = participations.map((participation) => this.convertParticipationForServer(participation, exercise));
         return this.http
             .put<StudentParticipation[]>(SERVER_API_URL + `api/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
+    }
+
+    private convertParticipationForServer(participation: StudentParticipation, exercise: Exercise): StudentParticipation {
+        // make sure participation and exercise are connected, because this is expected by the server
+        participation.exercise = ExerciseService.convertExerciseForServer(exercise);
+        return this.convertDateFromClient(participation);
     }
 
     find(participationId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/${participationId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     findWithLatestResult(participationId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/${participationId}/withLatestResult`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     /*
@@ -62,7 +64,7 @@ export class ParticipationService {
     findParticipationForCurrentUser(exerciseId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participation`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     findAllParticipationsByExercise(exerciseId: number, withLatestResult = false): Observable<EntityArrayResponseType> {
@@ -72,7 +74,7 @@ export class ParticipationService {
                 params: options,
                 observe: 'response',
             })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
     }
 
     delete(participationId: number, req?: any): Observable<HttpResponse<any>> {
@@ -112,10 +114,10 @@ export class ParticipationService {
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.initializationDate = res.body.initializationDate ? dayjs(res.body.initializationDate) : undefined;
+            ParticipationService.convertParticipationDatesFromServer(res.body);
             res.body.results = this.submissionService.convertResultsDateFromServer(res.body.results);
             res.body.submissions = this.submissionService.convertSubmissionsDateFromServer(res.body.submissions);
-            res.body.exercise = this.convertExerciseDateFromServer(res.body.exercise);
+            res.body.exercise = ExerciseService.convertExerciseDateFromServer(res.body.exercise);
         }
         return res;
     }
@@ -123,35 +125,31 @@ export class ParticipationService {
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((participation: StudentParticipation) => {
-                this.convertParticipationDateFromServer(participation);
+                ParticipationService.convertParticipationDatesFromServer(participation);
             });
         }
         return res;
     }
 
-    protected convertExerciseDateFromServer(exercise?: Exercise) {
-        if (exercise != undefined) {
-            exercise.releaseDate = exercise.releaseDate ? dayjs(exercise.releaseDate) : undefined;
-            exercise.dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
-        }
-        return exercise;
-    }
-
-    protected convertParticipationDateFromServer(participation?: StudentParticipation) {
-        if (participation != undefined) {
+    /**
+     * Converts the dates that are part of the participation into a usable format.
+     *
+     * Does not convert dates in dependant attributes (e.g. results, submissions)!
+     * @param participation for which the dates should be converted into the dayjs format.
+     */
+    public static convertParticipationDatesFromServer(participation?: Participation) {
+        if (participation) {
             participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
             participation.individualDueDate = participation.individualDueDate ? dayjs(participation.individualDueDate) : undefined;
-            participation.results = this.submissionService.convertResultsDateFromServer(participation.results);
-            participation.submissions = this.submissionService.convertSubmissionsDateFromServer(participation.submissions);
         }
         return participation;
     }
 
-    public convertParticipationsDateFromServer(participations?: StudentParticipation[]) {
+    public static convertParticipationsDateFromServer(participations?: StudentParticipation[]) {
         const convertedParticipations: StudentParticipation[] = [];
-        if (participations != undefined && participations.length > 0) {
+        if (participations && participations.length > 0) {
             participations.forEach((participation: StudentParticipation) => {
-                convertedParticipations.push(this.convertParticipationDateFromServer(participation)!);
+                convertedParticipations.push(ParticipationService.convertParticipationDatesFromServer(participation)!);
             });
         }
         return convertedParticipations;
@@ -225,5 +223,45 @@ export class ParticipationService {
                 submission.participation = combinedParticipation;
             });
         }
+    }
+
+    /**
+     * This method bundles recurring conversion steps for Participation EntityArrayResponses.
+     * @param participationRes
+     * @private
+     */
+    private processParticipationEntityArrayResponseType(participationRes: EntityArrayResponseType): EntityArrayResponseType {
+        this.convertDateArrayFromServer(participationRes);
+        this.setAccessRightsParticipationEntityArrayResponseType(participationRes);
+        return participationRes;
+    }
+
+    /**
+     * This method bundles recurring conversion steps for Participation EntityResponses.
+     * @param participationRes
+     * @private
+     */
+    private processParticipationEntityResponseType(participationRes: EntityResponseType): EntityResponseType {
+        this.convertDateFromServer(participationRes);
+        this.setAccessRightsParticipationEntityResponseType(participationRes);
+        return participationRes;
+    }
+
+    private setAccessRightsParticipationEntityResponseType(res: EntityResponseType): EntityResponseType {
+        if (res.body?.exercise) {
+            this.accountService.setAccessRightsForExercise(res.body.exercise);
+        }
+        return res;
+    }
+
+    private setAccessRightsParticipationEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((participation) => {
+                if (participation.exercise) {
+                    this.accountService.setAccessRightsForExercise(participation.exercise);
+                }
+            });
+        }
+        return res;
     }
 }

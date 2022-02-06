@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
 import static com.google.gson.JsonParser.parseString;
-import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.io.IOException;
 import java.util.*;
@@ -37,27 +36,22 @@ public class ModelingPlagiarismDetectionService {
     }
 
     /**
-     * Convenience method to extract all latest submissions from a ModelingExercise and compute
-     * pair-wise distances.
+     * Convenience method to extract all latest submissions from a ModelingExercise and compute pair-wise distances.
      *
-     * @param exerciseWithParticipationsSubmissionsResults Text Exercise with fetched participations
-     *                                                     and submissions
-     * @param minimumSimilarity                            the minimum similarity so that the result
-     *                                                     is considered
-     * @param minimumModelSize                             the minimum number of model elements to
-     *                                                     be considered as plagiarism
-     * @param minimumScore                                 the minimum result score (if available)
-     *                                                     to be considered as plagiarism
+     * @param exerciseWithParticipationsSubmissionsResults Text Exercise with fetched participations and submissions
+     * @param minimumSimilarity                            the minimum similarity so that the result is considered
+     * @param minimumModelSize                             the minimum number of model elements to be considered as plagiarism
+     * @param minimumScore                                 the minimum result score (if available) to be considered as plagiarism
      * @return List of submission id pairs and similarity score
      */
-    public ModelingPlagiarismResult compareSubmissions(ModelingExercise exerciseWithParticipationsSubmissionsResults, double minimumSimilarity, int minimumModelSize,
+    public ModelingPlagiarismResult checkPlagiarism(ModelingExercise exerciseWithParticipationsSubmissionsResults, double minimumSimilarity, int minimumModelSize,
             int minimumScore) {
         final List<ModelingSubmission> modelingSubmissions = modelingSubmissionsForComparison(exerciseWithParticipationsSubmissionsResults);
 
         log.info("Found {} modeling submissions in exercise {}", modelingSubmissions.size(), exerciseWithParticipationsSubmissionsResults.getId());
 
         Long exerciseId = exerciseWithParticipationsSubmissionsResults.getId();
-        ModelingPlagiarismResult result = compareSubmissions(modelingSubmissions, minimumSimilarity, minimumModelSize, minimumScore, exerciseId);
+        ModelingPlagiarismResult result = checkPlagiarism(modelingSubmissions, minimumSimilarity, minimumModelSize, minimumScore, exerciseId);
 
         result.setExercise(exerciseWithParticipationsSubmissionsResults);
 
@@ -87,7 +81,7 @@ public class ModelingPlagiarismDetectionService {
      *
      * @return List of submission id pairs and similarity score
      */
-    public ModelingPlagiarismResult compareSubmissions(List<ModelingSubmission> modelingSubmissions, double minimumSimilarity, int minimumModelSize, int minimumScore,
+    public ModelingPlagiarismResult checkPlagiarism(List<ModelingSubmission> modelingSubmissions, double minimumSimilarity, int minimumModelSize, int minimumScore,
             Long exerciseId) {
         String topic = plagiarismWebsocketService.getModelingExercisePlagiarismCheckTopic(exerciseId);
 
@@ -193,7 +187,7 @@ public class ModelingPlagiarismDetectionService {
      */
     public List<ModelingSubmission> modelingSubmissionsForComparison(ModelingExercise exerciseWithParticipationsAndSubmissions) {
         return exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().map(Participation::findLatestSubmission).filter(Optional::isPresent)
-                .map(Optional::get).filter(submission -> submission instanceof ModelingSubmission).map(submission -> (ModelingSubmission) submission).collect(toUnmodifiableList());
+                .map(Optional::get).filter(submission -> submission instanceof ModelingSubmission).map(submission -> (ModelingSubmission) submission).toList();
     }
 
 }

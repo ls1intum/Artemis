@@ -1,8 +1,8 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -17,11 +17,11 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 
 describe('Participation Service', () => {
-    let injector: TestBed;
     let service: ParticipationService;
     let httpMock: HttpTestingController;
     let participationDefault: Participation;
     let currentDate: dayjs.Dayjs;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -32,9 +32,8 @@ describe('Participation Service', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(ParticipationService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(ParticipationService);
+        httpMock = TestBed.inject(HttpTestingController);
         currentDate = dayjs();
 
         participationDefault = new StudentParticipation();
@@ -136,9 +135,7 @@ describe('Participation Service', () => {
         expect(mergedParticipation?.id).toEqual(participation1.id);
         expect(mergedParticipation?.results).toEqual([...participation1.results!, ...participation2.results!]);
         expect(mergedParticipation?.submissions).toEqual([...participation1.submissions!, ...participation2.submissions!]);
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
         mergedParticipation?.results?.forEach((result) => expect(result.participation).toMatchObject(mergedParticipation));
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
         mergedParticipation?.submissions?.forEach((submission) => expect(submission.participation).toMatchObject(mergedParticipation));
     }));
 
@@ -163,9 +160,7 @@ describe('Participation Service', () => {
         expect(mergedParticipation?.id).toEqual(participation1.id);
         expect(mergedParticipation?.results).toEqual([...participation1.results!, ...participation2.results!]);
         expect(mergedParticipation?.submissions).toEqual([...participation1.submissions!, ...participation2.submissions!]);
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
         mergedParticipation?.results?.forEach((result) => expect(result.participation).toMatchObject(mergedParticipation));
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
         mergedParticipation?.submissions?.forEach((submission) => expect(submission.participation).toMatchObject(mergedParticipation));
     }));
 
@@ -189,6 +184,8 @@ describe('Participation Service', () => {
     it('should update a Participation', fakeAsync(() => {
         const exercise = new TextExercise(new Course(), undefined);
         exercise.id = 1;
+        exercise.categories = undefined;
+
         const returnedFromService = Object.assign(
             {
                 repositoryUrl: 'BBBBBB',
@@ -251,7 +248,7 @@ describe('Participation Service', () => {
         ['', 'artifact'],
         ['filename="FixArtifactDownload-Tests-1.0.jar"', 'FixArtifactDownload-Tests-1.0.jar'],
         ['f="abc"', 'artifact'],
-    ])('%# should download artifact and extract file name: %p', async (headerVal: string, expectedFileName: string, done: jest.DoneCallback) => {
+    ])('%# should download artifact and extract file name: %p', async (headerVal: string, expectedFileName: string) => {
         const expectedBlob = new Blob(['abc', 'cfe'], { type: 'application/java-archive' });
         const headers = new HttpHeaders({ 'content-disposition': headerVal, 'content-type': 'application/java-archive' });
         const response = { body: expectedBlob, headers, status: 200 };
@@ -259,7 +256,6 @@ describe('Participation Service', () => {
         service.downloadArtifact(123).subscribe((resp) => {
             expect(resp.fileName).toBe(expectedFileName);
             expect(resp.fileContent).toBe(expectedBlob);
-            done();
         });
 
         const req = httpMock.expectOne({ method: 'GET' });
