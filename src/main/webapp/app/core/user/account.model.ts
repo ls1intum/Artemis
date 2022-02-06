@@ -6,6 +6,7 @@ export class Account {
     public login?: string;
     public email?: string;
     public name?: string;
+    public isInternal: boolean;
     public firstName?: string;
     public lastName?: string;
     public langKey?: string;

@@ -133,8 +133,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
                 this.openApiEnabled = profileInfo.openApiEnabled;
-                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
-                this.passwordResetEnabled = this.isRegistrationEnabled || profileInfo.saml2?.enablePassword || false;
             }
         });
 
@@ -143,7 +141,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
         // The current user is needed to hide menu items for not logged in users.
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
-            .pipe(tap((user: User) => (this.currAccount = user)))
+            .pipe(
+                tap((user: User) => {
+                    this.currAccount = user;
+                    this.passwordResetEnabled = user.isInternal;
+                }),
+            )
             .subscribe();
 
         this.examParticipationService.currentlyLoadedStudentExam.subscribe((studentExam) => {
