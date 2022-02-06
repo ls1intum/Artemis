@@ -207,6 +207,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
         });
+
+        // Sort the tables
+        for (let i = 0; i < this.numberOfAssessmentsOfCorrectionRounds.length; i++) {
+            this.sortSubmissionRows(i);
+        }
+        this.sortComplaintRows();
+        this.sortMoreFeedbackRows();
     }
 
     setupGraph() {
@@ -801,7 +808,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     sortMoreFeedbackRows() {
         // If the selected sort predicate is indifferent about two elements, the one submitted earlier should be displayed on top
         this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, 'complaint.submittedTime', true);
-        if (this.sortPredicates[1] === 'responseTime') {
+        if (this.sortPredicates[2] === 'responseTime') {
             this.sortService.sortByFunction(this.submissionsWithMoreFeedbackRequests, (element) => this.getResponseTimeInHours(element.complaint), this.reverseOrders[2]);
         } else {
             this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, this.sortPredicates[2], this.reverseOrders[2]);
