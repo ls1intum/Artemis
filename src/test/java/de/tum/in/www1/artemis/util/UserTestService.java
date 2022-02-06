@@ -286,18 +286,18 @@ public class UserTestService {
     public void createInternalUser_asAdmin_isSuccessful() throws Exception {
         student.setId(null);
         student.setLogin("batman");
-        student.setPassword("foobar");
+        student.setPassword("foobar1234");
         student.setEmail("batman@secret.invalid");
         student.setInternal(true);
 
         mockDelegate.mockCreateUserInUserManagement(student, false);
 
-        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student, student.getPassword()), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
         final var userInDB = userRepository.findById(response.getId()).get();
         userInDB.setPassword(passwordService.decryptPasswordByLogin(userInDB.getLogin()).get());
         student.setId(response.getId());
-        response.setPassword("foobar");
+        response.setPassword("foobar1234");
 
         assertThat(student).as("New user is equal to request response").isEqualTo(response);
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);

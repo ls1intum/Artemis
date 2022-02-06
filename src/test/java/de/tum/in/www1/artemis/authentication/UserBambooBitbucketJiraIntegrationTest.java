@@ -89,8 +89,8 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void createInternalUser_asAdmin_isSuccessful() throws Exception {
-        bitbucketRequestMockProvider.mockUserExists("batman");
-        bitbucketRequestMockProvider.mockCreateUser("batman", "foobar", "batman@secret.invalid", "Bruce Wayne");
+        bitbucketRequestMockProvider.mockUserDoesNotExist("batman");
+        bitbucketRequestMockProvider.mockCreateUser("batman", "foobar1234", "batman@secret.invalid", "student1First student1Last");
         bitbucketRequestMockProvider.mockAddUserToGroups();
         userTestService.createInternalUser_asAdmin_isSuccessful();
     }
