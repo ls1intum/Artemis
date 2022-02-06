@@ -370,6 +370,43 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                <ng-container
+                                    *ngIf="
+                                        unassessedSubmissionByCorrectionRound &&
+                                        unassessedSubmissionByCorrectionRound!.get(correctionRound) &&
+                                        unassessedSubmissionByCorrectionRound!.get(correctionRound)!.id! > 0 &&
+                                        !exercise.teamMode &&
+                                        !isTestRun
+                                    "
+                                >
+                                    <tr>
+                                        <td></td>
+                                        <td>{{ unassessedSubmissionByCorrectionRound.get(correctionRound)?.submissionDate | artemisDate }}</td>
+                                        <td></td>
+                                        <td *ngIf="exercise.type === ExerciseType.TEXT">
+                                            <jhi-language-table-cell [submission]="unassessedSubmissionByCorrectionRound.get(correctionRound)!"></jhi-language-table-cell>
+                                        </td>
+                                        <td>
+                                            <a
+                                                *jhiExtensionPoint="
+                                                    overrideOpenAssessmentButton;
+                                                    context: { submission: 'new', queryParams: getAssessmentQueryParams(correctionRound), buttonLabel: 'startAssessment' }
+                                                "
+                                                id="start-new-assessment"
+                                                class="btn btn-success btn-sm guided-tour-new-assessment-btn"
+                                                [routerLink]="getAssessmentLink('new')"
+                                                [queryParams]="getAssessmentQueryParams(correctionRound)"
+                                                [class.disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
+                                                [class.guided-tour]="exercise === exerciseForGuidedTour"
+                                                [ngStyle]="exercise === exerciseForGuidedTour ? { cursor: 'not-allowed' } : {}"
+                                            >
+                                                <fa-icon *ngIf="openingAssessmentEditorForNewSubmission" [icon]="faSpinner" [spin]="true"></fa-icon>
+                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
+                                                {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </ng-container>
                                 <tr *ngFor="let submission of submissionsByCorrectionRound.get(correctionRound); let i = index">
                                     <td>{{ i + 1 }}</td>
                                     <td>{{ submission.submissionDate | artemisDate }}</td>
@@ -421,43 +458,6 @@
                                         </ng-container>
                                     </td>
                                 </tr>
-                                <ng-container
-                                    *ngIf="
-                                        unassessedSubmissionByCorrectionRound &&
-                                        unassessedSubmissionByCorrectionRound!.get(correctionRound) &&
-                                        unassessedSubmissionByCorrectionRound!.get(correctionRound)!.id! > 0 &&
-                                        !exercise.teamMode &&
-                                        !isTestRun
-                                    "
-                                >
-                                    <tr>
-                                        <td></td>
-                                        <td>{{ unassessedSubmissionByCorrectionRound.get(correctionRound)?.submissionDate | artemisDate }}</td>
-                                        <td></td>
-                                        <td *ngIf="exercise.type === ExerciseType.TEXT">
-                                            <jhi-language-table-cell [submission]="unassessedSubmissionByCorrectionRound.get(correctionRound)!"></jhi-language-table-cell>
-                                        </td>
-                                        <td>
-                                            <a
-                                                *jhiExtensionPoint="
-                                                    overrideOpenAssessmentButton;
-                                                    context: { submission: 'new', queryParams: getAssessmentQueryParams(correctionRound), buttonLabel: 'startAssessment' }
-                                                "
-                                                id="start-new-assessment"
-                                                class="btn btn-success btn-sm guided-tour-new-assessment-btn"
-                                                [routerLink]="getAssessmentLink('new')"
-                                                [queryParams]="getAssessmentQueryParams(correctionRound)"
-                                                [class.disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
-                                                [class.guided-tour]="exercise === exerciseForGuidedTour"
-                                                [ngStyle]="exercise === exerciseForGuidedTour ? { cursor: 'not-allowed' } : {}"
-                                            >
-                                                <fa-icon *ngIf="openingAssessmentEditorForNewSubmission" [icon]="faSpinner" [spin]="true"></fa-icon>
-                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
-                                                {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}
-                                            </a>
-                                        </td>
-                                    </tr>
-                                </ng-container>
                             </tbody>
                         </table>
                         <ng-container
