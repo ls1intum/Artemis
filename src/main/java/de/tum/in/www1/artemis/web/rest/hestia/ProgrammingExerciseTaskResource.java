@@ -35,7 +35,7 @@ public class ProgrammingExerciseTaskResource {
      * @return All tasks with test cases and solution entries
      */
     @GetMapping("/programming-exercises/{exerciseId}/tasks")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Set<ProgrammingExerciseTask>> getTasks(@PathVariable Long exerciseId) {
         log.debug("REST request to retrieve ProgrammingExerciseTasks for ProgrammingExercise with id : {}", exerciseId);
         Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);

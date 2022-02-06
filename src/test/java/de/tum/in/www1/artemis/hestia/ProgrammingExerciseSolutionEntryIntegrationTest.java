@@ -90,7 +90,7 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetSolutionEntryById() throws Exception {
         Long entryId = programmingExerciseSolutionEntryRepository.findAll().get(0).getId();
         ProgrammingExerciseSolutionEntry expectedSolutionEntry = programmingExerciseSolutionEntryRepository.findByIdWithTestCaseAndProgrammingExerciseElseThrow(entryId);
@@ -100,7 +100,7 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetSolutionEntryByIdAsStudent() throws Exception {
         Long entryId = programmingExerciseSolutionEntryRepository.findAll().get(0).getId();
         ProgrammingExerciseSolutionEntry expectedSolutionEntry = programmingExerciseSolutionEntryRepository.findByIdWithTestCaseAndProgrammingExerciseElseThrow(entryId);
@@ -109,14 +109,14 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetSolutionEntryByIdWithInvalidExerciseId() throws Exception {
         Long entryId = programmingExerciseSolutionEntryRepository.findAll().get(0).getId();
         request.get("/api/programming-exercises/" + Long.MAX_VALUE + "/solution-entries/" + entryId, HttpStatus.BAD_REQUEST, ProgrammingExerciseSolutionEntry.class);
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetSolutionEntriesByCodeHintId() throws Exception {
         final Set<ProgrammingExerciseSolutionEntry> solutionEntries = new HashSet<>(
                 request.getList("/api/programming-exercises/" + programmingExercise.getId() + "/code-hints/" + codeHint.getId() + "/solution-entries", HttpStatus.OK,
@@ -125,7 +125,7 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetSolutionEntriesByTestCaseId() throws Exception {
         ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
                 .orElseThrow();
@@ -136,7 +136,7 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testDeleteSolutionEntry() throws Exception {
         ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
                 .orElseThrow();
@@ -146,7 +146,7 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "STUDENT")
+    @WithMockUser(username = "student1", roles = "STUDENT")
     public void testDeleteSolutionEntryAsStudent() throws Exception {
         ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
                 .orElseThrow();
@@ -155,7 +155,7 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testDeleteSolutionEntryAsTutor() throws Exception {
         ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
                 .orElseThrow();
@@ -164,7 +164,7 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testUpdateSolutionEntry() throws Exception {
         ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
                 .orElseThrow();
@@ -180,7 +180,7 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testUpdateSolutionEntryWithInvalidId() throws Exception {
         ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
                 .orElseThrow();
@@ -196,7 +196,7 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "STUDENT")
+    @WithMockUser(username = "student1", roles = "STUDENT")
     public void testUpdateSolutionEntryAsStudent() throws Exception {
         ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
                 .orElseThrow();
@@ -207,7 +207,7 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testUpdateSolutionEntryAsTutor() throws Exception {
         ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
                 .orElseThrow();

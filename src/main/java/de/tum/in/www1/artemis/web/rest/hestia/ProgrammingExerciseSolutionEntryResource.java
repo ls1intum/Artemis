@@ -66,7 +66,7 @@ public class ProgrammingExerciseSolutionEntryResource {
      * or with status {@code 400 (Bad Request) if the exerciseId or solutionEntryId are not valid}.
      */
     @GetMapping("/programming-exercises/{exerciseId}/solution-entries/{solutionEntryId}")
-    @PreAuthorize("hasRole('TUTOR')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ProgrammingExerciseSolutionEntry> getSolutionEntry(@PathVariable Long exerciseId, @PathVariable Long solutionEntryId) {
         log.debug("REST request to retrieve SolutionEntry : {}", solutionEntryId);
         ProgrammingExerciseSolutionEntry solutionEntry = programmingExerciseSolutionEntryRepository.findByIdWithTestCaseAndProgrammingExerciseElseThrow(solutionEntryId);
