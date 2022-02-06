@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
 import { MetricsService } from 'app/admin/metrics/metrics.service';
+import { Metrics, ThreadDump } from 'app/admin/metrics/metrics.model';
 
 describe('MetricsComponent', () => {
     let comp: MetricsComponent;
@@ -14,9 +15,7 @@ describe('MetricsComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [MetricsComponent],
-        })
-            .overrideTemplate(MetricsComponent, '')
-            .compileComponents();
+        }).compileComponents();
     });
 
     beforeEach(() => {
@@ -25,16 +24,49 @@ describe('MetricsComponent', () => {
         service = fixture.debugElement.injector.get(MetricsService);
     });
 
-    describe('refresh', () => {
-        it('should call refresh on init', () => {
-            // GIVEN
-            jest.spyOn(service, 'getMetrics').mockReturnValue(of());
+    it('should call refresh on init', () => {
+        const mockMetrics = {};
+        const mockThreadDump = { threads: [] };
+        jest.spyOn(service, 'getMetrics').mockReturnValue(of(mockMetrics as Metrics));
+        jest.spyOn(service, 'threadDump').mockReturnValue(of(mockThreadDump as ThreadDump));
+        expect(comp.updatingMetrics).toBe(true);
+        comp.ngOnInit();
+        expect(service.getMetrics).toHaveBeenCalled();
+        expect(service.threadDump).toHaveBeenCalled();
+        expect(comp.updatingMetrics).toBe(false);
+        expect(comp.metrics).toBe(mockMetrics);
+        expect(comp.threads).toBe(mockThreadDump.threads);
+    });
 
-            // WHEN
-            comp.ngOnInit();
+    it('metricsKeyExists method should work correctly', () => {
+        comp.metrics = {} as any as Metrics;
+        expect(comp.metricsKeyExists('cache')).toBe(false);
 
-            // THEN
-            expect(service.getMetrics).toHaveBeenCalled();
-        });
+        comp.metrics = {
+            cache: undefined,
+        } as any as Metrics;
+        expect(comp.metricsKeyExists('cache')).toBe(false);
+
+        comp.metrics = {
+            cache: {},
+        } as any as Metrics;
+        expect(comp.metricsKeyExists('cache')).toBe(true);
+    });
+
+    it('metricsKeyExistsAndObjectNotEmpty method should work correctly', () => {
+        comp.metrics = {
+            cache: undefined,
+        } as any as Metrics;
+        expect(comp.metricsKeyExistsAndObjectNotEmpty('cache')).toBe(false);
+
+        comp.metrics = {
+            cache: {},
+        } as any as Metrics;
+        expect(comp.metricsKeyExistsAndObjectNotEmpty('cache')).toBe(false);
+
+        comp.metrics = {
+            cache: { randomKey: {} },
+        } as any as Metrics;
+        expect(comp.metricsKeyExistsAndObjectNotEmpty('cache')).toBe(true);
     });
 });
