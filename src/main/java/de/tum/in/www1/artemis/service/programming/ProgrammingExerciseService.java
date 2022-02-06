@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -29,9 +30,13 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -86,13 +91,18 @@ public class ProgrammingExerciseService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
+    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
+    private final ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
             ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -109,6 +119,8 @@ public class ProgrammingExerciseService {
         this.groupNotificationService = groupNotificationService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
+        this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.programmingExerciseSolutionEntryRepository = programmingExerciseSolutionEntryRepository;
     }
 
     /**
@@ -952,5 +964,17 @@ public class ProgrammingExerciseService {
             throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");
         }
         // means the project does not exist in version control server and does not exist in continuous integration server
+    }
+
+    /**
+     * Delete all tasks with solution entries for an existing ProgrammingExercise
+     * @param exerciseId of the exercise
+     */
+    public void deleteTaskWithSolutionEntries(Long exerciseId) {
+        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
+        Set<ProgrammingExerciseSolutionEntry> solutionEntries = tasks.stream().map(ProgrammingExerciseTask::getTestCases).flatMap(Collection::stream)
+                .map(ProgrammingExerciseTestCase::getSolutionEntries).flatMap(Collection::stream).collect(Collectors.toSet());
+        programmingExerciseTaskRepository.deleteAll(tasks);
+        programmingExerciseSolutionEntryRepository.deleteAll(solutionEntries);
     }
 }

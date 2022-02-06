@@ -69,6 +69,32 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
     Optional<ProgrammingExerciseTask> findByNameAndExerciseId(String taskName, long exerciseId);
 
     /**
+     * Gets all tasks with its test cases and solution entries of the test case for a programming exercise
+     * @param exerciseId of the exercise
+     * @return All tasks with solution entries and associated test cases
+     * @throws EntityNotFoundException If the exercise with exerciseId does not exist
+     */
+    @NotNull
+    default Set<ProgrammingExerciseTask> findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(long exerciseId) throws EntityNotFoundException {
+        return findByExerciseIdWithTestCaseAndSolutionEntries(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Task", exerciseId));
+    }
+
+    /**
+     * Gets all tasks with its test cases and solution entries of the test case for a programming exercise
+     * @param exerciseId of the exercise
+     * @return All tasks with solution entries and associated test cases
+     */
+    @Query("""
+                        SELECT t
+                        FROM ProgrammingExerciseTask t
+                        LEFT JOIN FETCH t.testCases tc
+                        LEFT JOIN FETCH tc.solutionEntries
+                        WHERE t.exercise.id = :exerciseId
+                        AND tc.exercise.id = :exerciseId
+            """)
+    Optional<Set<ProgrammingExerciseTask>> findByExerciseIdWithTestCaseAndSolutionEntries(long exerciseId);
+
+    /**
      * Returns the task name with the given id
      *
      * @param taskId the id of the task

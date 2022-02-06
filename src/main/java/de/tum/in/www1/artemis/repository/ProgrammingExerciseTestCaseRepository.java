@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the ProgrammingExerciseTestCase entity.
@@ -18,6 +20,27 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
 
     Set<ProgrammingExerciseTestCase> findByExerciseId(Long exerciseId);
 
+    default ProgrammingExerciseTestCase findByIdWithExerciseElseThrow(Long testCaseId) {
+        return findByIdWithExercise(testCaseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Test Case", testCaseId));
+    }
+
+    /**
+     * Returns the test case with the programming exercise
+     * @param testCaseId of the test case
+     * @return the test case with the programming exercise
+     */
+    @Query("""
+                        SELECT tc FROM ProgrammingExerciseTestCase tc
+                        LEFT JOIN FETCH tc.exercise ex
+                        WHERE tc.id = :testCaseId
+            """)
+    Optional<ProgrammingExerciseTestCase> findByIdWithExercise(Long testCaseId);
+
+    /**
+     * Returns all test cases with the associated solution entries for a programming exercise
+     * @param exerciseId of the exercise
+     * @return all test cases with the assocaited solution entries
+     */
     @Query("""
             SELECT DISTINCT tc FROM ProgrammingExerciseTestCase tc
             LEFT JOIN FETCH tc.solutionEntries se

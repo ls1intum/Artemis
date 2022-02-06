@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExerciseSolutionEntry extends DomainObject {
 
-    @Column(name = "filePath")
+    @Column(name = "file_path")
     private String filePath;
 
     // The line where the old code segment is in the template
