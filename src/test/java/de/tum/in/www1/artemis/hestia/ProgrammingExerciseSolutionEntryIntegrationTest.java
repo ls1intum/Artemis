@@ -90,13 +90,22 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetSolutionEntryById() throws Exception {
         Long entryId = programmingExerciseSolutionEntryRepository.findAll().get(0).getId();
         ProgrammingExerciseSolutionEntry expectedSolutionEntry = programmingExerciseSolutionEntryRepository.findByIdWithTestCaseAndProgrammingExerciseElseThrow(entryId);
         final var actualSolutionEntry = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/solution-entries/" + expectedSolutionEntry.getId(),
                 HttpStatus.OK, ProgrammingExerciseSolutionEntry.class);
         assertThat(actualSolutionEntry).isEqualTo(expectedSolutionEntry);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testGetSolutionEntryByIdAsStudent() throws Exception {
+        Long entryId = programmingExerciseSolutionEntryRepository.findAll().get(0).getId();
+        ProgrammingExerciseSolutionEntry expectedSolutionEntry = programmingExerciseSolutionEntryRepository.findByIdWithTestCaseAndProgrammingExerciseElseThrow(entryId);
+        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/solution-entries/" + expectedSolutionEntry.getId(), HttpStatus.FORBIDDEN,
+                ProgrammingExerciseSolutionEntry.class);
     }
 
     @Test
