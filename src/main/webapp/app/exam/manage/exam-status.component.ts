@@ -31,10 +31,10 @@ export class ExamStatusComponent implements OnChanges {
     examChecklist: ExamChecklist;
     numberOfGeneratedStudentExams: number;
 
-    configureExercises: boolean;
-    registerStudents: boolean;
-    generateExams: boolean;
-    prepareExerciseStart: boolean;
+    configuredExercises: boolean;
+    registeredStudents: boolean;
+    generatedStudentExams: boolean;
+    preparedExerciseStart: boolean;
 
     examPreparationFinished = false;
     examConductionState: ExamConductionState;
@@ -92,7 +92,7 @@ export class ExamStatusComponent implements OnChanges {
      * @private
      */
     private isExamPreparationFinished(): boolean {
-        return this.configureExercises && this.registerStudents && this.generateExams && this.prepareExerciseStart;
+        return this.configuredExercises && this.registeredStudents && this.generatedStudentExams && this.preparedExerciseStart;
     }
 
     /**
@@ -132,13 +132,13 @@ export class ExamStatusComponent implements OnChanges {
      */
     private setExamPreparation(): void {
         // Step 1.1:
-        this.configureExercises = this.areAllExercisesConfigured();
+        this.configuredExercises = this.areAllExercisesConfigured();
         // Step 1.2:
-        this.registerStudents = this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam);
+        this.registeredStudents = this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam);
         // Step 1.3:
-        this.generateExams = this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist) && this.registerStudents;
+        this.generatedStudentExams = this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist) && this.registeredStudents;
         // Step 1.4:
-        this.prepareExerciseStart = !!this.examChecklist.allExamExercisesAllStudentsPrepared && this.generateExams;
+        this.preparedExerciseStart = !!this.examChecklist.allExamExercisesAllStudentsPrepared && this.generatedStudentExams;
         this.examPreparationFinished = this.isExamPreparationFinished();
     }
 

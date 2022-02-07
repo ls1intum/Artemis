@@ -11,28 +11,28 @@
             <ol>
                 <li class="d-flex align-items-center">
                     <span>{{ 'artemisApp.examStatus.preparation.configureExercises' | artemisTranslate: { amount: exam.exerciseGroups ? exam.exerciseGroups.length : 0 } }}</span>
-                    <fa-icon *ngIf="configureExercises" [icon]="faCheckCircle" class="check"></fa-icon>
-                    <fa-icon *ngIf="!configureExercises" [icon]="faTimes" class="cross"></fa-icon>
+                    <fa-icon *ngIf="configuredExercises" [icon]="faCheckCircle" class="check"></fa-icon>
+                    <fa-icon *ngIf="!configuredExercises" [icon]="faTimes" class="cross"></fa-icon>
                 </li>
                 <li class="d-flex align-items-center">
                     <span>{{ 'artemisApp.examStatus.preparation.registerStudents' | artemisTranslate: { registered: exam.numberOfRegisteredUsers } }} </span>
-                    <fa-icon *ngIf="registerStudents" [icon]="faCheckCircle" class="check"></fa-icon>
-                    <fa-icon *ngIf="!registerStudents" [icon]="faTimes" class="cross"></fa-icon>
+                    <fa-icon *ngIf="registeredStudents" [icon]="faCheckCircle" class="check"></fa-icon>
+                    <fa-icon *ngIf="!registeredStudents" [icon]="faTimes" class="cross"></fa-icon>
                 </li>
                 <li class="d-flex align-items-center">
                     <span>{{ 'artemisApp.examStatus.preparation.generateStudentExams' | artemisTranslate }}</span>
                     <!-- If no students are registered yet, we do not want to display "0 of 0" -->
-                    <span *ngIf="!registerStudents">{{ 'artemisApp.examStatus.preparation.notRegistered' | artemisTranslate }}</span>
-                    <span *ngIf="registerStudents">
+                    <span *ngIf="!registeredStudents">{{ 'artemisApp.examStatus.preparation.notRegistered' | artemisTranslate }}</span>
+                    <span *ngIf="registeredStudents">
                         {{ 'artemisApp.examStatus.preparation.registered' | artemisTranslate: { generated: numberOfGeneratedStudentExams, total: exam.numberOfRegisteredUsers } }}
                     </span>
-                    <fa-icon *ngIf="generateExams" [icon]="faCheckCircle" class="check"></fa-icon>
-                    <fa-icon *ngIf="!generateExams" [icon]="faTimes" class="cross"></fa-icon>
+                    <fa-icon *ngIf="generatedStudentExams" [icon]="faCheckCircle" class="check"></fa-icon>
+                    <fa-icon *ngIf="!generatedStudentExams" [icon]="faTimes" class="cross"></fa-icon>
                 </li>
                 <li class="d-flex align-items-center">
                     <span>{{ 'artemisApp.examStatus.preparation.prepareExerciseStart' | artemisTranslate }}</span>
-                    <fa-icon *ngIf="registerStudents" [icon]="faCheckCircle" class="check"></fa-icon>
-                    <fa-icon *ngIf="!registerStudents" [icon]="faTimes" class="cross"></fa-icon>
+                    <fa-icon *ngIf="registeredStudents" [icon]="faCheckCircle" class="check"></fa-icon>
+                    <fa-icon *ngIf="!registeredStudents" [icon]="faTimes" class="cross"></fa-icon>
                 </li>
             </ol>
         </div>

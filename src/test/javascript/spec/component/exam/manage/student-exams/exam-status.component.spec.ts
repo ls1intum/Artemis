@@ -130,10 +130,10 @@ describe('ExamStatusComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.configureExercises).toBe(true);
-        expect(component.registerStudents).toBe(true);
-        expect(component.generateExams).toBe(true);
-        expect(component.prepareExerciseStart).toBe(true);
+        expect(component.configuredExercises).toBe(true);
+        expect(component.registeredStudents).toBe(true);
+        expect(component.generatedStudentExams).toBe(true);
+        expect(component.preparedExerciseStart).toBe(true);
         expect(component.numberOfGeneratedStudentExams).toBe(42);
         expect(component.examPreparationFinished).toBe(true);
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
