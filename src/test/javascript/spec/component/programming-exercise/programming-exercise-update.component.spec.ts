@@ -303,10 +303,12 @@ describe('ProgrammingExercise Management Update Component', () => {
             fixture.detectChanges();
             tick();
             comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+            comp.onProjectTypeChange(ProjectType.GCC);
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
+            expect(comp.selectedProjectType).toBe(ProjectType.GCC);
             expect(comp.staticCodeAnalysisAllowed).toBe(true);
         }));
 
@@ -320,6 +322,20 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
             expect(comp.staticCodeAnalysisAllowed).toBe(true);
             expect(comp.packageNamePattern).toBe(comp.packageNamePatternForJavaKotlin);
+        }));
+
+        it('Should deactivate SCA for C (FACT)', fakeAsync(() => {
+            // WHEN
+            fixture.detectChanges();
+            tick();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+            comp.onProjectTypeChange(ProjectType.FACT);
+
+            // THEN
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
+            expect(comp.selectedProjectType).toBe(ProjectType.FACT);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(false);
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
         }));
     });
 
@@ -686,7 +702,7 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 plagiarismCheckSupported: true,
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
-                projectTypes: [],
+                projectTypes: [ProjectType.FACT, ProjectType.GCC],
             } as ProgrammingLanguageFeature;
         default:
             throw new Error();

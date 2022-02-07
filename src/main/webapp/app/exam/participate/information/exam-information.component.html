@@ -24,13 +24,9 @@
         </ng-container>
         <span class="mx-2" *ngIf="exam && exam.startDate && exam.endDate">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.duration' | artemisTranslate }}:</strong>
-            <ng-container *ngIf="studentExam && studentExam.workingTime && studentExam.workingTime! < normalWorkingTime!; else normalOrLongerWorkingTime">
-                {{ studentExam.workingTime || 0 | artemisDurationFromSeconds }}
+            <ng-container *ngIf="studentExam && studentExam.workingTime">
+                <jhi-student-exam-working-time [studentExam]="studentExam"></jhi-student-exam-working-time>
             </ng-container>
-            <ng-template #normalOrLongerWorkingTime>
-                {{ normalWorkingTime || 0 | artemisDurationFromSeconds }}
-                <ng-container *ngIf="additionalWorkingTime"> ( + {{ additionalWorkingTime | artemisDurationFromSeconds }} ) </ng-container>
-            </ng-template>
         </span>
     </div>
     <div class="mb-2">

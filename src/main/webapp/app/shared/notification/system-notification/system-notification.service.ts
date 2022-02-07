@@ -36,10 +36,12 @@ export class SystemNotificationService {
 
     /**
      * Find a notification on the server using a GET request.
-     * @param id The id of the notification to get.
+     * @param systemNotificationId The id of the notification to get.
      */
-    find(id: number): Observable<EntityResponseType> {
-        return this.http.get<SystemNotification>(`${this.resourceUrl}/${id}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    find(systemNotificationId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<SystemNotification>(`${this.resourceUrl}/${systemNotificationId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {
@@ -51,10 +53,10 @@ export class SystemNotificationService {
 
     /**
      * Delete a notification on the server using a DELETE request.
-     * @param id The id of the notification to delete.
+     * @param systemNotificationId The id of the notification to delete.
      */
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(systemNotificationId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<any>(`${this.resourceUrl}/${systemNotificationId}`, { observe: 'response' });
     }
 
     /**

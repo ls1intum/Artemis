@@ -28,8 +28,9 @@ import { declareExerciseType } from 'app/entities/exercise.model';
 import { mean, median, standardDeviation, sum } from 'simple-statistics';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Course, NgxDataEntry } from 'app/entities/course.model';
+import { Course } from 'app/entities/course.model';
 import { ScaleType, Color } from '@swimlane/ngx-charts';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -61,7 +62,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public noOfExamsFiltered: number;
 
     // ngx
-    ngxData: NgxDataEntry[] = [];
+    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
     yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
     xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
     yScaleMax: number;
@@ -71,7 +72,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         group: ScaleType.Ordinal,
         domain: [],
     } as Color;
-    activeEntries: NgxDataEntry[] = [];
+    activeEntries: NgxChartsSingleSeriesDataEntry[] = [];
     dataLabelFormatting = this.formatDataLabel.bind(this);
     showOverallMedian: boolean; // Indicates whether the median of all exams is currently highlighted
     showOverallMedianCheckbox = true; // Indicates whether the checkbox for toggling the highlighting of overallChartMedian is currently visible to the user
