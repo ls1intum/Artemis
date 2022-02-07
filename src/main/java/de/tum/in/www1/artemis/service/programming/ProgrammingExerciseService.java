@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
@@ -95,6 +96,8 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository;
 
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -102,7 +105,7 @@ public class ProgrammingExerciseService {
             ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository) {
+            ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -121,6 +124,7 @@ public class ProgrammingExerciseService {
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.programmingExerciseSolutionEntryRepository = programmingExerciseSolutionEntryRepository;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
     }
 
     /**
@@ -171,6 +175,9 @@ public class ProgrammingExerciseService {
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
+
+        // Extract the tasks from the problem statement
+        programmingExerciseTaskService.updateTasks(programmingExercise);
 
         // The creation of the webhooks must occur after the initial push, because the participation is
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
@@ -410,6 +417,9 @@ public class ProgrammingExerciseService {
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
+
+        // Extract the tasks from the problem statement
+        programmingExerciseTaskService.updateTasks(savedProgrammingExercise);
 
         // TODO: in case of an exam exercise, this is not necessary
         scheduleOperations(programmingExercise.getId());
@@ -712,6 +722,9 @@ public class ProgrammingExerciseService {
         programmingExercise.setProblemStatement(problemStatement);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
+        // Extract the tasks from the problem statement
+        programmingExerciseTaskService.updateTasks(updatedProgrammingExercise);
+
         groupNotificationService.notifyAboutExerciseUpdate(programmingExercise, notificationText);
 
         return updatedProgrammingExercise;
@@ -968,9 +981,10 @@ public class ProgrammingExerciseService {
 
     /**
      * Delete all tasks with solution entries for an existing ProgrammingExercise
+     *
      * @param exerciseId of the exercise
      */
-    public void deleteTaskWithSolutionEntries(Long exerciseId) {
+    public void deleteTasksWithSolutionEntries(Long exerciseId) {
         Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
         Set<ProgrammingExerciseSolutionEntry> solutionEntries = tasks.stream().map(ProgrammingExerciseTask::getTestCases).flatMap(Collection::stream)
                 .map(ProgrammingExerciseTestCase::getSolutionEntries).flatMap(Collection::stream).collect(Collectors.toSet());

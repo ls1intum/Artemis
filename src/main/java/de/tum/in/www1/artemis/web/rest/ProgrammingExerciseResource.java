@@ -734,7 +734,7 @@ public class ProgrammingExerciseResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
-        programmingExerciseService.deleteTaskWithSolutionEntries(exercise.getId());
+        programmingExerciseService.deleteTasksWithSolutionEntries(exercise.getId());
         return ResponseEntity.noContent().build();
     }
 }
