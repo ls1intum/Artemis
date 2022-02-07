@@ -241,11 +241,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     extractTasksFromProblemStatement() {
         this.programmingExerciseService.extractTasksFromProblemStatement(this.programmingExercise.id!).subscribe({
             next: (res) => {
+                const numberTests = res.map((task) => task.tests.length).reduce((numberTests1, numberTests2) => numberTests1 + numberTests2, 0);
                 this.alertService.addAlert({
                     type: 'success',
-                    message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccessHeader',
+                    message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccess',
+                    translationParams: { numberTasks: res.length, numberTestCases: numberTests, detailedResult: this.buildTaskCreationMessage(res) },
                     // long timeout in order to test properly
-                    translationParams: { numberTasks: res.length, testCases: this.buildTaskCreationMessage(res) },
                     timeout: 10000000,
                 });
             },

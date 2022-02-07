@@ -99,6 +99,7 @@
             "combineTemplateCommitsError": "Template repository commits could not be combined.",
             "combineTemplateCommitsSuccess": "Template repository commits have been successfully combined.",
             "extractTasksFromProblemStatementWarning": "Only for testing purpose: Extract all tasks and test cases from problems statement.",
+            "extractTasksFromProblemStatementSuccess": "Extracted {{numberTasks}} tasks with {{numberTestCases}} tests from the problem statement:\n{{detailedResult}}",
             "extractTasksFromProblemStatementTitle": "Extract Tasks",
             "deleteTasksAndSolutionEntriesWarning": "Only for testing purpose: Delete all tasks and solution entries.",
             "deleteTasksAndSolutionEntriesSuccess": "Successfully deleted all tasks and solution entries.",
