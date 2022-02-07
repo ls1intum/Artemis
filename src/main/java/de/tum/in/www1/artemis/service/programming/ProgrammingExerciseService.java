@@ -177,7 +177,7 @@ public class ProgrammingExerciseService {
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
 
         // Extract the tasks from the problem statement
-        programmingExerciseTaskService.updateTasks(programmingExercise);
+        programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
 
         // The creation of the webhooks must occur after the initial push, because the participation is
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
@@ -419,7 +419,7 @@ public class ProgrammingExerciseService {
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
 
         // Extract the tasks from the problem statement
-        programmingExerciseTaskService.updateTasks(savedProgrammingExercise);
+        programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
         // TODO: in case of an exam exercise, this is not necessary
         scheduleOperations(programmingExercise.getId());
@@ -723,7 +723,7 @@ public class ProgrammingExerciseService {
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // Extract the tasks from the problem statement
-        programmingExerciseTaskService.updateTasks(updatedProgrammingExercise);
+        programmingExerciseTaskService.updateTasksFromProblemStatement(updatedProgrammingExercise);
 
         groupNotificationService.notifyAboutExerciseUpdate(programmingExercise, notificationText);
 

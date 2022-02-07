@@ -51,7 +51,7 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
     private void updateProblemStatement(String problemStatement) {
         programmingExercise.setProblemStatement(problemStatement);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExerciseTaskService.updateTasks(programmingExercise);
+        programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
     }
 
     @AfterEach

@@ -31,6 +31,7 @@ public class ProgrammingExerciseTaskResource {
 
     /**
      * Get all tasks with test cases and solution entries for a programming exercise
+     *
      * @param exerciseId of the exercise
      * @return All tasks with test cases and solution entries
      */
