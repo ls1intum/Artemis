@@ -38,6 +38,7 @@ public class AutomaticTextFeedbackService {
      * Feedbacks are stored inline with the provided Result object.
      *
      * @param result Result for the Submission
+     * @param exerciseId ID of the exercise to which the results belong
      */
     @Transactional(readOnly = true)
     public void suggestFeedback(@NotNull Result result, Long exerciseId) {
