@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { Result } from 'app/entities/result.model';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
@@ -13,7 +13,7 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./result-history.scss'],
 })
 export class ResultHistoryComponent {
-    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 
     @Input() results: Result[];
