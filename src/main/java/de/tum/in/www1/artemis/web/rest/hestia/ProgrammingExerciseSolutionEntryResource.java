@@ -91,7 +91,7 @@ public class ProgrammingExerciseSolutionEntryResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         CodeHint codeHint = codeHintRepository.findByIdElseThrow(codeHintId);
-        if (!exercise.getId().equals(codeHint.getId())) {
+        if (!exercise.getId().equals(codeHint.getExercise().getId())) {
             throw new BadRequestAlertException("A solution entry can only be retrieved if the code hint belongs to the exercise", ENTITY_NAME, "idnull");
         }
 
