@@ -43,7 +43,7 @@
 
         <addColumn tableName="exercise_hint">
             <column name="task_id" type="BIGINT"/>
-            <column name="discriminator" type="VARCHAR(31)">
+            <column name="discriminator" type="VARCHAR(31)" defaultValue="T">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
