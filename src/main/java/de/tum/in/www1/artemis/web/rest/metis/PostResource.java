@@ -112,9 +112,9 @@ public class PostResource {
      * @param courseWideContext         optional request param if a course-wide topic is the targeted context
      * @param exerciseId                optional request param if a certain exercise is the targeted context
      * @param lectureId                 optional request param if a certain lecture is the targeted context
-     * @param filterToUnresolved        flag to fetch only unresolved posts
-     * @param filterToOwn               flag to fetch only user's own posts
-     * @param filterToAnsweredOrReacted flag to fetch only posts the user has answered or reacted to
+     * @param filterToUnresolved        post is only fetched if none of the given answers is marked as resolving
+     * @param filterToOwn               post is only fetched if the author of the post matches the currently logged in user
+     * @param filterToAnsweredOrReacted post is only fetched if the author of any given answer the user that put any reaction on that post matches the currently logged in user
      * @param postSortCriterion         sorting property
      * @param sortingOrder              sorting order (ASC, DESC)
      * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context
@@ -124,12 +124,12 @@ public class PostResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Post>> getPostsInCourse(@PathVariable Long courseId, @ApiParam Pageable pageable, @RequestParam(defaultValue = "false") boolean pagingEnabled,
             @RequestParam(required = false) CourseWideContext courseWideContext, @RequestParam(required = false) Long exerciseId, @RequestParam(required = false) Long lectureId,
-            @RequestParam(required = false) boolean filterToUnresolved, @RequestParam(required = false) boolean filterToOwn,
+            @RequestParam(required = false) String searchText, @RequestParam(required = false) boolean filterToUnresolved, @RequestParam(required = false) boolean filterToOwn,
             @RequestParam(required = false) boolean filterToAnsweredOrReacted, @RequestParam(required = false) PostSortCriterion postSortCriterion,
             @RequestParam(required = false) SortingOrder sortingOrder) {
 
-        Page<Post> coursePosts = postService.getPostsInCourse(pagingEnabled, pageable, courseId, courseWideContext, exerciseId, lectureId, filterToUnresolved, filterToOwn,
-                filterToAnsweredOrReacted, postSortCriterion, sortingOrder);
+        Page<Post> coursePosts = postService.getPostsInCourse(pagingEnabled, pageable, courseId, courseWideContext, exerciseId, lectureId, searchText, filterToUnresolved,
+                filterToOwn, filterToAnsweredOrReacted, postSortCriterion, sortingOrder);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
 
         return new ResponseEntity<>(coursePosts.getContent(), headers, HttpStatus.OK);

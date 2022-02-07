@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -206,15 +208,16 @@ public class PostService extends PostingService {
      * @param courseWideContext         course-wide context for which the posts should be fetched
      * @param exerciseId                id of the exercise for which the posts should be fetched
      * @param lectureId                 id of the lecture for which the posts should be fetched
-     * @param filterToUnresolved        flag to fetch only unresolved posts
-     * @param filterToOwn               flag to fetch only user's own posts
-     * @param filterToAnsweredOrReacted flag to fetch only posts the user has answered or reacted to
+     * @param searchText
+     * @param filterToUnresolved        post is only fetched if none of the given answers is marked as resolving
+     * @param filterToOwn               post is only fetched if the author of the post matches the currently logged in user
+     * @param filterToAnsweredOrReacted post is only fetched if the author of any given answer the user that put any reaction on that post matches the currently logged in user
      * @param postSortCriterion         sorting property
      * @param sortingOrder              sorting order (ASC, DESC)
      * @return page of posts that match the given context
      */
     public Page<Post> getPostsInCourse(boolean pagingEnabled, Pageable pageable, Long courseId, CourseWideContext courseWideContext, Long exerciseId, Long lectureId,
-            boolean filterToUnresolved, boolean filterToOwn, boolean filterToAnsweredOrReacted, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
+            String searchText, boolean filterToUnresolved, boolean filterToOwn, boolean filterToAnsweredOrReacted, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
 
         List<Post> postsInCourse;
         // no filter -> get all posts in course
@@ -240,6 +243,9 @@ public class PostService extends PostingService {
         final Page<Post> postsPage;
         if (pagingEnabled) {
             // sort
+            if (searchText != null) {
+                postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, searchText)).collect(Collectors.toList());
+            }
             postsInCourse.sort((postA, postB) -> postComparator(postA, postB, postSortCriterion, sortingOrder));
 
             int startIndex = pageable.getPageNumber() * pageable.getPageSize();
@@ -283,9 +289,9 @@ public class PostService extends PostingService {
      * and ensures that sensitive information is filtered out
      *
      * @param courseId                  id of the course the post belongs to
-     * @param filterToUnresolved        flag to fetch only unresolved posts
-     * @param filterToOwn               flag to fetch only user's own posts
-     * @param filterToAnsweredOrReacted flag to fetch only posts the user has answered or reacted to
+     * @param filterToUnresolved        post is only fetched if none of the given answers is marked as resolving
+     * @param filterToOwn               post is only fetched if the author of the post matches the currently logged in user
+     * @param filterToAnsweredOrReacted post is only fetched if the author of any given answer the user that put any reaction on that post matches the currently logged in user
      * @return page of posts that belong to the course
      */
     public List<Post> getAllCoursePostsPage(Long courseId, boolean filterToUnresolved, boolean filterToOwn, boolean filterToAnsweredOrReacted) {
@@ -334,9 +340,9 @@ public class PostService extends PostingService {
      *
      * @param courseId                  id of the course the post belongs to
      * @param courseWideContext         specific course-wide context to filter course get posts for
-     * @param filterToUnresolved        flag to fetch only unresolved posts
-     * @param filterToOwn               flag to fetch only user's own posts
-     * @param filterToAnsweredOrReacted flag to fetch only posts the user has answered or reacted to
+     * @param filterToUnresolved        post is only fetched if none of the given answers is marked as resolving
+     * @param filterToOwn               post is only fetched if the author of the post matches the currently logged in user
+     * @param filterToAnsweredOrReacted post is only fetched if the author of any given answer the user that put any reaction on that post matches the currently logged in user
      * @return page of posts for a certain course-wide context
      */
     public List<Post> getAllPostsByCourseWideContext(Long courseId, CourseWideContext courseWideContext, boolean filterToUnresolved, boolean filterToOwn,
@@ -387,9 +393,9 @@ public class PostService extends PostingService {
      *
      * @param courseId                  id of the course the post belongs to
      * @param exerciseId                id of the exercise for which the posts should be retrieved
-     * @param filterToUnresolved        flag to fetch only unresolved posts
-     * @param filterToOwn               flag to fetch only user's own posts
-     * @param filterToAnsweredOrReacted flag to fetch only posts the user has answered or reacted to
+     * @param filterToUnresolved        post is only fetched if none of the given answers is marked as resolving
+     * @param filterToOwn               post is only fetched if the author of the post matches the currently logged in user
+     * @param filterToAnsweredOrReacted post is only fetched if the author of any given answer the user that put any reaction on that post matches the currently logged in user
      * @return page of posts that belong to the exercise
      */
     public List<Post> getAllExercisePosts(Long courseId, Long exerciseId, boolean filterToUnresolved, boolean filterToOwn, boolean filterToAnsweredOrReacted) {
@@ -438,9 +444,9 @@ public class PostService extends PostingService {
      *
      * @param courseId                  id of the course the post belongs to
      * @param lectureId                 id of the lecture for which the posts should be retrieved
-     * @param filterToUnresolved        flag to fetch only unresolved posts
-     * @param filterToOwn               flag to fetch only user's own posts
-     * @param filterToAnsweredOrReacted flag to fetch only posts the user has answered or reacted to
+     * @param filterToUnresolved        post is only fetched if none of the given answers is marked as resolving
+     * @param filterToOwn               post is only fetched if the author of the post matches the currently logged in user
+     * @param filterToAnsweredOrReacted post is only fetched if the author of any given answer the user that put any reaction on that post matches the currently logged in user
      * @return page of posts that belong to the lecture
      */
     public List<Post> getAllLecturePostsPage(Long courseId, Long lectureId, boolean filterToUnresolved, boolean filterToOwn, boolean filterToAnsweredOrReacted) {
@@ -690,11 +696,11 @@ public class PostService extends PostingService {
             int postBVoteEmojiCount = 0;
 
             if (postA.getReactions() != null) {
-                postAVoteEmojiCount = (int) postA.getReactions().stream().filter((Reaction reaction) -> reaction.getEmojiId().equals("heavy_plus_sign")).count();
+                postAVoteEmojiCount = (int) postA.getReactions().stream().filter((Reaction reaction) -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
             }
 
             if (postB.getReactions() != null) {
-                postBVoteEmojiCount = (int) postB.getReactions().stream().filter((Reaction reaction) -> reaction.getEmojiId().equals("heavy_plus_sign")).count();
+                postBVoteEmojiCount = (int) postB.getReactions().stream().filter((Reaction reaction) -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
             }
 
             if (postAVoteEmojiCount > postBVoteEmojiCount) {
@@ -733,5 +739,30 @@ public class PostService extends PostingService {
             }
         }
         return 0;
+    }
+
+    /**
+     * filters posts on a search string in a match-all-manner
+     * - currentPostContentFilter: post is only kept if the search string (which is not a #id pattern) is included in either the post title, content or tag (all strings lowercased)
+     *
+     * @return boolean predicate if the post is kept (true) or filtered out (false)
+     */
+    public static boolean postFilter(Post post, String searchText) {
+        boolean keepPost = true;
+
+        if (searchText != null && searchText.trim().length() > 0) {
+            // check if the search text is either contained in the title or in the content
+            String lowerCasedSearchString = searchText.toLowerCase();
+            // if searchText starts with a # and is followed by a post id, filter for post with id
+            if (lowerCasedSearchString.startsWith("#") && (lowerCasedSearchString.substring(1) != null && !lowerCasedSearchString.substring(1).isBlank())) {
+                return keepPost && post.getId() == Integer.parseInt(lowerCasedSearchString.substring(1));
+            }
+            // regular search on content, title, and tags
+            boolean searchStringMatchesAnyPostProperty = post.getTitle() != null && post.getTitle().toLowerCase().contains(lowerCasedSearchString)
+                    || post.getContent() != null && post.getContent().toLowerCase().contains(lowerCasedSearchString)
+                    || post.getTags() != null && String.join(" ", post.getTags()).toLowerCase().contains(lowerCasedSearchString);
+            return keepPost && (searchStringMatchesAnyPostProperty);
+        }
+        return keepPost;
     }
 }

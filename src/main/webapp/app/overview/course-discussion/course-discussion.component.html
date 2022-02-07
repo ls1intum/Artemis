@@ -7,11 +7,11 @@
                     name="searchText"
                     [(ngModel)]="searchText"
                     class="form-control"
-                    (keyup.enter)="onSearch()"
+                    (keyup.enter)="onSelectContext()"
                     placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}"
                 />
-                <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSearch()"></jhi-button>
-                <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSearch()"></jhi-button>
+                <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()"></jhi-button>
+                <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
             </div>
             <!-- new post button -->
             <div class="col-2" *ngIf="createdPost">
@@ -79,7 +79,7 @@
                             <span>{{ 'artemisApp.metis.overview.sortPostsBy' | artemisTranslate }}</span>
                         </div>
                         <div class="col-auto p-0">
-                            <select formControlName="sortBy" class="form-select" [compareWith]="comparePostSortOptionFn" (change)="onChangeSortBy()" name="sortBy">
+                            <select formControlName="sortBy" class="form-select" [compareWith]="comparePostSortOptionFn" (change)="onSelectContext()" name="sortBy">
                                 <option *ngFor="let sortByOption of SortBy | keyvalue" [ngValue]="sortByOption.value">
                                     {{ 'artemisApp.metis.overview.' + sortByOption.value | artemisTranslate }}
                                 </option>
