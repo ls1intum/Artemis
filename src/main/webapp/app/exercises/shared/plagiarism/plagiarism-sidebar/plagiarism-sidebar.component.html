@@ -3,8 +3,8 @@
         <span>Run details</span>
         <fa-icon [icon]="faChevronRight"></fa-icon>
     </div>
-    <div style="padding: 0.75rem" *ngIf="casesFiltered">
-        <fa-icon class="text-warning" [icon]="faExclamationTriangle" style="margin-right: 0.5rem"></fa-icon>
+    <div class="filter-disclaimer" *ngIf="casesFiltered">
+        <fa-icon class="text-warning disclaimer-icon" [icon]="faExclamationTriangle"></fa-icon>
         <span>{{ 'artemisApp.plagiarism.casesFiltered' | artemisTranslate }}</span>
     </div>
 
