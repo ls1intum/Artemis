@@ -67,13 +67,13 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
 
         assertThat(tasks).anyMatch(programmingExerciseTask -> {
             var testCases = programmingExerciseTask.getTestCases();
-            return programmingExerciseTask.getTaskName().equals("Task 1") && !testCases.isEmpty()
-                    && testCases.stream().findFirst().get().getTestName().equals("testClass[BubbleSort]");
+            return "Task 1".equals(programmingExerciseTask.getTaskName()) && !testCases.isEmpty()
+                    && "testClass[BubbleSort]".equals(testCases.stream().findFirst().get().getTestName());
         });
         assertThat(tasks).anyMatch(programmingExerciseTask -> {
             var testCases = programmingExerciseTask.getTestCases();
-            return programmingExerciseTask.getTaskName().equals("Task 2") && !testCases.isEmpty()
-                    && testCases.stream().findFirst().get().getTestName().equals("testMethods[Context]");
+            return "Task 2".equals(programmingExerciseTask.getTaskName()) && !testCases.isEmpty()
+                    && "testMethods[Context]".equals(testCases.stream().findFirst().get().getTestName());
         });
     }
 
@@ -93,18 +93,18 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
 
         assertThat(tasks).anyMatch(programmingExerciseTask -> {
             var testCases = programmingExerciseTask.getTestCases();
-            return programmingExerciseTask.getTaskName().equals("Task 1") && !testCases.isEmpty()
-                    && testCases.stream().findFirst().get().getTestName().equals("testClass[BubbleSort]");
+            return "Task 1".equals(programmingExerciseTask.getTaskName()) && !testCases.isEmpty()
+                    && "testClass[BubbleSort]".equals(testCases.stream().findFirst().get().getTestName());
         });
         assertThat(tasks).anyMatch(programmingExerciseTask -> {
             var testCases = programmingExerciseTask.getTestCases();
-            return programmingExerciseTask.getTaskName().equals("Task 2") && !testCases.isEmpty()
-                    && testCases.stream().findFirst().get().getTestName().equals("testMethods[Context]");
+            return "Task 2".equals(programmingExerciseTask.getTaskName()) && !testCases.isEmpty()
+                    && "testMethods[Context]".equals(testCases.stream().findFirst().get().getTestName());
         });
         assertThat(tasks).anyMatch(programmingExerciseTask -> {
             var testCases = programmingExerciseTask.getTestCases();
-            return programmingExerciseTask.getTaskName().equals("Task 3") && !testCases.isEmpty()
-                    && testCases.stream().findFirst().get().getTestName().equals("testMethods[Policy]");
+            return "Task 3".equals(programmingExerciseTask.getTaskName()) && !testCases.isEmpty()
+                    && "testMethods[Policy]".equals(testCases.stream().findFirst().get().getTestName());
         });
 
         // Test that the other tasks were not removed and re-added.
@@ -154,13 +154,13 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
 
         assertThat(tasks).anyMatch(programmingExerciseTask -> {
             var testCases = programmingExerciseTask.getTestCases();
-            return programmingExerciseTask.getTaskName().equals("Task 1a") && !testCases.isEmpty()
-                    && testCases.stream().findFirst().get().getTestName().equals("testClass[BubbleSort]");
+            return "Task 1a".equals(programmingExerciseTask.getTaskName()) && !testCases.isEmpty()
+                    && "testClass[BubbleSort]".equals(testCases.stream().findFirst().get().getTestName());
         });
         assertThat(tasks).anyMatch(programmingExerciseTask -> {
             var testCases = programmingExerciseTask.getTestCases();
-            return programmingExerciseTask.getTaskName().equals("Task 2") && !testCases.isEmpty()
-                    && testCases.stream().findFirst().get().getTestName().equals("testMethods[Context]");
+            return "Task 2".equals(programmingExerciseTask.getTaskName()) && !testCases.isEmpty()
+                    && "testMethods[Context]".equals(testCases.stream().findFirst().get().getTestName());
         });
     }
 
@@ -187,7 +187,7 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
 
     @Test
     public void testDeleteWithCodeHints() {
-        var task = programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId()).stream().filter(task1 -> task1.getTaskName().equals("Task 1")).findFirst()
+        var task = programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId()).stream().filter(task1 -> "Task 1".equals(task1.getTaskName())).findFirst()
                 .orElse(null);
         assertThat(task).isNotNull();
 

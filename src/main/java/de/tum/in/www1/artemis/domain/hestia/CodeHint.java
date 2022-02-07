@@ -45,7 +45,7 @@ public class CodeHint extends ExerciseHint {
      * This method ensures that all solution entry references are removed before deleting a CodeHint
      */
     @PreRemove
-    private void preRemove() {
+    public void preRemove() {
         solutionEntries.forEach(solutionEntry -> solutionEntry.setCodeHint(null));
     }
 
