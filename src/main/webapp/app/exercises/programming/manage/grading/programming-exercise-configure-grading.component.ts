@@ -361,7 +361,11 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         const saveTestCases = this.gradingService.updateTestCase(this.programmingExercise.id!, testCaseUpdates).pipe(
             tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
                 // From successfully updated test cases from dirty checking list.
-                this.changedTestCaseIds = _differenceWith(this.changedTestCaseIds, updatedTestCases, (id: number, testCase: ProgrammingExerciseTestCase) => testCase.id === id);
+                this.changedTestCaseIds = _differenceWith(
+                    this.changedTestCaseIds,
+                    updatedTestCases,
+                    (testCaseId: number, testCase: ProgrammingExerciseTestCase) => testCase.id === testCaseId,
+                );
 
                 // Generate the new list of test cases with the updated weights and notify the test case service.
                 const newTestCases = _unionBy(updatedTestCases, this.testCases, 'id');
@@ -408,7 +412,11 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         const saveCodeAnalysis = this.gradingService.updateCodeAnalysisCategories(this.programmingExercise.id!, categoryUpdates).pipe(
             tap((updatedCategories: StaticCodeAnalysisCategory[]) => {
                 // From successfully updated categories from dirty checking list.
-                this.changedCategoryIds = _differenceWith(this.changedCategoryIds, updatedCategories, (id: number, category: StaticCodeAnalysisCategory) => category.id === id);
+                this.changedCategoryIds = _differenceWith(
+                    this.changedCategoryIds,
+                    updatedCategories,
+                    (categoryId: number, category: StaticCodeAnalysisCategory) => category.id === categoryId,
+                );
 
                 // Generate the new list of categories.
                 this.staticCodeAnalysisCategoriesForTable = _unionBy(updatedCategories, this.backupStaticCodeAnalysisCategories, 'id');
@@ -783,19 +791,19 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     /**
      * Auxiliary method that handles the filtering of a table if the user clicks a specific test case or sca category in the respective chart
-     * @param id the id of the test case that is clicked
+     * @param testCaseId the id of the test case that is clicked
      * @param filterType enum indicating whether test cases or static code analysis categories are filtered
      */
-    filterByChart(id: any, filterType: ChartFilterType): void {
-        const filterFunction = (part: any) => part.id === (id as number);
+    filterByChart(testCaseId: number, filterType: ChartFilterType): void {
+        const filterFunction = (part: any) => part.id === testCaseId;
         if (filterType === ChartFilterType.TEST_CASES) {
             this.filteredTestCasesForTable = this.backupTestCases;
-            if (id !== this.RESET_TABLE) {
+            if (testCaseId !== this.RESET_TABLE) {
                 this.filteredTestCasesForTable = this.filteredTestCasesForTable.filter(filterFunction);
             }
         } else {
             this.staticCodeAnalysisCategoriesForTable = this.backupStaticCodeAnalysisCategories;
-            if (id !== this.RESET_TABLE) {
+            if (testCaseId !== this.RESET_TABLE) {
                 this.staticCodeAnalysisCategoriesForTable = this.staticCodeAnalysisCategoriesForTable.filter(filterFunction);
             }
         }
