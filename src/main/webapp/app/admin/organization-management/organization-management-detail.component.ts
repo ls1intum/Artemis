@@ -12,6 +12,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { iconsAsHTML } from 'app/utils/icons.utils';
 import { UserService } from 'app/core/user/user.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
 
 const cssClasses = {
     alreadyMember: 'already-member',
@@ -38,6 +39,9 @@ export class OrganizationManagementDetailComponent implements OnInit {
     searchNoResults = false;
     isTransitioning = false;
     rowClass: string | undefined = undefined;
+
+    // Icons
+    faUserSlash = faUserSlash;
 
     constructor(private organizationService: OrganizationManagementService, private userService: UserService, private alertService: AlertService, private route: ActivatedRoute) {}
 
@@ -126,13 +130,13 @@ export class OrganizationManagementDetailComponent implements OnInit {
      */
     removeFromOrganization(user: User) {
         if (user.login) {
-            this.organizationService.removeUserFromOrganization(this.organization.id!, user.login).subscribe(
-                () => {
+            this.organizationService.removeUserFromOrganization(this.organization.id!, user.login).subscribe({
+                next: () => {
                     this.organization.users = this.organization.users!.filter((u) => u.login !== user.login);
                     this.dialogErrorSource.next('');
                 },
-                (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-            );
+                error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            });
         }
     }
 
@@ -164,8 +168,8 @@ export class OrganizationManagementDetailComponent implements OnInit {
         // If the user is not part of this organization yet, perform the server call to add them
         if (!this.organization.users!.map((u) => u.id).includes(user.id) && user.login) {
             this.isTransitioning = true;
-            this.organizationService.addUserToOrganization(this.organization.id!, user.login).subscribe(
-                () => {
+            this.organizationService.addUserToOrganization(this.organization.id!, user.login).subscribe({
+                next: () => {
                     this.isTransitioning = false;
 
                     // Add newly added user to the list of all users in the organization
@@ -177,10 +181,10 @@ export class OrganizationManagementDetailComponent implements OnInit {
                     // Flash green background color to signal to the user that this record was added
                     this.flashRowClass(cssClasses.newlyAddedMember);
                 },
-                () => {
+                error: () => {
                     this.isTransitioning = false;
                 },
-            );
+            });
         } else {
             // Hand back over to the data table
             callback(user);

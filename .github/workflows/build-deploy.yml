@@ -35,6 +35,7 @@ env:
   CI: true
   node: 16.x
   java: 17
+  RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
 
 jobs:
 
@@ -43,12 +44,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Setup Node.js
-      uses: actions/setup-node@v2.4.1
+      uses: actions/setup-node@v2.5.1
       with:
         node-version: '${{ env.node }}'
         cache: 'npm'
     - name: Setup Java
-      uses: actions/setup-java@v2.3.1
+      uses: actions/setup-java@v2.5.0
       with:
         distribution: 'zulu'
         java-version: '${{ env.java }}'
@@ -73,7 +74,60 @@ jobs:
         asset_name: Artemis.war
         asset_content_type: application/x-webarchive
 
+  docker:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download Artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: Artemis.war
+    - name: Download Dockerfile
+      run: curl -O ${{ env.RAW_URL }}/src/main/docker/Dockerfile -O ${{ env.RAW_URL }}/src/main/docker/entrypoint.sh
+    - name: Build Docker Image
+      run: docker build --build-arg WAR_PATH=. -t artemis .
+    
+    - name: Compute Tag
+      uses: actions/github-script@v5
+      id: compute-tag
+      with:
+        result-encoding: string
+        script: |
+          if (context.eventName === "pull_request") {
+            return "pr-" + context.issue.number;
+          }
+          if (context.eventName === "push") {
+            if (context.ref.startsWith("refs/tags/")) {
+              return context.ref.slice(10); 
+            }
+            if (context.ref === "refs/heads/develop") {
+              return "latest";
+            }
+          }
+          return "FALSE";
+
+    # Push to GitHub Container Registry
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
+    - name: Push to GitHub Container Registry
+      env:
+        TAG: ${{ steps.compute-tag.outputs.result }}
+      run: |
+        docker tag artemis ghcr.io/ls1intum/artemis:$TAG
+        docker push ghcr.io/ls1intum/artemis:$TAG
+      if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
+
+    # TODO: Push to Docker Hub (develop + tag)
+
+    # TODO: Push to Chair Habour (??)
+
   deploy:
+    if: ${{ github.event_name == 'pull_request' }}
     needs: build
     runs-on: ubuntu-latest
     strategy:
@@ -117,6 +171,12 @@ jobs:
       id: artifact-name
       run: echo "::set-output name=war-file::$(ls)"
 
+    # Downlaod artemis-server-cli from GH without cloning the Repo
+    - name: Fetch Artemis CLI
+      run: |
+        wget ${{ env.RAW_URL }}/artemis-server-cli
+        chmod +x artemis-server-cli
+
     - name: Install OpenVPN
       run: sudo apt-get --assume-yes --no-install-recommends install openvpn
     # Fill config from Secret (https://tum.eduvpn.lrz.de/vpn-user-portal/configurations)
@@ -141,12 +201,6 @@ jobs:
           done
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
           ssh-add - <<< $SSH_PRIVATE_KEY
-
-    # Downlaod artemis-server-cli from GH without cloning the Repo
-    - name: Fetch Artemis CLI
-      run: |
-        wget https://raw.githubusercontent.com/ls1intum/Artemis/develop/artemis-server-cli
-        chmod +x artemis-server-cli
 
     - name: Deploy Artemis WAR artifact
       env:

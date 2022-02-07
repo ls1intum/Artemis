@@ -13,7 +13,7 @@
 <div>
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExamDetail.student">Student</span></h5>
-        <ol style="list-style-type: none">
+        <ol class="indented-list">
             <li>
                 <strong jhiTranslate="artemisApp.studentExamDetail.name">Name:</strong>
                 {{ student.name }}
@@ -35,13 +35,71 @@
 
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.workingTime" [ngbTooltip]="getWorkingTimeToolTip()">Working time</span></h5>
-        <form class="d-flex" [formGroup]="workingTimeForm" (ngSubmit)="saveWorkingTime()">
-            <div class="me-2" [ngbTooltip]="getWorkingTimeToolTip()">
-                <input formControlName="minutes" type="number" style="width: 60px; height: 35px" class="text-center" min="0" step="1" required /> h
-                <input formControlName="seconds" type="number" style="width: 60px; height: 35px" class="text-center" min="0" max="59" step="1" required /> min
+        <form #form="ngForm" (ngSubmit)="saveWorkingTime()">
+            <div class="mb-1 working-time-form" [ngbTooltip]="getWorkingTimeToolTip()">
+                <div class="input-group mb-1 d-flex justify-content-between align-items-center">
+                    <label class="me-4" jhiTranslate="artemisApp.studentExams.setWorkingTime">Absolute:</label>
+                    <input
+                        [(ngModel)]="workingTimeFormValues.hours"
+                        (ngModelChange)="updateWorkingTimePercent()"
+                        [disabled]="isFormDisabled()"
+                        id="hours"
+                        name="hours"
+                        type="number"
+                        class="text-center form-control form-number-input"
+                        min="0"
+                        step="1"
+                        required
+                    />
+                    <label for="hours" class="input-group-text">h</label>
+                    <input
+                        [(ngModel)]="workingTimeFormValues.minutes"
+                        (ngModelChange)="updateWorkingTimePercent()"
+                        [disabled]="isFormDisabled()"
+                        id="minutes"
+                        name="minutes"
+                        type="number"
+                        class="text-center form-control form-number-input"
+                        min="0"
+                        max="59"
+                        step="1"
+                        required
+                    />
+                    <label for="minutes" class="input-group-text">min</label>
+                    <input
+                        [(ngModel)]="workingTimeFormValues.seconds"
+                        (ngModelChange)="updateWorkingTimePercent()"
+                        [disabled]="isFormDisabled()"
+                        id="seconds"
+                        name="seconds"
+                        type="number"
+                        class="text-center form-control form-number-input"
+                        min="0"
+                        max="59"
+                        step="1"
+                        required
+                    />
+                    <label for="seconds" class="input-group-text">s</label>
+                </div>
+                <div class="input-group d-flex justify-content-between align-items-center">
+                    <label class="me-4 flex-fill" jhiTranslate="artemisApp.studentExams.setWorkingTimeRelative">Addition relative to regular working time:</label>
+                    <input
+                        [(ngModel)]="workingTimeFormValues.percent"
+                        (ngModelChange)="updateWorkingTimeDuration()"
+                        [disabled]="isFormDisabled()"
+                        id="percent"
+                        name="percent"
+                        type="number"
+                        class="text-center form-control form-number-input"
+                        min="-100"
+                        step=".01"
+                        required
+                    />
+                    <label for="percent" class="input-group-text">%</label>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary me-2" [disabled]="workingTimeForm.invalid || isSavingWorkingTime || examIsVisible()">
-                <fa-icon [icon]="'save'" [ngbTooltip]="getWorkingTimeToolTip()"></fa-icon>
+            <button type="submit" class="btn btn-primary me-2" [disabled]="!form.valid || isFormDisabled()">
+                <fa-icon [icon]="faSave" [ngbTooltip]="getWorkingTimeToolTip()"></fa-icon>
                 <span jhiTranslate="entity.action.save" [ngbTooltip]="getWorkingTimeToolTip()">Save</span>
             </button>
         </form>
@@ -50,7 +108,7 @@
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.participationStatus">Participation state</span></h5>
         <div class="me-2">
-            <ol style="list-style-type: none">
+            <ol class="indented-list">
                 <li>
                     <strong>{{ 'artemisApp.studentExams.started' | artemisTranslate }}:</strong>
                     {{ (studentExam.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
@@ -162,7 +220,7 @@
                         <td></td>
                         <td></td>
                         <td class="align-middle">
-                            <span style="text-decoration: underline" jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Points</span>
+                            <span class="text-decoration-underline" jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Points</span>
                         </td>
                         <td class="align-middle">
                             <u> {{ achievedTotalPoints }} </u>

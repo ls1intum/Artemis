@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
@@ -41,12 +41,12 @@ public class ExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseResource.class);
 
-    private static final String ENTITY_NAME = "exercise";
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     private final ExerciseService exerciseService;
+
+    private final ExerciseDeletionService exerciseDeletionService;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -62,24 +62,21 @@ public class ExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ComplaintRepository complaintRepository;
-
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserRepository userRepository, ExamDateService examDateService,
-            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ComplaintRepository complaintRepository, SubmissionRepository submissionRepository, TutorLeaderboardService tutorLeaderboardService,
-            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository) {
+    public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
+            UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+            ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository) {
         this.exerciseService = exerciseService;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
-        this.complaintRepository = complaintRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examDateService = examDateService;
         this.exerciseRepository = exerciseRepository;
@@ -113,18 +110,18 @@ public class ExerciseResource {
                 ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
                 if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                     // When there is no due date or the due date is in the future, we return forbidden here
-                    return forbidden();
+                    throw new AccessForbiddenException();
                 }
             }
             else {
                 // Students should never access exercises
-                return forbidden();
+                throw new AccessForbiddenException();
             }
         }
         // Normal exercise
         else {
             if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
-                return forbidden();
+                throw new AccessForbiddenException();
             }
             if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                 exercise.filterSensitiveInformation();
@@ -183,11 +180,7 @@ public class ExerciseResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Set<Exercise>> getUpcomingExercises() {
         log.debug("REST request to get all upcoming exercises");
-
-        if (!authCheckService.isAdmin()) {
-            return forbidden();
-        }
-
+        authCheckService.checkIsAdminElseThrow(null);
         Set<Exercise> upcomingExercises = exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDate();
         return ResponseEntity.ok(upcomingExercises);
     }
@@ -215,13 +208,8 @@ public class ExerciseResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<StatsForDashboardDTO> getStatsForExerciseAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            return forbidden();
-        }
-
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         StatsForDashboardDTO stats = exerciseService.populateCommonStatistics(exercise, exercise.isExamExercise());
-
         return ResponseEntity.ok(stats);
     }
 
@@ -237,7 +225,7 @@ public class ExerciseResource {
         log.debug("REST request to reset Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        exerciseService.reset(exercise);
+        exerciseDeletionService.reset(exercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "exercise", exerciseId.toString())).build();
     }
 
@@ -250,20 +238,18 @@ public class ExerciseResource {
      */
     @DeleteMapping(value = "/exercises/{exerciseId}/cleanup")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> cleanup(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", exerciseId, deleteRepositories);
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            return forbidden();
-        }
-        exerciseService.cleanup(exerciseId, deleteRepositories);
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        exerciseDeletionService.cleanup(exerciseId, deleteRepositories);
         log.info("Cleanup build plans was successful for Exercise : {}", exerciseId);
         return ResponseEntity.ok().build();
     }
 
     /**
-     * GET /exercises/:exerciseId/details : sends exercise details including all results for the currently logged in user
+     * GET /exercises/:exerciseId/details : sends exercise details including all results for the currently logged-in user
      *
      * @param exerciseId the exerciseId of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
@@ -271,21 +257,19 @@ public class ExerciseResource {
     @GetMapping(value = "/exercises/{exerciseId}/details")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
-        long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("{} requested access for exercise with exerciseId {}", user.getLogin(), exerciseId);
 
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
 
         // TODO: Create alternative route so that instructors and admins can access the exercise details
         // The users are not allowed to access the exercise details over this route if the exercise belongs to an exam
         if (exercise.isExamExercise()) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         // if exercise is not yet released to the students they should not have any access to it
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerResultsAndSubmissions(exercise, user.getId());
@@ -301,6 +285,7 @@ public class ExerciseResource {
         }
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
+            // TODO: instead fetch the policy without programming exercise, should be faster
             SubmissionPolicy policy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
             programmingExercise.setSubmissionPolicy(policy);
             programmingExercise.checksAndSetsIfProgrammingExerciseIsLocalSimulation();
@@ -312,9 +297,7 @@ public class ExerciseResource {
             exercise.filterSensitiveInformation();
         }
 
-        log.debug("getResultsForCurrentUser took {}ms", System.currentTimeMillis() - start);
-
-        return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
+        return ResponseEntity.ok(exercise);
     }
 
     /**
@@ -328,12 +311,7 @@ public class ExerciseResource {
     public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
         log.debug("toggleSecondCorrectionEnabled for exercise with id: {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (exercise == null) {
-            throw new EntityNotFoundException("Exercise not found with id " + exerciseId);
-        }
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         return ResponseEntity.ok(exerciseRepository.toggleSecondCorrection(exercise));
     }
 

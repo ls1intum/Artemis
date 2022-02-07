@@ -1,21 +1,20 @@
 import { BASE_API, POST } from '../../../constants';
 
 export class MultipleChoiceQuiz {
-    getQuizBody() {
-        return cy.get('.mc-question');
+    private getQuizBody(quizQuestionId: number) {
+        return cy.get('#question' + quizQuestionId);
     }
 
-    tickAnswerOption(optionNumber: number) {
-        this.getQuizBody()
+    tickAnswerOption(optionNumber: number, quizQuestionId = 0) {
+        this.getQuizBody(quizQuestionId)
             .get('#answer-option-' + optionNumber)
-            .find('.svg-inline--fa')
-            .first()
+            .find('#mc-answer-selection-' + optionNumber)
             .click();
     }
 
     submit() {
         cy.intercept(POST, BASE_API + 'exercises/*/submissions/live').as('createQuizExercise');
-        cy.get('.jhi-btn').should('contain.text', 'Submit').click();
+        cy.get('#submit-quiz').click();
         return cy.wait('@createQuizExercise');
     }
 }

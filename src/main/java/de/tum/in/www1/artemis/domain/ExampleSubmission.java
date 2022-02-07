@@ -28,7 +28,7 @@ public class ExampleSubmission extends DomainObject {
     @ManyToOne
     private Exercise exercise;
 
-    @OneToOne(cascade = CascadeType.REMOVE)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JoinColumn(unique = true)
     private Submission submission;
 

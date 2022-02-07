@@ -1,4 +1,4 @@
-import { safeUnescape } from 'app/shared/util/security-util';
+import { safeUnescape } from 'app/shared/util/security.util';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
@@ -33,9 +33,9 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
         const mappedLogs = buildLogs.map(({ log, ...rest }) => {
             let logType = BuildLogType.OTHER;
             if (log) {
-                if (log.trimLeft().startsWith('[ERROR]')) {
+                if (log.trimStart().startsWith('[ERROR]')) {
                     logType = BuildLogType.ERROR;
-                } else if (log.trimLeft().startsWith('WARNING')) {
+                } else if (log.trimStart().startsWith('WARNING')) {
                     logType = BuildLogType.WARNING;
                 }
             }
@@ -61,7 +61,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
         } else {
             errorLogRegex = this.defaultErrorLogRegex;
         }
-        return (
+        return Array.from(
             this
                 // Parse build logs
                 .map(({ log, time }) => ({ log: log.match(errorLogRegex), time }))
@@ -87,7 +87,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
                     column: Math.max(parseInt(column, 10) - 1, 0),
                     text: safeUnescape(text) || '',
                     timestamp: Date.parse(time),
-                }))
+                })),
         );
     }
 }

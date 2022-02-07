@@ -1,21 +1,25 @@
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
-import { MODELING_SPACE } from '../exercises/modeling/ModelingEditor';
+import { MODELING_EDITOR_CANVAS } from '../exercises/modeling/ModelingEditor';
 import { CypressExerciseType } from '../../requests/CourseManagementRequests';
 import { BASE_API, PUT } from '../../constants';
-// TODO: find or create better selectors for this
-const FEEDBACK_CONTAINER = '.sc-lcuiOb';
+
+const ASSESSMENT_CONTAINER = '#modeling-assessment-container';
 
 /**
  * A class which encapsulates UI selectors and actions for the Modeling Exercise Assessment editor
  */
 export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessmentPage {
     openAssessmentForComponent(componentNumber: number) {
-        cy.get('.apollon-row').getSettled(`${MODELING_SPACE} >> :nth-child(${componentNumber})`).children().eq(0).dblclick('top', { force: true });
+        cy.get('#apollon-assessment-row').getSettled(`${MODELING_EDITOR_CANVAS} >>> :nth-child(${componentNumber})`).children().eq(0).dblclick('top', { force: true });
     }
 
     assessComponent(points: number, feedback: string) {
-        cy.get(`${FEEDBACK_CONTAINER} > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)`).type(`${points}`);
-        cy.get(`${FEEDBACK_CONTAINER} > :nth-child(1) > :nth-child(3)`).type(`${feedback}`);
+        this.getPointAssessmentField().type(`${points}`);
+        this.getFeedbackAssessmentField().type(`${feedback}`);
+    }
+
+    clickNextAssessment() {
+        this.getNextAssessmentField().click();
     }
 
     rejectComplaint(response: string) {
@@ -35,5 +39,21 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
         cy.intercept(PUT, BASE_API + 'modeling-submissions/*/result/*/assessment*').as('submitModelingAssessment');
         super.submitWithoutInterception();
         return cy.wait('@submitModelingAssessment').its('response.statusCode').should('eq', 200);
+    }
+
+    private getNextAssessmentField() {
+        return this.getAssessmentContainer().children().last();
+    }
+
+    private getPointAssessmentField() {
+        return this.getAssessmentContainer().children().eq(1).children().children().eq(1);
+    }
+
+    private getFeedbackAssessmentField() {
+        return this.getAssessmentContainer().children().eq(3);
+    }
+
+    private getAssessmentContainer() {
+        return cy.get(`${ASSESSMENT_CONTAINER}`);
     }
 }

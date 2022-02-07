@@ -11,6 +11,18 @@ import { ActivatedRoute } from '@angular/router';
 import { lastValueFrom } from 'rxjs';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
+import {
+    faBalanceScaleRight,
+    faEdit,
+    faExclamation,
+    faExclamationTriangle,
+    faInfoCircle,
+    faQuestionCircle,
+    faRobot,
+    faSearch,
+    faTimes,
+    faTrash,
+} from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -28,7 +40,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Output() onConflictsClicked = new EventEmitter<number>();
     @ViewChild('detailText') textareaRef: ElementRef;
     @ViewChild(ConfirmIconComponent) confirmIconComponent: ConfirmIconComponent;
-    @Input() disableEditScore = false;
     @Input() readOnly: boolean;
     @Input() isConflictingFeedback: boolean;
     @Input() conflictMode: boolean;
@@ -61,6 +72,18 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         return this.isSelectedConflict;
     }
 
+    // Icons
+    faEdit = faEdit;
+    faQuestionCircle = faQuestionCircle;
+    faExclamationTriangle = faExclamationTriangle;
+    faInfoCircle = faInfoCircle;
+    faRobot = faRobot;
+    faExclamation = faExclamation;
+    faSearch = faSearch;
+    faBalanceScaleRight = faBalanceScaleRight;
+    faTimes = faTimes;
+    faTrash = faTrash;
+
     constructor(
         public structuredGradingCriterionService: StructuredGradingCriterionService,
         protected modalService: NgbModal,
@@ -77,7 +100,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         this.textareaElement = this.textareaRef.nativeElement as HTMLTextAreaElement;
         setTimeout(() => this.textareaAutogrow());
-        this.disableEditScore = !!(this.feedback.gradingInstruction && this.feedback.gradingInstruction.usageCount !== 0);
     }
 
     /**
@@ -157,7 +179,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
 
     connectFeedbackWithInstruction(event: Event) {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
-        this.disableEditScore = !!(this.feedback.gradingInstruction && this.feedback.gradingInstruction.usageCount !== 0);
 
         // Reset the feedback correction status upon setting grading instruction in order to hide it.
         this.feedback.correctionStatus = undefined;

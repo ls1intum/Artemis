@@ -1,6 +1,54 @@
-<h3 class="text-center">{{ 'artemisApp.exercise-scores-chart.title' | artemisTranslate }}</h3>
-<div class="chart-wrapper mx-auto">
-    <div class="mx-auto chart" #chartDiv>
-        <canvas baseChart [datasets]="dataSets" [labels]="labels" [options]="chartOptions" [colors]="chartColors" [legend]="true" [chartType]="'line'"></canvas>
+<div class="d-flex justify-content-center">
+    <h3>{{ 'artemisApp.exercise-scores-chart.title' | artemisTranslate }}</h3>
+    <div *ngIf="typeSet.size > 0" class="filter mb-2" aria-label="Filter Dropdown" ngbDropdown>
+        <button class="btn" [ngClass]="{ 'btn-secondary': numberOfActiveFilters === 0, 'btn-success': numberOfActiveFilters > 0 }" ngbDropdownToggle id="filter-dropdown-button">
+            <fa-icon [icon]="faFilter"></fa-icon>
+            <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: numberOfActiveFilters } }}</span>
+        </button>
+        <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+            <li>
+                <b class="ms-2">{{ 'artemisApp.exercise-scores-chart.includeType' | artemisTranslate }}</b>
+            </li>
+            <li *ngFor="let type of typeSet">
+                <label>
+                    <input class="ms-2" (change)="toggleExerciseType(type)" [checked]="chartFilter.get(type.toLowerCase().replace('_', '-'))" type="checkbox" />
+                    <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase() + 'Plural' | artemisTranslate }}</span>
+                </label>
+            </li>
+        </ul>
+    </div>
+</div>
+<div class="row chart-wrapper mx-auto">
+    <div #containerRef class="col-11">
+        <ngx-charts-line-chart
+            [view]="[containerRef.offsetWidth, 350]"
+            [results]="ngxData"
+            [scheme]="ngxColor"
+            [yAxisLabel]="yAxisLabel"
+            [xAxisLabel]="xAxisLabel"
+            [legend]="true"
+            [legendTitle]="''"
+            [xAxis]="true"
+            [yAxis]="true"
+            [showYAxisLabel]="true"
+            [showXAxisLabel]="true"
+            [yScaleMax]="maxScale"
+            [yScaleMin]="1"
+            [maxXAxisTickLength]="15"
+            (select)="onSelect($event)"
+        >
+            <ng-template #tooltipTemplate let-model="model">
+                <b>{{ model.name }}</b> <br />
+                <span>{{ model.series }}: {{ Math.max(model.value - 1, 0) }} %</span>
+            </ng-template>
+            <ng-template #seriesTooltipTemplate let-model="model">
+                <h6>{{ model[0].name }}</h6>
+                <div *ngFor="let entry of model">{{ entry.series }}: {{ Math.max(entry.value - 1, 0) }}%</div>
+                <b>
+                    {{ 'artemisApp.exercise-scores-chart.exerciseType' | artemisTranslate }}
+                    {{ 'artemisApp.exercise-scores-chart.' + model[0].exerciseType.toLowerCase() | artemisTranslate }}</b
+                >
+            </ng-template>
+        </ngx-charts-line-chart>
     </div>
 </div>

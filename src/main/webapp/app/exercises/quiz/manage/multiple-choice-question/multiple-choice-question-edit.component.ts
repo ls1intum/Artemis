@@ -10,6 +10,8 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
+import { generateTextHintExplanation } from 'app/shared/util/markdown.util';
+import { faAngleDown, faAngleRight, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
@@ -50,6 +52,11 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     /** DomainCommands for the multiple choice question **/
     commandMultipleChoiceQuestions: DomainCommand[] = [this.correctCommand, this.incorrectCommand, this.explanationCommand, this.hintCommand];
 
+    // Icons
+    faTrash = faTrash;
+    faAngleRight = faAngleRight;
+    faAngleDown = faAngleDown;
+
     constructor(private artemisMarkdown: ArtemisMarkdownService, private modalService: NgbModal, private changeDetector: ChangeDetectorRef) {}
 
     /**
@@ -67,11 +74,9 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
      */
     generateMarkdown(): string {
         const markdownText =
-            this.artemisMarkdown.generateTextHintExplanation(this.question) +
+            generateTextHintExplanation(this.question) +
             '\n\n' +
-            this.question
-                .answerOptions!.map((answerOption) => (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption))
-                .join('\n');
+            this.question.answerOptions!.map((answerOption) => (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + generateTextHintExplanation(answerOption)).join('\n');
         return markdownText;
     }
 

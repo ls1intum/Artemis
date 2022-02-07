@@ -1,7 +1,6 @@
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 export class MockUserService {
@@ -37,5 +36,15 @@ export class MockUserService {
             body: {} as User,
             headers: new HttpHeaders(),
         } as HttpResponse<User>);
+    }
+
+    updateNotificationVisibility(showAllNotifications: boolean): Observable<HttpResponse<void>> {
+        return of({
+            headers: new HttpHeaders(),
+        } as HttpResponse<void>);
+    }
+
+    initializeLTIUser(): Observable<HttpResponse<{ password: string }>> {
+        return of({ headers: new HttpHeaders(), body: { password: '' } } as HttpResponse<{ password: string }>);
     }
 }

@@ -12,8 +12,9 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faClipboard, faEye, faListAlt, faPlus, faSort, faThList, faTimes, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -27,6 +28,17 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     eventSubscriber: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faSort = faSort;
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faEye = faEye;
+    faWrench = faWrench;
+    faUser = faUser;
+    faListAlt = faListAlt;
+    faClipboard = faClipboard;
+    faThList = faThList;
 
     constructor(
         private route: ActivatedRoute,
@@ -47,14 +59,14 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * @see registerChangeInExams
      */
     ngOnInit(): void {
-        this.courseService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe(
-            (res: HttpResponse<Course>) => {
+        this.courseService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
+            next: (res: HttpResponse<Course>) => {
                 this.course = res.body!;
                 this.loadAllExamsForCourse();
                 this.registerChangeInExams();
             },
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     /**
@@ -71,8 +83,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * Load all exams for a course.
      */
     loadAllExamsForCourse() {
-        this.examManagementService.findAllExamsForCourse(this.course.id!).subscribe(
-            (res: HttpResponse<Exam[]>) => {
+        this.examManagementService.findAllExamsForCourse(this.course.id!).subscribe({
+            next: (res: HttpResponse<Exam[]>) => {
                 this.exams = res.body!;
                 this.exams.forEach((exam) => {
                     this.examManagementService
@@ -82,8 +94,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
                         );
                 });
             },
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     /**
@@ -100,13 +112,13 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * @param examId Id to be deleted
      */
     deleteExam(examId: number): void {
-        this.examManagementService.delete(this.course.id!, examId).subscribe(
-            () => {
+        this.examManagementService.delete(this.course.id!, examId).subscribe({
+            next: () => {
                 this.dialogErrorSource.next('');
                 this.exams = this.exams.filter((exam) => exam.id !== examId);
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     /**

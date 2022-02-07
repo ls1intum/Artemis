@@ -6,11 +6,8 @@ import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.co
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import dayjs from 'dayjs';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { MockRouterLinkDirective } from '../../lecture-unit/lecture-unit-management.component.spec';
+import dayjs from 'dayjs/esm';
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
@@ -22,11 +19,10 @@ import { HttpResponse } from '@angular/common/http';
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
+import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
@@ -66,6 +62,7 @@ describe('Course Management Detail Component', () => {
             declarations: [
                 CourseDetailComponent,
                 MockComponent(SecuredImageComponent),
+                MockComponent(UsersImportButtonComponent),
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(DeleteButtonDirective),
@@ -76,6 +73,7 @@ describe('Course Management Detail Component', () => {
                 MockDirective(HasAnyAuthorityDirective),
                 MockComponent(CourseDetailDoughnutChartComponent),
                 MockComponent(CourseDetailLineChartComponent),
+                MockComponent(FullscreenComponent),
             ],
             providers: [{ provide: ActivatedRoute, useValue: route }, { provide: Router, useClass: MockRouter }, MockProvider(CourseManagementService)],
         }).compileComponents();
@@ -86,43 +84,45 @@ describe('Course Management Detail Component', () => {
     });
 
     beforeEach(fakeAsync(() => {
-        const statsStub = sinon.stub(courseService, 'getCourseStatisticsForDetailView');
-        statsStub.returns(of(new HttpResponse({ body: dtoMock })));
-        const infoStub = sinon.stub(courseService, 'find');
-        infoStub.returns(of(new HttpResponse({ body: course })));
+        const statsStub = jest.spyOn(courseService, 'getCourseStatisticsForDetailView');
+        statsStub.mockReturnValue(of(new HttpResponse({ body: dtoMock })));
+        const infoStub = jest.spyOn(courseService, 'find');
+        infoStub.mockReturnValue(of(new HttpResponse({ body: course })));
 
         component.ngOnInit();
         tick();
     }));
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('Should call registerChangeInCourses on init', () => {
-        const registerSpy = sinon.spy(component, 'registerChangeInCourses');
+        const registerSpy = jest.spyOn(component, 'registerChangeInCourses');
 
         fixture.detectChanges();
         component.ngOnInit();
-        expect(component.courseDTO).to.deep.equal(dtoMock);
-        expect(component.course).to.deep.equal(course);
-        expect(registerSpy).to.have.been.called;
+        expect(component.courseDTO).toEqual(dtoMock);
+        expect(component.course).toEqual(course);
+        expect(registerSpy).toHaveBeenCalledTimes(2);
     });
 
     it('should destroy event subscriber onDestroy', () => {
+        const destroySpy = jest.spyOn(eventManager, 'destroy');
         component.ngOnDestroy();
-        expect(eventManager.destroy).to.have.been.called;
+        expect(destroySpy).toHaveBeenCalled();
     });
 
     it('should broadcast course modification on delete', () => {
-        const deleteStub = sinon.stub(courseService, 'delete');
-        deleteStub.returns(of(new HttpResponse<void>()));
+        const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
+        const deleteStub = jest.spyOn(courseService, 'delete');
+        deleteStub.mockReturnValue(of(new HttpResponse<void>()));
 
         const courseId = 444;
         component.deleteCourse(courseId);
 
-        expect(deleteStub).to.have.been.calledWith(courseId);
-        expect(eventManager.broadcast).to.have.been.calledWith({
+        expect(deleteStub).toHaveBeenCalledWith(courseId);
+        expect(broadcastSpy).toHaveBeenCalledWith({
             name: 'courseListModification',
             content: 'Deleted an course',
         });

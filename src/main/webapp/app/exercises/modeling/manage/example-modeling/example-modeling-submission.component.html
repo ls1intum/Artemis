@@ -4,6 +4,7 @@
         <h2 jhiTranslate="artemisApp.modelingExercise.exampleSubmissionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
             Example Modeling Submission for Exercise {{ exercise?.title }}
         </h2>
+        <h5 *ngIf="toComplete" class="fw-light">{{ 'artemisApp.exampleSubmission.home.assessmentTraining' | artemisTranslate }}</h5>
         <p *ngIf="assessmentMode" jhiTranslate="artemisApp.exampleSubmission.assessmentInstruction">Double-click on a model element to view and edit the element's assessment.</p>
     </div>
 
@@ -11,29 +12,31 @@
         <div class="d-flex justify-content-end flex-wrap" *ngIf="!assessmentMode">
             <div class="form-check align-baseline">
                 <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial" [(ngModel)]="usedForTutorial" />
-                <label class="form-check-label" for="field_usedForTutorial" jhiTranslate="artemisApp.modelingExercise.usedForTutorial">Used for tutorial</label>
+                <label class="form-check-label" for="field_usedForTutorial" jhiTranslate="artemisApp.exampleSubmission.usedForTutorial"></label>
             </div>
 
             <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary ms-2 button-resize">
-                <fa-icon [icon]="'save'"></fa-icon>
-                <span *ngIf="isNewSubmission" jhiTranslate="artemisApp.modelingExercise.createNewExampleSubmission">Create new example submission</span>
+                <fa-icon [icon]="faSave"></fa-icon>
+                <span *ngIf="isNewSubmission" jhiTranslate="artemisApp.modelingExercise.createNewExampleSubmission" id="new-modeling-example-submission"
+                    >Create new example submission</span
+                >
                 <span *ngIf="!isNewSubmission" jhiTranslate="artemisApp.modelingExercise.saveExampleSubmission">Save modeling submission</span>
             </button>
         </div>
 
         <button *ngIf="assessmentMode" (click)="saveExampleAssessment()" class="btn btn-primary button-resize">
-            <fa-icon [icon]="'save'"></fa-icon>
+            <fa-icon [icon]="faSave"></fa-icon>
             <span jhiTranslate="artemisApp.modelingExercise.saveExampleAssessment">Save example assessment</span>
         </button>
 
         <div class="mt-2 mb-3" *ngIf="exampleSubmission && !isNewSubmission">
             <button class="btn btn-secondary button-resize" *ngIf="!assessmentMode" (click)="showAssessment()">
-                <fa-icon [icon]="'chalkboard-teacher'"></fa-icon>
-                <span jhiTranslate="artemisApp.modelingExercise.showExampleAssessment">Show assessment</span>
+                <fa-icon [icon]="faChalkboardTeacher"></fa-icon>
+                <span jhiTranslate="artemisApp.modelingExercise.showExampleAssessment" id="show-modeling-example-assessment">Show assessment</span>
             </button>
 
             <button class="btn btn-secondary button-resize" *ngIf="assessmentMode" (click)="showSubmission()">
-                <fa-icon [icon]="'code-branch'"></fa-icon>
+                <fa-icon [icon]="faCodeBranch"></fa-icon>
                 <span jhiTranslate="artemisApp.modelingExercise.showExampleSubmission">Show submission</span>
             </button>
         </div>
@@ -45,29 +48,29 @@
             <div *ngFor="let legendElement of legend.slice(0, 3)" class="pe-5" style="display: inline-block">
                 <span>{{ legendElement.text | artemisTranslate }}</span>
                 <fa-layers>
-                    <fa-icon style="color: #e9ecef" [icon]="'circle'" size="2x"></fa-icon>
+                    <fa-icon style="color: #e9ecef" [icon]="faCircle" size="2x"></fa-icon>
                     <fa-icon [icon]="legendElement.icon" [styles]="{ width: '29px', color: legendElement.color, 'font-size': legendElement.size }" transform="shrink-6"></fa-icon>
                 </fa-layers>
             </div>
 
-            <!-- extra logic for the display warning icon -->
-            <div class="pe-5" style="display: inline-block">
+            <!-- Extra logic for displaying warning icon. It should only be shown for tutors that are assessing example submissions -->
+            <div *ngIf="toComplete" class="pe-5" style="display: inline-block">
                 <span>{{ legend[3].text | artemisTranslate }}</span>
                 <fa-layers>
-                    <fa-icon style="color: #e9ecef" [icon]="'circle'" size="2x"></fa-icon>
+                    <fa-icon style="color: #e9ecef" [icon]="faCircle" size="2x"></fa-icon>
                     <fa-icon
                         [icon]="legend[3].icon"
                         [styles]="{ color: '#ffc800', width: '29px', 'margin-top': '-9px', 'font-size': legend[3].size }"
                         transform="shrink-6"
                     ></fa-icon>
-                    <fa-icon [icon]="'exclamation'" size="2x" [styles]="{ width: '29px', 'margin-top': '-8px' }" transform="shrink-10"></fa-icon>
+                    <fa-icon [icon]="faExclamation" size="2x" [styles]="{ width: '29px', 'margin-top': '-8px' }" transform="shrink-10"></fa-icon>
                 </fa-layers>
             </div>
         </div>
 
         <div class="col-3 text-end mb-2" *ngIf="readOnly">
             <button (click)="readAndUnderstood()" class="btn btn-success">
-                <fa-icon [icon]="'save'"></fa-icon>
+                <fa-icon [icon]="faSave"></fa-icon>
                 <span jhiTranslate="artemisApp.exampleSubmission.readAndUnderstood">I have viewed and understood the example</span>
             </button>
         </div>
@@ -76,7 +79,7 @@
             <button
                 class="btn btn-primary px-5"
                 (click)="checkAssessment()"
-                [disabled]="!feedbacks || !assessmentsAreValid"
+                [disabled]="!assessments || !assessmentsAreValid"
                 jhiTranslate="artemisApp.exampleSubmission.submitAssessment"
             >
                 Submit Assessment
@@ -103,7 +106,7 @@
                     <jhi-modeling-assessment
                         class="col-12"
                         *ngIf="assessmentMode && exercise.diagramType"
-                        [model]="umlModel"
+                        [umlModel]="umlModel"
                         [resultFeedbacks]="result?.feedbacks || []"
                         [diagramType]="exercise.diagramType!"
                         [maxScore]="exercise.maxPoints || 0"
@@ -111,7 +114,7 @@
                         [totalScore]="totalScore"
                         [readOnly]="readOnly"
                         [course]="course"
-                        (feedbackChanged)="onFeedbackChanged($event)"
+                        (feedbackChanged)="onReferencedFeedbackChanged($event)"
                     >
                     </jhi-modeling-assessment>
                 </div>
@@ -123,7 +126,7 @@
                     <sup>
                         <small>
                             <fa-icon
-                                [icon]="'info-circle'"
+                                [icon]="faInfoCircle"
                                 title="{{ 'artemisApp.exampleSubmission.assessmentExplanationInfo' | artemisTranslate }}"
                                 style="color: #ffc107"
                             ></fa-icon>
@@ -140,9 +143,24 @@
                     [(ngModel)]="assessmentExplanation"
                     [disabled]="readOnly"
                 ></textarea>
+
+                <jhi-unreferenced-feedback
+                    *ngIf="assessmentMode"
+                    [(feedbacks)]="unreferencedFeedback"
+                    [readOnly]="readOnly"
+                    [addReferenceIdForExampleSubmission]="true"
+                    (feedbacksChange)="onUnReferencedFeedbackChanged($event)"
+                ></jhi-unreferenced-feedback>
             </div>
 
-            <jhi-collapsable-assessment-instructions class="col-auto pe-2" *ngIf="exercise" [readOnly]="readOnly" [exercise]="exercise" [collapsed]="!readOnly && !toComplete">
+            <jhi-collapsable-assessment-instructions
+                class="col-auto pe-2"
+                *ngIf="exercise"
+                [readOnly]="readOnly"
+                [exercise]="exercise"
+                [collapsed]="!readOnly && !toComplete"
+                [isAssessmentTraining]="toComplete"
+            >
             </jhi-collapsable-assessment-instructions>
         </div>
     </div>

@@ -1,0 +1,102 @@
+{
+    "eventKey": "repo:refs_changed",
+    "date": "2019-07-27T17:07:34+0000",
+    "actor": {
+        "name": "admin",
+        "emailAddress": "admin@bitbucket.de",
+        "id": 1,
+        "displayName": "Admin",
+        "active": true,
+        "slug": "admin",
+        "type": "NORMAL",
+        "links": {
+            "self": [
+                {
+                    "href": "http://bitbucket/users/admin"
+                }
+            ]
+        }
+    },
+    "repository": {
+        "slug": "test201904bprogrammingexercise6-exercise-testuser",
+        "id": 422,
+        "name": "test201904bprogrammingexercise6-exercise-testuser",
+        "scmId": "git",
+        "state": "AVAILABLE",
+        "statusMessage": "Available",
+        "forkable": true,
+        "origin": {
+            "slug": "test201904bprogrammingexercise6-exercise",
+            "id": 404,
+            "name": "test201904bprogrammingexercise6-exercise",
+            "scmId": "git",
+            "state": "AVAILABLE",
+            "statusMessage": "Available",
+            "forkable": true,
+            "project": {
+                "key": "TEST201904BPROGRAMMINGEXERCISE6",
+                "id": 186,
+                "name": "Test201904B ProgrammingExercise6",
+                "public": false,
+                "type": "NORMAL",
+                "links": {
+                    "self": [
+                        {
+                            "href": "http://bitbucket/projects/TEST201904BPROGRAMMINGEXERCISE6"
+                        }
+                    ]
+                }
+            },
+            "public": false,
+            "links": {
+                "clone": [
+                    {
+                        "href": "ssh://git@bitbucket:7999/test201904bprogrammingexercise6/test201904bprogrammingexercise6-exercise.git",
+                        "name": "ssh"
+                    },
+                    {
+                        "href": "http://bitbucket/scm/test201904bprogrammingexercise6/test201904bprogrammingexercise6-exercise.git",
+                        "name": "http"
+                    }
+                ],
+                "self": [
+                    {
+                        "href": "http://bitbucket/projects/TEST201904BPROGRAMMINGEXERCISE6/repos/test201904bprogrammingexercise6-exercise/browse"
+                    }
+                ]
+            }
+        },
+        "project": {
+            "key": "TEST201904BPROGRAMMINGEXERCISE6",
+            "id": 186,
+            "name": "Test201904B ProgrammingExercise6",
+            "public": false,
+            "type": "NORMAL",
+            "links": {
+                "self": [
+                    {
+                        "href": "http://bitbucket/projects/TEST201904BPROGRAMMINGEXERCISE6"
+                    }
+                ]
+            }
+        },
+        "public": false,
+        "links": {
+            "clone": [
+                {
+                    "href": "http://bitbucket/scm/test201904bprogrammingexercise6/test201904bprogrammingexercise6-exercise-testuser.git",
+                    "name": "http"
+                },
+                {
+                    "href": "ssh://git@bitbucket:7999/test201904bprogrammingexercise6/test201904bprogrammingexercise6-exercise-testuser.git",
+                    "name": "ssh"
+                }
+            ],
+            "self": [
+                {
+                    "href": "http://bitbucket/projects/TEST201904BPROGRAMMINGEXERCISE6/repos/test201904bprogrammingexercise6-exercise-testuser/browse"
+                }
+            ]
+        }
+    }
+}

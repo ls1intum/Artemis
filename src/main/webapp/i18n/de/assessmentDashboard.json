@@ -7,7 +7,7 @@
             "title": "Bewertungsübersicht",
             "noSubmissionFound": "Keine Abgaben gefunden",
             "assessmentInformation": "Bewertungsinformationen",
-            "submissions": "Einreichugen",
+            "submissions": "Einreichungen",
             "pageHeader": "Bewertungs-Dashboard für den Kurs",
             "pageHeaderExam": "Klausur-Dashboard für Tutor:innen von",
             "pageHeaderExamTestRun": "Testlauf Bewertungs-Dashboard",
@@ -18,7 +18,8 @@
             "totalComplaints": "Gesamtzahl der Beschwerden",
             "moreFeedbackRequests": "Feedbackanfragen",
             "totalMoreFeedbackRequests": "Gesamtzahl der weiteren Feedbackanfragen",
-            "showFinishedExercises": "Beendete Übungen anzeigen",
+            "hideFinishedExercises": "Beendete Übungen verbergen",
+            "hideOptional": "Optionale Übungen verbergen",
             "exercise": "Übungen",
             "exerciseType": "Aufgabentyp",
             "yourStatus": "Dein Status",
@@ -35,21 +36,21 @@
             "exerciseTeams": "Teams der Übung",
             "exerciseTable": {
                 "title": "Tabelle aller Übungen",
-                "courseInformation": "Übung Tabelle listet alle Übungen des aktuellen Kurses auf. Um alle Übungen, einschließlich der beendeten, anzuzeigen, musst du in das folgende Checkbox. Du kannst klicken <strong>Aufgaben-Dashboard</strong>, um die Aufgabendetails und Abgaben der Studierenden anschauen.",
-                "examInformation": "Übung Tabelle listet alle Übungen des aktuellen Klausur auf. Um alle Übungen, einschließlich der beendeten, anzuzeigen, musst du in das folgende Checkbox. Du kannst klicken <strong>Aufgaben-Dashboard</strong>, um die Aufgabendetails und Abgaben der Studierenden anschauen."
+                "courseInformation": "Die Übungstabelle listet alle Übungen des aktuellen Kurses auf. Du kannst auswählen, ob schon beendete Übungen ausgeblendet werden sollen. Über das jeweilige <strong>Aufgaben-Dashboard</strong> kannst du die Aufgabendetails und deine Bewertungen anschauen. Außerdem kannst du dort weitere Bewertungen vornehmen und auf Beschwerden antworten.",
+                "examInformation": "Die Übungstabelle listet alle Übungen der aktuellen Klausur auf. Du kannst auswählen, ob schon beendete Übungen ausgeblendet werden sollen. Über das jeweilige <strong>Aufgaben-Dashboard</strong> kannst du die Aufgabendetails und deine Bewertungen anschauen. Außerdem kannst du dort weitere Bewertungen vornehmen und auf Beschwerden antworten."
             },
             "tutorPerformanceIssues": {
                 "title": "Probleme mit der Leistung von Tutor:innen",
                 "tutor": "Tutor:in {{ tutorName }} hat Probleme mit der Leistung",
                 "ratings": {
-                    "below": "{{tutorName}} hat {{numberOfTutorItems}} Ratings mit dem durchschnittlichen Wert von {{averageTutorValue}} ⭐️ bekommen. Das ist weniger als {{threshold}} ⭐."
+                    "below": "{{tutorName}} hat {{numberOfTutorItems}} Ratings mit dem durchschnittlichen Wert von {{averageTutorValue}} ⭐️ bekommen. Das ist weniger als der Gesamtdurchschnitt von {{threshold}} ⭐."
                 },
                 "score": {
-                    "above": "{{tutorName}} hat {{numberOfTutorItems}} Abgaben mit der durchschnittlichen Punktzahl von {{averageTutorValue}}% bewertet. Das ist größer als {{threshold}}%.",
-                    "below": "{{tutorName}} hat {{numberOfTutorItems}} Abgaben mit der durchschnittlichen Punktzahl von {{averageTutorValue}}% bewertet. Das ist weniger als {{threshold}}%."
+                    "above": "{{tutorName}} hat {{numberOfTutorItems}} Abgaben mit der durchschnittlichen Punktzahl von {{averageTutorValue}}% bewertet. Das ist mehr als der Gesamtdurchschnitt von {{threshold}}%.",
+                    "below": "{{tutorName}} hat {{numberOfTutorItems}} Abgaben mit der durchschnittlichen Punktzahl von {{averageTutorValue}}% bewertet. Das ist weniger als der Gesamtdurchschnitt von {{threshold}}%."
                 },
                 "complaints": {
-                    "above": "{{tutorName}} hat {{numberOfTutorItems}} Beschwerden bekommen. Das entspricht einer Beschwerdequote von {{averageTutorValue}}%. Das ist größer als {{threshold}}%."
+                    "above": "{{tutorName}} hat {{numberOfTutorItems}} Beschwerden bekommen. Das entspricht einer Beschwerdequote von {{averageTutorValue}}%. Das ist mehr als der Gesamtdurchschnitt von {{threshold}}%."
                 }
             },
             "tutorLeaderboard": {
@@ -57,7 +58,7 @@
                 "examTitle": "Tutor:innen-Klausur Bestenliste",
                 "id": "ID",
                 "name": "Name",
-                "numberOfAssessments": "Assessments",
+                "numberOfAssessments": "Bewertungen",
                 "numberOfAcceptedComplaints": "Angenommene Beschwerden",
                 "numberOfNotAnsweredMoreFeedbackRequests": "Offene Feedbackanfragen",
                 "numberOfComplaintResponses": "Beschwerdeantworten",
@@ -65,7 +66,8 @@
                 "points": "Punkte",
                 "averageScore": "Durchschnittliche Punktzahl",
                 "averageRating": "Durchschnittliches Rating"
-            }
+            },
+            "exerciseAverageRating": "Durchschnittliches Rating"
         }
     }
 }

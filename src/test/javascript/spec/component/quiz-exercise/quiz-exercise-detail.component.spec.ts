@@ -29,7 +29,7 @@ import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { advanceTo } from 'jest-date-mock';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
@@ -330,7 +330,7 @@ describe('QuizExercise Management Detail Component', () => {
             });
 
             it('should call on error if course service fails', () => {
-                courseServiceStub.mockReturnValue(throwError({ status: 404 }));
+                courseServiceStub.mockReturnValue(throwError(() => ({ status: 404 })));
                 comp.init();
                 expect(alertServiceStub).toBeCalled();
             });
@@ -667,7 +667,7 @@ describe('QuizExercise Management Detail Component', () => {
                 });
 
                 it('should call alert service if fails', () => {
-                    quizExerciseServiceFindForCourseStub.mockReturnValue(throwError({ status: 404 }));
+                    quizExerciseServiceFindForCourseStub.mockReturnValue(throwError(() => ({ status: 404 })));
                     console.error = jest.fn();
                     let alertServiceStub: jest.SpyInstance;
                     alertServiceStub = jest.spyOn(alertService, 'error');
@@ -714,7 +714,7 @@ describe('QuizExercise Management Detail Component', () => {
                 });
 
                 it('should call alert service if fails', () => {
-                    quizExerciseServiceFindForExamStub.mockReturnValue(throwError({ status: 404 }));
+                    quizExerciseServiceFindForExamStub.mockReturnValue(throwError(() => ({ status: 404 })));
                     console.error = jest.fn();
                     let alertServiceStub: jest.SpyInstance;
                     alertServiceStub = jest.spyOn(alertService, 'error');
@@ -939,7 +939,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should be valid if MC question hint has exactly 255 characters', () => {
                 const { question } = createValidMCQuestion();
-                question.hint = new Array(255 + 1).join('f');
+                question.hint = 'f'.repeat(255);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).toBe(true);
@@ -947,7 +947,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should be valid if MC question explanation has exactly 500 characters', () => {
                 const { question } = createValidMCQuestion();
-                question.explanation = new Array(500 + 1).join('f');
+                question.explanation = 'f'.repeat(500);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).toBe(true);
@@ -955,7 +955,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should not be valid if MC question hint has more than 255 characters', () => {
                 const { question } = createValidMCQuestion();
-                question.hint = new Array(255 + 2).join('f');
+                question.hint = 'f'.repeat(255 + 1);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).toBe(false);
@@ -963,7 +963,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should not be valid if MC question explanation has more than 500 characters', () => {
                 const { question } = createValidMCQuestion();
-                question.explanation = new Array(500 + 2).join('f');
+                question.explanation = 'f'.repeat(500 + 1);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).toBe(false);
@@ -971,7 +971,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should be valid if MC answer option hint has exactly 255 characters', () => {
                 const { question } = createValidMCQuestion();
-                question.answerOptions![0]!.hint = new Array(255 + 1).join('f');
+                question.answerOptions![0]!.hint = 'f'.repeat(255);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).toBe(true);
@@ -979,7 +979,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should be valid if MC answer option explanation has exactly 500 characters', () => {
                 const { question } = createValidMCQuestion();
-                question.answerOptions![0]!.explanation = new Array(500 + 1).join('f');
+                question.answerOptions![0]!.explanation = 'f'.repeat(500);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).toBe(true);
@@ -987,7 +987,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should not be valid if MC answer option hint has more than 255 characters', () => {
                 const { question } = createValidMCQuestion();
-                question.answerOptions![0]!.hint = new Array(255 + 2).join('f');
+                question.answerOptions![0]!.hint = 'f'.repeat(255 + 1);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).toBe(false);
@@ -995,7 +995,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should not be valid if MC answer option explanation has more than 1000 characters', () => {
                 const { question } = createValidMCQuestion();
-                question.answerOptions![0]!.explanation = new Array(500 + 2).join('f');
+                question.answerOptions![0]!.explanation = 'f'.repeat(500 + 1);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).toBe(false);
@@ -1020,7 +1020,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should be valid if DnD question hint has exactly 255 characters', () => {
                 const { question } = createValidDnDQuestion();
-                question.hint = new Array(255 + 1).join('f');
+                question.hint = 'f'.repeat(255);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).toBe(true);
@@ -1028,7 +1028,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should be valid if DnD question explanation has exactly 500 characters', () => {
                 const { question } = createValidDnDQuestion();
-                question.explanation = new Array(500 + 1).join('f');
+                question.explanation = 'f'.repeat(500);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).toBe(true);
@@ -1036,7 +1036,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should not be valid if DnD question hint has more than 255 characters', () => {
                 const { question } = createValidDnDQuestion();
-                question.hint = new Array(255 + 2).join('f');
+                question.hint = 'f'.repeat(255 + 1);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).toBe(false);
@@ -1044,7 +1044,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should not be valid if DnD question explanation has more than 500 characters', () => {
                 const { question } = createValidDnDQuestion();
-                question.explanation = new Array(500 + 2).join('f');
+                question.explanation = 'f'.repeat(500 + 1);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).toBe(false);
@@ -1060,6 +1060,15 @@ describe('QuizExercise Management Detail Component', () => {
             it('should not be valid if SA question has no title', () => {
                 const { question } = createValidSAQuestion();
                 removeQuestionTitleAndExpectInvalidQuiz(question);
+            });
+
+            it('should not be valid with SA question with too long answer option', () => {
+                const { question } = createValidSAQuestion();
+                // @ts-ignore
+                question.solutions[0].text = 'a'.repeat(250);
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toEqual(false);
             });
 
             it('should not be valid if SA question has no correct mapping', () => {
@@ -1155,13 +1164,13 @@ describe('QuizExercise Management Detail Component', () => {
             });
 
             it('should call alert service if update fails', () => {
-                quizExerciseServiceUpdateStub.mockReturnValue(throwError({ status: 404 }));
+                quizExerciseServiceUpdateStub.mockReturnValue(throwError(() => ({ status: 404 })));
                 saveAndExpectAlertService();
             });
 
             it('should call alert service if response has no body on create', () => {
                 comp.quizExercise.id = undefined;
-                quizExerciseServiceCreateStub.mockReturnValue(throwError({ status: 404 }));
+                quizExerciseServiceCreateStub.mockReturnValue(throwError(() => ({ status: 404 })));
                 saveAndExpectAlertService();
             });
         });
@@ -1432,7 +1441,7 @@ describe('QuizExercise Management Detail Component', () => {
                 });
 
                 it('should put reason for too long title', () => {
-                    quizExercise.title = new Array(251).join('a');
+                    quizExercise.title = 'a'.repeat(250);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.quizTitleLength');
                 });
 
@@ -1496,7 +1505,7 @@ describe('QuizExercise Management Detail Component', () => {
                 });
 
                 it('should put reason for too long title', () => {
-                    question.title = new Array(251).join('a');
+                    question.title = 'a'.repeat(250);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionTitleLength');
                 });
 
@@ -1506,28 +1515,28 @@ describe('QuizExercise Management Detail Component', () => {
                 });
 
                 it('should put reason if question explanation is too long', () => {
-                    question.explanation = new Array(500 + 2).join('f');
+                    question.explanation = 'f'.repeat(500 + 1);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionExplanationLength');
                 });
 
                 it('should put reason if question hint is too long', () => {
-                    question.hint = new Array(255 + 2).join('f');
+                    question.hint = 'f'.repeat(255 + 1);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionHintLength');
                 });
 
                 it('should put reason if answer option explanation is too long', () => {
-                    answerOption1.explanation = new Array(500 + 2).join('f');
+                    answerOption1.explanation = 'f'.repeat(500 + 1);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.answerExplanationLength');
                 });
 
                 it('should put reason if answer option hint is too long', () => {
-                    answerOption1.hint = new Array(255 + 2).join('f');
+                    answerOption1.hint = 'f'.repeat(255 + 1);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.answerHintLength');
                 });
 
                 it('should put reason exactly once if more than one answer option explanation is too long', () => {
-                    answerOption1.explanation = new Array(500 + 2).join('f');
-                    answerOption2.explanation = new Array(500 + 2).join('f');
+                    answerOption1.explanation = 'f'.repeat(500 + 1);
+                    answerOption2.explanation = 'f'.repeat(500 + 1);
                     const invalidReasonsAnswerOptions = comp
                         .computeInvalidReasons()
                         .filter((reason) => reason.translateKey === 'artemisApp.quizExercise.invalidReasons.answerExplanationLength');
@@ -1535,8 +1544,8 @@ describe('QuizExercise Management Detail Component', () => {
                 });
 
                 it('should put reason exactly once if more than one answer option hint is too long', () => {
-                    answerOption1.hint = new Array(255 + 2).join('f');
-                    answerOption2.hint = new Array(255 + 2).join('f');
+                    answerOption1.hint = 'f'.repeat(255 + 1);
+                    answerOption2.hint = 'f'.repeat(255 + 1);
                     const invalidReasonsAnswerOptions = comp
                         .computeInvalidReasons()
                         .filter((reason) => reason.translateKey === 'artemisApp.quizExercise.invalidReasons.answerHintLength');
@@ -1596,12 +1605,12 @@ describe('QuizExercise Management Detail Component', () => {
                 });
 
                 it('should put reason if question explanation is too long', () => {
-                    question.explanation = new Array(500 + 2).join('f');
+                    question.explanation = 'f'.repeat(500 + 1);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionExplanationLength');
                 });
 
                 it('should put reason if question hint is too long', () => {
-                    question.hint = new Array(255 + 2).join('f');
+                    question.hint = 'f'.repeat(255 + 1);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionHintLength');
                 });
             });
@@ -1650,6 +1659,11 @@ describe('QuizExercise Management Detail Component', () => {
                 it('should put reason when there is an empty solution ', () => {
                     shortAnswerSolution1.text = '';
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.shortAnswerQuestionSolutionHasNoValue');
+                });
+
+                it('should put reason for too long answer option', () => {
+                    shortAnswerSolution1.text = 'a'.repeat(250);
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.quizAnswerOptionLength');
                 });
 
                 it('should put reason when duplicate mappings', () => {

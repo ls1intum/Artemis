@@ -163,13 +163,20 @@
                 "charts": {
                     "title": "Diagramme",
                     "preview": "Vorschau",
+                    "resetFilter": "Filter zurücksetzen",
                     "testCaseWeights": {
                         "title": "Gewichtungs-Verteilung",
-                        "description": "Die Verteilung der Gewichtungen der Testfälle auf die Aufgabe. Dies zeigt den Einfluss eines Testfalls auf das Ergebnis einer/s Studierenden. Der erste Balken betrachtet nur die Gewichtung eines Testfalls, während der zweite Balken auch die jeweiligen Bonuspunkte einbezieht.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen."
+                        "description": "Die Verteilung der Gewichtungen der Testfälle auf die Aufgabe. Dies zeigt den Einfluss eines Testfalls auf das Ergebnis einer/s Studierenden. Der erste Balken betrachtet nur die Gewichtung eines Testfalls, während der zweite Balken auch die jeweiligen Bonuspunkte einbezieht.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen.",
+                        "weight": "Gewichtung",
+                        "weightTooltip": "Gewichtung: {{ percentage }}% aller Gewichtungen.",
+                        "weightAndBonus": "Gewichtung & Bonus",
+                        "weightAndBonusTooltip": "Gewichtung & Bonus: {{ percentage }}% aller Gewichtungen und Boni."
                     },
                     "testCasePoints": {
                         "title": "Punkte-Verteilung",
-                        "description": "Der prozentuale Anteil von verteilten Punkten für ein bestimmten Testfall. 100% in dem Diagramm steht für volle Punktzahl (100%) bei <b>allen</b> Studierenden. Das Diagramm zeigt nur die positiven Punkte erzielt durch erfüllte Testfälle, ungeachtet möglicher Punktabzüge durch statische Code-Analyse.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen."
+                        "description": "Der prozentuale Anteil von verteilten Punkten für ein bestimmten Testfall. 100% in dem Diagramm steht für volle Punktzahl (100%) bei <b>allen</b> Studierenden. Das Diagramm zeigt nur die positiven Punkte erzielt durch erfüllte Testfälle, ungeachtet möglicher Punktabzüge durch statische Code-Analyse.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen.",
+                        "points": "Punkte",
+                        "pointsTooltip": "Punkte: {{ percentage }}% aller Punkte."
                     },
                     "categoryDistribution": {
                         "title": "Kategorie-Verteilung",
@@ -214,7 +221,7 @@
             "resubmitSingle": "Neues Ergebnis für Teilnahme erzeugen",
             "resubmitConfirmManualResultOverride": "Das letzte Ergebnis ist ein manuelles Ergebnis, das heißt es wurde von Tutor:innen bewertet. Falls du einen neuen Build für diese Abgabe auslöst, wird anstelle des manuellen Ergebnissen das neu generierte, automatische Ergebnis primär für die Studierenden angezeigt.",
             "resubmitAllConfirmAfterDeadline": "Die Einreichungsfrist ist verstrichen, möglicherweise haben Tutor:innen manche Teilnahmen manuell bewertet. Neu erzeugte automatische Ergebnisse würden diese manuellen Ergebnisse als aktuelles Ergebnis ersetzen.",
-            "resubmitUnsuccessful": "Die letzte Abgabe konnte nicht erneut bewertet werden. Bitte kontaktiere eine/n Tutor:in.",
+            "resubmitUnsuccessful": "Die letzte Abgabe konnte nicht erneut bewertet werden. Bitte wende dich an entsprechende Tutor:innen.",
             "resubmitAll": "Alle erneut ausführen",
             "resubmitAllTooltip": "Führe die letzte Abgabe aller Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet.",
             "resubmitAllDialog": "ACHTUNG: Die erneute Abgabe aller Teilnahmen ist eine sehr aufwändige Operation. Diese Aktion wird für jede Teilnahme dieser Übung einen CI Build starten. Das bedeutet, dass alle Ergebnisse der Studierenden anhand ihres letzten Commits neu berechnet und mit dem neu erzeugten Ergebnis überschreiben werden!",
@@ -289,6 +296,7 @@
             "unlockAllRepositoriesSuccess": "Die Repositories werden nun entsperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
             "lockAllRepositoriesSuccess": "Die Repositories werden nun gesperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
             "auxiliaryRepository": {
+                "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
                 "repositoryName": "Name des Repositorys",
                 "checkoutDirectory": "Checkout-Verzeichnis",
@@ -329,10 +337,10 @@
                 "submissionPenalty": {
                     "optionLabel": "Punktabzug je Überschreitung",
                     "penaltyInputFieldTitle": "Punktabzug je Überschreitung des Abgabelimits",
-                    "exceedingLimitDescription": "Der Punktabzug von dem Gesamtergebnis für jede Abgabe, die das Abgabelimit überschreitet. Jede Punktzahl größer oder gleich 0 kann eingetragen werden.",
+                    "exceedingLimitDescription": "Der Punktabzug von dem Gesamtergebnis für jede Abgabe, die das Abgabelimit überschreitet. Jede Punktzahl größer 0 kann eingetragen werden.",
                     "penaltyInputFieldValidationWarning": {
-                        "min": "Der Punktabzug muss größer oder gleich 0 sein!",
-                        "required": "Der Punktabzug muss gesetzt sein!"
+                        "pattern": "Der Punktabzug muss eine Nummer größer als 0 sein.",
+                        "required": "Der Punktabzug muss gesetzt sein."
                     },
                     "penaltyInfoLabel": "Punktabzug je Überschreitung",
                     "triggerAllInformation": "Wird der Punktabzug je Überschreitung des Abgabelimits oder das Abgabelimit selbst angepasst, muss nach dem Speichern der Abgaberichtlinie die 'Erneut Bewerten' Funktionalität genutzt werden, um die Ergebnisse der Teilnehmenden zu aktualisieren."

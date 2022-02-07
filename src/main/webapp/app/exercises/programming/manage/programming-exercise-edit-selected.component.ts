@@ -4,9 +4,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',
@@ -23,12 +23,14 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     private translationBasePath = 'artemisApp.programmingExercise.';
     notificationText?: string;
 
+    // Icons
+    faSave = faSave;
+
     constructor(
         private activeModal: NgbActiveModal,
         private translateService: TranslateService,
         private alertService: AlertService,
         private programmingExerciseService: ProgrammingExerciseService,
-        private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
     ) {}
 
     ngOnInit(): void {
@@ -70,10 +72,10 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(exerciseTitle: string | undefined, result: Observable<HttpResponse<ProgrammingExercise>>) {
-        result.subscribe(
-            () => this.onSaveSuccess(),
-            (res: HttpErrorResponse) => this.onSaveError(res, exerciseTitle),
-        );
+        result.subscribe({
+            next: () => this.onSaveSuccess(),
+            error: (res: HttpErrorResponse) => this.onSaveError(res, exerciseTitle),
+        });
     }
 
     private onSaveSuccess() {

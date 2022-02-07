@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 export enum FeedbackConflictType {
     INCONSISTENT_COMMENT = 'INCONSISTENT_COMMENT',

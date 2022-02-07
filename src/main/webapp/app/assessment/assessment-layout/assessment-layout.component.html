@@ -10,7 +10,6 @@
     [isTestRun]="isTestRun"
     [isIllegalSubmission]="isIllegalSubmission"
     [exerciseDashboardLink]="exerciseDashboardLink"
-    [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"
     [assessmentsAreValid]="assessmentsAreValid"
     [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed"
@@ -26,7 +25,8 @@
     [hasComplaint]="!!complaint"
     [hasMoreFeedbackRequest]="complaint?.complaintType === MORE_FEEDBACK"
     [complaintHandled]="!!complaint ? complaint.accepted !== undefined : false"
-    (importExampleSubmission)="importExampleSubmission.emit()"
+    [complaintType]="complaint?.complaintType"
+    (useAsExampleSubmission)="useAsExampleSubmission.emit()"
 ></jhi-assessment-header>
 
 <jhi-assessment-complaint-alert [complaint]="complaint"></jhi-assessment-complaint-alert>
@@ -43,5 +43,4 @@
     [submission]="submission"
     [isTestRun]="isTestRun"
     (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint.emit($event)"
-    [isAtLeastInstructor]="isAtLeastInstructor"
 ></jhi-complaints-for-tutor-form>

@@ -1,5 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -15,9 +13,8 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TextResultBlock } from 'app/exercises/text/participate/text-result/text-result-block';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 describe('TextResultComponent', () => {
     let fixture: ComponentFixture<TextResultComponent>;
@@ -63,7 +60,7 @@ describe('TextResultComponent', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(component).to.be.ok;
+        expect(component).not.toBe(undefined);
     });
 
     it('should convert text to result blocks', () => {
@@ -102,7 +99,7 @@ describe('TextResultComponent', () => {
 
         component.result = result;
 
-        expect(component.textResults.length).to.equal(4);
+        expect(component.textResults.length).toBe(4);
     });
 
     it('should repeat steps for each credit', () => {
@@ -110,7 +107,7 @@ describe('TextResultComponent', () => {
         textBlock.text = 'this is a text block';
         const textResultBlock = new TextResultBlock(textBlock, feedbacks[0]);
 
-        expect(component.repeatForEachCredit(textResultBlock)).to.deep.equal([1, 1]);
+        expect(component.repeatForEachCredit(textResultBlock)).toEqual([1, 1]);
     });
 
     it('should translate credits', () => {
@@ -118,11 +115,11 @@ describe('TextResultComponent', () => {
         textBlock.text = 'this is a text block';
         let textResultBlock = new TextResultBlock(textBlock, feedbacks[0]);
 
-        expect(component.creditsTranslationForTextResultBlock(textResultBlock)).to.equal('artemisApp.textAssessment.detail.credits.many');
+        expect(component.creditsTranslationForTextResultBlock(textResultBlock)).toBe('artemisApp.textAssessment.detail.credits.many');
 
         textResultBlock = new TextResultBlock(textBlock, feedbacks[1]);
 
-        expect(component.creditsTranslationForTextResultBlock(textResultBlock)).to.equal('artemisApp.textAssessment.detail.credits.one');
+        expect(component.creditsTranslationForTextResultBlock(textResultBlock)).toBe('artemisApp.textAssessment.detail.credits.one');
     });
 
     it('should test result block methods', () => {
@@ -132,18 +129,18 @@ describe('TextResultComponent', () => {
         textBlock.endIndex = 5;
         let textResultBlock = new TextResultBlock(textBlock, feedbacks[0]);
 
-        expect(textResultBlock.length).to.equal(5);
-        expect(textResultBlock.cssClass).to.equal('text-with-feedback positive-feedback');
-        expect(textResultBlock.icon).to.equal('check');
-        expect(textResultBlock.iconCssClass).to.equal('feedback-icon positive-feedback');
-        expect(textResultBlock.feedbackCssClass).to.equal('alert alert-success');
+        expect(textResultBlock.length).toBe(5);
+        expect(textResultBlock.cssClass).toBe('text-with-feedback positive-feedback');
+        expect(textResultBlock.icon).toBe(faCheck);
+        expect(textResultBlock.iconCssClass).toBe('feedback-icon positive-feedback');
+        expect(textResultBlock.feedbackCssClass).toBe('alert alert-success');
 
         textResultBlock = new TextResultBlock(textBlock, feedbacks[2]);
 
-        expect(textResultBlock.cssClass).to.equal('text-with-feedback neutral-feedback');
-        expect(textResultBlock.icon).to.equal('circle');
-        expect(textResultBlock.iconCssClass).to.equal('feedback-icon neutral-feedback');
-        expect(textResultBlock.feedbackCssClass).to.equal('alert alert-secondary');
+        expect(textResultBlock.cssClass).toBe('text-with-feedback neutral-feedback');
+        expect(textResultBlock.icon).toBe(faCircle);
+        expect(textResultBlock.iconCssClass).toBe('feedback-icon neutral-feedback');
+        expect(textResultBlock.feedbackCssClass).toBe('alert alert-secondary');
 
         const feedback = {
             id: 3,
@@ -154,9 +151,87 @@ describe('TextResultComponent', () => {
 
         textResultBlock = new TextResultBlock(textBlock, feedback);
 
-        expect(textResultBlock.cssClass).to.equal('text-with-feedback negative-feedback');
-        expect(textResultBlock.icon).to.equal('times');
-        expect(textResultBlock.iconCssClass).to.equal('feedback-icon negative-feedback');
-        expect(textResultBlock.feedbackCssClass).to.equal('alert alert-danger');
+        expect(textResultBlock.cssClass).toBe('text-with-feedback negative-feedback');
+        expect(textResultBlock.icon).toBe(faTimes);
+        expect(textResultBlock.iconCssClass).toBe('feedback-icon negative-feedback');
+        expect(textResultBlock.feedbackCssClass).toBe('alert alert-danger');
+    });
+
+    it('should display the feedback text properly', () => {
+        const gradingInstruction = {
+            id: 1,
+            credits: 1,
+            gradingScale: 'scale',
+            instructionDescription: 'description',
+            feedback: 'instruction feedback',
+            usageCount: 0,
+        } as GradingInstruction;
+        const feedback = feedbacks[0];
+
+        let textToBeDisplayed = component.buildFeedbackTextForReview(feedback);
+        expect(textToBeDisplayed).toBe(feedback.detailText);
+
+        feedback.gradingInstruction = gradingInstruction;
+        textToBeDisplayed = component.buildFeedbackTextForReview(feedback);
+        expect(textToBeDisplayed).toEqual(gradingInstruction.feedback + '<br>' + feedback.detailText);
+    });
+
+    it('should mark the subsequent feedback', () => {
+        const result = new Result();
+        const submission = new TextSubmission();
+        submission.text = 'submission text';
+
+        const gradingInstruction = {
+            id: 1,
+            credits: 1,
+            gradingScale: 'scale',
+            instructionDescription: 'description',
+            feedback: 'instruction feedback',
+            usageCount: 1,
+        } as GradingInstruction;
+
+        const blocks = [
+            {
+                id: 'ed462aaf735fe740a260660cbbbfbcc0ee66f98f',
+                text: 'submission',
+                startIndex: 0,
+                endIndex: 10,
+            } as TextBlock,
+            {
+                id: 'ed462aaf735fe740a260660cbcbfbcc0ee66f98a',
+                text: ' text',
+                startIndex: 10,
+                endIndex: 15,
+            } as TextBlock,
+        ];
+
+        const feedback = [
+            {
+                id: 1,
+                detailText: 'feedback1',
+                credits: 1,
+                reference: 'ed462aaf735fe740a260660cbbbfbcc0ee66f98f',
+                gradingInstruction,
+            } as Feedback,
+            {
+                id: 2,
+                detailText: 'feedback2',
+                credits: 1,
+                reference: 'ed462aaf735fe740a260660cbcbfbcc0ee66f98a',
+                gradingInstruction,
+            } as Feedback,
+        ];
+
+        submission.blocks = blocks;
+        result.submission = submission;
+        result.feedbacks = feedback;
+
+        component.result = result;
+
+        expect(component.textResults).toHaveLength(2);
+        expect(component.textResults[0].feedback).not.toBe(undefined);
+        expect(component.textResults[0].feedback!.isSubsequent).toBe(undefined);
+        expect(component.textResults[1].feedback).not.toBe(undefined);
+        expect(component.textResults[1].feedback!.isSubsequent).toBe(true);
     });
 });

@@ -1,10 +1,11 @@
 import { Component, Input } from '@angular/core';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { TextResultBlock } from './text-result-block';
 import { TranslateService } from '@ngx-translate/core';
 import { TextBlock } from 'app/entities/text-block.model';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-text-result',
@@ -16,6 +17,9 @@ export class TextResultComponent {
 
     public textResults: TextResultBlock[];
     private submission: TextSubmission;
+
+    // Icons
+    faExclamationTriangle = faExclamationTriangle;
 
     private readonly sha1Regex = /^[a-f0-9]{40}$/i;
 
@@ -33,6 +37,8 @@ export class TextResultComponent {
     constructor(private translateService: TranslateService) {}
 
     private convertTextToResultBlocks(feedbacks: Feedback[] = []): void {
+        checkSubsequentFeedbackInAssessment(feedbacks);
+
         const [referenceBasedFeedback, blockBasedFeedback]: [Feedback[], Feedback[]] = feedbacks.reduce(
             ([refBased, blockBased], elem) => (this.sha1Regex.test(elem.reference!) ? [refBased, [...blockBased, elem]] : [[...refBased, elem], blockBased]),
             [[], []],
@@ -106,5 +112,9 @@ export class TextResultComponent {
         const singular = Math.abs(textResultBlock.feedback!.credits || 0) === 1;
 
         return this.translateService.instant(`artemisApp.textAssessment.detail.credits.${singular ? 'one' : 'many'}`, { credits: textResultBlock.feedback!.credits });
+    }
+
+    public buildFeedbackTextForReview(feedback: Feedback): string {
+        return buildFeedbackTextForReview(feedback);
     }
 }

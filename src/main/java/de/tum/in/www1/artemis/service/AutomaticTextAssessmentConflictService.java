@@ -92,7 +92,7 @@ public class AutomaticTextAssessmentConflictService {
         List<FeedbackConflict> feedbackConflicts = new ArrayList<>();
 
         // look for new conflicts
-        // Athene may find conflicts with feedback ids that are not in the feedback repository any more. So check for them. (May happen if the feedback is deleted in Artemis but
+        // Athene may find conflicts with feedback ids that are not in the feedback repository anymore. So check for them. (May happen if the feedback is deleted in Artemis but
         // already stored in Athene)
         feedbackConflictResponseDTOS.forEach(conflict -> {
             Optional<Feedback> firstFeedback = feedbackRepository.findById(conflict.getFirstFeedbackId());

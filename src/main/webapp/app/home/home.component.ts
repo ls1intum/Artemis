@@ -16,6 +16,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { PASSWORD_MIN_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-home',
@@ -52,7 +53,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     isSubmittingLogin = false;
 
     profileInfo: ProfileInfo | undefined = undefined;
-    showResetPasswordLink = false;
+
+    // Icons
+    faCircleNotch = faCircleNotch;
 
     constructor(
         private router: Router,
@@ -89,7 +92,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 }
                 this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
                 this.needsToAcceptTerms = profileInfo.needsToAcceptTerms || false;
-                this.showResetPasswordLink = this.isRegistrationEnabled || profileInfo.saml2?.enablePassword || false;
             }
         });
         this.accountService.identity().then((user) => {
@@ -185,10 +187,10 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             const redirect = this.stateStorageService.getUrl();
             if (redirect && redirect !== '') {
                 this.stateStorageService.storeUrl('');
-                this.router.navigate([redirect]);
+                this.router.navigateByUrl(redirect);
             } else {
                 // TODO: Remove redirect after summer 2021 term. New deep links should no longer use /#.
-                const url = this.router.url.startsWith('/#') ? this.router.url.substr(2) : 'courses';
+                const url = this.router.url.startsWith('/#') ? this.router.url.slice(2) : 'courses';
                 this.router.navigate([url]);
             }
         }

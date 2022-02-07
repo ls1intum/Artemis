@@ -1,3 +1,5 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
 .feedback-item {
     border-radius: 4px;
     border-style: solid;
@@ -59,8 +61,37 @@
             float: right;
         }
     }
+
+    .chart-tooltip-space {
+        margin-top: -10px;
+
+        .chart-tooltip-space-content {
+            width: 250px;
+            height: 20px;
+            top: -15px;
+            position: absolute;
+        }
+    }
 }
 
 .fa-angle {
     cursor: pointer;
+}
+
+.chart-space {
+    height: 100px;
+}
+
+:host::ng-deep .legend-labels {
+    background-color: transparent !important;
+    text-align: center !important;
+    font-weight: bolder;
+}
+
+:host::ng-deep .legend-label {
+    color: $artemis-dark !important;
+}
+
+:host::ng-deep .legend-label-color {
+    border: 1px solid;
 }

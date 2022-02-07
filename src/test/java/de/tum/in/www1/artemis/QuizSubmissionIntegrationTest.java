@@ -8,6 +8,7 @@ import java.security.Principal;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -84,15 +85,9 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testQuizSubmit() throws Exception {
-        // change config to make test faster
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
-        Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
-        quizExercise.duration(240);
-        quizExercise.setIsPlannedToStart(true);
-        quizExercise.setIsVisibleBeforeStart(true);
+        QuizExercise quizExercise = setupQuizExerciseParameters();
         quizExercise = quizExerciseService.save(quizExercise);
 
         int numberOfParticipants = 10 * multiplier;
@@ -183,7 +178,96 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testQuizSubmit_partial_points() throws Exception {
+        QuizExercise quizExercise = setupQuizExerciseParameters();
+        // force getting partial points
+        quizExercise.getQuizQuestions().get(0).setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
+        quizExercise.getQuizQuestions().get(1).score(1);
+        quizExercise.getQuizQuestions().get(2).score(1);
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        DragAndDropQuestion dndQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
+        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
+
+        List<QuizSubmission> submissions = new ArrayList<>();
+
+        QuizSubmission student1Submission = new QuizSubmission();
+
+        // student 1 achieves 1/3 points for the DnD question
+        setupDragAndDropSubmission(dndQuestion, student1Submission, 2);
+        // and 0.5 points for the SA question
+        setupShortAnswerSubmission(saQuestion, student1Submission, 1);
+
+        // in total, student 1 achieves 0.83 points -> rounded to 1 point
+        student1Submission.submitted(true);
+        student1Submission.submissionDate(null);
+        submissions.add(student1Submission);
+
+        QuizSubmission student2Submission = new QuizSubmission();
+
+        // student 2 achieves 1/3 points for the DnD question
+        setupDragAndDropSubmission(dndQuestion, student2Submission, 2);
+
+        // in total, student 2 achieves 0.33 points -> rounded to 0 points
+        student2Submission.submitted(true);
+        student2Submission.submissionDate(null);
+        submissions.add(student2Submission);
+
+        QuizSubmission student3Submission = new QuizSubmission();
+        var correctAnswerOption = mcQuestion.getAnswerOptions().stream().filter(AnswerOption::isIsCorrect).findFirst().get();
+
+        MultipleChoiceSubmittedAnswer student3mcAnswer = new MultipleChoiceSubmittedAnswer();
+        student3mcAnswer.setQuizQuestion(mcQuestion);
+        student3mcAnswer.addSelectedOptions(correctAnswerOption);
+
+        // student 3 achieves 4 points for the MC question
+        student3Submission.addSubmittedAnswers(student3mcAnswer);
+
+        // and 1 point for the DnD question
+        setupDragAndDropSubmission(dndQuestion, student3Submission, 3);
+        // and 1 point for the SA question
+        setupShortAnswerSubmission(saQuestion, student3Submission, 2);
+
+        // in total, student 3 achieves 6 points
+        student3Submission.submitted(true);
+        student3Submission.submissionDate(null);
+        submissions.add(student3Submission);
+
+        for (int i = 0; i < 3; i++) {
+            var studentId = i + 1;
+            var username = "student" + studentId;
+            final Principal principal = () -> username;
+            quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), submissions.get(i), principal);
+        }
+
+        quizScheduleService.processCachedQuizSubmissions();
+
+        QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        var quizPointStatistic = quizExerciseWithStatistic.getQuizPointStatistic();
+        assertThat(quizExerciseWithStatistic).isNotNull();
+
+        for (var pointCounter : quizPointStatistic.getPointCounters()) {
+            assertThat(pointCounter.getUnRatedCounter()).as("Unrated counter is always 0").isEqualTo(0);
+            if (pointCounter.getPoints() == 0.0) {
+                assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 1 rated submission -> 0.33 points").isEqualTo(1);
+            }
+            else if (pointCounter.getPoints() == 1.0) {
+                assertThat(pointCounter.getRatedCounter()).as("Bucket 1.0 contains 1 rated submission -> 0.83 points").isEqualTo(1);
+            }
+            else if (pointCounter.getPoints() == 6.0) {
+                assertThat(pointCounter.getRatedCounter()).as("Bucket 6.0 contains 1 rated submission -> 6 points").isEqualTo(1);
+            }
+            else {
+                assertThat(pointCounter.getRatedCounter()).as("All other buckets contain 0 rated submissions").isEqualTo(0);
+            }
+
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     public void testQuizSubmitLiveMode() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
@@ -221,7 +305,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testQuizSubmitLiveMode_badRequest_notActive() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
@@ -234,7 +318,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testQuizSubmitLiveMode_badRequest_alreadySubmitted() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
@@ -249,7 +333,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testQuizSubmitPractice() throws Exception {
 
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
@@ -328,7 +412,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testQuizSubmitPractice_badRequest() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
@@ -361,7 +445,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testQuizSubmitPractice_badRequest_exam() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         QuizExercise quizExerciseServer = database.createQuizForExam(exerciseGroup);
@@ -378,7 +462,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testQuizSubmitPreview_forbidden() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
@@ -388,7 +472,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testQuizSubmitPractice_forbidden() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
@@ -401,7 +485,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testQuizSubmitPreview_forbidden_otherTa() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
@@ -413,19 +497,19 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testQuizSubmitPreview_badRequest_noQuiz() throws Exception {
         request.postWithResponseBody("/api/exercises/" + 11223344 + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.NOT_FOUND);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testQuizSubmitPractice_badRequest_noQuiz() throws Exception {
         request.postWithResponseBody("/api/exercises/" + 11223344 + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.NOT_FOUND);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testQuizSubmitPreview_badRequest_submissionId() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
@@ -437,7 +521,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testQuizSubmitPractice_badRequest_submissionId() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
@@ -449,7 +533,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testQuizSubmitPreview() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
@@ -503,7 +587,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testQuizSubmitScheduledAndDeleted() throws Exception {
         log.debug("// Start testQuizSubmitScheduledAndDeleted");
         /*
@@ -533,7 +617,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // reschedule
         log.debug("// Rescheduling the quiz for another 2s into the future");
         releaseDate = releaseDate.plus(2000, ChronoUnit.MILLIS);
-        quizExercise.releaseDate(releaseDate);
+        quizExercise.setReleaseDate(releaseDate);
         quizExercise = quizExerciseService.save(quizExercise);
 
         // wait for the old release date to pass
@@ -597,7 +681,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testQuizScoringTypes() {
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null);
@@ -648,7 +732,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ScoringType.class)
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testQuizScoringType(ScoringType scoringType) {
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null);
@@ -697,5 +781,47 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     private void sleep(long millis) throws InterruptedException {
         log.debug("zzzzzzzzzzzzz Sleep {}ms", millis);
         TimeUnit.MILLISECONDS.sleep(millis);
+    }
+
+    private void setupShortAnswerSubmission(ShortAnswerQuestion saQuestion, QuizSubmission submission, int amountOfCorrectAnswers) {
+        ShortAnswerSubmittedAnswer submittedAnswer = new ShortAnswerSubmittedAnswer();
+        submittedAnswer.setQuizQuestion(saQuestion);
+        List<ShortAnswerSpot> spots = saQuestion.getSpots();
+
+        for (int i = 0; i < amountOfCorrectAnswers; i++) {
+            ShortAnswerSubmittedText text = new ShortAnswerSubmittedText();
+            text.setSpot(spots.get(i));
+            var correctSolution = saQuestion.getCorrectSolutionForSpot(spots.get(i)).iterator().next().getText();
+            text.setText(correctSolution);
+            submittedAnswer.addSubmittedTexts(text);
+        }
+
+        submission.addSubmittedAnswers(submittedAnswer);
+    }
+
+    private void setupDragAndDropSubmission(DragAndDropQuestion dndQuestion, QuizSubmission submission, int amountOfCorrectAnswers) {
+        List<DragItem> dragItems = dndQuestion.getDragItems();
+        List<DropLocation> dropLocations = dndQuestion.getDropLocations();
+
+        DragAndDropSubmittedAnswer submittedDndAnswer = new DragAndDropSubmittedAnswer();
+        submittedDndAnswer.setQuizQuestion(dndQuestion);
+
+        for (int i = 0; i < amountOfCorrectAnswers; i++) {
+            submittedDndAnswer.addMappings(new DragAndDropMapping().dragItem(dragItems.get(i)).dropLocation(dropLocations.get(i)));
+        }
+
+        submission.addSubmittedAnswers(submittedDndAnswer);
+    }
+
+    private QuizExercise setupQuizExerciseParameters() throws Exception {
+        // change config to make test faster
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
+        Course course = courses.get(0);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
+        quizExercise.duration(240);
+        quizExercise.setIsPlannedToStart(true);
+        quizExercise.setIsVisibleBeforeStart(true);
+
+        return quizExercise;
     }
 }

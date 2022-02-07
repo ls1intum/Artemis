@@ -14,15 +14,15 @@ export class ExampleSubmissionAssessCommand {
     constructor(private tutorParticipationService: TutorParticipationService, private alertService: AlertService, private feedbackMarker: FeedbackMarker) {}
 
     assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number) {
-        this.tutorParticipationService.assessExampleSubmission(exampleSubmission, exerciseId).subscribe(
-            () => this.onSuccess(),
-            (error: HttpErrorResponse) => this.onFailure(error),
-        );
+        this.tutorParticipationService.assessExampleSubmission(exampleSubmission, exerciseId).subscribe({
+            next: () => this.onSuccess(),
+            error: (error: HttpErrorResponse) => this.onFailure(error),
+        });
     }
 
     private onSuccess() {
         this.feedbackMarker.markAllFeedbackToCorrect();
-        this.alertService.success('artemisApp.exampleSubmission.assessScore.success');
+        this.alertService.success('artemisApp.exampleSubmission.correctTutorAssessment');
     }
 
     private onFailure(error: HttpErrorResponse) {

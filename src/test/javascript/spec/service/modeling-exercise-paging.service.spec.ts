@@ -1,5 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingExercisePagingService } from 'app/exercises/modeling/manage/modeling-exercise-paging.service';
@@ -10,7 +10,6 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
 describe('ModelingExercise Service', () => {
-    let injector: TestBed;
     let service: ModelingExercisePagingService;
     let httpMock: HttpTestingController;
 
@@ -23,10 +22,9 @@ describe('ModelingExercise Service', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(ModelingExercisePagingService);
+        service = TestBed.inject(ModelingExercisePagingService);
         service.resourceUrl = 'resourceUrl';
-        httpMock = injector.get(HttpTestingController);
+        httpMock = TestBed.inject(HttpTestingController);
     });
 
     it('should find an element', fakeAsync(() => {

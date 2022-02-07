@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Setting } from 'app/shared/user-settings/user-settings.model';
+import { faArchive, faBell, faCircleNotch, faCog, faEye, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificationSideBar';
 
@@ -24,6 +25,7 @@ export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificati
 export class NotificationSidebarComponent implements OnInit {
     // HTML template related
     showSidebar = false;
+    showButtonToHideCurrentlyDisplayedNotifications = true;
     loading = false;
 
     // notification logic related
@@ -41,12 +43,21 @@ export class NotificationSidebarComponent implements OnInit {
     notificationTitleActivationMap: Map<string, boolean> = new Map<string, boolean>();
     subscriptionToNotificationSettingsChanges: Subscription;
 
+    // Icons
+    faTimes = faTimes;
+    faCircleNotch = faCircleNotch;
+    faBell = faBell;
+    faCog = faCog;
+    faArchive = faArchive;
+    faEye = faEye;
+
     constructor(
         private notificationService: NotificationService,
         private userService: UserService,
         private accountService: AccountService,
         private userSettingsService: UserSettingsService,
         private notificationSettingsService: NotificationSettingsService,
+        private changeDetector: ChangeDetectorRef,
     ) {}
 
     /**
@@ -102,6 +113,16 @@ export class NotificationSidebarComponent implements OnInit {
     // notification logic related methods
 
     /**
+     * Starts the process to show or hide all notifications in the sidebar
+     */
+    toggleNotificationDisplay(): void {
+        this.showButtonToHideCurrentlyDisplayedNotifications = !this.showButtonToHideCurrentlyDisplayedNotifications;
+        this.userService.updateNotificationVisibility(this.showButtonToHideCurrentlyDisplayedNotifications).subscribe(() => {
+            this.resetNotificationsInSidebar();
+        });
+    }
+
+    /**
      * Update the user's lastNotificationRead setting. As this method will be executed when the user opens the sidebar, the
      * component's lastNotificationRead attribute will be updated only after two seconds so that the notification `new` badges
      * won't disappear immediately.
@@ -125,10 +146,10 @@ export class NotificationSidebarComponent implements OnInit {
                     size: this.notificationsPerPage,
                     sort: ['notificationDate,desc'],
                 })
-                .subscribe(
-                    (res: HttpResponse<Notification[]>) => this.loadNotificationsSuccess(res.body!, res.headers),
-                    (res: HttpErrorResponse) => (this.error = res.message),
-                );
+                .subscribe({
+                    next: (res: HttpResponse<Notification[]>) => this.loadNotificationsSuccess(res.body!, res.headers),
+                    error: (res: HttpErrorResponse) => (this.error = res.message),
+                });
         }
     }
 
@@ -189,19 +210,34 @@ export class NotificationSidebarComponent implements OnInit {
         } else {
             this.recentNotificationCount = this.notifications.length;
         }
+
+        if (!this.notifications || this.notifications.length === 0) {
+            // if no notifications are currently loaded show the button to display all saved/archived ones
+            this.showButtonToHideCurrentlyDisplayedNotifications = false;
+        } else {
+            // some notifications are currently loaded, thus show the button to hide currently displayed ones
+            this.showButtonToHideCurrentlyDisplayedNotifications = true;
+        }
+        this.changeDetector.detectChanges();
     }
 
     /**
      * Clears all currently loaded notifications and settings, afterwards fetches updated once
      * E.g. is used to update the view after the user changed the notification settings
      */
-    private resetNotificationSidebars(): void {
+    private resetNotificationSidebarsWithSettings(): void {
         // reset notification settings
         this.notificationSettings = [];
         this.notificationTitleActivationMap = new Map<string, boolean>();
         this.loadNotificationSettings();
+        this.resetNotificationsInSidebar();
+    }
 
-        // reset notifications
+    /**
+     * Clears all currently loaded notifications, afterwards fetches updated once
+     * E.g. is used to update the view after the user toggles the button to show/hide all notifications
+     */
+    private resetNotificationsInSidebar(): void {
         this.notifications = [];
         this.sortedNotifications = [];
         this.recentNotificationCount = 0;
@@ -216,16 +252,18 @@ export class NotificationSidebarComponent implements OnInit {
      * Loads the notifications settings
      */
     private loadNotificationSettings(): void {
-        this.userSettingsService.loadSettings(UserSettingsCategory.NOTIFICATION_SETTINGS).subscribe(
-            (res: HttpResponse<Setting[]>) => {
+        this.userSettingsService.loadSettings(UserSettingsCategory.NOTIFICATION_SETTINGS).subscribe({
+            next: (res: HttpResponse<Setting[]>) => {
                 this.notificationSettings = this.userSettingsService.loadSettingsSuccessAsIndividualSettings(
                     res.body!,
                     UserSettingsCategory.NOTIFICATION_SETTINGS,
                 ) as NotificationSetting[];
                 this.notificationTitleActivationMap = this.notificationSettingsService.createUpdatedNotificationTitleActivationMap(this.notificationSettings);
+                // update the notification settings in the service to make them reusable for others (to avoid unnecessary server calls)
+                this.notificationSettingsService.setNotificationSettings(this.notificationSettings);
             },
-            (res: HttpErrorResponse) => (this.error = res.message),
-        );
+            error: (res: HttpErrorResponse) => (this.error = res.message),
+        });
     }
 
     /**
@@ -235,7 +273,7 @@ export class NotificationSidebarComponent implements OnInit {
     private listenForNotificationSettingsChanges(): void {
         this.subscriptionToNotificationSettingsChanges = this.userSettingsService.userSettingsChangeEvent.subscribe((changeMessage) => {
             if (changeMessage === reloadNotificationSideBarMessage) {
-                this.resetNotificationSidebars();
+                this.resetNotificationSidebarsWithSettings();
             }
         });
     }

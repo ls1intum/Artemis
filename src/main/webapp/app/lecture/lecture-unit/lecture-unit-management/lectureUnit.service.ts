@@ -2,7 +2,7 @@ import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureU
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Injectable } from '@angular/core';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
@@ -17,7 +17,7 @@ type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
 export class LectureUnitService {
     private resourceURL = SERVER_API_URL + 'api';
 
-    constructor(private httpClient: HttpClient, private attachmentService: AttachmentService, private exerciseService: ExerciseService) {}
+    constructor(private httpClient: HttpClient, private attachmentService: AttachmentService) {}
 
     updateOrder(lectureId: number, lectureUnits: LectureUnit[]): Observable<HttpResponse<LectureUnit[]>> {
         // need to remove participations from exercise units to prevent circular structure failure
@@ -45,7 +45,7 @@ export class LectureUnitService {
             }
         } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
             if ((<ExerciseUnit>lectureUnit).exercise) {
-                (<ExerciseUnit>lectureUnit).exercise = this.exerciseService.convertDateFromClient((<ExerciseUnit>lectureUnit).exercise!);
+                (<ExerciseUnit>lectureUnit).exercise = ExerciseService.convertDateFromClient((<ExerciseUnit>lectureUnit).exercise!);
                 return lectureUnit;
             }
         }
@@ -71,7 +71,7 @@ export class LectureUnitService {
                 }
             } else if (res.body.type === LectureUnitType.EXERCISE) {
                 if ((<ExerciseUnit>res.body).exercise) {
-                    (<ExerciseUnit>res.body).exercise = this.exerciseService.convertExerciseDateFromServer((<ExerciseUnit>res.body).exercise);
+                    (<ExerciseUnit>res.body).exercise = ExerciseService.convertExerciseDateFromServer((<ExerciseUnit>res.body).exercise);
                 }
             } else {
                 res.body.releaseDate = res.body.releaseDate ? dayjs(res.body.releaseDate) : undefined;
@@ -87,7 +87,7 @@ export class LectureUnitService {
             }
         } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
             if ((<ExerciseUnit>lectureUnit).exercise) {
-                (<ExerciseUnit>lectureUnit).exercise = this.exerciseService.convertExerciseDateFromServer((<ExerciseUnit>lectureUnit).exercise);
+                (<ExerciseUnit>lectureUnit).exercise = ExerciseService.convertExerciseDateFromServer((<ExerciseUnit>lectureUnit).exercise);
             }
         } else {
             lectureUnit.releaseDate = lectureUnit.releaseDate ? dayjs(lectureUnit.releaseDate) : undefined;

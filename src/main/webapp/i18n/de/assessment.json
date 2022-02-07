@@ -6,7 +6,11 @@
             "testRunAssessment": "Bewertungstestlauf",
             "additionalFeedback": "Zusätzliches Feedback",
             "feedback": "Feedback",
+            "feedbackHint": "Dieses Feedback ist mit einer Bewertungsanweisung verbunden. Du kannst zusätzliches Feedback für dieses Abgabeelement geben. Der/Die Studierende sieht das kombinierte Feedback während der Überprüfung.",
+            "feedbackCommentPlaceholder": "Du kannst hier ein Feedback abgeben...",
+            "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
             "automaticGenerated": "Automatisch erstelltes Feedback",
+            "subsequentFeedback": "Dies ist ein zusätzliches Feedback, das nicht in die Gesamtbewertung eingeht.",
             "error": {
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."
             },
@@ -14,7 +18,10 @@
             "assessmentLockedComplaintView": "Ursprüngliche:r Tutor:in: {{otherUser}}",
             "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
             "assessmentReadOnlyUnhandledComplaint": "Es gibt eine Beschwerde für diese Bewertung. Andere:r Tutor:in muss antworten.",
-            "moreFeedbackRequest": "Du musst auf die Feedback Anfrage antworten.",
+            "moreFeedbackRequest": "Du musst auf die Feedbackanfrage antworten.",
+            "teamComplaint": "Du musst auf die Beschwerde antworten.",
+            "automaticAssessmentComplaint": "Du kannst auf die Beschwerde antworten.",
+            "automaticAssessmentFeedbackRequest": "Du kannst auf die Feedbackanfrage antworten.",
             "assessmentReadOnlyHandledComplaint": "Die Beschwerde über deine Bewertung wurde bearbeitet.",
             "assessmentDueDateIsOver": "Die Einreichungsfrist der Bewertung ist vorbei, die nächste Einreichung wird direkt veröffentlicht",
             "diffView": {
@@ -29,13 +36,15 @@
                 "overrideAssessment": "Bewertung überschreiben",
                 "nextSubmission": "Nächste Abgabe bewerten",
                 "resolveConflict": "Konflikte behandeln",
-                "importExampleSubmission": "Als Beispielabgabe importieren"
+                "useAsExampleSubmission": "Als Beispielabgabe verwenden"
             },
             "detail": {
                 "feedback": "Feedback",
+                "feedbackWithColon": "Feedback:",
                 "scoreFor": "Bewertung für",
                 "tutorComment": "Kommentar von Tutor:in:"
             },
+            "useAsExampleSubmissionVerificationQuestion": "Bist du dir sicher, dass du diese Abgabe als Beispielabgabe importieren möchtest?",
             "messages": {
                 "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutor:innen wieder zur Verfügung.",
                 "loadSubmissionFailed": "Laden der angefragten Abgabe ist fehlgeschlagen.",
@@ -48,6 +57,7 @@
             },
             "dashboard": {
                 "warning": "Achtung: Die Einreichungsfrist ist noch nicht abgelaufen und Studierende dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen.",
+                "warningIndividual": "Achtung: Die allgemeine Einreichungsfrist ist abgelaufen, aber manche Studierende mit verlängerter Bearbeitungszeit dürfen noch ihre Einreichungen abgeben. Bitte stelle vor Beginn einer Korrektur sicher, dass diese Studierenden nicht mehr abgeben können.",
                 "empty": "Keine Abgabe für diese Aufgabe!",
                 "loading": "Laden..",
                 "columns": {

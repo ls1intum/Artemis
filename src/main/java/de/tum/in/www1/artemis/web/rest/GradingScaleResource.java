@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
@@ -23,6 +21,7 @@ import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GradingScaleService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -106,15 +105,7 @@ public class GradingScaleResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByCourseId(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        if (existingGradingScale.isPresent()) {
-            return badRequest(ENTITY_NAME, "gradingScaleAlreadyExists", "A grading scale already exists for the selected course");
-        }
-        else if (gradingScale.getGradeSteps() == null || gradingScale.getGradeSteps().isEmpty()) {
-            return badRequest(ENTITY_NAME, "emptyGradeSteps", "A grading scale must contain grade steps");
-        }
-        else if (gradingScale.getId() != null) {
-            return badRequest(ENTITY_NAME, "gradingScaleHasId", "A grading scale can't contain a predefined id");
-        }
+        validateGradingScale(existingGradingScale, gradingScale);
 
         if (!Objects.equals(gradingScale.getCourse().getMaxPoints(), course.getMaxPoints())) {
             course.setMaxPoints(gradingScale.getCourse().getMaxPoints());
@@ -125,6 +116,18 @@ public class GradingScaleResource {
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/grading-scale/")).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, ""))
                 .body(savedGradingScale);
+    }
+
+    private void validateGradingScale(Optional<GradingScale> existingGradingScale, GradingScale gradingScale) {
+        if (existingGradingScale.isPresent()) {
+            throw new BadRequestAlertException("A grading scale already exists", ENTITY_NAME, "gradingScaleAlreadyExists");
+        }
+        else if (gradingScale.getGradeSteps() == null || gradingScale.getGradeSteps().isEmpty()) {
+            throw new BadRequestAlertException("A grading scale must contain grade steps", ENTITY_NAME, "emptyGradeSteps");
+        }
+        else if (gradingScale.getId() != null) {
+            throw new BadRequestAlertException("A grading scale can't contain a predefined id", ENTITY_NAME, "gradingScaleHasId");
+        }
     }
 
     /**
@@ -144,15 +147,7 @@ public class GradingScaleResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        if (existingGradingScale.isPresent()) {
-            return badRequest(ENTITY_NAME, "gradingScaleAlreadyExists", "A grading scale already exists for the selected exam");
-        }
-        else if (gradingScale.getGradeSteps() == null || gradingScale.getGradeSteps().isEmpty()) {
-            return badRequest(ENTITY_NAME, "emptyGradeSteps", "A grading scale must contain grade steps");
-        }
-        else if (gradingScale.getId() != null) {
-            return badRequest(ENTITY_NAME, "gradingScaleHasId", "A grading scale can't contain a predefined id");
-        }
+        validateGradingScale(existingGradingScale, gradingScale);
         Exam exam = examRepository.findByIdElseThrow(examId);
         if (gradingScale.getExam().getMaxPoints() != exam.getMaxPoints()) {
             exam.setMaxPoints(gradingScale.getExam().getMaxPoints());

@@ -80,49 +80,13 @@ public class ExamRegistrationService {
         for (var studentDto : studentDTOs) {
             var registrationNumber = studentDto.getRegistrationNumber();
             var login = studentDto.getLogin();
-            try {
-                // 1) we use the registration number and try to find the student in the Artemis user database
-                var optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
-                if (optionalStudent.isPresent()) {
-                    var student = optionalStudent.get();
-                    // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the
-                    // course)
-                    if (!student.getGroups().contains(course.getStudentGroupName())) {
-                        userService.addUserToGroup(student, course.getStudentGroupName(), Role.STUDENT);
-                    }
-                    exam.addRegisteredUser(student);
-                    continue;
-                }
-
-                // 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a
-                // potential
-                // external user management system
-                optionalStudent = userService.createUserFromLdap(registrationNumber);
-                if (optionalStudent.isPresent()) {
-                    var student = optionalStudent.get();
-                    // the newly created student needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
-                    userService.addUserToGroup(student, course.getStudentGroupName(), Role.STUDENT);
-                    exam.addRegisteredUser(student);
-                    continue;
-                }
-
-                // 3) if we cannot find the user in the (TUM) LDAP or the registration number was not set properly, try again using the login
-                optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
-                if (optionalStudent.isPresent()) {
-                    var student = optionalStudent.get();
-                    // the newly created student needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
-                    userService.addUserToGroup(student, course.getStudentGroupName(), Role.STUDENT);
-                    exam.addRegisteredUser(student);
-                    continue;
-                }
-
-                log.warn("User with registration number '{}' and login '{}' not found in Artemis user database nor found in (TUM) LDAP", registrationNumber, login);
+            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, course.getStudentGroupName(), Role.STUDENT, login);
+            if (optionalStudent.isEmpty()) {
+                notFoundStudentsDTOs.add(studentDto);
             }
-            catch (Exception ex) {
-                log.warn("Error while processing user with registration number " + registrationNumber, ex);
+            else {
+                exam.addRegisteredUser(optionalStudent.get());
             }
-
-            notFoundStudentsDTOs.add(studentDto);
         }
         examRepository.save(exam);
 
@@ -263,18 +227,21 @@ public class ExamRegistrationService {
     public void addAllStudentsOfCourseToExam(Long courseId, Long examId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         var students = userRepository.getStudents(course);
-        var examOpt = examRepository.findWithRegisteredUsersById(examId);
+        var exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
 
-        if (examOpt.isPresent()) {
-            Exam exam = examOpt.get();
-            students.forEach(student -> {
-                if (!exam.getRegisteredUsers().contains(student) && !student.getAuthorities().contains(ADMIN_AUTHORITY)
-                        && !student.getGroups().contains(course.getInstructorGroupName())) {
-                    exam.addRegisteredUser(student);
-                }
-            });
-            examRepository.save(exam);
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("exam", exam.getTitle());
+        for (int i = 0; i < students.size(); i++) {
+            var student = students.get(i);
+            if (!exam.getRegisteredUsers().contains(student) && !student.getAuthorities().contains(ADMIN_AUTHORITY)
+                    && !student.getGroups().contains(course.getInstructorGroupName())) {
+                exam.addRegisteredUser(student);
+                userData.put("student " + i, student.toDatabaseString());
+            }
         }
 
+        examRepository.save(exam);
+        AuditEvent auditEvent = new AuditEvent(userRepository.getUser().getLogin(), Constants.ADD_USER_TO_EXAM, userData);
+        auditEventRepository.add(auditEvent);
     }
 }

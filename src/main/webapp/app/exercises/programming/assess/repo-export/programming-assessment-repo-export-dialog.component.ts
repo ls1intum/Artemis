@@ -10,6 +10,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-scores-repo-export-dialog',
@@ -31,6 +32,9 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     repositoryExportOptions: RepositoryExportOptions;
     isLoading = false;
     isRepoExportForMultipleExercises: boolean;
+
+    // Icons
+    faCircleNotch = faCircleNotch;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -87,19 +91,23 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             // We anonymize the assessment process ("double-blind").
             this.repositoryExportOptions.addParticipantName = false;
             this.repositoryExportOptions.hideStudentNameInZippedFolder = true;
-            this.repoExportService.exportReposByParticipations(exerciseId, this.participationIdList, this.repositoryExportOptions).subscribe(this.handleExportRepoResponse, () => {
-                this.exportInProgress = false;
+            this.repoExportService.exportReposByParticipations(exerciseId, this.participationIdList, this.repositoryExportOptions).subscribe({
+                next: this.handleExportRepoResponse,
+                error: () => {
+                    this.exportInProgress = false;
+                },
             });
             return;
         }
         const participantIdentifierList =
             this.participantIdentifierList !== undefined && this.participantIdentifierList !== '' ? this.participantIdentifierList.split(',').map((e) => e.trim()) : ['ALL'];
 
-        this.repoExportService
-            .exportReposByParticipantIdentifiers(exerciseId, participantIdentifierList, this.repositoryExportOptions)
-            .subscribe(this.handleExportRepoResponse, () => {
+        this.repoExportService.exportReposByParticipantIdentifiers(exerciseId, participantIdentifierList, this.repositoryExportOptions).subscribe({
+            next: this.handleExportRepoResponse,
+            error: () => {
                 this.exportInProgress = false;
-            });
+            },
+        });
     }
 
     bulkExportRepos() {

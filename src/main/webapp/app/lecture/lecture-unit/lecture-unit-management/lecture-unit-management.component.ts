@@ -12,6 +12,7 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import { faArrowDown, faArrowUp, faPencilAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-lecture-unit-management',
@@ -31,6 +32,12 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faTimes = faTimes;
+    faPencilAlt = faPencilAlt;
+    faArrowUp = faArrowUp;
+    faArrowDown = faArrowDown;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -56,6 +63,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.activatedRoute.parent!.params.subscribe((params) => {
             this.lectureId = +params['lectureId'];
             if (this.lectureId) {
+                // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
                 this.loadData();
             }
         });
@@ -68,16 +76,18 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     loadData() {
         this.isLoading = true;
+        // TODO: we actually would like to have the lecture with all units! Posts and learning goals are not required here
+        // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
         this.lectureService
-            .find(this.lectureId)
+            .findWithDetails(this.lectureId)
             .pipe(
                 map((response: HttpResponse<Lecture>) => response.body!),
                 finalize(() => {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                (lecture) => {
+            .subscribe({
+                next: (lecture) => {
                     this.lecture = lecture;
                     if (lecture?.lectureUnits) {
                         this.lectureUnits = lecture?.lectureUnits;
@@ -85,18 +95,17 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                         this.lectureUnits = [];
                     }
                 },
-                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            );
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
 
     updateOrder() {
         this.lectureUnitService
             .updateOrder(this.lectureId, this.lectureUnits)
             .pipe(map((response: HttpResponse<LectureUnit[]>) => response.body!))
-            .subscribe(
-                () => {},
-                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            );
+            .subscribe({
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
 
     moveUp(index: number): void {
@@ -156,13 +165,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     deleteLectureUnit(lectureUnitId: number) {
-        this.lectureUnitService.delete(lectureUnitId, this.lectureId).subscribe(
-            () => {
+        this.lectureUnitService.delete(lectureUnitId, this.lectureId).subscribe({
+            next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     editButtonAvailable(lectureUnit: LectureUnit) {
@@ -180,15 +189,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         switch (lectureUnit?.type) {
             case LectureUnitType.ATTACHMENT:
                 return ['attachment-units', lectureUnit.id, 'edit'];
-                break;
-            case LectureUnitType.VIDEO: {
+            case LectureUnitType.VIDEO:
                 return ['video-units', lectureUnit.id, 'edit'];
-                break;
-            }
-            case LectureUnitType.TEXT: {
+            case LectureUnitType.TEXT:
                 return ['text-units', lectureUnit.id, 'edit'];
-                break;
-            }
             default:
                 return;
         }

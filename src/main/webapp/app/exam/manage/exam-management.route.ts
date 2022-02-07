@@ -1,8 +1,4 @@
-import { Injectable } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
-import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
@@ -12,21 +8,13 @@ import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/ex
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
-import { Exam } from 'app/entities/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
 import { TextExerciseResolver } from 'app/exercises/text/manage/text-exercise/text-exercise.route';
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
-import { FileUploadExerciseResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management.route';
 import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/programming-exercise-management-routing.module';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
-import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise.route';
 import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
 import { AssessmentDashboardComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard.component';
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
@@ -43,7 +31,7 @@ import { FileUploadAssessmentDashboardComponent } from 'app/exercises/file-uploa
 import { TextAssessmentDashboardComponent } from 'app/exercises/text/assess/text-assessment-dashboard/text-assessment-dashboard.component';
 import { ModelingAssessmentDashboardComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-dashboard.component';
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
-import { ProgrammingAssessmentDashboardComponent } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-assessment-dashboard.component';
+import { ProgrammingExerciseSubmissionsComponent } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-exercise-submissions.component';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { exerciseTypes } from 'app/entities/exercise.model';
 import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-detail.component';
@@ -67,76 +55,9 @@ import { ShortAnswerQuestionStatisticComponent } from 'app/exercises/quiz/manage
 import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
 import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
 import { isOrion } from 'app/shared/orion/orion';
-
-@Injectable({ providedIn: 'root' })
-export class ExamResolve implements Resolve<Exam> {
-    constructor(private examManagementService: ExamManagementService) {}
-
-    /**
-     * Resolves the route by extracting the examId and returns the exam with that Id if it exists
-     * or creates a new exam otherwise.
-     * @param route Contains the information about the route to be resolved
-     */
-    resolve(route: ActivatedRouteSnapshot): Observable<Exam> {
-        const courseId = route.params['courseId'] ? route.params['courseId'] : undefined;
-        const examId = route.params['examId'] ? route.params['examId'] : undefined;
-        const withStudents = route.data['requestOptions'] ? route.data['requestOptions'].withStudents : false;
-        const withExerciseGroups = route.data['requestOptions'] ? route.data['requestOptions'].withExerciseGroups : false;
-        if (courseId && examId) {
-            return this.examManagementService.find(courseId, examId, withStudents, withExerciseGroups).pipe(
-                filter((response: HttpResponse<Exam>) => response.ok),
-                map((response: HttpResponse<Exam>) => response.body!),
-            );
-        }
-        return of(new Exam());
-    }
-}
-
-@Injectable({ providedIn: 'root' })
-export class ExerciseGroupResolve implements Resolve<ExerciseGroup> {
-    constructor(private exerciseGroupService: ExerciseGroupService) {}
-
-    /**
-     * Resolves the route by extracting the exerciseGroupId and returns the exercise group with that id if it exists
-     * or creates a new exercise group otherwise.
-     * @param route Contains the information about the route to be resolved
-     */
-    resolve(route: ActivatedRouteSnapshot): Observable<ExerciseGroup> {
-        const courseId = route.params['courseId'] || undefined;
-        const examId = route.params['examId'] || undefined;
-        const exerciseGroupId = route.params['exerciseGroupId'] || undefined;
-        if (courseId && examId && exerciseGroupId) {
-            return this.exerciseGroupService.find(courseId, examId, exerciseGroupId).pipe(
-                filter((response: HttpResponse<ExerciseGroup>) => response.ok),
-                map((exerciseGroup: HttpResponse<ExerciseGroup>) => exerciseGroup.body!),
-            );
-        }
-        return of({ isMandatory: true } as ExerciseGroup);
-    }
-}
-
-@Injectable({ providedIn: 'root' })
-export class StudentExamResolve implements Resolve<StudentExam> {
-    constructor(private studentExamService: StudentExamService) {}
-
-    /**
-     * Resolves the route by extracting the studentExamId and returns the student exam with that id if it exists
-     * or creates a new student exam otherwise.
-     * @param route Contains the information about the route to be resolved
-     */
-    resolve(route: ActivatedRouteSnapshot): Observable<StudentExam> {
-        const courseId = route.params['courseId'] || undefined;
-        const examId = route.params['examId'] || undefined;
-        const studentExamId = route.params['studentExamId'] ? route.params['studentExamId'] : route.params['testRunId'];
-        if (courseId && examId && studentExamId) {
-            return this.studentExamService.find(courseId, examId, studentExamId).pipe(
-                filter((response: HttpResponse<StudentExam>) => response.ok),
-                map((response: HttpResponse<StudentExam>) => response.body!),
-            );
-        }
-        return of(new StudentExam());
-    }
-}
+import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management-resolve.service';
+import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise-resolver.service';
+import { ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
 
 export const examManagementRoute: Routes = [
     {
@@ -439,7 +360,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/new',
         component: FileUploadExerciseUpdateComponent,
         resolve: {
-            fileUploadExercise: FileUploadExerciseResolve,
+            fileUploadExercise: FileUploadExerciseManagementResolve,
         },
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
@@ -452,7 +373,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/edit',
         component: FileUploadExerciseUpdateComponent,
         resolve: {
-            fileUploadExercise: FileUploadExerciseResolve,
+            fileUploadExercise: FileUploadExerciseManagementResolve,
         },
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
@@ -576,7 +497,7 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
+            pageTitle: 'artemisApp.plagiarism.plagiarismDetection',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -588,7 +509,7 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
+            pageTitle: 'artemisApp.plagiarism.plagiarismDetection',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -600,7 +521,7 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
+            pageTitle: 'artemisApp.plagiarism.plagiarismDetection',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -854,7 +775,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions',
-        component: ProgrammingAssessmentDashboardComponent,
+        component: ProgrammingExerciseSubmissionsComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.assessmentDashboard.home.title',

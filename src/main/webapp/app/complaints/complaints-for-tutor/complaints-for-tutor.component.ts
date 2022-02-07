@@ -10,6 +10,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Location } from '@angular/common';
 import { Submission } from 'app/entities/submission.model';
+import { isAllowedToRespondToComplaintAction } from 'app/assessment/assessment.service';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
@@ -23,7 +24,6 @@ export class ComplaintsForTutorComponent implements OnInit {
     @Input() zeroIndent = true;
     @Input() exercise: Exercise | undefined;
     @Input() submission: Submission | undefined;
-    @Input() isAtLeastInstructor: boolean;
     // Indicates that the assessment should be updated after a complaint. Includes the corresponding complaint
     // that should be sent to the server along with the assessment update.
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
@@ -76,18 +76,18 @@ export class ComplaintsForTutorComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                (response) => {
+            .subscribe({
+                next: (response) => {
                     this.complaintResponse = response.body!;
                     this.complaint = this.complaintResponse.complaint!;
                     this.showRemoveLockButton = true;
                     this.showLockDuration = true;
                     this.alertService.success('artemisApp.locks.acquired');
                 },
-                (err: HttpErrorResponse) => {
+                error: (err: HttpErrorResponse) => {
                     this.onError(err);
                 },
-            );
+            });
     }
 
     private refreshLock() {
@@ -105,17 +105,17 @@ export class ComplaintsForTutorComponent implements OnInit {
                         this.isLoading = false;
                     }),
                 )
-                .subscribe(
-                    (response) => {
+                .subscribe({
+                    next: (response) => {
                         this.complaintResponse = response.body!;
                         this.complaint = this.complaintResponse.complaint!;
                         this.showRemoveLockButton = true;
                         this.alertService.success('artemisApp.locks.acquired');
                     },
-                    (err: HttpErrorResponse) => {
+                    error: (err: HttpErrorResponse) => {
                         this.onError(err);
                     },
-                );
+                });
         } else {
             this.showRemoveLockButton = false;
         }
@@ -126,15 +126,15 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     removeLock() {
-        this.complaintResponseService.removeLock(this.complaint.id!).subscribe(
-            () => {
+        this.complaintResponseService.removeLock(this.complaint.id!).subscribe({
+            next: () => {
                 this.alertService.success('artemisApp.locks.lockRemoved');
                 this.navigateBack();
             },
-            (err: HttpErrorResponse) => {
+            error: (err: HttpErrorResponse) => {
                 this.onError(err);
             },
-        );
+        });
     }
 
     respondToComplaint(acceptComplaint: boolean): void {
@@ -172,23 +172,24 @@ export class ComplaintsForTutorComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                (response) => {
+            .subscribe({
+                next: (response) => {
                     this.handled = true;
-                    // eslint-disable-next-line chai-friendly/no-unused-expressions
-                    this.complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                        ? this.alertService.success('artemisApp.moreFeedbackResponse.created')
-                        : this.alertService.success('artemisApp.complaintResponse.created');
+                    if (this.complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
+                        this.alertService.success('artemisApp.moreFeedbackResponse.created');
+                    } else {
+                        this.alertService.success('artemisApp.complaintResponse.created');
+                    }
                     this.complaintResponse = response.body!;
                     this.complaint = this.complaintResponse.complaint!;
                     this.isLockedForLoggedInUser = false;
                     this.showLockDuration = false;
                     this.showRemoveLockButton = false;
                 },
-                (err: HttpErrorResponse) => {
+                error: (err: HttpErrorResponse) => {
                     this.onError(err);
                 },
-            );
+            });
     }
 
     onError(httpErrorResponse: HttpErrorResponse) {
@@ -208,19 +209,6 @@ export class ComplaintsForTutorComponent implements OnInit {
      * For exam test runs, the original assessor is allowed to respond to complaints.
      */
     get isAllowedToRespond(): boolean {
-        if (this.isAtLeastInstructor) {
-            return true;
-        }
-        if (this.complaint!.team) {
-            return this.isAssessor;
-        } else {
-            if (this.isTestRun) {
-                return this.isAssessor;
-            }
-            if (this.complaint.result && this.complaint.result.assessor == undefined) {
-                return true;
-            }
-            return this.complaint!.complaintType === ComplaintType.COMPLAINT ? !this.isAssessor : this.isAssessor;
-        }
+        return isAllowedToRespondToComplaintAction(this.exercise?.isAtLeastInstructor ?? false, this.isTestRun, this.isAssessor, this.complaint, this.exercise);
     }
 }

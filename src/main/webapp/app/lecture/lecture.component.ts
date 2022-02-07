@@ -9,6 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faFile, faPencilAlt, faPlus, faPuzzlePiece, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-lecture',
@@ -22,6 +23,13 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faPencilAlt = faPencilAlt;
+    faFile = faFile;
+    faPuzzlePiece = faPuzzlePiece;
 
     constructor(
         protected lectureService: LectureService,
@@ -39,12 +47,12 @@ export class LectureComponent implements OnInit, OnDestroy {
                 filter((res: HttpResponse<Lecture[]>) => res.ok),
                 map((res: HttpResponse<Lecture[]>) => res.body),
             )
-            .subscribe(
-                (res: Lecture[]) => {
+            .subscribe({
+                next: (res: Lecture[]) => {
                     this.lectures = res;
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     ngOnInit() {
@@ -74,15 +82,15 @@ export class LectureComponent implements OnInit, OnDestroy {
      * @param lectureId the id of the lecture
      */
     deleteLecture(lectureId: number) {
-        this.lectureService.delete(lectureId).subscribe(
-            () => {
+        this.lectureService.delete(lectureId).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'lectureListModification',
                     content: 'Deleted an lecture',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 }

@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
@@ -22,11 +19,11 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
-import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -58,6 +55,8 @@ public class QuizExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final ExerciseDeletionService exerciseDeletionService;
+
     private final ExamDateService examDateService;
 
     private final QuizScheduleService quizScheduleService;
@@ -68,14 +67,15 @@ public class QuizExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final InstanceMessageSendService instanceMessageSendService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
-    public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
-            QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService, CourseRepository courseRepository,
-            GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserRepository userRepository, ExamDateService examDateService,
-            QuizMessagingService quizMessagingService, InstanceMessageSendService instanceMessageSendService) {
+    public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService, UserRepository userRepository,
+            ExerciseDeletionService exerciseDeletionServiceService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
+            AuthorizationCheckService authCheckService, CourseRepository courseRepository, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
+            ExamDateService examDateService, QuizMessagingService quizMessagingService, StudentParticipationRepository studentParticipationRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
+        this.exerciseDeletionService = exerciseDeletionServiceService;
         this.userRepository = userRepository;
         this.courseService = courseService;
         this.quizScheduleService = quizScheduleService;
@@ -86,7 +86,7 @@ public class QuizExerciseResource {
         this.examDateService = examDateService;
         this.courseRepository = courseRepository;
         this.quizMessagingService = quizMessagingService;
-        this.instanceMessageSendService = instanceMessageSendService;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -111,23 +111,14 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
-        exerciseService.validateScoreSettings(quizExercise);
-
+        quizExercise.validateScoreSettings();
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
-
-        // Check that the user is authorized to create the exercise
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         quizExercise = quizExerciseService.save(quizExercise);
-
-        groupNotificationService.checkNotificationForExerciseRelease(quizExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
@@ -157,19 +148,14 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
-        exerciseService.validateScoreSettings(quizExercise);
+        quizExercise.validateScoreSettings();
 
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
-
-        // Check that the user is authorized to update the exercise
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
-            return forbidden();
-        }
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         // Forbid conversion between normal course exercise and exam exercise
         final var originalQuiz = quizExerciseRepository.findByIdElseThrow(quizExercise.getId());
@@ -187,8 +173,6 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalQuiz, quizExercise, notificationText, instanceMessageSendService);
-
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
     }
 
@@ -205,9 +189,9 @@ public class QuizExerciseResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
-        var quizExercises = quizExerciseRepository.findByCourseId(courseId);
+        var quizExercises = quizExerciseRepository.findByCourseIdWithCategories(courseId);
 
         for (QuizExercise quizExercise : quizExercises) {
             quizExercise.setQuizQuestions(null);
@@ -252,19 +236,13 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
-
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         if (quizExercise.isExamExercise()) {
-            // Get the course over the exercise group
-            Course course = quizExercise.getExerciseGroup().getExam().getCourse();
-
-            if (!authCheckService.isAtLeastEditorInCourse(course, null)) {
-                return forbidden();
-            }
-            exerciseService.checkTestRunsExist(quizExercise);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, null);
+            studentParticipationRepository.checkTestRunsExist(quizExercise);
         }
         else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
         return ResponseEntity.ok(quizExercise);
     }
@@ -281,7 +259,7 @@ public class QuizExerciseResource {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
         quizStatisticService.recalculateStatistics(quizExercise);
         // fetch the quiz exercise again to make sure the latest changes are included
@@ -298,11 +276,9 @@ public class QuizExerciseResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long quizExerciseId) {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
-
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
-
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
         quizExercise.applyAppropriateFilterForStudents();
 
@@ -322,14 +298,8 @@ public class QuizExerciseResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable String action) {
         log.debug("REST request to immediately start QuizExercise : {}", quizExerciseId);
-
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
-
-        // check permissions
-        Course course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!authCheckService.isAtLeastEditorInCourse(course, null)) {
-            return forbidden();
-        }
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, null);
 
         switch (action) {
             case "start-now" -> {
@@ -398,14 +368,12 @@ public class QuizExerciseResource {
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete QuizExercise : {}", quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
-        Course course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return forbidden();
-        }
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
+
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
-        exerciseService.logDeletion(quizExercise, course, user);
-        exerciseService.delete(quizExerciseId, false, false);
+        exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseDeletionService.delete(quizExerciseId, false, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.getTitle())).build();
     }
@@ -442,15 +410,12 @@ public class QuizExerciseResource {
         }
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorForExercise(originalQuizExercise, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
 
         quizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
-        exerciseService.validateScoreSettings(quizExercise);
-
+        quizExercise.validateScoreSettings();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
     }
 }

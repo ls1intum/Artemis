@@ -1,14 +1,20 @@
-/*
-if the chart will be wider than the wrapper a horizontal scroll bar will appear and the user can scroll through all the
-exercises
-*/
-
 .chart-wrapper {
     width: 100%;
-    max-width: 1200px;
-    overflow-x: auto;
+    max-width: 1700px;
+}
+
+.filter {
+    margin-left: 0.5rem;
 }
 
 .chart {
     height: 350px;
+}
+
+:host::ng-deep .chart-legend {
+    padding: 104px 0 0 0 !important;
+}
+
+:host::ng-deep.legend-labels {
+    background-color: transparent !important;
 }

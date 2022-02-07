@@ -90,6 +90,31 @@
             "upload": "Upload",
             "uploading": "Uploading...",
             "fileUploadExercises": "File Upload Exercises",
+            "exercise": {
+                "search": {
+                    "searchButton": "Search",
+                    "resetButton": "Reset",
+                    "toggleButton": {
+                        "true": "Hide Advanced Search",
+                        "false": "Show Advanced Search"
+                    },
+                    "cardTitle": "Search Exercises",
+                    "labelExerciseName": "Search by exercise name",
+                    "fieldExerciseName": "Exercise name",
+                    "labelExerciseCategory": "Category",
+                    "fieldExerciseCategory": "Category",
+                    "labelExerciseType": "Exercise Type",
+                    "noResults": "No exercises matching this search query were found",
+                    "type": {
+                        "all": "All Exercises",
+                        "programming": "Programming Exercises",
+                        "quiz": "Quiz Exercises",
+                        "modeling": "Modelling Exercises",
+                        "text": "Text Exercises",
+                        "file-upload": "File Upload Exercises"
+                    }
+                }
+            },
             "students": "Students",
             "participations": "Participation",
             "tutors": "Tutors",
@@ -145,15 +170,25 @@
                 "complaintsTitle": "Total Complaints",
                 "moreFeedbackTitle": "More Feedback Requests",
                 "averageStudentScoreTitle": "Average Student Score"
-            }
+            },
+            "activeStudents": "Active students: {{ students }}"
         },
         "courseStatistics": {
             "statistics": "Statistics",
             "course": "Course",
-            "courseAverage": "course average",
+            "courseAverage": "Course average",
             "exerciseAverage": "exercise average",
             "amountOfStudents": "# of students",
-            "activeStudents": "Active students"
+            "activeStudents": "Active students",
+            "activeStudentsExplanation": "Active students are students that submitted at least once in the corresponding week.",
+            "average": "Average: ",
+            "averageReferenceLineCheckboxLabel": "Show average as reference line",
+            "exerciseType": "Exercise type",
+            "programming": "Programming",
+            "quiz": "Quiz",
+            "modeling": "Modeling",
+            "text": "Text",
+            "file-upload": "File Upload"
         }
     }
 }

@@ -11,6 +11,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
@@ -23,6 +24,10 @@ export class ApollonDiagramListComponent implements OnInit {
     reverse: boolean;
     courseId: number;
     isAtLeastInstructor = false;
+
+    // Icons
+    faSort = faSort;
+    faPlus = faPlus;
 
     constructor(
         private apollonDiagramsService: ApollonDiagramService,
@@ -45,14 +50,14 @@ export class ApollonDiagramListComponent implements OnInit {
         this.courseService.find(this.courseId).subscribe((courseResponse: HttpResponse<Course>) => {
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(courseResponse.body!);
         });
-        this.apollonDiagramsService.getDiagramsByCourse(this.courseId).subscribe(
-            (response) => {
+        this.apollonDiagramsService.getDiagramsByCourse(this.courseId).subscribe({
+            next: (response) => {
                 this.apollonDiagrams = response.body!;
             },
-            () => {
+            error: () => {
                 this.alertService.error('artemisApp.apollonDiagram.home.error.loading');
             },
-        );
+        });
     }
 
     /**
@@ -60,17 +65,17 @@ export class ApollonDiagramListComponent implements OnInit {
      * @param apollonDiagram
      */
     delete(apollonDiagram: ApollonDiagram) {
-        this.apollonDiagramsService.delete(apollonDiagram.id!, this.courseId).subscribe(
-            () => {
+        this.apollonDiagramsService.delete(apollonDiagram.id!, this.courseId).subscribe({
+            next: () => {
                 this.alertService.success('artemisApp.apollonDiagram.delete.success', { title: apollonDiagram.title });
                 this.apollonDiagrams = this.apollonDiagrams.filter((diagram) => {
                     return diagram.id !== apollonDiagram.id;
                 });
             },
-            () => {
+            error: () => {
                 this.alertService.error('artemisApp.apollonDiagram.delete.error', { title: apollonDiagram.title });
             },
-        );
+        });
     }
 
     /**

@@ -8,6 +8,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { SubmissionExportOptions, SubmissionExportService } from './submission-export.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-submission-export-dialog',
@@ -22,6 +23,9 @@ export class SubmissionExportDialogComponent implements OnInit {
     exportInProgress: boolean;
     submissionExportOptions: SubmissionExportOptions;
     isLoading = false;
+
+    // Icons
+    faCircleNotch = faCircleNotch;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -62,8 +66,11 @@ export class SubmissionExportDialogComponent implements OnInit {
 
     exportSubmissions(exerciseId: number) {
         this.exportInProgress = true;
-        this.submissionExportService.exportSubmissions(exerciseId, this.exerciseType, this.submissionExportOptions).subscribe(this.handleExportResponse, () => {
-            this.exportInProgress = false;
+        this.submissionExportService.exportSubmissions(exerciseId, this.exerciseType, this.submissionExportOptions).subscribe({
+            next: this.handleExportResponse,
+            error: () => {
+                this.exportInProgress = false;
+            },
         });
     }
 

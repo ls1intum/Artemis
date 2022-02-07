@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * Service Implementation for managing Participation.
  */
 @Service
-// TODO: this class is too large. We need to split it into multiple smaller classes with fewer dependencies
 public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
@@ -40,8 +39,6 @@ public class ParticipationService {
     private final Optional<VersionControlService> versionControlService;
 
     private final QuizScheduleService quizScheduleService;
-
-    private final UrlService urlService;
 
     private final ParticipationRepository participationRepository;
 
@@ -67,12 +64,15 @@ public class ParticipationService {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
-    public ParticipationService(UrlService urlService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+    private final UrlService urlService;
+
+    public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository,
             ComplaintRepository complaintRepository, TeamRepository teamRepository, GitService gitService, QuizScheduleService quizScheduleService,
             ParticipationRepository participationRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository) {
+            Optional<VersionControlService> versionControlService, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository,
+            UrlService urlService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -88,8 +88,8 @@ public class ParticipationService {
         this.versionControlService = versionControlService;
         this.quizScheduleService = quizScheduleService;
         this.ratingRepository = ratingRepository;
-        this.urlService = urlService;
         this.participantScoreRepository = participantScoreRepository;
+        this.urlService = urlService;
     }
 
     /**
@@ -98,7 +98,7 @@ public class ParticipationService {
      *
      * @param exercise the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
      * @param participant the user or team who starts the exercise
-     * @param createInitialSubmission whether an initial empty submission should be created for text, modeling, quiz, fileupload or not
+     * @param createInitialSubmission whether an initial empty submission should be created for text, modeling, quiz, file-upload or not
      * @return the participation connecting the given exercise and user
      */
     public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
@@ -220,6 +220,8 @@ public class ParticipationService {
             // fetch again to get additional objects
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
             ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
+            // Note: we make sure to use the correct programming exercises here to avoid org.hibernate.LazyInitializationException later
+            programmingParticipation.setProgrammingExercise(programmingExercise);
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the deadline)
             programmingParticipation = copyRepository(programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
@@ -321,7 +323,7 @@ public class ParticipationService {
         participation = copyBuildPlan(participation);
         // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
         participation = configureBuildPlan(participation);
-        // Note: the repository webhook (step 1c) already exists so we don't need to set it up again, the empty commit hook (step 2c) is also not necessary here
+        // Note: the repository webhook (step 1c) already exists, so we don't need to set it up again, the empty commit hook (step 2c) is also not necessary here
         // and must be handled by the calling method in case it would be necessary
         participation.setInitializationState(INITIALIZED);
         participation = programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
@@ -533,8 +535,8 @@ public class ParticipationService {
     }
 
     /**
-     * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactive This means the participation can be resumed in
-     * the future
+     * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactivate.
+     * This means the participation can be resumed in the future
      *
      * @param participation that will be set to inactive
      */
@@ -551,7 +553,7 @@ public class ParticipationService {
 
     /**
      * NOTICE: be careful with this method because it deletes the students code on the version control server Deletes the repository on the version control server and sets the
-     * initialization state of the participation to finished This means the participation cannot be resumed in the future and would need to be restarted
+     * initialization state of the participation to finished. This means the participation cannot be resumed in the future and would need to be restarted
      *
      * @param participation to be stopped
      */
@@ -567,6 +569,44 @@ public class ParticipationService {
     }
 
     /**
+     * Updates the individual due date for each given participation.
+     *
+     * Only sets individual due dates if the exercise has a due date and the
+     * individual due date is after this regular due date.
+     *
+     * @param exercise the {@code participations} belong to.
+     * @param participations for which the individual due date should be updated.
+     * @return all participations where the individual due date actually changed.
+     */
+    public List<StudentParticipation> updateIndividualDueDates(final Exercise exercise, final List<StudentParticipation> participations) {
+        final List<StudentParticipation> changedParticipations = new ArrayList<>();
+
+        for (final StudentParticipation toBeUpdated : participations) {
+            final Optional<StudentParticipation> originalParticipation = studentParticipationRepository.findById(toBeUpdated.getId());
+            if (originalParticipation.isEmpty()) {
+                continue;
+            }
+
+            // individual due dates can only exist if the exercise has a due date
+            // they also have to be after the exercise due date
+            final ZonedDateTime newIndividualDueDate;
+            if (exercise.getDueDate() == null || (toBeUpdated.getIndividualDueDate() != null && toBeUpdated.getIndividualDueDate().isBefore(exercise.getDueDate()))) {
+                newIndividualDueDate = null;
+            }
+            else {
+                newIndividualDueDate = toBeUpdated.getIndividualDueDate();
+            }
+
+            if (!Objects.equals(originalParticipation.get().getIndividualDueDate(), newIndividualDueDate)) {
+                originalParticipation.get().setIndividualDueDate(newIndividualDueDate);
+                changedParticipations.add(originalParticipation.get());
+            }
+        }
+
+        return changedParticipations;
+    }
+
+    /**
      * Delete the participation by participationId.
      *
      * @param participationId  the participationId of the entity
@@ -575,7 +615,7 @@ public class ParticipationService {
      */
     @Transactional // ok
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
-        StudentParticipation participation = studentParticipationRepository.findWithEagerLegalSubmissionsResultsFeedbacksById(participationId).get();
+        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         log.info("Request to delete Participation : {}", participation);
 
         if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseParticipation) {
@@ -602,7 +642,7 @@ public class ParticipationService {
         complaintRepository.deleteByResult_Participation_Id(participationId);
         ratingRepository.deleteByResult_Participation_Id(participationId);
 
-        participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation.getId());
+        deleteResultsAndSubmissionsOfParticipation(participationId);
 
         Exercise exercise = participation.getExercise();
         exercise.removeParticipation(participation);
@@ -614,25 +654,24 @@ public class ParticipationService {
      * Remove all results and submissions of the given participation. Will do nothing if invoked with a participation without results/submissions.
      *
      * @param participationId the id of the participation to delete results/submissions from.
-     * @return participation without submissions and results.
      */
     @Transactional // ok
-    public Participation deleteResultsAndSubmissionsOfParticipation(Long participationId) {
+    public void deleteResultsAndSubmissionsOfParticipation(Long participationId) {
         log.info("Request to delete all results and submissions of participation with id : {}", participationId);
-        Participation participation = participationRepository.getOneWithEagerSubmissionsAndResults(participationId);
+        var participation = participationRepository.findByIdWithResultsAndSubmissionsResults(participationId)
+                .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
         Set<Submission> submissions = participation.getSubmissions();
         List<Result> resultsToBeDeleted = new ArrayList<>();
 
         // The result of the submissions will be deleted via cascade
         submissions.forEach(submission -> {
-            resultsToBeDeleted.addAll(Objects.requireNonNull(submission.getResults()));
+            resultsToBeDeleted.addAll(submission.getResults());
             submissionRepository.deleteById(submission.getId());
         });
         resultsToBeDeleted.forEach(result -> participantScoreRepository.deleteAllByResultIdTransactional(result.getId()));
         // The results that are only connected to a participation are also deleted
         resultsToBeDeleted.forEach(participation::removeResult);
         participation.getResults().forEach(result -> resultRepository.deleteById(result.getId()));
-        return participation;
     }
 
     /**

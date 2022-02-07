@@ -17,15 +17,12 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-import * as chai from 'chai';
-import { ReactiveFormsModule } from '@angular/forms';
+import { NgForm, NgModel, ReactiveFormsModule } from '@angular/forms';
 import { Exercise } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
@@ -37,9 +34,7 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time.component';
 
 describe('StudentExamDetailComponent', () => {
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
@@ -73,6 +68,8 @@ describe('StudentExamDetailComponent', () => {
             id: 1,
             registeredUsers: [student],
             visibleDate: dayjs().add(120, 'seconds'),
+            startDate: dayjs().add(200, 'seconds'),
+            endDate: dayjs().add(7400, 'seconds'),
         };
 
         result = { score: 40 };
@@ -85,13 +82,13 @@ describe('StudentExamDetailComponent', () => {
 
         studentExam = {
             id: 1,
-            workingTime: 3600,
+            workingTime: 7200,
             exam,
             user: student,
             exercises: [exercise],
         };
         studentExam2 = {
-            id: 1,
+            id: 2,
             workingTime: 3600,
             exam,
             user: student,
@@ -114,6 +111,9 @@ describe('StudentExamDetailComponent', () => {
                 StudentExamDetailComponent,
                 MockComponent(AlertComponent),
                 MockComponent(DataTableComponent),
+                MockComponent(StudentExamWorkingTimeComponent),
+                MockDirective(NgForm),
+                MockDirective(NgModel),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
                 MockTranslateValuesDirective,
@@ -186,71 +186,149 @@ describe('StudentExamDetailComponent', () => {
                 gradingSystemService = TestBed.inject(GradingSystemService);
             });
     });
+
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
+    const expectDuration = (hours: number, minutes: number, seconds: number) => {
+        expect(studentExamDetailComponent.workingTimeFormValues.hours).toBe(hours);
+        expect(studentExamDetailComponent.workingTimeFormValues.minutes).toBe(minutes);
+        expect(studentExamDetailComponent.workingTimeFormValues.seconds).toBe(seconds);
+    };
+
     it('initialize', () => {
-        const findCourseSpy = sinon.spy(courseManagementService, 'find');
-        const gradeSpy = sinon.spy(gradingSystemService, 'matchPercentageToGradeStepForExam');
+        const findCourseSpy = jest.spyOn(courseManagementService, 'find');
+        const gradeSpy = jest.spyOn(gradingSystemService, 'matchPercentageToGradeStepForExam');
         studentExamDetailComponentFixture.detectChanges();
 
-        expect(findCourseSpy).to.have.been.calledOnce;
-        expect(gradeSpy).to.have.been.calledOnce;
-        expect(course.id).to.equal(1);
-        expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
+        expect(findCourseSpy).toHaveBeenCalledTimes(1);
+        expect(gradeSpy).toHaveBeenCalledTimes(1);
+        expect(course.id).toBe(1);
+        expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
+
+        expectDuration(2, 0, 0);
+        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(0);
     });
 
     it('should save working time', () => {
-        const studentExamSpy = sinon.spy(studentExamService, 'updateWorkingTime');
+        const studentExamSpy = jest.spyOn(studentExamService, 'updateWorkingTime');
         studentExamDetailComponentFixture.detectChanges();
 
         studentExamDetailComponent.saveWorkingTime();
-        expect(studentExamSpy).to.have.been.calledOnce;
-        expect(studentExamDetailComponent.isSavingWorkingTime).to.equal(false);
-        expect(course.id).to.equal(1);
-        expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
-        expect(studentExamDetailComponent.maxTotalPoints).to.equal(100);
+        expect(studentExamSpy).toHaveBeenCalledTimes(1);
+        expect(studentExamDetailComponent.isSavingWorkingTime).toBe(false);
+        expect(course.id).toBe(1);
+        expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
+        expect(studentExamDetailComponent.maxTotalPoints).toBe(100);
     });
 
     it('should not increase points when save working time is called more than once', () => {
-        const studentExamSpy = sinon.spy(studentExamService, 'updateWorkingTime');
+        const studentExamSpy = jest.spyOn(studentExamService, 'updateWorkingTime');
         studentExamDetailComponentFixture.detectChanges();
         studentExamDetailComponent.saveWorkingTime();
         studentExamDetailComponent.saveWorkingTime();
         studentExamDetailComponent.saveWorkingTime();
-        expect(studentExamSpy).to.have.been.calledThrice;
-        expect(studentExamDetailComponent.isSavingWorkingTime).to.equal(false);
-        expect(course.id).to.equal(1);
-        expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
-        expect(studentExamDetailComponent.maxTotalPoints).to.equal(100);
+        expect(studentExamSpy).toHaveBeenCalledTimes(3);
+        expect(studentExamDetailComponent.isSavingWorkingTime).toBe(false);
+        expect(course.id).toBe(1);
+        expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
+        expect(studentExamDetailComponent.maxTotalPoints).toBe(100);
+    });
+
+    it('should disable the working time form while saving', () => {
+        studentExamDetailComponent.isSavingWorkingTime = true;
+        expect(studentExamDetailComponent.isFormDisabled()).toBe(true);
+    });
+
+    it('should disable the working time form after a test run is submitted', () => {
+        studentExamDetailComponent.isTestRun = true;
+        studentExamDetailComponent.studentExam = studentExam;
+
+        studentExamDetailComponent.studentExam.submitted = false;
+        expect(studentExamDetailComponent.isFormDisabled()).toBe(false);
+
+        studentExamDetailComponent.studentExam.submitted = true;
+        expect(studentExamDetailComponent.isFormDisabled()).toBe(true);
+    });
+
+    it('should disable the working time form after the exam is visible to a student', () => {
+        studentExamDetailComponent.isTestRun = false;
+        studentExamDetailComponent.studentExam = studentExam;
+
+        studentExamDetailComponent.studentExam.exam!.visibleDate = dayjs().add(1, 'hour');
+        expect(studentExamDetailComponent.isFormDisabled()).toBe(false);
+
+        studentExamDetailComponent.studentExam.exam!.visibleDate = dayjs().subtract(1, 'hour');
+        expect(studentExamDetailComponent.isFormDisabled()).toBe(true);
+    });
+
+    it('should disable the working time form if there is no exam', () => {
+        studentExamDetailComponent.isTestRun = false;
+        studentExamDetailComponent.studentExam = studentExam;
+
+        studentExamDetailComponent.studentExam.exam = undefined;
+        expect(studentExamDetailComponent.isFormDisabled()).toBe(true);
     });
 
     it('should get examIsOver', () => {
         studentExamDetailComponent.studentExam = studentExam;
         studentExam.exam!.gracePeriod = 100;
-        expect(studentExamDetailComponent.examIsOver()).to.equal(false);
+        expect(studentExamDetailComponent.examIsOver()).toBe(false);
         studentExam.exam!.endDate = dayjs().add(-20, 'seconds');
-        expect(studentExamDetailComponent.examIsOver()).to.equal(false);
+        expect(studentExamDetailComponent.examIsOver()).toBe(false);
         studentExam.exam!.endDate = dayjs().add(-200, 'seconds');
-        expect(studentExamDetailComponent.examIsOver()).to.equal(true);
+        expect(studentExamDetailComponent.examIsOver()).toBe(true);
         studentExam.exam = undefined;
-        expect(studentExamDetailComponent.examIsOver()).to.equal(false);
+        expect(studentExamDetailComponent.examIsOver()).toBe(false);
     });
 
     it('should toggle to unsubmitted', () => {
-        const toggleSubmittedStateSpy = sinon.spy(studentExamService, 'toggleSubmittedState');
+        const toggleSubmittedStateSpy = jest.spyOn(studentExamService, 'toggleSubmittedState');
         studentExamDetailComponentFixture.detectChanges();
-        expect(studentExamDetailComponent.studentExam.submitted).to.equal(undefined);
-        expect(studentExamDetailComponent.studentExam.submissionDate).to.equal(undefined);
+        expect(studentExamDetailComponent.studentExam.submitted).toBe(undefined);
+        expect(studentExamDetailComponent.studentExam.submissionDate).toBe(undefined);
 
         studentExamDetailComponent.toggle();
 
-        expect(toggleSubmittedStateSpy).to.have.been.calledOnce;
-        expect(studentExamDetailComponent.studentExam.submitted).to.equal(true);
-        expect(studentExamDetailComponent.studentExam.submissionDate).to.not.equal(undefined);
+        expect(toggleSubmittedStateSpy).toHaveBeenCalledTimes(1);
+        expect(studentExamDetailComponent.studentExam.submitted).toBe(true);
+        // the toggle uses the current time as submission date,
+        // therefore no useful assertion about a concrete value is possible here
+        expect(studentExamDetailComponent.studentExam.submissionDate).not.toBe(undefined);
+    });
+
+    it('should update the percent difference when the absolute working time changes', () => {
+        studentExamDetailComponent.ngOnInit();
+
+        studentExamDetailComponent.workingTimeFormValues.hours = 4;
+        studentExamDetailComponent.updateWorkingTimePercent();
+        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(100);
+
+        studentExamDetailComponent.workingTimeFormValues.hours = 3;
+        studentExamDetailComponent.updateWorkingTimePercent();
+        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(50);
+
+        studentExamDetailComponent.workingTimeFormValues.hours = 0;
+        studentExamDetailComponent.updateWorkingTimePercent();
+        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(-100);
+
+        // small change, not a full percent
+        studentExamDetailComponent.workingTimeFormValues.hours = 2;
+        studentExamDetailComponent.workingTimeFormValues.seconds = 12;
+        studentExamDetailComponent.updateWorkingTimePercent();
+        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(0.17);
+    });
+
+    it('should update the absolute working time when changing the percent difference', () => {
+        studentExamDetailComponent.ngOnInit();
+
+        studentExamDetailComponent.workingTimeFormValues.percent = 26;
+        studentExamDetailComponent.updateWorkingTimeDuration();
+        expectDuration(2, 31, 12);
+
+        studentExamDetailComponent.workingTimeFormValues.percent = -100;
+        studentExamDetailComponent.updateWorkingTimeDuration();
+        expectDuration(0, 0, 0);
     });
 });

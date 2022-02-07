@@ -22,9 +22,9 @@ export interface IExerciseHintService {
 
     /**
      * Finds an exercise hint
-     * @param id Id of exercise hint to find
+     * @param exerciseHintId Id of exercise hint to find
      */
-    find(id: number): Observable<ExerciseHintResponse>;
+    find(exerciseHintId: number): Observable<ExerciseHintResponse>;
 
     /**
      * Finds all exercise hints by exercise id
@@ -34,25 +34,25 @@ export interface IExerciseHintService {
 
     /**
      * Deletes an exercise hint
-     * @param id Id of exercise hint to delete
+     * @param exerciseHintId Id of exercise hint to delete
      */
-    delete(id: number): Observable<HttpResponse<void>>;
+    delete(exerciseHintId: number): Observable<HttpResponse<void>>;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseHintService implements IExerciseHintService {
     public resourceUrl = SERVER_API_URL + 'api/exercise-hints';
 
-    constructor(protected http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(protected http: HttpClient) {}
 
     /**
      * Creates an exercise hint
      * @param exerciseHint Exercise hint to create
      */
     create(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
-        exerciseHint.exercise = this.exerciseService.convertDateFromClient(exerciseHint.exercise!);
+        exerciseHint.exercise = ExerciseService.convertDateFromClient(exerciseHint.exercise!);
         if (exerciseHint.exercise.categories) {
-            exerciseHint.exercise.categories = this.exerciseService.stringifyExerciseCategories(exerciseHint.exercise);
+            exerciseHint.exercise.categories = ExerciseService.stringifyExerciseCategories(exerciseHint.exercise);
         }
         return this.http.post<ExerciseHint>(this.resourceUrl, exerciseHint, { observe: 'response' });
     }
@@ -62,8 +62,8 @@ export class ExerciseHintService implements IExerciseHintService {
      * @param exerciseHint Exercise hint to update
      */
     update(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
-        exerciseHint.exercise = this.exerciseService.convertDateFromClient(exerciseHint.exercise!);
-        exerciseHint.exercise.categories = this.exerciseService.stringifyExerciseCategories(exerciseHint.exercise);
+        exerciseHint.exercise = ExerciseService.convertDateFromClient(exerciseHint.exercise!);
+        exerciseHint.exercise.categories = ExerciseService.stringifyExerciseCategories(exerciseHint.exercise);
         return this.http.put<ExerciseHint>(`${this.resourceUrl}/${exerciseHint.id}`, exerciseHint, { observe: 'response' });
     }
 

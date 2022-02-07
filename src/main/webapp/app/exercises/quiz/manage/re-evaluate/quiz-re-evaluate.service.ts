@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Injectable({ providedIn: 'root' })
 export class QuizReEvaluateService {
@@ -9,15 +10,16 @@ export class QuizReEvaluateService {
     constructor(private http: HttpClient) {}
 
     update(quizExercise: QuizExercise) {
-        const copy = this.convert(quizExercise);
+        const copy = QuizReEvaluateService.convert(quizExercise);
         return this.http.put<QuizExercise>(this.resourceUrl + quizExercise.id + '/re-evaluate', copy, { observe: 'response' });
     }
 
     /**
-     * Convert a QuizExercise to a JSON which can be sent to the server.
+     * Copy the QuizExercise object
      */
-    private convert(quizExercise: QuizExercise): QuizExercise {
+    private static convert(quizExercise: QuizExercise): QuizExercise {
         const copy: QuizExercise = Object.assign({}, quizExercise);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return copy;
     }
 }

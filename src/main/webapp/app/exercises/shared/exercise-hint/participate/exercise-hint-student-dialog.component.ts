@@ -7,6 +7,7 @@ import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstra
 
 import { ExerciseHintService } from '../manage/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 
 /**
  * This component is a modal that shows the exercise's hints.
@@ -37,7 +38,7 @@ export class ExerciseHintStudentDialogComponent {
     template: `
         <fa-icon
             *ngIf="exerciseHints && exerciseHints.length"
-            [icon]="['far', 'question-circle']"
+            [icon]="farQuestionCircle"
             (click)="openModal()"
             class="hint-icon text-secondary"
             ngbTooltip="{{ 'artemisApp.exerciseHint.studentDialog.tooltip' | artemisTranslate }}"
@@ -49,6 +50,9 @@ export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
     @Input() exerciseId: number;
     @Input() exerciseHints?: ExerciseHint[];
     protected ngbModalRef: NgbModalRef | null;
+
+    // Icons
+    farQuestionCircle = faQuestionCircle;
 
     constructor(protected exerciseHintService: ExerciseHintService, protected activatedRoute: ActivatedRoute, protected router: Router, protected modalService: NgbModal) {}
 

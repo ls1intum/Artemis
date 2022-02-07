@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, ContentChild, ElementRef } from '@angular/core';
+import { faCircle } from '@fortawesome/free-solid-svg-icons';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Component({
@@ -12,6 +13,9 @@ export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
     disconnected = true;
     onConnected: () => void;
     onDisconnected: () => void;
+
+    // Icons
+    faCircle = faCircle;
 
     constructor(private jhiWebsocketService: JhiWebsocketService) {}
 

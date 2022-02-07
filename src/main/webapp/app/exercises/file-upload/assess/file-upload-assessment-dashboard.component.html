@@ -2,7 +2,7 @@
     <h4 jhiTranslate="artemisApp.fileUploadAssessment.dashboard.heading" [translateValues]="{ exerciseTitle: exercise.title }"></h4>
     <jhi-assessment-filters [submissions]="submissions" (filterChange)="updateFilteredSubmissions($event)"></jhi-assessment-filters>
     <ng-container *ngIf="!busy"></ng-container>
-    <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
+    <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
     <div class="table-responsive" *ngIf="submissions && submissions.length > 0; else emptyTable">
         <table class="table table-striped exercise-table">
             <thead>
@@ -12,32 +12,32 @@
                     </th>
                     <th *ngIf="exercise.isAtLeastInstructor" jhiSortBy="participation.participantName">
                         <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th *ngIf="exercise.isAtLeastInstructor" jhiSortBy="participation.participantIdentifier">
                         <a class="th-link" jhiTranslate="artemisApp.exercise.studentId">Student login</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="submissionDate">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="latestResult.score">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.result">Result</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="participation.submissions.length">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="durationInMinutes">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="latestResult.assessor.name">
                         <a *ngIf="numberOfCorrectionrounds == 1" class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
                         <a *ngIf="numberOfCorrectionrounds == 2" class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessors">Reviewers</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th>
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentFirst">Assessment</a>
@@ -115,7 +115,7 @@
                                     [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                     class="btn btn-success btn-sm mb-1"
                                 >
-                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | artemisTranslate }}
+                                    <fa-icon [fixedWidth]="true" [icon]="faFolderOpen"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | artemisTranslate }}
                                 </a>
 
                                 <a
@@ -124,7 +124,7 @@
                                     [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                     class="btn btn-primary btn-sm mb-1"
                                 >
-                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
+                                    <fa-icon [fixedWidth]="true" [icon]="faFolderOpen"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
                                 </a>
                             </span>
                             <!-- start-->
@@ -139,7 +139,7 @@
                                         [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                         class="btn btn-primary btn-sm mb-1"
                                     >
-                                        <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
+                                        <fa-icon [fixedWidth]="true" [icon]="faFolderOpen"></fa-icon>&nbsp;
                                         <span>
                                             {{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
                                         </span>
@@ -153,7 +153,7 @@
                                                 [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                                 class="btn btn-warning btn-sm mb-1"
                                             >
-                                                <fa-icon [fixedWidth]="true" [icon]="'edit'"></fa-icon>&nbsp;
+                                                <fa-icon [fixedWidth]="true" [icon]="faEdit"></fa-icon>&nbsp;
                                                 <span>
                                                     {{ 'artemisApp.assessment.dashboard.actions.continue' | artemisTranslate }}
                                                 </span>
@@ -165,7 +165,7 @@
                                                 [disabled]="busy"
                                                 class="btn btn-danger btn-sm mb-1"
                                             >
-                                                <fa-icon [fixedWidth]="true" [icon]="'ban'"></fa-icon>&nbsp;{{
+                                                <fa-icon [fixedWidth]="true" [icon]="faBan"></fa-icon>&nbsp;{{
                                                     'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate
                                                 }}
                                             </button>
@@ -183,7 +183,7 @@
                                     [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                     class="btn btn-success btn-sm mb-1"
                                 >
-                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
+                                    <fa-icon [fixedWidth]="true" [icon]="faFolderOpen"></fa-icon>
                                     {{ 'artemisApp.assessment.dashboard.actions.assess' | artemisTranslate }}
                                 </a>
                             </span>

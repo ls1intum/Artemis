@@ -11,17 +11,17 @@ import { LectureUpdateComponent } from './lecture-update.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { CourseResolve } from 'app/course/manage/course-management.route';
 import { lectureUnitRoute } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.route';
+import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 
 @Injectable({ providedIn: 'root' })
 export class LectureResolve implements Resolve<Lecture> {
-    constructor(private service: LectureService) {}
+    constructor(private lectureService: LectureService) {}
 
     resolve(route: ActivatedRouteSnapshot): Observable<Lecture> {
-        const id = route.params['lectureId'];
-        if (id) {
-            return this.service.find(id).pipe(
+        const lectureId = route.params['lectureId'];
+        if (lectureId) {
+            return this.lectureService.find(lectureId).pipe(
                 filter((response: HttpResponse<Lecture>) => response.ok),
                 map((lecture: HttpResponse<Lecture>) => lecture.body!),
             );
@@ -35,7 +35,7 @@ export const lectureRoute: Routes = [
         path: ':courseId/lectures',
         component: LectureComponent,
         resolve: {
-            course: CourseResolve,
+            course: CourseManagementResolve,
         },
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
@@ -47,7 +47,7 @@ export const lectureRoute: Routes = [
         // Create a new path without a component defined to prevent the LectureComponent from being always rendered
         path: ':courseId/lectures',
         resolve: {
-            course: CourseResolve,
+            course: CourseManagementResolve,
         },
         children: [
             {

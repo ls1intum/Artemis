@@ -1,4 +1,3 @@
-import * as sinon from 'sinon';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -8,7 +7,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -63,7 +62,7 @@ describe('GradeKeyOverviewComponent', () => {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {

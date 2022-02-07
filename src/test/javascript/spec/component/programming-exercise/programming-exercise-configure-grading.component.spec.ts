@@ -1,11 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, Subject } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { CookieService } from 'ngx-cookie-service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -18,7 +17,11 @@ import { ProgrammingBuildRunService } from 'app/exercises/programming/participat
 import { MockProgrammingBuildRunService } from '../../helpers/mocks/service/mock-programming-build-run.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-import { EditableField, ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
+import {
+    ChartFilterType,
+    EditableField,
+    ProgrammingExerciseConfigureGradingComponent,
+} from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -28,7 +31,6 @@ import {
     StaticCodeAnalysisCategoryUpdate,
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
-import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
@@ -36,14 +38,14 @@ import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-e
 import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/grading/charts/category-issues-chart.component';
 import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-status.component';
 import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-table-actions.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbAlert, NgbTooltip, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlert, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
@@ -53,7 +55,6 @@ import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
@@ -240,11 +241,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: ProgrammingBuildRunService, useClass: MockProgrammingBuildRunService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: CookieService, useClass: MockCookieService },
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: Router, useClass: MockRouter },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-                { provide: AlertService, useClass: MockAlertService },
+                MockProvider(AlertService),
             ],
         })
             .compileComponents()
@@ -689,7 +689,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(resetCategoriesStub).toHaveBeenCalledWith(exerciseId);
         expect(loadStatisticsStub).toHaveBeenCalledTimes(1);
         expect(loadStatisticsStub).toHaveBeenCalledWith(exerciseId);
-        expect(comp.staticCodeAnalysisCategories).toEqual(codeAnalysisCategories1);
+        expect(comp.staticCodeAnalysisCategoriesForTable).toEqual(codeAnalysisCategories1);
         expect(comp.changedCategoryIds).toHaveLength(0);
     });
 
@@ -700,7 +700,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         const table = debugElement.query(By.css(codeAnalysisTableId));
 
-        const gradedCategories = comp.staticCodeAnalysisCategories.filter((category) => category.state === StaticCodeAnalysisCategoryState.Graded);
+        const gradedCategories = comp.staticCodeAnalysisCategoriesForTable.filter((category) => category.state === StaticCodeAnalysisCategoryState.Graded);
 
         // get inputs
         const editingInputs = table.queryAll(By.css(tableEditingInput));
@@ -739,7 +739,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(updateCategoriesStub).toHaveBeenCalledTimes(1);
         expect(updateCategoriesStub).toHaveBeenCalledWith(exerciseId, [StaticCodeAnalysisCategoryUpdate.from(updatedCategory)]);
 
-        const categoryThatWasUpdated = comp.staticCodeAnalysisCategories.find((category) => category.id === updatedCategory.id)!;
+        const categoryThatWasUpdated = comp.staticCodeAnalysisCategoriesForTable.find((category) => category.id === updatedCategory.id)!;
         expect(categoryThatWasUpdated.penalty).toBe(20);
         expect(categoryThatWasUpdated.maxPenalty).toBe(100);
         expect(comp.changedCategoryIds).toHaveLength(0);
@@ -797,10 +797,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         headerElement.nativeElement.click();
         fixture.detectChanges();
 
-        const sortIcon = getElement(headerElement, 'fa-icon').attributes['ng-reflect-icon'].value;
-
         expect(comp.tableSorts[table]).toEqual([{ prop, dir }]);
-        expect(sortIcon).toBe(dir === 'asc' ? 'sort-up' : 'sort-down');
     };
 
     it('should sort test-case table', () => {
@@ -841,5 +838,151 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const detectedIssuesHeader = headerColumns[4];
         sortAndTest(detectedIssuesHeader, 'detectedIssues', 'asc');
         sortAndTest(detectedIssuesHeader, 'detectedIssues', 'desc');
+    });
+
+    describe('test chart interaction', () => {
+        it('should filter test case table correctly', () => {
+            initGradingComponent();
+            fixture.detectChanges();
+            const testCasesDisplayedByCharts = comp.filteredTestCasesForCharts;
+            const expectedTestCase = {
+                id: 1,
+                testName: 'testBubbleSort',
+                active: true,
+                weight: 1,
+                bonusMultiplier: 1,
+                bonusPoints: 0,
+                visibility: Visibility.Always,
+            };
+
+            comp.filterByChart(1, ChartFilterType.TEST_CASES);
+
+            expect(comp.filteredTestCasesForTable).toHaveLength(1);
+            expect(comp.filteredTestCasesForTable).toEqual([expectedTestCase]);
+            expect(comp.filteredTestCasesForCharts).toEqual(testCasesDisplayedByCharts);
+        });
+
+        it('should update test case accordingly if modified while chart filtering', () => {
+            initGradingComponent();
+            fixture.detectChanges();
+            comp.filterByChart(1, ChartFilterType.TEST_CASES);
+            fixture.detectChanges();
+            const table = debugElement.query(By.css(testCaseTableId));
+            const editingInputs = table.queryAll(By.css(tableEditingInput));
+            expect(editingInputs).toHaveLength(3);
+
+            const weightInput = editingInputs[0].nativeElement;
+            expect(weightInput).not.toBe(null);
+            weightInput.focus();
+
+            // Set new weight.
+            weightInput.value = '40';
+            weightInput.dispatchEvent(new Event('blur'));
+
+            const multiplierInput = editingInputs[1].nativeElement;
+            expect(multiplierInput).not.toBe(null);
+            multiplierInput.focus();
+
+            // Set new multiplier.
+            multiplierInput.value = '4';
+            multiplierInput.dispatchEvent(new Event('blur'));
+
+            const bonusInput = editingInputs[2].nativeElement;
+            expect(bonusInput).not.toBe(null);
+            bonusInput.focus();
+
+            // Set new bonus.
+            bonusInput.value = '7';
+            bonusInput.dispatchEvent(new Event('blur'));
+            fixture.detectChanges();
+
+            const visibleTestCase = {
+                id: 1,
+                testName: 'testBubbleSort',
+                active: true,
+                weight: 40,
+                bonusMultiplier: 4,
+                bonusPoints: 7,
+                visibility: Visibility.Always,
+            };
+
+            expect(comp.filteredTestCasesForTable).toHaveLength(1);
+            expect(comp.filteredTestCasesForTable).toEqual([visibleTestCase]);
+            expect(comp.filteredTestCasesForCharts).toContainEqual(visibleTestCase);
+
+            // we reset the table
+            comp.filterByChart(-5, ChartFilterType.TEST_CASES);
+            const expectedTestCases = testCases1.filter((testCase) => testCase.active === true).map((testCase) => (testCase.id !== 1 ? testCase : visibleTestCase));
+
+            expect(comp.filteredTestCasesForTable).toEqual(expectedTestCases);
+        });
+
+        it('should filter sca table correctly', () => {
+            initGradingComponent({ tab: 'code-analysis' });
+            fixture.detectChanges();
+            const scaCategoriesDisplayedByChart = comp.staticCodeAnalysisCategoriesForCharts;
+            const expectedCategory = {
+                id: 1,
+                name: 'Bad Practice',
+                state: StaticCodeAnalysisCategoryState.Graded,
+                penalty: 1,
+                maxPenalty: 10,
+            };
+
+            comp.filterByChart(1, ChartFilterType.CATEGORIES);
+
+            expect(comp.staticCodeAnalysisCategoriesForTable).toHaveLength(1);
+            expect(comp.staticCodeAnalysisCategoriesForTable).toEqual([expectedCategory]);
+            expect(comp.staticCodeAnalysisCategoriesForCharts).toEqual(scaCategoriesDisplayedByChart);
+        });
+
+        it('should update category accordingly if modified while chart filtering', () => {
+            initGradingComponent({ tab: 'code-analysis' });
+            fixture.detectChanges();
+            comp.filterByChart(1, ChartFilterType.CATEGORIES);
+            fixture.detectChanges();
+            const table = debugElement.query(By.css(codeAnalysisTableId));
+
+            // get inputs
+            const editingInputs = table.queryAll(By.css(tableEditingInput));
+            expect(editingInputs).toHaveLength(2);
+
+            const penaltyInput = editingInputs[0].nativeElement;
+            expect(penaltyInput).not.toBe(null);
+            penaltyInput.focus();
+
+            // Set new penalty.
+            penaltyInput.value = '10';
+            penaltyInput.dispatchEvent(new Event('blur'));
+
+            const maxPenaltyInput = editingInputs[1].nativeElement;
+            expect(maxPenaltyInput).not.toBe(null);
+            maxPenaltyInput.focus();
+
+            // Set new max penalty.
+            maxPenaltyInput.value = '50';
+            maxPenaltyInput.dispatchEvent(new Event('blur'));
+
+            fixture.detectChanges();
+            const currentlyDisplayedCategory = {
+                id: 1,
+                name: 'Bad Practice',
+                state: StaticCodeAnalysisCategoryState.Graded,
+                penalty: 10,
+                maxPenalty: 50,
+            };
+
+            expect(comp.staticCodeAnalysisCategoriesForTable).toHaveLength(1);
+            expect(comp.staticCodeAnalysisCategoriesForTable).toEqual([currentlyDisplayedCategory]);
+            expect(comp.staticCodeAnalysisCategoriesForCharts).toContainEqual(currentlyDisplayedCategory);
+
+            // we reset the table
+            comp.filterByChart(-5, ChartFilterType.CATEGORIES);
+            const expectedCategories = codeAnalysisCategories1
+                .filter((category) => category.state !== StaticCodeAnalysisCategoryState.Inactive)
+                .map((category) => (category.id !== 1 ? category : currentlyDisplayedCategory));
+
+            expect(comp.staticCodeAnalysisCategoriesForTable).toEqual(expectedCategories);
+        });
     });
 });

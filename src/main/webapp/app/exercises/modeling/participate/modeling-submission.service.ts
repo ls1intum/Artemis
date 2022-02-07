@@ -4,9 +4,9 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { stringifyCircular } from 'app/shared/util/utils';
-import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
@@ -14,7 +14,7 @@ export type EntityResponseType = HttpResponse<ModelingSubmission>;
 export class ModelingSubmissionService {
     public resourceUrl = SERVER_API_URL + 'api';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
 
     /**
      * Create a new modeling submission
@@ -22,13 +22,13 @@ export class ModelingSubmissionService {
      * @param {number} exerciseId - Id of the exercise, for which the submission is made
      */
     create(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
-        const copy = ModelingSubmissionService.convert(modelingSubmission);
+        const copy = this.submissionService.convert(modelingSubmission);
         return this.http
             .post<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions`, stringifyCircular(copy), {
                 headers: { 'Content-Type': 'application/json' }, // needed due to stringifyCircular
                 observe: 'response',
             })
-            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.submissionService.convertResponse(res)));
     }
 
     /**
@@ -37,13 +37,13 @@ export class ModelingSubmissionService {
      * @param {number} exerciseId - Id of the exercise, for which the submission is made
      */
     update(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
-        const copy = ModelingSubmissionService.convert(modelingSubmission);
+        const copy = this.submissionService.convert(modelingSubmission);
         return this.http
             .put<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions`, stringifyCircular(copy), {
                 headers: { 'Content-Type': 'application/json' }, // needed due to stringifyCircular
                 observe: 'response',
             })
-            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.submissionService.convertResponse(res)));
     }
 
     /**
@@ -63,7 +63,7 @@ export class ModelingSubmissionService {
                 params,
                 observe: 'response',
             })
-            .pipe(map((res: HttpResponse<ModelingSubmission[]>) => this.convertArrayResponse(res)));
+            .pipe(map((res: HttpResponse<ModelingSubmission[]>) => this.submissionService.convertArrayResponse(res)));
     }
 
     /**
@@ -81,7 +81,7 @@ export class ModelingSubmissionService {
         if (lock) {
             params = params.set('lock', 'true');
         }
-        return this.http.get<ModelingSubmission>(url, { params }).pipe(map((res: ModelingSubmission) => ModelingSubmissionService.convertItemFromServer(res)));
+        return this.http.get<ModelingSubmission>(url, { params }).pipe(map((res: ModelingSubmission) => this.submissionService.convertSubmissionFromServer(res)));
     }
 
     /**
@@ -99,7 +99,7 @@ export class ModelingSubmissionService {
         if (resultId && resultId > 0) {
             params = params.set('resultId', resultId.toString());
         }
-        return this.http.get<ModelingSubmission>(url, { params });
+        return this.http.get<ModelingSubmission>(url, { params }).pipe(map((res: ModelingSubmission) => this.submissionService.convertSubmissionFromServer(res)));
     }
 
     /**
@@ -119,35 +119,5 @@ export class ModelingSubmissionService {
      */
     getLatestSubmissionForModelingEditor(participationId: number): Observable<ModelingSubmission> {
         return this.http.get<ModelingSubmission>(`api/participations/${participationId}/latest-modeling-submission`, { responseType: 'json' });
-    }
-
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: ModelingSubmission = ModelingSubmissionService.convertItemFromServer(res.body!);
-        return res.clone({ body });
-    }
-
-    private convertArrayResponse(res: HttpResponse<ModelingSubmission[]>): HttpResponse<ModelingSubmission[]> {
-        const jsonResponse: ModelingSubmission[] = res.body!;
-        const body: ModelingSubmission[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(ModelingSubmissionService.convertItemFromServer(jsonResponse[i]));
-        }
-        return res.clone({ body });
-    }
-
-    /**
-     * Convert a returned JSON object to ModelingSubmission.
-     */
-    private static convertItemFromServer(modelingSubmission: ModelingSubmission): ModelingSubmission {
-        const convertedModelingSubmission = Object.assign({}, modelingSubmission);
-        setLatestSubmissionResult(convertedModelingSubmission, getLatestSubmissionResult(convertedModelingSubmission));
-        return convertedModelingSubmission;
-    }
-
-    /**
-     * Convert a ModelingSubmission to a JSON which can be sent to the server.
-     */
-    private static convert(modelingSubmission: ModelingSubmission): ModelingSubmission {
-        return Object.assign({}, modelingSubmission);
     }
 }

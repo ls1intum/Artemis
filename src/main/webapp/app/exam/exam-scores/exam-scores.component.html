@@ -12,15 +12,20 @@
                 {{ examScoreDTO.title }}
             </h2>
             <button class="ms-auto btn btn-primary btn-sm" (click)="exportToCsv()">
-                <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon>
+                <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
                 <span jhiTranslate="artemisApp.examScores.exportCSV">&nbsp;Export Results as CSV</span>
             </button>
         </div>
 
         <div class="d-flex mb-1">
             <h6 *ngIf="examScoreDTO.maxPoints">{{ 'artemisApp.examScores.maxPoints' | artemisTranslate }}: {{ localize(examScoreDTO.maxPoints) }},</h6>
-            <h6 class="ms-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | artemisTranslate }},</h6>
-            <h6 class="ms-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | artemisTranslate }}</h6>
+            <a [routerLink]="['/course-management', course!.id, 'exams', examScoreDTO.examId, 'exercise-groups']">
+                <h6 class="ms-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | artemisTranslate }}</h6>
+            </a>
+            <h6>,</h6>
+            <a [routerLink]="['/course-management', course!.id, 'exams', examScoreDTO.examId, 'students']">
+                <h6 class="ms-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | artemisTranslate }}</h6>
+            </a>
         </div>
 
         <div class="mb-2">
@@ -304,10 +309,68 @@
             </tbody>
         </table>
 
-        <div style="display: block">
+        <div #containerRef class="d-block">
+            <label *ngIf="showPassedMedianCheckbox" class="d-flex align-items-center">
+                <input type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
+                <span class="ms-1">
+                    {{
+                        'artemisApp.examScores.highlightPassedMedian'
+                            | artemisTranslate
+                                : {
+                                      median: this.aggregatedExamResults.medianRelativePassed
+                                          ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, course)
+                                          : 0
+                                  }
+                    }}
+                </span>
+            </label>
+            <label *ngIf="showOverallMedianCheckbox" class="d-flex align-items-center">
+                <input type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
+                <span class="ms-1">
+                    {{ 'artemisApp.examScores.highlightOverallMedian' | artemisTranslate: { median: this.overallChartMedian } }}
+                </span>
+            </label>
             <!-- Histogram -->
-            <canvas baseChart height="400" [datasets]="barChartData" [labels]="barChartLabels" [options]="barChartOptions" [legend]="barChartLegend" [chartType]="barChartType">
-            </canvas>
+            <ngx-charts-bar-vertical
+                [view]="[containerRef.offsetWidth, 400]"
+                [results]="ngxData"
+                [scheme]="ngxColor"
+                [yAxis]="true"
+                [xAxis]="true"
+                [yAxisLabel]="yAxisLabel"
+                [showYAxisLabel]="true"
+                [xAxisLabel]="xAxisLabel"
+                [showXAxisLabel]="true"
+                [yScaleMax]="yScaleMax"
+                [dataLabelFormatting]="dataLabelFormatting"
+                [showDataLabel]="true"
+                [activeEntries]="activeEntries"
+                (select)="onSelect()"
+                class="row"
+            >
+                <ng-template #tooltipTemplate let-model="model">
+                    <b>{{ model.name }}</b
+                    ><br />
+                    <span>{{ 'statistics.amountOfStudents' | artemisTranslate }}: {{ model.value }}</span>
+                </ng-template>
+            </ngx-charts-bar-vertical>
+            <div *ngIf="gradingScaleExists && !isBonus" class="d-flex justify-content-center align-items-center">
+                <div class="color-box insufficient-performance"></div>
+                <span class="ms-2">{{ 'artemisApp.examScores.insufficientPerformance' | artemisTranslate }}</span>
+
+                <div class="ms-4 color-box sufficient-performance"></div>
+                <span class="ms-2">{{ 'artemisApp.examScores.sufficientPerformance' | artemisTranslate }}</span>
+                <jhi-help-icon class="ms-2" placement="right auto" text="artemisApp.examScores.gradingScaleExplanationNotBonus"></jhi-help-icon>
+            </div>
+            <div *ngIf="!gradingScaleExists || isBonus" class="d-flex justify-content-center align-items-center">
+                <div class="color-box critical-performance"></div>
+                <span class="ms-2">{{ 'artemisApp.examScores.criticalPerformance' | artemisTranslate }}</span>
+
+                <div class="ms-4 color-box sufficient-performance"></div>
+                <span class="ms-2">{{ 'artemisApp.examScores.uncriticalPerformance' | artemisTranslate }}</span>
+                <jhi-help-icon *ngIf="!isBonus" class="ms-2" placement="right auto" text="artemisApp.examScores.noGradingScaleExplanation"></jhi-help-icon>
+                <jhi-help-icon *ngIf="isBonus" class="ms-2" placement="right auto" text="artemisApp.examScores.gradingScaleExplanationBonus"></jhi-help-icon>
+            </div>
         </div>
 
         <!-- Exercise Statistics -->
@@ -410,40 +473,40 @@
                         <th>#</th>
                         <th jhiSortBy="name">
                             <span jhiTranslate="artemisApp.examScores.nameColumn">Name</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                         <th jhiSortBy="login">
                             <span jhiTranslate="artemisApp.examScores.loginColumn">Login</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                         <th jhiSortBy="eMail">
                             <span jhiTranslate="artemisApp.examScores.eMailColumn">E-Mail</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                         <th jhiSortBy="registrationNumber">
                             <span jhiTranslate="artemisApp.examScores.registrationNumberColumn">Matriculation Number</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                         <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
                             <th [jhiSortBy]="'exerciseGroupIdToExerciseResult.' + exerciseGroup.id + '.achievedPoints'">
                                 <span>{{ exerciseGroup.title }}</span>
-                                <fa-icon [icon]="'sort'"></fa-icon>
+                                <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                         </ng-container>
                         <th jhiSortBy="overallPointsAchieved">
                             <span jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Points</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
 
                         <th jhiSortBy="overallScoreAchieved">
                             <span jhiTranslate="artemisApp.examScores.overallScoreColumn">Overall Score (%)</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                         <th *ngIf="gradingScaleExists" jhiSortBy="overallScoreAchieved">
                             <span>{{
                                 isBonus ? ('artemisApp.examScores.overallBonusColumn' | artemisTranslate) : ('artemisApp.examScores.overallGradeColumn' | artemisTranslate)
                             }}</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
+                            <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                         <th *ngIf="gradingScaleExists && !isBonus">{{ 'artemisApp.examScores.passedColumn' | artemisTranslate }}</th>
                     </tr>
@@ -475,10 +538,10 @@
                             {{ studentResult.overallGrade !== null ? studentResult.overallGrade : '-' }}
                         </td>
                         <td *ngIf="gradingScaleExists && !isBonus && studentResult.overallGrade && studentResult.hasPassed" style="text-align: center">
-                            <fa-icon [icon]="'check-circle'" style="color: #28a745; font-size: 1.5em"></fa-icon>
+                            <fa-icon [icon]="faCheckCircle" style="color: #28a745; font-size: 1.5em"></fa-icon>
                         </td>
                         <td *ngIf="gradingScaleExists && !isBonus && studentResult.overallGrade && !studentResult.hasPassed" style="text-align: center">
-                            <fa-icon [icon]="'times'" style="color: #ca2024; font-size: 1.5em"></fa-icon>
+                            <fa-icon [icon]="faTimes" style="color: #ca2024; font-size: 1.5em"></fa-icon>
                         </td>
                     </tr>
                 </tbody>

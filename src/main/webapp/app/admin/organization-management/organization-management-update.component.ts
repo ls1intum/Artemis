@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-organization-management-update',
@@ -10,6 +11,10 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 export class OrganizationManagementUpdateComponent implements OnInit {
     organization: Organization;
     isSaving: boolean;
+
+    // Icons
+    faSave = faSave;
+    faBan = faBan;
 
     constructor(private route: ActivatedRoute, private organizationService: OrganizationManagementService) {}
 
@@ -43,15 +48,15 @@ export class OrganizationManagementUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.organization.id) {
-            this.organizationService.update(this.organization).subscribe(
-                () => this.onSaveSuccess(),
-                () => this.onSaveError(),
-            );
+            this.organizationService.update(this.organization).subscribe({
+                next: () => this.onSaveSuccess(),
+                error: () => this.onSaveError(),
+            });
         } else {
-            this.organizationService.add(this.organization).subscribe(
-                () => this.onSaveSuccess(),
-                () => this.onSaveError(),
-            );
+            this.organizationService.add(this.organization).subscribe({
+                next: () => this.onSaveSuccess(),
+                error: () => this.onSaveError(),
+            });
         }
     }
 

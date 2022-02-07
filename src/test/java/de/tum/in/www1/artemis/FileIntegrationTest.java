@@ -61,7 +61,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveTempFile() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
@@ -72,11 +72,11 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetTemplateFile() throws Exception {
         String javaReadme = request.get("/api/files/templates/JAVA/ECLIPSE/readme", HttpStatus.OK, String.class);
         assertThat(javaReadme).isNotEmpty();
-        String cReadme = request.get("/api/files/templates/C/readme", HttpStatus.OK, String.class);
+        String cReadme = request.get("/api/files/templates/C/GCC/readme", HttpStatus.OK, String.class);
         assertThat(cReadme).isNotEmpty();
         String pythonReadme = request.get("/api/files/templates/PYTHON/readme", HttpStatus.OK, String.class);
         assertThat(pythonReadme).isNotEmpty();
@@ -85,7 +85,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetCourseIcon() throws Exception {
         Course course = database.addEmptyCourse();
         MockMultipartFile file = new MockMultipartFile("file", "icon.png", "application/json", "some data".getBytes());
@@ -101,7 +101,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetDragAndDropBackgroundFile() throws Exception {
         Course course = database.addEmptyCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
@@ -122,7 +122,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetDragItemFile() throws Exception {
         Course course = database.addEmptyCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
@@ -144,7 +144,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetFileUploadSubmission() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
@@ -168,7 +168,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetLectureAttachment() throws Exception {
         String filename = "attachment.pdf";
         String attachmentPath = createLectureWithAttachment(filename, HttpStatus.CREATED);
@@ -181,14 +181,14 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetLectureAttachment_unsupportedFileType() throws Exception {
         // this should return Unsupported file type
         createLectureWithAttachment("attachment.abc", HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetLectureAttachment_mimeType() throws Exception {
         // add a new file type to allow to check the mime type detection in FileResource with an exotic extension
         fileResource.addAllowedFileExtension("exotic");
@@ -232,7 +232,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void uploadImageMarkdownAsStudent_forbidden() throws Exception {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
@@ -241,7 +241,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void uploadImageMarkdownAsTutor() throws Exception {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
@@ -253,7 +253,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void uploadFileMarkdownUnsupportedFileExtensionAsTutor() throws Exception {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.txt", "application/json", "some data".getBytes());
@@ -262,7 +262,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void uploadFileAsStudentForbidden() throws Exception {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
@@ -271,7 +271,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "TA")
+    @WithMockUser(username = "student1", roles = "TA")
     public void uploadFileAsTutor() throws Exception {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
@@ -282,7 +282,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "TA")
+    @WithMockUser(username = "student1", roles = "TA")
     public void uploadFileUnsupportedFileExtension() throws Exception {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.txt", "application/json", "some data".getBytes());
@@ -291,14 +291,14 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetLecturePdfAttachmentsMerged_InvalidToken() throws Exception {
         Lecture lecture = createLectureWithLectureUnits(HttpStatus.CREATED);
         request.get("/api/files/attachments/lecture/" + lecture.getId() + "/merge-pdf?access_token=random_non_valid_token", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetLecturePdfAttachmentsMerged_InvalidCourseId() throws Exception {
         request.get("/api/files/attachments/course/" + 199999999 + "/access-token", HttpStatus.NOT_FOUND, String.class);
     }
