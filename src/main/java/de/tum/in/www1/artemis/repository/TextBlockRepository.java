@@ -23,6 +23,13 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
 
     Optional<Set<TextBlock>> findAllByCluster(Map<Long, TextCluster> cluster);
 
+    /**
+     * For the given Submission `id` and Exercise `id` returns all text blocks and their
+     * respective clusters.
+     * @param submissionId the id of the Submission
+     * @param exerciseId the id of the Exercise
+     * @return set of TextBlock based on the provided Submission `id` and Exercise `id`
+     */
     @Query("""
             SELECT DISTINCT tb
             FROM TextSubmission s
@@ -57,6 +64,7 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
      * For all TextBlock's of the Submission with the given `id`
      * finds their respective cluster and retrieves the number of other blocks in the same cluster
      * @param submissionId the id of the Submission
+     * @param exerciseId the id of the Exercise
      * @return the number of other TextBlock's in the same cluster as the block with given `id`
      */
     @Query("""
@@ -74,6 +82,7 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
      * This function calls query `countOtherBlocksInSameClusterForSubmissionId` and converts the result into a Map
      * so that it's values will be easily accessed through key value pairs
      * @param submissionId the `id` of the Submission
+     * @param exerciseId the `id` of the Exercise
      * @return a Map data type representing key value pairs where the key is the TextBlock id
      * and the value is the number of other blocks in the same cluster for that TextBlock.
      */

@@ -111,6 +111,7 @@ public class TextBlockService {
      * TextBlock of this submission
      *
      * @param result Result for the Submission acting as a reference for the text submission to be searched.
+     * @param exerciseId ID of the exercise to which the text blocks belong to
      */
     public void setNumberOfAffectedSubmissionsPerBlock(@NotNull Result result, Long exerciseId) {
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();

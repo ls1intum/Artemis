@@ -45,7 +45,7 @@ spring:
     jpa:
         database-platform: org.hibernate.dialect.MySQL8Dialect
         database: MYSQL
-        show-sql: true
+        show-sql: false
     liquibase:
         contexts: dev
     mail:
@@ -62,7 +62,7 @@ spring:
 
 server:
     port: 8080
-    url: http://10.0.2.2:9000
+    url: https://artemislocal.ase.in.tum.de
 
 # ===================================================================
 # JHipster specific properties

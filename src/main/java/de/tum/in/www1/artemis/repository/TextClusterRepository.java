@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface TextClusterRepository extends JpaRepository<TextCluster, Long> {
 
     // @EntityGraph(type = LOAD, attributePaths = { "blocks", "blocks.submission", "blocks.submission.results" })
-    // List<TextCluster> findAllByExercise(TextExercise exercise);
 
     @Query("""
             SELECT DISTINCT tc
