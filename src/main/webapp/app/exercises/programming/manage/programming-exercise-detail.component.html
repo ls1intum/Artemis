@@ -138,7 +138,7 @@
                             <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
                         </button>
                     </span>
-                    <span *ngIf="programmingExercise.isAtLeastEditor" class="mr-1">
+                    <span *ngIf="programmingExercise.isAtLeastEditor" class="me-1">
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
@@ -149,7 +149,9 @@
                             <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title">Recreate Build Plans</span>
                         </button>
                     </span>
-                    <span *ngIf="isAdmin" class="mr-1">
+                </div>
+                <div *ngIf="isAdmin">
+                    <span class="me-1">
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
@@ -160,7 +162,7 @@
                             <span jhiTranslate="artemisApp.programmingExercise.extractTasksFromProblemStatementTitle">Extract Tasks</span>
                         </button>
                     </span>
-                    <span *ngIf="isAdmin" class="mr-1">
+                    <span class="me-1">
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
