@@ -63,7 +63,6 @@ describe('Category Selector Component', () => {
                 MockModule(FormsModule),
             ],
             declarations: [CategorySelectorComponent, MockComponent(ColorSelectorComponent), MockPipe(ArtemisTranslatePipe)],
-            providers: [],
         })
             .compileComponents()
             .then(() => {
