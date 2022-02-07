@@ -193,4 +193,16 @@ describe('Category Selector Component', () => {
         comp.uniqueCategoriesForAutocomplete.subscribe((value) => (result = value));
         expect(result).toEqual(['category4', 'category5']);
     });
+
+    it('should filter categories for autocomplete on changes', () => {
+        comp.existingCategories = [category3, category4, category5];
+        comp.categories = [category3];
+        comp.ngOnChanges();
+
+        let result;
+        comp.uniqueCategoriesForAutocomplete.subscribe((value) => (result = value));
+        comp.categoryCtrl.setValue('category4');
+        comp.categoryCtrl.updateValueAndValidity();
+        expect(result).toEqual(['category4']);
+    });
 });
