@@ -38,6 +38,10 @@ export class PostService extends PostingService<Post> {
      */
     getPosts(courseId: number, postContextFilter: PostContextFilter): Observable<EntityArrayResponseType> {
         let params = new HttpParams();
+
+        params = params.set('postSortCriterion', postContextFilter.postSortCriterion!.toString());
+        params = params.set('sortingOrder', postContextFilter.sortingOrder!.toString());
+
         if (postContextFilter.courseWideContext) {
             params = params.set('courseWideContext', postContextFilter.courseWideContext.toString());
         }

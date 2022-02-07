@@ -35,7 +35,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     lectures?: Lecture[];
     currentPostContextFilter: PostContextFilter;
     currentSortCriterion = PostSortCriterion.CREATION_DATE;
-    currentSortDirection = SortDirection.DESC;
+    currentSortDirection = SortDirection.DESCENDING;
     currentPostContentFilter: ContentFilterOption;
     searchText?: string;
     filterToUnresolved = false;
@@ -99,7 +99,14 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
                     }
                     this.metisService.setCourse(this.course!);
                     this.metisService.setPageType(this.pageType);
-                    this.metisService.getFilteredPosts({ courseId: this.course!.id, pagingEnabled: this.pagingEnabled, page: this.page, pageSize: this.itemsPerPage });
+                    this.metisService.getFilteredPosts({
+                        courseId: this.course!.id,
+                        postSortCriterion: this.currentSortCriterion,
+                        sortingOrder: this.currentSortDirection,
+                        pagingEnabled: this.pagingEnabled,
+                        page: this.page - 1,
+                        pageSize: this.itemsPerPage,
+                    });
                     this.resetCurrentFilter();
                     this.createEmptyPost();
                     this.resetFormGroup();
@@ -162,7 +169,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      */
     onChangeSortBy(): void {
         this.setFilterAndSort();
-        this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
+        this.metisService.getFilteredPosts(this.currentPostContextFilter);
     }
 
     /**
@@ -171,8 +178,12 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      */
     onChangeSortDir(): void {
         // flip sort direction
-        this.currentSortDirection = this.currentSortDirection === SortDirection.DESC ? SortDirection.ASC : SortDirection.DESC;
-        this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
+        this.currentSortDirection = this.currentSortDirection === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING;
+
+        this.page = 1;
+
+        this.setFilterAndSort();
+        this.metisService.getFilteredPosts(this.currentPostContextFilter);
     }
 
     /**
@@ -307,19 +318,19 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             const postAVoteEmojiCount = postA.reactions?.filter((reaction: Reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
             const postBVoteEmojiCount = postB.reactions?.filter((reaction: Reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
             if (postAVoteEmojiCount > postBVoteEmojiCount) {
-                return this.currentSortDirection === SortDirection.DESC ? -1 : 1;
+                return this.currentSortDirection === SortDirection.DESCENDING ? -1 : 1;
             }
             if (postAVoteEmojiCount < postBVoteEmojiCount) {
-                return this.currentSortDirection === SortDirection.DESC ? 1 : -1;
+                return this.currentSortDirection === SortDirection.DESCENDING ? 1 : -1;
             }
         }
         // sort by creation date
         if (this.currentSortCriterion === PostSortCriterion.CREATION_DATE) {
             if (Number(postA.creationDate) > Number(postB.creationDate)) {
-                return this.currentSortDirection === SortDirection.DESC ? -1 : 1;
+                return this.currentSortDirection === SortDirection.DESCENDING ? -1 : 1;
             }
             if (Number(postA.creationDate) < Number(postB.creationDate)) {
-                return this.currentSortDirection === SortDirection.DESC ? 1 : -1;
+                return this.currentSortDirection === SortDirection.DESCENDING ? 1 : -1;
             }
         }
         // sort by answer count
@@ -327,10 +338,10 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             const postAAnswerCount = postA.answers?.length ?? 0;
             const postBAnswerCount = postB.answers?.length ?? 0;
             if (postAAnswerCount > postBAnswerCount) {
-                return this.currentSortDirection === SortDirection.DESC ? -1 : 1;
+                return this.currentSortDirection === SortDirection.DESCENDING ? -1 : 1;
             }
             if (postAAnswerCount < postBAnswerCount) {
-                return this.currentSortDirection === SortDirection.DESC ? 1 : -1;
+                return this.currentSortDirection === SortDirection.DESCENDING ? 1 : -1;
             }
         }
         return 0;
@@ -378,13 +389,15 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             courseWideContext: undefined,
             exerciseId: undefined,
             lectureId: undefined,
+            ...this.formGroup.get('context')?.value,
             pagingEnabled: this.pagingEnabled,
             page: this.page - 1,
             pageSize: this.itemsPerPage,
             filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
             filterToOwn: this.formGroup.get('filterToOwn')?.value,
             filterToAnsweredOrReacted: this.formGroup.get('filterToAnsweredOrReacted')?.value,
-            ...this.formGroup.get('context')?.value,
+            postSortCriterion: this.formGroup.get('sortBy')?.value,
+            sortingOrder: this.currentSortDirection,
         };
         this.currentSortCriterion = this.formGroup.get('sortBy')?.value;
         this.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
@@ -401,6 +414,8 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             courseWideContext: undefined,
             exerciseId: undefined,
             lectureId: undefined,
+            postSortCriterion: PostSortCriterion.CREATION_DATE,
+            sortingOrder: SortDirection.DESCENDING,
         };
         this.currentPostContentFilter = {
             searchText: undefined,

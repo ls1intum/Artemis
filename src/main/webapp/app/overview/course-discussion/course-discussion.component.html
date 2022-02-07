@@ -87,9 +87,9 @@
                         </div>
                         <div class="col-auto p-0 clickable" (click)="onChangeSortDir()">
                             <fa-icon
-                                [icon]="currentSortDirection === SortDirection.ASC ? faLongArrowAltUp : faLongArrowAltDown"
+                                [icon]="currentSortDirection === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
                                 [ngbTooltip]="
-                                    currentSortDirection === SortDirection.ASC
+                                    currentSortDirection === SortDirection.ASCENDING
                                         ? ('artemisApp.metis.overview.sortAscending' | artemisTranslate)
                                         : ('artemisApp.metis.overview.sortDescending' | artemisTranslate)
                                 "

@@ -26,8 +26,8 @@ export enum PageType {
 export const VOTE_EMOJI_ID = 'heavy_plus_sign';
 
 export enum SortDirection {
-    ASC = 'ASC',
-    DESC = 'DESC',
+    ASCENDING = 'ASCENDING',
+    DESCENDING = 'DESCENDING',
 }
 
 export enum PostSortCriterion {
@@ -50,6 +50,8 @@ export interface PostContextFilter {
     filterToUnresolved?: boolean;
     filterToOwn?: boolean;
     filterToAnsweredOrReacted?: boolean;
+    postSortCriterion?: PostSortCriterion;
+    sortingOrder?: SortDirection;
     pagingEnabled?: boolean;
     page?: number;
     pageSize?: number;

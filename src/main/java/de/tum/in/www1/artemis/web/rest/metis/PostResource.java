@@ -17,8 +17,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.service.metis.PostService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.ApiParam;
@@ -105,11 +107,16 @@ public class PostResource {
     /**
      * GET /courses/{courseId}/posts : Get all posts for a course by its id
      *
-     * @param courseId          id of the course the fetch posts for
-     * @param pageable          pagination settings to fetch posts in smaller batches
-     * @param courseWideContext optional request param if a course-wide topic is the targeted context
-     * @param exerciseId        optional request param if a certain exercise is the targeted context
-     * @param lectureId         optional request param if a certain lecture is the targeted context
+     * @param courseId                  id of the course the fetch posts for
+     * @param pageable                  pagination settings to fetch posts in smaller batches
+     * @param courseWideContext         optional request param if a course-wide topic is the targeted context
+     * @param exerciseId                optional request param if a certain exercise is the targeted context
+     * @param lectureId                 optional request param if a certain lecture is the targeted context
+     * @param filterToUnresolved        flag to fetch only unresolved posts
+     * @param filterToOwn               flag to fetch only user's own posts
+     * @param filterToAnsweredOrReacted flag to fetch only posts the user has answered or reacted to
+     * @param postSortCriterion         sorting property
+     * @param sortingOrder              sorting order (ASC, DESC)
      * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context
      * or 400 (Bad Request) if the checks on user, course or post validity fail
      */
@@ -118,7 +125,8 @@ public class PostResource {
     public ResponseEntity<List<Post>> getPostsInCourse(@PathVariable Long courseId, @ApiParam Pageable pageable, @RequestParam(defaultValue = "false") boolean pagingEnabled,
             @RequestParam(required = false) CourseWideContext courseWideContext, @RequestParam(required = false) Long exerciseId, @RequestParam(required = false) Long lectureId,
             @RequestParam(required = false) boolean filterToUnresolved, @RequestParam(required = false) boolean filterToOwn,
-            @RequestParam(required = false) boolean filterToAnsweredOrReacted) {
+            @RequestParam(required = false) boolean filterToAnsweredOrReacted, @RequestParam(required = false) PostSortCriterion postSortCriterion,
+            @RequestParam(required = false) SortingOrder sortingOrder) {
 
         // pageable object is not null by default
         if (!pagingEnabled) {
@@ -126,7 +134,7 @@ public class PostResource {
         }
 
         Page<Post> coursePosts = postService.getPostsInCourse(pageable, courseId, courseWideContext, exerciseId, lectureId, filterToUnresolved, filterToOwn,
-                filterToAnsweredOrReacted);
+                filterToAnsweredOrReacted, postSortCriterion, sortingOrder);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
 
         return new ResponseEntity<>(coursePosts.getContent(), headers, HttpStatus.OK);
