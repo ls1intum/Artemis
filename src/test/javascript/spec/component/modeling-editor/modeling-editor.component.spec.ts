@@ -234,7 +234,7 @@ describe('ModelingEditorComponent', () => {
         const newExplanation = 'New Explanation';
         fixture.componentInstance.onExplanationInput(newExplanation);
 
-        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledTimes(1);
         expect(spy).toHaveBeenCalledWith(newExplanation);
         expect(fixture.componentInstance.explanation).toBe(newExplanation);
     });
@@ -247,16 +247,26 @@ describe('ModelingEditorComponent', () => {
         const updateSpy = jest.spyOn(guidedTourService, 'updateModelingResult');
         updateSpy.mockReturnThis();
 
+        let updateSpyCallCount = 0;
         let currentUmlName = personUML.name;
         subject.next(currentUmlName);
         expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
+
+        updateSpyCallCount++;
+        expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
 
         currentUmlName = studentUML.name;
         subject.next(currentUmlName);
         expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
 
+        updateSpyCallCount++;
+        expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
+
         currentUmlName = associationUML.name;
         subject.next(currentUmlName);
         expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
+
+        updateSpyCallCount++;
+        expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
     });
 });

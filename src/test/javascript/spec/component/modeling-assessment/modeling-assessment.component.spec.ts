@@ -2,7 +2,7 @@ import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { ApollonEditor, UMLDiagramType, UMLElement, UMLModel, UMLRelationship } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLElement, UMLModel, UMLRelationship } from '@ls1intum/apollon';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
@@ -201,6 +201,9 @@ describe('ModelingAssessmentComponent', () => {
         expect(spy).toHaveBeenCalledWith('artemisApp.exercise.assessmentInstruction');
         expect(spy).toHaveBeenCalledWith('artemisApp.assessment.feedbackHint');
         expect(mockModel.assessments[0].dropInfo.instruction).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
+
+        // toHaveBeenCalledTimes(5): 2 from calculateLabel() + 3 from calculateDropInfo()
+        expect(spy).toHaveBeenCalledTimes(5);
     });
 
     it('should update element counts', () => {
@@ -223,6 +226,8 @@ describe('ModelingAssessmentComponent', () => {
         elementCounts.forEach((elementCount) =>
             expect(spy).toHaveBeenCalledWith('modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCount.numberOfOtherElements }),
         );
+
+        expect(spy).toHaveBeenCalledTimes(elementCounts.length);
     });
 
     it('should generate feedback from assessment', () => {
