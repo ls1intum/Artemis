@@ -14,7 +14,7 @@ fileUploadExercise.course = new Course();
 export class MockFileUploadExerciseService {
     create = (fileUploadExerciseParam: FileUploadExercise) => of();
     update = (fileUploadExerciseParam: FileUploadExercise, exerciseId: number, req?: any) => of();
-    find = (id: number) => of(new HttpResponse({ body: fileUploadExercise }));
+    find = (fileUploadExerciseId: number) => of(new HttpResponse({ body: fileUploadExercise }));
     query = (req?: any) => of();
-    delete = (id: number) => of();
+    delete = (fileUploadExerciseId: number) => of();
 }

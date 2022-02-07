@@ -725,13 +725,13 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function setContent
+     * @function setQuestionText
      * @desc sets the new text as question.text and updates the UI (through textParts)
-     * @param id
+     * @param textPartId
      */
-    setQuestionText(id: string): void {
-        const rowColumn: string[] = id.split('-').slice(1);
-        this.textParts[rowColumn[0]][rowColumn[1]] = (<HTMLInputElement>document.getElementById(id)).value;
+    setQuestionText(textPartId: string): void {
+        const rowColumn: string[] = textPartId.split('-').slice(1);
+        this.textParts[rowColumn[0]][rowColumn[1]] = (<HTMLInputElement>document.getElementById(textPartId)).value;
         this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
         this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text);
     }

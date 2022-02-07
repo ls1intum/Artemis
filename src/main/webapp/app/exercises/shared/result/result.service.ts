@@ -17,7 +17,7 @@ export type EntityArrayResponseType = HttpResponse<Result[]>;
 export type ResultsWithPointsArrayResponseType = HttpResponse<ResultWithPointsPerGradingCriterion[]>;
 
 export interface IResultService {
-    find: (id: number) => Observable<EntityResponseType>;
+    find: (resultId: number) => Observable<EntityResponseType>;
     getResultsForExercise: (courseId: number, exerciseId: number, req?: any) => Observable<EntityArrayResponseType>;
     getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: any) => Observable<ResultsWithPointsArrayResponseType>;
     getLatestResultWithFeedbacks: (participationId: number) => Observable<HttpResponse<Result>>;

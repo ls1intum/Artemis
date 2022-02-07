@@ -25,7 +25,7 @@ export function submitRandomTextAnswerExam(artemis, exercise, submissionId) {
 export function newTextExercise(artemis, exerciseGroup, courseID) {
     const textExercise = {
         maxPoints: 1,
-        title: 'text' + nextAlphanumeric(5),
+        title: 'Text K6 ' + nextAlphanumeric(5),
         type: 'text',
         mode: 'INDIVIDUAL',
     };
