@@ -170,6 +170,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
 
     constructor(
+        public complaintService: ComplaintService,
         private exerciseService: ExerciseService,
         private alertService: AlertService,
         private translateService: TranslateService,
@@ -182,7 +183,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private artemisMarkdown: ArtemisMarkdownService,
         private router: Router,
-        private complaintService: ComplaintService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,

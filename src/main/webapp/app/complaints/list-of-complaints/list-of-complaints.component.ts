@@ -42,7 +42,7 @@ export class ListOfComplaintsComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
 
     constructor(
-        private complaintService: ComplaintService,
+        public complaintService: ComplaintService,
         private alertService: AlertService,
         private route: ActivatedRoute,
         private router: Router,
