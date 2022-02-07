@@ -128,12 +128,7 @@ public class PostResource {
             @RequestParam(required = false) boolean filterToAnsweredOrReacted, @RequestParam(required = false) PostSortCriterion postSortCriterion,
             @RequestParam(required = false) SortingOrder sortingOrder) {
 
-        // pageable object is not null by default
-        if (!pagingEnabled) {
-            pageable = null;
-        }
-
-        Page<Post> coursePosts = postService.getPostsInCourse(pageable, courseId, courseWideContext, exerciseId, lectureId, filterToUnresolved, filterToOwn,
+        Page<Post> coursePosts = postService.getPostsInCourse(pagingEnabled, pageable, courseId, courseWideContext, exerciseId, lectureId, filterToUnresolved, filterToOwn,
                 filterToAnsweredOrReacted, postSortCriterion, sortingOrder);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
 

@@ -200,6 +200,7 @@ public class PostService extends PostingService {
     }
 
     /**
+     * @param pagingEnabled             flag to paginate result
      * @param pageable                  pagination settings to fetch posts in smaller batches
      * @param courseId                  id of the course the fetch posts for
      * @param courseWideContext         course-wide context for which the posts should be fetched
@@ -212,8 +213,8 @@ public class PostService extends PostingService {
      * @param sortingOrder              sorting order (ASC, DESC)
      * @return page of posts that match the given context
      */
-    public Page<Post> getPostsInCourse(Pageable pageable, Long courseId, CourseWideContext courseWideContext, Long exerciseId, Long lectureId, boolean filterToUnresolved,
-            boolean filterToOwn, boolean filterToAnsweredOrReacted, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
+    public Page<Post> getPostsInCourse(boolean pagingEnabled, Pageable pageable, Long courseId, CourseWideContext courseWideContext, Long exerciseId, Long lectureId,
+            boolean filterToUnresolved, boolean filterToOwn, boolean filterToAnsweredOrReacted, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
 
         List<Post> postsInCourse;
         // no filter -> get all posts in course
@@ -236,13 +237,20 @@ public class PostService extends PostingService {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
 
-        // sort
-        postsInCourse.sort((postA, postB) -> postComparator(postA, postB, postSortCriterion, sortingOrder));
+        final Page<Post> postsPage;
+        if (pagingEnabled) {
+            // sort
+            postsInCourse.sort((postA, postB) -> postComparator(postA, postB, postSortCriterion, sortingOrder));
 
-        int startIndex = pageable.getPageNumber() * pageable.getPageSize();
-        int endIndex = Math.min(startIndex + pageable.getPageSize(), postsInCourse.size());
+            int startIndex = pageable.getPageNumber() * pageable.getPageSize();
+            int endIndex = Math.min(startIndex + pageable.getPageSize(), postsInCourse.size());
 
-        final Page<Post> postsPage = new PageImpl<>(postsInCourse.subList(startIndex, endIndex), pageable, postsInCourse.size());
+            postsPage = new PageImpl<>(postsInCourse.subList(startIndex, endIndex), pageable, postsInCourse.size());
+        }
+        else {
+            postsPage = new PageImpl<>(postsInCourse);
+        }
+
         return postsPage;
     }
 
@@ -617,8 +625,8 @@ public class PostService extends PostingService {
     /**
      * Calculates k similar posts based on the underlying content comparison strategy
      *
-     * @param courseId  id of the course in which similar posts are searched for
-     * @param post      post that is to be created and check for similar posts beforehand
+     * @param courseId id of the course in which similar posts are searched for
+     * @param post     post that is to be created and check for similar posts beforehand
      * @return list of similar posts
      */
     public List<Post> getSimilarPosts(Long courseId, Post post) {
