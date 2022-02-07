@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { Complaint, ComplaintType, getResponseTimeInSeconds, shouldHighlightComplaint } from 'app/entities/complaint.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -40,9 +40,6 @@ export class ListOfComplaintsComponent implements OnInit {
     faSort = faSort;
     faFolderOpen = faFolderOpen;
     faExclamationTriangle = faExclamationTriangle;
-
-    readonly getResponseTimeInSeconds = getResponseTimeInSeconds;
-    readonly shouldHighlightComplaint = shouldHighlightComplaint;
 
     constructor(
         private complaintService: ComplaintService,
@@ -138,7 +135,7 @@ export class ListOfComplaintsComponent implements OnInit {
     sortRows() {
         switch (this.complaintsSortingPredicate) {
             case 'responseTime':
-                this.sortService.sortByFunction(this.complaintsToShow, (complaint) => getResponseTimeInSeconds(complaint), this.complaintsReverseOrder);
+                this.sortService.sortByFunction(this.complaintsToShow, (complaint) => this.complaintService.getResponseTimeInSeconds(complaint), this.complaintsReverseOrder);
                 break;
             case 'lockStatus':
                 this.sortService.sortByFunction(this.complaintsToShow, (complaint) => this.calculateComplaintLockStatus(complaint), this.complaintsReverseOrder);

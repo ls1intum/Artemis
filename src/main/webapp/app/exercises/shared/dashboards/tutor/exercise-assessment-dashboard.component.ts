@@ -13,7 +13,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { Complaint, ComplaintType, getResponseTimeInSeconds, shouldHighlightComplaint } from 'app/entities/complaint.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
@@ -61,8 +61,6 @@ export interface ExampleSubmissionQueryParams {
 export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
-    readonly getResponseTimeInSeconds = getResponseTimeInSeconds;
-    readonly shouldHighlightComplaint = shouldHighlightComplaint;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     programmingExercise: ProgrammingExercise;
@@ -784,7 +782,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         // If the selected sort predicate is indifferent about two elements, the one submitted earlier should be displayed on top
         this.sortService.sortByProperty(this.submissionsWithComplaints, 'complaint.submittedTime', true);
         if (this.sortPredicates[1] === 'responseTime') {
-            this.sortService.sortByFunction(this.submissionsWithComplaints, (element) => getResponseTimeInSeconds(element.complaint), this.reverseOrders[1]);
+            this.sortService.sortByFunction(this.submissionsWithComplaints, (element) => this.complaintService.getResponseTimeInSeconds(element.complaint), this.reverseOrders[1]);
         } else {
             this.sortService.sortByProperty(this.submissionsWithComplaints, this.sortPredicates[1], this.reverseOrders[1]);
         }
@@ -794,7 +792,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         // If the selected sort predicate is indifferent about two elements, the one submitted earlier should be displayed on top
         this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, 'complaint.submittedTime', true);
         if (this.sortPredicates[2] === 'responseTime') {
-            this.sortService.sortByFunction(this.submissionsWithMoreFeedbackRequests, (element) => getResponseTimeInSeconds(element.complaint), this.reverseOrders[2]);
+            this.sortService.sortByFunction(
+                this.submissionsWithMoreFeedbackRequests,
+                (element) => this.complaintService.getResponseTimeInSeconds(element.complaint),
+                this.reverseOrders[2],
+            );
         } else {
             this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, this.sortPredicates[2], this.reverseOrders[2]);
         }

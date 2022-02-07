@@ -548,9 +548,9 @@
                                 </td>
                                 <td>
                                     <ng-container *ngIf="submissionWithComplaint.complaint.accepted === undefined"> &gt;= </ng-container>
-                                    {{ getResponseTimeInSeconds(submissionWithComplaint.complaint) | artemisDurationFromSeconds: true }}
+                                    {{ complaintService.getResponseTimeInSeconds(submissionWithComplaint.complaint) | artemisDurationFromSeconds: true }}
                                     <fa-icon
-                                        *ngIf="shouldHighlightComplaint(submissionWithComplaint.complaint)"
+                                        *ngIf="complaintService.shouldHighlightComplaint(submissionWithComplaint.complaint)"
                                         [icon]="faExclamationTriangle"
                                         class="text-warning"
                                         ngbTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
@@ -659,9 +659,9 @@
                                 </td>
                                 <td>
                                     <ng-container *ngIf="moreFeedbackRequest.complaint.accepted === undefined"> &gt;= </ng-container>
-                                    {{ getResponseTimeInSeconds(moreFeedbackRequest.complaint) | artemisDurationFromSeconds: true }}
+                                    {{ complaintService.getResponseTimeInSeconds(moreFeedbackRequest.complaint) | artemisDurationFromSeconds: true }}
                                     <fa-icon
-                                        *ngIf="shouldHighlightComplaint(moreFeedbackRequest.complaint)"
+                                        *ngIf="complaintService.shouldHighlightComplaint(moreFeedbackRequest.complaint)"
                                         [icon]="faExclamationTriangle"
                                         class="text-warning"
                                         ngbTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
