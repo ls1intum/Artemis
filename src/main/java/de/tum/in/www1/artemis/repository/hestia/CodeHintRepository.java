@@ -18,6 +18,8 @@ public interface CodeHintRepository extends JpaRepository<CodeHint, Long> {
 
     Set<CodeHint> findByExerciseId(Long exerciseId);
 
+    Set<CodeHint> findByTaskId(Long taskId);
+
     @NotNull
     default CodeHint findByIdElseThrow(long exerciseHintId) throws EntityNotFoundException {
         return findById(exerciseHintId).orElseThrow(() -> new EntityNotFoundException("Code Hint", exerciseHintId));

@@ -12,7 +12,23 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 
 /**
- * A ProgrammingExerciseSolutionEntry.
+ * A ProgrammingExerciseSolutionEntry represents a single change in a file that a students has to make in order to pass the related test.
+ * It is structured similarly to a git diff entry.
+ * If it replaces existing code it will contain the previous code that it replaces otherwise previousCode will be null.
+ * If it is only removing existing code the code attribute will be null.
+ * If it encompasses the addition entire file, previousLine will be null.
+ * If it deletes an entire file, line will be null.
+ * previousLine and line will be different when there are other changes higher up in the file.
+ *
+ * Example:
+ * A print statement gets changed:
+ * SolutionEntry{
+ *         filePath = "<...>"
+ *     previousLine = 12
+ *     previousCode = System.out.println("Tset");
+ *             line = 12
+ *             code = System.out.println("Test");
+ * }
  */
 @Entity
 @Table(name = "programming_exercise_solution_entry")
@@ -23,7 +39,7 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
     @Column(name = "file_path")
     private String filePath;
 
-    // The line where the old code segment is in the template
+    // The line where the previous code segment is in the template
     @Column(name = "previous_line")
     private Integer previousLine;
 
@@ -31,7 +47,7 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
     @Column(name = "line")
     private Integer line;
 
-    // The old code segment to be replaced by the new code segment
+    // The previous code segment to be replaced by the new code segment
     @Column(name = "previous_code")
     private String previousCode;
 

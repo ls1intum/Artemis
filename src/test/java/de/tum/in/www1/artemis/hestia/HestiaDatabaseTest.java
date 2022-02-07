@@ -77,7 +77,7 @@ public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     void addOneTaskToProgrammingExercise() {
         var task = addTaskToProgrammingExercise("Task 1");
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExerciseId)).containsExactly(task);
+        assertThat(programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExerciseId)).containsExactly(task);
     }
 
     @Test
