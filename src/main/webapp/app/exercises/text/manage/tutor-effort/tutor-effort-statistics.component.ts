@@ -6,6 +6,8 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismAndTutorEffortDirective } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 import { TranslateService } from '@ngx-translate/core';
+import { median } from 'simple-statistics';
+import { GraphColors } from 'app/entities/statistics.model';
 
 @Component({
     selector: 'jhi-text-exercise-tutor-effort-statistics',
@@ -22,12 +24,15 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     numberOfTutorsInvolvedInCourse: number;
     effortDistribution: number[];
     yScaleMax = 10;
+    medianValue: number;
+
+    showMedianLegend = true;
 
     // Distance value representing step difference between chartLabel entries, i.e:. 1-10, 10-20
-    bucketSize = 10;
+    readonly bucketSize = 10;
 
-    xAxisLabel = this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.minutes');
-    yAxisLabel = this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.tutors');
+    xAxisLabel: string;
+    yAxisLabel: string;
 
     // Icons
     faSync = faSync;
@@ -39,10 +44,14 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
         private translateService: TranslateService,
     ) {
         super();
+        this.translateService.onLangChange.subscribe(() => {
+            this.translateLabels();
+        });
     }
 
     ngOnInit(): void {
-        this.ngxChartLabels = ['0-10', '10-20', '20-30', '30-40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100-110', '110-120', '120+'];
+        this.translateLabels();
+        this.ngxChartLabels = ['[0-10)', '[10-20)', '[20-30)', '[30-40)', '[40-50)', '[50-60)', '[60-70)', '[70-80)', '[80-90)', '[90-100)', '[100-110)', '[110-120)', '120+'];
         this.route.params.subscribe((params) => {
             this.currentExerciseId = Number(params['exerciseId']);
             this.currentCourseId = Number(params['courseId']);
@@ -77,6 +86,9 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
             this.ngxData.push({ name: this.ngxChartLabels[index], value: effort });
         });
         this.determineMaxChartHeight(this.effortDistribution);
+        this.medianValue = this.computeEffortMedian();
+        this.highlightMedian(this.medianValue);
+
         this.ngxData = [...this.ngxData];
     }
 
@@ -96,11 +108,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     distributeEffortToSets() {
         this.effortDistribution = new Array<number>(this.ngxChartLabels.length).fill(0);
         this.tutorEfforts.forEach((effort) => {
-            const BUCKET_LAST_INDEX = this.ngxChartLabels.length - 1;
-            const BUCKET_POSITION = effort.totalTimeSpentMinutes / this.bucketSize;
-            // the element will either be distributed in one of first 12 elements (chartLabels.length)
-            // or the last element if the time passed is larger than 120 (i.e.: chartLabels[12] = 120+)
-            const BUCKET_INDEX = Math.min(Math.floor(BUCKET_POSITION), BUCKET_LAST_INDEX);
+            const BUCKET_INDEX = this.determineIndex(effort.totalTimeSpentMinutes);
             this.effortDistribution[BUCKET_INDEX]++;
         });
     }
@@ -112,5 +120,32 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      */
     private determineMaxChartHeight(data: number[]): void {
         this.yScaleMax = Math.max(this.yScaleMax, ...data);
+    }
+
+    private translateLabels() {
+        this.xAxisLabel = this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.minutes');
+        this.yAxisLabel = this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.tutors');
+    }
+
+    private computeEffortMedian(): number {
+        const timeSpent = this.tutorEfforts.map((effort) => effort.totalTimeSpentMinutes);
+        return median(timeSpent);
+    }
+
+    private determineIndex(timeSpent: number): number {
+        const BUCKET_LAST_INDEX = this.ngxChartLabels.length - 1;
+        const BUCKET_POSITION = timeSpent / this.bucketSize;
+        // the element will either be distributed in one of first 12 elements (chartLabels.length)
+        // or the last element if the time passed is larger than 120 (i.e.: chartLabels[12] = 120+)
+        return Math.min(Math.floor(BUCKET_POSITION), BUCKET_LAST_INDEX);
+    }
+
+    private highlightMedian(medianValue: number) {
+        const index = this.determineIndex(medianValue);
+        if (this.ngxData[index].value > 0) {
+            this.ngxColor.domain[index] = GraphColors.DARK_BLUE;
+        } else {
+            this.showMedianLegend = false;
+        }
     }
 }
