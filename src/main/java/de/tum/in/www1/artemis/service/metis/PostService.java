@@ -242,16 +242,23 @@ public class PostService extends PostingService {
 
         final Page<Post> postsPage;
         if (pagingEnabled) {
-            // sort
+            // search by text or #post
             if (searchText != null) {
                 postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, searchText)).collect(Collectors.toList());
             }
-            postsInCourse.sort((postA, postB) -> postComparator(postA, postB, postSortCriterion, sortingOrder));
 
             int startIndex = pageable.getPageNumber() * pageable.getPageSize();
             int endIndex = Math.min(startIndex + pageable.getPageSize(), postsInCourse.size());
 
-            postsPage = new PageImpl<>(postsInCourse.subList(startIndex, endIndex), pageable, postsInCourse.size());
+            // sort
+            postsInCourse.sort((postA, postB) -> postComparator(postA, postB, postSortCriterion, sortingOrder));
+
+            try {
+                postsPage = new PageImpl<>(postsInCourse.subList(startIndex, endIndex), pageable, postsInCourse.size());
+            }
+            catch (IllegalArgumentException ex) {
+                throw new BadRequestAlertException("Not enough posts to fetch " + pageable.getPageNumber() + "'th page", METIS_POST_ENTITY_NAME, "invalidPageRequest");
+            }
         }
         else {
             postsPage = new PageImpl<>(postsInCourse);
