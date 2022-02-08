@@ -24,6 +24,9 @@ import { PlagiarismRunDetailsComponent } from 'app/exercises/shared/plagiarism/p
 import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
+import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
+import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
+import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -43,6 +46,7 @@ describe('Plagiarism Inspector Component', () => {
     let modelingExerciseService: ModelingExerciseService;
     let programmingExerciseService: ProgrammingExerciseService;
     let textExerciseService: TextExerciseService;
+    let inspectorService: PlagiarismInspectorService;
 
     const modelingExercise = { id: 123, type: ExerciseType.MODELING } as ModelingExercise;
     const textExercise = { id: 234, type: ExerciseType.TEXT } as TextExercise;
@@ -52,18 +56,21 @@ describe('Plagiarism Inspector Component', () => {
     };
     const comparisons = [
         {
+            id: 1,
             submissionA: { studentLogin: 'student1A' },
             submissionB: { studentLogin: 'student1B' },
             similarity: 0.5,
             status: PlagiarismStatus.NONE,
         },
         {
+            id: 2,
             submissionA: { studentLogin: 'student2A' },
             submissionB: { studentLogin: 'student2B' },
             similarity: 0.8,
             status: PlagiarismStatus.NONE,
         },
         {
+            id: 3,
             submissionA: { studentLogin: 'student3A' },
             submissionB: { studentLogin: 'student3B' },
             similarity: 0.7,
@@ -90,7 +97,12 @@ describe('Plagiarism Inspector Component', () => {
                 MockComponent(PlagiarismRunDetailsComponent),
                 MockComponent(PlagiarismSidebarComponent),
             ],
-            providers: [{ provide: ActivatedRoute, useValue: activatedRoute }, MockProvider(JhiWebsocketService), MockProvider(TranslateService)],
+            providers: [
+                { provide: ActivatedRoute, useValue: activatedRoute },
+                MockProvider(JhiWebsocketService),
+                MockProvider(TranslateService),
+                MockProvider(PlagiarismInspectorService),
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -99,6 +111,7 @@ describe('Plagiarism Inspector Component', () => {
                 modelingExerciseService = TestBed.inject(ModelingExerciseService);
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
                 textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
+                inspectorService = TestBed.inject(PlagiarismInspectorService);
             });
     });
 
@@ -177,10 +190,10 @@ describe('Plagiarism Inspector Component', () => {
     });
 
     it('should select a comparison at the given index', () => {
-        comp.selectedComparisonIndex = 0;
-        comp.selectComparisonAtIndex(1);
+        comp.selectedComparisonId = 0;
+        comp.selectComparisonWithID(1);
 
-        expect(comp.selectedComparisonIndex).toEqual(1);
+        expect(comp.selectedComparisonId).toEqual(1);
     });
 
     it('should download the plagiarism detection results as JSON', () => {
@@ -203,8 +216,7 @@ describe('Plagiarism Inspector Component', () => {
     it('should get the latest plagiarism result for modeling exercise', fakeAsync(() => {
         comp.exercise = modelingExercise;
 
-        const mockResult = {} as ModelingPlagiarismResult;
-        jest.spyOn(modelingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(mockResult));
+        jest.spyOn(modelingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(modelingPlagiarismResult));
         jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
@@ -213,14 +225,13 @@ describe('Plagiarism Inspector Component', () => {
         tick();
 
         expect(modelingExerciseService.getLatestPlagiarismResult).toHaveBeenCalledWith(modelingExercise.id);
-        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(mockResult);
+        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(modelingPlagiarismResult);
     }));
 
     it('should get the latest plagiarism result for programming exercise', fakeAsync(() => {
         comp.exercise = programmingExercise;
 
-        const mockResult = {} as TextPlagiarismResult;
-        jest.spyOn(programmingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(mockResult));
+        jest.spyOn(programmingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(textPlagiarismResult));
         jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
@@ -229,14 +240,13 @@ describe('Plagiarism Inspector Component', () => {
         tick();
 
         expect(programmingExerciseService.getLatestPlagiarismResult).toHaveBeenCalledWith(programmingExercise.id);
-        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(mockResult);
+        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(textPlagiarismResult);
     }));
 
     it('should get the latest plagiarism result for text exercise', fakeAsync(() => {
         comp.exercise = textExercise;
 
-        const mockResult = {} as TextPlagiarismResult;
-        jest.spyOn(textExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(mockResult));
+        jest.spyOn(textExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(textPlagiarismResult));
         jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
@@ -245,7 +255,7 @@ describe('Plagiarism Inspector Component', () => {
         tick();
 
         expect(textExerciseService.getLatestPlagiarismResult).toHaveBeenCalledWith(textExercise.id);
-        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(mockResult);
+        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(textPlagiarismResult);
     }));
 
     it('should be programming exercise', () => {
@@ -258,5 +268,54 @@ describe('Plagiarism Inspector Component', () => {
         comp.exercise = { type: ExerciseType.TEXT } as TextExercise;
 
         expect(comp.isProgrammingExercise()).toBe(false);
+    });
+
+    it('should trigger similarity distribution', () => {
+        const getLatestPlagiarismResultStub = jest.spyOn(comp, 'getLatestPlagiarismResult').mockImplementation();
+        const resetFilterStub = jest.spyOn(comp, 'resetFilter').mockImplementation();
+
+        comp.showSimilarityDistribution(true);
+
+        expect(resetFilterStub).toHaveBeenCalledTimes(1);
+        expect(getLatestPlagiarismResultStub).toHaveBeenCalledTimes(1);
+        expect(comp.showRunDetails).toBe(true);
+    });
+
+    describe('test chart interactivity', () => {
+        it('should apply filter and reset it', () => {
+            const filterComparisonsMock = jest.spyOn(inspectorService, 'filterComparisons').mockReturnValue([]);
+            const range = { minimumSimilarity: 20, maximumSimilarity: 30 };
+            comp.plagiarismResult = textPlagiarismResult;
+
+            comp.filterByChart(range);
+
+            expect(filterComparisonsMock).toHaveBeenCalledTimes(1);
+            expect(filterComparisonsMock).toHaveBeenCalledWith(range, comparisons);
+            expect(comp.visibleComparisons).toEqual([]);
+            expect(comp.sidebarOffset).toBe(0);
+            expect(comp.chartFilterApplied).toBe(true);
+
+            comp.resetFilter();
+
+            expect(comp.visibleComparisons).toEqual(comparisons);
+            expect(comp.sidebarOffset).toBe(0);
+            expect(comp.chartFilterApplied).toBe(false);
+        });
+
+        it('should return the selected comparison', () => {
+            comp.selectedComparisonId = 2;
+            comp.visibleComparisons = comparisons as PlagiarismComparison<TextSubmissionElement>[];
+            const expected = {
+                id: 2,
+                submissionA: { studentLogin: 'student2A' },
+                submissionB: { studentLogin: 'student2B' },
+                similarity: 0.8,
+                status: PlagiarismStatus.NONE,
+            };
+
+            const selected = comp.getSelectedComparison();
+
+            expect(selected).toEqual(expected);
+        });
     });
 });
