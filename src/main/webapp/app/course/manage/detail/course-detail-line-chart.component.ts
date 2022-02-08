@@ -7,6 +7,7 @@ import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/util
 import { Course } from 'app/entities/course.model';
 import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import * as shape from 'd3-shape';
+import { GraphColors } from 'app/entities/statistics.model';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',
@@ -40,7 +41,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['rgba(53,61,71,1)'],
+        domain: [GraphColors.DARK_BLUE],
     };
     legend = false;
     xAxis = true;

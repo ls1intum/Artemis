@@ -5,6 +5,8 @@ import { Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ScaleType, Color } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { GraphColors } from 'app/entities/statistics.model';
 
 @Component({
     selector: 'jhi-course-detail-doughnut-chart',
@@ -29,7 +31,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     constructor(private router: Router) {}
 
     // ngx-charts
-    ngxData: any[] = [
+    ngxData: NgxChartsSingleSeriesDataEntry[] = [
         { name: 'Done', value: 0 },
         { name: 'Not done', value: 0 },
     ];
@@ -37,7 +39,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['#32cd32', '#ff0000'], // colors: green, red
+        domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
     bindFormatting = this.valueFormatting.bind(this);
 

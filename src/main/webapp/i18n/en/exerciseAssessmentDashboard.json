@@ -77,6 +77,7 @@
             "moreFeedbackRequestEvaluated": "More Feedback Request has already been evaluated",
             "moreFeedbackRequestNotEvaluated": "More Feedback Request still needs to be evaluated",
             "numberOfUnassessedSubmissions": "Unassessed submissions",
+            "numberOfOpenComplaints": "Open complaints",
             "exerciseInformation": "Exercise information",
             "totalYours": "Total | Yours",
             "stats": {
@@ -86,6 +87,7 @@
             "numberOfSubmissions": "Total submissions",
             "numberOfAssessedSubmissions": "Assessed submissions",
             "numberOfAutomaticAssistedSubmissions": "Assessed Submissions with automatic assistance",
+            "numberOfResolvedComplaints": "Resolved complaints",
             "numberOfManualAssessedSubmissions": "Manual Assessed Submissions",
             "nextAssessment": "Assess next submission",
             "programmingExercise": {

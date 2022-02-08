@@ -77,6 +77,7 @@
             "moreFeedbackRequestEvaluated": "Die Feedbackanfragen wurden bereits ausgewertet",
             "moreFeedbackRequestNotEvaluated": "Es müssen noch weitere Feedbackanfragen bewertet werden",
             "numberOfUnassessedSubmissions": "Nicht bewertete Beiträge",
+            "numberOfOpenComplaints": "Offene Beschwerden",
             "exerciseInformation": "Übungsinformationen",
             "totalYours": "Gesamt | Deine",
             "stats": {
@@ -86,6 +87,7 @@
             "numberOfSubmissions": "Gesamte Abgaben",
             "numberOfAssessedSubmissions": "Bewertete Abgaben",
             "numberOfAutomaticAssistedSubmissions": "Bewertete Abgaben mit automatischer Assistenz",
+            "numberOfResolvedComplaints": "Bearbeitete Beschwerden",
             "numberOfManualAssessedSubmissions": "Manuell bewertete Abgaben",
             "nextAssessment": "Nächste Abgabe bewerten",
             "programmingExercise": {
