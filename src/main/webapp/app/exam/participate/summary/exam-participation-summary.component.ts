@@ -62,13 +62,14 @@ export class ExamParticipationSummaryComponent implements OnInit {
         // courseId is not part of the exam or the exercise
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.setExamWithOnlyIdAndStudentReviewPeriod();
-        let course;
-        this.courseManagementService.find(this.courseId).subscribe((courseResponse) => (course = courseResponse.body!));
-        for (const exercise of this.studentExam.exercises!) {
+        // load course for the exercise
+        this.courseManagementService.find(this.courseId).subscribe((courseResponse) => {
+            this.examWithOnlyIdAndStudentReviewPeriod.course = courseResponse.body!;
+        });
+        for (const exercise of this.studentExam.exercises ?? []) {
             exercise.studentParticipations!.first()!.exercise = exercise;
             exercise.exerciseGroup!.exam = this.examWithOnlyIdAndStudentReviewPeriod;
         }
-        this.examWithOnlyIdAndStudentReviewPeriod.course = course;
     }
 
     getIcon(exerciseType: ExerciseType) {
