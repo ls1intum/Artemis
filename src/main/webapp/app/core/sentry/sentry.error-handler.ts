@@ -41,13 +41,13 @@ export class SentryErrorHandler extends ErrorHandler {
      * Send an HttpError to Sentry. Only if it's not in the range 400-499.
      * @param error
      */
-    handleError(error: any): void {
-        if (error.name === 'HttpErrorResponse' && error.status < 500 && error.status >= 400) {
+    handleError(error: any | undefined): void {
+        if (error && error.name === 'HttpErrorResponse' && error.status < 500 && error.status >= 400) {
             super.handleError(error);
             return;
         }
         if (this.environment !== 'local') {
-            captureException(error.originalError || error);
+            captureException(error?.originalError || error);
         }
         super.handleError(error);
     }

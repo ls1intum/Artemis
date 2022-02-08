@@ -459,6 +459,33 @@
             "alreadySubmitted": "Du hast bereits abgegeben.",
             "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
             "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
+        },
+        "examStatus": {
+            "columnTitle": "Klausurstatus",
+            "preparation": {
+                "examPreparation": "Klausurvorbereitung",
+                "configureExercises": "Konfiguriere Klausuraufgaben: {{ amount }} Aufgabengruppen",
+                "registerStudents": "Registriere Studierende: {{ registered }} registiert",
+                "generateStudentExams": "Generiere Klausuren: ",
+                "registered": "{{ generated }} von {{ total }}",
+                "notRegistered": "Keine Studierenden registriert",
+                "prepareExerciseStart": "Bereite Aufgabenstart vor"
+            },
+            "conduction": {
+                "examConduction": "Klausurdurchführung",
+                "startedExams": "Begonnene Klausuren",
+                "submittedExams": "Abgegebene Klausuren"
+            },
+            "correction": {
+                "examCorrection": "Klausurkorrektur",
+                "correctionRoundProgress": "Korrekturfortschritt in Runde {{ index }}",
+                "examReview": "Klausureinsicht",
+                "unset": "Nicht angesetzt",
+                "planned": "Geplant",
+                "running": "Im Gange",
+                "finished": "Abgeschlossen",
+                "complaints": "Beschwerden"
+            }
         }
     }
 }

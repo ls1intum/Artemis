@@ -205,11 +205,11 @@ public class AccountResource {
     /**
      * {@code POST   /account/reset-password/init} : Send an email to reset the password of the user.
      *
-     * @param mail the mail of the user.
+     * @param mailUsername string containing either mail or username of the user.
      */
     @PostMapping(path = "/account/reset-password/init")
-    public void requestPasswordReset(@RequestBody String mail) {
-        List<User> user = userRepository.findAllByEmailIgnoreCase(mail);
+    public void requestPasswordReset(@RequestBody String mailUsername) {
+        List<User> user = userRepository.findAllByEmailOrUsernameIgnoreCase(mailUsername);
         if (!user.isEmpty()) {
             List<User> internalUsers = user.stream().filter(User::isInternal).toList();
             if (internalUsers.isEmpty()) {
@@ -220,9 +220,9 @@ public class AccountResource {
             }
         }
         else {
-            // Pretend the request has been successful to prevent checking which emails really exist
+            // Pretend the request has been successful to prevent checking which emails or usernames really exist
             // but log that an invalid attempt has been made
-            log.warn("Password reset requested for non existing mail '{}'", mail);
+            log.warn("Password reset requested for non existing mail or username '{}'", mailUsername);
         }
     }
 
