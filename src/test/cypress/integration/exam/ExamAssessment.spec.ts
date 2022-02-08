@@ -81,7 +81,7 @@ describe('Exam assessment', () => {
                     cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                     examStartEnd.startExam();
                     examNavigation.openExerciseAtIndex(0);
-                    makeSubmissionAndVerifyResults(editorPage, programmingExercise.packageName, partiallySuccessful, () => {
+                    makeSubmissionAndVerifyResults(editorPage, programmingExercise.packageName!, partiallySuccessful, () => {
                         examNavigation.handInEarly();
                         examStartEnd.finishExam();
                     });
@@ -90,7 +90,7 @@ describe('Exam assessment', () => {
 
         it('Assess a programming exercise submission (MANUAL)', () => {
             cy.login(tutor, '/course-management/' + course.id + '/exams');
-            examManagement.openAssessmentDashboard(exam.id, examDuration);
+            examManagement.openAssessmentDashboard(exam.id!, examDuration);
             startAssessing();
             examAssessment.addNewFeedback(2, 'Good job');
             examAssessment.submit();
@@ -123,7 +123,7 @@ describe('Exam assessment', () => {
 
             it('Assess a modeling exercise submission', () => {
                 cy.login(tutor, '/course-management/' + course.id + '/exams');
-                examManagement.openAssessmentDashboard(exam.id, 60000);
+                examManagement.openAssessmentDashboard(exam.id!, 60000);
                 startAssessing();
                 modelingAssessment.addNewFeedback(5, 'Good');
                 modelingAssessment.openAssessmentForComponent(1);
@@ -158,7 +158,7 @@ describe('Exam assessment', () => {
 
             it('Assess a text exercise submission', () => {
                 cy.login(tutor, '/course-management/' + course.id + '/exams');
-                examManagement.openAssessmentDashboard(exam.id, 60000);
+                examManagement.openAssessmentDashboard(exam.id!, 60000);
                 startAssessing();
                 examAssessment.addNewFeedback(7, 'Good job');
                 examAssessment.submitTextAssessment().then((assessmentResponse: Interception) => {
@@ -220,7 +220,7 @@ describe('Exam assessment', () => {
     function prepareExam(end: dayjs.Dayjs, resultDate = end.add(1, 'seconds')) {
         cy.login(admin);
         const examContent = new CypressExamBuilder(course)
-            .visibleDate(dayjs().subtract(1, 'day'))
+            .visibleDate(dayjs().subtract(1, 'hour'))
             .startDate(dayjs())
             .endDate(end)
             .publishResultsDate(resultDate)

@@ -10,6 +10,14 @@
     top: 0;
     width: 240px;
 
+    .filter-disclaimer {
+        padding: 0.75rem;
+
+        .disclaimer-icon {
+            margin-right: 0.5rem;
+        }
+    }
+
     .plagiarism-paging {
         border-top: 1px solid $body-bg;
         display: flex;

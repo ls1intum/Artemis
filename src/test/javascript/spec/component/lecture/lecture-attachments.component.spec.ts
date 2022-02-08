@@ -224,7 +224,7 @@ describe('LectureAttachmentsComponent', () => {
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
         } as Attachment;
-        const attachmentServiceDeleteStub = jest.spyOn(attachmentService, 'delete').mockReturnValue(of(new HttpResponse({ body: newAttachment })));
+        const attachmentServiceDeleteStub = jest.spyOn(attachmentService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
         comp.deleteAttachment(toDelete);
         expect(comp.attachments.length).toBe(1);
         expect(attachmentServiceDeleteStub).toHaveBeenCalledTimes(1);
