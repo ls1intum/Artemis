@@ -524,6 +524,48 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(returnedTags).isNull();
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsForCourse_WithUsersOwnPosts() throws Exception {
+        // filterToOwn set; will fetch all course posts of current logged-in user
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToOwn", "true");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        // get posts of current user and compare
+        assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> post.getAuthor().getLogin().equals("student1")).collect(Collectors.toList()));
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsPageForCourse() throws Exception {
+        // pagingEnabled set; will fetch a page of course posts
+        var params = new LinkedMultiValueMap<String, String>();
+        int maxPostsPerPage = 10;
+
+        params.add("pagingEnabled", "true");
+        // Valid page request
+        params.add("page", "0");
+        params.add("size", String.valueOf(maxPostsPerPage));
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        assertThat(returnedPosts.size()).isIn(returnedPosts.size(), maxPostsPerPage);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsPageForCourse_badRequest() throws Exception {
+        // pagingEnabled set; will try to fetch a page of course posts
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("pagingEnabled", "true");
+        // invalid page request as there are not enough posts create such page
+        params.add("page", "4");
+        params.add("size", "10");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.BAD_REQUEST, Post.class, params);
+        assertThat(returnedPosts).isNull();
+    }
+
     // DELETE
 
     @Test

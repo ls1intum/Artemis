@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
@@ -143,6 +144,23 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", existingAnswerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
         assertThat(existingAnswerPosts.size()).isEqualTo(answerPostRepository.count());
+    }
+
+    // GET
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsForCourse_WithUnresolvedPosts() throws Exception {
+        // filterToUnresolved set true; will fetch all unresolved posts of current course
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToUnresolved", "true");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        // get posts of current user and compare
+        List<Post> resolvedPosts = existingPostsWithAnswers.stream()
+                .filter(post -> post.getAnswers().stream().allMatch(answerPost -> answerPost.doesResolvePost() == null || answerPost.doesResolvePost() == false))
+                .collect(Collectors.toList());
+
+        assertThat(returnedPosts).isEqualTo(resolvedPosts);
     }
 
     // UPDATE

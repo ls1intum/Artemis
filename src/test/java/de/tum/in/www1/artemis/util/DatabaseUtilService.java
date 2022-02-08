@@ -756,8 +756,9 @@ public class DatabaseUtilService {
         exercisePost.setAnswers(createBasicAnswers(exercisePost));
         postRepository.save(exercisePost);
 
+        // resolved post
         Post courseWidePost = posts.stream().filter(coursePost -> (coursePost.getCourseWideContext() != null)).collect(Collectors.toList()).get(0);
-        courseWidePost.setAnswers(createBasicAnswers(courseWidePost));
+        courseWidePost.setAnswers(createBasicAnswersThatResolves(courseWidePost));
         postRepository.save(courseWidePost);
 
         return posts;
@@ -818,6 +819,18 @@ public class DatabaseUtilService {
         answerPost.setContent(post.getContent() + " Answer");
         answerPost.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         answerPost.setPost(post);
+        answerPosts.add(answerPost);
+        answerPostRepository.save(answerPost);
+        return answerPosts;
+    }
+
+    private Set<AnswerPost> createBasicAnswersThatResolves(Post post) {
+        Set<AnswerPost> answerPosts = new HashSet<>();
+        AnswerPost answerPost = new AnswerPost();
+        answerPost.setContent(post.getContent() + " Answer");
+        answerPost.setAuthor(getUserByLoginWithoutAuthorities("student1"));
+        answerPost.setPost(post);
+        answerPost.setResolvesPost(true);
         answerPosts.add(answerPost);
         answerPostRepository.save(answerPost);
         return answerPosts;
