@@ -28,9 +28,5 @@ module.exports = (on: (arg0: string, arg1: {}) => void, config: any) => {
             console.error('\x1b[33m', 'WARNING: ', message, '\x1b[0m');
             return null;
         },
-        debug(message: string) {
-            console.log(message);
-            return null;
-        },
     });
 };
