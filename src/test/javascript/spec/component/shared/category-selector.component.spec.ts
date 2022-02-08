@@ -143,7 +143,7 @@ describe('Category Selector Component', () => {
         comp.onItemAdd(event);
 
         expect(comp.categories).toEqual([category6]);
-        expect(emitSpy).not.toHaveBeenCalled();
+        expect(emitSpy).not.toHaveBeenCalledTimes(1);
         expect(comp.categoryCtrl.value).toBe(null);
     });
 
