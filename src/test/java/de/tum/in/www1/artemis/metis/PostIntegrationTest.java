@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.service.metis.PostService.TOP_K_SIMILARITY_
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,11 +26,9 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
-import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 
@@ -57,8 +54,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private Long lectureId;
 
     private Validator validator;
-
-    private int maxPostsPerPage = 20;
 
     @BeforeEach
     public void initTestCase() {
@@ -543,66 +538,10 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourse_WithPostId() throws Exception {
-
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("searchText", "#1");
-        params.add("pagingEnabled", "true"); // search by text, only available in course discussions page where paging is enabled
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-
-        assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> post.getId() == 1).collect(Collectors.toList()));
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourse_OrderByCreationDateDESC() throws Exception {
-        PostSortCriterion sortCriterion = PostSortCriterion.CREATION_DATE;
-        SortingOrder sortingOrder = SortingOrder.DESCENDING;
-
-        var params = new LinkedMultiValueMap<String, String>();
-
-        // ordering only available in course discussions page, where paging is enabled
-        params.add("pagingEnabled", "true");
-        params.add("page", "0");
-        params.add("size", String.valueOf(maxPostsPerPage));
-
-        params.add("postSortCriterion", sortCriterion.toString());
-        params.add("sortingOrder", sortingOrder.toString());
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        existingPosts.sort(Comparator.comparing(Post::getCreationDate).reversed());
-
-        assertThat(returnedPosts).isEqualTo(existingPosts);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourse_OrderByCreationDateASC() throws Exception {
-        PostSortCriterion sortCriterion = PostSortCriterion.CREATION_DATE;
-        SortingOrder sortingOrder = SortingOrder.ASCENDING;
-
-        var params = new LinkedMultiValueMap<String, String>();
-
-        // ordering only available in course discussions page, where paging is enabled
-        params.add("pagingEnabled", "true");
-        params.add("page", "0");
-        params.add("size", String.valueOf(maxPostsPerPage));
-
-        params.add("postSortCriterion", sortCriterion.toString());
-        params.add("sortingOrder", sortingOrder.toString());
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        existingPosts.sort(Comparator.comparing(Post::getCreationDate));
-
-        assertThat(returnedPosts).isEqualTo(existingPosts);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
     public void testGetPostsPageForCourse() throws Exception {
         // pagingEnabled set; will fetch a page of course posts
         var params = new LinkedMultiValueMap<String, String>();
+        int maxPostsPerPage = 10;
 
         params.add("pagingEnabled", "true");
         // Valid page request
