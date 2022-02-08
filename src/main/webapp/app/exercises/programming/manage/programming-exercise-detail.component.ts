@@ -270,11 +270,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      */
     deleteTasksWithSolutionEntries() {
         this.programmingExerciseService.deleteTasksWithSolutionEntries(this.programmingExercise.id!).subscribe({
-            next: (res) => {
+            next: () => {
                 this.alertService.addAlert({
                     type: 'success',
                     message: 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesSuccess',
-                    // long timeout in order to test properly
                     timeout: 10000,
                 });
             },
