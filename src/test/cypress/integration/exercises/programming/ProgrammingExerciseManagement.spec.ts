@@ -55,7 +55,8 @@ describe('Programming Exercise Management', () => {
             cy.get('#additional-check-1').check();
             cy.get('#confirm-exercise-name').type(programmingExercise.title!);
             cy.intercept(DELETE, PROGRAMMING_EXERCISE_BASE + '*').as('deleteProgrammingExerciseQuery');
-            cy.get('#delete').click();
+            // For some reason the deletion sometimes fails if we do it immediately
+            cy.get('#delete').wait(4000).click();
             cy.wait('@deleteProgrammingExerciseQuery').then((request: any) => {
                 expect(request.response.statusCode).to.equal(200);
             });
