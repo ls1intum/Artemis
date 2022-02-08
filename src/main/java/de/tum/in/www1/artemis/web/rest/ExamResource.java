@@ -405,8 +405,8 @@ public class ExamResource {
         log.debug("REST request to get all exams for Course : {}", courseId);
 
         examAccessService.checkCourseAccessForTeachingAssistantElseThrow(courseId);
-
-        List<Exam> exams = examRepository.findByCourseId(courseId);
+        // We need the exercise groups and exercises for the exam status now
+        List<Exam> exams = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId);
         examRepository.setNumberOfRegisteredUsersForExams(exams);
         return ResponseEntity.ok(exams);
     }
