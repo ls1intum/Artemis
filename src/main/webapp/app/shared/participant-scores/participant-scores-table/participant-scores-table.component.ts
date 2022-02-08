@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { ParticipantScoreDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 
 @Component({
@@ -8,7 +8,7 @@ import { Course } from 'app/entities/course.model';
     templateUrl: './participant-scores-table.component.html',
 })
 export class ParticipantScoresTableComponent {
-    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     @Input()
     participantScores: ParticipantScoreDTO[] = [];

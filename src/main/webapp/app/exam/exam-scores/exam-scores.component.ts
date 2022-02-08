@@ -16,7 +16,7 @@ import {
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { TranslateService } from '@ngx-translate/core';
@@ -81,7 +81,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     showPassedMedian: boolean; // Same as above for the median of all passed exams
     showPassedMedianCheckbox: boolean; // Same as above for the checkbox corresponding to passedMedian
 
-    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly medianType = MedianType;
 
     // exam score dtos
@@ -682,9 +682,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + ' Assigned Exercise'] = exerciseResult.title ? exerciseResult.title : '';
                 csvRow[exerciseGroup.title + ' Achieved Points'] =
-                    exerciseResult.achievedPoints == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(exerciseResult.achievedPoints, this.course));
+                    exerciseResult.achievedPoints == undefined ? '' : this.localize(roundValueSpecifiedByCourseSettings(exerciseResult.achievedPoints, this.course));
                 csvRow[exerciseGroup.title + ' Achieved Score (%)'] =
-                    exerciseResult.achievedScore == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(exerciseResult.achievedScore, this.course));
+                    exerciseResult.achievedScore == undefined ? '' : this.localize(roundValueSpecifiedByCourseSettings(exerciseResult.achievedScore, this.course));
             } else {
                 csvRow[exerciseGroup.title + ' Assigned Exercise'] = '';
                 csvRow[exerciseGroup.title + ' Achieved Points'] = '';
@@ -693,9 +693,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         });
 
         csvRow.overAllPoints =
-            studentResult.overallPointsAchieved == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course));
+            studentResult.overallPointsAchieved == undefined ? '' : this.localize(roundValueSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course));
         csvRow.overAllScore =
-            studentResult.overallScoreAchieved == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course));
+            studentResult.overallScoreAchieved == undefined ? '' : this.localize(roundValueSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course));
         if (this.gradingScaleExists) {
             if (this.isBonus) {
                 csvRow['Overall Bonus Points'] = studentResult.overallGrade;
@@ -716,7 +716,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * @returns localized string representation of the rounded points
      */
     roundAndPerformLocalConversion(points: number | undefined): string {
-        return this.localize(roundScoreSpecifiedByCourseSettings(points, this.course));
+        return this.localize(roundValueSpecifiedByCourseSettings(points, this.course));
     }
 
     /**
@@ -733,8 +733,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.studentIdToExamScoreDTOs.set(examScoreDTO.studentId!, examScoreDTO);
         }
         for (const studentResult of this.studentResults) {
-            const overAllPoints = roundScoreSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course);
-            const overallScore = roundScoreSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course);
+            const overAllPoints = roundValueSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course);
+            const overallScore = roundValueSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course);
 
             const regularCalculation = {
                 scoreAchieved: overallScore,
@@ -748,8 +748,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 const errorMessage = `Exam scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
                 this.logErrorOnSentry(errorMessage);
             } else {
-                examScoreDTO.scoreAchieved = roundScoreSpecifiedByCourseSettings(examScoreDTO.scoreAchieved, this.course);
-                examScoreDTO.pointsAchieved = roundScoreSpecifiedByCourseSettings(examScoreDTO.pointsAchieved, this.course);
+                examScoreDTO.scoreAchieved = roundValueSpecifiedByCourseSettings(examScoreDTO.scoreAchieved, this.course);
+                examScoreDTO.pointsAchieved = roundValueSpecifiedByCourseSettings(examScoreDTO.pointsAchieved, this.course);
 
                 if (Math.abs(examScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 0.1) {
                     const errorMessage = `Different exam points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
@@ -891,7 +891,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         let chartMedian;
         if (medianType === MedianType.PASSED) {
             const passedMedian = this.aggregatedExamResults.medianRelativePassed;
-            chartMedian = passedMedian ? roundScoreSpecifiedByCourseSettings(passedMedian, this.course) : 0;
+            chartMedian = passedMedian ? roundValueSpecifiedByCourseSettings(passedMedian, this.course) : 0;
             this.showPassedMedian = true;
         } else {
             this.setOverallChartMedianDependingOfExamsIncluded(medianType);
@@ -931,10 +931,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     private setOverallChartMedianDependingOfExamsIncluded(medianType: MedianType): void {
         if (medianType === MedianType.OVERALL) {
             const overallMedian = this.aggregatedExamResults.medianRelativeTotal;
-            this.overallChartMedian = overallMedian ? roundScoreSpecifiedByCourseSettings(overallMedian, this.course) : 0;
+            this.overallChartMedian = overallMedian ? roundValueSpecifiedByCourseSettings(overallMedian, this.course) : 0;
         } else {
             const submittedMedian = this.aggregatedExamResults.medianRelative;
-            this.overallChartMedian = submittedMedian ? roundScoreSpecifiedByCourseSettings(submittedMedian, this.course) : 0;
+            this.overallChartMedian = submittedMedian ? roundValueSpecifiedByCourseSettings(submittedMedian, this.course) : 0;
         }
         this.overallChartMedianType = medianType;
     }

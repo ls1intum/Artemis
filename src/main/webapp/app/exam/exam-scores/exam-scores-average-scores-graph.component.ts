@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { navigateToExamExercise } from 'app/utils/navigation.utils';
@@ -77,7 +77,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     }
 
     roundAndPerformLocalConversion(points: number | undefined) {
-        return this.localeConversionService.toLocaleString(roundScoreSpecifiedByCourseSettings(points, this.course), this.course!.accuracyOfScores!);
+        return this.localeConversionService.toLocaleString(roundValueSpecifiedByCourseSettings(points, this.course), this.course!.accuracyOfScores!);
     }
 
     /**

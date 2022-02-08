@@ -3,7 +3,7 @@ import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/ex
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Course } from 'app/entities/course.model';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { faBook, faExclamationTriangle, faFileSignature, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faCalendarAlt } from '@fortawesome/free-regular-svg-icons';
 
@@ -71,7 +71,7 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
         }
 
         this.statisticsLoaded = true;
-        this.averageScoreNumerator = roundScoreSpecifiedByCourseSettings((this.statistic.averageScoreInPercent! * this.statistic.exerciseMaxPoints!) / 100, this.course);
+        this.averageScoreNumerator = roundValueSpecifiedByCourseSettings((this.statistic.averageScoreInPercent! * this.statistic.exerciseMaxPoints!) / 100, this.course);
     }
 
     setIcon(exerciseType?: ExerciseType) {
