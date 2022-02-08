@@ -187,13 +187,11 @@ export class ComplaintService implements IComplaintService {
      * @return returns the passed time in seconds
      */
     getResponseTimeInSeconds(complaint: Complaint): number {
-        let responseTime;
         if (complaint.accepted !== undefined) {
-            responseTime = complaint.complaintResponse?.submittedTime?.diff(complaint.submittedTime, 'seconds') || NaN;
+            return complaint.complaintResponse?.submittedTime?.diff(complaint.submittedTime, 'seconds') || NaN;
         } else {
-            responseTime = dayjs().diff(complaint.submittedTime, 'seconds');
+            return dayjs().diff(complaint.submittedTime, 'seconds');
         }
-        return responseTime;
     }
 
     /**
