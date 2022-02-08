@@ -89,14 +89,14 @@
             <h6 class="text-center">{{ 'artemisApp.examStatus.correction.examCorrection' | artemisTranslate }}</h6>
             <ol *ngIf="examChecklist">
                 <div *ngIf="examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && examChecklist.numberOfExamsSubmitted !== 0">
-                    <li *ngFor="let correctionRound of examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound; let i = index">
+                    <li *ngFor="let finishedByCorrectionRound of examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound; let i = index">
                         <span>
                             {{ 'artemisApp.examStatus.correction.correctionRoundProgress' | artemisTranslate: { index: i + 1 } }}:
                             {{
-                                Math.max(
+                                Math.min(
                                     examChecklist.numberOfTotalParticipationsForAssessment > 0
-                                        ? round((examChecklist.numberOfTotalParticipationsForAssessment * 100) / examChecklist.numberOfTotalParticipationsForAssessment, 1)
-                                        : 0,
+                                        ? round((finishedByCorrectionRound * 100) / examChecklist.numberOfTotalParticipationsForAssessment, 1)
+                                        : 100,
                                     100
                                 )
                             }}%
@@ -111,9 +111,9 @@
                     <span>
                         {{ 'artemisApp.examStatus.correction.complaints' | artemisTranslate }}:
                         {{
-                            examChecklist.numberOfAllComplaintsDone && examChecklist.numberOfAllComplaints
+                            examChecklist.numberOfAllComplaintsDone && examChecklist.numberOfAllComplaints && examChecklist.numberOfAllComplaints > 0
                                 ? round((examChecklist.numberOfAllComplaintsDone * 100) / examChecklist.numberOfAllComplaints, 1)
-                                : 0
+                                : 100
                         }}%
                     </span>
                 </li>

@@ -116,12 +116,12 @@ export class ExamStatusComponent implements OnChanges {
     private setReviewState(): void {
         if (!this.exam.examStudentReviewEnd) {
             this.examReviewState = ExamReviewState.UNSET;
+        } else if (this.isExamReviewPlanned()) {
+            this.examReviewState = ExamReviewState.PLANNED;
         } else if (this.isExamReviewRunning()) {
             this.examReviewState = ExamReviewState.RUNNING;
-        } else if (this.exam.examStudentReviewEnd.isBefore(dayjs())) {
-            this.examReviewState = ExamReviewState.FINISHED;
         } else {
-            this.examReviewState = ExamReviewState.PLANNED;
+            this.examReviewState = ExamReviewState.FINISHED;
         }
     }
 
@@ -164,9 +164,26 @@ export class ExamStatusComponent implements OnChanges {
      */
     private isExamReviewRunning(): boolean {
         return (
-            ((!this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd && this.exam.examStudentReviewEnd.isAfter(dayjs())) ||
+            (!this.allComplaintsResolved() ||
+                (!this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd && this.exam.examStudentReviewEnd.isAfter(dayjs())) ||
                 (this.exam.examStudentReviewStart && this.exam.examStudentReviewStart.isBefore(dayjs()) && this.exam.examStudentReviewEnd!.isAfter(dayjs()))) ??
             false
         );
+    }
+
+    /**
+     * Indicates whether exam review is planned
+     * @private
+     */
+    private isExamReviewPlanned(): boolean {
+        return (this.exam.examStudentReviewStart && this.exam.examStudentReviewStart.isAfter(dayjs())) ?? false;
+    }
+
+    /**
+     * Indicates whether all complaints are resolved
+     * @private
+     */
+    private allComplaintsResolved(): boolean {
+        return this.examChecklist.numberOfAllComplaints === this.examChecklist.numberOfAllComplaintsDone;
     }
 }
