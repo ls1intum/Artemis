@@ -439,8 +439,13 @@ export class MetisService implements OnDestroy {
                     break;
             }
             // emit updated version of cachedPosts to subscribing components
-            // by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
-            this.getFilteredPosts(this.currentPostContextFilter, false);
+            if (this.currentPostContextFilter.pagingEnabled) {
+                // by invoking the getFilteredPosts method with forceUpdate set to true, i.e. fetching a page of posts from the server
+                this.getFilteredPosts(this.currentPostContextFilter);
+            } else {
+                // by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
+                this.getFilteredPosts(this.currentPostContextFilter, false);
+            }
         });
     }
 
