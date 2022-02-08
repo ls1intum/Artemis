@@ -84,7 +84,7 @@ describe('Category Selector Component', () => {
         comp.onItemRemove(category2);
 
         expect(comp.categories).toEqual([category1, category3]);
-        expect(cancelColorSelectorSpy).toHaveBeenCalledOnce();
+        expect(cancelColorSelectorSpy).toHaveBeenCalledTimes(1);
         expect(emitSpy).toHaveBeenCalledWith([category1, category3]);
     });
 
