@@ -31,8 +31,8 @@
                 </li>
                 <li class="d-flex align-items-center">
                     <span>{{ 'artemisApp.examStatus.preparation.prepareExerciseStart' | artemisTranslate }}</span>
-                    <fa-icon *ngIf="registeredStudents" [icon]="faCheckCircle" class="check"></fa-icon>
-                    <fa-icon *ngIf="!registeredStudents" [icon]="faTimes" class="cross"></fa-icon>
+                    <fa-icon *ngIf="preparedExerciseStart" [icon]="faCheckCircle" class="check"></fa-icon>
+                    <fa-icon *ngIf="!preparedExerciseStart" [icon]="faTimes" class="cross"></fa-icon>
                 </li>
             </ol>
         </div>
@@ -95,7 +95,7 @@
                             {{
                                 Math.max(
                                     examChecklist.numberOfTotalParticipationsForAssessment > 0
-                                        ? round((correctionRound * 100) / examChecklist.numberOfTotalParticipationsForAssessment, 1)
+                                        ? round((examChecklist.numberOfTotalParticipationsForAssessment * 100) / examChecklist.numberOfTotalParticipationsForAssessment, 1)
                                         : 0,
                                     100
                                 )
