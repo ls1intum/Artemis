@@ -33,6 +33,7 @@ export class ExerciseDetailsComponent implements OnInit {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.programmingExercise = this.exercise as ProgrammingExercise;
         } else {
+            // Do not render the markdown here if it is a programming exercises, as ProgrammingExerciseInstructionComponent takes care of that
             this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
         }
         this.isExamExercise = !!this.exercise.exerciseGroup;
