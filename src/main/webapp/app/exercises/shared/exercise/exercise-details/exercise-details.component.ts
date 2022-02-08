@@ -30,9 +30,10 @@ export class ExerciseDetailsComponent implements OnInit {
      */
     ngOnInit() {
         this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
-        this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.programmingExercise = this.exercise as ProgrammingExercise;
+        } else {
+            this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
         }
         this.isExamExercise = !!this.exercise.exerciseGroup;
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorForExercise(this.exercise);
