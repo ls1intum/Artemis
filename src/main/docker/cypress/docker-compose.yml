@@ -12,7 +12,9 @@ services:
 
     artemis-app:
         build:
-            context: ../
+            # This is required to copy the Artemis war file properly into the container
+            context: ../../../..
+            dockerfile: src/main/docker/Dockerfile
         volumes:
             - ../../resources/config/application-prod.yml:/home/artemis/application-prod.yml:ro
             - ./application.yml:/home/artemis/application.yml:ro
