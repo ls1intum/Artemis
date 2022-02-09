@@ -144,7 +144,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             .pipe(
                 tap((user: User) => {
                     this.currAccount = user;
-                    this.passwordResetEnabled = user.isInternal;
+                    this.passwordResetEnabled = user.internal;
                 }),
             )
             .subscribe();

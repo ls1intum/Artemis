@@ -17,7 +17,7 @@ describe('SettingsComponent', () => {
     let comp: SettingsComponent;
 
     const accountValues: User = {
-        isInternal: true,
+        internal: true,
         guidedTourSettings: [],
         name: 'John Doe',
         firstName: 'John',

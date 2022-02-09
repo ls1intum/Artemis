@@ -191,8 +191,9 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/change-password")
     public void changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
-        if (isRegistrationDisabled() && isSAML2Disabled()) {
-            throw new AccessForbiddenException("User Registration is disabled");
+        User user = userRepository.getUser();
+        if (!user.isInternal()) {
+            throw new AccessForbiddenException("Only users with internally saved credentials can change their password.");
         }
         if (isPasswordLengthInvalid(passwordChangeDto.getNewPassword())) {
             throw new InvalidPasswordException();

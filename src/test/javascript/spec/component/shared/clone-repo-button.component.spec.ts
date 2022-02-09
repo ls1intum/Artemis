@@ -131,7 +131,7 @@ describe('JhiCloneRepoButtonComponent', () => {
         component.sshTemplateUrl = 'ssh://git@bitbucket.ase.in.tum.de:7999/';
         component.useSsh = false;
 
-        component.user = { login: 'user1', guidedTourSettings: [], isInternal: true };
+        component.user = { login: 'user1', guidedTourSettings: [], internal: true };
         component.isTeamParticipation = true;
         let url = component.getHttpOrSshRepositoryUrl();
         expect(url).toEqual(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
@@ -145,7 +145,7 @@ describe('JhiCloneRepoButtonComponent', () => {
         component.repositoryUrl = info.versionControlUrl!;
         component.useSsh = false;
 
-        component.user = { login: 'user1', guidedTourSettings: [], isInternal: true };
+        component.user = { login: 'user1', guidedTourSettings: [], internal: true };
         component.isTeamParticipation = true;
         let url = component.getHttpOrSshRepositoryUrl();
         expect(url).toEqual(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
