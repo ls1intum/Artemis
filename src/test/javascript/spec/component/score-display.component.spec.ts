@@ -20,11 +20,10 @@ describe('ScoreDisplayComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ScoreDisplayComponent);
                 component = fixture.componentInstance;
+
+                component.ngOnInit();
+                component.course = course;
             });
-    });
-    beforeEach(() => {
-        component.ngOnInit();
-        component.course = course;
     });
 
     it('should set bonus points correctly if score > maxScore', () => {
