@@ -18,7 +18,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable, of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -28,6 +28,15 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
+import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
+
+const generateCsv = jest.fn();
+
+jest.mock('export-to-csv', () => ({
+    ExportToCsv: jest.fn().mockImplementation(() => ({
+        generateCsv,
+    })),
+}));
 
 describe('Course Management Detail Component', () => {
     let comp: CourseGroupComponent;
@@ -258,5 +267,25 @@ describe('Course Management Detail Component', () => {
             delete user.login;
             expect(comp.searchTextFromUser(user)).toBe('');
         });
+    });
+
+    it('should generate csv correctly', () => {
+        comp.allCourseGroupUsers = [courseGroupUser, courseGroupUser2];
+        comp.courseGroup = CourseGroup.STUDENTS;
+        comp.course = course;
+        const exportAsCsvMock = jest.spyOn(comp, 'exportAsCsv');
+
+        comp.exportUserInformation();
+
+        expect(exportAsCsvMock).toHaveBeenCalledTimes(1);
+        const generatedRows = exportAsCsvMock.mock.calls[0][0];
+
+        for (let index = 0; index < generatedRows.length; index++) {
+            const userRow = generatedRows[index];
+            expect(userRow[NAME_KEY]).toBe(comp.allCourseGroupUsers[index].name ?? '');
+            expect(userRow[USERNAME_KEY]).toBe(comp.allCourseGroupUsers[index].login ?? '');
+            expect(userRow[EMAIL_KEY]).toBe(comp.allCourseGroupUsers[index].email ?? '');
+            expect(userRow[REGISTRATION_NUMBER_KEY]).toBe(comp.allCourseGroupUsers[index].visibleRegistrationNumber ?? '');
+        }
     });
 });
