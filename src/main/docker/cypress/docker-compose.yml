@@ -9,6 +9,8 @@ services:
             interval: 1s
             timeout: 3s
             retries: 30
+        networks:
+            - artemis
 
     artemis-app:
         build:
