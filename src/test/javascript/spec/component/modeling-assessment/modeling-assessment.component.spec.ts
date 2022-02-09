@@ -189,7 +189,7 @@ describe('ModelingAssessmentComponent', () => {
         comp.resultFeedbacks = mockFeedbacks;
 
         expect(comp.referencedFeedbacks).toEqual([mockFeedbackWithReference, mockFeedbackInvalid]);
-        expect(comp.feedbacks).toBe(mockFeedbacks);
+        expect(comp.feedbacks).toEqual(mockFeedbacks);
     });
 
     it('should calculate drop info', () => {
@@ -237,7 +237,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
 
         comp.generateFeedbackFromAssessment(mockModel.assessments);
-        expect(comp.elementFeedback.get(mockFeedbackWithGradingInstruction.referenceId!)).toBe(mockFeedbackWithGradingInstruction);
+        expect(comp.elementFeedback.get(mockFeedbackWithGradingInstruction.referenceId!)).toEqual(mockFeedbackWithGradingInstruction);
     });
 
     it('should highlight elements', () => {
