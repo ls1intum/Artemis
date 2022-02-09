@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { DoughnutChartType } from './course-detail.component';
 import { Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
@@ -48,7 +48,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
             this.assignValuesToData([1, 0]);
         } else {
             this.receivedStats = true;
-            const remaining = roundScoreSpecifiedByCourseSettings(this.currentMax! - this.currentAbsolute!, this.course);
+            const remaining = roundValueSpecifiedByCourseSettings(this.currentMax! - this.currentAbsolute!, this.course);
             this.stats = [this.currentAbsolute!, remaining];
             return this.currentMax === 0 ? this.assignValuesToData([1, 0]) : this.assignValuesToData(this.stats);
         }

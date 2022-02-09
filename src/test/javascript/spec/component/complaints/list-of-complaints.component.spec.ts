@@ -177,42 +177,6 @@ describe('ListOfComplaintsComponent', () => {
         });
     });
 
-    describe('shouldHighlightComplaint', () => {
-        it('should not highlight handled complaints', () => {
-            const complaint = {
-                id: 42,
-                submittedTime: dayjs().subtract(1, 'hours'),
-                accepted: true,
-            } as Complaint;
-
-            const result = comp.shouldHighlightComplaint(complaint);
-
-            expect(result).toBe(false);
-        });
-
-        it('should not highlight recent complaints', () => {
-            const complaint = {
-                id: 42,
-                submittedTime: dayjs().subtract(8, 'days').add(1, 'seconds'),
-            } as Complaint;
-
-            const result = comp.shouldHighlightComplaint(complaint);
-
-            expect(result).toBe(false);
-        });
-
-        it('should highlight old complaints', () => {
-            const complaint = {
-                id: 42,
-                submittedTime: dayjs().subtract(8, 'days'),
-            } as Complaint;
-
-            const result = comp.shouldHighlightComplaint(complaint);
-
-            expect(result).toBe(true);
-        });
-    });
-
     it('triggerAddressedComplaints', () => {
         const complaints = [complaint1, complaint2, complaint3, complaint4, complaint5];
         const freeComplaints = [complaint3, complaint4];

@@ -200,6 +200,42 @@ describe('ComplaintService', () => {
         });
     });
 
+    describe('shouldHighlightComplaint', () => {
+        it('should not highlight handled complaints', () => {
+            const complaint = {
+                id: 42,
+                submittedTime: dayjs().subtract(1, 'hours'),
+                accepted: true,
+            } as Complaint;
+
+            const result = complaintService.shouldHighlightComplaint(complaint);
+
+            expect(result).toBe(false);
+        });
+
+        it('should not highlight recent complaints', () => {
+            const complaint = {
+                id: 42,
+                submittedTime: dayjs().subtract(8, 'days').add(1, 'seconds'),
+            } as Complaint;
+
+            const result = complaintService.shouldHighlightComplaint(complaint);
+
+            expect(result).toBe(false);
+        });
+
+        it('should highlight old complaints', () => {
+            const complaint = {
+                id: 42,
+                submittedTime: dayjs().subtract(8, 'days'),
+            } as Complaint;
+
+            const result = complaintService.shouldHighlightComplaint(complaint);
+
+            expect(result).toBe(true);
+        });
+    });
+
     it('findBySubmissionId', () => {
         const submissionId = 1337;
         complaintService.findBySubmissionId(submissionId).subscribe((received) => {

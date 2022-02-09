@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
@@ -52,7 +52,7 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
             this.assignValuesToData([1, 0]);
         } else {
             this.receivedStats = true;
-            const remaining = roundScoreSpecifiedByCourseSettings(this.currentMax! - this.currentAbsolute!, this.course);
+            const remaining = roundValueSpecifiedByCourseSettings(this.currentMax! - this.currentAbsolute!, this.course);
             this.stats = [this.currentAbsolute!, remaining];
             return this.currentMax === 0 ? this.assignValuesToData([1, 0]) : this.assignValuesToData(this.stats);
         }

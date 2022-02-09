@@ -13,6 +13,9 @@
                 </div>
             </div>
             <div class="plagiarism-header-top-right">
+                <button *ngIf="chartFilterApplied" class="check-plagiarism btn btn-info" (click)="resetFilter()">
+                    <span>{{ 'artemisApp.plagiarism.resetFilter' | artemisTranslate }}</span>
+                </button>
                 <button
                     [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
                     class="check-plagiarism btn btn-primary"
@@ -73,21 +76,22 @@
 
     <div class="plagiarism-body" *ngIf="plagiarismResult && !detectionInProgress">
         <jhi-plagiarism-sidebar
-            [(showRunDetails)]="showRunDetails"
-            [comparisons]="plagiarismResult?.comparisons"
-            (selectIndex)="selectComparisonAtIndex($event)"
-            [activeIndex]="selectedComparisonIndex"
+            [showRunDetails]="showRunDetails"
+            (showRunDetailsChange)="showSimilarityDistribution($event)"
+            [comparisons]="visibleComparisons"
+            [offset]="sidebarOffset"
+            (selectIndex)="selectComparisonWithID($event)"
+            [activeID]="selectedComparisonId"
+            [casesFiltered]="chartFilterApplied"
         ></jhi-plagiarism-sidebar>
 
         <jhi-plagiarism-details
             [hidden]="showRunDetails"
-            [comparison]="
-                plagiarismResult.comparisons && plagiarismResult.comparisons.length > selectedComparisonIndex ? plagiarismResult!.comparisons[selectedComparisonIndex] : undefined
-            "
+            [comparison]="plagiarismResult.comparisons ? getSelectedComparison() : undefined"
             [exercise]="exercise"
         ></jhi-plagiarism-details>
 
-        <jhi-plagiarism-run-details [hidden]="!showRunDetails" [plagiarismResult]="plagiarismResult"></jhi-plagiarism-run-details>
+        <jhi-plagiarism-run-details [hidden]="!showRunDetails" [plagiarismResult]="plagiarismResult" (similaritySelected)="filterByChart($event)"></jhi-plagiarism-run-details>
     </div>
 
     <div class="plagiarism-empty" *ngIf="!plagiarismResult || detectionInProgress">

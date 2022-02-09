@@ -38,6 +38,7 @@
                 "actions": "Actions",
                 "title": "List of complaints",
                 "dateAndTime": "Date and Time",
+                "responseTime": "Response time",
                 "status": "Status",
                 "noReply": "No reply yet",
                 "accepted": "Accepted",
@@ -45,7 +46,8 @@
                 "showAddressedComplaints": "Show addressed complaints",
                 "noComplaintsToShow": "There are no complaints to show at the moment"
             },
-            "review": "Review Complaint"
+            "review": "Review Complaint",
+            "oneWeekUnanswered": "Complaints should be answered within one week if possible!"
         },
         "moreFeedback": {
             "title": "More Feedback Request",

@@ -6,7 +6,6 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { BASE_API, DELETE, POST, PUT, GET } from '../constants';
-import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import { dayjsToString, generateUUID } from '../utils';
 import examTemplate from '../../fixtures/requests/exam_template.json';
@@ -50,24 +49,30 @@ export class CourseManagementRequests {
      * @param customizeGroups whether the predefined groups should be used (so we dont have to wait more than a minute between course and programming exercise creation)
      * @param courseName the title of the course (will generate default name if not provided)
      * @param courseShortName the short name (will generate default name if not provided)
+     * @param start the start date of the course (default: now() - 2 hours)
+     * @param end the end date of the course (default: now() + 2 hours)
      * @returns <Chainable> request response
      */
     createCourse(
         customizeGroups = false,
         courseName = 'Cypress course' + generateUUID(),
         courseShortName = 'cypress' + generateUUID(),
+        start = day().subtract(2, 'hours'),
+        end = day().add(2, 'hours'),
     ): Cypress.Chainable<Cypress.Response<Course>> {
-        let course = { ...courseTemplate, title: courseName, shortName: courseShortName };
+        const course = new Course();
+        course.title = courseName;
+        course.shortName = courseShortName;
+        course.testCourse = true;
+        course.startDate = start;
+        course.endDate = end;
+
         const allowGroupCustomization: boolean = Cypress.env('allowGroupCustomization');
         if (customizeGroups && allowGroupCustomization) {
-            course = {
-                ...course,
-                customizeGroupNames: true,
-                studentGroupName: Cypress.env('studentGroupName'),
-                teachingAssistantGroupName: Cypress.env('tutorGroupName'),
-                editorGroupName: Cypress.env('editorGroupName'),
-                instructorGroupName: Cypress.env('instructorGroupName'),
-            };
+            course.studentGroupName = Cypress.env('studentGroupName');
+            course.teachingAssistantGroupName = Cypress.env('tutorGroupName');
+            course.editorGroupName = Cypress.env('editorGroupName');
+            course.instructorGroupName = Cypress.env('instructorGroupName');
         }
         return cy.request({
             url: BASE_API + 'courses',
