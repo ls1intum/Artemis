@@ -38,6 +38,7 @@
                 "actions": "Aktionen",
                 "title": "Liste der Beschwerden",
                 "dateAndTime": "Datum und Uhrzeit",
+                "responseTime": "Bearbeitungszeit",
                 "status": "Status",
                 "noReply": "Noch keine Antwort",
                 "accepted": "Angenommen",
@@ -45,7 +46,8 @@
                 "showAddressedComplaints": "Adressierte Beschwerden anzeigen",
                 "noComplaintsToShow": "Es gibt im Moment keine anzeigbaren Beschwerden."
             },
-            "review": "Beschwerde überprüfen"
+            "review": "Beschwerde überprüfen",
+            "oneWeekUnanswered": "Beschwerden sollten möglichst innerhalb von einer Woche beantwortet werden!"
         },
         "moreFeedback": {
             "title": "Weiteres Feedback anfragen",

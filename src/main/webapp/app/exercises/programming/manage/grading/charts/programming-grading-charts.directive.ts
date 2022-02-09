@@ -1,6 +1,6 @@
 import { Directive } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { xAxisFormatting } from './programming-grading-charts.utils';
+import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 
 @Directive()
 export class ProgrammingGradingChartsDirective {
@@ -13,7 +13,7 @@ export class ProgrammingGradingChartsDirective {
         domain: [],
     } as Color;
 
-    readonly xAxisFormatting = xAxisFormatting;
+    readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
     static RESET_TABLE = -5; // we use the number -5 in order to indicate programming-exercise-configure-grading.component.ts to reset the corresponding table
 
     resetTableFilter() {

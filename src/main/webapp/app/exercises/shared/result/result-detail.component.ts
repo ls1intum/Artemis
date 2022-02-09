@@ -33,8 +33,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/entities/statistics.model';
-import { xAxisFormatting } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.utils';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 
 export enum FeedbackItemType {
     Issue,
@@ -116,7 +116,7 @@ export class ResultDetailComponent implements OnInit {
     showOnlyPositiveFeedback = false;
     showOnlyNegativeFeedback = false;
 
-    readonly xAxisFormatting = xAxisFormatting;
+    readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
 
     get exercise(): Exercise | undefined {
         if (this.result.participation) {
