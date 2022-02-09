@@ -31,8 +31,8 @@ describe('MetricsComponent', () => {
         jest.spyOn(service, 'threadDump').mockReturnValue(of(mockThreadDump as ThreadDump));
         expect(comp.updatingMetrics).toBe(true);
         comp.ngOnInit();
-        expect(service.getMetrics).toHaveBeenCalled();
-        expect(service.threadDump).toHaveBeenCalled();
+        expect(service.getMetrics).toHaveBeenCalledTimes(1);
+        expect(service.threadDump).toHaveBeenCalledTimes(1);
         expect(comp.updatingMetrics).toBe(false);
         expect(comp.metrics).toBe(mockMetrics);
         expect(comp.threads).toBe(mockThreadDump.threads);
