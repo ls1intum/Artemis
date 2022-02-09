@@ -75,11 +75,11 @@
     <div class="connector" [ngClass]="examConductionState === examConductionStateEnum.FINISHED ? 'check' : ''"></div>
     <!-- 3. Exam correction -->
     <div class="status-step">
-        <!-- If exam review is unset, show a red calendar with a cross,
-             If exam review is planned, show a green calendar with a check,
-             If exam review is running, show a yellow dot,
-             If exam review is finished, show a green check -->
-        <div class="d-flex justify-content-center header-icon" [ngSwitch]="examReviewState">
+        <!-- If exam review phase or result publication date is unset, show a red calendar with a cross,
+             If exam review phase is planned and result publication date is set, show a green calendar with a check,
+             If exam review phase is running or there are still open complaints, show a yellow dot,
+             If exam review phase is finished and all complaints are resolved, show a green check -->
+        <div class="d-flex justify-content-center header-icon" [ngSwitch]="examCorrectionState">
             <fa-icon *ngSwitchCase="examReviewStateEnum.UNSET" [icon]="faCalendarTimes" class="cross"></fa-icon>
             <fa-icon *ngSwitchCase="examReviewStateEnum.PLANNED" [icon]="faCalendarCheck" class="check"></fa-icon>
             <fa-icon *ngSwitchCase="examReviewStateEnum.RUNNING" [icon]="faDotCircle" class="running"></fa-icon>
@@ -96,13 +96,24 @@
                                 Math.min(
                                     examChecklist.numberOfTotalParticipationsForAssessment > 0
                                         ? round((finishedByCorrectionRound * 100) / examChecklist.numberOfTotalParticipationsForAssessment, 1)
-                                        : 100,
+                                        : 0,
                                     100
                                 )
                             }}%
                         </span>
                     </li>
                 </div>
+                <li class="d-flex align-items-center">
+                    <span>{{ 'artemisApp.examStatus.correction.publishResultDate' | artemisTranslate }}: </span>
+                    <b *ngIf="exam.publishResultsDate">
+                        {{ exam.publishResultsDate | artemisDate }}
+                        <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
+                    </b>
+                    <b *ngIf="!exam.publishResultsDate" class="unset">
+                        {{ 'artemisApp.examStatus.correction.notSet' | artemisTranslate }}
+                    </b>
+                    <br />
+                </li>
                 <li>
                     <span>{{ 'artemisApp.examStatus.correction.examReview' | artemisTranslate }}:</span>
                     <b *ngIf="examReviewState" [ngClass]="examReviewState">{{ 'artemisApp.examStatus.correction.' + examReviewState | artemisTranslate }}</b>

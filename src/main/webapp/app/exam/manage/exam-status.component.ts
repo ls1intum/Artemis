@@ -39,6 +39,7 @@ export class ExamStatusComponent implements OnChanges {
     examPreparationFinished = false;
     examConductionState: ExamConductionState;
     examReviewState: ExamReviewState;
+    examCorrectionState: ExamReviewState;
 
     readonly examConductionStateEnum = ExamConductionState;
     readonly examReviewStateEnum = ExamReviewState;
@@ -63,13 +64,14 @@ export class ExamStatusComponent implements OnChanges {
 
             // Step 1:
             this.setExamPreparation();
+
+            // Step 2: Exam conduction
+            this.setConductionState();
+
+            // Step 3: Exam correction
+            this.setReviewState();
+            this.setCorrectionState();
         });
-
-        // Step 2: Exam conduction
-        this.setConductionState();
-
-        // Step 3: Exam correction
-        this.setReviewState();
     }
 
     /**
@@ -126,6 +128,22 @@ export class ExamStatusComponent implements OnChanges {
     }
 
     /**
+     * Auxiliary method that sets the state for the whole Exam correction section
+     * @private
+     */
+    private setCorrectionState(): void {
+        if (this.examReviewState === ExamReviewState.RUNNING) {
+            this.examCorrectionState = ExamReviewState.RUNNING;
+        } else if (!this.exam.publishResultsDate || this.examReviewState === ExamReviewState.UNSET) {
+            this.examCorrectionState = ExamReviewState.UNSET;
+        } else if (this.exam.publishResultsDate && this.examReviewState === ExamReviewState.PLANNED) {
+            this.examCorrectionState = ExamReviewState.PLANNED;
+        } else if (this.examReviewState === ExamReviewState.FINISHED && this.allComplaintsResolved()) {
+            this.examCorrectionState = ExamReviewState.FINISHED;
+        }
+    }
+
+    /**
      * Auxiliary method that determines the state of the different sub steps of exam preparation and stores them in a map
      * Finally determines whether every sub step is sufficiently fulfilled and therefore exam preparation is finished
      * @private
@@ -164,8 +182,7 @@ export class ExamStatusComponent implements OnChanges {
      */
     private isExamReviewRunning(): boolean {
         return (
-            (!this.allComplaintsResolved() ||
-                (!this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd && this.exam.examStudentReviewEnd.isAfter(dayjs())) ||
+            ((!this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd && this.exam.examStudentReviewEnd.isAfter(dayjs())) ||
                 (this.exam.examStudentReviewStart && this.exam.examStudentReviewStart.isBefore(dayjs()) && this.exam.examStudentReviewEnd!.isAfter(dayjs()))) ??
             false
         );
@@ -181,9 +198,8 @@ export class ExamStatusComponent implements OnChanges {
 
     /**
      * Indicates whether all complaints are resolved
-     * @private
      */
-    private allComplaintsResolved(): boolean {
+    allComplaintsResolved(): boolean {
         return this.examChecklist.numberOfAllComplaints === this.examChecklist.numberOfAllComplaintsDone;
     }
 }

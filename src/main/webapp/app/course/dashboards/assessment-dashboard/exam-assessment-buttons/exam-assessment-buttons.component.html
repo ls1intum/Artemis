@@ -1,4 +1,17 @@
 <div class="exam-action-buttons">
+    <span *ngIf="course && exam">
+        <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+            <a
+                *ngIf="course.isAtLeastInstructor"
+                [routerLink]="['/course-management', courseId, 'exams', examId, 'grading-system']"
+                class="btn btn-info mt-1"
+                id="grading-key-button-{{ exam.id }}"
+            >
+                <fa-icon [icon]="faClipboard"></fa-icon>
+                <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.gradingSystem' | artemisTranslate }}</span>
+            </a>
+        </span>
+    </span>
     <button
         id="evaluateQuizExercisesButton"
         class="btn btn-primary mt-1"

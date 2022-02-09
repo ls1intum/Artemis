@@ -26,6 +26,7 @@ import { faSort } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-courses',
     templateUrl: './assessment-dashboard.component.html',
+    styleUrls: ['./exam-assessment-buttons/exam-assessment-buttons.component.scss'],
     providers: [CourseManagementService],
 })
 export class AssessmentDashboardComponent implements OnInit {
