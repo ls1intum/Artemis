@@ -26,21 +26,21 @@ describe('HealthComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [HealthComponent, MockComponent(HealthModalComponent), TranslatePipeMock, MockComponent(JhiConnectionStatusComponent), MockDirective(TranslateDirective)],
             providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
-        }).compileComponents();
-    });
-
-    beforeEach(() => {
-        fixture = TestBed.createComponent(HealthComponent);
-        comp = fixture.componentInstance;
-        healthService = TestBed.inject(HealthService);
-        modalService = TestBed.inject(NgbModal);
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(HealthComponent);
+                comp = fixture.componentInstance;
+                healthService = TestBed.inject(HealthService);
+                modalService = TestBed.inject(NgbModal);
+            });
     });
 
     it('should get badge class', () => {
         const upBadgeClass = comp.getBadgeClass('UP');
         const downBadgeClass = comp.getBadgeClass('DOWN');
-        expect(upBadgeClass).toEqual('bg-success');
-        expect(downBadgeClass).toEqual('bg-danger');
+        expect(upBadgeClass).toBe('bg-success');
+        expect(downBadgeClass).toBe('bg-danger');
     });
 
     it('should call refresh on init', () => {
@@ -53,7 +53,7 @@ describe('HealthComponent', () => {
 
         // THEN
         expect(healthService.checkHealth).toHaveBeenCalledTimes(1);
-        expect(comp.health).toBe(health);
+        expect(comp.health).toEqual(health);
     });
 
     it('should handle a 503 on refreshing health data', () => {
@@ -66,7 +66,7 @@ describe('HealthComponent', () => {
 
         // THEN
         expect(healthService.checkHealth).toHaveBeenCalledTimes(1);
-        expect(comp.health).toBe(health);
+        expect(comp.health).toEqual(health);
     });
 
     it('should open a modal with health if eye icon is clicked', () => {
