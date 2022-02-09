@@ -2,14 +2,17 @@ version: '2.1'
 services:
     artemis-mysql:
         extends:
-            file: mysql.yml
+            file: ../mysql.yml
             service: artemis-mysql
+        healthcheck:
+            test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+            interval: 1s
+            timeout: 3s
+            retries: 30
 
     artemis-app:
-        image: ghcr.io/ls1intum/artemis
         build:
-            context: ../../../..
-            dockerfile: src/main/docker/Dockerfile
+            dockerfile: ../Dockerfile
         volumes:
             - ../../resources/config/application-prod.yml:/home/artemis/application-prod.yml:ro
             - ./application.yml:/home/artemis/application.yml:ro
@@ -44,6 +47,7 @@ services:
                 condition: service_healthy
 
     artemis-cypress:
+        # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
         image: cypress/browsers:node16.5.0-chrome94-ff93
         depends_on:
             - artemis-app
