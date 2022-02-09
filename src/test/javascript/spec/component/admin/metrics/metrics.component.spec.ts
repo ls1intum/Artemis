@@ -34,8 +34,8 @@ describe('MetricsComponent', () => {
         expect(service.getMetrics).toHaveBeenCalledTimes(1);
         expect(service.threadDump).toHaveBeenCalledTimes(1);
         expect(comp.updatingMetrics).toBe(false);
-        expect(comp.metrics).toBe(mockMetrics);
-        expect(comp.threads).toBe(mockThreadDump.threads);
+        expect(comp.metrics).toEqual(mockMetrics);
+        expect(comp.threads).toEqual(mockThreadDump.threads);
     });
 
     it('metricsKeyExists method should work correctly', () => {

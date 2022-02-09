@@ -41,7 +41,7 @@ describe('JvmThreadsComponent', () => {
 
         comp.threads = threads;
 
-        expect(comp.threads).toBe(threads);
+        expect(comp.threads).toEqual(threads);
         expect(comp.threadStats).toEqual({
             threadDumpAll: 7,
             threadDumpRunnable: 1,
@@ -66,6 +66,6 @@ describe('JvmThreadsComponent', () => {
 
         expect(spy).toHaveBeenCalledTimes(1);
         expect(spy).toHaveBeenCalledWith(MetricsModalThreadsComponent, { size: 'xl' });
-        expect(mockModalRef.componentInstance.threads).toBe(threads);
+        expect(mockModalRef.componentInstance.threads).toEqual(threads);
     });
 });
