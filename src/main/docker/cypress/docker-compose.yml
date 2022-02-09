@@ -12,7 +12,7 @@ services:
 
     artemis-app:
         build:
-            dockerfile: ../Dockerfile
+            context: ../
         volumes:
             - ../../resources/config/application-prod.yml:/home/artemis/application-prod.yml:ro
             - ./application.yml:/home/artemis/application.yml:ro
