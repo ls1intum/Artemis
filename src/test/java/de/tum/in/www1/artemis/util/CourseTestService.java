@@ -1847,8 +1847,8 @@ public class CourseTestService {
 
         // Average Score
         assertThat(courseDTO.getCurrentPercentageAverageScore()).isEqualTo(60);
-        assertThat(courseDTO.getCurrentAbsoluteAverageScore()).isEqualTo(3);
-        assertThat(courseDTO.getCurrentMaxAverageScore()).isEqualTo(5);
+        assertThat(courseDTO.getCurrentAbsoluteAverageScore()).isEqualTo(18);
+        assertThat(courseDTO.getCurrentMaxAverageScore()).isEqualTo(30);
 
         // Active Users
         int periodIndex = 0;
