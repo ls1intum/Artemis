@@ -38,13 +38,13 @@ const programmingExercise2 = {
 const programmingSubmission1 = {
     id: 1,
     submitted: true,
-    results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [], isInternal: true } }],
+    results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [], internal: true } }],
     participation: { id: 41, exercise: programmingExercise1 },
 };
 const programmingSubmission2 = {
     id: 2,
     submitted: true,
-    results: [{ id: 20, assessor: { id: 30, guidedTourSettings: [], isInternal: true } }],
+    results: [{ id: 20, assessor: { id: 30, guidedTourSettings: [], internal: true } }],
     participation: { id: 41, exercise: programmingExercise2 },
 };
 

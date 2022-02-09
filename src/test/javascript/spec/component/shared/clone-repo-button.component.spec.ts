@@ -190,7 +190,7 @@ describe('JhiCloneRepoButtonComponent', () => {
 
     function stubServices() {
         const identityStub = jest.spyOn(accountService, 'identity');
-        identityStub.mockReturnValue(Promise.resolve({ guidedTourSettings: [], login: 'edx_userLogin', isInternal: true }));
+        identityStub.mockReturnValue(Promise.resolve({ guidedTourSettings: [], login: 'edx_userLogin', internal: true }));
 
         const getProfileInfoStub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoStub.mockReturnValue(new BehaviorSubject(info));

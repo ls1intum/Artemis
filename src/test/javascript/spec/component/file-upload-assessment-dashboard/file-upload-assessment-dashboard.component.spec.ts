@@ -38,13 +38,13 @@ const fileUploadExercise2 = {
 const fileUploadSubmission1 = {
     id: 1,
     submitted: true,
-    results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [], isInternal: true } }],
+    results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [], internal: true } }],
     participation: { id: 41, exercise: fileUploadExercise1 },
 };
 const fileUploadSubmission2 = {
     id: 2,
     submitted: true,
-    results: [{ id: 20, assessor: { id: 30, guidedTourSettings: [], isInternal: true } }],
+    results: [{ id: 20, assessor: { id: 30, guidedTourSettings: [], internal: true } }],
     participation: { id: 41, exercise: fileUploadExercise2 },
 };
 
