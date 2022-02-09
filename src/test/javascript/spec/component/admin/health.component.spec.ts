@@ -52,8 +52,8 @@ describe('HealthComponent', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(healthService.checkHealth).toHaveBeenCalled();
-        expect(comp.health).toEqual(health);
+        expect(healthService.checkHealth).toHaveBeenCalledTimes(1);
+        expect(comp.health).toBe(health);
     });
 
     it('should handle a 503 on refreshing health data', () => {
@@ -65,8 +65,8 @@ describe('HealthComponent', () => {
         comp.refresh();
 
         // THEN
-        expect(healthService.checkHealth).toHaveBeenCalled();
-        expect(comp.health).toEqual(health);
+        expect(healthService.checkHealth).toHaveBeenCalledTimes(1);
+        expect(comp.health).toBe(health);
     });
 
     it('should open a modal with health if eye icon is clicked', () => {

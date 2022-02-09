@@ -57,7 +57,6 @@ describe('HealthModalComponentTest', () => {
         const button = fixture.debugElement.query(By.css('button.btn-close'));
         expect(button).not.toBe(null);
 
-        expect(dismissSpy).toHaveBeenCalledTimes(0);
         button.nativeElement.click();
         expect(dismissSpy).toHaveBeenCalledTimes(1);
     });
