@@ -33,7 +33,7 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
         List<User> users = userRepository.findAll();
         int remainder = users.size() % listSize;
         int listCount = (int) Math.floor(users.size() / 100f);
-        for (int i = 0; i < listCount - 1; i++) {
+        for (int i = 0; i < listCount; i++) {
             List<User> sublist = users.subList(i * listSize, (i + 1) * listSize);
             processUsers(sublist);
         }

@@ -38,10 +38,10 @@ describe('MetricsModalThreadsComponent', () => {
         jest.clearAllMocks();
     });
 
-    function createThread(id: number, threadState: ThreadState): Thread {
+    function createThread(threadId: number, threadState: ThreadState): Thread {
         return {
             threadName: '',
-            threadId: id,
+            threadId,
             blockedTime: -1,
             blockedCount: -1,
             waitedTime: -1,

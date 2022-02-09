@@ -3,12 +3,12 @@
         "request": {
             "title": "Passwort zurücksetzen",
             "form": {
-                "button": "Passwort zurücksetzen"
+                "button": "Passwort zurücksetzen",
+                "emailUsername": "E-Mail/Benutzername"
             },
             "messages": {
-                "info": "Gebe die E-Mail-Adresse ein, welche du bei der Registrierung verwendest hast.",
-                "success": "Eine E-Mail mit weiteren Instruktionen für das Zurücksetzen des Passworts wurde gesendet.",
-                "notfound": "<strong>Diese E-Mail Adresse existiert nicht!</strong> Überprüfe deine E-Mail-Adresse und versuche es nochmal."
+                "info": "Gib die E-Mail-Adresse ein, die du bei der Registrierung verwendest hast oder deinen Benutzernamen.",
+                "success": "Eine E-Mail mit weiteren Instruktionen für das Zurücksetzen des Passworts wurde gesendet. Aus Sicherheitsgründen erscheint dieser Hinweis auch wenn der angegebene Account nicht existiert. Überprüfe deine Eingabe, wenn du keine E-Mail erhältst."
             },
             "external": {
                 "explanation": "Deine Zugangsdaten sind nicht in Artemis sondern in {{provider}} gespeichert.",
