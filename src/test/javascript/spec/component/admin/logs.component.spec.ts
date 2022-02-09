@@ -34,7 +34,7 @@ describe('Component Tests', () => {
             expect(comp.ascending).toBe(true);
         });
 
-        it('Should call load all on init', () => {
+        it('should call load all on init', () => {
             // GIVEN
             const log = new Log('main', 'WARN');
             jest.spyOn(service, 'findAll').mockReturnValue(
