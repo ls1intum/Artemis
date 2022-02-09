@@ -12,6 +12,6 @@ export function yAxisTickFormatting(tick: string): string {
  * @param tick the default tick
  * @returns {{ tick }}%
  */
-export function yAxisTickFormattingWithPercentageSign(tick: string): string {
+export function axisTickFormattingWithPercentageSign(tick: string): string {
     return tick + '%';
 }

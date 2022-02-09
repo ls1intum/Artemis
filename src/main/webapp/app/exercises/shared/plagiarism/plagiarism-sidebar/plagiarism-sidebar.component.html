@@ -3,13 +3,17 @@
         <span>Run details</span>
         <fa-icon [icon]="faChevronRight"></fa-icon>
     </div>
+    <div class="filter-disclaimer" *ngIf="casesFiltered">
+        <fa-icon class="text-warning disclaimer-icon" [icon]="faExclamationTriangle"></fa-icon>
+        <span>{{ 'artemisApp.plagiarism.casesFiltered' | artemisTranslate }}</span>
+    </div>
 
     <ul class="plagiarism-list" *ngIf="comparisons && comparisons.length">
         <li
             *ngFor="let comparison of pagedComparisons; let idx = index"
             class="plagiarism-list-item"
-            [class.selected]="!showRunDetails && getPagedIndex(idx) === activeIndex"
-            (click)="selectIndex.emit(getPagedIndex(idx))"
+            [class.selected]="!showRunDetails && comparison.id === activeID"
+            (click)="selectIndex.emit(comparison.id)"
         >
             <div class="plagiarism-list-item-content">
                 <span
@@ -21,7 +25,7 @@
                 ></span>
 
                 <div class="plagiarism-list-item-info">
-                    <span class="plagiarism-name"> #{{ getPagedIndex(idx) + 1 }} </span>
+                    <span class="plagiarism-name"> #{{ getPagedIndex(idx) + 1 + offset }} </span>
 
                     <span class="plagiarism-list-item-students">
                         <span>{{ comparison.submissionA.studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }}, </span>
