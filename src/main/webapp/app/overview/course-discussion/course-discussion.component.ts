@@ -139,7 +139,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * on changing the context via dropdown, the metis service is invoked to deliver the first page of posts for the currently set context,
+     * on changing any filter, the metis service is invoked to deliver the first page of posts for the currently set context,
      * filtered and sorted on the backend
      */
     onSelectContext(): void {
@@ -247,6 +247,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             exerciseId: undefined,
             lectureId: undefined,
             searchText: undefined,
+            filterToUnresolved: false,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: SortDirection.DESCENDING,
         };

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.metis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,8 +17,10 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 
 public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -36,6 +39,8 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     private List<AnswerPost> existingAnswerPosts;
 
     private Long courseId;
+
+    private int maxPostsPerPage = 20;
 
     @BeforeEach
     public void initTestCase() {
@@ -161,6 +166,68 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
                 .collect(Collectors.toList());
 
         assertThat(returnedPosts).isEqualTo(resolvedPosts);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsForCourse_WithOwnAndUnresolvedPosts() throws Exception {
+        // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToUnresolved", "true");
+        params.add("filterToOwn", "true");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        // get unresolved posts of current user and compare
+        List<Post> resolvedPosts = existingPostsWithAnswers.stream()
+                .filter(post -> post.getAuthor().getLogin().equals("student1")
+                        && (post.getAnswers().stream().allMatch(answerPost -> answerPost.doesResolvePost() == null || answerPost.doesResolvePost() == false)))
+                .collect(Collectors.toList());
+
+        assertThat(returnedPosts).isEqualTo(resolvedPosts);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsForCourse_OrderByAnswerCountDESC() throws Exception {
+        PostSortCriterion sortCriterion = PostSortCriterion.ANSWER_COUNT;
+        SortingOrder sortingOrder = SortingOrder.DESCENDING;
+
+        var params = new LinkedMultiValueMap<String, String>();
+
+        // ordering only available in course discussions page, where paging is enabled
+        params.add("pagingEnabled", "true");
+        params.add("page", "0");
+        params.add("size", String.valueOf(maxPostsPerPage));
+
+        params.add("postSortCriterion", sortCriterion.toString());
+        params.add("sortingOrder", sortingOrder.toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        existingPostsWithAnswers = existingPostsWithAnswers.stream().sorted(Comparator.comparing((Post post) -> post.getAnswers().size()).reversed()).collect(Collectors.toList());
+
+        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsForCourse_OrderByAnswerCountASC() throws Exception {
+        PostSortCriterion sortCriterion = PostSortCriterion.ANSWER_COUNT;
+        SortingOrder sortingOrder = SortingOrder.ASCENDING;
+
+        var params = new LinkedMultiValueMap<String, String>();
+
+        // ordering only available in course discussions page, where paging is enabled
+        params.add("pagingEnabled", "true");
+        params.add("page", "0");
+        params.add("size", String.valueOf(maxPostsPerPage));
+
+        params.add("postSortCriterion", sortCriterion.toString());
+        params.add("sortingOrder", sortingOrder.toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        existingPostsWithAnswers = existingPostsWithAnswers.stream().sorted(Comparator.comparing(post -> post.getAnswers().size())).collect(Collectors.toList());
+
+        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
     }
 
     // UPDATE
