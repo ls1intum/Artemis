@@ -37,14 +37,14 @@ import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/sha
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner, faSort, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 export interface ExampleSubmissionQueryParams {
@@ -59,7 +59,7 @@ export interface ExampleSubmissionQueryParams {
     providers: [CourseManagementService],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
-    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
@@ -112,6 +112,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     notYetAssessed: number[] = [];
     firstRoundAssessments: number;
 
+    // attributes for sorting the tables
+    sortPredicates = ['submissionDate', 'complaint.accepted', 'complaint.accepted'];
+    reverseOrders = [true, false, false];
+
     readonly ExerciseType = ExerciseType;
 
     stats = {
@@ -162,8 +166,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     faQuestionCircle = faQuestionCircle;
     faCheckCircle = faCheckCircle;
     faFolderOpen = faFolderOpen;
+    faSort = faSort;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
+        public complaintService: ComplaintService,
         private exerciseService: ExerciseService,
         private alertService: AlertService,
         private translateService: TranslateService,
@@ -176,7 +183,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private artemisMarkdown: ArtemisMarkdownService,
         private router: Router,
-        private complaintService: ComplaintService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
@@ -327,6 +333,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId).subscribe({
                 next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithComplaints = res.body || [];
+                    this.sortComplaintRows();
                 },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
@@ -334,6 +341,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.submissionService.getSubmissionsWithMoreFeedbackRequestsForTutor(this.exerciseId).subscribe({
                 next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithMoreFeedbackRequests = res.body || [];
+                    this.sortMoreFeedbackRows();
                 },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
@@ -494,7 +502,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         return submission;
                     });
 
-                this.submissionsByCorrectionRound!.set(correctionRound, sub);
+                this.submissionsByCorrectionRound.set(correctionRound, sub);
+                this.sortSubmissionRows(correctionRound);
             });
     }
 
@@ -625,33 +634,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     calculateSubmissionStatusIsDraft(submission: Submission, correctionRound = 0): boolean {
         const tmpResult = submission.results?.[correctionRound];
         return !(tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!));
-    }
-
-    calculateComplaintStatus(complaint: Complaint) {
-        // a complaint is handled if it is either accepted or denied and a complaint response exists
-        const handled = complaint.accepted !== undefined && complaint.complaintResponse !== undefined;
-        if (handled) {
-            return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.complaintEvaluated');
-        } else {
-            if (this.complaintService.isComplaintLocked(complaint)) {
-                if (this.complaintService.isComplaintLockedByLoggedInUser(complaint)) {
-                    const endDate = this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate);
-                    return this.translateService.instant('artemisApp.locks.lockInformationYou', {
-                        endDate,
-                    });
-                } else {
-                    const endDate = this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate);
-                    const user = complaint.complaintResponse?.reviewer?.login;
-
-                    return this.translateService.instant('artemisApp.locks.lockInformation', {
-                        endDate,
-                        user,
-                    });
-                }
-            } else {
-                return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.complaintNotEvaluated');
-            }
-        }
     }
 
     /**
@@ -785,6 +767,38 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     navigateToExerciseSubmissionOverview(event: any): void {
         if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
             this.router.navigate(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
+        }
+    }
+
+    sortSubmissionRows(correctionRound: number) {
+        this.sortService.sortByProperty(
+            this.submissionsByCorrectionRound.get(correctionRound)!,
+            this.sortPredicates[0].replace('correctionRound', correctionRound + ''),
+            this.reverseOrders[0],
+        );
+    }
+
+    sortComplaintRows() {
+        // If the selected sort predicate is indifferent about two elements, the one submitted earlier should be displayed on top
+        this.sortService.sortByProperty(this.submissionsWithComplaints, 'complaint.submittedTime', true);
+        if (this.sortPredicates[1] === 'responseTime') {
+            this.sortService.sortByFunction(this.submissionsWithComplaints, (element) => this.complaintService.getResponseTimeInSeconds(element.complaint), this.reverseOrders[1]);
+        } else {
+            this.sortService.sortByProperty(this.submissionsWithComplaints, this.sortPredicates[1], this.reverseOrders[1]);
+        }
+    }
+
+    sortMoreFeedbackRows() {
+        // If the selected sort predicate is indifferent about two elements, the one submitted earlier should be displayed on top
+        this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, 'complaint.submittedTime', true);
+        if (this.sortPredicates[2] === 'responseTime') {
+            this.sortService.sortByFunction(
+                this.submissionsWithMoreFeedbackRequests,
+                (element) => this.complaintService.getResponseTimeInSeconds(element.complaint),
+                this.reverseOrders[2],
+            );
+        } else {
+            this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, this.sortPredicates[2], this.reverseOrders[2]);
         }
     }
 }

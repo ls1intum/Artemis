@@ -27,14 +27,14 @@ import {
     isResultPreliminary,
 } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { round, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { round, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/entities/statistics.model';
-import { xAxisFormatting } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.utils';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 
 export enum FeedbackItemType {
     Issue,
@@ -67,7 +67,7 @@ export class ResultDetailComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
-    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
     readonly FeedbackItemType = FeedbackItemType;
 
@@ -116,7 +116,7 @@ export class ResultDetailComponent implements OnInit {
     showOnlyPositiveFeedback = false;
     showOnlyNegativeFeedback = false;
 
-    readonly xAxisFormatting = xAxisFormatting;
+    readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
 
     get exercise(): Exercise | undefined {
         if (this.result.participation) {
@@ -462,9 +462,9 @@ export class ResultDetailComponent implements OnInit {
 
         const course = getCourseFromExercise(this.exercise!);
 
-        const appliedNegativePoints = roundScoreSpecifiedByCourseSettings(codeIssueCredits + negativeCredits, course);
-        const receivedNegativePoints = roundScoreSpecifiedByCourseSettings(codeIssuePenalties + negativeCredits, course);
-        const positivePoints = roundScoreSpecifiedByCourseSettings(testCaseCredits + positiveCredits, course);
+        const appliedNegativePoints = roundValueSpecifiedByCourseSettings(codeIssueCredits + negativeCredits, course);
+        const receivedNegativePoints = roundValueSpecifiedByCourseSettings(codeIssuePenalties + negativeCredits, course);
+        const positivePoints = roundValueSpecifiedByCourseSettings(testCaseCredits + positiveCredits, course);
 
         if (appliedNegativePoints !== receivedNegativePoints) {
             this.showScoreChartTooltip = true;
