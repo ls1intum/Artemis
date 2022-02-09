@@ -19,6 +19,8 @@ import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { SimilarityRange } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
+import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 
 export type PlagiarismCheckState = {
     state: 'COMPLETED' | 'RUNNING';
@@ -51,7 +53,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     /**
      * Index of the currently selected comparison.
      */
-    selectedComparisonIndex: number;
+    selectedComparisonId: number;
 
     /**
      * True, if the plagiarism details tab is active.
@@ -92,6 +94,15 @@ export class PlagiarismInspectorComponent implements OnInit {
      * The minimumSize option is only configurable, if this value is true.
      */
     enableMinimumSize = false;
+    /**
+     * Comparisons that are currently visible (might differ from the original set as filtering can be applied)
+     */
+    visibleComparisons?: PlagiarismComparison<any>[];
+    chartFilterApplied = false;
+    /**
+     * Offset of the currently visible comparisons to the original set in order to keep the numbering even if comparisons are filtered
+     */
+    sidebarOffset = 0;
 
     readonly FeatureToggle = FeatureToggle;
 
@@ -108,6 +119,7 @@ export class PlagiarismInspectorComponent implements OnInit {
         private textExerciseService: TextExerciseService,
         private websocketService: JhiWebsocketService,
         private translateService: TranslateService,
+        private inspectorService: PlagiarismInspectorService,
     ) {}
 
     ngOnInit() {
@@ -217,8 +229,8 @@ export class PlagiarismInspectorComponent implements OnInit {
         }
     }
 
-    selectComparisonAtIndex(index: number) {
-        this.selectedComparisonIndex = index;
+    selectComparisonWithID(id: number) {
+        this.selectedComparisonId = id;
         this.showRunDetails = false;
     }
 
@@ -282,11 +294,19 @@ export class PlagiarismInspectorComponent implements OnInit {
         }
 
         this.plagiarismResult = result;
-        this.selectedComparisonIndex = 0;
+        this.selectedComparisonId = this.plagiarismResult.comparisons[0].id;
+        this.visibleComparisons = result.comparisons;
     }
 
     sortComparisonsForResult(result: PlagiarismResult<any>) {
-        result.comparisons = result.comparisons.sort((a, b) => b.similarity - a.similarity);
+        result.comparisons = result.comparisons.sort((a, b) => {
+            // if the cases share the same similarity, we sort by the id
+            if (b.similarity - a.similarity === 0) {
+                return b.id - a.id;
+            } else {
+                return b.similarity - a.similarity;
+            }
+        });
     }
 
     /**
@@ -352,5 +372,45 @@ export class PlagiarismInspectorComponent implements OnInit {
                 return tooltip;
             }
         }
+    }
+
+    /**
+     * Filters the comparisons visible in {@link PlagiarismSidebarComponent} according to the selected similarity range
+     * selected by the user in the chart
+     * @param range the range selected by the user in the chart by clicking on a chart bar
+     */
+    filterByChart(range: SimilarityRange): void {
+        this.visibleComparisons = this.inspectorService.filterComparisons(range, this.plagiarismResult?.comparisons);
+        const index = this.plagiarismResult?.comparisons.indexOf(this.visibleComparisons[0]) ?? 0;
+        this.sidebarOffset = index !== -1 ? index : 0;
+        this.chartFilterApplied = true;
+    }
+
+    /**
+     * Resets the filter applied by chart interaction
+     */
+    resetFilter(): void {
+        this.visibleComparisons = this.plagiarismResult?.comparisons;
+        this.chartFilterApplied = false;
+        this.sidebarOffset = 0;
+    }
+
+    /**
+     * Auxiliary method called if the "Run details" Button is clicked
+     * This additional logic is necessary in order to update the {@link PlagiarismRunDetailsComponent#bucketDTOs}
+     * @param flag emitted by {@link PlagiarismSidebarComponent#showRunDetailsChange}
+     */
+    showSimilarityDistribution(flag: boolean): void {
+        this.resetFilter();
+        this.getLatestPlagiarismResult();
+        this.showRunDetails = flag;
+    }
+
+    /**
+     * Auxiliary method that returns the comparison currently selected by the user
+     */
+    getSelectedComparison(): PlagiarismComparison<any> {
+        // as the id is unique, the filtered array should always have length 1
+        return this.visibleComparisons!.filter((comparison) => comparison.id === this.selectedComparisonId)[0];
     }
 }
