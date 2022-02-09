@@ -332,57 +332,23 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "authenticateduser")
-    public void changePasswordRegistrationDisabled() throws Throwable {
-        testWithRegistrationDisabled(() -> {
-            // create user in repo
-            User user = ModelFactory.generateActivatedUser("authenticateduser");
-            bitbucketRequestMockProvider.mockUserExists("authenticateduser");
-            User createdUser = userCreationService.createUser(new ManagedUserVM(user));
-            // Password Data
-            String updatedPassword = "12345678password-reset-init.component.spec.ts";
+    public void changePasswordExternalUser() throws Throwable {
+        String newPassword = getValidPassword();
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        bitbucketRequestMockProvider.mockUserExists("authenticateduser");
+        bitbucketRequestMockProvider.mockUpdateUserDetails(user.getLogin(), user.getEmail(), user.getName());
+        bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), newPassword, true);
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+        createdUser.setInternal(false);
+        userRepository.save(createdUser);
 
-            PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
-            // make request
-            request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
-        });
-    }
+        // Password Data
+        String updatedPassword = "12345678password-reset-init.component.spec.ts";
 
-    @Test
-    @WithMockUser(username = "authenticateduser")
-    public void changePasswordSaml2Disabled() throws Throwable {
-        testWithRegistrationDisabled(() -> {
-            ConfigUtil.testWithChangedConfig(accountResource, "saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
-                // create user in repo
-                User user = ModelFactory.generateActivatedUser("authenticateduser");
-                bitbucketRequestMockProvider.mockUserExists("authenticateduser");
-                User createdUser = userCreationService.createUser(new ManagedUserVM(user));
-                // Password Data
-                String updatedPassword = "12345678password-reset-init.component.spec.ts";
-
-                PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
-                // make request
-                request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
-            });
-        });
-    }
-
-    @Test
-    @WithMockUser(username = "authenticateduser")
-    public void changePasswordSaml2ConfigEmpty() throws Throwable {
-        testWithRegistrationDisabled(() -> {
-            ConfigUtil.testWithChangedConfig(accountResource, "saml2EnablePassword", Optional.empty(), () -> {
-                // create user in repo
-                User user = ModelFactory.generateActivatedUser("authenticateduser");
-                bitbucketRequestMockProvider.mockUserExists("authenticateduser");
-                User createdUser = userCreationService.createUser(new ManagedUserVM(user));
-                // Password Data
-                String updatedPassword = "12345678password-reset-init.component.spec.ts";
-
-                PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
-                // make request
-                request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
-            });
-        });
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
+        // make request
+        request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
