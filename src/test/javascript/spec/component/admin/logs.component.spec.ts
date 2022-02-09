@@ -51,7 +51,7 @@ describe('Component Tests', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(service.findAll).toHaveBeenCalled();
+            expect(service.findAll).toHaveBeenCalledTimes(1);
             expect(comp.loggers?.[0]).toEqual(expect.objectContaining(log));
         });
 
@@ -73,8 +73,8 @@ describe('Component Tests', () => {
             comp.changeLevel('main', 'ERROR');
 
             // THEN
-            expect(service.changeLevel).toHaveBeenCalled();
-            expect(service.findAll).toHaveBeenCalled();
+            expect(service.changeLevel).toHaveBeenCalledTimes(1);
+            expect(service.findAll).toHaveBeenCalledTimes(1);
             expect(comp.loggers?.[0]).toEqual(expect.objectContaining(log));
         });
 
