@@ -26,8 +26,6 @@ import { CourseDiscussionComponent } from 'app/overview/course-discussion/course
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs/esm';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { Reaction } from 'app/entities/metis/reaction.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';

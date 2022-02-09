@@ -109,9 +109,11 @@ public class PostResource {
      *
      * @param courseId                  id of the course the fetch posts for
      * @param pageable                  pagination settings to fetch posts in smaller batches
+     * @param pagingEnabled             flag stating whether requesting component has paging enabled or not
      * @param courseWideContext         optional request param if a course-wide topic is the targeted context
      * @param exerciseId                optional request param if a certain exercise is the targeted context
      * @param lectureId                 optional request param if a certain lecture is the targeted context
+     * @param searchText                text to be searched within posts
      * @param filterToUnresolved        post is only fetched if none of the given answers is marked as resolving
      * @param filterToOwn               post is only fetched if the author of the post matches the currently logged in user
      * @param filterToAnsweredOrReacted post is only fetched if the author of any given answer the user that put any reaction on that post matches the currently logged in user

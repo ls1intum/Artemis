@@ -671,6 +671,10 @@ public class PostService extends PostingService {
      * -- in between pinned and archived posts --
      * 3. criterion: currently selected criterion in combination with currently selected order
      *
+     * @param postA             post 1 to be compared
+     * @param postB             post 2 to be compared
+     * @param postSortCriterion criterion to sort posts (CREATION_DATE, #VOTES,#ANSWERS)
+     * @param sortingOrder      direction of sorting (ASC, DESC)
      * @return number indicating the order of two elements
      */
     public static int postComparator(Post postA, Post postB, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
@@ -752,6 +756,8 @@ public class PostService extends PostingService {
      * filters posts on a search string in a match-all-manner
      * - currentPostContentFilter: post is only kept if the search string (which is not a #id pattern) is included in either the post title, content or tag (all strings lowercased)
      *
+     * @param post          checked post for including searchText
+     * @param searchText    text to be searched within posts
      * @return boolean predicate if the post is kept (true) or filtered out (false)
      */
     public static boolean postFilter(Post post, String searchText) {
