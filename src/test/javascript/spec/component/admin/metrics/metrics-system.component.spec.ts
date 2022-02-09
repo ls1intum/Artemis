@@ -19,7 +19,7 @@ describe('MetricsSystemComponent', () => {
             });
     });
 
-    it('millisecond to duration conversion', () => {
+    it('should convert milliseconds to durations', () => {
         expect(comp.convertMillisecondsToDuration(5000)).toBe('5 seconds ');
         expect(comp.convertMillisecondsToDuration(10000)).toBe('10 seconds ');
         expect(comp.convertMillisecondsToDuration(60000)).toBe('1 minute ');
