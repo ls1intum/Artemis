@@ -198,8 +198,9 @@ export class ExamStatusComponent implements OnChanges {
 
     /**
      * Indicates whether all complaints are resolved
+     * @private
      */
-    allComplaintsResolved(): boolean {
+    private allComplaintsResolved(): boolean {
         return this.examChecklist.numberOfAllComplaints === this.examChecklist.numberOfAllComplaintsDone;
     }
 }
