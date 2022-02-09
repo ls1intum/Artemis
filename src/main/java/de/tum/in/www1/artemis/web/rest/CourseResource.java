@@ -525,15 +525,18 @@ public class CourseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
     @GetMapping("/courses/{courseId}")
-    @PreAuthorize("hasRole('TA')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
-        course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
-        course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
-        course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
+            course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
+            course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
+            course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
+            course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
+        }
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
 
