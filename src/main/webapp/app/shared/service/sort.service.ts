@@ -7,54 +7,72 @@ import dayjs from 'dayjs/esm';
 export class SortService {
     constructor() {}
 
-    sortByProperty<T>(array: T[], key: string, asc: boolean): T[] {
+    /**
+     * Sorts the given array based on the defined key
+     * @param array The array that should be sorted
+     * @param key The attribute of the elements that should be used for determining the order
+     * @param ascending Decides if the biggest value comes last (ascending) or first (descending)
+     */
+    sortByProperty<T>(array: T[], key: string, ascending: boolean): T[] {
+        return this.sortByFunction(array, (element) => SortService.customGet(element, key, undefined), ascending);
+    }
+
+    /**
+     * Sorts the given array based on the defined key
+     * @param array The array that should be sorted
+     * @param func The function that returns a value based on which the elements should be sorted
+     * @param ascending Decides if the biggest value comes last (ascending) or first (descending)
+     */
+    sortByFunction<T>(array: T[], func: { (parameter: T): any }, ascending: boolean): T[] {
         return array.sort((a: T, b: T) => {
-            const valueA = this.customGet(a, key, undefined);
-            const valueB = this.customGet(b, key, undefined);
+            const valueA = func(a);
+            const valueB = func(b);
+
+            let compareValue;
 
             if (valueA == undefined || valueB == undefined) {
-                return SortService.compareWithUndefinedNull(valueA, valueB);
+                compareValue = SortService.compareWithUndefinedNull(valueA, valueB);
+            } else if (dayjs.isDayjs(valueA) && dayjs.isDayjs(valueB)) {
+                compareValue = SortService.compareDayjs(valueA, valueB);
+            } else {
+                compareValue = SortService.compareBasic(valueA, valueB);
             }
 
-            if (dayjs.isDayjs(valueA) && dayjs.isDayjs(valueB)) {
-                return SortService.compareDayjs(valueA, valueB, asc);
+            if (!ascending) {
+                compareValue = -compareValue;
             }
 
-            return SortService.compareBasic(valueA, valueB, asc);
+            return compareValue;
         });
     }
 
     private static compareWithUndefinedNull(valueA: any, valueB: any) {
-        if (!valueA && !valueB) {
+        if ((valueA === null || valueA === undefined) && (valueB === null || valueB === undefined)) {
             return 0;
-        } else if (!valueA) {
+        } else if (valueA === null || valueA === undefined) {
             return 1;
         } else {
             return -1;
         }
     }
 
-    private static compareDayjs(valueA: dayjs.Dayjs, valueB: dayjs.Dayjs, ascending: boolean) {
+    private static compareDayjs(valueA: dayjs.Dayjs, valueB: dayjs.Dayjs) {
         if (valueA.isSame(valueB)) {
             return 0;
-        } else if (ascending) {
-            return valueA.isBefore(valueB) ? -1 : 1;
         } else {
-            return valueA.isBefore(valueB) ? 1 : -1;
+            return valueA.isBefore(valueB) ? -1 : 1;
         }
     }
 
-    private static compareBasic(valueA: any, valueB: any, ascending: boolean) {
+    private static compareBasic(valueA: any, valueB: any) {
         if (valueA === valueB) {
             return 0;
-        } else if (ascending) {
-            return valueA < valueB ? -1 : 1;
         } else {
-            return valueA < valueB ? 1 : -1;
+            return valueA < valueB ? -1 : 1;
         }
     }
 
-    private customGet(object: any, path: string, defaultValue: any) {
+    private static customGet(object: any, path: string, defaultValue: any) {
         const pathArray = path.split('.').filter((key) => key);
         const value = pathArray.reduce((obj, key) => {
             if (!obj) {

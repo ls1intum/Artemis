@@ -92,16 +92,16 @@ export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: any, c
 };
 
 /**
- * Rounds the points to the specified amount in the course object
- * @param points The points of the student
- * @param course The course in which the score is displayed. The attribute accuracyOfScores determines the accuracy
- * @returns The rounded points of the student
+ * Rounds the given value to the accuracy defined by the course.
+ * @param value The value that should be rounded.
+ * @param course The course which defines the accuracy to which the value should be rounded.
+ * @returns The rounded value.
  */
-export const roundScoreSpecifiedByCourseSettings = (points: any, course?: Course) => {
+export const roundValueSpecifiedByCourseSettings = (value: any, course?: Course) => {
     if (!course) {
         captureException(new Error('The course object used for determining the rounding of scores was undefined'));
     }
-    return round(points, course ? course!.accuracyOfScores : 1);
+    return round(value, course ? course.accuracyOfScores : 1);
 };
 
 /**

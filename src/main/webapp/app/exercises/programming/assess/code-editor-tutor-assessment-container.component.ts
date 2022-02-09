@@ -32,7 +32,7 @@ import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { getLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
@@ -547,7 +547,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private createResultString(totalScore: number, maxScore: number | undefined): string {
-        return `${roundScoreSpecifiedByCourseSettings(totalScore, getCourseFromExercise(this.exercise))} of ${roundScoreSpecifiedByCourseSettings(
+        return `${roundValueSpecifiedByCourseSettings(totalScore, getCourseFromExercise(this.exercise))} of ${roundValueSpecifiedByCourseSettings(
             maxScore,
             getCourseFromExercise(this.exercise),
         )} points`;

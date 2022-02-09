@@ -65,19 +65,24 @@
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.dateAndTime' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
+                    <th jhiSortBy="responseTime">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.responseTime' | artemisTranslate }}</a>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
                     <th jhiSortBy="accepted">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.status' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th>
-                        <span>{{ 'artemisApp.locks.lockStatus' | artemisTranslate }}</span>
+                    <th jhiSortBy="lockStatus">
+                        <a class="th-link">{{ 'artemisApp.locks.lockStatus' | artemisTranslate }}</a>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th>{{ 'artemisApp.complaint.listOfComplaints.actions' | artemisTranslate }}</th>
                 </tr>
             </thead>
 
             <tbody>
-                <tr *ngFor="let complaint of complaintsToShow" [ngClass]="{ 'table-warning': shouldHighlightComplaint(complaint) }">
+                <tr *ngFor="let complaint of complaintsToShow">
                     <td>
                         {{ complaint.id }}
                     </td>
@@ -110,6 +115,18 @@
                         <span>{{ complaint.submittedTime | artemisDate }}</span>
                     </td>
 
+                    <td>
+                        <span>
+                            <ng-container *ngIf="complaint.accepted === undefined"> &gt;= </ng-container>
+                            {{ complaintService.getResponseTimeInSeconds(complaint) | artemisDurationFromSeconds: true }}
+                            <fa-icon
+                                *ngIf="complaintService.shouldHighlightComplaint(complaint)"
+                                [icon]="faExclamationTriangle"
+                                class="text-warning"
+                                ngbTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
+                            ></fa-icon>
+                        </span>
+                    </td>
                     <td>
                         <span class="text-warning" *ngIf="complaint.accepted == undefined">{{ 'artemisApp.complaint.listOfComplaints.noReply' | artemisTranslate }}</span>
                         <span class="text-success" *ngIf="complaint.accepted == true && complaintType === ComplaintType.COMPLAINT">{{

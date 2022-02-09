@@ -76,14 +76,21 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed.
         const dueDateHasPassed = !this.exercise.dueDate || dayjs(this.exercise.dueDate).isBefore(dayjs());
         this.repositoryIsLocked = !!this.exercise.buildAndTestStudentSubmissionsAfterDueDate && !!this.exercise.dueDate && dueDateHasPassed;
-
-        const participation = { ...this.studentParticipation, exercise: this.exercise } as StudentParticipation;
-        this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
+        this.updateDomain();
     }
 
     onActivate() {
         super.onActivate();
         this.instructions.updateMarkdown();
+        this.updateDomain();
+    }
+
+    /**
+     * Updates the domain to set the active student participation
+     */
+    updateDomain() {
+        const participation = { ...this.studentParticipation, exercise: this.exercise } as StudentParticipation;
+        this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 
     /**

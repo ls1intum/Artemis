@@ -45,6 +45,7 @@ import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submissio
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { UserImportModule } from 'app/shared/import/user-import.module';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
+import { ExamStatusComponent } from 'app/exam/manage/exam-status.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -93,6 +94,7 @@ const ENTITY_STATES = [...examManagementState];
         ExamChecklistComponent,
         ExamChecklistExerciseGroupTableComponent,
         ExamChecklistCheckComponent,
+        ExamStatusComponent,
         ProgrammingExerciseGroupCellComponent,
         FileUploadExerciseGroupCellComponent,
         ModelingExerciseGroupCellComponent,
