@@ -250,12 +250,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     timeout: 10000000,
                 });
             },
-            error: (error) => {
-                const errorMessage = error.headers.get('X-artemisApp-alert');
-                // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-                const jhiAlert = this.alertService.error(errorMessage);
-                jhiAlert.message = errorMessage;
-            },
+            error: (error) => this.dialogErrorSource.next(error.message),
         });
     }
 
@@ -277,12 +272,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     timeout: 10000,
                 });
             },
-            error: (error) => {
-                const errorMessage = error.headers.get('X-artemisApp-alert');
-                // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-                const jhiAlert = this.alertService.error(errorMessage);
-                jhiAlert.message = errorMessage;
-            },
+            error: (error) => this.dialogErrorSource.next(error.message),
         });
     }
 
