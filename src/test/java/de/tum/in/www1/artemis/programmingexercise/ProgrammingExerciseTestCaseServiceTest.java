@@ -22,7 +22,9 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
@@ -229,6 +231,45 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
             Set<ProgrammingExerciseTestCase> updated = testCaseService.update(programmingExercise.getId(), testCaseDTOs);
             assertThat(updated).hasSize(3);
             assertThat(updated).allMatch(testCase -> testCase.getWeight() == 0.0);
+        }
+    }
+
+    @Test
+    public void shouldMapStructuralTestCaseTypesCorrectly() {
+        Set<ProgrammingExerciseTestCase> structuralTestCases = Set.of(new ProgrammingExerciseTestCase().testName("testClass[Policy]").exercise(programmingExercise),
+                new ProgrammingExerciseTestCase().testName("testConstructors[BubbleSort]").exercise(programmingExercise),
+                new ProgrammingExerciseTestCase().testName("testMethods[Context]").exercise(programmingExercise),
+                new ProgrammingExerciseTestCase().testName("testAttributes[Starter]").exercise(programmingExercise));
+
+        testCaseService.setTestCasesWithTestCaseType(structuralTestCases, ProgrammingLanguage.JAVA);
+        assertThat(structuralTestCases).allMatch(testCase -> testCase.getProgrammingExerciseTestCaseType() == ProgrammingExerciseTestCaseType.STRUCTURAL);
+    }
+
+    @Test
+    public void shouldMapBehavioralTestCaseTypesCorrectly() {
+        Set<ProgrammingExerciseTestCase> behavioralTestCases = Set.of(new ProgrammingExerciseTestCase().testName("testBubbleSort").exercise(programmingExercise),
+                new ProgrammingExerciseTestCase().testName("testMergeSort").exercise(programmingExercise),
+                new ProgrammingExerciseTestCase().testName("test13412").exercise(programmingExercise),
+                new ProgrammingExerciseTestCase().testName("HiddenRandomTest").exercise(programmingExercise));
+
+        testCaseService.setTestCasesWithTestCaseType(behavioralTestCases, ProgrammingLanguage.JAVA);
+        assertThat(behavioralTestCases).allMatch(testCase -> testCase.getProgrammingExerciseTestCaseType() == ProgrammingExerciseTestCaseType.BEHAVIORAL);
+    }
+
+    @Test
+    public void shouldMapNonJavaTestsToDefaultTestCaseType() {
+        Set<ProgrammingExerciseTestCase> testCases;
+
+        for (ProgrammingLanguage language : ProgrammingLanguage.values()) {
+            if (language == ProgrammingLanguage.JAVA) {
+                continue;
+            }
+            testCases = Set.of(new ProgrammingExerciseTestCase().testName("testBubbleSort").exercise(programmingExercise),
+                    new ProgrammingExerciseTestCase().testName("testMergeSort").exercise(programmingExercise),
+                    new ProgrammingExerciseTestCase().testName("test13412").exercise(programmingExercise),
+                    new ProgrammingExerciseTestCase().testName("HiddenRandomTest").exercise(programmingExercise));
+            testCaseService.setTestCasesWithTestCaseType(testCases, language);
+            assertThat(testCases).allMatch(testCase -> testCase.getProgrammingExerciseTestCaseType() == ProgrammingExerciseTestCaseType.DEFAULT);
         }
     }
 }
