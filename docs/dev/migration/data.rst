@@ -18,4 +18,4 @@ The changelog can be found in :code:`src/main/java/config/migration/MigrationReg
 - All executed entries are saved in the table :code:`migration_changelog`. If you delete entries, they get executed again.
 - Test your changes locally first, and only commit changes you are confident that work.
 - Before deploying any database changes to a test server, ask for official permission from the project lead. If the changes don’t get approved, manual rollbacks can be necessary, which are avoidable.
-- It is suggested to not use repository methods that execute custom SQL queries as this may lead to problems with the authentication to the database.
+- Do not use repository methods that execute custom SQL/JPQL queries as this leads to problems.
