@@ -101,7 +101,6 @@ public class ProgrammingExerciseTestCaseService {
         }
 
         testCaseRepository.saveAll(updatedTests);
-        // Extract the tasks from the problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
         // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
         programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);

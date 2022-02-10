@@ -176,7 +176,6 @@ public class ProgrammingExerciseService {
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
 
-        // Extract the tasks from the problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
 
         // The creation of the webhooks must occur after the initial push, because the participation is
