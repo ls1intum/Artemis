@@ -107,10 +107,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         private modelingAssessmentService: ModelingAssessmentService,
         private tutorParticipationService: TutorParticipationService,
         private alertService: AlertService,
-        private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,
-        private location: Location,
         private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
