@@ -6,6 +6,5 @@
                 <constraints nullable="false"/>
             </column>
         </addColumn>
-        <sql>UPDATE programming_exercise_test_case SET test_case_type = 'DEFAULT'</sql>
     </changeSet>
 </databaseChangeLog>
