@@ -1,12 +1,14 @@
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { Course } from 'app/entities/course.model';
 import { artemis } from '../../../support/ArtemisTesting';
-import day from 'dayjs';
+import day from 'dayjs/esm';
 
 // pageobjects
-const assessmentEditor = artemis.pageobjects.modelingExercise.assessmentEditor;
+const assessmentEditor = artemis.pageobjects.assessment.modeling;
 const courseAssessmentDashboard = artemis.pageobjects.assessment.course;
 const exerciseAssessmentDashboard = artemis.pageobjects.assessment.exercise;
-const exerciseResult = artemis.pageobjects.exerciseResult;
-const modelingFeedback = artemis.pageobjects.modelingExercise.feedback;
+const exerciseResult = artemis.pageobjects.exercise.result;
+const modelingFeedback = artemis.pageobjects.exercise.modeling.feedback;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 // Users
@@ -17,8 +19,8 @@ const tutor = userManagement.getTutor();
 const instructor = userManagement.getInstructor();
 
 describe('Modeling Exercise Assessment Spec', () => {
-    let course: any;
-    let modelingExercise: any;
+    let course: Course;
+    let modelingExercise: ModelingExercise;
 
     before('Log in as admin and create a course', () => {
         createCourseWithModelingExercise().then(() => {
@@ -29,24 +31,23 @@ describe('Modeling Exercise Assessment Spec', () => {
 
     after('Delete test course', () => {
         cy.login(admin);
-        courseManagementRequests.deleteCourse(course.id);
+        courseManagementRequests.deleteCourse(course.id!);
     });
 
     it('Tutor can assess a submission', () => {
         cy.login(tutor, '/course-management');
         cy.get(`[href="/course-management/${course.id}/assessment-dashboard"]`).click();
         cy.url().should('contain', `/course-management/${course.id}/assessment-dashboard`);
-        courseAssessmentDashboard.checkShowFinishedExercises();
         courseAssessmentDashboard.clickExerciseDashboardButton();
         exerciseAssessmentDashboard.clickHaveReadInstructionsButton();
         exerciseAssessmentDashboard.clickStartNewAssessment();
-        cy.get('#assessmentLockedCurrentUser').should('contain.text', 'You have the lock for this assessment');
+        cy.get('#assessmentLockedCurrentUser').should('be.visible');
         assessmentEditor.addNewFeedback(1, 'Thanks, good job.');
         assessmentEditor.openAssessmentForComponent(1);
         assessmentEditor.assessComponent(-1, 'False');
-        assessmentEditor.openAssessmentForComponent(2);
+        assessmentEditor.clickNextAssessment();
         assessmentEditor.assessComponent(2, 'Good');
-        assessmentEditor.openAssessmentForComponent(3);
+        assessmentEditor.clickNextAssessment();
         assessmentEditor.assessComponent(0, 'Unnecessary');
         assessmentEditor.submit();
     });
@@ -65,7 +66,7 @@ describe('Modeling Exercise Assessment Spec', () => {
 
         it('Student can view the assessment and complain', () => {
             cy.login(student, `/courses/${course.id}/exercises/${modelingExercise.id}`);
-            exerciseResult.shouldShowExerciseTitle(modelingExercise.title);
+            exerciseResult.shouldShowExerciseTitle(modelingExercise.title!);
             exerciseResult.shouldShowScore(20);
             exerciseResult.clickViewSubmission();
             modelingFeedback.shouldShowScore(2, 10, 20);
@@ -76,10 +77,9 @@ describe('Modeling Exercise Assessment Spec', () => {
 
         it('Instructor can see complaint and reject it', () => {
             cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
-            courseAssessmentDashboard.openComplaints(course.id);
+            courseAssessmentDashboard.openComplaints();
             courseAssessmentDashboard.showTheComplaint();
             assessmentEditor.rejectComplaint('You are wrong.');
-            cy.get('.alerts').should('contain.text', 'Response to complaint has been submitted');
         });
     });
 
@@ -87,9 +87,9 @@ describe('Modeling Exercise Assessment Spec', () => {
         cy.login(admin);
         return courseManagementRequests.createCourse(true).then((response) => {
             course = response.body;
-            courseManagementRequests.addStudentToCourse(course.id, student.username);
+            courseManagementRequests.addStudentToCourse(course.id!, student.username);
             courseManagementRequests.addTutorToCourse(course, tutor);
-            courseManagementRequests.addInstructorToCourse(course.id, instructor);
+            courseManagementRequests.addInstructorToCourse(course.id!, instructor);
             courseManagementRequests.createModelingExercise({ course }).then((modelingResponse) => {
                 modelingExercise = modelingResponse.body;
             });
@@ -98,8 +98,8 @@ describe('Modeling Exercise Assessment Spec', () => {
 
     function makeModelingSubmissionAsStudent() {
         cy.login(student);
-        courseManagementRequests.startExerciseParticipation(course.id, modelingExercise.id).then((participation) => {
-            courseManagementRequests.makeModelingExerciseSubmission(modelingExercise.id, participation.body);
+        courseManagementRequests.startExerciseParticipation(modelingExercise.id!).then((participation) => {
+            courseManagementRequests.makeModelingExerciseSubmission(modelingExercise.id!, participation.body);
         });
     }
 

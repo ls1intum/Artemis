@@ -4,10 +4,7 @@ import { By } from '@angular/platform-browser';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement } from '@angular/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import dayjs from 'dayjs';
-import { SinonStub, spy, stub } from 'sinon';
+import dayjs from 'dayjs/esm';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
@@ -31,6 +28,7 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 // eslint-disable-next-line @typescript-eslint/tslint/config
+// tslint:disable-next-line:max-line-length
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -44,9 +42,6 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockComponent } from 'ng-mocks';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('ProgrammingExerciseInstructionComponent', () => {
     let comp: ProgrammingExerciseInstructionComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructionComponent>;
@@ -57,11 +52,11 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let exerciseHintService: IExerciseHintService;
     let modalService: NgbModal;
 
-    let subscribeForLatestResultOfParticipationStub: SinonStub;
-    let getFileStub: SinonStub;
-    let openModalStub: SinonStub;
-    let getLatestResultWithFeedbacks: SinonStub;
-    let getHintsForExerciseStub: SinonStub;
+    let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
+    let getFileStub: jest.SpyInstance;
+    let openModalStub: jest.SpyInstance;
+    let getLatestResultWithFeedbacks: jest.SpyInstance;
+    let getHintsForExerciseStub: jest.SpyInstance;
 
     const exerciseHints = [{ id: 1 }, { id: 2 }];
 
@@ -102,21 +97,20 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 exerciseHintService = debugElement.injector.get(ExerciseHintService);
                 modalService = debugElement.injector.get(NgbModal);
 
-                subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
-                openModalStub = stub(modalService, 'open');
-                getFileStub = stub(repositoryFileService, 'get');
-                getLatestResultWithFeedbacks = stub(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
-                getHintsForExerciseStub = stub(exerciseHintService, 'findByExerciseId').returns(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
+                subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+                openModalStub = jest.spyOn(modalService, 'open');
+                getFileStub = jest.spyOn(repositoryFileService, 'get');
+                getLatestResultWithFeedbacks = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
+                getHintsForExerciseStub = jest
+                    .spyOn(exerciseHintService, 'findByExerciseId')
+                    .mockReturnValue(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
 
                 comp.personalParticipation = true;
             });
     });
 
     afterEach(() => {
-        subscribeForLatestResultOfParticipationStub.restore();
-        openModalStub.restore();
-        getFileStub.restore();
-        getLatestResultWithFeedbacks.restore();
+        jest.restoreAllMocks();
     });
 
     it('should on participation change clear old subscription for participation results set up new one', () => {
@@ -125,7 +119,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const result = { id: 1 };
         const participation = { id: 2, results: [result] } as Participation;
         const oldSubscription = new Subscription();
-        subscribeForLatestResultOfParticipationStub.returns(of());
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
         comp.exercise = exercise as ProgrammingExercise;
         comp.participation = participation;
         comp.participationSubscription = oldSubscription;
@@ -133,11 +127,13 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         triggerChanges(comp, { property: 'participation', currentValue: participation, previousValue: oldParticipation, firstChange: false });
         fixture.detectChanges();
 
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(participation.id, true, exercise.id);
-        expect(comp.participationSubscription).not.to.equal(oldSubscription);
-        expect(comp.isInitial).to.be.true;
-        expect(getHintsForExerciseStub).to.have.been.calledOnceWithExactly(exercise.id);
-        expect(comp.exerciseHints).to.deep.equal(exerciseHints);
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true, exercise.id);
+        expect(comp.participationSubscription).not.toEqual(oldSubscription);
+        expect(comp.isInitial).toBe(true);
+        expect(getHintsForExerciseStub).toHaveBeenCalledOnce();
+        expect(getHintsForExerciseStub).toHaveBeenCalledWith(exercise.id);
+        expect(comp.exerciseHints).toEqual(exerciseHints);
     });
 
     it('should try to fetch README.md from assignment repository if no problemStatement was provided', () => {
@@ -145,9 +141,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const participation = { id: 2 } as Participation;
         const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
         const getFileSubject = new Subject<{ fileContent: string; fileName: string }>();
-        const loadInitialResultStub = stub(comp, 'loadInitialResult').returns(of(result));
-        const updateMarkdownStub = stub(comp, 'updateMarkdown');
-        getFileStub.returns(getFileSubject);
+        const loadInitialResultStub = jest.spyOn(comp, 'loadInitialResult').mockReturnValue(of(result));
+        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
+        getFileStub.mockReturnValue(getFileSubject);
         comp.participation = participation;
         comp.exercise = exercise;
         comp.isInitial = true;
@@ -156,21 +152,22 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
         triggerChanges(comp);
         fixture.detectChanges();
-        expect(comp.isLoading).to.be.true;
-        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).to.exist;
-        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.to.exist;
-        expect(getFileStub).to.have.been.calledOnceWithExactly(participation.id, 'README.md');
+        expect(comp.isLoading).toBe(true);
+        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).not.toBe(null);
+        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).toBe(null);
+        expect(getFileStub).toHaveBeenCalledOnce();
+        expect(getFileStub).toHaveBeenCalledWith(participation.id, 'README.md');
 
         getFileSubject.next({ fileContent: 'lorem ipsum', fileName: 'README.md' });
-        expect(comp.problemStatement).to.equal('lorem ipsum');
-        expect(loadInitialResultStub).to.have.been.calledOnceWithExactly();
-        expect(comp.latestResult).to.deep.equal(result);
-        expect(updateMarkdownStub).to.have.been.calledOnceWithExactly();
-        expect(comp.isInitial).to.be.false;
-        expect(comp.isLoading).to.be.false;
+        expect(comp.problemStatement).toEqual('lorem ipsum');
+        expect(loadInitialResultStub).toHaveBeenCalledOnce();
+        expect(comp.latestResult).toEqual(result);
+        expect(updateMarkdownStub).toHaveBeenCalledOnce();
+        expect(comp.isInitial).toBe(false);
+        expect(comp.isLoading).toBe(false);
         fixture.detectChanges();
-        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).not.to.exist;
-        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).to.exist;
+        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBe(null);
+        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBe(null);
     });
 
     it('should NOT try to fetch README.md from assignment repository if a problemStatement was provided', () => {
@@ -178,8 +175,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const participation = { id: 2 } as Participation;
         const problemstatement = 'lorem ipsum';
         const exercise = { id: 3, course: { id: 4 }, problemStatement: problemstatement } as ProgrammingExercise;
-        const loadInitialResultStub = stub(comp, 'loadInitialResult').returns(of(result));
-        const updateMarkdownStub = stub(comp, 'updateMarkdown');
+        const loadInitialResultStub = jest.spyOn(comp, 'loadInitialResult').mockReturnValue(of(result));
+        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
         comp.participation = participation;
         comp.exercise = exercise;
         comp.isInitial = true;
@@ -188,16 +185,16 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
         triggerChanges(comp);
 
-        expect(getFileStub).to.not.have.been.called;
-        expect(comp.problemStatement).to.equal('lorem ipsum');
-        expect(loadInitialResultStub).to.have.been.calledOnceWithExactly();
-        expect(comp.latestResult).to.deep.equal(result);
-        expect(updateMarkdownStub).to.have.been.calledOnceWithExactly();
-        expect(comp.isInitial).to.be.false;
-        expect(comp.isLoading).to.be.false;
+        expect(getFileStub).not.toHaveBeenCalled();
+        expect(comp.problemStatement).toEqual('lorem ipsum');
+        expect(loadInitialResultStub).toHaveBeenCalledOnce();
+        expect(comp.latestResult).toEqual(result);
+        expect(updateMarkdownStub).toHaveBeenCalledOnce();
+        expect(comp.isInitial).toBe(false);
+        expect(comp.isLoading).toBe(false);
         fixture.detectChanges();
-        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).not.to.exist;
-        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).to.exist;
+        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBe(null);
+        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBe(null);
     });
 
     it('should emit that no instructions are available if there is neither a problemStatement provided nor a README.md can be retrieved', () => {
@@ -205,10 +202,10 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const participation = { id: 2 } as Participation;
         const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
         const getFileSubject = new Subject<{ fileContent: string; fileName: string }>();
-        const loadInitialResultStub = stub(comp, 'loadInitialResult').returns(of(result));
-        const updateMarkdownStub = stub(comp, 'updateMarkdown');
-        const noInstructionsAvailableSpy = spy(comp.onNoInstructionsAvailable, 'emit');
-        getFileStub.returns(getFileSubject);
+        const loadInitialResultStub = jest.spyOn(comp, 'loadInitialResult').mockReturnValue(of(result));
+        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
+        const noInstructionsAvailableSpy = jest.spyOn(comp.onNoInstructionsAvailable, 'emit');
+        getFileStub.mockReturnValue(getFileSubject);
         comp.participation = participation;
         comp.exercise = exercise;
         comp.isInitial = true;
@@ -216,20 +213,21 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         fixture.detectChanges();
         triggerChanges(comp);
-        expect(comp.isLoading).to.be.true;
-        expect(getFileStub).to.have.been.calledOnceWithExactly(participation.id, 'README.md');
+        expect(comp.isLoading).toBe(true);
+        expect(getFileStub).toHaveBeenCalledOnce();
+        expect(getFileStub).toHaveBeenCalledWith(participation.id, 'README.md');
 
         getFileSubject.error('fatal error');
-        expect(comp.problemStatement).to.be.undefined;
-        expect(loadInitialResultStub).to.not.have.been.called;
-        expect(comp.latestResult).to.be.undefined;
-        expect(updateMarkdownStub).to.not.have.been.called;
-        expect(noInstructionsAvailableSpy).to.have.been.calledOnceWithExactly();
-        expect(comp.isInitial).to.be.false;
-        expect(comp.isLoading).to.be.false;
+        expect(comp.problemStatement).toBe(undefined);
+        expect(loadInitialResultStub).not.toHaveBeenCalled();
+        expect(comp.latestResult).toBe(undefined);
+        expect(updateMarkdownStub).not.toHaveBeenCalled();
+        expect(noInstructionsAvailableSpy).toHaveBeenCalledOnce();
+        expect(comp.isInitial).toBe(false);
+        expect(comp.isLoading).toBe(false);
         fixture.detectChanges();
-        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).not.to.exist;
-        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).to.exist;
+        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBe(null);
+        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBe(null);
     });
 
     it('should NOT update markdown if the problemStatement is changed', () => {
@@ -237,8 +235,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
         const oldProblemStatement = 'lorem ipsum';
         const newProblemStatement = 'new lorem ipsum';
-        const updateMarkdownStub = stub(comp, 'updateMarkdown');
-        const loadInitialResult = stub(comp, 'loadInitialResult');
+        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
+        const loadInitialResult = jest.spyOn(comp, 'loadInitialResult');
         fixture.detectChanges();
         comp.exercise = { ...exercise, problemStatement: newProblemStatement };
         comp.participation = participation;
@@ -249,32 +247,32 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             currentValue: { ...comp.exercise, problemStatement: newProblemStatement },
             firstChange: false,
         });
-        expect(updateMarkdownStub).to.have.been.called;
-        expect(loadInitialResult).not.to.have.been.called;
+        expect(updateMarkdownStub).toHaveBeenCalled();
+        expect(loadInitialResult).not.toHaveBeenCalled();
     });
 
     it('should NOT update the markdown if there is no participation and the exercise has changed', () => {
         const participation = { id: 2 } as Participation;
         const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
         const newProblemStatement = 'new lorem ipsum';
-        const updateMarkdownStub = stub(comp, 'updateMarkdown');
-        const loadInitialResult = stub(comp, 'loadInitialResult');
+        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
+        const loadInitialResult = jest.spyOn(comp, 'loadInitialResult');
         fixture.detectChanges();
         comp.exercise = { ...exercise, problemStatement: newProblemStatement };
         comp.participation = participation;
         comp.isInitial = false;
         triggerChanges(comp, { property: 'exercise', currentValue: { ...comp.exercise, problemStatement: newProblemStatement }, firstChange: false });
-        expect(comp.markdownExtensions).to.have.lengthOf(2);
-        expect(updateMarkdownStub).to.have.been.called;
-        expect(loadInitialResult).not.to.have.been.called;
+        expect(comp.markdownExtensions).toHaveLength(2);
+        expect(updateMarkdownStub).toHaveBeenCalled();
+        expect(loadInitialResult).not.toHaveBeenCalled();
     });
 
     it('should still render the instructions if fetching the latest result fails', () => {
         const participation = { id: 2 } as Participation;
         const problemstatement = 'lorem ipsum';
         const exercise = { id: 3, course: { id: 4 }, problemStatement: problemstatement } as ProgrammingExercise;
-        const updateMarkdownStub = stub(comp, 'updateMarkdown');
-        getLatestResultWithFeedbacks.returns(throwError('fatal error'));
+        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
+        getLatestResultWithFeedbacks.mockReturnValue(throwError('fatal error'));
         comp.participation = participation;
         comp.exercise = exercise;
         comp.isInitial = true;
@@ -283,11 +281,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
         triggerChanges(comp);
 
-        expect(comp.markdownExtensions).to.have.lengthOf(2);
-        expect(getLatestResultWithFeedbacks).to.have.been.calledOnceWith(participation.id);
-        expect(updateMarkdownStub).to.have.been.calledOnce;
-        expect(comp.isInitial).to.be.false;
-        expect(comp.isLoading).to.be.false;
+        expect(comp.markdownExtensions).toHaveLength(2);
+        expect(getLatestResultWithFeedbacks).toHaveBeenCalledOnce();
+        expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id);
+        expect(updateMarkdownStub).toHaveBeenCalledOnce();
+        expect(comp.isInitial).toBe(false);
+        expect(comp.isLoading).toBe(false);
     });
 
     it('should create the steps task icons for the tasks in problem statement markdown (non legacy case)', fakeAsync(() => {
@@ -306,15 +305,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.updateMarkdown();
 
-        expect(comp.tasks).to.have.lengthOf(2);
-        expect(comp.tasks[0]).to.deep.equal({
+        expect(comp.tasks).toHaveLength(2);
+        expect(comp.tasks[0]).toEqual({
             id: 0,
             completeString: '[task][Implement Bubble Sort](testBubbleSort)',
             taskName: 'Implement Bubble Sort',
             tests: ['testBubbleSort'],
             hints: [],
         });
-        expect(comp.tasks[1]).to.deep.equal({
+        expect(comp.tasks[1]).toEqual({
             id: 1,
             completeString: '[task][Implement Merge Sort](testMergeSort){33,44}',
             taskName: 'Implement Merge Sort',
@@ -323,25 +322,26 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         });
         fixture.detectChanges();
 
-        expect(debugElement.query(By.css('.stepwizard'))).to.exist;
-        expect(debugElement.queryAll(By.css('.stepwizard-circle'))).to.have.lengthOf(2);
+        expect(debugElement.query(By.css('.stepwizard'))).not.toBe(null);
+        expect(debugElement.queryAll(By.css('.stepwizard-circle'))).toHaveLength(2);
         tick();
         fixture.detectChanges();
-        expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).to.equal(problemStatementBubbleSortNotExecutedHtml);
+        expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(problemStatementBubbleSortNotExecutedHtml);
 
         const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--not-executed'));
         const mergeSortStep = debugElement.query(By.css('.stepwizard-step--success'));
-        expect(bubbleSortStep).to.exist;
-        expect(mergeSortStep).to.exist;
+        expect(bubbleSortStep).not.toBe(null);
+        expect(mergeSortStep).not.toBe(null);
 
         const modalRef = { componentInstance: {} };
-        openModalStub.returns(modalRef);
+        openModalStub.mockReturnValue(modalRef);
 
         bubbleSortStep.nativeElement.click();
         mergeSortStep.nativeElement.click();
 
-        expect(openModalStub).to.have.been.calledOnceWithExactly(ResultDetailComponent, { keyboard: true, size: 'lg' });
-        expect(modalRef).to.deep.equal({
+        expect(openModalStub).toHaveBeenCalledOnce();
+        expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(modalRef).toEqual({
             componentInstance: { exerciseType: ExerciseType.PROGRAMMING, feedbackFilter: ['testBubbleSort'], result, showTestDetails: true },
         });
     }));
@@ -362,15 +362,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.updateMarkdown();
 
-        expect(comp.tasks).to.have.lengthOf(2);
-        expect(comp.tasks[0]).to.deep.equal({
+        expect(comp.tasks).toHaveLength(2);
+        expect(comp.tasks[0]).toEqual({
             id: 0,
             completeString: '[task][Implement Bubble Sort](testBubbleSort)',
             taskName: 'Implement Bubble Sort',
             tests: ['testBubbleSort'],
             hints: [],
         });
-        expect(comp.tasks[1]).to.deep.equal({
+        expect(comp.tasks[1]).toEqual({
             id: 1,
             completeString: '[task][Implement Merge Sort](testMergeSort){33,44}',
             taskName: 'Implement Merge Sort',
@@ -379,25 +379,26 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         });
         fixture.detectChanges();
 
-        expect(debugElement.query(By.css('.stepwizard'))).to.exist;
-        expect(debugElement.queryAll(By.css('.stepwizard-circle'))).to.have.lengthOf(2);
+        expect(debugElement.query(By.css('.stepwizard'))).not.toBe(null);
+        expect(debugElement.queryAll(By.css('.stepwizard-circle'))).toHaveLength(2);
         tick();
         fixture.detectChanges();
-        expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).to.equal(problemStatementBubbleSortFailsHtml);
+        expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(problemStatementBubbleSortFailsHtml);
 
         const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--failed'));
         const mergeSortStep = debugElement.query(By.css('.stepwizard-step--success'));
-        expect(bubbleSortStep).to.exist;
-        expect(mergeSortStep).to.exist;
+        expect(bubbleSortStep).not.toBe(null);
+        expect(mergeSortStep).not.toBe(null);
 
         const modalRef = { componentInstance: {} };
-        openModalStub.returns(modalRef);
+        openModalStub.mockReturnValue(modalRef);
 
         bubbleSortStep.nativeElement.click();
         mergeSortStep.nativeElement.click();
 
-        expect(openModalStub).to.have.been.calledOnceWithExactly(ResultDetailComponent, { keyboard: true, size: 'lg' });
-        expect(modalRef).to.deep.equal({
+        expect(openModalStub).toHaveBeenCalledOnce();
+        expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(modalRef).toEqual({
             componentInstance: { exerciseType: ExerciseType.PROGRAMMING, feedbackFilter: ['testBubbleSort'], result, showTestDetails: false },
         });
     }));

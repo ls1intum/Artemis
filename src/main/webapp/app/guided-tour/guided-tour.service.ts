@@ -790,7 +790,7 @@ export class GuidedTourService {
                     this.restartIsLoading = true;
                     const isProgrammingExercise = this.currentExercise.type === ExerciseType.PROGRAMMING;
                     this.participationService
-                        .findParticipation(this.currentExercise.id!)
+                        .findParticipationForCurrentUser(this.currentExercise.id!)
                         .pipe(
                             map((response: HttpResponse<StudentParticipation>) => response.body!),
                             flatMap((participation) =>

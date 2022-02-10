@@ -51,3 +51,10 @@
         }
     }
 }
+
+.cdk-drag-preview {
+    img {
+        max-height: 158px;
+        max-width: 160px;
+    }
+}

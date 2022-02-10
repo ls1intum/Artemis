@@ -3,32 +3,50 @@
         <h3 *ngIf="quizExercise.title !== question.title">{{ quizExercise.title }}</h3>
         <div class="row">
             <div *ngIf="question" class="col">
-                <h3>{{ question.title }} <span style="color: red" *ngIf="question.invalid" jhiTranslate="showStatistic.invalid"></span></h3>
+                <h3>{{ question.title }} <span class="invalid-question" *ngIf="question.invalid" jhiTranslate="showStatistic.invalid"></span></h3>
                 <h4 [innerHTML]="questionTextRendered"></h4>
-                <div>
+                <div #containerRef>
                     <div class="row">
                         <div class="col-md-7 text-start">
-                            <p id="text" style="font-size: large">
+                            <p id="text" class="chart-title-text">
                                 <span *ngIf="rated" jhiTranslate="showStatistic.questionStatistic.titleRated"></span>
                                 <span *ngIf="!rated" jhiTranslate="showStatistic.questionStatistic.titleUnrated"></span>
                             </p>
                         </div>
                         <div class="col-md-5 text-end">
-                            <p style="font-size: large">
+                            <p class="chart-title-text">
                                 <span>{{ participants }} </span><span jhiTranslate="showStatistic.participants"></span>
                             </p>
                         </div>
                     </div>
-                    <canvas baseChart [datasets]="datasets" [labels]="chartLabels" [options]="options" [chartType]="chartType" [colors]="colors"> </canvas>
+                    <ngx-charts-bar-vertical
+                        [view]="[containerRef.offsetWidth, 525]"
+                        [results]="ngxData"
+                        [scheme]="ngxColor"
+                        [showDataLabel]="true"
+                        [showXAxisLabel]="true"
+                        [showYAxisLabel]="true"
+                        [xAxisLabel]="xAxisLabel"
+                        [yAxisLabel]="yAxisLabel"
+                        [xAxis]="true"
+                        [yAxis]="true"
+                        [yScaleMax]="maxScale"
+                        [tooltipDisabled]="true"
+                        [rotateXAxisTicks]="false"
+                        [maxXAxisTickLength]="17"
+                        [dataLabelFormatting]="bindFormatting"
+                        [roundEdges]="false"
+                    >
+                    </ngx-charts-bar-vertical>
                     <div class="col-md-12 text-center">
                         <button (click)="switchSolution()" type="button" class="btn btn-primary">
-                            <fa-icon *ngIf="showSolution" [icon]="'check-circle'"></fa-icon>&nbsp; <fa-icon *ngIf="!showSolution" [icon]="'times-circle'"></fa-icon>&nbsp;
+                            <fa-icon *ngIf="showSolution" [icon]="faCheckCircle"></fa-icon>&nbsp; <fa-icon *ngIf="!showSolution" [icon]="faTimesCircle"></fa-icon>&nbsp;
                             <span *ngIf="showSolution" jhiTranslate="showStatistic.dragAndDropQuestionStatistic.hideSampleSolution"></span>
                             <span *ngIf="!showSolution" jhiTranslate="showStatistic.dragAndDropQuestionStatistic.showSampleSolution"></span>
                         </button>
 
                         <button (click)="switchRated()" type="button" class="btn btn-primary">
-                            <fa-icon [icon]="'sync'"></fa-icon>&nbsp;
+                            <fa-icon [icon]="faSync"></fa-icon>&nbsp;
                             <span *ngIf="rated" jhiTranslate="showStatistic.switchToUnrated"></span>
                             <span *ngIf="!rated" jhiTranslate="showStatistic.switchToRated"></span>
                         </button>
@@ -39,6 +57,7 @@
                         <div class="click-layer">
                             <div *ngIf="!showSolution">
                                 <div
+                                    id="drop-location"
                                     class="drop-location"
                                     *ngFor="let dropLocation of question.dropLocations; let i = index"
                                     [ngStyle]="{

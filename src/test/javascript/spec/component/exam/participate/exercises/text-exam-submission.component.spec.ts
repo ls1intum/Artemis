@@ -1,7 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -13,14 +11,10 @@ import { TextEditorService } from 'app/exercises/text/participate/text-editor.se
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { ArtemisTestModule } from '../../../../test.module';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('TextExamSubmissionComponent', () => {
     let fixture: ComponentFixture<TextExamSubmissionComponent>;
@@ -54,7 +48,7 @@ describe('TextExamSubmissionComponent', () => {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -66,11 +60,11 @@ describe('TextExamSubmissionComponent', () => {
         fixture.detectChanges();
         component.onDeactivate();
 
-        expect(component.answer).to.equal('Hello World');
-        expect(component.wordCount).to.equal(2);
-        expect(component.characterCount).to.equal(11);
-        expect(component.getExercise()).to.equal(exercise);
-        expect(component.getSubmission()).to.equal(textSubmission);
+        expect(component.answer).toBe('Hello World');
+        expect(component.wordCount).toBe(2);
+        expect(component.characterCount).toBe(11);
+        expect(component.getExercise()).toEqual(exercise);
+        expect(component.getSubmission()).toEqual(textSubmission);
     });
 
     it('should initialize with empty answer', () => {
@@ -79,9 +73,9 @@ describe('TextExamSubmissionComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.answer).to.equal('');
-        expect(component.wordCount).to.equal(0);
-        expect(component.characterCount).to.equal(0);
+        expect(component.answer).toBe('');
+        expect(component.wordCount).toBe(0);
+        expect(component.characterCount).toBe(0);
     });
 
     it('should return the negation of student submission isSynced value', () => {
@@ -91,7 +85,7 @@ describe('TextExamSubmissionComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.hasUnsavedChanges()).to.equal(true);
+        expect(component.hasUnsavedChanges()).toBeTrue();
     });
 
     it('should update text of the submission', () => {
@@ -102,7 +96,7 @@ describe('TextExamSubmissionComponent', () => {
         fixture.detectChanges();
         component.updateSubmissionFromView();
 
-        expect(component.studentSubmission.text).to.equal('Text');
+        expect(component.studentSubmission.text).toBe('Text');
     });
 
     it('should update problem statement of the exercise', () => {
@@ -112,19 +106,19 @@ describe('TextExamSubmissionComponent', () => {
 
         component.updateProblemStatement(newProblemStatement);
 
-        expect(component.exercise.problemStatement).to.equal(newProblemStatement);
+        expect(component.exercise.problemStatement).toBe(newProblemStatement);
     });
 
-    it('should trigger text editor events', () => {
+    it('should trigger text editor events', fakeAsync(() => {
         component.exercise = exercise;
         textSubmission.text = 'Hello World';
         component.studentSubmission = textSubmission;
 
         fixture.detectChanges();
         fixture.whenStable().then(() => {
-            expect(component.answer).to.equal('Hello World');
-            const textareaDebugElement = fixture.debugElement.query(By.css('#text-editor-tab'));
-            expect(textareaDebugElement).to.exist;
+            expect(component.answer).toBe('Hello World');
+            const textareaDebugElement = fixture.debugElement.query(By.css('#text-editor'));
+            expect(textareaDebugElement).not.toBeNull();
             const textarea = textareaDebugElement.nativeElement;
             textarea.value = 'Test';
             textarea.dispatchEvent(new Event('input'));
@@ -132,8 +126,8 @@ describe('TextExamSubmissionComponent', () => {
             textarea.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
             textarea.dispatchEvent(new Event('input'));
             fixture.detectChanges();
-            expect(textarea.value).to.equal('Test\t');
-            expect(component.studentSubmission.isSynced).to.be.false;
+            expect(textarea.value).toBe('Test\t');
+            expect(component.studentSubmission.isSynced).toBeFalse();
         });
-    });
+    }));
 });

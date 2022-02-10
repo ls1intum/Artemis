@@ -2,7 +2,7 @@
     <h2>
         <span id="health-page-heading" jhiTranslate="health.title">Health Checks</span>
 
-        <button class="btn btn-primary float-end" (click)="refresh()"><fa-icon [icon]="'sync'"></fa-icon> <span jhiTranslate="health.refresh.button">Refresh</span></button>
+        <button class="btn btn-primary float-end" (click)="refresh()"><fa-icon [icon]="faSync"></fa-icon> <span jhiTranslate="health.refresh.button">Refresh</span></button>
     </h2>
 
     <div class="table-responsive">
@@ -29,7 +29,7 @@
                     </td>
                     <td class="text-center">
                         <a class="hand" (click)="showHealth({ key: componentHealth.key, value: componentHealth.value! })" *ngIf="componentHealth.value!.details">
-                            <fa-icon [icon]="'eye'"></fa-icon>
+                            <fa-icon [icon]="faEye"></fa-icon>
                         </a>
                     </td>
                 </tr>

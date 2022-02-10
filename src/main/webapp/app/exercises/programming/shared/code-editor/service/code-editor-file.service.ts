@@ -1,6 +1,5 @@
 import { DeleteFileChange, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
-import { isEmpty as _isEmpty } from 'lodash-es';
+import { fromPairs, toPairs, isEmpty as _isEmpty } from 'lodash-es';
 import { Injectable } from '@angular/core';
 
 /**
@@ -22,20 +21,18 @@ export class CodeEditorFileService {
         if (fileChange instanceof RenameFileChange) {
             const testRegex = new RegExp(`^${fileChange.oldFileName}($|/.*)`);
             const replaceRegex = new RegExp(`^${fileChange.oldFileName}`);
-            return compose(
-                fromPairs,
-                map(([fileName, refContent]) => [testRegex.test(fileName) ? fileName.replace(replaceRegex, fileChange.newFileName) : fileName, refContent]),
-                filter((entry) => !_isEmpty(entry)),
-                toPairs,
-            )(refs);
+            return fromPairs(
+                toPairs(refs)
+                    .filter((entry) => !_isEmpty(entry))
+                    .map(([fileName, refContent]) => [testRegex.test(fileName) ? fileName.replace(replaceRegex, fileChange.newFileName) : fileName, refContent]),
+            );
         } else if (fileChange instanceof DeleteFileChange) {
             const testRegex = new RegExp(`^${fileChange.fileName}($|/.*)`);
-            return compose(
-                fromPairs,
-                filter(([fileName]) => !testRegex.test(fileName)),
-                filter((entry) => !_isEmpty(entry)),
-                toPairs,
-            )(refs);
+            return fromPairs(
+                toPairs(refs)
+                    .filter((entry) => !_isEmpty(entry))
+                    .filter(([fileName]) => !testRegex.test(fileName)),
+            );
         } else {
             return refs;
         }

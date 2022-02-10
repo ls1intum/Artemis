@@ -1,36 +1,32 @@
-<tag-input
-    #categoryInput
-    [ngModel]="exerciseCategories"
-    theme="bootstrap"
-    class="form-control tag-input"
-    name="categories"
-    identifyBy="category"
-    displayBy="category"
-    [maxItems]="2"
-    id="field_categories"
-    [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"
-    [secondaryPlaceholder]="'artemisApp.exercise.tagSecondaryPlaceholder' | artemisTranslate"
-    [addOnBlur]="true"
-    (onAdd)="onItemAdded($event)"
-    (onRemove)="onItemRemove($event)"
-    [animationDuration]="{ enter: '0ms', leave: '0ms' }"
->
-    <tag-input-dropdown
-        [focusFirstElement]="true"
-        [showDropdownIfEmpty]="true"
-        [minimumTextLength]="0"
-        identifyBy="category"
-        displayBy="category"
-        [zIndex]="10000"
-        [autocompleteItems]="uniqueCategories"
-    ></tag-input-dropdown>
-    <ng-template let-item="item" let-index="index">
-        <div class="custom-tag" [ngStyle]="{ backgroundColor: item.color }">
-            <span class="category-name" (click)="openColorSelector($event, item)">
-                {{ item.category }}
-            </span>
-            <delete-icon class="delete" (click)="categoryInput.onRemoveRequested(item, index)"></delete-icon>
-        </div>
-    </ng-template>
-</tag-input>
+<mat-form-field class="category-chip-list" appearance="outline">
+    <mat-chip-list #chipList aria-label="Category selection">
+        <mat-chip *ngFor="let category of categories" (removed)="onItemRemove(category)" class="category-chip">
+            <div class="custom-tag" [ngStyle]="{ backgroundColor: category.color }">
+                <span class="category-name" (click)="openColorSelector($event, category)">
+                    {{ category.category }}
+                </span>
+                <button matChipRemove>
+                    <fa-icon [icon]="faTimes" class="category-chip-remove"></fa-icon>
+                </button>
+            </div>
+        </mat-chip>
+        <input
+            id="field_categories"
+            *ngIf="categories && categories.length < 2"
+            class="category-chip-input"
+            #categoryInput
+            [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"
+            [formControl]="categoryCtrl"
+            [matAutocomplete]="auto"
+            [matChipInputFor]="chipList"
+            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+            (matChipInputTokenEnd)="onItemAdd($event)"
+        />
+    </mat-chip-list>
+    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onItemSelect($event)">
+        <mat-option *ngFor="let category of uniqueCategoriesForAutocomplete | async" [value]="category" class="tag-option">
+            {{ category }}
+        </mat-option>
+    </mat-autocomplete>
+</mat-form-field>
 <jhi-color-selector [tagColors]="categoryColors" (selectedColor)="onSelectedColor($event)"></jhi-color-selector>

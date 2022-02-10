@@ -10,10 +10,19 @@
 
     <div class="plagiarism-run-details-item">
         <div class="plagiarism-run-details-label">
-            {{ 'artemisApp.plagiarism.similarity-distribution' | artemisTranslate }}
+            {{ 'artemisApp.plagiarism.similarityDistribution' | artemisTranslate }}
         </div>
-        <div class="plagiarism-run-details-info">
-            <canvas baseChart [datasets]="chartDataSets" [labels]="chartLabels" [chartType]="chartType" [options]="chartOptions" [legend]="false"></canvas>
+        <div #containerRef class="plagiarism-run-details-info">
+            <ngx-charts-bar-vertical
+                [view]="[containerRef.offsetWidth, 400]"
+                [scheme]="ngxColor"
+                [results]="ngxData"
+                [xAxis]="true"
+                [yAxis]="true"
+                [yAxisTickFormatting]="yAxisTickFormatting"
+                [yAxisTicks]="yAxisTicks"
+            >
+            </ngx-charts-bar-vertical>
         </div>
     </div>
 </div>

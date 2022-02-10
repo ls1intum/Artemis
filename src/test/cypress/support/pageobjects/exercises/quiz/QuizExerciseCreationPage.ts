@@ -18,33 +18,33 @@ export class QuizExerciseCreationPage {
         cy.get('#short-answer-question-title').type(title);
         cy.fixture('quiz_exercise_fixtures/ShortAnswerQuiz.txt').then((fileContent) => {
             cy.get('.ace_text-input').focus().clear().type(fileContent);
-            cy.get('[jhitranslate="artemisApp.shortAnswerQuestion.editor.visual"]').click();
+            cy.get('#short-answer-show-visual').click();
         });
     }
 
     addDragAndDropQuestion(title: string) {
         cy.get('#quiz-add-dnd-question').click();
-        cy.get('.question-title > .form-control').type(title);
+        cy.get('#drag-and-drop-question-title').type(title);
         this.uploadDragAndDropBackground().then(() => {
             cy.wait(2000);
             cy.get('.click-layer').trigger('mousedown', { x: 50, y: 50 }).trigger('mousemove', { x: 500, y: 300 }).trigger('mouseup');
         });
         this.createDragAndDropItem('Rick Astley');
-        cy.get('.drag-item').drag('.drop-location');
+        cy.get('#drag-item-0').drag('#drop-location');
         cy.fixture('quiz_exercise_fixtures/dragAndDropQuiz.txt').then((fileContent) => {
             cy.get('.ace_text-input').focus().clear().type(fileContent);
         });
     }
 
     createDragAndDropItem(text: string) {
-        cy.get('[jhitranslate="artemisApp.dragAndDropQuestion.addDragItemText"]').click();
-        cy.get('.drag-item').find('textarea').clear().type(text);
+        cy.get('#add-text-drag-item').click();
+        cy.get('#drag-item-0-text').clear().type(text);
     }
 
     uploadDragAndDropBackground() {
-        cy.get('input[type="file"]').eq(1).attachFile('quiz_exercise_fixtures/dragAndDrop_background.jpg');
+        cy.get('#background-image-input-form').children().eq(0).attachFile('quiz_exercise_fixtures/dragAndDrop_background.jpg');
         cy.intercept(POST, BASE_API + 'fileUpload*').as('uploadBackground');
-        cy.get('[jhitranslate="artemisApp.dragAndDropQuestion.upload"]').click();
+        cy.get('#background-image-input-form').children().eq(1).click();
         return cy.wait('@uploadBackground');
     }
 
@@ -53,7 +53,7 @@ export class QuizExerciseCreationPage {
      */
     saveQuiz() {
         cy.intercept(POST, BASE_API + 'quiz-exercises').as('createQuizExercise');
-        cy.contains('Save').click();
+        cy.get('#quiz-save').click();
         return cy.wait('@createQuizExercise');
     }
 }

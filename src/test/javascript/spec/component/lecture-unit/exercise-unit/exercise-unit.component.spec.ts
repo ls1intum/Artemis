@@ -1,7 +1,3 @@
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-import * as chai from 'chai';
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
@@ -11,9 +7,6 @@ import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { By } from '@angular/platform-browser';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 @Component({ selector: 'jhi-course-exercise-row', template: '' })
 class CourseExerciseRowStubComponent {
     @Input()
@@ -21,15 +14,12 @@ class CourseExerciseRowStubComponent {
     @Input()
     course: Course;
     @Input()
-    extendedLink: boolean;
-    @Input()
     hasGuidedTour: boolean;
     @Input()
     isPresentationMode: boolean;
 }
 
 describe('ExerciseUnitComponent', () => {
-    const sandbox = sinon.createSandbox();
     let exerciseUnit: ExerciseUnit;
     let course: Course;
 
@@ -57,8 +47,9 @@ describe('ExerciseUnitComponent', () => {
             });
     });
 
-    afterEach(function () {
-        sandbox.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
+        jest.resetModules();
     });
 
     it('should initialize and set input of course exercise row correctly', () => {
@@ -67,7 +58,7 @@ describe('ExerciseUnitComponent', () => {
             By.directive(CourseExerciseRowStubComponent),
         ).componentInstance;
 
-        expect(courseExerciseRowStubComponent.course).to.equal(exerciseUnitComponent.course);
-        expect(courseExerciseRowStubComponent.exercise).to.equal(exerciseUnitComponent.exerciseUnit.exercise);
+        expect(courseExerciseRowStubComponent.course).toEqual(exerciseUnitComponent.course);
+        expect(courseExerciseRowStubComponent.exercise).toEqual(exerciseUnitComponent.exerciseUnit.exercise);
     });
 });

@@ -29,6 +29,28 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { LANGUAGES } from 'app/core/language/language.constants';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import {
+    faBars,
+    faBell,
+    faBook,
+    faBookOpen,
+    faCog,
+    faEye,
+    faFlag,
+    faHeart,
+    faList,
+    faLock,
+    faSignOutAlt,
+    faTachometerAlt,
+    faTasks,
+    faThLarge,
+    faThList,
+    faToggleOn,
+    faUniversity,
+    faUser,
+    faUserPlus,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-navbar',
@@ -49,6 +71,27 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isRegistrationEnabled = false;
     passwordResetEnabled = false;
     breadcrumbs: Breadcrumb[];
+    // Icons
+    faBars = faBars;
+    faThLarge = faThLarge;
+    faThList = faThList;
+    faUser = faUser;
+    faBell = faBell;
+    faUniversity = faUniversity;
+    faEye = faEye;
+    faCog = faCog;
+    faWrench = faWrench;
+    faLock = faLock;
+    faFlag = faFlag;
+    faBook = faBook;
+    faTasks = faTasks;
+    faList = faList;
+    faHeart = faHeart;
+    faTachometerAlt = faTachometerAlt;
+    faToggleOn = faToggleOn;
+    faBookOpen = faBookOpen;
+    faUserPlus = faUserPlus;
+    faSignOutAlt = faSignOutAlt;
 
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
@@ -172,7 +215,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         quiz_statistic: 'artemisApp.quizExercise.statistics',
         quiz_point_statistic: 'artemisApp.quizExercise.statistics',
         import: 'artemisApp.exercise.import.table.doImport',
-        plagiarism: 'artemisApp.plagiarism.plagiarism-detection',
+        plagiarism: 'artemisApp.plagiarism.plagiarismDetection',
         example_solution: 'artemisApp.modelingExercise.exampleSolution',
         example_submissions: 'artemisApp.exampleSubmission.home.title',
         example_submission_editor: 'artemisApp.exampleSubmission.home.editor',

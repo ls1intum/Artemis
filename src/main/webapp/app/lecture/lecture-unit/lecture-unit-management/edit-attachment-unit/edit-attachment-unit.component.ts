@@ -11,7 +11,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { forkJoin, combineLatest } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-edit-attachment-unit',

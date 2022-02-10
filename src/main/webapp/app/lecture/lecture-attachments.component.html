@@ -62,7 +62,7 @@
                                             {{ attachment.name }}
                                         </a>
                                         <a class="text-primary" *ngIf="isDownloadingAttachmentLink === attachment.link">
-                                            <fa-icon [icon]="'spinner'" [spin]="true"></fa-icon> {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}
+                                            <fa-icon [icon]="faSpinner" [spin]="true"></fa-icon> {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}
                                         </a>
                                     </td>
                                     <td>{{ attachment.releaseDate | artemisDate }}</td>
@@ -73,7 +73,7 @@
                                     <td class="text-end">
                                         <div class="flex-btn-group-container">
                                             <button type="submit" (click)="editAttachment(attachment)" class="btn btn-primary btn-sm me-1">
-                                                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                                <fa-icon [icon]="faPencilAlt"></fa-icon>
                                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                             </button>
                                             <button
@@ -149,12 +149,12 @@
                 <div class="row">
                     <div class="col-12">
                         <button id="upload-attachment" type="submit" [disabled]="isUploadingAttachment" (click)="uploadLectureAttachmentAndSave()" class="btn btn-primary me-2">
-                            <fa-icon [icon]="'paperclip'"></fa-icon>&nbsp;
+                            <fa-icon [icon]="faPaperclip"></fa-icon>&nbsp;
                             <span *ngIf="isUploadingAttachment" jhiTranslate="artemisApp.lecture.attachments.uploading"></span>
                             <span *ngIf="!isUploadingAttachment" jhiTranslate="entity.action.saveAttachment"></span>
                         </button>
                         <button type="submit" (click)="cancel()" class="btn btn-default">
-                            <fa-icon [icon]="'times'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"> Cancel</span>
+                            <fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"> Cancel</span>
                         </button>
                     </div>
                 </div>
@@ -163,7 +163,7 @@
             <div class="row" *ngIf="!attachmentToBeCreated">
                 <div class="col-12">
                     <button type="submit" (click)="addAttachment()" class="btn btn-primary" id="add-attachment">
-                        <fa-icon [icon]="'paperclip'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.addAttachment"> Add attachment</span>
+                        <fa-icon [icon]="faPaperclip"></fa-icon>&nbsp;<span jhiTranslate="entity.action.addAttachment"> Add attachment</span>
                     </button>
                 </div>
             </div>

@@ -117,18 +117,25 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    public void mockCreateBuildPlan(String projectKey, String planKey) throws IOException {
+    public void mockCreateBuildPlan(String projectKey, String planKey, boolean jobAlreadyExists) throws IOException {
         var jobFolder = projectKey;
         var job = jobFolder + "-" + planKey;
-        mockCreateJobInFolder(jobFolder, job);
+        mockCreateJobInFolder(jobFolder, job, jobAlreadyExists);
         mockGivePlanPermissions(jobFolder, job);
         mockTriggerBuild(jobFolder, job, false);
     }
 
-    public void mockCreateJobInFolder(String jobFolder, String job) throws IOException {
+    public void mockCreateJobInFolder(String jobFolder, String job, boolean jobAlreadyExists) throws IOException {
         var folderJob = new FolderJob();
         mockGetFolderJob(jobFolder, folderJob);
-        doNothing().when(jenkinsServer).createJob(any(FolderJob.class), eq(job), anyString(), eq(useCrumb));
+        if (jobAlreadyExists) {
+            var jobWithDetails = new JobWithDetails();
+            doReturn(jobWithDetails).when(jenkinsServer).getJob(any(FolderJob.class), eq(job));
+        }
+        else {
+            doReturn(null).when(jenkinsServer).getJob(any(FolderJob.class), eq(job));
+            doNothing().when(jenkinsServer).createJob(any(FolderJob.class), eq(job), anyString(), eq(useCrumb));
+        }
     }
 
     public void mockGivePlanPermissions(String jobFolder, String job) throws IOException {
@@ -194,6 +201,8 @@ public class JenkinsRequestMockProvider {
 
     private void mockSaveJobXml(String targetProjectKey) throws IOException {
         mockGetFolderJob(targetProjectKey, new FolderJob());
+        // copyBuildPlan uses #createJobInFolder()
+        doReturn(null).when(jenkinsServer).getJob(any(), anyString());
         doNothing().when(jenkinsServer).createJob(any(), anyString(), anyString(), eq(useCrumb));
     }
 

@@ -8,25 +8,23 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { TextEditorComponent } from 'app/exercises/text/participate/text-editor.component';
 import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-
-const ENTITY_STATES = [...textEditorRoute];
+import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
+        RouterModule.forChild(textEditorRoute),
         ArtemisResultModule,
         ArtemisComplaintsModule,
         ArtemisSharedComponentModule,
         ArtemisHeaderExercisePageWithDetailsModule,
-        ArtemisTeamModule,
         ArtemisTeamSubmissionSyncModule,
         RatingModule,
         ArtemisMarkdownModule,
+        ArtemisTeamParticipeModule,
     ],
     declarations: [TextEditorComponent, TextResultComponent],
 })

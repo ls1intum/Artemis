@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.gateway.security.jwt;
 
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;

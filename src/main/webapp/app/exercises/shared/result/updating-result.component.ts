@@ -4,16 +4,17 @@ import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { RepositoryService } from 'app/exercises/shared/result/repository.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { hasParticipationChanged } from 'app/overview/participation-utils';
 import { Result } from 'app/entities/result.model';
 import { MissingResultInfo } from 'app/exercises/shared/result/result.component';
+import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged in user.
@@ -26,15 +27,15 @@ import { MissingResultInfo } from 'app/exercises/shared/result/result.component'
     providers: [ResultService, RepositoryService],
 })
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
-    /**
-     * @property personal Whether the participation belongs to the user (by being a student) or not (by being an instructor)
-     */
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
     @Input() short = false;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge: boolean;
     @Input() showTestNames = false;
+    /**
+     * @property personalParticipation Whether the participation belongs to the user (by being a student) or not (by being an instructor)
+     */
     @Input() personalParticipation = true;
 
     result?: Result;
@@ -125,7 +126,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                         !this.exercise.dueDate ||
                         submission.type === SubmissionType.INSTRUCTOR ||
                         submission.type === SubmissionType.TEST ||
-                        this.exercise.dueDate.isAfter(dayjs(submission.submissionDate!)),
+                        hasExerciseDueDatePassed(this.exercise, this.participation),
                 ),
                 tap(({ submissionState }) => {
                     this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;

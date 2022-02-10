@@ -15,7 +15,7 @@
                 [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                 [routerLink]="['/course-management', courseId, 'programming-exercises', 'new']"
             >
-                <fa-icon [icon]="'plus'"></fa-icon>
+                <fa-icon [icon]="faPlus"></fa-icon>
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">Generate new Programming Exercise</span>
             </a>
             <button
@@ -25,7 +25,7 @@
                 [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                 (click)="openImportModal()"
             >
-                <fa-icon [icon]="'plus'"></fa-icon>
+                <fa-icon [icon]="faPlus"></fa-icon>
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.importLabel"> Import new programming exercise </span>
             </button>
         </ng-container>
@@ -38,35 +38,35 @@
                     <th *ngIf="course.isAtLeastEditor" class="d-md-table-cell">
                         <input type="checkbox" (change)="toggleAllProgrammingExercises()" />
                     </th>
-                    <th class="d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th class="d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th class="d-md-table-cell" jhiSortBy="shortName">
-                        <span jhiTranslate="artemisApp.exercise.shortName">Short Name</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="artemisApp.exercise.shortName">Short Name</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th class="d-md-table-cell" jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th class="d-md-table-cell" jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="includedInOverallScore">
-                        <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.repositories">Repositories</span></th>
                     <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.buildplans">Build Plans</span>&nbsp;</th>
                     <th class="d-md-table-cell" jhiSortBy="publishBuildPlanUrl">
-                        <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="d-md-table-cell">
-                        <span jhiTranslate="artemisApp.programmingExercise.participationMode">Participation Mode</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="artemisApp.programmingExercise.participationMode">Participation Mode</span>
                     </th>
                     <th class="d-md-table-cell" jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
-                        <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th></th>
                 </tr>
             </thead>
 
             <tbody>
-                <tr *ngFor="let programmingExercise of filteredProgrammingExercises; trackBy: trackId">
+                <tr *ngFor="let programmingExercise of filteredProgrammingExercises; trackBy: trackId" id="exercise-card-{{ programmingExercise.id }}">
                     <td *ngIf="programmingExercise.isAtLeastEditor" class="d-md-table-cell">
                         <input type="checkbox" (change)="toggleProgrammingExercise(programmingExercise)" [ngModel]="isExerciseSelected(programmingExercise)" />
                     </td>
@@ -191,11 +191,11 @@
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a
-                                    *ngIf="programmingExercise.isAtLeastInstructor"
+                                    *ngIf="programmingExercise.isAtLeastEditor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'submissions']"
                                     class="btn btn-success btn-sm me-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'book'"></fa-icon>
+                                    <fa-icon [icon]="faBook"></fa-icon>
                                     <span class="d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
                                 </a>
                                 <a
@@ -205,16 +205,16 @@
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
-                                        <fa-icon [icon]="'table'"></fa-icon>
+                                        <fa-icon [icon]="faTable"></fa-icon>
                                         <span class="d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                                     </div>
                                 </a>
                                 <a
                                     *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
-                                    [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'teams']"
+                                    [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'teams']"
                                     class="btn btn-primary btn-sm me-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'users'"></fa-icon>
+                                    <fa-icon [icon]="faUsers"></fa-icon>
                                     <span class="d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
                                 </a>
                             </div>
@@ -226,7 +226,7 @@
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
-                                        <fa-icon [icon]="'list-alt'"></fa-icon>
+                                        <fa-icon [icon]="faListAlt"></fa-icon>
                                         <span class="d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                                     </div>
                                 </a>
@@ -238,7 +238,7 @@
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
-                                        <fa-icon [icon]="'file-signature'"></fa-icon>
+                                        <fa-icon [icon]="faFileSignature"></fa-icon>
                                         <span class="d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
                                     </div>
                                 </a>
@@ -260,7 +260,7 @@
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
-                                        <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                        <fa-icon [icon]="faPencilAlt"></fa-icon>
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
                                     </div>
                                 </a>
@@ -271,7 +271,7 @@
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
-                                        <fa-icon [icon]="'wrench'"></fa-icon>
+                                        <fa-icon [icon]="faWrench"></fa-icon>
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                     </div>
                                 </a>
@@ -289,7 +289,7 @@
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     class="mb-1"
                                 >
-                                    <fa-icon [icon]="'times'"></fa-icon>
+                                    <fa-icon [icon]="faTimes"></fa-icon>
                                 </button>
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
@@ -305,8 +305,9 @@
                                         deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
                                     }"
                                     class="mb-1"
+                                    id="delete-exercise"
                                 >
-                                    <fa-icon [icon]="'times'"></fa-icon>
+                                    <fa-icon [icon]="faTimes"></fa-icon>
                                 </button>
                             </div>
                         </div>
@@ -316,16 +317,16 @@
         </table>
         <div *ngIf="selectedProgrammingExercises.length > 0">
             <button type="submit" (click)="openEditSelectedModal()" class="btn btn-warning btn-sm me-1">
-                <fa-icon [icon]="'wrench'"></fa-icon>
+                <fa-icon [icon]="faWrench"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.editSelected">Edit selected</span>
             </button>
             <button type="submit" *ngIf="course.isAtLeastInstructor" (click)="openRepoExportModal()" class="btn btn-info btn-sm me-1">
-                <fa-icon [icon]="'download'"></fa-icon>
+                <fa-icon [icon]="faDownload"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="instructorDashboard.exportSubmissions.title">Download Repos</span>
             </button>
             <jhi-exercise-scores-export-button *ngIf="course.isAtLeastInstructor" [exercises]="selectedProgrammingExercises"></jhi-exercise-scores-export-button>
             <button *ngIf="course.isAtLeastInstructor" (click)="checkConsistencies()" class="btn btn-outline-primary btn-sm me-1">
-                <fa-icon [icon]="'check-double'"></fa-icon>
+                <fa-icon [icon]="faCheckDouble"></fa-icon>
                 <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
             </button>
         </div>

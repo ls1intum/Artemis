@@ -5,10 +5,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
-import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { metisAnswerPostToCreateUser1, metisResolvingAnswerPostUser1, metisAnswerPostUser2 } from '../../../../../helpers/sample/metis-sample-data';
 
@@ -22,14 +22,14 @@ describe('AnswerPostCreateEditModalComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 AnswerPostCreateEditModalComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(PostingsMarkdownEditorComponent),
-                MockComponent(PostingsButtonComponent),
+                MockComponent(PostingMarkdownEditorComponent),
+                MockComponent(PostingButtonComponent),
                 MockComponent(HelpIconComponent),
             ],
+            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
         })
             .compileComponents()
             .then(() => {
@@ -72,14 +72,14 @@ describe('AnswerPostCreateEditModalComponent', () => {
 
     it('should invoke updatePosting when confirming', () => {
         component.posting = metisResolvingAnswerPostUser1;
-        component.ngOnInit();
+        component.ngOnChanges();
         component.confirm();
         expect(updatePostingMock).toHaveBeenCalled;
     });
 
     it('should invoke createPosting when confirming without posting id', () => {
         component.posting = metisResolvingAnswerPostUser1;
-        component.ngOnInit();
+        component.ngOnChanges();
         component.confirm();
         expect(updatePostingMock).toHaveBeenCalled;
     });
@@ -88,7 +88,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
         const metisServiceCreateSpy = jest.spyOn(metisService, 'createAnswerPost');
         const onCreateSpy = jest.spyOn(component.onCreate, 'emit');
         component.posting = metisAnswerPostToCreateUser1;
-        component.ngOnInit();
+        component.ngOnChanges();
         const newContent = 'New Content';
         component.formGroup.setValue({
             content: newContent,
@@ -103,7 +103,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
     it('should invoke metis service with updated answer post', fakeAsync(() => {
         const metisServiceCreateSpy = jest.spyOn(metisService, 'updateAnswerPost');
         component.posting = metisAnswerPostUser2;
-        component.ngOnInit();
+        component.ngOnChanges();
         const updatedContent = 'Updated Content';
         component.formGroup.setValue({
             content: updatedContent,

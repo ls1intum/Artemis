@@ -2,11 +2,11 @@ import { Component, ContentChild, EventEmitter, Input, OnChanges, OnInit, Output
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
-import { compose, filter, flatten } from 'lodash/fp';
-import { get, isNumber } from 'lodash-es';
+import { get, isNumber, flatten } from 'lodash-es';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SortService } from 'app/shared/service/sort.service';
+import { faSort, faSortUp, faSortDown, faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Enum for ascending and descending order.
@@ -23,11 +23,11 @@ enum SortOrder {
  * @readonly
  * @enum {string}
  */
-enum SortIcon {
-    NONE = 'sort',
-    ASC = 'sort-up',
-    DESC = 'sort-down',
-}
+const SortIcon = {
+    NONE: faSort,
+    ASC: faSortUp,
+    DESC: faSortDown,
+};
 
 const SortOrderIcon = {
     [SortOrder.ASC]: SortIcon.ASC,
@@ -133,6 +133,9 @@ export class DataTableComponent implements OnInit, OnChanges {
      */
     searchQueryTooShort: boolean;
     readonly minSearchQueryLength = 3;
+
+    // Icons
+    faCircleNotch = faCircleNotch;
 
     constructor(private sortService: SortService, private localStorage: LocalStorageService) {
         this.entities = [];
@@ -257,7 +260,7 @@ export class DataTableComponent implements OnInit, OnChanges {
         const searchPredicate = (entity: BaseEntity) => {
             return !this.searchEntityFilterEnabled || this.filterEntityByTextSearch(this.entityCriteria.textSearch, entity, this.searchFields);
         };
-        const filteredEntities = compose(filter(searchPredicate), filter(this.customFilter))(this.allEntities);
+        const filteredEntities = this.allEntities.filter((entity) => this.customFilter(entity) && searchPredicate(entity));
         this.entities = this.sortService.sortByProperty(filteredEntities, this.entityCriteria.sortProp.field, this.entityCriteria.sortProp.order === SortOrder.ASC);
         // defer execution of change emit to prevent ExpressionChangedAfterItHasBeenCheckedError, see explanation at https://blog.angular-university.io/angular-debugging/
         setTimeout(() => this.entitiesSizeChange.emit(this.entities.length));

@@ -1,17 +1,17 @@
-import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
-import duration from 'dayjs/plugin/duration';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import isoWeek from 'dayjs/plugin/isoWeek';
-import utc from 'dayjs/plugin/utc';
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
-import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
-import isBetween from 'dayjs/plugin/isBetween';
-import minMax from 'dayjs/plugin/minMax';
-import localizedFormat from 'dayjs/plugin/localizedFormat';
+import dayjs from 'dayjs/esm';
+import customParseFormat from 'dayjs/esm/plugin/customParseFormat';
+import duration from 'dayjs/esm/plugin/duration';
+import relativeTime from 'dayjs/esm/plugin/relativeTime';
+import isoWeek from 'dayjs/esm/plugin/isoWeek';
+import utc from 'dayjs/esm/plugin/utc';
+import isSameOrBefore from 'dayjs/esm/plugin/isSameOrBefore';
+import isSameOrAfter from 'dayjs/esm/plugin/isSameOrAfter';
+import isBetween from 'dayjs/esm/plugin/isBetween';
+import minMax from 'dayjs/esm/plugin/minMax';
+import localizedFormat from 'dayjs/esm/plugin/localizedFormat';
 
-import 'dayjs/locale/en';
-import 'dayjs/locale/de';
+import 'dayjs/esm/locale/en';
+import 'dayjs/esm/locale/de';
 
 dayjs.extend(customParseFormat);
 dayjs.extend(duration);

@@ -79,8 +79,14 @@ public interface InstanceMessageSendService {
     void sendCancelRemoveNonActivatedUserSchedule(Long userId);
 
     /**
-     * Send a message to the main server that schedules a notification for an exercise
-     * @param exerciseId of the exercise a notification should be created
+     * Send a message to the main server that schedules a notification for a released exercise
+     * @param exerciseId of the exercise a notification should be created for
      */
     void sendExerciseReleaseNotificationSchedule(Long exerciseId);
+
+    /**
+     * Send a message to the main server that schedules a notification for an assessed exercise submission
+     * @param exerciseId of the exercise a notification should be created for
+     */
+    void sendAssessedExerciseSubmissionNotificationSchedule(Long exerciseId);
 }

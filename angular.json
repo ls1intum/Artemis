@@ -24,18 +24,17 @@
               "path": "./webpack/webpack.custom.js"
             },
             "allowedCommonJsDependencies": [
-              "lodash/fp",
               "sockjs-client",
-              "chart.js",
+              "hoist-non-react-statics",
               "showdown-highlight",
               "brace/mode/markdown",
               "export-to-csv",
-              "@ls1intum/apollon",
               "prop-types",
               "dayjs/locale/de",
               "brace/mode/java",
               "crypto",
-              "crypto-js"
+              "crypto-js",
+              "clone-deep"
             ],
             "outputPath": "build/resources/main/static/",
             "index": "src/main/webapp/index.html",
@@ -45,22 +44,22 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/main/webapp/content",
-              "src/main/webapp/favicon.svg",
+              "src/main/webapp/logo/favicon.svg",
               "src/main/webapp/manifest.webapp",
               "src/main/webapp/robots.txt",
-              "src/main/webapp/android-chrome-192x192.png",
-              "src/main/webapp/android-chrome-512x512.png",
-              "src/main/webapp/apple-touch-icon.png",
+              "src/main/webapp/logo/android-chrome-192x192.png",
+              "src/main/webapp/logo/android-chrome-512x512.png",
+              "src/main/webapp/logo/apple-touch-icon.png",
               "src/main/webapp/browserconfig.xml",
-              "src/main/webapp/favicon.ico",
-              "src/main/webapp/favicon-16x16.png",
-              "src/main/webapp/favicon-32x32.png",
-              "src/main/webapp/mstile-70x70.png",
-              "src/main/webapp/mstile-144x144.png",
-              "src/main/webapp/mstile-150x150.png",
-              "src/main/webapp/mstile-310x150.png",
-              "src/main/webapp/mstile-310x310.png",
-              "src/main/webapp/safari-pinned-tab.svg",
+              "src/main/webapp/logo/favicon.ico",
+              "src/main/webapp/logo/favicon-16x16.png",
+              "src/main/webapp/logo/favicon-32x32.png",
+              "src/main/webapp/logo/mstile-70x70.png",
+              "src/main/webapp/logo/mstile-144x144.png",
+              "src/main/webapp/logo/mstile-150x150.png",
+              "src/main/webapp/logo/mstile-310x150.png",
+              "src/main/webapp/logo/mstile-310x310.png",
+              "src/main/webapp/logo/safari-pinned-tab.svg",
               {
                 "glob": "*.{js,css,html,png}",
                 "input": "./node_modules/swagger-ui-dist",
@@ -88,13 +87,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "5mb",
-                  "maximumError": "9mb"
+                  "maximumWarning": "2mb",
+                  "maximumError": "2.2mb"
                 },
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "1mb",
-                  "maximumError": "2mb"
+                  "maximumError": "1.6mb"
                 }
               ]
             },
@@ -137,6 +136,11 @@
   "defaultProject": "artemis",
   "cli": {
     "analytics": false,
-    "packageManager": "npm"
+    "packageManager": "npm",
+    "cache": {
+      "enabled": true,
+      "path": ".cache",
+      "environment": "all"
+    }
   }
 }

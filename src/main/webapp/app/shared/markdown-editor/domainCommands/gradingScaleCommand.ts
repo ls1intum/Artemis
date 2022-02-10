@@ -1,5 +1,5 @@
 import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
-import { addTextAtCursor } from 'app/shared/util/markdown-util';
+import { addTextAtCursor } from 'app/shared/util/markdown.util';
 
 export class GradingScaleCommand extends DomainTagCommand {
     public static readonly identifier = '[gradingScale]';

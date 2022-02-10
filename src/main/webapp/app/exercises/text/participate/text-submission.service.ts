@@ -3,33 +3,34 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 export type EntityResponseType = HttpResponse<TextSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class TextSubmissionService {
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
 
     create(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
-        const copy = TextSubmissionService.convert(textSubmission);
+        const copy = this.submissionService.convert(textSubmission);
         return this.http
             .post<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
                 observe: 'response',
             })
-            .pipe(map((res: EntityResponseType) => TextSubmissionService.convertResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.submissionService.convertResponse(res)));
     }
 
     update(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
-        const copy = TextSubmissionService.convert(textSubmission);
+        const copy = this.submissionService.convert(textSubmission);
         return this.http
             .put<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, stringifyCircular(copy), {
                 headers: { 'Content-Type': 'application/json' },
                 observe: 'response',
             })
-            .pipe(map((res: EntityResponseType) => TextSubmissionService.convertResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.submissionService.convertResponse(res)));
     }
 
     getTextSubmission(submissionId: number): Observable<TextSubmission> {
@@ -53,7 +54,7 @@ export class TextSubmissionService {
 
         return this.http
             .get<TextSubmission[]>(url, { observe: 'response', params })
-            .pipe(map((res: HttpResponse<TextSubmission[]>) => TextSubmissionService.convertArrayResponse(res)));
+            .pipe(map((res: HttpResponse<TextSubmission[]>) => this.submissionService.convertArrayResponse(res)));
     }
 
     /**
@@ -82,35 +83,5 @@ export class TextSubmissionService {
                 return submission;
             }),
         );
-    }
-
-    private static convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: TextSubmission = TextSubmissionService.convertItemFromServer(res.body!);
-        return res.clone({ body });
-    }
-
-    private static convertArrayResponse(res: HttpResponse<TextSubmission[]>): HttpResponse<TextSubmission[]> {
-        const jsonResponse: TextSubmission[] = res.body!;
-        const body: TextSubmission[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(TextSubmissionService.convertItemFromServer(jsonResponse[i]));
-        }
-        return res.clone({ body });
-    }
-
-    /**
-     * Convert a returned JSON object to TextSubmission.
-     */
-    private static convertItemFromServer(textSubmission: TextSubmission): TextSubmission {
-        const convertedTextSubmission = Object.assign({}, textSubmission);
-        setLatestSubmissionResult(convertedTextSubmission, getLatestSubmissionResult(convertedTextSubmission));
-        return convertedTextSubmission;
-    }
-
-    /**
-     * Convert a TextSubmission to a JSON which can be sent to the server.
-     */
-    private static convert(textSubmission: TextSubmission): TextSubmission {
-        return Object.assign({}, textSubmission);
     }
 }

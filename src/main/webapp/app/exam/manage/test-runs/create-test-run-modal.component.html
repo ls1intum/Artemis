@@ -7,7 +7,7 @@
     <div class="modal-body">
         <div class="mb-3">
             <h5><span jhiTranslate="artemisApp.studentExams.workingTime">Working time</span></h5>
-            <p>Set the working time:</p>
+            <p jhiTranslate="artemisApp.examManagement.testRun.setWorkingTime">Set the working time:</p>
             <form class="d-flex" [formGroup]="workingTimeForm">
                 <div class="me-2">
                     <input formControlName="minutes" type="number" style="width: 60px; height: 35px" class="text-center" min="0" step="1" required />
@@ -18,13 +18,13 @@
         </div>
 
         <div class="mb-3">
-            <h5>Exercises</h5>
+            <h5 jhiTranslate="artemisApp.exam.exercises">Exercises</h5>
             <p jhiTranslate="artemisApp.examManagement.testRun.setupHint">Select an exercise for every exercise group by clicking on it.</p>
             <table class="table table-striped">
                 <thead class="thead-dark">
                     <tr>
-                        <th>Exercise Group</th>
-                        <th>Exercise</th>
+                        <th jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn">Exercise Group</th>
+                        <th jhiTranslate="artemisApp.examScores.titleExerciseColumn">Exercise</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -37,9 +37,9 @@
                                 <thead>
                                     <tr>
                                         <th>#</th>
-                                        <th>Title</th>
-                                        <th>Difficulty Level</th>
-                                        <th>Type</th>
+                                        <th jhiTranslate="artemisApp.exercise.title">Title</th>
+                                        <th jhiTranslate="artemisApp.exercise.difficulty">Difficulty Level</th>
+                                        <th jhiTranslate="artemisApp.exercise.type">Type</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -63,8 +63,16 @@
         </div>
 
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
-            <button id="createTestRunButton" type="button" class="btn btn-primary" data-dismiss="modal" [disabled]="!testRunConfigured" (click)="createTestRun()">
+            <button type="button" class="btn btn-secondary" (click)="cancel()" jhiTranslate="global.form.cancel">Cancel</button>
+            <button
+                id="createTestRunButton"
+                type="button"
+                class="btn btn-primary"
+                data-dismiss="modal"
+                [disabled]="!testRunConfigured"
+                (click)="createTestRun()"
+                jhiTranslate="artemisApp.examManagement.testRun.setup"
+            >
                 Create Test Run
             </button>
         </div>

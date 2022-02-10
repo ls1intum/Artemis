@@ -1,17 +1,14 @@
 package de.tum.in.www1.artemis.web.rest.errors;
 
-import java.io.Serial;
+import java.net.URI;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+public class ConflictException extends HttpStatusException {
 
-@ResponseStatus(HttpStatus.CONFLICT)
-public class ConflictException extends RuntimeException {
+    public ConflictException(String defaultMessage, String entityName, String errorKey) {
+        this(ErrorConstants.DEFAULT_TYPE, defaultMessage, entityName, errorKey, false);
+    }
 
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    public ConflictException() {
-        super();
+    public ConflictException(URI type, String defaultMessage, String entityName, String errorKey, boolean skipAlert) {
+        super(type, defaultMessage, entityName, errorKey, getAlertParameters(entityName, errorKey, skipAlert));
     }
 }

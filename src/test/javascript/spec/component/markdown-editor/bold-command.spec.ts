@@ -1,16 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 
-import { AceEditorModule } from 'ng2-ace-editor';
+import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisTestModule } from '../../test.module';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('BoldCommand', () => {
     let comp: MarkdownEditorComponent;
@@ -33,6 +28,6 @@ describe('BoldCommand', () => {
         comp.ngAfterViewInit();
 
         boldCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).to.equal('****');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('****');
     });
 });

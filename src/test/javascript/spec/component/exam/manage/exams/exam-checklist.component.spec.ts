@@ -22,15 +22,8 @@ import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import * as sinon from 'sinon';
-import { stub } from 'sinon';
-import sinonChai from 'sinon-chai';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 @Component({
     template: '',
@@ -116,8 +109,8 @@ describe('ExamChecklistComponent', () => {
                 examChecklistComponentFixture = TestBed.createComponent(ExamChecklistComponent);
                 examDetailComponent = examChecklistComponentFixture.componentInstance;
                 exerciseGroupService = TestBed.inject(ExerciseGroupService);
-                findAllForExamStub = stub(exerciseGroupService, 'findAllForExam');
-                findAllForExamStub.returns(of(responseExerciseGroup));
+                findAllForExamStub = jest.spyOn(exerciseGroupService, 'findAllForExam');
+                findAllForExamStub.mockReturnValue(of(responseExerciseGroup));
             });
     });
 
@@ -135,7 +128,7 @@ describe('ExamChecklistComponent', () => {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     describe('test checkTotalPointsMandatory', () => {
@@ -145,24 +138,24 @@ describe('ExamChecklistComponent', () => {
 
         it('should set totalPointsMandatory to false', () => {
             examDetailComponent.checkTotalPointsMandatory();
-            expect(examDetailComponent.totalPointsMandatory).to.be.equal(false);
+            expect(examDetailComponent.totalPointsMandatory).toBeFalse();
         });
 
         it('should set checkTotalPointsMandatory to true', () => {
             examDetailComponent.pointsExercisesEqual = true;
             examDetailComponent.checkTotalPointsMandatory();
-            expect(examDetailComponent.totalPointsMandatory).to.be.equal(true);
+            expect(examDetailComponent.totalPointsMandatory).toBeTrue();
         });
 
         it('should set totalPointsMandatoryOptional to false', () => {
             examDetailComponent.checkTotalPointsMandatory();
-            expect(examDetailComponent.totalPointsMandatoryOptional).to.be.equal(false);
+            expect(examDetailComponent.totalPointsMandatoryOptional).toBeFalse();
         });
 
         it('should set checkTotalPointsMandatoryOptional to true', () => {
             examDetailComponent.pointsExercisesEqual = true;
             examDetailComponent.checkTotalPointsMandatory();
-            expect(examDetailComponent.totalPointsMandatoryOptional).to.be.equal(true);
+            expect(examDetailComponent.totalPointsMandatoryOptional).toBeTrue();
         });
     });
 
@@ -175,12 +168,12 @@ describe('ExamChecklistComponent', () => {
         it('should set allExamsGenerated to true', () => {
             examChecklist.numberOfGeneratedStudentExams = 3;
             examDetailComponent.checkAllExamsGenerated();
-            expect(examDetailComponent.allExamsGenerated).to.be.equal(true);
+            expect(examDetailComponent.allExamsGenerated).toBeTrue();
         });
 
         it('should set allExamsGenerated to false', () => {
             examDetailComponent.checkAllExamsGenerated();
-            expect(examDetailComponent.allExamsGenerated).to.be.equal(false);
+            expect(examDetailComponent.allExamsGenerated).toBeFalse();
         });
     });
 
@@ -188,13 +181,13 @@ describe('ExamChecklistComponent', () => {
         it('should set allGroupsContainExercise to true', () => {
             examDetailComponent.exam.exerciseGroups = getExerciseGroups(false);
             examDetailComponent.checkAllGroupContainsExercise();
-            expect(examDetailComponent.allGroupsContainExercise).to.be.equal(true);
+            expect(examDetailComponent.allGroupsContainExercise).toBeTrue();
         });
 
         it('should set allGroupsContainExercise to false', () => {
             examDetailComponent.exam.exerciseGroups = [{ id: 1, exercises: [] }];
             examDetailComponent.checkAllGroupContainsExercise();
-            expect(examDetailComponent.allGroupsContainExercise).to.be.equal(false);
+            expect(examDetailComponent.allGroupsContainExercise).toBeFalse();
         });
     });
 
@@ -202,12 +195,12 @@ describe('ExamChecklistComponent', () => {
         it('should return checkPointsExercisesEqual as true ', () => {
             examDetailComponent.exam.exerciseGroups = getExerciseGroups(true);
             examDetailComponent.checkPointsExercisesEqual();
-            expect(examDetailComponent.pointsExercisesEqual).to.be.equal(true);
+            expect(examDetailComponent.pointsExercisesEqual).toBeTrue();
         });
         it('should return checkPointsExercisesEqual as false', () => {
             examDetailComponent.exam.exerciseGroups = getExerciseGroups(false);
             examDetailComponent.checkPointsExercisesEqual();
-            expect(examDetailComponent.pointsExercisesEqual).to.be.equal(false);
+            expect(examDetailComponent.pointsExercisesEqual).toBeFalse();
         });
     });
 });

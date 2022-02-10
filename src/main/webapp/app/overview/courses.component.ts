@@ -12,11 +12,12 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Router } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-overview',
@@ -34,6 +35,9 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     quizExercisesChannels: string[] = [];
 
     nextRelevantExercise?: Exercise;
+
+    // Icons
+    faPenAlt = faPenAlt;
 
     constructor(
         private courseService: CourseManagementService,

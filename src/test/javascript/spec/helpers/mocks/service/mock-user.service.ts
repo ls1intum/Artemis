@@ -38,4 +38,10 @@ export class MockUserService {
             headers: new HttpHeaders(),
         } as HttpResponse<User>);
     }
+
+    updateNotificationVisibility(showAllNotifications: boolean): Observable<HttpResponse<void>> {
+        return of({
+            headers: new HttpHeaders(),
+        } as HttpResponse<void>);
+    }
 }

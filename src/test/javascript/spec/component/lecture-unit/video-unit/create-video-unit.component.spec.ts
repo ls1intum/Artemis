@@ -1,8 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
-import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CreateVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-video-unit/create-video-unit.component';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
@@ -12,12 +9,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 @Component({ selector: 'jhi-video-unit-form', template: '' })
 class VideoUnitFormStubComponent {
@@ -34,7 +28,6 @@ class LectureUnitLayoutStubComponent {
 describe('CreateVideoUnitComponent', () => {
     let createVideoUnitComponentFixture: ComponentFixture<CreateVideoUnitComponent>;
     let createVideoUnitComponent: CreateVideoUnitComponent;
-    const sandbox = sinon.createSandbox();
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -81,13 +74,13 @@ describe('CreateVideoUnitComponent', () => {
             });
     });
 
-    afterEach(function () {
-        sandbox.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         createVideoUnitComponentFixture.detectChanges();
-        expect(createVideoUnitComponent).to.be.ok;
+        expect(createVideoUnitComponent).not.toBeNull();
     });
 
     it('should send POST request upon form submission and navigate', fakeAsync(() => {
@@ -106,8 +99,8 @@ describe('CreateVideoUnitComponent', () => {
             status: 201,
         });
 
-        const createStub = sandbox.stub(videoUnitService, 'create').returns(of(response));
-        const navigateSpy = sinon.spy(router, 'navigate');
+        const createStub = jest.spyOn(videoUnitService, 'create').mockReturnValue(of(response));
+        const navigateSpy = jest.spyOn(router, 'navigate');
 
         createVideoUnitComponentFixture.detectChanges();
         tick();
@@ -115,19 +108,19 @@ describe('CreateVideoUnitComponent', () => {
         videoUnitForm.formSubmitted.emit(formDate);
 
         createVideoUnitComponentFixture.whenStable().then(() => {
-            const videoUnitCallArgument: VideoUnit = createStub.getCall(0).args[0];
-            const lectureIdCallArgument: number = createStub.getCall(0).args[1];
+            const videoUnitCallArgument: VideoUnit = createStub.mock.calls[0][0];
+            const lectureIdCallArgument: number = createStub.mock.calls[0][1];
 
-            expect(videoUnitCallArgument.name).to.equal(formDate.name);
-            expect(videoUnitCallArgument.description).to.equal(formDate.description);
-            expect(videoUnitCallArgument.releaseDate).to.equal(formDate.releaseDate);
-            expect(videoUnitCallArgument.source).to.equal(formDate.source);
-            expect(lectureIdCallArgument).to.equal(1);
+            expect(videoUnitCallArgument.name).toEqual(formDate.name);
+            expect(videoUnitCallArgument.description).toEqual(formDate.description);
+            expect(videoUnitCallArgument.releaseDate).toEqual(formDate.releaseDate);
+            expect(videoUnitCallArgument.source).toEqual(formDate.source);
+            expect(lectureIdCallArgument).toEqual(1);
 
-            expect(createStub).to.have.been.calledOnce;
-            expect(navigateSpy).to.have.been.calledOnce;
+            expect(createStub).toHaveBeenCalledTimes(1);
+            expect(navigateSpy).toHaveBeenCalledTimes(1);
 
-            navigateSpy.restore();
+            navigateSpy.mockRestore();
         });
     }));
 });

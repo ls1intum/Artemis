@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.jplag.exceptions.ExitException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -37,7 +38,6 @@ import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
-import jplag.ExitException;
 
 /**
  * REST controller for managing TextExercise.
@@ -61,6 +61,8 @@ public class TextExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final ExerciseDeletionService exerciseDeletionService;
+
     private final PlagiarismResultRepository plagiarismResultRepository;
 
     private final TextExerciseRepository textExerciseRepository;
@@ -76,6 +78,8 @@ public class TextExerciseResource {
     private final AuthorizationCheckService authCheckService;
 
     private final StudentParticipationRepository studentParticipationRepository;
+
+    private final ParticipationRepository participationRepository;
 
     private final ResultRepository resultRepository;
 
@@ -96,13 +100,15 @@ public class TextExerciseResource {
     private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
-            PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
-            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, GroupNotificationService groupNotificationService,
+            ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
+            AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
+            ParticipationRepository participationRepository, ResultRepository resultRepository, GroupNotificationService groupNotificationService,
             TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository,
             ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository,
             ExerciseGroupRepository exerciseGroupRepository, InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService,
             CourseRepository courseRepository, TextAssessmentKnowledgeService textAssessmentKnowledgeService) {
         this.feedbackRepository = feedbackRepository;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -111,6 +117,7 @@ public class TextExerciseResource {
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
         this.textExerciseImportService = textExerciseImportService;
         this.textSubmissionExportService = textSubmissionExportService;
@@ -145,7 +152,7 @@ public class TextExerciseResource {
             throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
         }
         // validates general settings: points, dates
-        exerciseService.validateGeneralSettings(textExercise);
+        textExercise.validateGeneralSettings();
 
         if (textExercise.getDueDate() == null && textExercise.getAssessmentDueDate() != null) {
             throw new BadRequestAlertException("If you set an assessmentDueDate, then you need to add also a dueDate", ENTITY_NAME, "dueDate");
@@ -169,7 +176,7 @@ public class TextExerciseResource {
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
 
-        groupNotificationService.checkNotificationForExerciseRelease(textExercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(textExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -196,7 +203,7 @@ public class TextExerciseResource {
         }
 
         // validates general settings: points, dates
-        exerciseService.validateGeneralSettings(textExercise);
+        textExercise.validateGeneralSettings();
 
         // Valid exercises have set either a course or an exerciseGroup
         textExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
@@ -222,6 +229,8 @@ public class TextExerciseResource {
         TextExercise updatedTextExercise = textExerciseRepository.save(textExercise);
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(textExerciseBeforeUpdate, updatedTextExercise);
+
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedTextExercise, textExerciseBeforeUpdate.getDueDate());
 
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
 
@@ -253,7 +262,7 @@ public class TextExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return forbidden();
         }
-        List<TextExercise> exercises = textExerciseRepository.findByCourseId(courseId);
+        List<TextExercise> exercises = textExerciseRepository.findByCourseIdWithCategories(courseId);
         for (Exercise exercise : exercises) {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
@@ -344,7 +353,7 @@ public class TextExerciseResource {
         instanceMessageSendService.sendTextExerciseScheduleCancel(textExercise.getId());
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(textExercise, course, user);
-        exerciseService.delete(exerciseId, false, false);
+        exerciseDeletionService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.getTitle())).build();
     }
 
@@ -402,7 +411,7 @@ public class TextExerciseResource {
                     result.setFeedbacks(assessments);
                 }
 
-                if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
+                if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
                     result.setAssessor(null);
                 }
             }

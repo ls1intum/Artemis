@@ -2,7 +2,6 @@ import { OnDestroy, OnInit, Component, ViewChild } from '@angular/core';
 import { Observable, Subscription, throwError, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { catchError, filter, map, tap, switchMap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -21,6 +20,7 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/e
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
 import { Course } from 'app/entities/course.model';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 /**
  * Enumeration specifying the repository type
@@ -319,7 +319,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     createAssignmentParticipation() {
         this.loadingState = LOADING_STATE.CREATING_ASSIGNMENT_REPO;
         return this.courseExerciseService
-            .startExercise(this.course.id!, this.exercise.id!)
+            .startExercise(this.exercise.id!)
             .pipe(
                 catchError(() => throwError('participationCouldNotBeCreated')),
                 tap((participation) => {

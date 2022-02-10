@@ -62,44 +62,19 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
     }
 
     /**
-     * increase participants, all selected AnswerCounter and if the question is correct, than increase the correctCounter
-     *
-     * @param submittedAnswer the submittedAnswer object which contains all selected answers
-     * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
-     *                        of the quizExercise)
-     */
-    @Override
-    public void addResult(SubmittedAnswer submittedAnswer, boolean rated) {
-        changeStatisticBasedOnResult(submittedAnswer, rated, 1);
-    }
-
-    /**
-     * decrease participants, all selected AnswerCounter and if the question is correct, than decrease the correctCounter
-     *
-     * @param submittedAnswer the submittedAnswer object which contains all selected answers
-     * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
-     *                        of the quizExercise)
-     */
-    @Override
-    public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated) {
-        changeStatisticBasedOnResult(submittedAnswer, rated, -1);
-    }
-
-    /**
-     * 1. check if the Result is rated or unrated 2. chnage participants, all selected AnswerCounter and if the question is correct, than change the correctCounter
+     * 1. check if the Result is rated or unrated 2. change participants, all selected AnswerCounter and if the question is correct, than change the correctCounter
      *
      * @param submittedAnswer the submittedAnswer object which contains all selected answers
      * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
      *                        of the quizExercise)
      * @param change          the int-value, which will be added to the Counter and participants
      */
-    private void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change) {
-
-        if (submittedAnswer == null) {
+    @Override
+    protected void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change) {
+        if (!(submittedAnswer instanceof MultipleChoiceSubmittedAnswer mcSubmittedAnswer)) {
             return;
         }
 
-        MultipleChoiceSubmittedAnswer mcSubmittedAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
         if (rated) {
             // change the rated participants
             setParticipantsRated(getParticipantsRated() + change);
@@ -143,14 +118,10 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
      */
     @Override
     public void resetStatistic() {
-        setParticipantsRated(0);
-        setParticipantsUnrated(0);
-        setRatedCorrectCounter(0);
-        setUnRatedCorrectCounter(0);
+        super.resetStatistic();
         for (AnswerCounter answerCounter : answerCounters) {
             answerCounter.setRatedCounter(0);
             answerCounter.setUnRatedCounter(0);
         }
     }
-
 }

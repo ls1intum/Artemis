@@ -82,6 +82,12 @@ sourceSets {
             include 'de/tum/in/www1/artemis/security/SecurityUtils.*'
             include 'de/tum/in/www1/artemis/security/UserNotActivatedException.*'
             include 'de/tum/in/www1/artemis/security/SpringSecurityAuditorAware.*'
+            include 'de/tum/in/www1/artemis/security/jwt/TokenProvider.*'
+            include 'de/tum/in/www1/artemis/security/jwt/JWTFilter.*'
+            include 'de/tum/in/www1/artemis/security/jwt/JWTConfigurer.*'
+
+            // de.tum.in.www1.artemis.management
+            include 'de/tum/in/www1/artemis/management/SecurityMetersService.*'
 
             // de.tum.in.www1.artemis.config
             include 'de/tum/in/www1/artemis/config/audit/AuditEventConverter.*'
@@ -103,6 +109,7 @@ sourceSets {
             include 'de/tum/in/www1/artemis/service/FileService.*'
             include 'de/tum/in/www1/artemis/service/ScoreService.*'
             include 'de/tum/in/www1/artemis/service/notifications/NotificationTargetService.*'
+            include 'de/tum/in/www1/artemis/service/notifications/NotificationTargetProvider.*'
             include 'de/tum/in/www1/artemis/service/compass/umlmodel/UMLElement.*'
             include 'de/tum/in/www1/artemis/service/compass/umlmodel/Similarity.*'
             include 'de/tum/in/www1/artemis/service/compass/assessment/Context.*'
@@ -111,6 +118,7 @@ sourceSets {
             include 'de/tum/in/www1/artemis/service/listeners/**'
             include 'de/tum/in/www1/artemis/service/ldap/**'
             include 'de/tum/in/www1/artemis/service/user/PasswordService.*'
+            include 'de/tum/in/www1/artemis/service/programming/ProgrammingLanguageFeature.*'
 
             include 'de/tum/in/www1/artemis/service/connectors/bamboo/BambooAuthorizationInterceptor.*' // needed from RestTemplateConfiguration
             include 'de/tum/in/www1/artemis/service/connectors/bitbucket/BitbucketAuthorizationInterceptor.*' // needed from RestTemplateConfiguration
@@ -149,6 +157,7 @@ sourceSets {
             include 'de/tum/in/www1/artemis/web/rest/dto/**'
             include 'de/tum/in/www1/artemis/web/rest/errors/EntityNotFoundException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/BadRequestAlertException.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/HttpStatusException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/FieldErrorVM.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/StudentsAlreadyAssignedException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/InternalServerErrorException.*'
@@ -170,6 +179,20 @@ sourceSets {
         java {
             srcDir file("../src/test")
             include "java/de/tum/in/www1/artemis/util/RequestUtilService.*"
+            include "java/de/tum/in/www1/artemis/util/DatabaseCleanupService.*"
+            include "java/de/tum/in/www1/artemis/util/ConfigUtil.*"
+            include "java/de/tum/in/www1/artemis/util/ModelFactory.*"
+            include "java/de/tum/in/www1/artemis/util/TestConstants.*"
+            include "java/de/tum/in/www1/artemis/connector/GitlabRequestMockProvider.*"
+            include "java/de/tum/in/www1/artemis/connector/JenkinsRequestMockProvider.*"
+            include "java/de/tum/in/www1/artemis/connector/JiraRequestMockProvider.*"
+
+
+            srcDir file("../src/main")
+            include "java/de/tum/in/www1/artemis/util/FileUtils.*"
+            include "java/de/tum/in/www1/artemis/service/UrlService.*"
+            include "java/de/tum/in/www1/artemis/service/connectors/bamboo/dto/**"
+            include "java/de/tum/in/www1/artemis/service/connectors/jenkins/dto/**"
         }
     }
     main {
@@ -238,7 +261,7 @@ apply from: "../gradle/dependencies.gradle"
 dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:${offbytwo_jenkins_client_version}"
     implementation "org.gitlab4j:gitlab4j-api:${gitlab4j_api_version}"
-    implementation files("../libs/jplag-${jplag_version}.jar")
+    implementation "de.jplag:jplag:${jplag_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:${sourceforge_plantuml_version}"
@@ -279,7 +302,7 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-hystrix"
     implementation "org.springframework.retry:spring-retry"
     implementation "org.springframework.cloud:spring-cloud-starter-bootstrap"
-    implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
+    implementation "org.springframework.cloud:spring-cloud-starter-openfeign:3.1.0"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
     implementation "org.xmlbeam:xmlprojector:${xmlbeam_xmlprojector_version}"
     implementation "mysql:mysql-connector-java:${mysql_connector_java_version}"

@@ -36,33 +36,13 @@
             [disabled]="isLoading"
         >
             <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <fa-icon [icon]="'exclamation-triangle'" class="text-warning"></fa-icon>
+            <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
             <span jhiTranslate="artemisApp.studentExams.unlockAllRepositories">Unlock all repositories</span>
         </button>
         <button id="lockAllRepositoriesButton" class="btn btn-danger mt-1" (click)="handleLockAllRepositories()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
             <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <fa-icon [icon]="'exclamation-triangle'" class="text-warning"></fa-icon>
+            <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
             <span jhiTranslate="artemisApp.studentExams.lockAllRepositories">Lock all repositories</span>
-        </button>
-        <button
-            id="evaluateQuizExercisesButton"
-            class="btn btn-primary mt-1"
-            (click)="evaluateQuizExercises()"
-            *ngIf="course?.isAtLeastInstructor"
-            [disabled]="isLoading || !isExamOver"
-        >
-            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises">Evaluate Quizzes</span>
-        </button>
-        <button
-            class="btn btn-primary mt-1"
-            id="assessUnsubmittedExamModelingAndTextParticipationsButton"
-            (click)="assessUnsubmittedExamModelingAndTextParticipations()"
-            *ngIf="course?.isAtLeastInstructor"
-            [disabled]="isLoading || !isExamOver"
-        >
-            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams">Assess unsubmitted student exams</span>
         </button>
     </div>
     <jhi-student-exam-status *ngIf="!isLoading" [hasStudentsWithoutExam]="hasStudentsWithoutExam"> </jhi-student-exam-status>

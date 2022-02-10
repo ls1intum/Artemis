@@ -25,15 +25,15 @@
         &nbsp;
         <div class="form-group">
             <button type="button" class="btn btn-secondary" id="cancel-button" data-dismiss="modal" (click)="clear()">
-                <fa-icon [icon]="'ban'"></fa-icon>
+                <fa-icon [icon]="faBan"></fa-icon>
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
             <button type="submit" id="save-button" (click)="saveExerciseWithoutReevaluation()" [disabled]="instructionDeleted && deleteFeedback" class="btn btn-warning">
-                <fa-icon [icon]="'exclamation-triangle'"></fa-icon>
+                <fa-icon [icon]="faExclamationTriangle"></fa-icon>
                 &nbsp;<span jhiTranslate="artemisApp.exercise.update.warning.saveExerciseWithoutReevaluation">Do not re-evaluate</span>
             </button>
             <button type="submit" id="reevaluate-button" (click)="reEvaluateExercise()" class="btn btn-success">
-                <fa-icon [icon]="'check'"></fa-icon>
+                <fa-icon [icon]="faCheck"></fa-icon>
                 &nbsp;<span jhiTranslate="artemisApp.exercise.update.warning.reevaluateExercise">Re-evaluate</span>
             </button>
         </div>

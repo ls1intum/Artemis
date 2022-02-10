@@ -1,9 +1,10 @@
-import $ from 'jquery';
-import { AfterViewInit, Component, ContentChild, ElementRef, ViewEncapsulation, EventEmitter, Output, Input } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, ViewEncapsulation, EventEmitter, Output, Input, ViewChild, Renderer2 } from '@angular/core';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ResizeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
+import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
+import { CollapsableCodeEditorElement } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 
 @Component({
     selector: 'jhi-code-editor-grid',
@@ -15,10 +16,13 @@ export class CodeEditorGridComponent implements AfterViewInit {
     @ContentChild('editorSidebarRight', { static: false }) editorSidebarRight: ElementRef;
     @ContentChild('editorSidebarLeft', { static: false }) editorSidebarLeft: ElementRef;
     @ContentChild('editorBottomArea', { static: false }) editorBottomArea: ElementRef;
-    @Input()
-    isTutorAssessment = false;
-    @Output()
-    onResize = new EventEmitter<ResizeType>();
+
+    @ViewChild('buildOutput') buildOutputElement: ElementRef;
+    @ViewChild('fileBrowser') fileBrowserElement: ElementRef;
+    @ViewChild('instructions') instructionsElement: ElementRef;
+
+    @Input() isTutorAssessment = false;
+    @Output() onResize = new EventEmitter<ResizeType>();
 
     fileBrowserIsCollapsed = false;
     rightPanelIsCollapsed = false;
@@ -40,7 +44,11 @@ export class CodeEditorGridComponent implements AfterViewInit {
     resizableMinHeightBottom = 300;
     resizableMaxHeightBottom = 600;
 
-    constructor() {}
+    // Icons
+    faGripLines = faGripLines;
+    faGripLinesVertical = faGripLinesVertical;
+
+    constructor(private renderer: Renderer2) {}
 
     /**
      * After the view was initialized, we create an interact.js resizable object,
@@ -159,24 +167,37 @@ export class CodeEditorGridComponent implements AfterViewInit {
             });
     }
 
+    private elementRefForCollapsableElement(collapsableElement: CollapsableCodeEditorElement): ElementRef {
+        switch (collapsableElement) {
+            case CollapsableCodeEditorElement.BuildOutput:
+                return this.buildOutputElement;
+            case CollapsableCodeEditorElement.FileBrowser:
+                return this.fileBrowserElement;
+            case CollapsableCodeEditorElement.Instructions:
+                return this.instructionsElement;
+        }
+    }
+
     /**
-     * Collapse parts of the editor (file browser, build output...)
+     * Collapse parts of the editor (file browser, build output, or instructions)
      * @param interactableEvent {object} The custom event object with additional information
+     * @param collapsableElement an enum to decide which card is collapsed
      */
-    toggleCollapse(interactableEvent: InteractableEvent) {
+    toggleCollapse(interactableEvent: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
         const event = interactableEvent.event;
         const horizontal = interactableEvent.horizontal;
         const interactResizable = interactableEvent.interactable;
         const target = event.event?.toElement || event.relatedTarget || event.target;
         target.blur();
-        const card = $(target).closest('.collapsable');
+        const cardElement = this.elementRefForCollapsableElement(collapsableElement);
+
         const collapsed = `collapsed--${horizontal ? 'horizontal' : 'vertical'}`;
 
-        if (card.hasClass(collapsed)) {
-            card.removeClass(collapsed);
+        if (cardElement.nativeElement.classList.contains(collapsed)) {
+            this.renderer.removeClass(cardElement.nativeElement, collapsed);
             interactResizable.resizable({ enabled: true });
         } else {
-            card.addClass(collapsed);
+            this.renderer.addClass(cardElement.nativeElement, collapsed);
             interactResizable.resizable({ enabled: false });
         }
 

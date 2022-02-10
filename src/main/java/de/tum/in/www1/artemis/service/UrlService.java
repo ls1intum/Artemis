@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.slf4j.Logger;
@@ -23,6 +24,22 @@ public class UrlService {
      */
     public String getRepositorySlugFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
         return getRepositorySlugFromUrl(repositoryUrl.getURL());
+    }
+
+    /**
+     * Gets the repository slug from the given repository URL string, see {@link #getRepositorySlugFromUrl}
+     * @param repositoryUrl The repository url as string
+     * @return The repository slug
+     * @throws VersionControlException if the URL is invalid and no repository slug could be extracted
+     */
+    public String getRepositorySlugFromRepositoryUrlString(String repositoryUrl) throws VersionControlException {
+        try {
+            return getRepositorySlugFromUrl(new URL(repositoryUrl));
+        }
+        catch (MalformedURLException e) {
+            log.error("Cannot get repository slug from repository url string {}", repositoryUrl, e);
+            throw new VersionControlException("Repository URL is not a git URL! Can't get repository slug for " + repositoryUrl);
+        }
     }
 
     /**
@@ -51,7 +68,6 @@ public class UrlService {
             // ... cut out the ending ".git", i.e. the last 4 characters
             repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
         }
-        log.debug("getRepositorySlugFromUrl {} --> {}", url, repositorySlug);
         return repositorySlug;
     }
 
@@ -118,7 +134,6 @@ public class UrlService {
             // special case for Bitbucket
             projectKey = pathComponents[2];
         }
-        log.debug("getProjectKeyFromUrl {} --> {}", url, projectKey);
         return projectKey;
     }
 }

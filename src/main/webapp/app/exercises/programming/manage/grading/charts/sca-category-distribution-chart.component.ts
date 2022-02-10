@@ -1,20 +1,82 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
-import { HorizontalStackedBarChartPreset } from 'app/shared/chart/presets/horizontalStackedBarChartPreset';
-import { ChartDataSets } from 'chart.js';
 import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { TranslateService } from '@ngx-translate/core';
+import { getColor, xAxisFormatting } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.utils';
+
+enum ScaChartBarTitle {
+    PENALTY = 'Penalty',
+    ISSUES = 'Issues',
+    DEDUCTIONS_EN = 'Deductions',
+    DEDUCTIONS_DE = 'Punkte',
+}
 
 @Component({
     selector: 'jhi-sca-category-distribution-chart',
+    styleUrls: ['./sca-category-distribution-chart.scss'],
     template: `
         <div>
             <div>
                 <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.title' | artemisTranslate }}</h4>
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.description' | artemisTranslate"></p>
             </div>
-            <div class="bg-light">
-                <jhi-chart [preset]="chartPreset" [datasets]="chartDatasets"></jhi-chart>
+            <div #containerRef class="chart bg-light">
+                <ngx-charts-bar-horizontal-normalized
+                    [view]="[containerRef.offsetWidth, containerRef.offsetHeight]"
+                    [scheme]="ngxColors"
+                    [results]="ngxData"
+                    [xAxis]="true"
+                    [yAxis]="true"
+                    [xAxisTickFormatting]="xAxisFormatting"
+                >
+                    <ng-template #tooltipTemplate let-model="model">
+                        <b>{{ model.name }}</b>
+                        <br />
+                        <div [ngSwitch]="model.series">
+                            <div *ngSwitchCase="scaChartBarTitle.PENALTY">
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
+                                </span>
+                                <br />
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.issues.toFixed(2) } }}
+                                </span>
+                                <br />
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
+                                </span>
+                            </div>
+                            <div *ngSwitchCase="scaChartBarTitle.ISSUES">
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.penalty.toFixed(2) } }}
+                                </span>
+                                <br />
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
+                                </span>
+                                <br />
+                                <span>
+                                    {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
+                                </span>
+                            </div>
+                        </div>
+                        <div *ngIf="[scaChartBarTitle.DEDUCTIONS_EN, scaChartBarTitle.DEDUCTIONS_DE].includes(model.series)">
+                            <span>
+                                {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.penalty.toFixed(2) } }}
+                            </span>
+                            <br />
+                            <span>
+                                {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.issues.toFixed(2) } }}
+                            </span>
+                            <br />
+                            <span>
+                                {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
+                            </span>
+                        </div>
+                    </ng-template>
+                </ngx-charts-bar-horizontal-normalized>
             </div>
         </div>
     `,
@@ -26,10 +88,26 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
 
     @Output() categoryColorsChange = new EventEmitter<{}>();
 
-    chartPreset = new HorizontalStackedBarChartPreset(['Penalty', 'Issues', 'Deductions'], ['all penalties', 'all detected issues', 'all deducted points']);
-    chartDatasets: ChartDataSets[] = [];
+    readonly scaChartBarTitle = ScaChartBarTitle;
+
+    // ngx
+    ngxData: any[] = [];
+    ngxColors = {
+        name: 'category distribution',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: [],
+    } as Color;
+
+    readonly xAxisFormatting = xAxisFormatting;
+
+    constructor(private translateService: TranslateService) {}
 
     ngOnChanges(): void {
+        this.ngxData = [];
+        this.ngxColors.domain = [];
+        // update colors for category table
+        const categoryColors = {};
         const categoryPenalties = this.categories
             .map((category) => ({
                 ...category,
@@ -61,27 +139,28 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
         // sum of all penalty points
         const totalPenaltyPoints = categoryPenalties.reduce((sum, { penaltyPoints }) => sum + penaltyPoints, 0);
 
-        this.chartDatasets = categoryPenalties.map((element, i) => ({
-            label: element.category.name,
-            data: [
-                // relative penalty percentage
-                totalPenalty > 0 ? (Math.min(element.category.penalty, element.category.maxPenalty) / totalPenalty) * 100 : 0,
-                // relative issues percentage
-                totalIssues > 0 ? (element.issues / totalIssues) * 100 : 0,
-                // relative penalty points percentage
-                totalPenaltyPoints > 0 ? (element.penaltyPoints / totalPenaltyPoints) * 100 : 0,
-            ],
-            backgroundColor: this.getColor(i / this.categories.length, 50),
-            hoverBackgroundColor: this.getColor(i / this.categories.length, 60),
-        }));
+        const penalty = { name: this.translateService.instant('artemisApp.programmingAssessment.penalty'), series: [] as any[] };
+        const issue = { name: this.translateService.instant('artemisApp.programmingAssessment.issues'), series: [] as any[] };
+        const deductions = { name: this.translateService.instant('artemisApp.programmingAssessment.deductions'), series: [] as any[] };
 
-        // update colors for category table
-        const categoryColors = {};
-        this.chartDatasets.forEach(({ label, backgroundColor }) => (categoryColors[label!] = backgroundColor));
+        categoryPenalties.forEach((element, index) => {
+            const penaltyScore = totalPenalty > 0 ? Math.max((Math.min(element.category.penalty, element.category.maxPenalty) / totalPenalty) * 100, 0) : 0;
+            const issuesScore = totalIssues > 0 ? Math.max((element.issues / totalIssues) * 100, 0) : 0;
+            const penaltyPoints = totalPenaltyPoints > 0 ? Math.max((element.penaltyPoints / totalPenaltyPoints) * 100, 0) : 0;
+            const color = getColor(index / this.categories.length, 50);
+
+            penalty.series.push({ name: element.category.name, value: penaltyScore, issues: issuesScore, points: penaltyPoints });
+            issue.series.push({ name: element.category.name, value: issuesScore, penalty: penaltyScore, points: penaltyPoints });
+            deductions.series.push({ name: element.category.name, value: penaltyPoints, penalty: penaltyScore, issues: issuesScore });
+
+            this.ngxColors.domain.push(color);
+            categoryColors[element.category.name] = color;
+        });
+        this.ngxData.push(penalty);
+        this.ngxData.push(issue);
+        this.ngxData.push(deductions);
+        this.ngxData = [...this.ngxData];
+
         this.categoryColorsChange.emit(categoryColors);
-    }
-
-    getColor(i: number, l: number): string {
-        return `hsl(${(i * 360 * 3) % 360}, 55%, ${l}%)`;
     }
 }

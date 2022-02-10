@@ -9,7 +9,8 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
+import { faClipboard, faEye, faListAlt, faTable, faThList, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -21,13 +22,21 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     formattedConfirmationStartText?: SafeHtml;
     formattedEndText?: SafeHtml;
     formattedConfirmationEndText?: SafeHtml;
-    isAtLeastEditor = false;
-    isAtLeastInstructor = false;
     isExamOver = true;
     resetType = ActionType.Reset;
     buttonSize = ButtonSize.MEDIUM;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faUndo = faUndo;
+    faEye = faEye;
+    faWrench = faWrench;
+    faUser = faUser;
+    faTable = faTable;
+    faListAlt = faListAlt;
+    faClipboard = faClipboard;
+    faThList = faThList;
 
     constructor(
         private route: ActivatedRoute,
@@ -42,8 +51,6 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.route.data.subscribe(({ exam }) => {
             this.exam = exam;
-            this.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.exam.course);
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exam.course);
             this.formattedStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
             this.formattedConfirmationStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
             this.formattedEndText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);

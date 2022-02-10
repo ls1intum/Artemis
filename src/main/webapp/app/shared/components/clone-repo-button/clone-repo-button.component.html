@@ -1,7 +1,7 @@
 <ng-container>
     <button
         jhi-exercise-action-button
-        buttonIcon="download"
+        [buttonIcon]="faDownload"
         class="ms-2 clone-repository"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [buttonLabel]="'artemisApp.exerciseActions.cloneRepository' | artemisTranslate"
@@ -10,28 +10,28 @@
         [hideLabelMobile]="false"
         [ngbPopover]="popContent"
         [autoClose]="'outside'"
-        placement="end"
+        placement="right"
         container="body"
     ></button>
     <ng-template #popContent style="max-width: 660px">
         <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | artemisTranslate }}</p>
         <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
         <div class="d-flex" style="margin: 0; max-width: 100%">
+            <div *ngIf="sshEnabled" aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
+                <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button" style="border-top-right-radius: 0; border-bottom-right-radius: 0">
+                    {{ useSsh ? 'SSH' : 'HTTPS' }}
+                </button>
+                <div class="dropdown-menu" ngbDropdownMenu style="min-width: 100%">
+                    <a (click)="setUseSSH(false)" class="dropdown-item {{ !useSsh ? 'active' : '' }}" id="useHTTPSButton">HTTPS</a>
+                    <a (click)="setUseSSH(true)" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
+                </div>
+            </div>
             <pre
                 style="flex: 1"
-                [ngStyle]="sshEnabled ? { borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' } : {}"
-                ngxClipboard
-                [cbContent]="getHttpOrSshRepositoryUrl()"
-                (cbOnSuccess)="onCopySuccess()"
-                (cbOnError)="onCopyFailure()"
+                [ngStyle]="sshEnabled ? { borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none' } : {}"
+                [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl()"
+                (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUrl() }}</pre
-            >
-            <pre
-                *ngIf="sshEnabled"
-                class="btn btn-primary d-inline-flex align-items-center ms-0 use-ssh"
-                style="border-top-left-radius: 0; border-bottom-left-radius: 0"
-                (click)="toggleUseSsh()"
-                >{{ useSsh ? 'USE HTTPS' : 'USE SSH' }}</pre
             >
         </div>
         <p *ngIf="repositoryPassword">
@@ -39,10 +39,8 @@
             {{ 'artemisApp.exerciseActions.hoverToShow' | artemisTranslate }}
         </p>
         <button
-            ngxClipboard
-            [cbContent]="getHttpOrSshRepositoryUrl()"
-            (cbOnSuccess)="onCopySuccess()"
-            (cbOnError)="onCopyFailure()"
+            [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl()"
+            (cdkCopyToClipboardCopied)="onCopyFinished($event)"
             [class.btn-success]="wasCopied"
             class="btn btn-primary btn-sm me-2"
             type="button"

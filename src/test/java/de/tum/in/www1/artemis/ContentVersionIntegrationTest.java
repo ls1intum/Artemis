@@ -23,7 +23,7 @@ public class ContentVersionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getAccountWithoutLoggedInUser() throws Exception {
+    public void testContentVersionHeaderIsSetCorrectly() throws Exception {
         MvcResult res = request.getMvc().perform(MockMvcRequestBuilders.get(new URI("/api/account"))).andReturn();
         final MockHttpServletResponse response = res.getResponse();
         final String contentVersionHeader = response.getHeader(ApiVersionFilter.CONTENT_VERSION_HEADER);

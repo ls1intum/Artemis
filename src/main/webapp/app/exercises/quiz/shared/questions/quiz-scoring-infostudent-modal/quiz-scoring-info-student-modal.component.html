@@ -438,9 +438,6 @@
 </ng-template>
 <div>
     <button class="btn" (click)="open(scoringExplanation)">
-        <fa-icon
-            [ngClass]="{ questionCorrect: this.score === this.question.points, questionWrong: this.score !== this.question.points }"
-            [icon]="['far', 'question-circle']"
-        ></fa-icon>
+        <fa-icon [ngClass]="{ questionCorrect: this.score === this.question.points, questionWrong: this.score !== this.question.points }" [icon]="farQuestionCircle"></fa-icon>
     </button>
 </div>

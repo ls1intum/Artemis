@@ -24,7 +24,7 @@
             "assessInstruction": "Markiere den zu bewertenden Textblock und klicke \"Bewerten\".",
             "predefineTextBlocks": "Textblöcke automatisch anlegen",
             "automatic": "Automatisch",
-            "lock": "Diese Abgabe kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte diese Abgabe bevor du eine neue öffnest.",
+            "lock": "Diese Abgabe kann jetzt nur noch von dir bearbeitet werden. Bitte bewerte diese Abgabe, bevor du eine neue öffnest.",
             "submissionLocked": "Abgabe gesperrt",
             "studentSubmission": "Studentische Abgabe",
             "instructions": "&nbsp; Aufgabenstellung &nbsp;",
@@ -59,7 +59,7 @@
                     "reused": "{{reusedCount}} mal wiederverwendet"
                 }
             },
-            "assessmentInstruction": "Bitte hovern Sie mit der Maus über den zu bewertenden Textblock und klicken Sie diesen an um ihn zu bewerten.<br>Drücke <code>alt</code>/<code>option</code> und wähle gleichzeitig Text aus, um eigene Textblöcke zu bewerten.",
+            "assessmentInstruction": "Bitte bewege die Maus über den zu bewertenden Textblock und klicke diesen an, um ihn zu bewerten.<br>Drücke <code>alt</code>/<code>option</code> und wähle gleichzeitig Text aus, um eigene Textblöcke zu bewerten.",
             "conflict": {
                 "assessor": "Bewertet von: Dir",
                 "otherAssessor": "Bewertet von: {{otherUser}}",

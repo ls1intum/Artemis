@@ -33,7 +33,7 @@ eureka:
         lease-expiration-duration-in-seconds: 10
         status-page-url-path: ${management.endpoints.web.base-path}/info
         health-check-url-path: ${management.endpoints.web.base-path}/health
-        preferIpAddress: true
+#        preferIpAddress: true
         metadata-map:
             zone: primary # This is needed for the load balancer
             profile: ${spring.profiles.active}
@@ -70,6 +70,10 @@ management:
     info:
         git:
             mode: full
+        java:
+            enabled: true
+        env:
+            enabled: true
     health:
         group:
             liveness:
@@ -142,7 +146,7 @@ spring:
                 -   id: artemis
                     uri: lb://ARTEMIS
                     predicates:
-                        - Path=/api/**,/time,/websocket/tracker/info,/websocket/tracker/info/**,/management/**,/public/**
+                        - Path=/api/**,/time,/websocket/tracker/info,/websocket/tracker/info/**,/management/**,/public/**,/logo/**
                 # Normal Websocket route
                 -   id: artemis
                     uri: lb:ws://ARTEMIS

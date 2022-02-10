@@ -1,7 +1,7 @@
 apply plugin: "war"
 
 bootWar {
-    mainClassName = "de.tum.in.www1.artemis.gateway.GatewayApp"
+    mainClass = "de.tum.in.www1.artemis.gateway.GatewayApp"
     includes = ["WEB-INF/**", "META-INF/**"]
     webXml = file("../src/main/webapp/WEB-INF/web.xml")
 }

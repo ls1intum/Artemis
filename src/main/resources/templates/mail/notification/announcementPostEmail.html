@@ -7,14 +7,7 @@
 <div id="message-body">
     <th:block th:replace="mail/notification/fragments :: greetingsFullName"/>
     <div class="notification-content">
-            <span th:text="#{email.notification.title.post.announcement(
-            ${notificationSubject.getTitle()},
-            ${notificationSubject.getCourse().getTitle()}
-            )}">Notification Content for Announcement Posts
-            </span>
-        <!-- Change message : notification text -->
-        <p class="notification-text-header" th:text="#{email.notification.aux.notification.post.content}"/>
-        <p class="notification-text" th:text="${notificationSubject.getContent()}">Post Content</p>
+        <p th:utext="${notificationSubject.getContent()}">Post Content</p>
         <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
     </div>
     <th:block th:replace="mail/notification/fragments :: farewell"/>

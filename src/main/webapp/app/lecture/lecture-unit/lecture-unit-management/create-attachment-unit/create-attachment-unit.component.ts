@@ -5,7 +5,7 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { concatMap, finalize } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';

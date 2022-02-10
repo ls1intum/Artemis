@@ -30,12 +30,6 @@
         }
     }
 
-    /* change highlight color to light green when dragging the item above a drop location */
-    .drop-hover,
-    .dnd-drag-over {
-        background: rgb(144, 238, 144) !important;
-    }
-
     .match-percentage-container {
         display: flex;
         justify-content: center;

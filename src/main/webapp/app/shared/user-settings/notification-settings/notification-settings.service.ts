@@ -13,6 +13,7 @@ import {
     NEW_REPLY_FOR_LECTURE_POST_TITLE,
     Notification,
     NotificationType,
+    EXERCISE_SUBMISSION_ASSESSED_TITLE,
 } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
@@ -25,6 +26,7 @@ export class NotificationSettingsService {
      * Each SettingIds can be based on multiple different notification titles (based on NotificationTypes)
      */
     private static NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TITLE_MAP: Map<SettingId, string[]> = new Map([
+        [SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED, [EXERCISE_SUBMISSION_ASSESSED_TITLE]],
         [SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED, [EXERCISE_RELEASED_TITLE]],
         [SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE, [EXERCISE_PRACTICE_TITLE]],
         [SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST, [NEW_EXERCISE_POST_TITLE]],
@@ -34,7 +36,7 @@ export class NotificationSettingsService {
         [SettingId.NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST, [NEW_REPLY_FOR_LECTURE_POST_TITLE]],
         [SettingId.NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST, [NEW_COURSE_POST_TITLE]],
         [SettingId.NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST, [NEW_REPLY_FOR_COURSE_POST_TITLE]],
-        [SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED, [EXAM_ARCHIVE_STARTED_TITLE, COURSE_ARCHIVE_STARTED_TITLE]],
+        [SettingId.NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED, [EXAM_ARCHIVE_STARTED_TITLE, COURSE_ARCHIVE_STARTED_TITLE]],
     ]);
 
     /**

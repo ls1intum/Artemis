@@ -5,7 +5,6 @@ import java.util.Optional;
 import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -144,7 +143,7 @@ public class ProgrammingExerciseParticipationService {
      * @param participation to check permissions for.
      * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
      */
-    public boolean canAccessParticipation(ProgrammingExerciseParticipation participation) {
+    public boolean canAccessParticipation(@NotNull ProgrammingExerciseParticipation participation) {
         if (participation == null) {
             return false;
         }
@@ -153,19 +152,14 @@ public class ProgrammingExerciseParticipationService {
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && studentParticipation.isOwnedBy(user)) {
             return true;
         }
-        // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
-        if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
-            // Find the programming exercise for the given participation
-            var optionalProgrammingExercise = programmingExerciseRepository.getExercise(participation);
-            if (optionalProgrammingExercise.isEmpty()) {
-                log.error("canAccessParticipation: could not find programming exercise of participation id {}", participation.getId());
-                // Cannot access a programming participation that has no programming exercise associated with it
-                return false;
-            }
-            participation.setProgrammingExercise(optionalProgrammingExercise.get());
+        final var programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation);
+        if (programmingExercise == null) {
+            log.error("canAccessParticipation: could not find programming exercise of participation id {}", participation.getId());
+            // Cannot access a programming participation that has no programming exercise associated with it
+            return false;
         }
-        // TODO: I think we should higher the following permissions to editor
-        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), user);
+
+        return authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user);
     }
 
     /**

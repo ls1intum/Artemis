@@ -7,14 +7,14 @@ import org.springframework.stereotype.Component;
 import de.tum.in.www1.artemis.domain.metis.Post;
 
 /**
- * Implementation of a PostContentCompareStrategy to be used when searching for duplicates during post creation.
+ * Implementation of a PostSimilarityComparisonStrategy to be used when searching for duplicates during post creation.
  * Jaccard Similarity is a common proximity measurement used to compute the similarity between two objects, such as two text documents;
  * In the context of post comparison, the TitleJaccardSimilarityCompareStrategy determines the similarity between two titles (i.e. document) using the number of terms used in both documents.
  * We use the JaccardSimilarity implementation provided by the org.apache.commons.text.similarity package.
  */
 @Primary
 @Component
-public class TitleJaccardSimilarityCompareStrategy implements PostContentCompareStrategy {
+public class TitleJaccardSimilarityCompareStrategy implements PostSimilarityComparisonStrategy {
 
     @Override
     public Double performSimilarityCheck(Post post1, Post post2) {

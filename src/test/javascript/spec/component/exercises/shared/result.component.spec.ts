@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { Result } from 'app/entities/result.model';
@@ -18,9 +15,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { cloneDeep } from 'lodash-es';
 import { Submission } from 'app/entities/submission.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 
 describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;
@@ -48,13 +43,13 @@ describe('ResultComponent', () => {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         component.result = result;
         fixture.detectChanges();
-        expect(component).to.be.ok;
+        expect(component).not.toBeNull();
     });
 
     it('should set results', () => {
@@ -67,12 +62,12 @@ describe('ResultComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.result).to.equal(result1);
-        expect(component.result!.participation).to.equal(participation1);
-        expect(component.submission).to.equal(submission1);
-        expect(component.textColorClass).to.equal('text-danger');
-        expect(component.hasFeedback).to.be.false;
-        expect(component.resultIconClass).to.deep.equal(['far', 'times-circle']);
-        expect(component.resultString).to.equal('artemisApp.editor.buildSuccessful');
+        expect(component.result).toEqual(result1);
+        expect(component.result!.participation).toEqual(participation1);
+        expect(component.submission).toEqual(submission1);
+        expect(component.textColorClass).toEqual('text-danger');
+        expect(component.hasFeedback).toBeFalse();
+        expect(component.resultIconClass).toEqual(faTimesCircle);
+        expect(component.resultString).toEqual('artemisApp.editor.buildSuccessful');
     });
 });

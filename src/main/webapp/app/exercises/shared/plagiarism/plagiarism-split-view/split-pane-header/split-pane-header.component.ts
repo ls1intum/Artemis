@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-split-pane-header',
@@ -12,6 +13,9 @@ export class SplitPaneHeaderComponent implements OnChanges {
 
     public showFiles = false;
     public activeFileIndex = 0;
+
+    // Icons
+    faChevronDown = faChevronDown;
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.files) {

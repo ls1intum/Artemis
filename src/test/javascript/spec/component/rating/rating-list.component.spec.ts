@@ -11,7 +11,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { StarRatingComponent } from 'ng-starrating';
+import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortService } from 'app/shared/service/sort.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';

@@ -1,25 +1,25 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Post } from 'app/entities/metis/post.model';
-import { PostingsThreadComponent } from 'app/shared/metis/postings-thread/postings-thread.component';
+import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostService } from 'app/shared/metis/post.service';
 import { MockPostService } from '../../../../helpers/mocks/service/mock-post.service';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { MockAnswerPostService } from '../../../../helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/shared/metis/metis.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MockComponent } from 'ng-mocks';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 
-describe('PostingsThreadComponent', () => {
-    let component: PostingsThreadComponent;
-    let fixture: ComponentFixture<PostingsThreadComponent>;
+describe('PostingThreadComponent', () => {
+    let component: PostingThreadComponent;
+    let fixture: ComponentFixture<PostingThreadComponent>;
     let metisService: MetisService;
     let metisServiceUserAuthorityStub: jest.SpyInstance;
 
@@ -61,7 +61,7 @@ describe('PostingsThreadComponent', () => {
                 { provide: MetisService, useClass: MockMetisService },
             ],
             declarations: [
-                PostingsThreadComponent,
+                PostingThreadComponent,
                 TranslatePipeMock,
                 MockComponent(PostComponent),
                 MockComponent(AnswerPostComponent),
@@ -71,14 +71,14 @@ describe('PostingsThreadComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(PostingsThreadComponent);
+                fixture = TestBed.createComponent(PostingThreadComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
                 metisServiceUserAuthorityStub = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
     it('should be initialized correctly for users that are at least tutors in course', () => {

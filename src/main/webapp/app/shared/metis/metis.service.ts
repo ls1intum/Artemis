@@ -28,7 +28,7 @@ import { Params } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -308,7 +308,7 @@ export class MetisService implements OnDestroy {
      */
     isPostResolved(post: Post): boolean {
         if (post.answers && post.answers.length > 0) {
-            return post.answers!.filter((answer: AnswerPost) => answer.resolvesPost === true).length > 0;
+            return !!post.answers.find((answerPosts: AnswerPost) => answerPosts.resolvesPost);
         } else {
             return false;
         }

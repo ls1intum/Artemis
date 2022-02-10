@@ -64,30 +64,6 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
     }
 
     /**
-     * increase participants, all the DropLocationCounter if the DragAndDropAssignment is correct and if the complete question is correct, than increase the correctCounter
-     *
-     * @param submittedAnswer the submittedAnswer object which contains all selected answers
-     * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
-     *                        of the quizExercise)
-     */
-    @Override
-    public void addResult(SubmittedAnswer submittedAnswer, boolean rated) {
-        changeStatisticBasedOnResult(submittedAnswer, rated, 1);
-    }
-
-    /**
-     * decrease participants, all the DropLocationCounter if the DragAndDropAssignment is correct and if the complete question is correct, than decrease the correctCounter
-     *
-     * @param submittedAnswer the submittedAnswer object which contains all selected answers
-     * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
-     *                        of the quizExercise)
-     */
-    @Override
-    public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated) {
-        changeStatisticBasedOnResult(submittedAnswer, rated, -1);
-    }
-
-    /**
      * 1. check if the Result is rated or unrated 2. change participants, all the DropLocationCounter if the DragAndDropAssignment is correct and if the complete question is
      * correct, than change the correctCounter
      *
@@ -96,12 +72,11 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
      *                        of the quizExercise)
      * @param change          the int-value, which will be added to the Counter and participants
      */
-    private void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change) {
-        if (submittedAnswer == null) {
+    @Override
+    protected void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change) {
+        if (!(submittedAnswer instanceof DragAndDropSubmittedAnswer ddSubmittedAnswer)) {
             return;
         }
-
-        DragAndDropSubmittedAnswer ddSubmittedAnswer = (DragAndDropSubmittedAnswer) submittedAnswer;
 
         if (rated) {
             // change the rated participants
@@ -145,10 +120,7 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
      */
     @Override
     public void resetStatistic() {
-        setParticipantsRated(0);
-        setParticipantsUnrated(0);
-        setRatedCorrectCounter(0);
-        setUnRatedCorrectCounter(0);
+        super.resetStatistic();
         for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
             dropLocationCounter.setRatedCounter(0);
             dropLocationCounter.setUnRatedCounter(0);

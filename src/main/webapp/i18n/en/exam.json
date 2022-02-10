@@ -123,7 +123,8 @@
             "registered": "Registered Students",
             "noExerciseGroups": "Exercise Groups",
             "submittedColumn": "Submitted",
-            "totalColumn": "Total"
+            "totalColumn": "Total",
+            "exerciseGroupTitle": "Average scores of exercise group \"{{ groupTitle }}\" in comparison"
         },
         "examParticipation": {
             "timer": "Time left: ",
@@ -264,6 +265,7 @@
                 "title": "Maximum number of points for exam",
                 "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
             },
+            "numberOfExerciseGroups": "Number of exercise groups:",
             "numberOfExercisesInExam": "Number of exercises in exam",
             "numberOfCorrectionRoundsInExam": "Number of correction rounds in exam",
             "randomizeQuestionOrder": "Randomize order of exercise groups",
@@ -281,6 +283,7 @@
                 "title": "Test Run Management: ",
                 "setup": "Create a Test Run",
                 "author": "Author",
+                "setWorkingTime": "Set a working time (minutes and seconds):",
                 "setupHint": "Select an exercise for every exercise group by clicking on it.\n<strong>Note:</strong> If you have already created a test run with one of the exercises, the exercise will already contain a submission and result.",
                 "assess": "Assess Your Test Runs",
                 "manage": "Manage Working Time",
@@ -313,24 +316,6 @@
                     "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?",
                     "deleteParticipationsAndSubmission": "Additionally delete this student's participation and submissions in the associated exam? This action can NOT be undone!",
                     "typeNameToConfirm": "Please type in the login of the student to confirm."
-                },
-                "importStudents": {
-                    "buttonLabel": "Import students",
-                    "dialogTitle": "Import students into:",
-                    "introText": "This dialog can be used to import students into this exam.",
-                    "dialogText": "Each entry in the input file must contain a value for either matriculation number or login.<br>Values for last and first name are optional.",
-                    "csvFile": {
-                        "label": "Select .csv file",
-                        "tooltip": "Please select the .csv file containing the students for the import. Either 'LOGIN' or 'REGISTRATION_NUMBER' column values must be present per entry."
-                    },
-                    "studentsForImport": {
-                        "label": "Students to import",
-                        "tooltip": "These students will be imported when clicking on the \"Import\" button."
-                    },
-                    "numberOfStudents": "Number of students:",
-                    "numberOfStudentsImported": "Imported:",
-                    "numberOfStudentsNotImported": "Not found:",
-                    "genericErrorMessage": "Import of students into exam failed!"
                 }
             },
             "exerciseGroups": "Exercise Groups",
@@ -364,8 +349,9 @@
             },
             "checklist": {
                 "title": "Exam Checklist",
-                "introduction": "You can find detailed documentation with screenshots about the exam mode in the",
-                "linkDescription": "Instructors Guide",
+                "introduction": "This page gives an overview over the various steps when conducting an exam. In the",
+                "linkDescription": "external documentation",
+                "introductionPart2": "you can find more details about the individual steps.",
                 "checklistItem": "Task",
                 "description": "Description",
                 "status": "Current status",
@@ -455,12 +441,12 @@
             "toggleSuccessful": "The submitted status was changed successfully.",
             "togglefailed": "The submitted status could not be changed!",
             "hasComplaint": "Has Complaint"
+        },
+        "studentExam": {
+            "submitSuccessful": "Your exam was submitted successfully. Artemis does not require further action, the window can be closed. Be sure to follow your instructor's exam protocol.",
+            "alreadySubmitted": "You have already submitted.",
+            "submissionNotInTime": "You have not submitted your exam on time. It will not be graded!",
+            "handInFailed": "Submission of your exam failed. Please try again!"
         }
-    },
-    "studentExam": {
-        "submitSuccessful": "Your exam was submitted successfully. Artemis does not require further action, the window can be closed. Be sure to follow your instructor's exam protocol.",
-        "alreadySubmitted": "You have already submitted.",
-        "submissionNotInTime": "You have not submitted your exam on time. It will not be graded!",
-        "handInFailed": "Submission of your exam failed. Please try again!"
     }
 }

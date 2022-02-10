@@ -1,12 +1,7 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('PresentationScoreComponent', () => {
     let component: PresentationScoreComponent;
@@ -53,12 +48,12 @@ describe('PresentationScoreComponent', () => {
     it('should show the presentation score checkbox', () => {
         component.exercise = exercise1;
         componentFixture.detectChanges();
-        expect(component.showPresentationScoreCheckbox()).to.be.true;
+        expect(component.showPresentationScoreCheckbox()).toBeTrue();
     });
 
     it('should hide the presentation score checkbox', () => {
         component.exercise = exercise2;
         componentFixture.detectChanges();
-        expect(component.showPresentationScoreCheckbox()).to.be.false;
+        expect(component.showPresentationScoreCheckbox()).toBeFalse();
     });
 });

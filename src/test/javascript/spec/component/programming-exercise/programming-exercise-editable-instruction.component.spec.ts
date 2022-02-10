@@ -211,4 +211,43 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.destroy();
         flush();
     }));
+
+    it('should update the code editor annotations when receiving a new ProblemStatementAnalysis', fakeAsync(() => {
+        const session = {
+            clearAnnotations: jest.fn(),
+            setAnnotations: jest.fn(),
+        };
+        const editor = {
+            getSession: () => session,
+        };
+        const aceEditorContainer = {
+            getEditor: () => editor,
+        };
+        // @ts-ignore
+        comp.markdownEditor = { aceEditorContainer };
+
+        const analysis = new Map();
+        analysis.set(0, { lineNumber: 0, invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'] });
+        analysis.set(2, {
+            lineNumber: 2,
+            invalidHints: ['artemisApp.programmingExercise.hintsAnalysis.invalidHint'],
+            invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'],
+        });
+
+        const expectedWarnings = [
+            { column: 0, row: 0, text: ' - artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase', type: 'warning' },
+            { column: 0, row: 2, text: ' - artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase', type: 'warning' },
+            { column: 0, row: 2, text: ' - artemisApp.programmingExercise.hintsAnalysis.invalidHint', type: 'warning' },
+        ];
+
+        comp.onAnalysisUpdate(analysis);
+        tick();
+
+        expect(session.clearAnnotations).toHaveBeenCalledTimes(1);
+        expect(session.setAnnotations).toHaveBeenCalledTimes(1);
+        expect(session.setAnnotations).toHaveBeenCalledWith(expectedWarnings);
+
+        fixture.destroy();
+        flush();
+    }));
 });

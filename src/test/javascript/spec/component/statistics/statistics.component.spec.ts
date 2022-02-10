@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -14,9 +11,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { SpanType } from 'app/entities/statistics.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('StatisticsComponent', () => {
     let fixture: ComponentFixture<StatisticsComponent>;
@@ -51,19 +45,19 @@ describe('StatisticsComponent', () => {
 
     it('should initialize', fakeAsync(() => {
         fixture.detectChanges();
-        expect(component).to.be.ok;
+        expect(component).not.toBeNull();
     }));
 
     it('should click Month button', fakeAsync(() => {
-        const tabSpy = sinon.spy(component, 'onTabChanged');
+        const tabSpy = jest.spyOn(component, 'onTabChanged');
         fixture.detectChanges();
 
         const button = fixture.debugElement.nativeElement.querySelector('#option3');
         button.click();
 
         tick();
-        expect(tabSpy).to.have.been.calledOnce;
-        expect(component.currentSpan).to.be.equal(SpanType.MONTH);
-        tabSpy.restore();
+        expect(tabSpy).toHaveBeenCalledTimes(1);
+        expect(component.currentSpan).toEqual(SpanType.MONTH);
+        tabSpy.mockRestore();
     }));
 });

@@ -27,7 +27,7 @@
             <div *ngIf="!isExamMode" class="form-group position-relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
                 <jhi-category-selector
-                    [exerciseCategories]="exerciseCategories"
+                    [categories]="exerciseCategories"
                     [existingCategories]="existingCategories"
                     (selectedCategories)="updateCategories($event)"
                     (ngModelChange)="cacheValidation()"
@@ -169,25 +169,25 @@
             <div class="row mt-2">
                 <div class="col-12 col-sm-6 col-xl-3 mb-1">
                     <button id="quiz-add-mc-question" class="btn btn-block btn-success" (click)="addMultipleChoiceQuestion()">
-                        <fa-icon [icon]="'plus'"></fa-icon>
+                        <fa-icon [icon]="faPlus"></fa-icon>
                         <span jhiTranslate="artemisApp.quizExercise.addMultipleChoiceQuestion"></span>
                     </button>
                 </div>
                 <div class="col-12 col-sm-6 col-xl-3 mb-1">
                     <button id="quiz-add-dnd-question" class="btn btn-block btn-success" (click)="addDragAndDropQuestion()">
-                        <fa-icon [icon]="'plus'"></fa-icon>
+                        <fa-icon [icon]="faPlus"></fa-icon>
                         <span jhiTranslate="artemisApp.quizExercise.addDragAndDropQuestion"></span>
                     </button>
                 </div>
                 <div class="col-12 col-sm-6 col-xl-3 mb-1">
                     <button id="quiz-add-short-answer-question" class="btn btn-block btn-success" (click)="addShortAnswerQuestion()">
-                        <fa-icon [icon]="'plus'"></fa-icon>
+                        <fa-icon [icon]="faPlus"></fa-icon>
                         <span jhiTranslate="artemisApp.quizExercise.addShortAnswerQuestion"></span>
                     </button>
                 </div>
                 <div class="col-12 col-sm-6 col-xl-3 mb-1">
                     <button class="btn btn-block" (click)="showHideExistingQuestions()" [ngClass]="{ 'btn-primary': showExistingQuestions, 'btn-success': !showExistingQuestions }">
-                        <fa-icon [icon]="'plus'"></fa-icon>
+                        <fa-icon [icon]="faPlus"></fa-icon>
                         <span jhiTranslate="artemisApp.quizExercise.addExistingQuestions"></span>
                     </button>
                 </div>
@@ -282,7 +282,7 @@
                                 </div>
                             </ng-template>
                             <span *ngIf="!quizIsValid" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right">
-                                <fa-icon [icon]="'exclamation-circle'"></fa-icon>
+                                <fa-icon [icon]="faExclamationCircle"></fa-icon>
                                 <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
                                 <span>({{ computeInvalidReasons().length }})</span>
                             </span>

@@ -2,7 +2,7 @@
     <h2 id="page-heading">
         <span jhiTranslate="artemisApp.lecture.home.title">Lectures</span>
         <a id="jh-create-entity" class="btn btn-primary float-end jh-create-entity create-lecture" [routerLink]="['new']">
-            <fa-icon [icon]="'plus'"></fa-icon>
+            <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.lecture.home.createLabel">Create Lecture</span>
         </a>
     </h2>
@@ -21,8 +21,8 @@
                     <th></th>
                 </tr>
             </thead>
-            <tbody class="markdown-preview">
-                <tr *ngFor="let lecture of lectures; trackBy: trackId">
+            <tbody class="markdown-preview" id="lecture-preview">
+                <tr *ngFor="let lecture of lectures; trackBy: trackId; let i = index" id="lecture-row-{{ i }}">
                     <td>
                         <a [routerLink]="[lecture.id]">{{ lecture.id }}</a>
                     </td>
@@ -41,23 +41,24 @@
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a *ngIf="lecture.isAtLeastEditor" [routerLink]="[lecture.id, 'attachments']" class="btn btn-primary mb-1 btn-sm">
-                                    <fa-icon [icon]="'file'"></fa-icon>
+                                    <fa-icon [icon]="faFile"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.attachments">Attachment</span>
                                 </a>
-                                <a *ngIf="lecture.isAtLeastEditor" [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm">
-                                    <fa-icon [icon]="'puzzle-piece'"></fa-icon>
+                                <a *ngIf="lecture.isAtLeastEditor" [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm" id="units">
+                                    <fa-icon [icon]="faPuzzlePiece"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.units">Units</span>
                                 </a>
                             </div>
 
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a *ngIf="lecture.isAtLeastEditor" [routerLink]="[lecture.id, 'edit']" class="btn btn-primary btn-sm">
-                                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                    <fa-icon [icon]="faPencilAlt"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                 </a>
                                 <button
                                     class="mt-1"
                                     jhiDeleteButton
+                                    id="delete-lecture"
                                     *ngIf="lecture.isAtLeastInstructor"
                                     [entityTitle]="lecture.title || ''"
                                     deleteQuestion="artemisApp.lecture.delete.question"
@@ -65,7 +66,7 @@
                                     (delete)="deleteLecture(lecture.id!)"
                                     [dialogError]="dialogError$"
                                 >
-                                    <fa-icon [icon]="'times'"></fa-icon>
+                                    <fa-icon [icon]="faTimes"></fa-icon>
                                 </button>
                             </div>
                         </div>

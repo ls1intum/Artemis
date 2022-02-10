@@ -9,6 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faFile, faPencilAlt, faPlus, faPuzzlePiece, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-lecture',
@@ -22,6 +23,13 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faPencilAlt = faPencilAlt;
+    faFile = faFile;
+    faPuzzlePiece = faPuzzlePiece;
 
     constructor(
         protected lectureService: LectureService,

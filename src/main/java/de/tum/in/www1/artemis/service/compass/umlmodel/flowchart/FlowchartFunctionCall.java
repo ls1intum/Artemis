@@ -34,10 +34,9 @@ public class FlowchartFunctionCall extends UMLElement {
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (!(reference instanceof FlowchartFunctionCall)) {
+        if (!(reference instanceof FlowchartFunctionCall referenceDecision)) {
             return similarity;
         }
-        FlowchartFunctionCall referenceDecision = (FlowchartFunctionCall) reference;
 
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceDecision.getName());
 
@@ -52,11 +51,9 @@ public class FlowchartFunctionCall extends UMLElement {
      */
     @Override
     public double overallSimilarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof FlowchartFunctionCall)) {
+        if (!(reference instanceof FlowchartFunctionCall referenceDecision)) {
             return 0;
         }
-
-        FlowchartFunctionCall referenceDecision = (FlowchartFunctionCall) reference;
 
         double similarity = similarity(referenceDecision);
 

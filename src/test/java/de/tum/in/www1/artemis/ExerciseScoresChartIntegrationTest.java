@@ -16,7 +16,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.web.rest.ExerciseScoresChartResource;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
 
 public class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -107,8 +106,7 @@ public class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getCourseExerciseScores_asStudent_shouldReturnCorrectIndividualAverageAndMaxScores() throws Exception {
-        List<ExerciseScoresDTO> exerciseScores = request.getList(ExerciseScoresChartResource.EndpointConstants.generateCourseExerciseScoresEndpoint(idOfCourse), HttpStatus.OK,
-                ExerciseScoresDTO.class);
+        List<ExerciseScoresDTO> exerciseScores = request.getList(getEndpointUrl(idOfCourse), HttpStatus.OK, ExerciseScoresDTO.class);
         assertThat(exerciseScores.size()).isEqualTo(3);
         ExerciseScoresDTO individualTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfIndividualTextExercise)).findFirst()
                 .get();
@@ -129,4 +127,7 @@ public class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegratio
         assertThat(individualTextExerciseWithoutParticipants.maxScoreAchieved).isEqualTo(0.0);
     }
 
+    private String getEndpointUrl(long courseId) {
+        return String.format("/api/courses/%d/charts/exercise-scores", courseId);
+    }
 }

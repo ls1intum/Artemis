@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.modeling;
 
+import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.MODELING;
+
 import java.time.ZonedDateTime;
 
 import javax.persistence.*;
@@ -10,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ModelAssessmentKnowledge;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 
 /**
  * A ModelingExercise.
@@ -88,6 +91,11 @@ public class ModelingExercise extends Exercise {
         setSampleSolutionModel(null);
         setSampleSolutionExplanation(null);
         super.filterSensitiveInformation();
+    }
+
+    @Override
+    public ExerciseType getExerciseType() {
+        return MODELING;
     }
 
     @Override

@@ -1,7 +1,7 @@
 <div>
     <h4 jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title"></h4>
     <button *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']" class="btn btn-primary btn-sm mb-2" (click)="loadTutorEfforts()">
-        <fa-icon [icon]="'sync'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'showStatistic.recalculateStatistics' | artemisTranslate }}
+        <fa-icon [icon]="faSync" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'showStatistic.recalculateStatistics' | artemisTranslate }}
     </button>
     <div *ngIf="tutorEfforts && tutorEfforts.length > 0">
         <table class="table">
@@ -19,8 +19,22 @@
             </tr>
             <tr>
                 <td colspan="3">
-                    <div class="col-9 justify-content-center">
-                        <canvas baseChart [datasets]="chartDataSets" [labels]="chartLabels" [chartType]="chartType" [options]="chartOptions" [legend]="false"></canvas>
+                    <div #containerRef class="col-9 justify-content-center">
+                        <h3 jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title">Tutor Effort Statistics</h3>
+                        <ngx-charts-bar-vertical
+                            [view]="[containerRef.offsetWidth, 600]"
+                            [scheme]="ngxColor"
+                            [results]="ngxData"
+                            [xAxis]="true"
+                            [yAxis]="true"
+                            [showXAxisLabel]="true"
+                            [showYAxisLabel]="true"
+                            [xAxisLabel]="xAxisLabel"
+                            [yAxisLabel]="yAxisLabel"
+                            [yAxisTickFormatting]="yAxisTickFormatting"
+                            [yScaleMax]="yScaleMax"
+                        >
+                        </ngx-charts-bar-vertical>
                     </div>
                 </td>
             </tr>

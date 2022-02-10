@@ -2,7 +2,7 @@
     *ngIf="participationBuildCanBeTriggered && (showForSuccessfulSubmissions || participationHasLatestSubmissionWithoutResult)"
     [btnSize]="btnSize"
     [btnType]="participationHasLatestSubmissionWithoutResult ? ButtonType.ERROR : ButtonType.PRIMARY"
-    [icon]="'redo'"
+    [icon]="faRedo"
     [disabled]="isRetrievingBuildStatus"
     [isLoading]="isBuilding"
     (onClick)="triggerBuild($event)"

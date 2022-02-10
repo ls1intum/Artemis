@@ -10,6 +10,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-scores-repo-export-dialog',
@@ -31,6 +32,9 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     repositoryExportOptions: RepositoryExportOptions;
     isLoading = false;
     isRepoExportForMultipleExercises: boolean;
+
+    // Icons
+    faCircleNotch = faCircleNotch;
 
     constructor(
         private exerciseService: ExerciseService,

@@ -5,7 +5,7 @@
                 <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title" style="height: 33px" />
                 <span class="input-group-btn">
                     <button class="btn btn-outline-secondary" type="button" (click)="resetQuestionTitle()">
-                        <fa-icon [icon]="'undo'"></fa-icon>
+                        <fa-icon [icon]="faUndo"></fa-icon>
                     </button>
                 </span>
             </div>
@@ -13,16 +13,16 @@
         <div class="col-md-2 text-end">
             <div class="form-group">
                 <div class="re-evaluate-button" id="move-up-button" (click)="moveUp()">
-                    <fa-icon [icon]="'chevron-up'" size="2x"></fa-icon>
+                    <fa-icon [icon]="faChevronUp" size="2x"></fa-icon>
                 </div>
                 <div class="re-evaluate-button" id="move-down-button" (click)="moveDown()">
-                    <fa-icon [icon]="'chevron-down'" size="2x"></fa-icon>
+                    <fa-icon [icon]="faChevronDown" size="2x"></fa-icon>
                 </div>
                 <div class="re-evaluate-button" id="reset-button" (click)="resetQuestion()">
-                    <fa-icon [icon]="'undo'" size="2x"></fa-icon>
+                    <fa-icon [icon]="faUndo" size="2x"></fa-icon>
                 </div>
                 <div class="re-evaluate-button" id="delete-button" (click)="delete()">
-                    <fa-icon [icon]="'trash'" size="2x"></fa-icon>
+                    <fa-icon [icon]="faTrash" size="2x"></fa-icon>
                 </div>
             </div>
         </div>
@@ -81,17 +81,17 @@
                 ></jhi-markdown-editor>
                 <span class="col-auto input-group-btn d-flex align-items-center">
                     <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
-                        <fa-icon [icon]="'undo'"></fa-icon>
+                        <fa-icon [icon]="faUndo"></fa-icon>
                     </button>
                 </span>
             </div>
         </div>
     </div>
-    <div class="answer-border" dnd-sortable-container [sortableData]="question.answerOptions || []">
-        <div class="answer-border" *ngFor="let answer of question.answerOptions; let i = index" dnd-sortable [sortableIndex]="i">
+    <div class="answer-border" cdkDropList (cdkDropListDropped)="onReorderAnswerOptionDrop($event)">
+        <div class="answer-border" *ngFor="let answer of question.answerOptions" cdkDrag>
             <div class="question-options">
-                <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%" dnd-sortable-handle>
-                    <fa-icon [icon]="'arrows-alt-v'" size="2x"></fa-icon>
+                <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%">
+                    <fa-icon [icon]="faArrowsAltV" size="2x"></fa-icon>
                 </span>
                 <jhi-markdown-editor
                     [markdown]="generateAnswerMarkdown(answer)"
@@ -122,10 +122,10 @@
                     ></button
                     >&nbsp;
                     <span class="re-evaluate-button" (click)="resetAnswer(answer)">
-                        <fa-icon [icon]="'undo'" size="2x"></fa-icon>
+                        <fa-icon [icon]="faUndo" size="2x"></fa-icon>
                     </span>
                     <span class="re-evaluate-button" (click)="deleteAnswer(answer)">
-                        <fa-icon [icon]="'trash'" size="2x"></fa-icon>
+                        <fa-icon [icon]="faTrash" size="2x"></fa-icon>
                     </span>
                 </div>
             </div>

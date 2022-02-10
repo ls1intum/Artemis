@@ -10,11 +10,11 @@ import { TextExerciseComponent } from 'app/exercises/text/manage/text-exercise/t
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 describe('TextExercise Management Component', () => {
     let comp: TextExerciseComponent;

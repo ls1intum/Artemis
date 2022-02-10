@@ -1,7 +1,5 @@
 import { TestBed, getTestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { ArtemisTestModule } from '../test.module';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -9,15 +7,10 @@ import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { cloneDeep } from 'lodash-es';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ShortAnswerQuestionUtil', () => {
     let injector: TestBed;
     let service: ShortAnswerQuestionUtil;
-    let markdownService: ArtemisMarkdownService;
 
     const spot = new ShortAnswerSpot();
     spot.spotNr = 1;
@@ -45,9 +38,9 @@ describe('ShortAnswerQuestionUtil', () => {
         shortAnswerQuestion.correctMappings!.push(mappingToCheck);
         const hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
         if (toBeTrue) {
-            expect(hasNoMisleadingMapping).to.be.true;
+            expect(hasNoMisleadingMapping).toBeTrue();
         } else {
-            expect(hasNoMisleadingMapping).to.be.false;
+            expect(hasNoMisleadingMapping).toBeFalse();
         }
     };
 
@@ -58,7 +51,6 @@ describe('ShortAnswerQuestionUtil', () => {
 
         injector = getTestBed();
         service = injector.get(ShortAnswerQuestionUtil);
-        markdownService = injector.get(ArtemisMarkdownService);
     });
     it('should return correct getter', () => {
         const solutions = service.getAllSolutionsForSpot(shortAnswerQuestion.correctMappings, spot);
@@ -68,89 +60,89 @@ describe('ShortAnswerQuestionUtil', () => {
         const spotFromGetter = service.getSpot(spot.spotNr!, shortAnswerQuestion);
         const spotNr = service.getSpotNr('[-spot 123]');
 
-        expect(solutions).to.contain(solution);
-        expect(spots).to.be.contain(spot);
-        expect(sampleSolutions).to.be.contain(solution);
-        expect(mappingFromGetter).to.be.equal(mapping);
-        expect(spotFromGetter).to.be.equal(spot);
-        expect(spotNr).to.be.equal(123);
+        expect(solutions).toContain(solution);
+        expect(spots).toContain(spot);
+        expect(sampleSolutions).toContain(solution);
+        expect(mappingFromGetter).toEqual(mapping);
+        expect(spotFromGetter).toEqual(spot);
+        expect(spotNr).toEqual(123);
 
         let isMappedTogether = service.isMappedTogether(shortAnswerQuestion.correctMappings, solution, spot);
-        expect(isMappedTogether).to.be.true;
+        expect(isMappedTogether).toBeTrue();
 
         isMappedTogether = service.isMappedTogether(shortAnswerQuestion.correctMappings, solutionUnmapped, spot);
-        expect(isMappedTogether).to.be.false;
+        expect(isMappedTogether).toBeFalse();
 
         let isInputField = service.isInputField('[-spot 123]');
-        expect(isInputField).to.be.true;
+        expect(isInputField).toBeTrue();
 
         isInputField = service.isInputField('text with no input');
-        expect(isInputField).to.be.false;
+        expect(isInputField).toBeFalse();
 
         let isSameSetOfSpots = service.isSameSetOfSpots([spot], [spot]);
-        expect(isSameSetOfSpots).to.be.true;
+        expect(isSameSetOfSpots).toBeTrue();
 
         isSameSetOfSpots = service.isSameSetOfSpots([spot], [spotUnmapped]);
-        expect(isSameSetOfSpots).to.be.false;
+        expect(isSameSetOfSpots).toBeFalse();
 
         let isSameSolution = service.isSameSolution(solution, solution);
-        expect(isSameSolution).to.be.true;
+        expect(isSameSolution).toBeTrue();
 
         isSameSolution = service.isSameSolution(solution, solutionUnmapped);
-        expect(isSameSolution).to.be.false;
+        expect(isSameSolution).toBeFalse();
 
         let isSameSpot = service.isSameSpot(spot, spot);
-        expect(isSameSpot).to.be.true;
+        expect(isSameSpot).toBeTrue();
 
         isSameSpot = service.isSameSpot(spot, spotUnmapped);
-        expect(isSameSpot).to.be.false;
+        expect(isSameSpot).toBeFalse();
 
         let areAllSolutionsinSampleSolution = service.allSolutionsAreInSampleSolution(solutions, sampleSolutions);
-        expect(areAllSolutionsinSampleSolution).to.be.true;
+        expect(areAllSolutionsinSampleSolution).toBeTrue();
 
         areAllSolutionsinSampleSolution = service.allSolutionsAreInSampleSolution([solutionUnmapped], sampleSolutions);
-        expect(areAllSolutionsinSampleSolution).to.be.false;
+        expect(areAllSolutionsinSampleSolution).toBeFalse();
     });
 
     it('should check whether spots and solutions are setup correctly', () => {
         let mappedSolutionsHaveSpots = service.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings!);
-        expect(mappedSolutionsHaveSpots).to.be.true;
+        expect(mappedSolutionsHaveSpots).toBeTrue();
 
         const wrongMapping = cloneDeep(shortAnswerQuestion.correctMappings);
         // @ts-ignore
         wrongMapping.forEach((m) => (m.spot = undefined));
         mappedSolutionsHaveSpots = service.everyMappedSolutionHasASpot(wrongMapping!);
-        expect(mappedSolutionsHaveSpots).to.be.false;
+        expect(mappedSolutionsHaveSpots).toBeFalse();
 
         let spotsHaveSolutions = service.everySpotHasASolution(shortAnswerQuestion.correctMappings!, shortAnswerQuestion.spots!);
-        expect(spotsHaveSolutions).to.be.true;
+        expect(spotsHaveSolutions).toBeTrue();
 
         spotsHaveSolutions = service.everySpotHasASolution(shortAnswerQuestion.correctMappings!, [spotUnmapped]);
-        expect(spotsHaveSolutions).to.be.false;
+        expect(spotsHaveSolutions).toBeFalse();
 
         let hasDuplicatedMappings = service.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings!);
-        expect(hasDuplicatedMappings).to.be.false;
+        expect(hasDuplicatedMappings).toBeFalse();
 
         const duplicatedMapping = cloneDeep(shortAnswerQuestion.correctMappings!);
         duplicatedMapping.push(duplicatedMapping[0]);
         hasDuplicatedMappings = service.hasMappingDuplicateValues(duplicatedMapping);
-        expect(hasDuplicatedMappings).to.be.true;
+        expect(hasDuplicatedMappings).toBeTrue();
 
         let hasAtLeastAsManySolutionsAsSpots = service.atLeastAsManySolutionsAsSpots(shortAnswerQuestion);
-        expect(hasAtLeastAsManySolutionsAsSpots).to.be.true;
+        expect(hasAtLeastAsManySolutionsAsSpots).toBeTrue();
 
         const faultyShortAnswerQuestion = new ShortAnswerQuestion();
         faultyShortAnswerQuestion.spots = [spot, spotUnmapped];
         faultyShortAnswerQuestion.solutions = [solution];
         hasAtLeastAsManySolutionsAsSpots = service.atLeastAsManySolutionsAsSpots(faultyShortAnswerQuestion);
-        expect(hasAtLeastAsManySolutionsAsSpots).to.be.false;
+        expect(hasAtLeastAsManySolutionsAsSpots).toBeFalse();
 
         let hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
-        expect(hasNoMisleadingMapping).to.be.true;
+        expect(hasNoMisleadingMapping).toBeTrue();
         // @ts-ignore
         shortAnswerQuestion.correctMappings = undefined;
         hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
-        expect(hasNoMisleadingMapping).to.be.true;
+        expect(hasNoMisleadingMapping).toBeTrue();
     });
 
     it('should check for misleading mappings', () => {
@@ -201,11 +193,11 @@ describe('ShortAnswerQuestionUtil', () => {
         const textPart2 = '**with highlighted markdown**';
         shortAnswerQuestion.text = textPart1 + '\n' + textPart2;
         const textParts = service.divideQuestionTextIntoTextParts(shortAnswerQuestion.text!);
-        expect(textParts[0][0]).to.contain(textPart1);
-        expect(textParts[1][0]).to.contain(textPart2);
+        expect(textParts[0][0]).toContain(textPart1);
+        expect(textParts[1][0]).toContain(textPart2);
 
-        const textPartsInHTML = service.transformTextPartsIntoHTML(textParts, markdownService);
-        expect(textPartsInHTML[0][0]).to.contain(`<p>${textPart1}</p>`);
-        expect(textPartsInHTML[1][0]).to.contain(`<p><strong>${textPart2.split('**').join('')}</strong></p>`);
+        const textPartsInHTML = service.transformTextPartsIntoHTML(textParts);
+        expect(textPartsInHTML[0][0]).toContain(`<p>${textPart1}</p>`);
+        expect(textPartsInHTML[1][0]).toContain(`<p><strong>${textPart2.split('**').join('')}</strong></p>`);
     });
 });

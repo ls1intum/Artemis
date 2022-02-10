@@ -13,11 +13,12 @@ import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -39,6 +40,9 @@ export class StudentExamsComponent implements OnInit {
     isExamOver = false;
     longestWorkingTime?: number;
     isAdmin = false;
+
+    // Icons
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private route: ActivatedRoute,
@@ -169,37 +173,6 @@ export class StudentExamsComponent implements OnInit {
             },
             (err: HttpErrorResponse) => {
                 this.handleError('artemisApp.studentExams.startExerciseFailure', err);
-                this.isLoading = false;
-            },
-        );
-    }
-
-    /**
-     * Evaluates all the quiz exercises that belong to the exam
-     */
-    evaluateQuizExercises() {
-        this.isLoading = true;
-        this.examManagementService.evaluateQuizExercises(this.courseId, this.examId).subscribe(
-            (res) => {
-                this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
-                this.isLoading = false;
-            },
-            (err: HttpErrorResponse) => {
-                this.handleError('artemisApp.studentExams.evaluateQuizExerciseFailure', err);
-                this.isLoading = false;
-            },
-        );
-    }
-
-    assessUnsubmittedExamModelingAndTextParticipations() {
-        this.isLoading = true;
-        this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.courseId, this.examId).subscribe(
-            (res) => {
-                this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
-                this.isLoading = false;
-            },
-            (err: HttpErrorResponse) => {
-                this.handleError('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure', err);
                 this.isLoading = false;
             },
         );

@@ -4,7 +4,7 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
 import { cloneDeep } from 'lodash-es';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -139,7 +139,6 @@ describe('FileUploadAssessmentComponent', () => {
             comp.submission.participation!.submissions = [comp.submission];
             comp.submission.participation!.results = [comp.submission.latestResult!];
             comp.isAssessor = true;
-            comp.isAtLeastInstructor = true;
             comp.assessmentsAreValid = true;
             comp.isLoading = false;
 
@@ -161,7 +160,6 @@ describe('FileUploadAssessmentComponent', () => {
             comp.submission.participation!.submissions = [comp.submission];
             comp.submission.participation!.results = [comp.submission.latestResult!];
             comp.isAssessor = true;
-            comp.isAtLeastInstructor = true;
             comp.assessmentsAreValid = true;
             comp.isLoading = false;
 
@@ -547,14 +545,12 @@ describe('FileUploadAssessmentComponent', () => {
 
     describe('canOverride', () => {
         it('should not be able to override if tutor is assessor and result has a complaint', () => {
-            comp.isAtLeastInstructor = false;
             comp.complaint = { id: 3 };
             comp.isAssessor = true;
             expect(comp.canOverride).toEqual(false);
         });
 
         it('should not be able to override if tutor is assessor and result has a complaint', () => {
-            comp.isAtLeastInstructor = false;
             comp.exercise!.assessmentDueDate = dayjs().add(-100, 'seconds');
             expect(comp.canOverride).toEqual(false);
         });

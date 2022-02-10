@@ -183,7 +183,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testProgrammingExerciseGetRandomSubmissionEligibleForNewAssessmentNoAssessments() {
 
         submission1 = new ProgrammingSubmission();
@@ -207,7 +207,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testFileUploadExerciseGetRandomSubmissionEligibleForNewAssessment() {
         submission1 = new FileUploadSubmission();
         submission2 = new FileUploadSubmission();
@@ -229,7 +229,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testFileUploadExerciseGetRandomSubmissionEligibleForNewAssessmentWithoutSubmission() {
         // setup
         queryTestingBasics(this.examFileUploadExercise);
@@ -250,7 +250,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testTextExerciseGetRandomSubmissionEligibleForNewAssessmentNoAssessments() {
         submission1 = new TextSubmission();
         submission2 = new TextSubmission();
@@ -272,7 +272,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testTextExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsWithoutLock() {
         submission1 = new TextSubmission();
         submission2 = new TextSubmission();
@@ -310,7 +310,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testTextExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsWithLock() {
         submission1 = new TextSubmission();
         submission2 = new TextSubmission();
@@ -342,7 +342,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testTextExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsInSecondCorrectionRoundWithoutLock() {
         submission1 = new TextSubmission();
         submission2 = new TextSubmission();
@@ -373,7 +373,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testTextExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsInSecondCorrectionRoundWithLock() {
         submission1 = new TextSubmission();
         submission2 = new TextSubmission();
@@ -409,7 +409,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testModelingExerciseGetRandomSubmissionEligibleForNewAssessmentNoAssessments() {
         submission1 = new ModelingSubmission();
         submission2 = new ModelingSubmission();
@@ -432,7 +432,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testModelingExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsWithoutLock() {
         submission1 = new ModelingSubmission();
         submission2 = new ModelingSubmission();
@@ -470,7 +470,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testModelingExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsWithLock() {
         submission1 = new ModelingSubmission();
         submission2 = new ModelingSubmission();
@@ -502,7 +502,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testModelingExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsInSecondCorrectionRoundWithoutLock() {
         submission1 = new ModelingSubmission();
         submission2 = new ModelingSubmission();
@@ -533,7 +533,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testModelingExerciseGetRandomSubmissionEligibleForNewAssessmentOneAssessmentsInSecondCorrectionRoundWithLock() {
         submission1 = new ModelingSubmission();
         submission2 = new ModelingSubmission();
@@ -602,7 +602,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetSubmissionsWithComplaintsForExerciseAsTutor() {
         var participation1 = database.createAndSaveParticipationForExercise(examTextExercise, "student1");
         var participation2 = database.createAndSaveParticipationForExercise(examTextExercise, "student2");
@@ -633,7 +633,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetSubmissionsWithMoreFeedbackRequestsForExerciseAsTutor() {
         var participation1 = database.createAndSaveParticipationForExercise(examTextExercise, "student1");
         var participation2 = database.createAndSaveParticipationForExercise(examTextExercise, "student2");

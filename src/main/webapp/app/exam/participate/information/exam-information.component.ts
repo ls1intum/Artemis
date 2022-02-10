@@ -1,8 +1,8 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam.model';
-import { endTime, getAdditionalWorkingTime, isExamOverMultipleDays, normalWorkingTime } from 'app/exam/participate/exam-utils';
-import dayjs from 'dayjs';
+import { endTime, getAdditionalWorkingTime, isExamOverMultipleDays, normalWorkingTime } from 'app/exam/participate/exam.utils';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-exam-information',

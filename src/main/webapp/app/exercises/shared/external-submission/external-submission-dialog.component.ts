@@ -11,6 +11,7 @@ import { ExternalSubmissionService } from 'app/exercises/shared/external-submiss
 import { SCORE_PATTERN } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-external-submission-dialog',
@@ -28,6 +29,10 @@ export class ExternalSubmissionDialogComponent implements OnInit {
     userId: number;
     isAssessor: boolean;
     complaint: Complaint;
+
+    // Icons
+    faSave = faSave;
+    faBan = faBan;
 
     constructor(
         private participationService: ParticipationService,

@@ -47,6 +47,20 @@ describe('User Service', () => {
             req.flush([Authority.USER, Authority.ADMIN]);
         });
 
+        it('should call correct URL to update lastNotificationRead', () => {
+            service.updateLastNotificationRead().subscribe();
+            const req = httpMock.expectOne({ method: 'PUT' });
+            const resourceUrl = SERVER_API_URL + 'api/users/notification-date';
+            expect(req.request.url).toEqual(`${resourceUrl}`);
+        });
+
+        it('should call correct URL to update notification visibility', () => {
+            service.updateNotificationVisibility(true).subscribe();
+            const req = httpMock.expectOne({ method: 'PUT' });
+            const resourceUrl = SERVER_API_URL + 'api/users/notification-visibility';
+            expect(req.request.url).toEqual(`${resourceUrl}`);
+        });
+
         it('should propagate not found response', () => {
             service.find('user').subscribe(null, (_error: any) => {
                 expect(_error.status).toEqual(404);

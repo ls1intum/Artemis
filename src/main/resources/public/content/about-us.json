@@ -269,6 +269,10 @@
         {
             "fullName": "Adem Khachnaoui",
             "photoDirectory": "public/images/about/Adem_Khachnaoui.jpg"
+        },
+        {
+            "fullName": "Lorena Schlesinger",
+            "photoDirectory": "public/images/about/Lorena_Schlesinger.jpg"
         }
     ]
 }

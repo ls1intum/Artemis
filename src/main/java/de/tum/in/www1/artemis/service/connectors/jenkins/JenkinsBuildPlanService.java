@@ -89,7 +89,7 @@ public class JenkinsBuildPlanService {
     /**
      * Creates a build plan for the programming exercise
      * @param exercise the programming exercise
-     * @param planKey the name of th eplan
+     * @param planKey the name of the plan
      * @param repositoryURL the url of the vcs repository
      * @param testRepositoryURL the url of the tests vcs repository
      */
@@ -98,11 +98,11 @@ public class JenkinsBuildPlanService {
         testRepositoryURL = jenkinsInternalUrlService.toInternalVcsUrl(testRepositoryURL);
 
         var programmingLanguage = exercise.getProgrammingLanguage();
-        var statisCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
+        var staticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
         var isSequentialTestRuns = exercise.hasSequentialTestRuns();
 
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
-        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, testRepositoryURL, repositoryURL, statisCodeAnalysisEnabled, isSequentialTestRuns);
+        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, testRepositoryURL, repositoryURL, staticCodeAnalysisEnabled, isSequentialTestRuns);
 
         var jobFolder = exercise.getProjectKey();
         var job = jobFolder + "-" + planKey;

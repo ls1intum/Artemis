@@ -37,39 +37,39 @@
                 <tr jhiSort [(predicate)]="complaintsSortingPredicate" [(ascending)]="complaintsReverseOrder" (sortChange)="sortRows()">
                     <th jhiSortBy="id">
                         <a class="th-link">#</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="result.participation.exercise.title">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.exercise' | artemisTranslate }}</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="result.submission.id">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.submissionId' | artemisTranslate }}</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="result.assessor.login">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerLogin' | artemisTranslate }}</a
-                        ><fa-icon [icon]="'sort'"></fa-icon>
+                        ><fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="result.assessor.name">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | artemisTranslate }}</a
-                        ><fa-icon [icon]="'sort'"></fa-icon>
+                        ><fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="student.login" *ngIf="hasStudentInformation">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | artemisTranslate }}</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="student.name" *ngIf="hasStudentInformation">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | artemisTranslate }}</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="submittedTime">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.dateAndTime' | artemisTranslate }}</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="accepted">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.status' | artemisTranslate }}</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th>
                         <span>{{ 'artemisApp.locks.lockStatus' | artemisTranslate }}</span>
@@ -127,8 +127,8 @@
                     </td>
 
                     <td class="text-center">
-                        <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)">
-                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                        <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)" id="show-complaint">
+                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                             <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}</span>
                             <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{
                                 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate

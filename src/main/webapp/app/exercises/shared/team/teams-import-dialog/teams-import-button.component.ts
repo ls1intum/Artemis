@@ -4,6 +4,7 @@ import { Team } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-teams-import-button',
@@ -11,7 +12,7 @@ import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-impo
         <jhi-button
             [btnType]="ButtonType.PRIMARY"
             [btnSize]="buttonSize"
-            [icon]="'plus'"
+            [icon]="faPlus"
             [title]="'artemisApp.team.importTeams.buttonLabel'"
             (onClick)="openTeamsImportDialog($event)"
         ></jhi-button>
@@ -26,6 +27,9 @@ export class TeamsImportButtonComponent {
     @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
 
     @Output() save: EventEmitter<Team[]> = new EventEmitter();
+
+    // Icons
+    faPlus = faPlus;
 
     constructor(private modalService: NgbModal) {}
 

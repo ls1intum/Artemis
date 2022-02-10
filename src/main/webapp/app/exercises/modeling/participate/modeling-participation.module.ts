@@ -8,11 +8,11 @@ import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/model
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { ArtemisModelingParticipationRoutingModule } from 'app/exercises/modeling/participate/modeling-participation.route';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
 
 @NgModule({
     imports: [
@@ -24,11 +24,11 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
         ArtemisModelingParticipationRoutingModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ModelingAssessmentModule,
-        ArtemisTeamModule,
         ArtemisTeamSubmissionSyncModule,
         ArtemisFullscreenModule,
         RatingModule,
         ArtemisMarkdownModule,
+        ArtemisTeamParticipeModule,
     ],
     declarations: [ModelingSubmissionComponent],
 })

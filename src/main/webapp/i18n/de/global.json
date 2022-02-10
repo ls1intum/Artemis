@@ -125,7 +125,8 @@
             "email.placeholder": "E-Mail-Adresse",
             "email.pattern": "Bitte nutze eine E-Mail nach folgendem Muster:",
             "cancel": "Abbruch",
-            "confirm": "Bestätigen"
+            "confirm": "Bestätigen",
+            "refresh": "Aktualisieren"
         },
         "messages": {
             "info": {

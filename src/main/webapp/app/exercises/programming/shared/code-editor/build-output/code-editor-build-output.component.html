@@ -1,16 +1,16 @@
 <div id="cardBuildOutput" class="card border build-output">
     <div class="card-header d-flex bg-primary text-white" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title">
-            <fa-icon [icon]="'terminal'"></fa-icon>
+            <fa-icon [icon]="faTerminal"></fa-icon>
             <span jhiTranslate="artemisApp.editor.buildOutput"> &nbsp; Build Output</span>
         </h3>
-        <fa-icon class="ms-auto clickable" [icon]="'chevron-down'"></fa-icon>
+        <fa-icon class="ms-auto clickable" [icon]="faChevronDown"></fa-icon>
     </div>
     <div class="card-body" *ngIf="!isBuilding && !rawBuildLogs.length">
         <p class="text-center no-buildoutput" jhiTranslate="artemisApp.editor.noBuildOutput">No build results available</p>
     </div>
     <div class="card-body" *ngIf="isBuilding">
-        <p class="text-center is-building"><fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.building">Building...</span></p>
+        <p class="text-center is-building"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.building">Building...</span></p>
     </div>
     <div class="card-body build-output__content" *ngIf="!isBuilding && rawBuildLogs.length">
         <div class="buildoutput d-flex flex-column">

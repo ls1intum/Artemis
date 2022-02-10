@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "allowJs": false,
-        "target": "es2017",
+        "target": "es2020",
         "module": "es2020",
         "moduleResolution": "node",
         "esModuleInterop": true,
@@ -22,7 +22,7 @@
         "allowSyntheticDefaultImports":true,
         "outDir": "build/resources/main/static/app",
         "forceConsistentCasingInFileNames": true,
-        "lib": ["es2018", "dom"],
+        "lib": ["es2020", "dom"],
         "typeRoots": [
             "node_modules/@types"
         ],

@@ -50,9 +50,37 @@ public abstract class QuizQuestionStatistic extends QuizStatistic {
         this.quizQuestion = quizQuestion;
     }
 
-    public abstract void addResult(SubmittedAnswer submittedAnswer, boolean rated);
+    /**
+     * increase participants, all the DropLocationCounter if the DragAndDropAssignment is correct and if the complete question is correct, than increase the correctCounter
+     *
+     * @param submittedAnswer the submittedAnswer object which contains all selected answers
+     * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
+     *                        of the quizExercise)
+     */
+    public void addResult(SubmittedAnswer submittedAnswer, boolean rated) {
+        changeStatisticBasedOnResult(submittedAnswer, rated, 1);
+    }
 
-    public abstract void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated);
+    /**
+     * decrease participants, all the DropLocationCounter if the DragAndDropAssignment is correct and if the complete question is correct, than decrease the correctCounter
+     *
+     * @param submittedAnswer the submittedAnswer object which contains all selected answers
+     * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate
+     *                        of the quizExercise)
+     */
+    public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated) {
+        changeStatisticBasedOnResult(submittedAnswer, rated, -1);
+    }
 
-    public abstract void resetStatistic();
+    protected abstract void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change);
+
+    /**
+     * reset the general statistics
+     */
+    public void resetStatistic() {
+        setParticipantsRated(0);
+        setParticipantsUnrated(0);
+        setRatedCorrectCounter(0);
+        setUnRatedCorrectCounter(0);
+    }
 }

@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKeys;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
@@ -90,14 +90,14 @@ public class AuxiliaryRepositoryService {
     private void validateAuxiliaryRepositoryId(AuxiliaryRepository auxiliaryRepository) {
         if (auxiliaryRepository.getId() != null) {
             throw new BadRequestAlertException("Auxiliary repositories must not have an id.", AUX_REPO_ENTITY_NAME,
-                    ProgrammingExerciseResource.ErrorKeys.INVALID_AUXILIARY_REPOSITORY_ID);
+                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_ID);
         }
     }
 
     private void validateAuxiliaryRepositoryNameExists(AuxiliaryRepository auxiliaryRepository) {
         if (auxiliaryRepository.getName() == null || auxiliaryRepository.getName().isEmpty()) {
             throw new BadRequestAlertException("Cannot set empty name for auxiliary repositories!", AUX_REPO_ENTITY_NAME,
-                    ProgrammingExerciseResource.ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
         }
         auxiliaryRepository.setName(auxiliaryRepository.getName().toLowerCase());
     }
@@ -105,7 +105,7 @@ public class AuxiliaryRepositoryService {
     private void validateAuxiliaryRepositoryNameLength(AuxiliaryRepository auxiliaryRepository) {
         if (auxiliaryRepository.getName().length() > AuxiliaryRepository.MAX_NAME_LENGTH) {
             throw new BadRequestAlertException("The name of an auxiliary repository must not be longer than 100 characters!", AUX_REPO_ENTITY_NAME,
-                    ProgrammingExerciseResource.ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
         }
     }
 
@@ -113,7 +113,7 @@ public class AuxiliaryRepositoryService {
         for (AuxiliaryRepository existingRepository : otherRepositories) {
             if (existingRepository.getName().equals(auxiliaryRepository.getName())) {
                 throw new BadRequestAlertException("The name '" + auxiliaryRepository.getName() + "' is not allowed for auxiliary repositories!", AUX_REPO_ENTITY_NAME,
-                        ProgrammingExerciseResource.ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+                        ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
             }
         }
     }
@@ -123,7 +123,7 @@ public class AuxiliaryRepositoryService {
             String repositoryName = repositoryType.getName();
             if (auxiliaryRepository.getName().equals(repositoryName)) {
                 throw new BadRequestAlertException("The name '" + repositoryName + "' is not allowed for auxiliary repositories!", AUX_REPO_ENTITY_NAME,
-                        ProgrammingExerciseResource.ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+                        ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
             }
         }
     }
@@ -132,14 +132,14 @@ public class AuxiliaryRepositoryService {
         Matcher ciCheckoutDirectoryMatcher = ALLOWED_BAMBOO_CHECKOUT_DIRECTORY.matcher(auxiliaryRepository.getCheckoutDirectory());
         if (!ciCheckoutDirectoryMatcher.matches() || auxiliaryRepository.getCheckoutDirectory().equals(ASSIGNMENT_CHECKOUT_PATH)) {
             throw new BadRequestAlertException("The checkout directory '" + auxiliaryRepository.getCheckoutDirectory() + "' is invalid!", AUX_REPO_ENTITY_NAME,
-                    ProgrammingExerciseResource.ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
+                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
         }
     }
 
     private void validateAuxiliaryRepositoryCheckoutDirectoryLength(AuxiliaryRepository auxiliaryRepository) {
         if (auxiliaryRepository.getCheckoutDirectory().length() > AuxiliaryRepository.MAX_CHECKOUT_DIRECTORY_LENGTH) {
             throw new BadRequestAlertException("The checkout directory path '" + auxiliaryRepository.getCheckoutDirectory() + "' is too long!", AUX_REPO_ENTITY_NAME,
-                    ProgrammingExerciseResource.ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
+                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
         }
     }
 
@@ -147,7 +147,7 @@ public class AuxiliaryRepositoryService {
         for (AuxiliaryRepository repo : otherRepositories) {
             if (repo.getCheckoutDirectory() != null && repo.getCheckoutDirectory().equals(auxiliaryRepository.getCheckoutDirectory())) {
                 throw new BadRequestAlertException("The checkout directory path is already defined for another additional repository!", AUX_REPO_ENTITY_NAME,
-                        ProgrammingExerciseResource.ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
+                        ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
             }
         }
     }
@@ -155,7 +155,7 @@ public class AuxiliaryRepositoryService {
     private void validateAuxiliaryRepositoryDescriptionLength(AuxiliaryRepository auxiliaryRepository) {
         if (auxiliaryRepository.getDescription() != null && auxiliaryRepository.getDescription().length() > AuxiliaryRepository.MAX_DESCRIPTION_LENGTH) {
             throw new BadRequestAlertException("The provided description is too long!", AUX_REPO_ENTITY_NAME,
-                    ProgrammingExerciseResource.ErrorKeys.INVALID_AUXILIARY_REPOSITORY_DESCRIPTION);
+                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_DESCRIPTION);
         }
     }
 

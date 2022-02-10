@@ -2,12 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
-import * as chai from 'chai';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ModelingExplanationEditorComponent', () => {
     let fixture: ComponentFixture<ModelingExplanationEditorComponent>;
@@ -26,13 +20,13 @@ describe('ModelingExplanationEditorComponent', () => {
             });
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(ModelingExplanationEditorComponent).to.be.ok;
+        expect(ModelingExplanationEditorComponent).not.toBeNull();
     });
 
     it('should change explanation value bidirectionally between component and template', () => {
@@ -40,20 +34,20 @@ describe('ModelingExplanationEditorComponent', () => {
         fixture.detectChanges();
         fixture.whenStable().then(() => {
             const textareaDebugElement = fixture.debugElement.query(By.css('textarea'));
-            expect(textareaDebugElement).to.exist;
+            expect(textareaDebugElement).not.toBeNull();
             const textarea = textareaDebugElement.nativeElement;
-            expect(textarea.value).to.equal('Initial Explanation');
+            expect(textarea.value).toEqual('Initial Explanation');
             textarea.value = 'Test';
             textarea.dispatchEvent(new Event('input'));
-            expect(comp.explanation).to.equal('Test');
-            expect(textarea.value).to.equal('Test');
+            expect(comp.explanation).toEqual('Test');
+            expect(textarea.value).toEqual('Test');
 
             // Test tab event
             textarea.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
             textarea.dispatchEvent(new Event('input'));
             fixture.detectChanges();
-            expect(textarea.value).to.equal('Test\t');
-            expect(comp.explanation).to.equal('Test\t');
+            expect(textarea.value).toEqual('Test\t');
+            expect(comp.explanation).toEqual('Test\t');
         });
     });
 });

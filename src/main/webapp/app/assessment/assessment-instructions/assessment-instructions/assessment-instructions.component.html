@@ -29,3 +29,7 @@
     <p class="markdown-preview" [innerHTML]="gradingInstructions"></p>
     <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly" [criteria]="criteria"></jhi-structured-grading-instructions-assessment-layout>
 </jhi-expandable-section>
+
+<jhi-expandable-section *ngIf="isAssessmentTraining" headerKey="assessmentInstructions.trainingEvaluationCriteria.title">
+    <p jhiTranslate="assessmentInstructions.trainingEvaluationCriteria.description"></p>
+</jhi-expandable-section>

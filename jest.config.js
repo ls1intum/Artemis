@@ -1,4 +1,9 @@
-const esModules = ['ngx-treeview', 'lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collapse-white-space', '@ctrl/ngx-emoji-mart'].join('|');
+require('jest-preset-angular/ngcc-jest-processor');
+
+const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collapse-white-space', '@angular/animations', '@angular/common', '@ls1intum/apollon',
+    '@angular/compiler', '@angular/core', '@angular/forms', '@angular/localize', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router',
+    '@ngx-translate/core', '@ngx-translate/http-loader', '@fortawesome/angular-fontawesome', '@angular/cdk', '@angular/material', '@angular/cdk', 'dayjs/esm',
+    'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-device-detector', '@swimlane/ngx-charts'].join('|');
 
 const {
     compilerOptions: { paths = {}, baseUrl = './' },
@@ -17,7 +22,6 @@ module.exports = {
             },
         },
     },
-    testRunner: "jest-jasmine2",
     roots: ['<rootDir>', `<rootDir>/${baseUrl}`],
     modulePaths: [`<rootDir>/${baseUrl}`],
     setupFiles: ['jest-date-mock'],
@@ -25,26 +29,51 @@ module.exports = {
     coverageDirectory: '<rootDir>/build/test-results/',
     reporters: ['default', ['jest-junit', { outputDirectory: '<rootDir>/build/test-results/', outputName: 'TESTS-results-jest.xml' }]],
     collectCoverageFrom: ['src/main/webapp/**/*.{js,jsx,ts,tsx}', '!src/main/webapp/**/*.module.{js,jsx,ts,tsx}'],
+    coveragePathIgnorePatterns: [
+        '/node_modules/',
+        'src/main/webapp/app/account/account.route.ts',
+        'src/main/webapp/app/admin/admin.route.ts',
+        'src/main/webapp/app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.route.ts',
+        'src/main/webapp/app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.route.ts',
+        'src/main/webapp/app/exercises/quiz/manage/quiz-management.route.ts',
+        'src/main/webapp/app/admin/organization-management/organization-management.route.ts',
+        'src/main/webapp/app/admin/system-notification-management/system-notification-management.route.ts',
+        'src/main/webapp/app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.route.ts',
+        'src/main/webapp/app/admin/user-management/user-management.route.ts',
+        'src/main/webapp/app/assessment/assessment-locks/assessment-locks.route.ts',
+        'src/main/webapp/app/complaints/list-of-complaints/list-of-complaints.route.ts',
+        'src/main/webapp/app/course/dashboards/assessment-dashboard/assessment-dashboard.route.ts',
+        'src/main/webapp/app/course/manage/course-management.route.ts',
+        'src/main/webapp/app/exam/exam-scores/exam-scores.route.ts',
+        'src/main/webapp/app/exam/participate/exam-participation.route.ts',
+        'src/main/webapp/app/exercises/file-upload/manage/file-upload-exercise-management.route.ts',
+        'src/main/webapp/app/exercises/modeling/manage/modeling-exercise.route.ts'
+    ],
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should be increase to at least 80%
-            statements: 77.1,
-            branches: 63.7,
-            functions: 68.2,
-            lines: 76.6,
+            statements: 77.4,
+            branches: 65.1,
+            functions: 68.9,
+            lines: 77.0,
         },
     },
-    setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-sinon', 'jest-extended/all'],
+    setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
+    moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
+    resolver: 'jest-preset-angular/build/resolvers/ng-jest-resolver.js',
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
+    transform: {
+        '^.+\\.(ts|js|mjs|html|svg)$': 'jest-preset-angular',
+    },
     modulePathIgnorePatterns: [],
-    testTimeout: 2000,
+    testTimeout: 3000,
     testMatch: [
-        '<rootDir>/src/test/javascript/spec/component/**/*.ts',
-        '<rootDir>/src/test/javascript/spec/directive/**/*.ts',
-        '<rootDir>/src/test/javascript/spec/integration/**/*.ts',
-        '<rootDir>/src/test/javascript/spec/pipe/**/*.ts',
-        '<rootDir>/src/test/javascript/spec/service/**/*.ts',
-        '<rootDir>/src/test/javascript/spec/util/**/*.ts',
+        '<rootDir>/src/test/javascript/spec/component/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/directive/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/integration/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/pipe/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/service/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/util/**/*.spec.ts',
     ],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',
@@ -54,5 +83,6 @@ module.exports = {
         '@env': '<rootDir>/src/main/webapp/environments/environment',
         '@src/(.*)': '<rootDir>/src/src/$1',
         '@state/(.*)': '<rootDir>/src/app/state/$1',
+        "^lodash-es$": "lodash"
     },
 };

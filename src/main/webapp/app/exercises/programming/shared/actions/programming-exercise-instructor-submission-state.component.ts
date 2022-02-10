@@ -4,8 +4,9 @@ import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmi
 import { Subscription } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise-utils';
+import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise.utils';
 import { ButtonType } from 'app/shared/components/button.component';
+import { faCircleNotch, faClock, faRedo } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:
@@ -34,6 +35,11 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
 
     submissionStateSubscription: Subscription;
     resultEtaSubscription: Subscription;
+
+    // Icons
+    faClock = faClock;
+    faCircleNotch = faCircleNotch;
+    faRedo = faRedo;
 
     constructor(private programmingSubmissionService: ProgrammingSubmissionService) {}
 

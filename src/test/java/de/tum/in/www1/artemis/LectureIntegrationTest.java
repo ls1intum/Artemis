@@ -52,7 +52,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true);
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().get();
-        this.textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
+        this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
         // Add users that are not in the course
         userRepository.save(ModelFactory.generateActivatedUser("student42"));
         userRepository.save(ModelFactory.generateActivatedUser("tutor42"));

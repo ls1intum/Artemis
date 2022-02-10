@@ -2,21 +2,23 @@
  * A class which encapsulates UI selectors and actions for the course management exercises page.
  */
 export class CourseManagementExercisesPage {
-    readonly exerciseCardSelector = 'jhi-course-exercise-card';
+    readonly exerciseCardSelector = '#exercise-card-';
 
-    getExerciseRowRootElement(exerciseTitle: string) {
-        return cy.get(this.exerciseCardSelector).contains(exerciseTitle).parents('tr');
+    getExerciseRowRootElement(exerciseId: number) {
+        return cy.get(this.exerciseCardSelector + exerciseId);
     }
 
-    clickDeleteExercise(exerciseTitle: string) {
-        this.getExerciseRowRootElement(exerciseTitle).find('[deleteconfirmationtext="artemisApp.exercise.delete.typeNameToConfirm"]').click();
+    clickDeleteExercise(exerciseId: number) {
+        this.getExerciseRowRootElement(exerciseId).find('#delete-exercise').click();
     }
 
     clickCreateProgrammingExerciseButton() {
         cy.get('#jh-create-entity').click();
     }
 
-    shouldContainExerciseWithName(exerciseTitle: string) {
-        cy.get(this.exerciseCardSelector).contains(exerciseTitle).scrollIntoView().should('be.visible');
+    shouldContainExerciseWithName(exerciseId: string) {
+        cy.get(this.exerciseCardSelector + exerciseId)
+            .scrollIntoView()
+            .should('be.visible');
     }
 }

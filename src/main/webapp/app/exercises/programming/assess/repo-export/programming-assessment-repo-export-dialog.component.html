@@ -120,7 +120,7 @@
             class="btn btn-default"
             *ngIf="!isRepoExportForMultipleExercises"
         >
-            <span *ngIf="this.exportInProgress" class="me-1"><fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon></span>
+            <span *ngIf="this.exportInProgress" class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon></span>
             <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>
         </button>
         <button
@@ -130,13 +130,13 @@
             class="btn btn-default"
             *ngIf="isRepoExportForMultipleExercises"
         >
-            <span *ngIf="this.exportInProgress" class="me-1"><fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon></span>
+            <span *ngIf="this.exportInProgress" class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon></span>
             <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>
         </button>
     </div>
 </form>
 <ng-template #loadingContainer>
     <div class="d-flex justify-content-center mt-4 mb-4">
-        <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
+        <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
     </div>
 </ng-template>

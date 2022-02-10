@@ -21,8 +21,8 @@ import org.springframework.security.web.server.util.matcher.OrServerWebExchangeM
 import org.zalando.problem.spring.webflux.advice.security.SecurityProblemSupport;
 
 import de.tum.in.www1.artemis.gateway.security.jwt.JWTFilter;
-import de.tum.in.www1.artemis.gateway.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.gateway.web.filter.SpaWebFilter;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.Role;
 
@@ -125,6 +125,7 @@ public class SecurityConfiguration {
                 .pathMatchers("/management/prometheus").permitAll()
                 .pathMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
                 .pathMatchers("/public/**").permitAll()
+                .pathMatchers("/logo/**").permitAll()
                 .pathMatchers("/time").permitAll();
         // @formatter:on
         return http.build();

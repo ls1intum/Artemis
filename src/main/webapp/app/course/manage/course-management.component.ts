@@ -12,6 +12,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course',
@@ -35,6 +36,11 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     dialogError$ = this.dialogErrorSource.asObservable();
 
     courseForGuidedTour?: Course;
+
+    // Icons
+    faPlus = faPlus;
+    faAngleDown = faAngleDown;
+    faAngleUp = faAngleUp;
 
     constructor(
         private examService: ExamManagementService,

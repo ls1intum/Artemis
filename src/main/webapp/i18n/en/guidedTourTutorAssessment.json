@@ -37,8 +37,8 @@
                 "headline": "Confirm instructions",
                 "content": "Click on this button and confirm only after you have read and understood the instructions."
             },
-            "reviewExampleSubmission": {
-                "headline": "Review Example Submission",
+            "readExampleSubmission": {
+                "headline": "Read Example Submission",
                 "content": "Click here to see how a text submission and its assessment could look."
             },
             "assessExampleSubmission": {
@@ -54,13 +54,13 @@
                 "content": "To start an actual assessment, click on the button <tt>Start new assessment</tt>. This button is disabled during the tutorial."
             }
         },
-        "exampleReview": {
-            "reviewSubmission": {
-                "headline": "Review Example Submission",
+        "exampleRead": {
+            "readSubmission": {
+                "headline": "Read Example Submission",
                 "content": "This is an example submission where three text blocks have already been marked for assessment."
             },
-            "reviewAssessment": {
-                "headline": "Review Example Assessment",
+            "readAssessment": {
+                "headline": "Read Example Assessment",
                 "content": "This is an example assessment of the submission. Every text block has been marked with one point."
             },
             "confirm": {

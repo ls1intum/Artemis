@@ -5,11 +5,12 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { hasParticipationChanged } from 'app/overview/participation-utils';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',
@@ -27,6 +28,9 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, 
 
     latestResult?: Result;
     resultSubscription: Subscription;
+
+    // Icons
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(private participationWebsocketService: ParticipationWebsocketService) {}
 

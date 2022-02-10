@@ -16,6 +16,7 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/utils/icons.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
 
 const cssClasses = {
     alreadyMember: 'already-member',
@@ -51,6 +52,9 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     searchNoResults = false;
     isTransitioning = false;
     rowClass: string | undefined = undefined;
+
+    // Icons
+    faUserSlash = faUserSlash;
 
     constructor(
         private router: Router,

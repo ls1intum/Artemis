@@ -4,16 +4,21 @@
             <h3 class="col-md-8 d-flex">{{ 'statistics.score_distribution' | artemisTranslate }}</h3>
         </div>
     </div>
-    <div class="col-md-9">
-        <canvas
-            baseChart
-            height="250"
-            width="1500"
-            [datasets]="chartData"
-            [labels]="barChartLabels"
-            [options]="barChartOptions"
-            [legend]="chartLegend"
-            [chartType]="barChartType"
-        ></canvas>
+    <div #containerRef class="col-md-9">
+        <ngx-charts-bar-vertical
+            [view]="[containerRef.offsetWidth, 250]"
+            [results]="ngxData"
+            [scheme]="ngxColor"
+            [xAxis]="true"
+            [yAxis]="true"
+            [yScaleMax]="100"
+            [showDataLabel]="true"
+            [yAxisTickFormatting]="yAxisTickFormatting"
+        >
+            <ng-template #tooltipTemplate let-model="model">
+                <b>{{ model.name }}</b> <br />
+                <span>{{ lookUpAbsoluteValue(model.name) }}</span>
+            </ng-template>
+        </ngx-charts-bar-vertical>
     </div>
 </div>

@@ -5,6 +5,7 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { SortService } from 'app/shared/service/sort.service';
 import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 import { round } from 'app/shared/util/utils';
+import { faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-learning-goal-course-detail-modal',
@@ -23,6 +24,9 @@ export class LearningGoalCourseDetailModalComponent implements OnInit {
     public progressInPercent = 0;
     public connectedLectureUnitsPredicate = 'id';
     public connectedLectureUnitsReverse = false;
+
+    // Icons
+    faSort = faSort;
 
     constructor(public activeModal: NgbActiveModal, public lectureUnitService: LectureUnitService, public sortService: SortService) {}
 

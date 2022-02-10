@@ -1,0 +1,56 @@
+<div>
+    <h3>{{ 'artemisApp.studentDashboard.register.signUp' | artemisTranslate }}</h3>
+    <div class="col-12 col-sm-auto" *ngIf="coursesToSelect && userIsAllowedToRegister">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th><span jhiTranslate="artemisApp.studentDashboard.course">Course</span></th>
+                    <th><span jhiTranslate="artemisApp.course.semester">Semester</span></th>
+                    <th><span jhiTranslate="artemisApp.course.description">Description</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let course of coursesToSelect">
+                    <td>
+                        <span>{{ course.title }}</span>
+                    </td>
+                    <td>
+                        <span>{{ course.semester }}</span>
+                    </td>
+                    <td>
+                        <span>{{ course.description }}</span>
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group">
+                            <jhi-confirm-button
+                                *ngIf="course.registrationConfirmationMessage!"
+                                (onConfirm)="registerForCourse(course.id!)"
+                                title="artemisApp.studentDashboard.register.signUpForCourse"
+                                confirmationText="{{ course.registrationConfirmationMessage! }}"
+                                confirmationTitle="artemisApp.studentDashboard.register.courseSignupConfirmationTitle"
+                                [disabled]="loading"
+                                [translateText]="false"
+                                [textIsMarkdown]="true"
+                            >
+                            </jhi-confirm-button>
+                            <button *ngIf="!course.registrationConfirmationMessage!" class="btn btn-primary" (click)="registerForCourse(course.id!)" [disabled]="loading">
+                                {{ 'artemisApp.studentDashboard.register.signUpForCourse' | artemisTranslate }}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div *ngIf="!loading && !coursesToSelect && userIsAllowedToRegister" class="col-12 col-sm-auto">
+        {{ 'artemisApp.studentDashboard.register.noCourse' | artemisTranslate }}
+    </div>
+    <div *ngIf="loading && !coursesToSelect && userIsAllowedToRegister" class="col-12 col-sm-auto d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="sr-only">{{ 'artemisApp.studentDashboard.register.courseLoading' | artemisTranslate }}</span>
+        </div>
+    </div>
+    <div *ngIf="!userIsAllowedToRegister" class="col-12 col-sm-auto">
+        {{ 'artemisApp.studentDashboard.register.noCourse' | artemisTranslate }}
+    </div>
+</div>

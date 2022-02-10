@@ -1,4 +1,3 @@
-import { Directive, HostListener, Input } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterEvent, RouterOutlet } from '@angular/router';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
@@ -8,42 +7,19 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
-import * as sinon from 'sinon';
-import { stub } from 'sinon';
-import sinonChai from 'sinon-chai';
-import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
-
-@Directive({
-    // tslint:disable-next-line:directive-selector
-    selector: '[routerLink]',
-})
-// tslint:disable-next-line:directive-class-suffix
-class RouterLinkSpy {
-    @Input()
-    routerLink = '';
-
-    constructor(private router: Router) {}
-
-    @HostListener('click')
-    onClick() {
-        this.router.navigateByUrl(this.routerLink);
-    }
-}
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('SystemNotificationManagementComponent', () => {
     let managementComponentFixture: ComponentFixture<SystemNotificationManagementComponent>;
     let managementComponent: SystemNotificationManagementComponent;
-    let router: any;
+    let router: MockRouter;
 
     const route = {
         data: of({ pagingParams: {} }),
@@ -52,7 +28,7 @@ describe('SystemNotificationManagementComponent', () => {
 
     beforeEach(() => {
         router = new MockRouter();
-        router.setEvents(of({ id: 1, url: '' } as RouterEvent));
+        router.events = of({ id: 1, url: '' } as RouterEvent);
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -60,7 +36,7 @@ describe('SystemNotificationManagementComponent', () => {
                 SystemNotificationManagementComponent,
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
-                RouterLinkSpy,
+                MockRouterLinkDirective,
                 MockDirective(RouterOutlet),
                 MockDirective(AlertComponent),
                 MockDirective(DeleteButtonDirective),
@@ -77,17 +53,12 @@ describe('SystemNotificationManagementComponent', () => {
             .then(() => {
                 managementComponentFixture = TestBed.createComponent(SystemNotificationManagementComponent);
                 managementComponent = managementComponentFixture.componentInstance;
-                router = managementComponentFixture.debugElement.injector.get(Router);
             });
     });
 
-    afterEach(function () {
-        sinon.restore();
-    });
-
-    it('should initialize', () => {
-        managementComponentFixture.detectChanges();
-        expect(managementComponent).to.be.ok;
+    afterEach(() => {
+        jest.restoreAllMocks();
+        router.navigate.mockRestore();
     });
 
     it('navigate to the details page of system notification if details is clicked', fakeAsync(() => {
@@ -102,9 +73,8 @@ describe('SystemNotificationManagementComponent', () => {
         button.click();
 
         tick();
-        expect(router.navigateByUrl).to.have.been.calledOnce;
-        const navigationArray = router.navigateByUrl.getCall(0).args[0];
-        expect(navigationArray).to.deep.equal(['./', notification.id]);
+        expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+        expect(router.navigateByUrl.mock.calls[0][0]).toEqual(['./', notification.id]);
     }));
 
     it('navigate to the edit page of system notification if details is clicked', fakeAsync(() => {
@@ -119,15 +89,14 @@ describe('SystemNotificationManagementComponent', () => {
         button.click();
 
         tick();
-        expect(router.navigateByUrl).to.have.been.calledOnce;
-        const navigationArray = router.navigateByUrl.getCall(0).args[0];
-        expect(navigationArray).to.deep.equal(['./', notification.id, 'edit']);
+        expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+        expect(router.navigateByUrl.mock.calls[0][0]).toEqual(['./', notification.id, 'edit']);
     }));
 
     it('should unsubscribe on destroy', () => {
-        const routeDataSpy = stub(managementComponent.routeData, 'unsubscribe');
+        const routeDataSpy = jest.spyOn(managementComponent.routeData, 'unsubscribe');
         managementComponentFixture.destroy();
-        expect(routeDataSpy).to.have.been.calledOnce;
+        expect(routeDataSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should transition on page change', fakeAsync(() => {
@@ -138,7 +107,6 @@ describe('SystemNotificationManagementComponent', () => {
         pagination.dispatchEvent(new Event('pageChange'));
 
         tick();
-        const navigationArray = router.navigate.getCall(0).args[0];
-        expect(navigationArray).to.deep.equal(['/admin/system-notification-management']);
+        expect(router.navigate.mock.calls[0][0]).toEqual(['/admin/system-notification-management']);
     }));
 });

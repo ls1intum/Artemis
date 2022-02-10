@@ -13,7 +13,7 @@
             class="btn btn-primary jh-create-entity create-modeling-exercise text-truncate mb-1 me-1"
             [routerLink]="['/course-management', course.id, 'modeling-exercises', 'new']"
         >
-            <fa-icon [icon]="'plus'"></fa-icon>
+            <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.modelingExercise.home.createLabel">Create new Modeling Exercise</span>
         </a>
         <button
@@ -22,7 +22,7 @@
             class="btn btn-primary jh-create-entity create-modeling-exercise text-truncate mb-1 me-1"
             (click)="openImportModal()"
         >
-            <fa-icon [icon]="'plus'"></fa-icon>
+            <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.modelingExercise.home.importLabel"> Import Modeling Exercise </span>
         </button>
     </h4>
@@ -33,39 +33,39 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="assessmentDueDate">
-                        <span jhiTranslate="artemisApp.exercise.assessmentDueDate">Assessment Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="artemisApp.exercise.assessmentDueDate">Assessment Due Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="includedInOverallScore">
-                        <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
-                        <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span></th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let modelingExercise of filteredModelingExercises; trackBy: trackId">
+                <tr *ngFor="let modelingExercise of filteredModelingExercises; trackBy: trackId" id="{{ 'exercise-card-' + modelingExercise.id }}">
                     <td>
                         <a [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.id }}</a>
                     </td>
-                    <td>
+                    <td id="modeling-exercise-{{ modelingExercise.id }}-title">
                         <a [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.title }}</a>
                     </td>
-                    <td>{{ modelingExercise.releaseDate | artemisDate }}</td>
-                    <td>{{ modelingExercise.dueDate | artemisDate }}</td>
-                    <td>{{ modelingExercise.assessmentDueDate | artemisDate }}</td>
-                    <td>{{ modelingExercise.maxPoints }}</td>
-                    <td>{{ modelingExercise.bonusPoints }}</td>
-                    <td>{{ exerciseService.isIncludedInScore(modelingExercise) }}</td>
+                    <td id="modeling-exercise-{{ modelingExercise.id }}-releaseDate">{{ modelingExercise.releaseDate | artemisDate }}</td>
+                    <td id="modeling-exercise-{{ modelingExercise.id }}-dueDate">{{ modelingExercise.dueDate | artemisDate }}</td>
+                    <td id="modeling-exercise-{{ modelingExercise.id }}-assessmentDueDate">{{ modelingExercise.assessmentDueDate | artemisDate }}</td>
+                    <td id="modeling-exercise-{{ modelingExercise.id }}-maxPoints">{{ modelingExercise.maxPoints }}</td>
+                    <td id="modeling-exercise-{{ modelingExercise.id }}-bonusPoints">{{ modelingExercise.bonusPoints }}</td>
+                    <td id="modeling-exercise-{{ modelingExercise.id }}-included">{{ exerciseService.isIncludedInScore(modelingExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ modelingExercise.presentationScoreEnabled }}</td>
                     <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
                     <td class="text-end">
@@ -75,7 +75,7 @@
                                 [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'scores']"
                                 class="btn btn-info btn-sm me-1"
                             >
-                                <fa-icon [icon]="'table'"></fa-icon>
+                                <fa-icon [icon]="faTable"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                             </a>
                             <a
@@ -83,7 +83,7 @@
                                 [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id, 'participations']"
                                 class="btn btn-primary btn-sm me-1"
                             >
-                                <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                                <fa-icon [icon]="farListAlt"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                             </a>
                             <a
@@ -91,7 +91,7 @@
                                 [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id, 'submissions']"
                                 class="btn btn-success btn-sm me-1"
                             >
-                                <fa-icon [icon]="'book'"></fa-icon>
+                                <fa-icon [icon]="faBook"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
                             </a>
                             <!-- Example Submission -->
@@ -100,15 +100,15 @@
                                 [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id, 'example-submissions']"
                                 class="btn btn-success btn-sm me-1"
                             >
-                                <fa-icon [icon]="'book'"></fa-icon>
+                                <fa-icon [icon]="faBook"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions">Example Submissions</span>
                             </a>
                             <a
                                 *ngIf="modelingExercise.teamMode && modelingExercise.isAtLeastTutor"
-                                [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'teams']"
+                                [routerLink]="['/course-management', modelingExercise.course?.id, 'exercises', modelingExercise.id, 'teams']"
                                 class="btn btn-primary btn-sm me-1"
                             >
-                                <fa-icon [icon]="'users'"></fa-icon>
+                                <fa-icon [icon]="faUsers"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
                             </a>
                             <a
@@ -116,7 +116,7 @@
                                 [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'edit']"
                                 class="btn btn-warning btn-sm me-1"
                             >
-                                <fa-icon [icon]="'wrench'"></fa-icon>
+                                <fa-icon [icon]="faWrench"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </a>
                             <button
@@ -128,7 +128,7 @@
                                 (delete)="deleteModelingExercise(modelingExercise.id!)"
                                 [dialogError]="dialogError$"
                             >
-                                <fa-icon [icon]="'times'"></fa-icon>
+                                <fa-icon [icon]="faTimes"></fa-icon>
                             </button>
                         </div>
                     </td>

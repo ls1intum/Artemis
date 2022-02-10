@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import javax.validation.constraints.NotNull;
+
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
@@ -45,6 +47,7 @@ public class UMLMethod extends UMLElement implements Serializable {
      *
      * @return  the UML class that contains this method
      */
+    @NotNull
     public UMLElement getParentElement() {
         return parentElement;
     }
@@ -54,7 +57,7 @@ public class UMLMethod extends UMLElement implements Serializable {
      *
      * @param parentElement the UML class that contains this method
      */
-    public void setParentElement(UMLElement parentElement) {
+    public void setParentElement(@NotNull UMLElement parentElement) {
         this.parentElement = parentElement;
     }
 
@@ -80,11 +83,9 @@ public class UMLMethod extends UMLElement implements Serializable {
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (!(reference instanceof UMLMethod)) {
+        if (!(reference instanceof UMLMethod referenceMethod)) {
             return similarity;
         }
-
-        UMLMethod referenceMethod = (UMLMethod) reference;
 
         if (!parentsSimilar(referenceMethod)) {
             return similarity;

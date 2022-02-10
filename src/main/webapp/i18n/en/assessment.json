@@ -18,6 +18,9 @@
             "assessmentLockedCurrentUser": "You have the lock for this assessment",
             "assessmentReadOnlyUnhandledComplaint": "There is a complaint for this assessment. Another tutor must respond.",
             "moreFeedbackRequest": "You must respond to the feedback request.",
+            "teamComplaint": "You must respond to the complaint.",
+            "automaticAssessmentComplaint": "You may respond to the complaint.",
+            "automaticAssessmentFeedbackRequest": "You may respond to the feedback request.",
             "assessmentReadOnlyHandledComplaint": "The complaint about your assessment has been resolved.",
             "assessmentDueDateIsOver": "Assessment Due Date has passed, the assessment will be published immediately after submitting.",
             "diffView": {
@@ -32,13 +35,15 @@
                 "overrideAssessment": "Override Assessment",
                 "nextSubmission": "Assess Next Submission",
                 "resolveConflict": "Resolve Conflicts",
-                "importExampleSubmission": "Import as Example Submission"
+                "useAsExampleSubmission": "Use as Example Submission"
             },
             "detail": {
                 "feedback": "Feedback",
+                "feedbackWithColon": "Feedback:",
                 "scoreFor": "Assessment for",
                 "tutorComment": "Tutor Comment:"
             },
+            "useAsExampleSubmissionVerificationQuestion": "Are you sure to import this submission as an example submission?",
             "messages": {
                 "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again.",
                 "loadSubmissionFailed": "Retrieving requested submission failed.",
@@ -54,7 +59,7 @@
                 "empty": "No Submissions for this exercise!",
                 "loading": "Loading...",
                 "columns": {
-                    "submissionDate": "Submission date",
+                    "submissionDate": "Submission Date",
                     "result": "Latest Result",
                     "submissionCount": "Submissions",
                     "score": "Points",

@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
@@ -9,6 +9,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { faAngleDown, faAngleRight, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -41,6 +42,13 @@ export class ExamParticipationSummaryComponent implements OnInit {
     testRunConduction = false;
 
     examWithOnlyIdAndStudentReviewPeriod: Exam;
+
+    // Icons
+    faFolderOpen = faFolderOpen;
+    faInfoCircle = faInfoCircle;
+    faPrint = faPrint;
+    faAngleRight = faAngleRight;
+    faAngleDown = faAngleDown;
 
     constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService, private courseManagementService: CourseManagementService) {}
 

@@ -94,7 +94,7 @@ export function setup() {
         sleep(delay * 3);
 
         console.log('Starting exercise ' + exerciseId);
-        let participation = startExercise(artemis, courseId, exerciseId);
+        let participation = startExercise(artemis, exerciseId);
         if (participation) {
             const submissionId = participation.submissions[0].id;
             console.log('Submitting submission ' + submissionId);

@@ -37,7 +37,7 @@
                 "headline": "Bestätigung",
                 "content": "Klicke auf diesen Button und bestätige, dass du die Anleitung gelesen und verstanden hast."
             },
-            "reviewExampleSubmission": {
+            "readExampleSubmission": {
                 "headline": "Beispielabgaben ansehen",
                 "content": "Klick hier, um eine Beispielabgabe für eine Textaufgabe und deren Bewertung anzusehen."
             },
@@ -54,12 +54,12 @@
                 "content": "Um eine Bewertung zu starten, musst du auf den Button <tt>Neue Bewertung starten</tt> klicken. Wir haben den Button hier für Tutorialzwecke deaktiviert."
             }
         },
-        "exampleReview": {
-            "reviewSubmission": {
+        "exampleRead": {
+            "readSubmission": {
                 "headline": "Beispielabgabe",
                 "content": "Das ist eine Beispielaufgabe, bei der bereits drei Textblöcke zur Bewertung markiert sind."
             },
-            "reviewAssessment": {
+            "readAssessment": {
                 "headline": "Beispielbewertung",
                 "content": "Das ist eine Beispielbewertung der Abgabe. Jeder markierte Textblock wurde mit der Punktzahl '1' bewertet."
             },

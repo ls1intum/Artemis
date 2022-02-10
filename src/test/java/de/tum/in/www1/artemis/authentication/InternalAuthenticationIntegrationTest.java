@@ -9,7 +9,8 @@ import static org.mockito.Mockito.doReturn;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -166,6 +167,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @NotNull
     private User createUserWithRestApi(Set<Authority> authorities) throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
@@ -187,6 +189,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         return user;
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     private void assertUserGroups(User user, boolean students, boolean tutors, boolean editors, boolean instructors) {
         if (students) {
             assertThat(user.getGroups()).contains(tutorialGroupStudents.get());
@@ -214,29 +217,33 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         }
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUserWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY));
         assertUserGroups(user, true, false, false, false);
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void createTutorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY));
         assertUserGroups(user, true, true, false, false);
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void createEditorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY, EDITOR_AUTHORITY));
         assertUserGroups(user, true, true, true, false);
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void createInstructorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY, EDITOR_AUTHORITY, INSTRUCTOR_AUTHORITY));
         assertUserGroups(user, true, true, true, true);
@@ -258,8 +265,9 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         assertThat(this.tokenProvider.validateTokenForAuthority(jwtToken.getIdToken())).as("JWT token is valid").isTrue();
     }
 
+    @Deprecated // Moved to user management microservice. To be removed.
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUserWithRemovedGroups_internalAuth_successful() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
         gitlabRequestMockProvider.mockUpdateUser();

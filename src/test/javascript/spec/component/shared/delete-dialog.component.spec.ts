@@ -1,24 +1,19 @@
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement, EventEmitter } from '@angular/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { By } from '@angular/platform-browser';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { stub } from 'sinon';
 import { Observable, Subject } from 'rxjs';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import '@angular/localize/init';
 
 describe('DeleteDialogComponent', () => {
     let comp: DeleteDialogComponent;
@@ -42,11 +37,12 @@ describe('DeleteDialogComponent', () => {
     });
 
     it('Dialog is correctly initialized', fakeAsync(() => {
+        const dismissSyp = jest.spyOn(ngbActiveModal, 'dismiss');
         let inputFormGroup = debugElement.query(By.css('.form-group'));
-        expect(inputFormGroup).to.not.exist;
+        expect(inputFormGroup).toBeNull();
 
         const modalTitle = fixture.debugElement.query(By.css('.modal-title'));
-        expect(modalTitle).to.exist;
+        expect(modalTitle).not.toBeNull();
         comp.entityTitle = 'title';
         comp.deleteQuestion = 'artemisApp.exercise.delete.question';
         comp.deleteConfirmationText = 'artemisApp.exercise.delete.typeNameToConfirm';
@@ -54,17 +50,17 @@ describe('DeleteDialogComponent', () => {
         fixture.detectChanges();
 
         const closeButton = fixture.debugElement.query(By.css('.btn-close'));
-        expect(closeButton).to.exist;
+        expect(closeButton).not.toBeNull();
         closeButton.nativeElement.click();
-        expect(ngbActiveModal.dismiss).to.be.calledOnce;
+        expect(dismissSyp).toHaveBeenCalledTimes(1);
 
         const cancelButton = fixture.debugElement.query(By.css('.btn.btn-secondary'));
-        expect(cancelButton).to.exist;
+        expect(cancelButton).not.toBeNull();
         cancelButton.nativeElement.click();
-        expect(ngbActiveModal.dismiss).to.be.calledTwice;
+        expect(dismissSyp).toHaveBeenCalledTimes(2);
 
         inputFormGroup = debugElement.query(By.css('.form-group'));
-        expect(inputFormGroup).to.exist;
+        expect(inputFormGroup).not.toBeNull();
     }));
 
     it('Form properly checked before submission', fakeAsync(() => {
@@ -75,20 +71,20 @@ describe('DeleteDialogComponent', () => {
         comp.dialogError = new Observable<string>();
         fixture.detectChanges();
         let submitButton = debugElement.query(By.css('.btn.btn-danger'));
-        expect(submitButton.nativeElement.disabled).to.be.true;
+        expect(submitButton.nativeElement.disabled).toBeTrue();
 
         // User entered some title
         comp.confirmEntityName = 'some title';
         fixture.detectChanges();
         submitButton = debugElement.query(By.css('.btn.btn-danger'));
-        expect(submitButton.nativeElement.disabled).to.be.true;
+        expect(submitButton.nativeElement.disabled).toBeTrue();
 
         // User entered correct tile
         comp.confirmEntityName = 'title';
-        expect(comp.confirmEntityName).to.be.equal('title');
+        expect(comp.confirmEntityName).toEqual('title');
         fixture.detectChanges();
         submitButton = debugElement.query(By.css('.btn.btn-danger'));
-        expect(submitButton.nativeElement.disabled).to.be.false;
+        expect(submitButton.nativeElement.disabled).toBeFalse();
     }));
 
     it('Error dialog events are correctly handled', fakeAsync(() => {
@@ -100,25 +96,25 @@ describe('DeleteDialogComponent', () => {
         comp.delete = new EventEmitter<{ [p: string]: boolean }>();
         fixture.detectChanges();
         let deleteButton = debugElement.query(By.css('.btn.btn-danger'));
-        expect(deleteButton.nativeElement.disabled).to.be.false;
+        expect(deleteButton.nativeElement.disabled).toBeFalse();
 
         // external component delete method was executed
         comp.confirmDelete();
         fixture.detectChanges();
         deleteButton = debugElement.query(By.css('.btn.btn-danger'));
-        expect(deleteButton.nativeElement.disabled).to.be.true;
+        expect(deleteButton.nativeElement.disabled).toBeTrue();
 
         // external component emits error to the dialog
         dialogErrorSource.next('example error');
         fixture.detectChanges();
         deleteButton = debugElement.query(By.css('.btn.btn-danger'));
-        expect(deleteButton.nativeElement.disabled).to.be.false;
+        expect(deleteButton.nativeElement.disabled).toBeFalse();
 
         // external component completed delete method successfully
-        const clearStub = stub(comp, 'clear');
-        clearStub.returns();
+        const clearStub = jest.spyOn(comp, 'clear');
+        clearStub.mockReturnValue();
         dialogErrorSource.next('');
-        expect(clearStub.calledOnce).to.be.true;
+        expect(clearStub).toHaveBeenCalledTimes(1);
 
         fixture.destroy();
         flush();

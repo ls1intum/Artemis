@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
@@ -12,6 +12,8 @@ import { LtiConfiguration } from 'app/entities/lti-configuration.model';
 import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exercise-statistics-dto.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { User } from 'app/core/user/user.model';
+import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -137,11 +139,9 @@ export class ExerciseService {
     }
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {
-        return this.http.get<Exercise[]>(`${this.resourceUrl}/upcoming`, { observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => this.convertExerciseCategoryArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => this.setAccessRightsExerciseEntityArrayResponseType(res)),
-        );
+        return this.http
+            .get<Exercise[]>(`${this.resourceUrl}/upcoming`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.processExerciseEntityArrayResponse(res)));
     }
 
     /**
@@ -177,10 +177,11 @@ export class ExerciseService {
 
     /**
      * Returns an active quiz, a visible quiz or an exercise due in delayInHours or 12 hours if not specified
-     * @param { Exercise[] } exercises - Considered exercises
-     * @param { number} delayInHours - If set, amount of hours that are considered
+     * @param exercises - Considered exercises
+     * @param delayInHours - If set, amount of hours that are considered
+     * @param student - Needed when individual due dates for course exercises should be considered
      */
-    getNextExerciseForHours(exercises?: Exercise[], delayInHours = 12) {
+    getNextExerciseForHours(exercises?: Exercise[], delayInHours = 12, student?: User) {
         // check for quiz exercise in order to prioritize before other exercise types
         const nextQuizExercises = exercises?.filter((exercise: QuizExercise) => exercise.type === ExerciseType.QUIZ && !exercise.ended);
         return (
@@ -190,7 +191,8 @@ export class ExerciseService {
             nextQuizExercises?.find((exercise: QuizExercise) => exercise.isVisibleBeforeStart) ||
             // 3rd priority is the next due exercise
             exercises?.find((exercise) => {
-                const dueDate = exercise.dueDate!;
+                const studentParticipation = student ? exercise.studentParticipations?.find((participation) => participation.student?.id === student?.id) : undefined;
+                const dueDate = getExerciseDueDate(exercise, studentParticipation);
                 return dayjs().isBefore(dueDate) && dayjs().add(delayInHours, 'hours').isSameOrAfter(dueDate);
             })
         );
@@ -358,11 +360,9 @@ export class ExerciseService {
      * @param { number } exerciseId - Id of exercise to retrieve
      */
     getForTutors(exerciseId: number): Observable<HttpResponse<Exercise>> {
-        return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-assessment-dashboard`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-            map((res: EntityResponseType) => this.setAccessRightsExerciseEntityResponseType(res)),
-        );
+        return this.http
+            .get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-assessment-dashboard`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -423,45 +423,39 @@ export class ExerciseService {
     /**
      * This method bundles recurring conversion steps for Exercise EntityResponses.
      * @param exerciseRes
-     * @private
      */
-    private processExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
+    public processExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
         this.convertDateFromServer(exerciseRes);
         this.convertExerciseCategoriesFromServer(exerciseRes);
         this.setAccessRightsExerciseEntityResponseType(exerciseRes);
         return exerciseRes;
     }
 
-    private setAccessRightsExerciseEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
+    /**
+     * This method bundles recurring conversion steps for Exercise EntityArrayResponses.
+     * @param exerciseResArray
+     */
+    public processExerciseEntityArrayResponse(exerciseResArray: EntityArrayResponseType): EntityArrayResponseType {
+        this.convertDateArrayFromServer(exerciseResArray);
+        this.convertExerciseCategoryArrayFromServer(exerciseResArray);
+        this.setAccessRightsExerciseEntityArrayResponseType(exerciseResArray);
+        return exerciseResArray;
+    }
+
+    public setAccessRightsExerciseEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((exercise: Exercise) => {
-                this.setAccessRightsExercise(exercise);
+                this.accountService.setAccessRightsForExerciseAndReferencedCourse(exercise);
             });
         }
         return res;
     }
 
-    private setAccessRightsExerciseEntityResponseType(res: EntityResponseType): EntityResponseType {
+    public setAccessRightsExerciseEntityResponseType(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.setAccessRightsExercise(res.body);
+            this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body as Exercise);
         }
         return res;
-    }
-
-    /**
-     * To reduce the error proneness the access rights for exercises and also
-     * their referenced course are set.
-     * @param exercise the course for which the access rights are set
-     * @private
-     */
-    private setAccessRightsExercise(exercise: Exercise): Exercise {
-        if (exercise) {
-            this.accountService.setAccessRightsForExercise(exercise);
-            if (exercise.course) {
-                this.accountService.setAccessRightsForCourse(exercise.course);
-            }
-        }
-        return exercise;
     }
 }
 

@@ -108,7 +108,7 @@ public class ExampleSubmissionService {
             newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(modelingSubmission));
         }
         if (exercise instanceof TextExercise) {
-            TextSubmission textSubmission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksByIdElseThrow(submissionId);
+            TextSubmission textSubmission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(submissionId);
             checkGivenExerciseIdSameForSubmissionParticipation(exercise.getId(), textSubmission.getParticipation().getExercise().getId());
             // example submission does not need participation
             textSubmission.setParticipation(null);
@@ -122,7 +122,6 @@ public class ExampleSubmissionService {
      *
      * @param originalExerciseId        given exercise id in the request
      * @param exerciseIdInSubmission    exercise id in submission participation
-     * @throws BadRequestAlertException
      */
     public void checkGivenExerciseIdSameForSubmissionParticipation(long originalExerciseId, long exerciseIdInSubmission) {
         if (!Objects.equals(originalExerciseId, exerciseIdInSubmission)) {

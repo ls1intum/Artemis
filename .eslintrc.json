@@ -2,8 +2,7 @@
     "plugins": [
 //        "@angular-eslint/eslint-plugin",
         "@typescript-eslint",
-        "@typescript-eslint/tslint",
-        "chai-friendly"
+        "@typescript-eslint/tslint"
     ],
     "extends": [
 //        "eslint:recommended",
@@ -33,10 +32,7 @@
         "@typescript-eslint/tslint/config": [
             "error",
             {
-                "lintFile": "./tslint.json",
-                "rules": {
-                    "no-unused-expressions": "off"
-                }
+                "lintFile": "./tslint.json"
             }
         ],
         "@typescript-eslint/no-unused-vars": [
@@ -54,8 +50,7 @@
         "@typescript-eslint/no-unsafe-call": "off",
         "@typescript-eslint/no-floating-promises": "off",
         "@typescript-eslint/no-unsafe-assignment": "off",
-        "@angular-eslint/no-output-on-prefix": "off",
-        "chai-friendly/no-unused-expressions": 2
+        "@angular-eslint/no-output-on-prefix": "off"
     },
     "overrides": [{
         "files": ["mock-*.ts"],

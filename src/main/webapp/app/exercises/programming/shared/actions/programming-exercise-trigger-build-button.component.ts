@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
-import { compose, head, orderBy } from 'lodash/fp';
+import { head, orderBy } from 'lodash-es';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -11,8 +11,8 @@ import { Result } from 'app/entities/result.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { hasParticipationChanged } from 'app/overview/participation-utils';
 import { AlertService } from 'app/core/util/alert.service';
+import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
@@ -59,7 +59,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             // The identification of manual results is only relevant when the deadline was passed, otherwise they could be overridden anyway.
             if (hasDeadlinePassed(this.exercise)) {
                 // If the last result was manual, the instructor might not want to override it with a new automatic result.
-                const newestResult = !!this.participation.results && compose(head, orderBy('id', 'desc'))(this.participation.results);
+                const newestResult = !!this.participation.results && head(orderBy(this.participation.results, ['id'], ['desc']));
                 this.lastResultIsManual = !!newestResult && Result.isManualResult(newestResult);
             }
             // We can trigger the build only if the participation is active (has build plan) or if the build plan was archived (new build plan will be created).

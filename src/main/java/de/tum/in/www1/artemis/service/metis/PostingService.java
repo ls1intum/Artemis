@@ -79,7 +79,7 @@ public abstract class PostingService {
     /**
      * Method to check if the possibly associated exercise is not an exam exercise
      *
-     * @param post     post that is checked
+     * @param post post that is checked
      */
     void preCheckPostValidity(Post post) {
         // do not allow postings for exam exercises

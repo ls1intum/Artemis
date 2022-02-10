@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIF
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
@@ -27,11 +28,11 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -55,8 +56,6 @@ public class ProgrammingExerciseGradingService {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
-    private final ProgrammingAssessmentService programmingAssessmentService;
-
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
@@ -69,7 +68,7 @@ public class ProgrammingExerciseGradingService {
 
     private final ResultService resultService;
 
-    private final ExamDateService examDateService;
+    private final ExerciseDateService exerciseDateService;
 
     private final SubmissionPolicyService submissionPolicyService;
 
@@ -77,10 +76,10 @@ public class ProgrammingExerciseGradingService {
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
+            SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExamDateService examDateService,
+            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -89,16 +88,15 @@ public class ProgrammingExerciseGradingService {
         this.resultRepository = resultRepository;
         this.messagingTemplate = messagingTemplate;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
-        this.programmingAssessmentService = programmingAssessmentService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.auditEventRepository = auditEventRepository;
         this.groupNotificationService = groupNotificationService;
         this.resultService = resultService;
-        this.examDateService = examDateService;
         this.submissionPolicyService = submissionPolicyService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -262,65 +260,148 @@ public class ProgrammingExerciseGradingService {
      */
     public Result calculateScoreForResult(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
         Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
-        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases;
+        final Set<ProgrammingExerciseTestCase> testCasesForCurrentDate;
         // We don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
         if (isStudentParticipation) {
-            testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
+            testCasesForCurrentDate = filterTestCasesForCurrentDate(result.getParticipation(), testCases);
+        }
+        else {
+            testCasesForCurrentDate = testCases;
         }
         return calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, isStudentParticipation);
     }
 
     /**
-     * Updates <b>all</b> latest automatic results of the given exercise with the information of the exercises test cases. This update includes:
-     * - Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs)
-     * - Checking the due date and the visibility.
-     * - Recalculating the score based based on the successful test cases weight vs the total weight of all test cases.
+     * Updates <b>all</b> latest results of the given exercise with the information of the exercises test cases.
+     * <p>
+     * This update includes:
+     * <ul>
+     *     <li>Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs).</li>
+     *     <li>Checking the due date and the visibility.</li>
+     *     <li>Recalculating the score based on the successful test cases weight vs the total weight of all test cases.</li>
+     * </ul>
      *
-     * If there are no test cases stored in the database for the given exercise (i.e. we have a legacy exercise) or the weight has not been changed, then the result will not change
+     * If there are no test cases stored in the database for the given exercise (i.e. we have a legacy exercise) or the weight has not been changed, then the result will not change.
      *
-     * @param exercise the exercise whose results should be updated
-     * @return the results of the exercise that have been updated
+     * @param exercise whose results should be updated.
+     * @return the results of the exercise that have been updated.
      */
-    public List<Result> updateAllResults(ProgrammingExercise exercise) {
-        Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+    public List<Result> updateAllResults(final ProgrammingExercise exercise) {
+        final Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
 
-        ArrayList<Result> updatedResults = new ArrayList<>();
+        final Stream<Result> updatedTemplateAndSolutionResult = updateTemplateAndSolutionResults(exercise, testCases);
 
-        templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
-                .flatMap(p -> Optional.ofNullable(p.findLatestLegalResult())).ifPresent(result -> {
-                    calculateScoreForResult(testCases, testCases, result, exercise, false);
-                    updatedResults.add(result);
-                });
-        solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
-                .flatMap(p -> Optional.ofNullable(p.findLatestLegalResult())).ifPresent(result -> {
-                    calculateScoreForResult(testCases, testCases, result, exercise, false);
-                    updatedResults.add(result);
-                });
-
-        // filter the test cases for the student results if necessary
-        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
+        final List<StudentParticipation> studentParticipations = new ArrayList<>();
         // We only update the latest automatic results here, later manual assessments are not affected
-        List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId());
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId()));
+        // Also update manual results
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId()));
 
-        for (StudentParticipation studentParticipation : participations) {
-            Result result = studentParticipation.findLatestLegalResult();
-            if (result != null) {
-                calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, true);
-                updatedResults.add(result);
-            }
+        final Stream<Result> updatedStudentResults = updateResults(exercise, testCases, studentParticipations);
+
+        return Stream.concat(updatedTemplateAndSolutionResult, updatedStudentResults).toList();
+    }
+
+    /**
+     * Updates the latest results of all participations that do not have an individual due date. This includes the template and solution participation.
+     * <p>
+     * For details what will be updated for individual results, see {@link ProgrammingExerciseGradingService#updateAllResults}.
+     * @param exercise whose results should be updated.
+     * @return the results of the exercise that have been updated.
+     */
+    public List<Result> updateResultsOnlyRegularDueDateParticipations(final ProgrammingExercise exercise) {
+        final Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+
+        final Stream<Result> updatedTemplateAndSolutionResult = updateTemplateAndSolutionResults(exercise, testCases);
+
+        final List<StudentParticipation> studentParticipations = new ArrayList<>();
+        // We only update the latest automatic results here, later manual assessments are not affected
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacksWithoutIndividualDueDate(exercise.getId()));
+        // Also update manual results
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacksWithoutIndividualDueDate(exercise.getId()));
+
+        final Stream<Result> updatedStudentResults = updateResults(exercise, testCases, studentParticipations);
+
+        return Stream.concat(updatedTemplateAndSolutionResult, updatedStudentResults).toList();
+    }
+
+    /**
+     * Updates the latest result scores of the given participation.
+     * <p>
+     * For details what will be updated, see {@link ProgrammingExerciseGradingService#updateAllResults}.
+     * @param participation for which the results should be updated.
+     * @return a list of updated results (maximum two: latest automatic, and latest manual result).
+     */
+    public List<Result> updateParticipationResults(final ProgrammingExerciseStudentParticipation participation) {
+        final ProgrammingExercise exercise = participation.getProgrammingExercise();
+        final Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+        final Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(testCases, true);
+        final Set<ProgrammingExerciseTestCase> testCasesAfterDueDate = filterTestCasesForStudents(testCases, false);
+
+        final Optional<Result> updatedAutomaticResult = studentParticipationRepository.findByIdWithLatestAutomaticResultAndFeedbacks(participation.getId())
+                .flatMap(studentParticipation -> updateLatestResult(exercise, studentParticipation, testCases, testCasesBeforeDueDate, testCasesAfterDueDate, true));
+        final Optional<Result> updatedManualResult = studentParticipationRepository.findByIdWithManualResultAndFeedbacks(participation.getId())
+                .flatMap(studentParticipation -> updateLatestResult(exercise, studentParticipation, testCases, testCasesBeforeDueDate, testCasesAfterDueDate, true));
+
+        return Stream.of(updatedAutomaticResult, updatedManualResult).flatMap(Optional::stream).toList();
+    }
+
+    /**
+     * Updates the latest results for the given participations.
+     * @param exercise the participations belong to.
+     * @param allTestCases of the programming exercise.
+     * @param participations for which the latest results should be updated.
+     * @return all results that have been updated.
+     */
+    private Stream<Result> updateResults(final ProgrammingExercise exercise, final Set<ProgrammingExerciseTestCase> allTestCases, final List<StudentParticipation> participations) {
+        final Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(allTestCases, true);
+        final Set<ProgrammingExerciseTestCase> testCasesAfterDueDate = filterTestCasesForStudents(allTestCases, false);
+
+        return participations.stream().map(participation -> updateLatestResult(exercise, participation, allTestCases, testCasesBeforeDueDate, testCasesAfterDueDate, true))
+                .flatMap(Optional::stream);
+    }
+
+    /**
+     * Updates the latest results for the template and solution participation.
+     * @param exercise the template and solution belong to.
+     * @param testCases of the exercise.
+     * @return a stream of results that have been updated.
+     *         (maximum length two; if template and/or solution do not have a results, then fewer)
+     */
+    private Stream<Result> updateTemplateAndSolutionResults(final ProgrammingExercise exercise, final Set<ProgrammingExerciseTestCase> testCases) {
+        final Optional<Result> templateResult = templateProgrammingExerciseParticipationRepository
+                .findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
+                .flatMap(templateParticipation -> updateLatestResult(exercise, templateParticipation, testCases, testCases, testCases, false));
+
+        final Optional<Result> solutionResult = solutionProgrammingExerciseParticipationRepository
+                .findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
+                .flatMap(solutionParticipation -> updateLatestResult(exercise, solutionParticipation, testCases, testCases, testCases, false));
+
+        return Stream.of(templateResult, solutionResult).flatMap(Optional::stream);
+    }
+
+    /**
+     * Updates the score for the latest result of the given participation.
+     * @param exercise the participation belongs to.
+     * @param participation of a student in the exercise.
+     * @param allTestCases of this exercise.
+     * @param testCasesBeforeDueDate the test cases that are visible to the student before the due date.
+     * @param testCasesAfterDueDate the test cases that are visible to the student after the due date.
+     * @param applySubmissionPolicy true, if submission policies should be taken into account when updating the score.
+     * @return the latest result with an updated score, or nothing if the participation had no results.
+     */
+    private Optional<Result> updateLatestResult(ProgrammingExercise exercise, Participation participation, Set<ProgrammingExerciseTestCase> allTestCases,
+            Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate, Set<ProgrammingExerciseTestCase> testCasesAfterDueDate, boolean applySubmissionPolicy) {
+        Result result = participation.findLatestLegalResult();
+        if (result == null) {
+            return Optional.empty();
         }
 
-        // Update also manual results
-        List<StudentParticipation> participationsWithManualResult = studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId());
-        for (StudentParticipation studentParticipation : participationsWithManualResult) {
-            Result result = studentParticipation.findLatestLegalResult();
-            if (result != null) {
-                calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, false);
-                updatedResults.add(result);
-            }
-        }
+        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
+        final Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = isBeforeDueDate ? testCasesBeforeDueDate : testCasesAfterDueDate;
 
-        return updatedResults;
+        calculateScoreForResult(allTestCases, testCasesForCurrentDate, result, exercise, applySubmissionPolicy);
+        return Optional.of(result);
     }
 
     public void logReEvaluate(User user, ProgrammingExercise exercise, Course course, List<Result> results) {
@@ -332,12 +413,21 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Filter all test cases from the score calculation that are never visible or ones with visibility "after due date" if the due date has not yet passed.
-     * @param exercise to which the test cases belong to.
      * @param testCases which should be filtered.
      * @return testCases, but the ones based on the described visibility criterion removed.
      */
-    private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCases) {
-        boolean isBeforeDueDate = !examDateService.isExerciseWorkingPeriodOver(exercise);
+    private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(Participation participation, Set<ProgrammingExerciseTestCase> testCases) {
+        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
+        return filterTestCasesForStudents(testCases, isBeforeDueDate);
+    }
+
+    /**
+     * Filters the test cases to only include the ones a student should be able to see.
+     * @param testCases all test cases of an exercise.
+     * @param isBeforeDueDate true, if the due date has not yet passed.
+     * @return a set of test cases that are visible to the student.
+     */
+    private Set<ProgrammingExerciseTestCase> filterTestCasesForStudents(final Set<ProgrammingExerciseTestCase> testCases, boolean isBeforeDueDate) {
         return testCases.stream().filter(testCase -> !testCase.isInvisible()).filter(testCase -> !(isBeforeDueDate && testCase.isAfterDueDate())).collect(Collectors.toSet());
     }
 
@@ -347,6 +437,7 @@ public class ProgrammingExerciseGradingService {
      * @param testCasesForCurrentDate Test cases for the exercise for the current date
      * @param result The result to be updated
      * @param exercise The current exercise
+     * @param applySubmissionPolicy true, if submission policies should be taken into account when updating the score.
      * @return The updated result
      */
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
@@ -670,7 +761,7 @@ public class ProgrammingExerciseGradingService {
     private String updateManualResultString(String resultString, Result result, ProgrammingExercise exercise) {
         // Calculate different scores for totalScore calculation and add points and maxScore to result string
         double maxScore = exercise.getMaxPoints();
-        double points = programmingAssessmentService.calculateTotalScore(result);
+        double points = result.calculateTotalPointsForProgrammingExercises();
         result.setScore(points, maxScore);
         return resultString + ", " + result.createResultString(points, maxScore);
     }

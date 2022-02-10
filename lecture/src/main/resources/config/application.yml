@@ -1,0 +1,269 @@
+# ===================================================================
+# Spring Boot configuration.
+#
+# This configuration will be overridden by the Spring profile you use,
+# for example application-dev.yml if you use the "dev" profile.
+#
+# More information on profiles: https://www.jhipster.tech/profiles/
+# More information on configuration properties: https://www.jhipster.tech/common-application-properties/
+# ===================================================================
+
+# ===================================================================
+# Standard Spring Boot properties.
+# Full reference is available at:
+# http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
+# ===================================================================
+
+logging:
+    level:
+        ROOT: INFO
+        de.tum.in.www1.artemis: INFO
+        tech.jhipster: INFO
+        org.springframework.web.socket.config: INFO
+        liquibase: INFO
+
+artemis:
+    version: #project.version#
+    file-upload-path: uploads
+    submission-export-path: exports
+    encryption-password: <encrypt-password>         # arbitrary password for encrypting database values
+    external-system-request:
+        batch-size: 50  # wait the time below after 50 requests
+        batch-waiting-time: 30000   # in ms = 30s
+
+management:
+    endpoints:
+        web:
+            base-path: /management
+            exposure:
+                include: [ 'configprops', 'env', 'health', 'info', 'jhimetrics', 'logfile', 'loggers', 'prometheus', 'threaddump', 'caches' ]
+    endpoint:
+        health:
+            show-details: when_authorized
+            roles: 'ROLE_ADMIN'
+            probes:
+                enabled: true
+        jhimetrics:
+            enabled: true
+    info:
+        git:
+            mode: full
+        java:
+            enabled: true
+        env:
+            enabled: true
+    health:
+        group:
+            liveness:
+                include: livenessState
+            readiness:
+                include: readinessState
+        mail:
+            enabled: false # When using the MailService, configure an SMTP server and set this to true
+    metrics:
+        export:
+            # Prometheus is the default metrics backend
+            prometheus:
+                enabled: true
+                step: 60
+        enable:
+            http: true
+            jvm: true
+            logback: true
+            process: true
+            system: true
+        distribution:
+            percentiles-histogram:
+                all: true
+            percentiles:
+                all: 0, 0.5, 0.75, 0.95, 0.99, 1.0
+        tags:
+            application: ${spring.application.name}
+        web:
+            server:
+                request:
+                    autotime:
+                        enabled: true
+
+spring:
+    application:
+        name: lecture
+    profiles:
+        # The commented value for `active` can be replaced with valid Spring profiles to load.
+        # Otherwise, it will be filled in by gradle when building the JAR file
+        # Either way, it can be overridden by `--spring.profiles.active` value passed in the commandline or `-Dspring.profiles.active` set in `JAVA_OPTS`
+        active: #spring.profiles.active#
+        group:
+            dev:
+                - dev
+                - api-docs
+                # Uncomment to activate TLS for the dev profile
+                #- tls
+    jmx:
+        enabled: false
+    data:
+        jpa:
+            repositories:
+                bootstrap-mode: deferred
+    jpa:
+        open-in-view: false
+        show-sql: false
+        hibernate:
+            ddl-auto: none
+            naming:
+                physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+                implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+        properties:
+            hibernate.jdbc.time_zone: UTC
+            hibernate.id.new_generator_mappings: true
+            hibernate.connection.provider_disables_autocommit: true
+            hibernate.cache.use_second_level_cache: true
+            hibernate.cache.use_query_cache: false
+            hibernate.generate_statistics: false
+            # modify batch size as necessary
+            hibernate.jdbc.batch_size: 25
+            hibernate.order_inserts: true
+            hibernate.order_updates: true
+            #            hibernate.query.fail_on_pagination_over_collection_fetch: true  # not appropriate in our case: https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch/
+            hibernate.query.in_clause_parameter_padding: true
+            hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastLocalCacheRegionFactory
+            hibernate.cache.use_minimal_puts: true
+            hibernate.cache.hazelcast.instance_name: Artemis
+            hibernate.cache.hazelcast.use_lite_member: true
+    messages:
+        basename: i18n/messages
+    main:
+        allow-bean-definition-overriding: true
+        lazy-initialization: false
+        allow-circular-references: true # TODO: we should deactivate this in the future, however currently securityConfiguration has a circular dependency to itself
+    task:
+        execution:
+            thread-name-prefix: lecture-task-
+            pool:
+                core-size: 2
+                max-size: 50
+                queue-capacity: 10000
+        scheduling:
+            thread-name-prefix: lecture-scheduling-
+            pool:
+                size: 2
+    thymeleaf:
+        mode: HTML
+    output:
+        ansi:
+            enabled: always
+    lifecycle:
+        timeout-per-shutdown-phase: 10
+    hazelcast:
+        interface: "127.0.0.1" # The interface to bind to, if non is set, all interfaces will be bound
+        port: 5701 # The hazelcast port that this instance runs on and where other instances are expected
+        localInstances: false # Whether the other instances are expected locally (in dev mode) or external
+        phone:
+            home:
+                enabled: false
+
+hazelcast:
+    phone:
+        home:
+            enabled: false
+
+springdoc:
+    api-docs:
+        path: /api-docs
+    swagger-ui:
+        path: /api.html
+        operationsSorter: method
+
+server:
+    servlet:
+        session:
+            cookie:
+                http-only: true
+    shutdown: graceful
+    forward-headers-strategy: native
+
+sentry:
+    logging:
+        enabled: true
+        minimum-breadcrumb-level: error
+        minimum-event-level: error
+
+# Properties to be exposed on the /info management endpoint
+info:
+    # Comma separated list of profiles that will trigger the ribbon to show
+    display-ribbon-on-profiles: 'dev'
+    sentry:
+        dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029 # Leave empty to disable Sentry, must be a valid URI
+
+# ===================================================================
+# JHipster specific properties
+#
+# Full reference is available at: https://www.jhipster.tech/common-application-properties/
+# ===================================================================
+
+jhipster:
+    clientApp:
+        name: 'lectureApp'
+    # By default CORS is disabled. Uncomment to enable.
+    # cors:
+    #   allowed-origins: "http://localhost:8100,http://localhost:9000"
+    #   allowed-methods: "*"
+    #   allowed-headers: "*"
+    #   exposed-headers: "Authorization,Link,X-Total-Count,X-${jhipster.clientApp.name}-alert,X-${jhipster.clientApp.name}-error,X-${jhipster.clientApp.name}-params"
+    #   allow-credentials: true
+    #   max-age: 1800
+    mail:
+        from: lecture@localhost
+    registry:
+        password: admin
+    cache: # Cache configuration
+        hazelcast: # Hazelcast distributed cache
+            time-to-live-seconds: 3600
+            backup-count: 1
+
+eureka:
+    client:
+        enabled: true
+        healthcheck:
+            enabled: true
+        fetch-registry: true
+        register-with-eureka: true
+        instance-info-replication-interval-seconds: 10
+        registry-fetch-interval-seconds: 10
+    instance:
+        prefer-ip-address: true
+        appname: lecture
+        instanceId: lecture:${spring.application.instance-id:${random.value}}
+        lease-renewal-interval-in-seconds: 5
+        lease-expiration-duration-in-seconds: 10
+        status-page-url-path: ${management.endpoints.web.base-path}/info
+        health-check-url-path: ${management.endpoints.web.base-path}/health
+        metadata-map:
+            zone: primary # This is needed for the load balancer
+            profile: ${spring.profiles.active}
+            version: #project.version#
+            git-version: ${git.commit.id.describe:}
+            git-commit: ${git.commit.id.abbrev:}
+            git-branch: ${git.branch:}
+            context-path: ${server.servlet.context-path:}
+
+feign:
+    hystrix:
+        enabled: true
+    # client:
+    #   config:
+    #     default:
+    #       connectTimeout: 5000
+    #       readTimeout: 5000
+
+# See https://github.com/Netflix/Hystrix/wiki/Configuration
+hystrix:
+    command:
+        default:
+            execution:
+                isolation:
+                    strategy: SEMAPHORE
+                    # See https://github.com/spring-cloud/spring-cloud-netflix/issues/1330
+                    # thread:
+                    #   timeoutInMilliseconds: 10000
+    shareSecurityContext: true

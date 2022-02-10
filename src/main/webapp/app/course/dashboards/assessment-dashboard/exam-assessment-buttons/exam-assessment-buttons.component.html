@@ -1,0 +1,22 @@
+<div class="exam-action-buttons">
+    <button
+        id="evaluateQuizExercisesButton"
+        class="btn btn-primary mt-1"
+        (click)="evaluateQuizExercises()"
+        *ngIf="course?.isAtLeastInstructor"
+        [disabled]="isLoading || !isExamOver"
+    >
+        <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises">Evaluate Quizzes</span>
+    </button>
+    <button
+        class="btn btn-primary mt-1"
+        id="assessUnsubmittedExamModelingAndTextParticipationsButton"
+        (click)="assessUnsubmittedExamModelingAndTextParticipations()"
+        *ngIf="course?.isAtLeastInstructor"
+        [disabled]="isLoading || !isExamOver"
+    >
+        <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams">Assess unsubmitted student exams</span>
+    </button>
+</div>

@@ -12,10 +12,10 @@
                 "exerciseTitle": "Aufgabentitel",
                 "lastResultId": "Id letztes Ergebnis",
                 "lastResultScore": "Letztes Ergebnis (%)",
-                "lastPoints": "Letzten Punkte",
+                "lastPoints": "Letzte Punkte",
                 "lastRatedResultId": "Id letztes bewertetes Ergebnis",
                 "lastRatedResultScore": "Letztes bewertetes Ergebnis (%)",
-                "lastRatedPoints": "Letzten bewerteten Punkte"
+                "lastRatedPoints": "Letzte bewertete Punkte"
             },
             "participantScoreAverageDTO": {
                 "userName": "Login",
@@ -34,7 +34,7 @@
             "averageRatedGrade": "Gewerteter Notendurchschnitt",
             "averageBonus": "Durchschnittlicher Bonus",
             "averageRatedBonus": "Gewerteter durchschnittlicher Bonus",
-            "notIncluded": "Optionale Aufgaben nicht miteingerechnet!"
+            "notIncluded": "Optionale Aufgaben nicht mit eingerechnet!"
         }
     }
 }

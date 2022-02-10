@@ -4,8 +4,8 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { getElement } from '../../../../helpers/utils/general.utils';
-import { AnswerPostHeaderComponent } from 'app/shared/metis/postings-header/answer-post-header/answer-post-header.component';
-import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
+import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answer-post-header/answer-post-header.component';
+import { AnswerPostFooterComponent } from 'app/shared/metis/posting-footer/answer-post-footer/answer-post-footer.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { metisResolvingAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
 

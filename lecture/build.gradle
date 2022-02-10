@@ -1,0 +1,299 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://repo.spring.io/plugins-release" }
+    }
+    dependencies {
+        classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
+    }
+}
+
+plugins {
+    id "checkstyle"
+    id "java"
+    id "maven-publish"
+    id "idea"
+    id "jacoco"
+    id "org.springframework.boot"
+    id "com.google.cloud.tools.jib"
+    id "com.github.node-gradle.node"
+    id "com.diffplug.spotless"
+    // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
+    id "com.github.ben-manes.versions"
+    id "com.github.andygoossens.gradle-modernizer-plugin"
+    id "org.openapi.generator" version "5.1.1" // version is included since the plugin is not used by Artemis
+    id "io.spring.nohttp" version "0.0.8" // version is included since the plugin is not used by Artemis
+}
+
+group = "de.tum.in.www1.artemis"
+
+sourceCompatibility = 16
+targetCompatibility = 16
+
+apply from: "gradle/docker.gradle"
+apply from: "../gradle/liquibase.gradle"
+
+
+if (project.hasProperty("prod")) {
+    apply from: "gradle/profile_prod.gradle"
+} else {
+    apply from: "gradle/profile_dev.gradle"
+}
+
+if (project.hasProperty("war")) {
+    apply from: "gradle/war.gradle"
+}
+
+if (project.hasProperty("zipkin")) {
+    apply from: "gradle/zipkin.gradle"
+}
+
+apply from: "../gradle/tasks.gradle"
+
+private excludedClassFilesForReport(classDirectories) {
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it,
+            includes: ['**/de/tum/in/www1/artemis/lecture/**'],
+        )
+    }))
+}
+
+jacocoTestReport.configure {
+    // we want to ignore files different from the current project
+    afterEvaluate { excludedClassFilesForReport(classDirectories) }
+}
+jacocoTestCoverageVerification.configure {
+    // we want to ignore files different from the current project
+    afterEvaluate { excludedClassFilesForReport(classDirectories) }
+}
+
+sourceSets {
+    external {
+        java {
+            srcDir file("../src/main/java")
+            // de.tum.in.www1.artemis.security
+            include 'de/tum/in/www1/artemis/security/DomainUserDetailsService.*'
+            include 'de/tum/in/www1/artemis/security/PBEPasswordEncoder.*'
+            include 'de/tum/in/www1/artemis/security/Role.*'
+            include 'de/tum/in/www1/artemis/security/SecurityUtils.*'
+            include 'de/tum/in/www1/artemis/security/UserNotActivatedException.*'
+            include 'de/tum/in/www1/artemis/security/SpringSecurityAuditorAware.*'
+            include 'de/tum/in/www1/artemis/security/jwt/TokenProvider.*'
+            include 'de/tum/in/www1/artemis/security/jwt/JWTFilter.*'
+            include 'de/tum/in/www1/artemis/security/jwt/JWTConfigurer.*'
+
+            // de.tum.in.www1.artemis.management
+            include 'de/tum/in/www1/artemis/management/SecurityMetersService.*'
+
+            // de.tum.in.www1.artemis.config
+            include 'de/tum/in/www1/artemis/config/audit/AuditEventConverter.*'
+            include 'de/tum/in/www1/artemis/config/Constants.*'
+            include 'de/tum/in/www1/artemis/config/AsyncConfiguration.*'
+            include 'de/tum/in/www1/artemis/config/LiquibaseConfiguration.*'
+            include 'de/tum/in/www1/artemis/config/DatabaseConfiguration.*'
+            include 'de/tum/in/www1/artemis/config/DateTimeFormatConfiguration.*'
+            include 'de/tum/in/www1/artemis/config/JacksonConfiguration.*'
+            include 'de/tum/in/www1/artemis/config/LocaleConfiguration.*'
+
+            // de.tum.in.www1.artemis.service
+            include 'de/tum/in/www1/artemis/service/FilePathService.*'
+            include 'de/tum/in/www1/artemis/service/FileService.*'
+            include 'de/tum/in/www1/artemis/service/ScoreService.*'
+            include 'de/tum/in/www1/artemis/service/notifications/NotificationTargetService.*'
+            include 'de/tum/in/www1/artemis/service/notifications/NotificationTargetProvider.*'
+            include 'de/tum/in/www1/artemis/service/compass/umlmodel/UMLElement.*'
+            include 'de/tum/in/www1/artemis/service/compass/umlmodel/Similarity.*'
+            include 'de/tum/in/www1/artemis/service/compass/assessment/Context.*'
+            include 'de/tum/in/www1/artemis/service/dto/**'
+            include 'de/tum/in/www1/artemis/service/util/**'
+            include 'de/tum/in/www1/artemis/service/listeners/**'
+            include 'de/tum/in/www1/artemis/service/programming/ProgrammingLanguageFeature.*'
+
+            // Include all DB entities. repositories and exceptions
+            include 'de/tum/in/www1/artemis/domain/**'
+            include 'de/tum/in/www1/artemis/exception/**'
+            include 'de/tum/in/www1/artemis/repository/**'
+            include 'de/tum/in/www1/artemis/validation/**'
+
+            // de.tum.in.www1.artemis.web.rest
+            include 'de/tum/in/www1/artemis/web/rest/dto/**'
+            include 'de/tum/in/www1/artemis/web/rest/errors/EntityNotFoundException.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/BadRequestAlertException.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/HttpStatusException.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/FieldErrorVM.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/StudentsAlreadyAssignedException.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/InternalServerErrorException.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/AccessForbiddenException.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/ErrorConstants.*'
+        }
+        resources {
+            srcDir '../src/main/resources'
+            include 'config/liquibase/**'
+            include 'config/application-artemis.yml'
+            include 'config/application-gitlab.yml'
+            include 'config/application-jenkins.yml'
+        }
+    }
+    externalTest {
+        java {
+            srcDir file("../src/test")
+            include "java/de/tum/in/www1/artemis/util/RequestUtilService.*"
+        }
+    }
+    main {
+        compileClasspath += external.java
+        java {
+            srcDir external.java
+        }
+        resources {
+            srcDir external.resources
+        }
+    }
+    test {
+        compileClasspath += external.java
+        compileClasspath += externalTest.java
+
+        java {
+            srcDir external.java
+            srcDir externalTest.java
+        }
+    }
+}
+
+idea {
+    module {
+        excludeDirs += files("node_modules")
+    }
+}
+
+spotless {
+    // allows to execute the code formatting commands ./gradlew :lecture:spotlessApply and ./gradlew :lecture:spotlessCheck
+    java {
+        target project.fileTree(project.rootDir) {
+            include "lecture/**/*.java"
+            exclude "**/src/main/java/de/tum/in/www1/artemis/lecture/config/SecurityConfiguration.java", "**/node_modules/**",
+                "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**",
+                "**/exports/**", "src/main/java/de/tum/in/www1/artemis/**"
+        }
+        importOrderFile "../artemis-spotless.importorder"
+        eclipse().configFile "../artemis-spotless-style.xml"
+
+        removeUnusedImports()
+    }
+}
+
+defaultTasks "bootRun"
+
+springBoot {
+    mainClass = "de.tum.in.www1.artemis.lecture.LectureApp"
+}
+
+bootRun {
+    jvmArgs = ["--illegal-access=warn"]
+}
+
+modernizer {
+    failOnViolations = true
+    includeTestClasses = true
+}
+
+configurations {
+    providedRuntime
+}
+
+apply from: "../gradle/dependencies.gradle"
+
+dependencies {
+    implementation "com.offbytwo.jenkins:jenkins-client:${offbytwo_jenkins_client_version}"
+    implementation "org.gitlab4j:gitlab4j-api:${gitlab4j_api_version}"
+    implementation "de.jplag:jplag:3.0.0"
+
+    // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
+    implementation "net.sourceforge.plantuml:plantuml:${sourceforge_plantuml_version}"
+    implementation "org.imsglobal:basiclti-util:${imsglobal_basiclti_util_version}"
+    implementation "me.xdrop:fuzzywuzzy:${xdrop_fuzzywuzzy_version}"
+    implementation "com.atlassian.bamboo:bamboo-specs:${atlassian_bamboo_specs_version}"
+    implementation "com.thoughtworks.qdox:qdox:${thoughtworks_qdox_version}"
+
+    implementation "org.springdoc:springdoc-openapi-ui:${springdoc_openapi_ui_version}"
+
+    implementation "com.hazelcast:hazelcast:${hazelcast_version}"
+    implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
+    implementation "com.hazelcast:hazelcast-hibernate53:${hazelcast_hibernate53_version}"
+    implementation "org.hibernate:hibernate-core:${hibernate_version}"
+    implementation "com.zaxxer:HikariCP:${zaxxer_HikariCP_version}"
+    implementation "org.apache.commons:commons-text:${apache_commons_text_version}"
+    implementation "org.apache.commons:commons-math3:${apache_commons_math3_version}"
+    implementation "org.apache.commons:commons-lang3"
+    implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
+    implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
+    implementation "org.liquibase:liquibase-core:${liquibase_core_version}"
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
+    implementation("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}") {
+        exclude module: "spring-boot-starter-undertow"
+    }
+    implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-undertow:${spring_boot_version}"
+
+    implementation "org.springframework.ldap:spring-ldap-core:${spring_ldap_core_version}"
+    implementation "org.springframework.data:spring-data-ldap:${spring_data_ldap_version}"
+
+    implementation "com.fasterxml.jackson.module:jackson-module-jaxb-annotations"
+    implementation "javax.annotation:javax.annotation-api"
+    implementation "io.dropwizard.metrics:metrics-core"
+
+    implementation "org.springframework.cloud:spring-cloud-starter"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-hystrix"
+    implementation "org.springframework.retry:spring-retry"
+    implementation "org.springframework.cloud:spring-cloud-starter-bootstrap"
+    implementation "org.springframework.cloud:spring-cloud-starter-openfeign:3.1.0"
+    implementation "org.springframework.security:spring-security-data:${spring_security_version}"
+    implementation "org.xmlbeam:xmlprojector:${xmlbeam_xmlprojector_version}"
+    implementation "mysql:mysql-connector-java:${mysql_connector_java_version}"
+
+    implementation "org.zalando:problem-spring-web:${zalando_problem_version}"
+    implementation "com.ibm.icu:icu4j:${ibm_icu4j_version}"
+    implementation "com.github.seancfoley:ipaddress:${github_seancfoley_ipaddress_version}"
+    implementation "org.apache.maven:maven-model:${apache_model_version}"
+    implementation "org.apache.pdfbox:pdfbox:${apache_pdfbox_version}"
+
+    implementation "org.springframework.boot:spring-boot-starter-artemis:${spring_boot_version}"
+
+    annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
+    annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
+        exclude group: "javax.ws.rs", module: "jsr311-api"
+    }
+
+    developmentOnly "org.springframework.boot:spring-boot-devtools:${spring_boot_version}"
+    testImplementation "com.h2database:h2:${h2_database_version}"
+
+}
+
+task executeTests(type: Exec) {
+    commandLine "./gradlew", ":lecture:test"
+}
+
+// Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
+checkstyle {
+    toolVersion "${checkstyle_version}"
+    configFile file("../checkstyle.xml")
+    checkstyleTest.enabled = false
+    maxErrors = 0
+}
+
+nohttp {
+    source.include "build.gradle", "README.md"
+}
+
+task executeCheckstyle(type: Exec) {
+    commandLine "./gradlew", ":lecture:checkstyleMain"
+}
+
+task buildJarForDocker(type: Exec) {
+    commandLine "./gradlew", ":lecture:build", "-x", "test", "-x", "jacocoTestCoverageVerification"
+}
+
+compileJava.dependsOn processResources
+processResources.dependsOn bootBuildInfo

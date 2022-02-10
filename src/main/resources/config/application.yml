@@ -20,6 +20,7 @@ logging:
         de.tum.in.www1.artemis: INFO
         tech.jhipster: INFO
         org.springframework.web.socket.config: INFO
+        liquibase: INFO
 
 artemis:
     version: #project.version#
@@ -46,6 +47,10 @@ management:
     info:
         git:
             mode: full
+        java:
+            enabled: true
+        env:
+            enabled: true
     health:
         mail:
             enabled: false # When using the MailService, configure an SMTP server and set this to true
@@ -121,6 +126,10 @@ spring:
     main:
         allow-bean-definition-overriding: true
         lazy-initialization: false
+        allow-circular-references: true # TODO: we should deactivate this in the future, however currently securityConfiguration has a circular dependency to itself
+    mvc:
+        pathmatch:
+            matching-strategy: ant_path_matcher # TODO: we should update all paths to support PathPatternParser, in particular ClientForwardResource
     task:
         execution:
             thread-name-prefix: artemis-task-

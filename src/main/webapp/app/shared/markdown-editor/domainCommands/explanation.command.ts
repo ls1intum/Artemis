@@ -1,8 +1,9 @@
-import { addTextAtCursor } from 'app/shared/util/markdown-util';
+import { addTextAtCursor } from 'app/shared/util/markdown.util';
 import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
 
+export const explanationCommandIdentifier = '[exp]';
+
 export class ExplanationCommand extends DomainTagCommand {
-    public static readonly identifier = '[exp]';
     public static readonly text = ' Add an explanation here (only visible in feedback after quiz has ended)';
 
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.addExplanation';
@@ -21,7 +22,7 @@ export class ExplanationCommand extends DomainTagCommand {
      * @desc identify the start of the explanation
      */
     getOpeningIdentifier(): string {
-        return ExplanationCommand.identifier;
+        return explanationCommandIdentifier;
     }
 
     /**

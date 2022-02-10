@@ -3,11 +3,12 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Subject } from 'rxjs';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
+import { faPaperclip, faPencilAlt, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-lecture-attachments',
@@ -42,6 +43,12 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faSpinner = faSpinner;
+    faTimes = faTimes;
+    faPencilAlt = faPencilAlt;
+    faPaperclip = faPaperclip;
 
     constructor(
         protected activatedRoute: ActivatedRoute,

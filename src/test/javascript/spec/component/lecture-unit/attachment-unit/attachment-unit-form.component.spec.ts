@@ -4,16 +4,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe, MockProviders } from 'ng-mocks';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 describe('AttachmentUnitFormComponent', () => {
-    const sandbox = sinon.createSandbox();
     let attachmentUnitFormComponentFixture: ComponentFixture<AttachmentUnitFormComponent>;
     let attachmentUnitFormComponent: AttachmentUnitFormComponent;
 
@@ -31,13 +24,13 @@ describe('AttachmentUnitFormComponent', () => {
             });
     });
 
-    afterEach(function () {
-        sandbox.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         attachmentUnitFormComponentFixture.detectChanges();
-        expect(attachmentUnitFormComponent).to.be.ok;
+        expect(attachmentUnitFormComponent).not.toBeNull();
     });
 
     it('should correctly set form values in edit mode', () => {
@@ -63,13 +56,13 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponent.formData = formData;
         attachmentUnitFormComponent.ngOnChanges();
 
-        expect(attachmentUnitFormComponent.nameControl?.value).to.equal(formData.formProperties.name);
-        expect(attachmentUnitFormComponent.releaseDateControl?.value).to.equal(formData.formProperties.releaseDate);
-        expect(attachmentUnitFormComponent.descriptionControl?.value).to.equal(formData.formProperties.description);
-        expect(attachmentUnitFormComponent.versionControl?.value).to.equal(formData.formProperties.version);
-        expect(attachmentUnitFormComponent.updateNotificationTextControl?.value).to.equal(formData.formProperties.updateNotificationText);
-        expect(attachmentUnitFormComponent.fileName).to.equal(formData.fileProperties.fileName);
-        expect(attachmentUnitFormComponent.file).to.equal(formData.fileProperties.file);
+        expect(attachmentUnitFormComponent.nameControl?.value).toEqual(formData.formProperties.name);
+        expect(attachmentUnitFormComponent.releaseDateControl?.value).toEqual(formData.formProperties.releaseDate);
+        expect(attachmentUnitFormComponent.descriptionControl?.value).toEqual(formData.formProperties.description);
+        expect(attachmentUnitFormComponent.versionControl?.value).toEqual(formData.formProperties.version);
+        expect(attachmentUnitFormComponent.updateNotificationTextControl?.value).toEqual(formData.formProperties.updateNotificationText);
+        expect(attachmentUnitFormComponent.fileName).toEqual(formData.fileProperties.fileName);
+        expect(attachmentUnitFormComponent.file).toEqual(formData.fileProperties.file);
     });
     it('should submit valid form', () => {
         attachmentUnitFormComponentFixture.detectChanges();
@@ -90,16 +83,16 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponent.fileName = exampleFileName;
 
         attachmentUnitFormComponentFixture.detectChanges();
-        expect(attachmentUnitFormComponent.form.valid).to.be.true;
+        expect(attachmentUnitFormComponent.form.valid).toBeTrue();
 
-        const submitFormSpy = sinon.spy(attachmentUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = sinon.spy(attachmentUnitFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = jest.spyOn(attachmentUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(attachmentUnitFormComponent.formSubmitted, 'emit');
 
         const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).to.have.been.called;
-        expect(submitFormEventSpy).to.have.been.calledWith({
+        expect(submitFormSpy).toHaveBeenCalled();
+        expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
                 description: exampleDescription,
@@ -113,8 +106,8 @@ describe('AttachmentUnitFormComponent', () => {
             },
         });
 
-        submitFormSpy.restore();
-        submitFormEventSpy.restore();
+        submitFormSpy.mockRestore();
+        submitFormEventSpy.mockRestore();
     });
     it('should not submit a form when name is missing', () => {
         attachmentUnitFormComponentFixture.detectChanges();
@@ -132,30 +125,30 @@ describe('AttachmentUnitFormComponent', () => {
         const exampleFileName = 'lorem Ipsum';
         attachmentUnitFormComponent.fileName = exampleFileName;
 
-        expect(attachmentUnitFormComponent.form.invalid).to.be.true;
-        const submitFormSpy = sinon.spy(attachmentUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = sinon.spy(attachmentUnitFormComponent.formSubmitted, 'emit');
+        expect(attachmentUnitFormComponent.form.invalid).toBeTrue();
+        const submitFormSpy = jest.spyOn(attachmentUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(attachmentUnitFormComponent.formSubmitted, 'emit');
 
         const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).to.not.have.been.called;
-        expect(submitFormEventSpy).to.not.have.been.called;
+        expect(submitFormSpy).toHaveBeenCalledTimes(0);
+        expect(submitFormEventSpy).toHaveBeenCalledTimes(0);
     });
 
     it('calls on file change on changed file', () => {
         const fakeBlob = new Blob([''], { type: 'application/pdf' });
         fakeBlob['name'] = 'Test-File.pdf';
-        const onFileChangeStub = sandbox.stub(attachmentUnitFormComponent, 'onFileChange');
+        const onFileChangeStub = jest.spyOn(attachmentUnitFormComponent, 'onFileChange');
         attachmentUnitFormComponentFixture.detectChanges();
         const fileInput = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
         fileInput.dispatchEvent(new Event('change'));
-        expect(onFileChangeStub).to.have.been.calledOnce;
+        expect(onFileChangeStub).toHaveBeenCalledTimes(1);
     });
 
     it('sets file upload error correctly', () => {
         attachmentUnitFormComponentFixture.detectChanges();
         attachmentUnitFormComponent.setFileUploadError('lorem ipsum');
-        expect(attachmentUnitFormComponent.fileUploadErrorMessage).to.equal('lorem ipsum');
+        expect(attachmentUnitFormComponent.fileUploadErrorMessage).toEqual('lorem ipsum');
     });
 });

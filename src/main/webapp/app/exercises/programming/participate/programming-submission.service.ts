@@ -4,7 +4,7 @@ import { BehaviorSubject, from, merge, Observable, of, Subject, Subscription, ti
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
-import { createRequestOption } from 'app/shared/util/request-util';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -62,7 +62,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     // participationId -> exerciseId
     private participationIdToExerciseId = new Map<number, number>();
 
-    // undefined describes the case where no pending submission exists, undefined is used for the setup process and will not be emitted to subscribers.
+    // undefined describes the case when there is not a pending submission, undefined is used for the setup process and will not be emitted to subscribers.
     private submissionSubjects: { [participationId: number]: BehaviorSubject<ProgrammingSubmissionStateObj | undefined> } = {};
     // exerciseId -> ExerciseSubmissionState
     private exerciseBuildStateSubjects = new Map<number, BehaviorSubject<ExerciseSubmissionState | undefined>>();
@@ -233,7 +233,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             filter((result: Result | undefined) => this.isResultOfLatestSubmission(result, exerciseId, participationId)),
             distinctUntilChanged(),
             tap(() => {
-                // This is the normal case - the last pending submission received a result, so we emit undefined as the message that there is no pending submission anymore.
+                // This is the normal case - the last pending submission received a result, so we emit undefined as the message that there is not a pending submission anymore.
                 this.emitNoPendingSubmission(participationId, exerciseId);
             }),
         );
@@ -248,11 +248,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     // This will also trigger the resultObservable above, which emits that the submission is no longer pending
                     this.participationWebsocketService.notifyAllResultSubscribers({ ...result, participation: { id: participationId } });
                 } else {
-                    // Otherwise notify that submission subscribers that the result could not be retrieved
+                    // Otherwise, notify that submission subscribers that the result could not be retrieved
                     this.emitFailedSubmission(participationId, exerciseId);
                 }
             }),
-            catchError(() => of(this.emitFailedSubmission(participationId, exerciseId))),
+            catchError(() => {
+                this.emitFailedSubmission(participationId, exerciseId);
+                return of(undefined);
+            }),
         );
 
         this.resultSubscriptions[participationId] = merge(timerObservable, resultObservable)
@@ -326,7 +329,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     };
 
     /**
-     * Initialize the cache from outside of the service.
+     * Initialize the cache from outside the service.
      *
      * The service expects that:
      * - Each exercise does only have one student participation for the given student.
@@ -354,7 +357,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 if (!forceCacheOverride && !!this.submissionSubjects[exercise.studentParticipations![0].id!]) {
                     return false;
                 }
-                // Without submissions we can't determine if the latest submission is pending.
+                // Without submissions, we can't determine if the latest submission is pending.
                 return !!exercise.studentParticipations[0].submissions && !!exercise.studentParticipations[0].submissions.length;
             })
             .forEach((exercise) => {
@@ -377,7 +380,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      *
      * Will emit:
      * - A submission if a last pending submission exists.
-     * - An undefined value when there is no pending submission.
+     * - An undefined value when there is not a pending submission.
      * - An undefined value when no result arrived in time for the submission.
      *
      * This method will execute a REST call to the server so that the subscriber will always receive the latest information from the server.
@@ -494,7 +497,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     /**
-     * Cache a retrieved pending submission and setup the websocket connections and timer.
+     * Cache a retrieved pending submission and set up the websocket connections and timer.
      *
      * @param submissionToBeProcessed to cache and use for the websocket subscriptions
      * @param participationId that serves as an identifier for caching the submission.

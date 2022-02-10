@@ -4,6 +4,7 @@ import { debounceTime, map, tap } from 'rxjs/operators';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
+import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-instruction-instructor-analysis',
@@ -23,6 +24,10 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
     missingTestCases: string[] = [];
 
     invalidHints: string[] = [];
+
+    // Icons
+    faCheckCircle = faCheckCircle;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(private analysisService: ProgrammingExerciseInstructionAnalysisService) {}
 

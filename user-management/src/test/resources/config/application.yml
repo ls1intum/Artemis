@@ -112,6 +112,12 @@ spring:
             addresses: ""
     hazelcast:
         interface: "127.0.0.1"
+    artemis: # ActiveMQ Artemis configuration
+        mode: native
+        host: localhost
+        port: 61616
+        user: guest
+        password: guest
 
 server:
     port: 8080

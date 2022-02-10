@@ -1,21 +1,31 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExampleSubmissionImportComponent } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import.component';
 import { Submission } from 'app/entities/submission.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
+import { faExclamationTriangle, faFont, faPlus, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
 })
 export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     exercise: Exercise;
+    readonly exerciseType = ExerciseType;
+    createdExampleAssessment: boolean[];
+
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faFont = faFont;
+    faQuestionCircle = faQuestionCircle;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private alertService: AlertService,
@@ -35,6 +45,15 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
             exercise.course = getCourseFromExercise(exercise);
             this.accountService.setAccessRightsForCourse(exercise.course);
             this.exercise = exercise;
+
+            this.createdExampleAssessment = this.exercise.exampleSubmissions!.map(
+                (exampleSubmission) => exampleSubmission.submission?.results?.some((result) => result.exampleResult) ?? false,
+            );
+        });
+        this.exercise?.exampleSubmissions?.forEach((exampleSubmission) => {
+            if (exampleSubmission.submission) {
+                exampleSubmission.submission.submissionSize = this.exampleSubmissionService.getSubmissionSize(exampleSubmission.submission, this.exercise);
+            }
         });
     }
 
@@ -42,7 +61,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
      * Closes open modal on component destroy
      */
     ngOnDestroy() {
-        if (this.modalService.hasOpenModals()) {
+        if (this.modalService?.hasOpenModals()) {
             this.modalService.dismissAll();
         }
     }
@@ -56,6 +75,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
         this.exampleSubmissionService.delete(submissionId).subscribe(
             () => {
                 this.exercise.exampleSubmissions!.splice(index, 1);
+                this.createdExampleAssessment.splice(index, 1);
             },
             (error: HttpErrorResponse) => {
                 this.alertService.error(error.message);

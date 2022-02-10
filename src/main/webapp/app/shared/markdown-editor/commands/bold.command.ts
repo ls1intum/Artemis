@@ -1,8 +1,9 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faBold } from '@fortawesome/free-solid-svg-icons';
 import { Command } from './command';
 
 export class BoldCommand extends Command {
-    buttonIcon = 'bold' as IconProp;
+    buttonIcon = faBold as IconProp;
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.bold';
 
     /**

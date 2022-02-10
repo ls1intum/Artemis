@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { faAsterisk } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external-submission/external-submission-dialog.component';
@@ -11,7 +12,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
             *ngIf="!exercise.teamMode"
             [btnType]="ButtonType.WARNING"
             [btnSize]="ButtonSize.SMALL"
-            [icon]="'asterisk'"
+            [icon]="faAsterisk"
             [title]="'entity.action.addExternalSubmission'"
             (onClick)="openExternalSubmissionDialog($event)"
         ></jhi-button>
@@ -22,6 +23,9 @@ export class ExternalSubmissionButtonComponent {
     ButtonSize = ButtonSize;
 
     @Input() exercise: Exercise;
+
+    // Icons
+    faAsterisk = faAsterisk;
 
     constructor(private modalService: NgbModal) {}
 

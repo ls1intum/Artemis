@@ -31,8 +31,8 @@ import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.usermanagement.security.jwt.JWTConfigurer;
-import de.tum.in.www1.artemis.usermanagement.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)

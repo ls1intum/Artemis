@@ -5,10 +5,18 @@ exercises
 
 .chart-wrapper {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1500px;
     overflow-x: auto;
 }
 
 .chart {
     height: 350px;
+}
+
+:host::ng-deep .chart-legend {
+    padding: 104px 0 0 0 !important;
+}
+
+:host::ng-deep.legend-labels {
+    background-color: transparent !important;
 }

@@ -6,10 +6,7 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, Observable, of, Subject, throwError } from 'rxjs';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import * as ace from 'brace';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -50,7 +47,6 @@ import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
@@ -75,9 +71,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 describe('CodeEditorInstructorIntegration', () => {
     // needed to make sure ace is defined
@@ -88,14 +82,14 @@ describe('CodeEditorInstructorIntegration', () => {
     let domainService: DomainService;
     let route: ActivatedRoute;
 
-    let checkIfRepositoryIsCleanStub: SinonStub;
-    let getRepositoryContentStub: SinonStub;
-    let subscribeForLatestResultOfParticipationStub: SinonStub;
-    let getFeedbackDetailsForResultStub: SinonStub;
-    let getBuildLogsStub: SinonStub;
-    let findWithParticipationsStub: SinonStub;
-    let getLatestResultWithFeedbacksStub: SinonStub;
-    let getHintsForExerciseStub: SinonStub;
+    let checkIfRepositoryIsCleanStub: jest.SpyInstance;
+    let getRepositoryContentStub: jest.SpyInstance;
+    let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
+    let getFeedbackDetailsForResultStub: jest.SpyInstance;
+    let getBuildLogsStub: jest.SpyInstance;
+    let findWithParticipationsStub: jest.SpyInstance;
+    let getLatestResultWithFeedbacksStub: jest.SpyInstance;
+    let getHintsForExerciseStub: jest.SpyInstance;
 
     let checkIfRepositoryIsCleanSubject: Subject<{ isClean: boolean }>;
     let getRepositoryContentSubject: Subject<{ [fileName: string]: FileType }>;
@@ -184,55 +178,52 @@ describe('CodeEditorInstructorIntegration', () => {
                 // @ts-ignore
                 (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
 
-                checkIfRepositoryIsCleanStub = stub(codeEditorRepositoryService, 'getStatus');
-                getRepositoryContentStub = stub(codeEditorRepositoryFileService, 'getRepositoryContent');
-                subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
-                getFeedbackDetailsForResultStub = stub(resultService, 'getFeedbackDetailsForResult');
-                getLatestResultWithFeedbacksStub = stub(programmingExerciseParticipationService, 'getLatestResultWithFeedback').returns(throwError('no result'));
-                getBuildLogsStub = stub(buildLogService, 'getBuildLogs');
-                getHintsForExerciseStub = stub(exerciseHintService, 'findByExerciseId').returns(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
+                checkIfRepositoryIsCleanStub = jest.spyOn(codeEditorRepositoryService, 'getStatus');
+                getRepositoryContentStub = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
+                subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+                getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
+                getLatestResultWithFeedbacksStub = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback').mockReturnValue(throwError('no result'));
+                getBuildLogsStub = jest.spyOn(buildLogService, 'getBuildLogs');
+                getHintsForExerciseStub = jest
+                    .spyOn(exerciseHintService, 'findByExerciseId')
+                    .mockReturnValue(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
 
-                findWithParticipationsStub = stub(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndResults');
-                findWithParticipationsStub.returns(findWithParticipationsSubject);
+                findWithParticipationsStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndResults');
+                findWithParticipationsStub.mockReturnValue(findWithParticipationsSubject);
 
-                subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
-                getRepositoryContentStub.returns(getRepositoryContentSubject);
-                checkIfRepositoryIsCleanStub.returns(checkIfRepositoryIsCleanSubject);
+                subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
+                getRepositoryContentStub.mockReturnValue(getRepositoryContentSubject);
+                checkIfRepositoryIsCleanStub.mockReturnValue(checkIfRepositoryIsCleanSubject);
             });
     });
 
     afterEach(() => {
-        checkIfRepositoryIsCleanStub.restore();
-        getRepositoryContentStub.restore();
-        subscribeForLatestResultOfParticipationStub.restore();
-        getFeedbackDetailsForResultStub.restore();
-        getBuildLogsStub.restore();
-        findWithParticipationsStub.restore();
-        getLatestResultWithFeedbacksStub.restore();
+        jest.restoreAllMocks();
 
         subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
-        subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
 
         routeSubject = new Subject<Params>();
         // @ts-ignore
         (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
 
         findWithParticipationsSubject = new Subject<{ body: ProgrammingExercise }>();
-        findWithParticipationsStub.returns(findWithParticipationsSubject);
+        findWithParticipationsStub.mockReturnValue(findWithParticipationsSubject);
 
         checkIfRepositoryIsCleanSubject = new Subject<{ isClean: boolean }>();
-        checkIfRepositoryIsCleanStub.returns(checkIfRepositoryIsCleanSubject);
+        checkIfRepositoryIsCleanStub.mockReturnValue(checkIfRepositoryIsCleanSubject);
 
         getRepositoryContentSubject = new Subject<{ [p: string]: FileType }>();
-        getRepositoryContentStub.returns(getRepositoryContentSubject);
+        getRepositoryContentStub.mockReturnValue(getRepositoryContentSubject);
     });
 
     const initContainer = (exercise: ProgrammingExercise) => {
         container.ngOnInit();
         routeSubject.next({ exerciseId: 1 });
-        expect(container.codeEditorContainer).to.be.undefined;
-        expect(findWithParticipationsStub).to.have.been.calledOnceWithExactly(exercise.id);
-        expect(container.loadingState).to.equal(container.LOADING_STATE.INITIALIZING);
+        expect(container.codeEditorContainer).toBe(undefined); // Have to use this as it's a component
+        expect(findWithParticipationsStub).toHaveBeenCalledTimes(1);
+        expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
+        expect(container.loadingState).toBe(container.LOADING_STATE.INITIALIZING);
     };
 
     it('should load the exercise and select the template participation if no participation id is provided', () => {
@@ -253,65 +244,65 @@ describe('CodeEditorInstructorIntegration', () => {
         exercise.templateParticipation = { ...exercise.templateParticipation, programmingExercise: exercise };
         exercise.solutionParticipation = { ...exercise.solutionParticipation, programmingExercise: exercise };
 
-        getFeedbackDetailsForResultStub.returns(of([]));
-        const setDomainSpy = spy(domainService, 'setDomain');
+        getFeedbackDetailsForResultStub.mockReturnValue(of([]));
+        const setDomainSpy = jest.spyOn(domainService, 'setDomain');
         // @ts-ignore
         (container.router as MockRouter).setUrl('code-editor-instructor/1');
         initContainer(exercise);
 
         findWithParticipationsSubject.next({ body: exercise });
 
-        expect(getLatestResultWithFeedbacksStub).not.to.have.been.called;
-        expect(setDomainSpy).to.have.been.calledOnce;
-        expect(setDomainSpy).to.have.been.calledOnceWithExactly([DomainType.PARTICIPATION, exercise.templateParticipation]);
-        expect(container.exercise).to.deep.equal(exercise);
-        expect(container.selectedRepository).to.equal(container.REPOSITORY.TEMPLATE);
-        expect(container.selectedParticipation).to.deep.equal(container.selectedParticipation);
-        expect(container.loadingState).to.equal(container.LOADING_STATE.CLEAR);
-        expect(container.domainChangeSubscription).to.exist;
+        expect(getLatestResultWithFeedbacksStub).not.toHaveBeenCalled();
+        expect(setDomainSpy).toHaveBeenCalledTimes(1);
+        expect(setDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, exercise.templateParticipation]);
+        expect(container.exercise).toEqual(exercise);
+        expect(container.selectedRepository).toBe(container.REPOSITORY.TEMPLATE);
+        expect(container.selectedParticipation).toEqual(container.selectedParticipation);
+        expect(container.loadingState).toBe(container.LOADING_STATE.CLEAR);
+        expect(container.domainChangeSubscription).not.toBe(undefined); // External complex object
 
         containerFixture.detectChanges();
-        expect(container.codeEditorContainer.grid).to.exist;
+        expect(container.codeEditorContainer.grid).not.toBe(undefined); // Have to use this as it's a component
 
         checkIfRepositoryIsCleanSubject.next({ isClean: true });
         getRepositoryContentSubject.next({ file: FileType.FILE, folder: FileType.FOLDER });
         containerFixture.detectChanges();
 
         // Submission could be built
-        expect(getBuildLogsStub).to.not.have.been.called;
+        expect(getBuildLogsStub).not.toHaveBeenCalled();
         // Once called by each build-output & instructions
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledTwice;
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(2);
 
-        expect(container.codeEditorContainer.grid).to.exist;
-        expect(container.codeEditorContainer.fileBrowser).to.exist;
-        expect(container.codeEditorContainer.actions).to.exist;
-        expect(container.editableInstructions).to.exist;
-        expect(container.editableInstructions.participation.id).to.deep.equal(exercise.templateParticipation.id);
-        expect(container.resultComp).to.exist;
-        expect(container.codeEditorContainer.buildOutput).to.exist;
-        expect(container.editableInstructions.exerciseHints).to.deep.equal(exerciseHints);
+        expect(container.codeEditorContainer.grid).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.codeEditorContainer.fileBrowser).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.codeEditorContainer.actions).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.editableInstructions).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.editableInstructions.participation).toEqual(exercise.templateParticipation);
+        expect(container.resultComp).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.codeEditorContainer.buildOutput).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.editableInstructions.exerciseHints).toEqual(exerciseHints);
 
         // Called once by each build-output, instructions, result and twice by instructor-exercise-status (=templateParticipation,solutionParticipation) &
-        expect(subscribeForLatestResultOfParticipationStub.callCount).to.equal(5);
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(5);
 
         // called once by instructions (hints are only visible if assignment repo is selected).
-        expect(getHintsForExerciseStub).to.have.been.calledOnce;
-        expect(getHintsForExerciseStub).to.have.been.calledWithExactly(exercise.id);
+        expect(getHintsForExerciseStub).toHaveBeenCalledTimes(1);
+        expect(getHintsForExerciseStub).toHaveBeenCalledWith(exercise.id);
     });
 
     it('should go into error state when loading the exercise failed', () => {
         const exercise = { id: 1, studentParticipations: [{ id: 2 }], templateParticipation: { id: 3 }, solutionParticipation: { id: 4 } } as ProgrammingExercise;
-        const setDomainSpy = spy(domainService, 'setDomain');
+        const setDomainSpy = jest.spyOn(domainService, 'setDomain');
         initContainer(exercise);
 
         findWithParticipationsSubject.error('fatal error');
 
-        expect(setDomainSpy).to.not.have.been.called;
-        expect(container.loadingState).to.equal(container.LOADING_STATE.FETCHING_FAILED);
-        expect(container.selectedRepository).to.be.undefined;
+        expect(setDomainSpy).not.toHaveBeenCalled();
+        expect(container.loadingState).toBe(container.LOADING_STATE.FETCHING_FAILED);
+        expect(container.selectedRepository).toBe(undefined);
 
         containerFixture.detectChanges();
-        expect(container.codeEditorContainer).to.be.undefined;
+        expect(container.codeEditorContainer).toBe(undefined);
     });
 
     it('should load test repository if specified in url', () => {
@@ -323,7 +314,7 @@ describe('CodeEditorInstructorIntegration', () => {
             solutionParticipation: { id: 4 },
             course: { id: 1 },
         } as ProgrammingExercise;
-        const setDomainSpy = spy(domainService, 'setDomain');
+        const setDomainSpy = jest.spyOn(domainService, 'setDomain');
         // @ts-ignore
         (container.router as MockRouter).setUrl('code-editor-instructor/1/test');
         container.ngOnDestroy();
@@ -331,30 +322,31 @@ describe('CodeEditorInstructorIntegration', () => {
 
         findWithParticipationsSubject.next({ body: exercise });
 
-        expect(setDomainSpy).to.have.been.calledOnceWithExactly([DomainType.TEST_REPOSITORY, exercise]);
-        expect(container.selectedParticipation).not.to.exist;
-        expect(container.selectedRepository).to.equal(container.REPOSITORY.TEST);
-        expect(getBuildLogsStub).not.to.have.been.called;
-        expect(getFeedbackDetailsForResultStub).not.to.have.been.called;
+        expect(setDomainSpy).toHaveBeenCalledTimes(1);
+        expect(setDomainSpy).toHaveBeenCalledWith([DomainType.TEST_REPOSITORY, exercise]);
+        expect(container.selectedParticipation).toBe(undefined);
+        expect(container.selectedRepository).toBe(container.REPOSITORY.TEST);
+        expect(getBuildLogsStub).not.toHaveBeenCalled();
+        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
 
         containerFixture.detectChanges();
 
-        expect(container.codeEditorContainer).to.exist;
-        expect(container.editableInstructions).to.exist;
-        expect(container.editableInstructions.participation).to.deep.equal(exercise.templateParticipation);
-        expect(container.resultComp).not.to.exist;
-        expect(container.codeEditorContainer.buildOutput).not.to.exist;
+        expect(container.codeEditorContainer).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.editableInstructions).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.editableInstructions.participation).toEqual(exercise.templateParticipation);
+        expect(container.resultComp).toBe(undefined);
+        expect(container.codeEditorContainer.buildOutput).toBe(undefined);
     });
 
     const checkSolutionRepository = (exercise: ProgrammingExercise) => {
-        expect(container.selectedRepository).to.equal(container.REPOSITORY.SOLUTION);
-        expect(container.selectedParticipation).to.deep.equal(exercise.solutionParticipation);
-        expect(container.codeEditorContainer).to.exist;
-        expect(container.editableInstructions).to.exist;
-        expect(container.resultComp).to.exist;
-        expect(container.codeEditorContainer.buildOutput).to.exist;
-        expect(container.codeEditorContainer.buildOutput.participation).to.deep.equal(exercise.solutionParticipation);
-        expect(container.editableInstructions.participation).to.deep.equal(exercise.solutionParticipation);
+        expect(container.selectedRepository).toBe(container.REPOSITORY.SOLUTION);
+        expect(container.selectedParticipation).toEqual(exercise.solutionParticipation);
+        expect(container.codeEditorContainer).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.editableInstructions).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.resultComp).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.codeEditorContainer.buildOutput).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.codeEditorContainer.buildOutput.participation).toEqual(exercise.solutionParticipation);
+        expect(container.editableInstructions.participation).toEqual(exercise.solutionParticipation);
     };
 
     it('should be able to switch between the repos and update the child components accordingly', () => {
@@ -369,7 +361,7 @@ describe('CodeEditorInstructorIntegration', () => {
         // @ts-ignore
         exercise.studentParticipations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseStudentParticipation];
 
-        const setDomainSpy = spy(domainService, 'setDomain');
+        const setDomainSpy = jest.spyOn(domainService, 'setDomain');
 
         // Start with assignment repository
         // @ts-ignore
@@ -380,14 +372,14 @@ describe('CodeEditorInstructorIntegration', () => {
 
         containerFixture.detectChanges();
 
-        expect(container.selectedRepository).to.equal(container.REPOSITORY.ASSIGNMENT);
-        expect(container.selectedParticipation).to.deep.equal(exercise.studentParticipations[0]);
-        expect(container.codeEditorContainer).to.exist;
-        expect(container.editableInstructions).to.exist;
-        expect(container.resultComp).to.exist;
-        expect(container.codeEditorContainer.buildOutput).to.exist;
-        expect(container.codeEditorContainer.buildOutput.participation).to.deep.equal(exercise.studentParticipations[0]);
-        expect(container.editableInstructions.participation).to.deep.equal(exercise.studentParticipations[0]);
+        expect(container.selectedRepository).toBe(container.REPOSITORY.ASSIGNMENT);
+        expect(container.selectedParticipation).toEqual(exercise.studentParticipations[0]);
+        expect(container.codeEditorContainer).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.editableInstructions).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.resultComp).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.codeEditorContainer.buildOutput).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.codeEditorContainer.buildOutput.participation).toEqual(exercise.studentParticipations[0]);
+        expect(container.editableInstructions.participation).toEqual(exercise.studentParticipations[0]);
 
         // New select solution repository
         // @ts-ignore
@@ -398,10 +390,11 @@ describe('CodeEditorInstructorIntegration', () => {
 
         checkSolutionRepository(exercise);
 
-        expect(findWithParticipationsStub).to.have.been.calledOnceWithExactly(exercise.id);
-        expect(setDomainSpy).to.have.been.calledTwice;
-        expect(setDomainSpy).to.have.been.calledWith([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
-        expect(setDomainSpy).to.have.been.calledWith([DomainType.PARTICIPATION, exercise.solutionParticipation]);
+        expect(findWithParticipationsStub).toHaveBeenCalledTimes(1);
+        expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
+        expect(setDomainSpy).toHaveBeenCalledTimes(2);
+        expect(setDomainSpy).toHaveBeenNthCalledWith(1, [DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
+        expect(setDomainSpy).toHaveBeenNthCalledWith(2, [DomainType.PARTICIPATION, exercise.solutionParticipation]);
     });
 
     it('should not be able to select a repository without repositoryUrl', () => {
@@ -416,7 +409,7 @@ describe('CodeEditorInstructorIntegration', () => {
         exercise.templateParticipation = { id: 3, programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
         exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
 
-        const setDomainSpy = spy(domainService, 'setDomain');
+        const setDomainSpy = jest.spyOn(domainService, 'setDomain');
 
         // Start with assignment repository
         // @ts-ignore
@@ -427,8 +420,8 @@ describe('CodeEditorInstructorIntegration', () => {
 
         containerFixture.detectChanges();
 
-        expect(setDomainSpy).to.have.been.calledOnce;
-        expect(setDomainSpy).to.have.been.calledOnceWithExactly([DomainType.PARTICIPATION, exercise.solutionParticipation]);
+        expect(setDomainSpy).toHaveBeenCalledTimes(1);
+        expect(setDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, exercise.solutionParticipation]);
         checkSolutionRepository(exercise);
     });
 });

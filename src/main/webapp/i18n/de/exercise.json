@@ -142,8 +142,7 @@
             "showManual": "Nur manuelle anzeigen",
             "showAutomatic": "Nur automatische anzeigen",
             "showAll": "Alle anzeigen",
-            "tagPlaceholder": "+Kategorie",
-            "tagSecondaryPlaceholder": "Neue Kategorie eingeben",
+            "tagPlaceholder": "+ Kategorie",
             "isProgramming": "Das ist eine Programmieraufgabe",
             "isModeling": "Das ist eine Modellierungsaufgabe",
             "isQuiz": "Das ist eine Quizaufgabe",
@@ -165,13 +164,16 @@
             },
             "form": {
                 "title": {
+                    "undefined": "Der Titel wurde nicht ausgefüllt!",
                     "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!"
                 },
                 "shortName": {
+                    "undefined": "Der Kurzname wurde nicht ausgefüllt!",
                     "pattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine speziellen Zeichen enthalten!",
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein!"
                 },
                 "packageName": {
+                    "undefined": "Der Package-Name wurde nicht ausgefüllt!",
                     "pattern": {
                         "JAVA": "Der Package-Name muss aus einem oder mehreren gültigen Java-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.java\"!",
                         "KOTLIN": "Der Package-Name muss aus einem oder mehreren gültigen Kotlin-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.kotlin\"!",
@@ -179,12 +181,14 @@
                     }
                 },
                 "points": {
-                    "customMin": "Die Punkte müssen mindestens 1 betragen.",
-                    "customMax": "Die Punkte dürfen höchstens 9999 betragen."
+                    "undefined": "Die Punkte wurden nicht ausgefüllt!",
+                    "customMin": "Die Punkte müssen mindestens 1 betragen!",
+                    "customMax": "Die Punkte dürfen höchstens 9999 betragen!"
                 },
                 "bonusPoints": {
-                    "customMin": "Die Punkte müssen mindestens 0 betragen.",
-                    "customMax": "Die Punkte dürfen höchstens 9999 betragen."
+                    "undefined": "Die Bonuspunkte wurden nicht ausgefüllt!",
+                    "customMin": "Die Bonuspunkte müssen mindestens 0 betragen!",
+                    "customMax": "Die Bonuspunkte dürfen höchstens 9999 betragen!"
                 },
                 "maxPenalty": {
                     "pattern": "Der maximale prozentuale Punktabzug muss zwischen 0 und 100 liegen!"

@@ -1,9 +1,7 @@
 import { BASE_API, PUT } from '../../../constants';
 import scrollBehaviorOptions = Cypress.scrollBehaviorOptions;
 
-// TODO: find or create better selectors for modeling objects
-export const MODELING_SPACE = '.sc-jrAFXE';
-const MODELING_COMPONENT = '.sc-hBEYId';
+export const MODELING_EDITOR_CANVAS = '#modeling-editor-canvas';
 
 /**
  * This provides functions for interacting with the modeling editor
@@ -13,30 +11,24 @@ export class ModelingEditor {
      * Adds a Modeling Component to the Example Solution
      * */
     addComponentToModel(componentNumber: number, scrollBehavior: scrollBehaviorOptions = 'center') {
-        cy.get(`${MODELING_COMPONENT}`).children().eq(componentNumber).drag(`${MODELING_SPACE}`, { scrollBehavior });
-    }
-
-    save() {
-        cy.intercept(PUT, BASE_API + 'exercises/*/modeling-submissions').as('createModelingSubmission');
-        cy.contains('Save').click();
-        return cy.wait('@createModelingSubmission');
+        cy.get('#modeling-editor-sidebar').children().eq(componentNumber).drag(`${MODELING_EDITOR_CANVAS}`, { scrollBehavior, timeout: 1000 });
     }
 
     submit() {
         cy.intercept(PUT, BASE_API + 'exercises/*/modeling-submissions').as('createModelingSubmission');
-        cy.get('.btn-primary').first().click();
+        cy.get('#submit-modeling-submission').first().click();
         return cy.wait('@createModelingSubmission');
     }
 
     clickCreateNewExampleSubmission() {
-        cy.get('[jhitranslate="artemisApp.modelingExercise.createNewExampleSubmission"]').click();
+        cy.get('#new-modeling-example-submission').click();
     }
 
     clickCreateExampleSubmission() {
-        cy.get('[jhitranslate="artemisApp.modelingExercise.createExampleSubmission"]').click();
+        cy.get('#create-example-submission').click();
     }
 
     showExampleAssessment() {
-        cy.get('[jhitranslate="artemisApp.modelingExercise.showExampleAssessment"]').click();
+        cy.get('#show-modeling-example-assessment').click();
     }
 }

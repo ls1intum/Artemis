@@ -34,10 +34,9 @@ public class FlowchartTerminal extends UMLElement {
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (!(reference instanceof FlowchartTerminal)) {
+        if (!(reference instanceof FlowchartTerminal referenceTerminal)) {
             return similarity;
         }
-        FlowchartTerminal referenceTerminal = (FlowchartTerminal) reference;
 
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceTerminal.getName());
 
@@ -52,11 +51,9 @@ public class FlowchartTerminal extends UMLElement {
      */
     @Override
     public double overallSimilarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof FlowchartTerminal)) {
+        if (!(reference instanceof FlowchartTerminal referenceTerminal)) {
             return 0;
         }
-
-        FlowchartTerminal referenceTerminal = (FlowchartTerminal) reference;
 
         double similarity = similarity(referenceTerminal);
 

@@ -1,0 +1,49 @@
+{
+    "generator-jhipster": {
+        "applicationType": "microservice",
+        "baseName": "lecture",
+        "jhipsterVersion": "7.1.0",
+        "skipClient": true,
+        "withAdminUi": false,
+        "skipUserManagement": true,
+        "skipServer": false,
+        "skipCheckLengthOfIdentifier": false,
+        "skipFakeData": false,
+        "jhiPrefix": "jhi",
+        "entitySuffix": "",
+        "dtoSuffix": "DTO",
+        "testFrameworks": [
+            "cypress"
+        ],
+        "blueprints": [],
+        "otherModules": [],
+        "pages": [],
+        "creationTimestamp": 1634738546457,
+        "serviceDiscoveryType": "eureka",
+        "reactive": false,
+        "authenticationType": "jwt",
+        "packageName": "de.tum.in.www1.artemis.lecture",
+        "serverPort": "8086",
+        "cacheProvider": "hazelcast",
+        "enableHibernateCache": false,
+        "databaseType": "sql",
+        "devDatabaseType": "mysql",
+        "prodDatabaseType": "mysql",
+        "buildTool": "gradle",
+        "serverSideOptions": [
+            "enableSwaggerCodegen:true"
+        ],
+        "websocket": false,
+        "searchEngine": false,
+        "messageBroker": false,
+        "enableSwaggerCodegen": true,
+        "enableTranslation": true,
+        "nativeLanguage": "en",
+        "packageFolder": "de/tum/in/www1/artemis/lecture",
+        "jwtSecretKey": "NWNlZGZlYjViMTEwMDY4YTM5ODQwMzYxNjdhY2NmNzljYmVkYjI0MGM5MmRiMTA3NzM5NGM4MmM2YzczNzkwYzQyZjIyZjgxNmVkYjFhNzQ1NWExZTAxNGUzMTI3MDQzZGI0MmM5MGJlMjFlNDM1MGFiZWUzNjNlZWM3MmU3OWY=",
+        "languages": [
+            "en",
+            "de"
+        ]
+    }
+}

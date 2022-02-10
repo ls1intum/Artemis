@@ -1,23 +1,24 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
-import { createRequestOption } from 'app/shared/util/request-util';
+import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
-import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
 import { map, tap } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
+export type ResultsWithPointsArrayResponseType = HttpResponse<ResultWithPointsPerGradingCriterion[]>;
 
 export interface IResultService {
     find: (id: number) => Observable<EntityResponseType>;
     getResultsForExercise: (courseId: number, exerciseId: number, req?: any) => Observable<EntityArrayResponseType>;
+    getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: any) => Observable<ResultsWithPointsArrayResponseType>;
     getLatestResultWithFeedbacks: (participationId: number) => Observable<HttpResponse<Result>>;
     getFeedbackDetailsForResult: (participationId: number, resultId: number) => Observable<HttpResponse<Feedback[]>>;
     delete: (participationId: number, resultId: number) => Observable<HttpResponse<void>>;
@@ -27,7 +28,6 @@ export interface IResultService {
 export class ResultService implements IResultService {
     private exerciseResourceUrl = SERVER_API_URL + 'api/exercises';
     private resultResourceUrl = SERVER_API_URL + 'api/results';
-    private submissionResourceUrl = SERVER_API_URL + 'api/submissions';
     private participationResourceUrl = SERVER_API_URL + 'api/participations';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
@@ -46,6 +46,16 @@ export class ResultService implements IResultService {
             .pipe(map((res: EntityArrayResponseType) => this.convertArrayResponse(res)));
     }
 
+    getResultsForExerciseWithPointsPerGradingCriterion(exerciseId: number, req?: any): Observable<ResultsWithPointsArrayResponseType> {
+        const options = createRequestOption(req);
+        return this.http
+            .get<ResultWithPointsPerGradingCriterion[]>(`${this.exerciseResourceUrl}/${exerciseId}/results-with-points-per-criterion`, {
+                params: options,
+                observe: 'response',
+            })
+            .pipe(map((res: ResultsWithPointsArrayResponseType) => this.convertResultWithPointsResponse(res)));
+    }
+
     getFeedbackDetailsForResult(participationId: number, resultId: number): Observable<HttpResponse<Feedback[]>> {
         return this.http.get<Feedback[]>(`${this.participationResourceUrl}/${participationId}/results/${resultId}/details`, { observe: 'response' });
     }
@@ -58,19 +68,8 @@ export class ResultService implements IResultService {
         return this.http.delete<void>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' });
     }
 
-    /**
-     * Create a new example result for the provided submission ID.
-     *
-     * @param exerciseId The ID of the exercise for which an example result should get created
-     * @param submissionId The ID of the example submission for which a result should get created
-     * @return The newly created (and empty) example result
-     */
-    createNewExampleResult(exerciseId: number, submissionId: number): Observable<HttpResponse<Result>> {
-        return this.http.post<Result>(`${this.exerciseResourceUrl}/${exerciseId}/example-submissions/${submissionId}/example-results`, null, { observe: 'response' });
-    }
-
     public convertDateFromClient(result: Result): Result {
-        const copy: Result = Object.assign({}, result, {
+        return Object.assign({}, result, {
             completionDate:
                 // Result completionDate is a dayjs object -> toJSON.
                 result.completionDate && dayjs.isDayjs(result.completionDate)
@@ -81,17 +80,32 @@ export class ResultService implements IResultService {
                     : // No valid date -> remove date.
                       null,
         });
-        return copy;
     }
 
     protected convertArrayResponse(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.forEach((result: Result) => {
-                result.completionDate = result.completionDate ? dayjs(result.completionDate) : undefined;
-                result.participation = this.convertParticipationDateFromServer(result.participation! as StudentParticipation);
+            res.body.forEach((result: Result) => this.convertResultResponse(result));
+        }
+        return res;
+    }
+
+    protected convertResultWithPointsResponse(res: ResultsWithPointsArrayResponseType): ResultsWithPointsArrayResponseType {
+        if (res.body) {
+            res.body.forEach((resultWithPoints: ResultWithPointsPerGradingCriterion) => {
+                this.convertResultResponse(resultWithPoints.result);
+                const pointsMap = new Map<number, number>();
+                Object.keys(resultWithPoints.pointsPerCriterion).forEach((key) => {
+                    pointsMap.set(Number(key), resultWithPoints.pointsPerCriterion[key]);
+                });
+                resultWithPoints.pointsPerCriterion = pointsMap;
             });
         }
         return res;
+    }
+
+    private convertResultResponse(result: Result) {
+        result.completionDate = result.completionDate ? dayjs(result.completionDate) : undefined;
+        result.participation = this.convertParticipationDateFromServer(result.participation! as StudentParticipation);
     }
 
     public convertDateFromServer(res: EntityResponseType): EntityResponseType {
@@ -102,7 +116,7 @@ export class ResultService implements IResultService {
         return res;
     }
 
-    convertParticipationDateFromServer(participation: StudentParticipation) {
+    private convertParticipationDateFromServer(participation: StudentParticipation): StudentParticipation {
         if (participation) {
             participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
             if (participation.exercise) {
@@ -120,30 +134,47 @@ export class ResultService implements IResultService {
             withSubmissions: exercise.type === ExerciseType.MODELING,
         }).pipe(
             tap((res: HttpResponse<Result[]>) => {
-                return res.body!.map((result) => {
-                    result.participation!.results = [result];
-                    (result.participation! as StudentParticipation).exercise = exercise;
-                    if (result.participation!.type === ParticipationType.PROGRAMMING) {
-                        addUserIndependentRepositoryUrl(result.participation!);
-                    }
-                    result.durationInMinutes = this.durationInMinutes(
-                        result.completionDate!,
-                        result.participation!.initializationDate ? result.participation!.initializationDate : exercise.releaseDate!,
-                    );
-                    // Nest submission into participation so that it is available for the result component
-                    if (result.submission) {
-                        result.participation!.submissions = [result.submission];
-                    }
-                    return result;
-                });
+                return res.body!.map((result) => ResultService.processReceivedResult(exercise, result));
             }),
         );
     }
 
     /**
+     * Fetches all results together with the total points and points per grading criterion for each of the given exercise.
+     * @param exercise of which the results with points should be fetched.
+     */
+    getResultsWithPointsPerGradingCriterion(exercise: Exercise): Observable<ResultsWithPointsArrayResponseType> {
+        return this.getResultsForExerciseWithPointsPerGradingCriterion(exercise.id!, {
+            withSubmissions: exercise.type === ExerciseType.MODELING,
+        }).pipe(
+            tap((res: HttpResponse<ResultWithPointsPerGradingCriterion[]>) => {
+                return res.body!.map((resultWithScores) => {
+                    const result = resultWithScores.result;
+                    resultWithScores.result = ResultService.processReceivedResult(exercise, result);
+                    return resultWithScores;
+                });
+            }),
+        );
+    }
+
+    private static processReceivedResult(exercise: Exercise, result: Result): Result {
+        result.participation!.results = [result];
+        (result.participation! as StudentParticipation).exercise = exercise;
+        result.durationInMinutes = ResultService.durationInMinutes(
+            result.completionDate!,
+            result.participation!.initializationDate ? result.participation!.initializationDate : exercise.releaseDate!,
+        );
+        // Nest submission into participation so that it is available for the result component
+        if (result.submission) {
+            result.participation!.submissions = [result.submission];
+        }
+        return result;
+    }
+
+    /**
      * Utility function
      */
-    private durationInMinutes(completionDate: dayjs.Dayjs, initializationDate: dayjs.Dayjs) {
+    private static durationInMinutes(completionDate: dayjs.Dayjs, initializationDate: dayjs.Dayjs) {
         return dayjs(completionDate).diff(initializationDate, 'minutes');
     }
 

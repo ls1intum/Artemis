@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TutorGroup } from 'app/entities/tutor-group.model';
@@ -9,6 +9,16 @@ import { Language } from 'app/entities/tutor-group.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Organization } from 'app/entities/organization.model';
 import { Post } from 'app/entities/metis/post.model';
+
+/**
+ * This interface is used in order to provide a type for objects
+ * requested by the ngx-charts framework in order
+ * to display information in charts
+ */
+export interface NgxDataEntry {
+    name: string;
+    value: number;
+}
 
 export class Course implements BaseEntity {
     public id?: number;

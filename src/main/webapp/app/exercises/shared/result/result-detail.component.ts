@@ -12,7 +12,6 @@ import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
-import { ScoreChartPreset } from 'app/shared/chart/presets/scoreChartPreset';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -22,9 +21,11 @@ import {
     isResultPreliminary,
 } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { round, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 export enum FeedbackItemType {
     Issue,
@@ -66,9 +67,17 @@ export class ResultDetailComponent implements OnInit {
     @Input() showScoreChart = false;
     @Input() exerciseType: ExerciseType;
     /**
-     * Translate key for a HTML message that is displayed at the top of the result details, if defined.
+     * Translate key for an HTML message that is displayed at the top of the result details, if defined.
      */
     @Input() messageKey?: string = undefined;
+    /**
+     * For programming exercises with individual due dates automatic feedbacks
+     * for tests marked as AFTER_DUE_DATE are hidden until the last student can
+     * no longer submit.
+     * Students should be informed why some feedbacks seem to be missing from
+     * the result.
+     */
+    @Input() showMissingAutomaticFeedbackInformation = false;
 
     isLoading = false;
     loadingFailed = false;
@@ -76,18 +85,31 @@ export class ResultDetailComponent implements OnInit {
     filteredFeedbackList: FeedbackItem[];
     buildLogs: BuildLogEntryArray;
 
-    scoreChartPreset: ScoreChartPreset;
     showScoreChartTooltip = false;
 
     commitHashURLTemplate?: string;
     commitHash?: string;
     commitUrl?: string;
 
+    ngxData: any[] = [];
+    labels: string[];
+    ngxColors = {
+        name: 'Feedback Detail',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: ['#28a745', '#dc3545'], // colors: green, red
+    } as Color;
+    xScaleMax = 100;
+    legendPosition = LegendPosition.Below;
+
     get exercise(): Exercise | undefined {
         if (this.result.participation) {
             return getExercise(this.result.participation);
         }
     }
+
+    // Icons
+    faCircleNotch = faCircleNotch;
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -98,7 +120,7 @@ export class ResultDetailComponent implements OnInit {
     ) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
         const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
-        this.scoreChartPreset = new ScoreChartPreset([pointsLabel, deductionsLabel]);
+        this.labels = [pointsLabel, deductionsLabel];
     }
 
     /**
@@ -234,12 +256,14 @@ export class ResultDetailComponent implements OnInit {
                 } else if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
                     const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
                     const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
+                    const text = this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message;
+                    const scaPreviewText = ResultDetailComponent.computeFeedbackPreviewText(text);
                     return {
                         type: FeedbackItemType.Issue,
                         category: 'Code Issue',
                         title: `${scaCategory} Issue in file ${this.getIssueLocation(scaIssue)}`.trim(),
-                        text: this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message,
-                        previewText,
+                        text,
+                        previewText: scaPreviewText,
                         positive: false,
                         credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
                         appliedCredits: feedback.credits,
@@ -424,9 +448,7 @@ export class ResultDetailComponent implements OnInit {
         if (appliedNegativePoints !== receivedNegativePoints) {
             this.showScoreChartTooltip = true;
         }
-
-        // the chart preset handles the capping to the maximum score of the exercise
-        this.scoreChartPreset.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, maxPoints, maxPointsWithBonus);
+        this.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, maxPoints, maxPointsWithBonus);
     }
 
     /**
@@ -448,5 +470,81 @@ export class ResultDetailComponent implements OnInit {
         const projectKey = (this.exercise as ProgrammingExercise)?.projectKey;
         const programmingSubmission = this.result.submission as ProgrammingSubmission;
         return createCommitUrl(this.commitHashURLTemplate, projectKey, this.result.participation, programmingSubmission);
+    }
+
+    /**
+     * Updates the datasets of the charts with the correct values and colors.
+     * @param receivedPositive Sum of positive credits of the score
+     * @param appliedNegative Sum of applied negative credits
+     * @param receivedNegative Sum of received negative credits
+     * @param maxScore The relevant maximal points of the exercise
+     * @param maxScoreWithBonus The actual received points + optional bonus points
+     */
+    setValues(receivedPositive: number, appliedNegative: number, receivedNegative: number, maxScore: number, maxScoreWithBonus: number): void {
+        this.ngxData = [
+            {
+                name: 'Score',
+                series: [
+                    { name: this.labels[0], value: 0 },
+                    { name: this.labels[1], value: 0 },
+                ],
+            },
+        ];
+        let appliedPositive = receivedPositive;
+
+        // cap to min and max values while maintaining correct negative points
+        if (appliedPositive - appliedNegative > maxScoreWithBonus) {
+            appliedPositive = maxScoreWithBonus;
+            appliedNegative = 0;
+        } else if (appliedPositive > maxScoreWithBonus) {
+            appliedNegative -= appliedPositive - maxScoreWithBonus;
+            appliedPositive = maxScoreWithBonus;
+        } else if (appliedPositive - appliedNegative < 0) {
+            appliedNegative = appliedPositive;
+        }
+        const score = this.roundToDecimals(((appliedPositive - appliedNegative) / maxScore) * 100, 2);
+        this.xScaleMax = Math.max(this.xScaleMax, score);
+        this.ngxData[0].series[0].value = score;
+        this.ngxData[0].series[0].name +=
+            ': ' + this.roundToDecimals(appliedPositive, 1) + (appliedPositive !== receivedPositive ? ` of ${this.roundToDecimals(receivedPositive, 1)}` : '');
+        this.ngxData[0].series[1].value = this.roundToDecimals((appliedNegative / maxScore) * 100, 2);
+        this.ngxData[0].series[1].name +=
+            ': ' + this.roundToDecimals(appliedNegative, 1) + (appliedNegative !== receivedNegative ? ` of ${this.roundToDecimals(receivedNegative, 1)}` : '');
+        this.ngxData = [...this.ngxData];
+    }
+
+    private roundToDecimals(i: number, n: number) {
+        const f = 10 ** n;
+        return round(i, f);
+    }
+
+    /**
+     * Adds a percentage sign to every x axis tick
+     * @param tick the default x axis tick
+     * @returns string representing custom x axis tick
+     */
+    xAxisFormatting(tick: string): string {
+        return tick + '%';
+    }
+
+    /**
+     * Handles the event if the user clicks on a legend entry. Then, the corresponding bar should disappear
+     * @param event the information that is delegated by the chart framework. It is dependent on the spot
+     * the user clicks
+     */
+    onSelect(event: any): void {
+        if (!event.series) {
+            const name = event as string;
+            this.ngxData[0].series.forEach((points: any, index: number) => {
+                if (points.name === name) {
+                    const color = this.ngxColors.domain[index];
+                    // if the bar is not transparent yet, make it transparent. Else, reset the normal color
+                    this.ngxColors.domain[index] = color !== 'rgba(255,255,255,0)' ? 'rgba(255,255,255,0)' : index === 0 ? '#28a745' : '#dc3545';
+
+                    // update is necessary for the colors to change
+                    this.ngxData = [...this.ngxData];
+                }
+            });
+        }
     }
 }

@@ -15,14 +15,11 @@ export class Post extends Posting {
     public course?: Course;
     public courseWideContext?: CourseWideContext;
     public displayPriority?: DisplayPriority;
-    // deprecated, will be removed
-    public votes?: number;
 
     constructor() {
         super();
         // set default values
         this.visibleForStudents = true;
-        this.votes = 0;
         this.displayPriority = DisplayPriority.NONE;
     }
 }

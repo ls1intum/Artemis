@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA, DebugElement, Directive, EventEmitter, Input, Output } from '@angular/core';
-import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
 import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
 import { UnderlineCommand } from 'app/shared/markdown-editor/commands/underline.command';
@@ -20,19 +20,19 @@ export class MockMarkdownEditorDirective {
 }
 
 describe('PostingsMarkdownEditor', () => {
-    let component: PostingsMarkdownEditorComponent;
+    let component: PostingMarkdownEditorComponent;
     let mockMarkdownEditorDirective: MockMarkdownEditorDirective;
-    let fixture: ComponentFixture<PostingsMarkdownEditorComponent>;
+    let fixture: ComponentFixture<PostingMarkdownEditorComponent>;
     let debugElement: DebugElement;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            declarations: [PostingsMarkdownEditorComponent, MockMarkdownEditorDirective],
+            declarations: [PostingMarkdownEditorComponent, MockMarkdownEditorDirective],
             schemas: [CUSTOM_ELEMENTS_SCHEMA], // required because we mock the nested MarkdownEditorComponent
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(PostingsMarkdownEditorComponent);
+                fixture = TestBed.createComponent(PostingMarkdownEditorComponent);
                 fixture.autoDetectChanges();
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;

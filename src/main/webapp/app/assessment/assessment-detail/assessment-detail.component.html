@@ -1,9 +1,9 @@
-<div (drop)="updateAssessmentOnDrop($event)" (dragover)="$event.preventDefault()" class="card mb-3">
+<div (drop)="updateAssessmentOnDrop($event)" (dragover)="$event.preventDefault()" class="card mb-3" id="assessment-detail">
     <div class="card-header" [class.color-cyan]="assessment.type == FeedbackType_AUTOMATIC">
         <jhi-grading-instruction-link-icon *ngIf="assessment.gradingInstruction!" [assessment]="assessment"></jhi-grading-instruction-link-icon>
-        <fa-icon [icon]="'trash-alt'" class="float-end" (click)="delete()" *ngIf="!disabled"></fa-icon>
+        <fa-icon [icon]="faTrashAlt" class="float-end" (click)="delete()" *ngIf="!readOnly"></fa-icon>
         <span class="badge bg-secondary float-end" *ngIf="assessment.type == FeedbackType_AUTOMATIC" title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}">
-            <fa-icon [icon]="'robot'"></fa-icon>
+            <fa-icon [icon]="faRobot"></fa-icon>
             <span jhiTranslate="artemisApp.textAssessment.automatic">Automatic</span>
         </span>
     </div>
@@ -11,13 +11,14 @@
         <div class="form-group row">
             <label class="col-4 assessment-label" jhiTranslate="artemisApp.exercise.score"></label>
             <input
+                id="feedback-points"
                 class="col form-control"
                 type="number"
                 step="0.5"
                 [(ngModel)]="assessment.credits"
                 (ngModelChange)="emitChanges()"
-                [readOnly]="disabled || assessment.gradingInstruction || readOnly"
-                [disabled]="disabled"
+                [readOnly]="assessment.gradingInstruction || readOnly"
+                [disabled]="readOnly"
                 [required]="!assessment.gradingInstruction"
             />
         </div>
@@ -26,7 +27,7 @@
                 <label class="pe-0" style="float: left" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
                 <div *ngIf="assessment.gradingInstruction!">
                     <fa-icon
-                        [icon]="'question-circle'"
+                        [icon]="faQuestionCircle"
                         class="text-secondary ps-1"
                         [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate"
                         container="body"
@@ -38,20 +39,36 @@
                     <span>{{ assessment.gradingInstruction!.feedback }}</span>
                 </div>
                 <textarea
+                    id="feedback-textarea"
                     class="form-control"
                     rows="2"
                     [(ngModel)]="assessment.detailText"
                     (ngModelChange)="emitChanges()"
                     [readOnly]="readOnly"
-                    [disabled]="disabled"
+                    [disabled]="readOnly"
                     [placeholder]="
                         assessment.gradingInstruction!
                             ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
                             : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
                     "
-                    [required]="assessment.gradingInstruction ? false : true"
+                    [required]="!assessment.gradingInstruction"
                 ></textarea>
             </div>
+        </div>
+        <!-- Text showing whether the tutor feedback is correct or not (upon validation on the server) -->
+        <div *ngIf="assessment.correctionStatus !== undefined">
+            <span *ngIf="assessment.correctionStatus === 'CORRECT'" class="text-success"
+                >{{ 'artemisApp.exampleSubmission.feedback.' + assessment.correctionStatus! | artemisTranslate }}
+            </span>
+            <span *ngIf="assessment.correctionStatus !== 'CORRECT'" class="text-danger"
+                >{{ 'artemisApp.exampleSubmission.feedback.' + assessment.correctionStatus! | artemisTranslate }}
+            </span>
+
+            <!-- :warning: emoji was rendered as a black-white glyph, hence the solution with the fa-icon -->
+            <fa-layers *ngIf="assessment.correctionStatus !== 'CORRECT'">
+                <fa-icon class="text-warning" [icon]="faExclamationTriangle"></fa-icon>
+                <fa-icon [icon]="faExclamation" size="2x" [styles]="{ width: '16px', 'margin-top': '-6px' }" [classes]="['text-dark']" transform="shrink-10"></fa-icon>
+            </fa-layers>
         </div>
 
         <jhi-assessment-correction-round-badge [feedback]="assessment" [highlightDifferences]="highlightDifferences"></jhi-assessment-correction-round-badge>

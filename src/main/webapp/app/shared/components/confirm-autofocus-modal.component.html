@@ -2,7 +2,7 @@
     <h4 class="modal-title">{{ title | artemisTranslate }}</h4>
     <button type="button" class="btn-close" aria-label="Close button" aria-describedby="modal-title" (click)="modal.dismiss('Cross click')"></button>
 </div>
-<div *ngIf="textIsMarkdown === true" class="modal-body" [innerHTML]="text | htmlForMarkdown"></div>
+<div *ngIf="textIsMarkdown === true" class="modal-body" [innerHTML]="text"></div>
 <div *ngIf="textIsMarkdown !== true" class="modal-body">
     <p *ngIf="translateText === true" style="white-space: pre-line">{{ text | artemisTranslate }}</p>
     <p *ngIf="translateText !== true" style="white-space: pre-line">{{ text }}</p>

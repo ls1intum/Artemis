@@ -3,6 +3,7 @@ import { Team } from 'app/entities/team.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TeamService } from '../team.service';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-teams-export-button',
@@ -10,7 +11,7 @@ import { TeamService } from '../team.service';
         <jhi-button
             [btnType]="ButtonType.PRIMARY"
             [btnSize]="buttonSize"
-            [icon]="'file-export'"
+            [icon]="faFileExport"
             [title]="'artemisApp.team.exportTeams.buttonLabel'"
             (onClick)="exportTeams($event)"
         ></jhi-button>
@@ -22,6 +23,9 @@ export class TeamsExportButtonComponent {
 
     @Input() teams: Team[];
     @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
+
+    // Icons
+    faFileExport = faFileExport;
 
     constructor(private teamService: TeamService, private alertService: AlertService) {}
 

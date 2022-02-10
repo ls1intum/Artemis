@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 
 /**
  * A GroupNotification.
@@ -63,6 +64,16 @@ public class GroupNotification extends Notification {
         this.setTitle(title);
         this.setText(notificationText);
         this.setAuthor(user);
+    }
+
+    public GroupNotification(Course course, String title, String notificationText, User user, GroupNotificationType type, NotificationPriority priority) {
+        this.setCourse(course);
+        this.setType(type);
+        this.setNotificationDate(ZonedDateTime.now());
+        this.setTitle(title);
+        this.setText(notificationText);
+        this.setAuthor(user);
+        this.setPriority(priority);
     }
 
     public void setCourse(Course course) {

@@ -102,7 +102,7 @@ public class ModelingPlagiarismDetectionService {
                         && modelingSubmission.getLatestResult().getScore() >= minimumScore)
                 .forEach(modelingSubmission -> {
                     String progressMessage = "Getting UML diagram for submission: " + processedSubmissionCount + "/" + modelingSubmissions.size();
-                    plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
+                    plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
 
                     try {
                         log.debug("Build UML diagram from json");
@@ -130,7 +130,7 @@ public class ModelingPlagiarismDetectionService {
         // similarity between two different submissions once
         for (int i = 0; i < nonEmptyDiagrams.size(); i++) {
             String progressMessage = "Comparing submissions: " + (i + 1) + "/" + nonEmptyDiagrams.size();
-            plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
+            plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
 
             for (int j = i + 1; j < nonEmptyDiagrams.size(); j++) {
 
@@ -172,7 +172,7 @@ public class ModelingPlagiarismDetectionService {
         }
 
         log.info("Found {} similar modeling submission combinations (>{})", comparisons.size(), minimumSimilarity);
-        plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
+        plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
 
         long durationInMillis = System.currentTimeMillis() - timeBeforeStartInMillis;
         int[] similarityDistribution = calculateSimilarityDistribution(comparisons);

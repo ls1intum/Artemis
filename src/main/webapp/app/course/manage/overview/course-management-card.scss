@@ -14,23 +14,41 @@
         cursor: pointer;
         height: 100px;
 
-        .container-padding {
-            padding: 10px;
+        > div {
+            flex: 0 1 auto;
         }
 
-        .card-description {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100ch;
-            display: inline-block;
+        .title-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex: 1 1 auto;
+            min-width: 0;
+
+            .course-title {
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+            }
+
+            .course-description {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: inline-block;
+                max-width: 100%;
+            }
+        }
+
+        .container-padding {
+            padding: 10px;
         }
 
         .card-date {
             white-space: nowrap;
             display: flex;
             align-items: center;
-            padding-left: 15px;
+            padding-left: 10px;
         }
 
         .card-groups {
@@ -57,10 +75,12 @@
         .card-header-left {
             display: flex;
             flex-direction: row;
+            align-items: center;
+            flex-wrap: nowrap;
         }
 
         jhi-secured-image {
-            padding: 5px 0 5px 5px;
+            padding: 5px;
 
             ::ng-deep img {
                 border-radius: 50%;
@@ -71,8 +91,6 @@
     }
 
     .section-card {
-        border: 1px solid $light-border-color;
-        border-radius: 0.1rem;
         min-width: 30%;
         height: 300px;
 
@@ -98,9 +116,15 @@
     }
 
     .statistics-card {
-        position: relative;
+        border-left: 1px solid rgba(0, 0, 0, 0.125);
         width: 100%;
         height: 100%;
+
+        .statistics-chart {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
     }
 
     .control-label {
@@ -150,16 +174,6 @@
     }
 }
 
-@media screen and (max-width: 1250px) {
-    .card {
-        .card-heading {
-            .card-description {
-                max-width: 80ch;
-            }
-        }
-    }
-}
-
 @media screen and (max-width: 1060px) {
     .card {
         .statistics-card {
@@ -170,15 +184,13 @@
             min-width: 100%;
         }
 
-        .card-heading {
-            .card-description {
-                display: none;
-            }
+        .card-heading .title-container .course-description {
+            display: none;
         }
     }
 }
 
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 850px) {
     .card {
         .card-heading {
             .card-header-left {
@@ -186,12 +198,26 @@
                 max-width: 110px;
             }
 
+            // see https://caniuse.com/css-line-clamp
+            .title-container .course-title {
+                font-size: 20px;
+                white-space: normal;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
+            }
+
             .card-date {
-                padding-left: 10px;
                 width: 100px;
                 white-space: pre-wrap;
                 margin-top: auto;
                 margin-bottom: auto;
+                font-size: 13px;
+                padding-bottom: 5px;
+            }
+
+            .card-groups {
+                font-size: 13px;
             }
 
             jhi-secured-image {
@@ -206,6 +232,12 @@
         }
 
         height: unset;
+    }
+}
+
+@media screen and (max-width: 500px) {
+    .card .card-footer .hidden-if-mobile {
+        display: none;
     }
 }
 

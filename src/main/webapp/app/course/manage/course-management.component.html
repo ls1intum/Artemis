@@ -13,9 +13,10 @@
                 [showInOrionWindow]="false"
                 *jhiHasAnyAuthority="'ROLE_ADMIN'"
                 class="btn btn-primary jh-create-entity create-course"
+                id="create-course"
                 [routerLink]="['/course-management/new']"
             >
-                <fa-icon [icon]="'plus'"></fa-icon>
+                <fa-icon [icon]="faPlus"></fa-icon>
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.course.home.createLabel"> Create new Course </span>
             </a>
         </div>
@@ -26,7 +27,7 @@
     <div class="table-responsive" *ngIf="courses">
         <div class="course-table-container mb-3" *ngFor="let semester of courseSemesters">
             <div class="control-label" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
-                <fa-icon class="pe-3" [icon]="semesterCollapsed[semester] ? 'angle-down' : 'angle-up'"></fa-icon>
+                <fa-icon class="pe-3" [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp"></fa-icon>
                 <span *ngIf="semester !== '' && semester !== 'test'">
                     <strong>{{ 'artemisApp.course.semester' | artemisTranslate }}: {{ semester }}</strong>
                 </span>

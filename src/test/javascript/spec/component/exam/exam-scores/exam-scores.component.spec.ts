@@ -4,10 +4,8 @@ import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { ExamScoreDTO, ExerciseGroup, ExerciseInfo, ExerciseResult, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { AggregatedExerciseGroupResult, ExamScoreDTO, ExerciseGroup, ExerciseInfo, ExerciseResult, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamScoresComponent } from 'app/exam/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -16,10 +14,8 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import * as chai from 'chai';
 import { cloneDeep } from 'lodash-es';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ChartsModule } from 'ng2-charts';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { empty, of } from 'rxjs';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
@@ -29,9 +25,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { BarChartModule } from '@swimlane/ngx-charts';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -185,7 +179,7 @@ describe('ExamScoresComponent', () => {
         exerciseGroupIdToExerciseResult: { [exGroup1Id]: exResult3ForGroup1 },
     } as StudentResult;
 
-    let findExamScoresSpy: sinon.SinonStub;
+    let findExamScoresSpy: jest.SpyInstance;
 
     const examScoreStudent1 = new ScoresDTO();
     examScoreStudent1.studentId = studentResult1.userId;
@@ -217,7 +211,7 @@ describe('ExamScoresComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ChartsModule],
+            imports: [MockModule(BarChartModule)],
             declarations: [
                 ExamScoresComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -268,35 +262,30 @@ describe('ExamScoresComponent', () => {
                 examService = fixture.debugElement.injector.get(ExamManagementService);
                 gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
                 const participationScoreService = fixture.debugElement.injector.get(ParticipantScoresService);
-                findExamScoresSpy = sinon
-                    .stub(participationScoreService, 'findExamScores')
-                    .returns(of(new HttpResponse({ body: [examScoreStudent1, examScoreStudent2, examScoreStudent3] })));
+                findExamScoresSpy = jest
+                    .spyOn(participationScoreService, 'findExamScores')
+                    .mockReturnValue(of(new HttpResponse({ body: [examScoreStudent1, examScoreStudent2, examScoreStudent3] })));
             });
     });
 
-    afterEach(function () {
-        sinon.restore();
-    });
-
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(comp).to.be.ok;
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should not log error on sentry when correct participant score calculation', () => {
         jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
-        const errorSpy = sinon.spy(comp, 'logErrorOnSentry');
+        const errorSpy = jest.spyOn(comp, 'logErrorOnSentry');
         fixture.detectChanges();
-        expect(errorSpy).to.not.have.been.called;
+        expect(errorSpy).not.toHaveBeenCalled();
     });
 
     it('should log error on sentry when missing participant score calculation', () => {
         jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        findExamScoresSpy.returns(of(new HttpResponse({ body: [] })));
-        const errorSpy = sinon.spy(comp, 'logErrorOnSentry');
+        findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [] })));
+        const errorSpy = jest.spyOn(comp, 'logErrorOnSentry');
         fixture.detectChanges();
-        expect(errorSpy).to.have.been.calledThrice;
+        expect(errorSpy).toHaveBeenCalledTimes(3);
     });
     it('should log error on sentry when wrong points calculation', () => {
         jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
@@ -306,10 +295,10 @@ describe('ExamScoresComponent', () => {
         cs2.pointsAchieved = 99;
         const cs3 = cloneDeep(examScoreStudent3);
         cs3.pointsAchieved = 99;
-        findExamScoresSpy.returns(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
-        const errorSpy = sinon.spy(comp, 'logErrorOnSentry');
+        findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
+        const errorSpy = jest.spyOn(comp, 'logErrorOnSentry');
         fixture.detectChanges();
-        expect(errorSpy).to.have.been.calledThrice;
+        expect(errorSpy).toHaveBeenCalledTimes(3);
     });
 
     it('should log error on sentry when wrong score calculation', () => {
@@ -320,10 +309,10 @@ describe('ExamScoresComponent', () => {
         cs2.scoreAchieved = 99;
         const cs3 = cloneDeep(examScoreStudent3);
         cs3.scoreAchieved = 99;
-        findExamScoresSpy.returns(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
-        const errorSpy = sinon.spy(comp, 'logErrorOnSentry');
+        findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
+        const errorSpy = jest.spyOn(comp, 'logErrorOnSentry');
         fixture.detectChanges();
-        expect(errorSpy).to.have.been.calledThrice;
+        expect(errorSpy).toHaveBeenCalledTimes(3);
     });
 
     it('should make duplicated titles unique', () => {
@@ -335,8 +324,8 @@ describe('ExamScoresComponent', () => {
         examScoreDTO.exerciseGroups.push(newExerciseGroup);
         fixture.detectChanges();
 
-        expect(examScoreDTO.exerciseGroups[0].title).to.equal(`group (id=1)`);
-        expect(examScoreDTO.exerciseGroups[1].title).to.equal(`group (id=2)`);
+        expect(examScoreDTO.exerciseGroups[0].title).toBe(`group (id=1)`);
+        expect(examScoreDTO.exerciseGroups[1].title).toBe(`group (id=2)`);
 
         // reset state
         examScoreDTO.exerciseGroups.pop();
@@ -355,36 +344,74 @@ describe('ExamScoresComponent', () => {
         // check histogram
         expectCorrectHistogram(comp, examScoreDTO);
         // expect three distinct scores
-        expect(comp.histogramData.filter((hd) => hd === 1).length).to.equal(3);
-        expect(comp.noOfExamsFiltered).to.equal(noOfSubmittedExercises);
+        expect(comp.histogramData.filter((hd) => hd === 1).length).toBe(3);
+        expect(comp.noOfExamsFiltered).toBe(noOfSubmittedExercises);
 
         // expect correct calculated exercise group statistics
         const groupResult1 = comp.aggregatedExerciseGroupResults.find((groupRes) => groupRes.exerciseGroupId === exGroup1.id);
-        expect(groupResult1).to.be.not.undefined;
+        const expectedGroupResult = {
+            noOfParticipantsWithFilter: 3,
+            totalPoints: 170,
+            exerciseResults: [
+                {
+                    noOfParticipantsWithFilter: 1,
+                    totalPoints: 100,
+                    exerciseId: 11,
+                    title: 'ex1_1',
+                    maxPoints: 100,
+                    totalParticipants: 1,
+                    exerciseType: 'text',
+                    averagePoints: 100,
+                    averagePercentage: 100,
+                },
+                {
+                    noOfParticipantsWithFilter: 2,
+                    totalPoints: 70,
+                    exerciseId: 12,
+                    title: 'ex1_2',
+                    maxPoints: 100,
+                    totalParticipants: 1,
+                    exerciseType: 'modeling',
+                    averagePoints: 35,
+                    averagePercentage: 35,
+                },
+                { noOfParticipantsWithFilter: 0, totalPoints: 0, exerciseId: 13, title: 'ex1_3', maxPoints: 100, totalParticipants: 1, exerciseType: 'programming' },
+                { noOfParticipantsWithFilter: 0, totalPoints: 0, exerciseId: 14, title: 'ex1_4', maxPoints: 100, totalParticipants: 1, exerciseType: 'file-upload' },
+                { noOfParticipantsWithFilter: 0, totalPoints: 0, exerciseId: 15, title: 'ex1_5', maxPoints: 100, totalParticipants: 1, exerciseType: 'quiz' },
+            ],
+            exerciseGroupId: 1,
+            title: 'group',
+            maxPoints: 100,
+            totalParticipants: 2,
+            averagePoints: 56.666666666666664,
+            averagePercentage: 56.666666666666664,
+        } as AggregatedExerciseGroupResult;
+
+        expect(groupResult1).toEqual(expectedGroupResult);
 
         const totalPoints = exResult1ForGroup1.achievedPoints! + exResult2ForGroup1.achievedPoints! + exResult3ForGroup1.achievedPoints!;
-        expect(groupResult1!.totalPoints).to.equal(totalPoints);
+        expect(groupResult1!.totalPoints).toBe(totalPoints);
         const averagePoints = totalPoints / noOfSubmittedExercises;
-        expect(groupResult1!.averagePoints).to.equal(averagePoints);
-        expect(groupResult1!.averagePercentage).to.equal((averagePoints / groupResult1!.maxPoints) * 100);
+        expect(groupResult1!.averagePoints).toBe(averagePoints);
+        expect(groupResult1!.averagePercentage).toBe((averagePoints / groupResult1!.maxPoints) * 100);
 
         // expect correct average points for exercises
-        expect(groupResult1!.exerciseResults.length).to.equal(5);
+        expect(groupResult1!.exerciseResults.length).toBe(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
             let averageExPoints = 0;
             let exInfo;
             if (exResult.exerciseId === 11) {
                 // result for ex 1_1
                 averageExPoints = exResult1ForGroup1.achievedPoints!;
-                expect(exResult.averagePoints).to.equal(averageExPoints);
+                expect(exResult.averagePoints).toBe(averageExPoints);
                 exInfo = exGroup1.containedExercises.find((ex) => ex.exerciseId === 11)!;
-                expect(exResult.averagePercentage).to.equal((averageExPoints / exInfo.maxPoints) * 100);
+                expect(exResult.averagePercentage).toBe((averageExPoints / exInfo.maxPoints) * 100);
             } else if (exResult.exerciseId === 12) {
                 // result for ex 1_2
                 averageExPoints = (exResult2ForGroup1.achievedPoints! + exResult3ForGroup1.achievedPoints!) / 2;
-                expect(exResult.averagePoints).to.equal(averageExPoints);
+                expect(exResult.averagePoints).toBe(averageExPoints);
                 exInfo = exGroup1.containedExercises.find((ex) => ex.exerciseId === 12)!;
-                expect(exResult.averagePercentage).to.equal((averageExPoints / exInfo.maxPoints) * 100);
+                expect(exResult.averagePercentage).toBe((averageExPoints / exInfo.maxPoints) * 100);
             }
         });
     });
@@ -402,21 +429,58 @@ describe('ExamScoresComponent', () => {
         // check histogram
         expectCorrectHistogram(comp, examScoreDTO);
         // expect two distinct scores
-        expect(comp.histogramData.filter((hd) => hd === 1).length).to.equal(noOfSubmittedExercises);
-        expect(comp.noOfExamsFiltered).to.equal(noOfSubmittedExercises);
+        expect(comp.histogramData.filter((hd) => hd === 1).length).toBe(noOfSubmittedExercises);
+        expect(comp.noOfExamsFiltered).toBe(noOfSubmittedExercises);
 
         // expect correct calculated exercise group statistics
         const groupResult1 = comp.aggregatedExerciseGroupResults.find((groupRes) => groupRes.exerciseGroupId === exGroup1.id);
-        expect(groupResult1).to.be.not.undefined;
+        const expectedGroupResult = {
+            noOfParticipantsWithFilter: 2,
+            totalPoints: 120,
+            exerciseResults: [
+                {
+                    noOfParticipantsWithFilter: 1,
+                    totalPoints: 100,
+                    exerciseId: 11,
+                    title: 'ex1_1',
+                    maxPoints: 100,
+                    totalParticipants: 1,
+                    exerciseType: 'text',
+                    averagePoints: 100,
+                    averagePercentage: 100,
+                },
+                {
+                    noOfParticipantsWithFilter: 1,
+                    totalPoints: 20,
+                    exerciseId: 12,
+                    title: 'ex1_2',
+                    maxPoints: 100,
+                    totalParticipants: 1,
+                    exerciseType: 'modeling',
+                    averagePoints: 20,
+                    averagePercentage: 20,
+                },
+                { noOfParticipantsWithFilter: 0, totalPoints: 0, exerciseId: 13, title: 'ex1_3', maxPoints: 100, totalParticipants: 1, exerciseType: 'programming' },
+                { noOfParticipantsWithFilter: 0, totalPoints: 0, exerciseId: 14, title: 'ex1_4', maxPoints: 100, totalParticipants: 1, exerciseType: 'file-upload' },
+                { noOfParticipantsWithFilter: 0, totalPoints: 0, exerciseId: 15, title: 'ex1_5', maxPoints: 100, totalParticipants: 1, exerciseType: 'quiz' },
+            ],
+            exerciseGroupId: 1,
+            title: 'group',
+            maxPoints: 100,
+            totalParticipants: 2,
+            averagePoints: 60,
+            averagePercentage: 60,
+        };
+        expect(groupResult1).toEqual(expectedGroupResult);
 
         const totalPoints = exResult1ForGroup1.achievedPoints! + exResult2ForGroup1.achievedPoints!;
-        expect(groupResult1!.totalPoints).to.equal(totalPoints);
+        expect(groupResult1!.totalPoints).toBe(totalPoints);
         const averagePoints = totalPoints / noOfSubmittedExercises;
-        expect(groupResult1!.averagePoints).to.equal(averagePoints);
-        expect(groupResult1!.averagePercentage).to.equal((averagePoints / groupResult1!.maxPoints) * 100);
+        expect(groupResult1!.averagePoints).toBe(averagePoints);
+        expect(groupResult1!.averagePercentage).toBe((averagePoints / groupResult1!.maxPoints) * 100);
 
         // expect correct average points for exercises
-        expect(groupResult1!.exerciseResults.length).to.equal(5);
+        expect(groupResult1!.exerciseResults.length).toBe(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
             let averageExPoints = 0;
             let exInfo;
@@ -424,14 +488,14 @@ describe('ExamScoresComponent', () => {
                 // result for ex 1_1
                 averageExPoints = exResult1ForGroup1.achievedPoints!;
                 exInfo = exGroup1.containedExercises.find((ex) => ex.exerciseId === 11)!;
-                expect(exResult.averagePoints).to.equal(averageExPoints);
-                expect(exResult.averagePercentage).to.equal((averageExPoints / exInfo.maxPoints) * 100);
+                expect(exResult.averagePoints).toBe(averageExPoints);
+                expect(exResult.averagePercentage).toBe((averageExPoints / exInfo.maxPoints) * 100);
             } else if (exResult.exerciseId === 12) {
                 // result for ex 1_2
                 averageExPoints = exResult2ForGroup1.achievedPoints!;
                 exInfo = exGroup1.containedExercises.find((ex) => ex.exerciseId === 12)!;
-                expect(exResult.averagePoints).to.equal(averageExPoints);
-                expect(exResult.averagePercentage).to.equal((averageExPoints / exInfo.maxPoints) * 100);
+                expect(exResult.averagePoints).toBe(averageExPoints);
+                expect(exResult.averagePercentage).toBe((averageExPoints / exInfo.maxPoints) * 100);
             }
         });
     });
@@ -444,11 +508,12 @@ describe('ExamScoresComponent', () => {
         comp.gradingScale.gradeSteps = [gradeStep1];
         comp.gradingScaleExists = true;
 
-        const exportAsCsvStub = sinon.stub(comp, 'exportAsCsv');
+        const exportAsCsvStub = jest.spyOn(comp, 'exportAsCsv');
         // create csv
         comp.exportToCsv();
-        const generatedRows = exportAsCsvStub.getCall(0).args[0];
-        expect(generatedRows.length).to.equal(noOfSubmittedExercises);
+
+        const generatedRows = exportAsCsvStub.mock.calls[0][0];
+        expect(generatedRows.length).toBe(noOfSubmittedExercises);
         const user1Row = generatedRows[0];
         validateUserRow(
             user1Row,
@@ -498,15 +563,13 @@ describe('ExamScoresComponent', () => {
         fixture.detectChanges();
 
         comp.exportToCsv();
-
-        expect(comp).to.be.ok;
     });
 
     it('should find grade step index correctly', () => {
         jest.spyOn(gradingSystemService, 'matchGradePercentage');
         comp.gradingScale = gradingScale;
 
-        expect(comp.findGradeStepIndex(20)).to.equal(0);
+        expect(comp.findGradeStepIndex(20)).toBe(0);
     });
 
     it('should set grading scale properties', () => {
@@ -517,9 +580,9 @@ describe('ExamScoresComponent', () => {
         jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
         fixture.detectChanges();
 
-        expect(comp.gradingScaleExists).to.be.true;
-        expect(comp.gradingScale).to.deep.equal(gradingScale);
-        expect(comp.isBonus).to.be.false;
+        expect(comp.gradingScaleExists).toBe(true);
+        expect(comp.gradingScale).toEqual(gradingScale);
+        expect(comp.isBonus).toBe(false);
     });
 
     it('should filter non-empty submissions', () => {
@@ -533,14 +596,14 @@ describe('ExamScoresComponent', () => {
 
         comp.toggleFilterForNonEmptySubmission();
 
-        expect(comp.filterForNonEmptySubmissions).to.be.true;
+        expect(comp.filterForNonEmptySubmissions).toBe(true);
     });
 });
 
 function expectCorrectExamScoreDto(comp: ExamScoresComponent, examScoreDTO: ExamScoreDTO) {
-    expect(comp.examScoreDTO).to.equal(examScoreDTO);
-    expect(comp.studentResults).to.equal(examScoreDTO.studentResults);
-    expect(comp.exerciseGroups).to.equal(examScoreDTO.exerciseGroups);
+    expect(comp.examScoreDTO).toEqual(examScoreDTO);
+    expect(comp.studentResults).toEqual(examScoreDTO.studentResults);
+    expect(comp.exerciseGroups).toEqual(examScoreDTO.exerciseGroups);
 }
 
 function expectCorrectHistogram(comp: ExamScoresComponent, examScoreDTO: ExamScoreDTO) {
@@ -551,10 +614,10 @@ function expectCorrectHistogram(comp: ExamScoresComponent, examScoreDTO: ExamSco
         }
         // expect one exercise with 20% and one with 100%
         if (studentResult.submitted || !comp.filterForSubmittedExams) {
-            expect(comp.histogramData[histogramIndex]).to.equal(1);
+            expect(comp.histogramData[histogramIndex]).toBe(1);
         } else {
             // the not submitted exercise counts not towards histogram
-            expect(comp.histogramData[histogramIndex]).to.equal(0);
+            expect(comp.histogramData[histogramIndex]).toBe(0);
         }
     });
 }
@@ -572,14 +635,14 @@ function validateUserRow(
     expectedOverAllScore: string,
     expectedSubmitted: string,
 ) {
-    expect(userRow.name).to.equal(expectedName);
-    expect(userRow.login).to.equal(expectedUsername);
-    expect(userRow.eMail).to.equal(expectedEmail);
-    expect(userRow.registrationNumber).to.equal(expectedRegistrationNumber);
-    expect(userRow['group Assigned Exercise']).to.equal(expectedExerciseTitle);
-    expect(userRow['group Achieved Points']).to.equal(expectedAchievedPoints);
-    expect(userRow['group Achieved Score (%)']).to.equal(expectedAchievedScore);
-    expect(userRow.overAllPoints).to.equal(expectedOverAllPoints);
-    expect(userRow.overAllScore).to.equal(expectedOverAllScore);
-    expect(userRow.submitted).to.equal(expectedSubmitted);
+    expect(userRow.name).toBe(expectedName);
+    expect(userRow.login).toBe(expectedUsername);
+    expect(userRow.eMail).toBe(expectedEmail);
+    expect(userRow.registrationNumber).toBe(expectedRegistrationNumber);
+    expect(userRow['group Assigned Exercise']).toBe(expectedExerciseTitle);
+    expect(userRow['group Achieved Points']).toBe(expectedAchievedPoints);
+    expect(userRow['group Achieved Score (%)']).toBe(expectedAchievedScore);
+    expect(userRow.overAllPoints).toBe(expectedOverAllPoints);
+    expect(userRow.overAllScore).toBe(expectedOverAllScore);
+    expect(userRow.submitted).toBe(expectedSubmitted);
 }

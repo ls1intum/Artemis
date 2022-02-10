@@ -1,4 +1,5 @@
 import { Component, EventEmitter } from '@angular/core';
+import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -7,6 +8,11 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     styleUrls: ['./code-editor-resolve-conflict-modal.scss'],
 })
 export class CodeEditorResolveConflictModalComponent {
+    // Icons
+    faBan = faBan;
+    faTimes = faTimes;
+    faExclamationTriangle = faExclamationTriangle;
+
     constructor(public activeModal: NgbActiveModal) {}
 
     shouldReset: EventEmitter<void> = new EventEmitter<void>();

@@ -128,7 +128,7 @@ export default function (data) {
     }
 
     group('Participate in Programming Exercise', function () {
-        let participationId = startExercise(artemis, courseId, exerciseId).id;
+        let participationId = startExercise(artemis, exerciseId).id;
         if (participationId) {
             // partial success, then 100%, then build error -- wait some time between submissions in order to the build server time for the result
             let simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, someSuccessfulErrorContent);

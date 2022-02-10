@@ -1,8 +1,8 @@
 import { PARTICIPATIONS, TUTOR_PARTICIPATIONS } from './endpoints.js';
 
-export function startExercise(artemis, courseId, exerciseId) {
+export function startExercise(artemis, exerciseId) {
     console.log('Try to start exercise for test user ' + __VU);
-    const res = artemis.post(PARTICIPATIONS(courseId, exerciseId), undefined, undefined);
+    const res = artemis.post(PARTICIPATIONS(exerciseId), undefined, undefined);
 
     if (res[0].status === 400) {
         sleep(3000);

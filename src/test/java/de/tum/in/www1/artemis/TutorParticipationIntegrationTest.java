@@ -5,7 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
@@ -121,6 +123,26 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
     }
 
     /**
+     * Tests when tutor provides unnecessry unreferenced feedback in text example assessment, bad request exception is thrown
+     */
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnnecessaryUnreferencedFeedbackBadRequest() throws Exception {
+        ExampleSubmission exampleSubmission = prepareTextExampleSubmission(true);
+
+        // Tutor reviewed the instructions.
+        var tutor = database.getUserByLogin("tutor1");
+        var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+        tutorParticipationService.createNewParticipation(textExercise, tutor);
+        exampleSubmission.addTutorParticipations(tutorParticipation);
+        exampleSubmissionService.save(exampleSubmission);
+
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
+        var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
+        request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
      * Tests the tutor training with example submission in Modelling exercises.
      * In case tutor has provided a feedback which was not provided by the instructor, response is BAD_REQUEST.
      */
@@ -137,6 +159,26 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
         exampleSubmissionService.save(exampleSubmission);
 
         exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createManualTextFeedback(1D, "6aba5764-d102-4740-9675-b2bd0a4f2680"));
+        var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
+        request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Tests when tutor provides unnecessry unreferenced feedback in modeling example assessment, bad request exception is thrown
+     */
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testTutorParticipateInModelingExerciseWithExampleSubmissionAddingUnnecessaryUnreferencedFeedbackBadRequest() throws Exception {
+        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
+
+        // Tutor reviewed the instructions.
+        var tutor = database.getUserByLogin("tutor1");
+        var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+        tutorParticipationService.createNewParticipation(textExercise, tutor);
+        exampleSubmission.addTutorParticipations(tutorParticipation);
+        exampleSubmissionService.save(exampleSubmission);
+
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
         var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }

@@ -2,9 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import * as chai from 'chai';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -15,9 +12,6 @@ import { ParticipantScoresTableComponent } from 'app/shared/participant-scores/p
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ParticipantScoresTable', () => {
     let fixture: ComponentFixture<ParticipantScoresTableComponent>;
@@ -42,13 +36,13 @@ describe('ParticipantScoresTable', () => {
             });
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(component).to.be.ok;
+        expect(component).not.toBeNull();
     });
 
     it('should render the data in a row', () => {
@@ -70,30 +64,30 @@ describe('ParticipantScoresTable', () => {
         fixture.detectChanges();
 
         const cellElements = fixture.debugElement.queryAll(By.css('.datatable-body-cell-label > span'));
-        expect(cellElements.length).to.equal(13);
-        expect(cellElements[0].nativeElement.innerHTML).to.contain(participantScoreDTO.id);
-        expect(cellElements[1].nativeElement.innerHTML).to.contain(participantScoreDTO.userId);
-        expect(cellElements[2].nativeElement.innerHTML).to.contain(participantScoreDTO.userName);
-        expect(cellElements[3].nativeElement.innerHTML).to.contain('');
-        expect(cellElements[4].nativeElement.innerHTML).to.contain('');
-        expect(cellElements[5].nativeElement.innerHTML).to.contain(participantScoreDTO.exerciseId);
-        expect(cellElements[6].nativeElement.innerHTML).to.contain(participantScoreDTO.exerciseTitle);
-        expect(cellElements[7].nativeElement.innerHTML).to.contain(participantScoreDTO.lastResultId);
-        expect(cellElements[8].nativeElement.innerHTML).to.contain(participantScoreDTO.lastResultScore);
-        expect(cellElements[9].nativeElement.innerHTML).to.contain(participantScoreDTO.lastPoints);
-        expect(cellElements[10].nativeElement.innerHTML).to.contain(participantScoreDTO.lastRatedResultId);
-        expect(cellElements[11].nativeElement.innerHTML).to.contain(participantScoreDTO.lastRatedResultScore);
-        expect(cellElements[12].nativeElement.innerHTML).to.contain(participantScoreDTO.lastRatedPoints);
+        expect(cellElements.length).toEqual(13);
+        expect(cellElements[0].nativeElement.innerHTML).toContain(participantScoreDTO.id.toString());
+        expect(cellElements[1].nativeElement.innerHTML).toContain(participantScoreDTO.userId.toString());
+        expect(cellElements[2].nativeElement.innerHTML).toContain(participantScoreDTO.userName);
+        expect(cellElements[3].nativeElement.innerHTML).toContain('');
+        expect(cellElements[4].nativeElement.innerHTML).toContain('');
+        expect(cellElements[5].nativeElement.innerHTML).toContain(participantScoreDTO.exerciseId.toString());
+        expect(cellElements[6].nativeElement.innerHTML).toContain(participantScoreDTO.exerciseTitle);
+        expect(cellElements[7].nativeElement.innerHTML).toContain(participantScoreDTO.lastResultId.toString());
+        expect(cellElements[8].nativeElement.innerHTML).toContain(participantScoreDTO.lastResultScore.toString());
+        expect(cellElements[9].nativeElement.innerHTML).toContain(participantScoreDTO.lastPoints.toString());
+        expect(cellElements[10].nativeElement.innerHTML).toContain(participantScoreDTO.lastRatedResultId.toString());
+        expect(cellElements[11].nativeElement.innerHTML).toContain(participantScoreDTO.lastRatedResultScore.toString());
+        expect(cellElements[12].nativeElement.innerHTML).toContain(participantScoreDTO.lastRatedPoints.toString());
     });
 
     it('should extract participant name correctly', () => {
         let participantScoreDTO = new ParticipantScoreDTO();
         participantScoreDTO.userName = 'testUser';
 
-        expect(component.extractParticipantName(participantScoreDTO)).to.equal(participantScoreDTO.userName);
+        expect(component.extractParticipantName(participantScoreDTO)).toEqual(participantScoreDTO.userName);
 
         participantScoreDTO = new ParticipantScoreDTO();
         participantScoreDTO.teamName = 'testTeam';
-        expect(component.extractParticipantName(participantScoreDTO)).to.equal(participantScoreDTO.teamName);
+        expect(component.extractParticipantName(participantScoreDTO)).toEqual(participantScoreDTO.teamName);
     });
 });

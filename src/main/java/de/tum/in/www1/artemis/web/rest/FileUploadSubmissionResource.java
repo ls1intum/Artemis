@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.io.IOException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -28,6 +26,9 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileUploadSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -55,16 +56,20 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
+    private final SingleUserNotificationService singleUserNotificationService;
+
     public FileUploadSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
             FileUploadExerciseRepository fileUploadExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
             ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService,
-            StudentParticipationRepository studentParticipationRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository) {
+            StudentParticipationRepository studentParticipationRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository,
+            SingleUserNotificationService singleUserNotificationService) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService, studentParticipationRepository);
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examSubmissionService = examSubmissionService;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -93,7 +98,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         // the exercise needs to be the same as the one referenced in the path via exerciseId
         if (fileUploadSubmission.getParticipation() != null && fileUploadSubmission.getParticipation().getExercise() != null
                 && !fileUploadSubmission.getParticipation().getExercise().getId().equals(exerciseId)) {
-            return badRequest("exerciseId", "400", "ExerciseId in Body doesn't match ExerciseId in path!");
+            throw new BadRequestAlertException("ExerciseId in Body doesn't match ExerciseId in path!", "exerciseId", "400");
         }
 
         // Apply further checks if it is an exam submission
@@ -118,9 +123,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Check the pattern
-        final var splittedFileName = file.getOriginalFilename().split("\\.");
-        final var fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase();
-        final var filePattern = String.join("|", exercise.getFilePattern().toLowerCase().replaceAll("\\s", "").split(","));
+        final String[] splittedFileName = file.getOriginalFilename().split("\\.");
+        final String fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase();
+        final String filePattern = String.join("|", exercise.getFilePattern().toLowerCase().replaceAll("\\s", "").split(","));
         if (!fileSuffix.matches(filePattern)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .headers(HeaderUtil.createAlert(applicationName, "The uploaded file has the wrong type!", "fileUploadSubmissionIllegalFileType")).build();
@@ -143,6 +148,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         this.fileUploadSubmissionService.hideDetails(submission, user);
         long end = System.currentTimeMillis();
+        singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(exercise, user);
         log.info("submitFileUploadExercise took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(submission);
     }
@@ -162,7 +168,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
-        var fileUploadSubmission = fileUploadSubmissionRepository.findOne(submissionId);
+        var fileUploadSubmission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
 
@@ -233,7 +239,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         log.debug("REST request to get a file upload submission without assessment");
         final Exercise fileUploadExercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!(fileUploadExercise instanceof FileUploadExercise)) {
-            return badRequest();
+            throw new BadRequestAlertException("The requested exercise was not found.", "exerciseId", "400");
         }
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
@@ -290,7 +296,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         // Students can only see their own file uploads (to prevent cheating). TAs, instructors and admins can see all file uploads.
         if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise))) {
-            return forbidden();
+            throw new AccessForbiddenException("participation", participationId);
         }
 
         Optional<FileUploadSubmission> optionalSubmission = participation.findLatestSubmission();

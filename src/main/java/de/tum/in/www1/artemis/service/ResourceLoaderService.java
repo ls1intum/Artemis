@@ -102,8 +102,8 @@ public class ResourceLoaderService {
     }
 
     /**
-     * Return the file system path were templates are stored.
-     * If no template path is defined, the current directory where Artemis was started from is used (e.g. the `templates` folder next to the Artemis.war file).
+     * Return the file system path where templates are stored.
+     * If no template path is defined, the current directory where Artemis was started from is used (e.g. the `templates` folder next to the 'Artemis.war' file).
      * If a template path is defined, it is used.
      * @return the template system path if defined (with a trailing '/') or "" if is not set
      */

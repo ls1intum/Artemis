@@ -97,7 +97,7 @@ public class ComplaintResource {
             throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
         }
 
-        Result result = resultRepository.findOneElseThrow(complaint.getResult().getId());
+        Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getParticipation().getExercise(), null);
 
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
@@ -136,7 +136,7 @@ public class ComplaintResource {
             throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
         }
 
-        Result result = resultRepository.findOneElseThrow(complaint.getResult().getId());
+        Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
         authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getParticipation());
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
         String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
@@ -174,16 +174,16 @@ public class ComplaintResource {
         if (!isOwner && !isAtLeastTA) {
             return forbidden();
         }
+        var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         var isTeamParticipation = participation.getParticipant() instanceof Team;
         var isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner().getLogin()).orElse(null));
 
-        if (!isAtLeastInstructor) {
+        if (!isAtLeastTutor) {
             complaint.getResult().setAssessor(null);
-
-            if (!isTeamParticipation || !isTutorOfTeam) {
-                complaint.filterSensitiveInformation();
-            }
+        }
+        if (!isAtLeastInstructor && (!isTeamParticipation || !isTutorOfTeam)) {
+            complaint.filterSensitiveInformation();
         }
         // hide participation + exercise + course which might include sensitive information
         complaint.getResult().setParticipation(null);

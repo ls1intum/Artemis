@@ -12,21 +12,14 @@ import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/ex
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockComponent } from 'ng-mocks';
 import { MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
-import * as sinon from 'sinon';
-import { SinonStub, stub } from 'sinon';
-import sinonChai from 'sinon-chai';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ExerciseGroupUpdateComponent', () => {
     const course = { id: 456 } as Course;
@@ -41,12 +34,12 @@ describe('ExerciseGroupUpdateComponent', () => {
     let fixture: ComponentFixture<ExerciseGroupUpdateComponent>;
     let service: ExerciseGroupService;
     const mockRouter = new MockRouter();
-    let alertServiceStub: SinonStub;
+    let alertServiceStub: jest.SpyInstance;
     let alertService: AlertService;
 
     const data = of({ exam, exerciseGroup });
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) }, data } as any as ActivatedRoute;
-    const navigateSpy = sinon.spy(mockRouter, 'navigate');
+    const navigateSpy = jest.spyOn(mockRouter, 'navigate');
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -71,23 +64,23 @@ describe('ExerciseGroupUpdateComponent', () => {
     beforeEach(fakeAsync(() => {
         fixture.detectChanges();
         tick();
-        expect(component).to.be.ok;
-        expect(component.exam).to.deep.equal(exam);
-        expect(component.exerciseGroup).to.deep.equal(exerciseGroup);
+        expect(component).not.toBeNull();
+        expect(component.exam).toEqual(exam);
+        expect(component.exerciseGroup).toEqual(exerciseGroup);
     }));
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('Should save exercise group', fakeAsync(() => {
         const responseFakeExerciseGroup = { body: exerciseGroup } as EntityResponseType;
-        sinon.replace(service, 'update', sinon.fake.returns(of(responseFakeExerciseGroup)));
+        jest.spyOn(service, 'update').mockReturnValue(of(responseFakeExerciseGroup));
 
         component.save();
 
-        expect(component.isSaving).to.be.false;
-        expect(navigateSpy).to.have.been.calledWith(['course-management', course.id, 'exams', route.snapshot.paramMap.get('examId'), 'exercise-groups']);
+        expect(component.isSaving).toBeFalse();
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', route.snapshot.paramMap.get('examId'), 'exercise-groups']);
         flush();
     }));
 
@@ -95,28 +88,28 @@ describe('ExerciseGroupUpdateComponent', () => {
         component.exerciseGroup.id = undefined;
 
         const responseFakeExerciseGroup = { body: exerciseGroup } as EntityResponseType;
-        sinon.replace(service, 'create', sinon.fake.returns(of(responseFakeExerciseGroup)));
+        jest.spyOn(service, 'create').mockReturnValue(of(responseFakeExerciseGroup));
 
         component.save();
 
-        expect(component.isSaving).to.be.false;
-        expect(component.exam).to.deep.equal(exam);
-        expect(navigateSpy).to.have.been.calledWith(['course-management', course.id, 'exams', route.snapshot.paramMap.get('examId'), 'exercise-groups']);
+        expect(component.isSaving).toBeFalse();
+        expect(component.exam).toEqual(exam);
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', route.snapshot.paramMap.get('examId'), 'exercise-groups']);
         flush();
     }));
 
     it('Should fail while saving with ErrorResponse', fakeAsync(() => {
-        alertServiceStub = stub(alertService, 'error');
+        alertServiceStub = jest.spyOn(alertService, 'error');
         const error = { status: 404 };
         component.exerciseGroup.id = undefined;
 
-        sinon.replace(service, 'create', sinon.fake.returns(throwError(new HttpErrorResponse(error))));
+        jest.spyOn(service, 'create').mockReturnValue(throwError(new HttpErrorResponse(error)));
 
         component.save();
 
-        expect(component.isSaving).to.be.false;
-        expect(component.exam).to.deep.equal(exam);
-        expect(alertServiceStub).to.have.been.calledOnce;
+        expect(component.isSaving).toBeFalse();
+        expect(component.exam).toEqual(exam);
+        expect(alertServiceStub).toHaveBeenCalledTimes(1);
         flush();
     }));
 });

@@ -2,12 +2,12 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
-import { RatingModule as StarratingModule } from 'ng-starrating';
 import { RatingListComponent } from './rating-list/rating-list.component';
+import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 
 @NgModule({
-    declarations: [RatingComponent, RatingListComponent],
+    declarations: [RatingComponent, RatingListComponent, StarRatingComponent],
     exports: [RatingComponent],
-    imports: [CommonModule, ArtemisSharedModule, StarratingModule],
+    imports: [CommonModule, ArtemisSharedModule],
 })
 export class RatingModule {}

@@ -13,7 +13,7 @@
             <div [innerHTML]="renderedQuestion.hint"></div>
         </ng-template>
         <span class="label label-info" [ngbPopover]="renderedHint" placement="auto" triggers="mouseenter:mouseleave" *ngIf="question.hint">
-            <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
+            <fa-icon [icon]="faQuestionCircle"></fa-icon>
             <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
         </span>
         <br />
@@ -21,7 +21,7 @@
             <div [innerHTML]="renderedQuestion.explanation"></div>
         </ng-template>
         <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
-            <fa-icon [icon]="'exclamation-circle'"></fa-icon>
+            <fa-icon [icon]="faExclamationCircle"></fa-icon>
             <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
         </span>
     </div>
@@ -58,14 +58,14 @@
                         <div [innerHTML]="renderedQuestion.renderedSubElements[i].hint"></div>
                     </ng-template>
                     <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint" placement="auto" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
-                        <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
+                        <fa-icon [icon]="faQuestionCircle"></fa-icon>
                         <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
                     </span>
                 </div>
             </div>
-            <div class="selection">
-                <fa-icon [icon]="['far', 'check-square']" size="2x" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
-                <fa-icon [icon]="['far', 'square']" size="2x" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
+            <div class="selection" id="mc-answer-selection-{{ i }}">
+                <fa-icon [icon]="farCheckSquare" size="2x" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
+                <fa-icon [icon]="farSquare" size="2x" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
             </div>
         </div>
     </div>
@@ -84,7 +84,7 @@
                         <div [innerHTML]="renderedQuestion.renderedSubElements![i].hint"></div>
                     </ng-template>
                     <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint2" placement="top" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
-                        <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
+                        <fa-icon [icon]="faQuestionCircle"></fa-icon>
                         <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
                     </span>
                     <ng-template #renderedAnswerOptionsExplanation>
@@ -97,7 +97,7 @@
                         triggers="mouseenter:mouseleave"
                         *ngIf="answerOption.explanation"
                     >
-                        <fa-icon [icon]="'exclamation-circle'"></fa-icon>
+                        <fa-icon [icon]="faExclamationCircle"></fa-icon>
                         <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
                     </span>
                 </div>
@@ -114,14 +114,14 @@
                     ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.invalid' | artemisTranslate }}"
                     placement="top"
                     style="color: black"
-                    [icon]="'question-circle'"
+                    [icon]="faQuestionCircle"
                     *ngIf="answerOption.invalid || question.invalid"
                 ></fa-icon>
             </td>
             <td class="result-symbol" *ngIf="!forceSampleSolution">
                 <fa-icon
                     size="2x"
-                    [icon]="'exclamation-triangle'"
+                    [icon]="faExclamationTriangle"
                     class="warning"
                     *ngIf="
                         !question.invalid &&
@@ -131,8 +131,8 @@
                 ></fa-icon>
             </td>
             <td class="selection" *ngIf="!forceSampleSolution">
-                <fa-icon [icon]="['far', 'check-square']" size="2x" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
-                <fa-icon [icon]="['far', 'square']" size="2x" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
+                <fa-icon [icon]="farCheckSquare" size="2x" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
+                <fa-icon [icon]="farSquare" size="2x" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
             </td>
         </tr>
     </table>

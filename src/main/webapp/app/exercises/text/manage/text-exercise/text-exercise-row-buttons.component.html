@@ -1,7 +1,7 @@
 <div class="btn-group flex-btn-group-container">
     <!-- Scores -->
     <a *ngIf="exercise.isAtLeastTutor" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'scores']" class="btn btn-info btn-sm me-1">
-        <fa-icon [icon]="'table'"></fa-icon>
+        <fa-icon [icon]="faTable"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
     </a>
     <!-- Participations -->
@@ -10,7 +10,7 @@
         [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'participations']"
         class="btn btn-primary btn-sm me-1"
     >
-        <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+        <fa-icon [icon]="farListAlt"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
     </a>
     <!-- Submissions -->
@@ -19,7 +19,7 @@
         [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'submissions']"
         class="btn btn-success btn-sm me-1"
     >
-        <fa-icon [icon]="'book'"></fa-icon>
+        <fa-icon [icon]="faBook"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
     </a>
     <!-- Example Submission -->
@@ -28,25 +28,22 @@
         [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'example-submissions']"
         class="btn btn-success btn-sm me-1"
     >
-        <fa-icon [icon]="'book'"></fa-icon>
+        <fa-icon [icon]="faBook"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions">Example Submissions</span>
     </a>
     <!-- Teams -->
-    <a
-        *ngIf="exercise.teamMode && exercise.isAtLeastTutor"
-        [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'teams']"
-        class="btn btn-primary btn-sm me-1"
-    >
-        <fa-icon [icon]="'users'"></fa-icon>
+    <a *ngIf="exercise.teamMode && exercise.isAtLeastTutor" [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams']" class="btn btn-primary btn-sm me-1">
+        <fa-icon [icon]="faUsers"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
     </a>
     <!-- Edit -->
     <a *ngIf="exercise.isAtLeastEditor" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'edit']" class="btn btn-warning btn-sm me-1">
-        <fa-icon [icon]="'wrench'"></fa-icon>
+        <fa-icon [icon]="faWrench"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
     </a>
     <!-- Delete -->
     <button
+        id="delete-exercise"
         *ngIf="exercise.isAtLeastInstructor"
         jhiDeleteButton
         [entityTitle]="exercise.title || ''"
@@ -55,6 +52,6 @@
         (delete)="deleteExercise()"
         [dialogError]="dialogError$"
     >
-        <fa-icon [icon]="'times'"></fa-icon>
+        <fa-icon [icon]="faTimes"></fa-icon>
     </button>
 </div>

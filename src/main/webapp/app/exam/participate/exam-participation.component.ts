@@ -16,7 +16,6 @@ import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, throttleTime, timeoutWith } from 'rxjs/operators';
@@ -25,7 +24,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
@@ -34,6 +33,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/entities/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -332,11 +332,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
                         exercise.exerciseHints = [];
                     });
-                    this.alertService.addAlert({ type: 'success', message: 'studentExam.submitSuccessful', timeout: 20000 });
+                    this.alertService.addAlert({ type: 'success', message: 'artemisApp.studentExam.submitSuccessful', timeout: 20000 });
                 },
                 (error: Error) => {
                     // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible
-                    const alreadySubmitted = error.message === 'studentExam.alreadySubmitted';
+                    const alreadySubmitted = error.message === 'artemisApp.studentExam.alreadySubmitted';
 
                     // When we have already submitted load the existing submission
                     if (alreadySubmitted) {
@@ -370,7 +370,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     } else {
                         this.alertService.error(error.message);
                         this.submitInProgress = false;
-                        this.handInPossible = error.message !== 'studentExam.submissionNotInTime';
+                        this.handInPossible = error.message !== 'artemisApp.studentExam.submissionNotInTime';
                     }
                 },
             );
@@ -555,7 +555,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     createParticipationForExercise(exercise: Exercise): Observable<StudentParticipation | undefined> {
         this.generateParticipationStatus.next('generating');
-        return this.courseExerciseService.startExercise(this.exam.course!.id!, exercise.id!).pipe(
+        return this.courseExerciseService.startExercise(exercise.id!).pipe(
             map((createdParticipation: StudentParticipation) => {
                 // note: it is important that we exchange the existing student participation and that we do not push it
                 exercise.studentParticipations = [createdParticipation];

@@ -1,8 +1,9 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faListOl } from '@fortawesome/free-solid-svg-icons';
 import { Command } from './command';
 
 export class OrderedListCommand extends Command {
-    buttonIcon = 'list-ol' as IconProp;
+    buttonIcon = faListOl as IconProp;
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.orderedList';
 
     /**

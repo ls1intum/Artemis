@@ -122,7 +122,8 @@ public class TextAssessmentEventResource {
 
         // make sure that the received event doesn't already have an ID
         // reject if the logged in user id and received event user id do not match
-        if (event.getId() != null || !user.getId().equals(event.getUserId())) {
+        // make sure that the event submission id is not null
+        if (event.getId() != null || !user.getId().equals(event.getUserId()) || event.getSubmissionId() == null) {
             return false;
         }
 

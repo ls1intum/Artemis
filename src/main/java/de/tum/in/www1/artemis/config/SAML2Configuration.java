@@ -1,13 +1,14 @@
 package de.tum.in.www1.artemis.config;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
@@ -63,7 +64,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
      */
     @Bean
     RelyingPartyRegistrationRepository relyingPartyRegistrationRepository() {
-        final List<RelyingPartyRegistration> relyingPartyRegistrations = new LinkedList<>();
+        final List<RelyingPartyRegistration> relyingPartyRegistrations = new ArrayList<>();
         // @formatter:off
         for (SAML2Properties.RelyingPartyProperties config : properties.getIdentityProviders()) {
             relyingPartyRegistrations.add(RelyingPartyRegistrations
@@ -131,7 +132,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
 
     private RSAPrivateKey readPrivateKey(String file) throws IOException {
         // Read PKCS#8 File!
-        try (FileReader keyReader = new FileReader(file)) {
+        try (FileReader keyReader = new FileReader(file, StandardCharsets.UTF_8)) {
             PEMParser pemParser = new PEMParser(keyReader);
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
             PrivateKeyInfo privateKeyInfo = PrivateKeyInfo.getInstance(pemParser.readObject());

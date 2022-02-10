@@ -1,10 +1,9 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -12,7 +11,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Exercise, ExerciseType, getIcon, getIconTooltip, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { getExerciseDueDate, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Component({
@@ -30,7 +29,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     @HostBinding('class') classes = 'exercise-row';
     @Input() exercise: Exercise;
     @Input() course: Course;
-    @Input() extendedLink = false;
     @Input() hasGuidedTour: boolean;
     /**
      * PresentationMode deactivates the interactivity of the component
@@ -41,6 +39,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     getIconTooltip = getIconTooltip;
     public exerciseCategories: ExerciseCategory[];
     isAfterAssessmentDueDate: boolean;
+    dueDate?: dayjs.Dayjs;
 
     participationUpdateListener: Subscription;
 
@@ -49,8 +48,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private exerciseService: ExerciseService,
         private httpClient: HttpClient,
-        private router: Router,
-        private route: ActivatedRoute,
         private participationWebsocketService: ParticipationWebsocketService,
     ) {}
 
@@ -59,6 +56,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         if (cachedParticipation) {
             this.exercise.studentParticipations = [cachedParticipation];
         }
+        this.dueDate = getExerciseDueDate(this.exercise, cachedParticipation);
+
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise!.id === this.exercise.id) {
                 this.exercise.studentParticipations =
@@ -68,11 +67,13 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
                           })
                         : [changedParticipation];
                 this.exercise.participationStatus = participationStatus(this.exercise);
+                this.dueDate = getExerciseDueDate(this.exercise, changedParticipation);
             }
         });
         this.exercise.participationStatus = participationStatus(this.exercise);
         if (this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
             this.exercise.studentParticipations[0].exercise = this.exercise;
+            this.dueDate = getExerciseDueDate(this.exercise, this.exercise.studentParticipations[0]);
         }
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
@@ -110,17 +111,5 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
 
     asQuizExercise(exercise: Exercise): QuizExercise {
         return exercise as QuizExercise;
-    }
-
-    showDetails(event: any) {
-        const isClickOnAction = event.target.closest('jhi-exercise-details-student-actions') && event.target.closest('.btn');
-        const isClickResult = event.target.closest('jhi-result') && event.target.closest('.result');
-        if (!isClickOnAction && !isClickResult) {
-            if (this.extendedLink) {
-                this.router.navigate(['courses', this.course.id, 'exercises', this.exercise.id]);
-            } else {
-                this.router.navigate([this.exercise.id], { relativeTo: this.route });
-            }
-        }
     }
 }

@@ -1,7 +1,8 @@
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 export interface VideoUnitFormData {
     name?: string;
@@ -55,6 +56,9 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
 
     urlValidator = urlValidator;
     videoUrlValidator = videoUrlValidator;
+
+    // Icons
+    faArrowLeft = faArrowLeft;
 
     constructor(private fb: FormBuilder) {}
 

@@ -4,6 +4,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/core/util/alert.service';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-repo-download',
@@ -14,7 +15,7 @@ import { AlertService } from 'app/core/util/alert.service';
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
             [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [icon]="'download'"
+            [icon]="faDownload"
             [title]="'artemisApp.programmingExercise.export.downloadRepo'"
             (onClick)="exportRepository()"
         ></jhi-button>
@@ -33,6 +34,9 @@ export class ProgrammingExerciseInstructorRepoDownloadComponent {
 
     @Input()
     auxiliaryRepositoryId: number;
+
+    // Icons
+    faDownload = faDownload;
 
     constructor(private programmingExerciseService: ProgrammingExerciseService, private alertService: AlertService) {}
 

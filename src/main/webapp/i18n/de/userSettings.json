@@ -21,11 +21,13 @@
                 "exerciseNotifications": "Aufgabenbenachrichtigungen",
                 "lectureNotifications": "Vorlesungsbenachrichtigungen",
                 "courseWideDiscussionNotifications": "Kursdiskussionsbenachrichtigungen",
-                "instructorExclusiveNotifications": "Exklusive Benachrichtigungen für Lehrende"
+                "editorNotifications": "Benachrichtigungen für Editor:innen",
+                "instructorNotifications": "Benachrichtigungen für Lehrende"
             },
             "settingNames": {
                 "exerciseReleased": "Neue Aufgabe veröffentlicht",
                 "exerciseOpenForPractice": "Aufgabe zum Üben freigegeben",
+                "exerciseSubmissionAssessed": "Aufgabeneinreichung korrigiert",
                 "newExercisePost": "Neue Beiträge für Aufgaben",
                 "newReplyForExercisePost": "Neue Antworten für Aufgaben",
                 "attachmentChanges": "Änderungen von Anhängen",
@@ -34,11 +36,14 @@
                 "newCoursePost": "Neue Beiträge für Kursdiskussionen",
                 "newReplyForCoursePost": "Neue Antworten von Kursdiskussionen",
                 "newAnnouncementPost": "Neue Ankündigungen",
-                "courseAndExamArchivingStarted": "Kurs und Klausur Archivierungsstart"
+                "courseAndExamArchivingStarted": "Kurs und Klausur Archivierungsstart",
+                "fileSubmissionSuccessful": "Erfolgreiche Einreichung von Dateiupload-Aufgaben",
+                "programmingTestCasesChanged": "Veränderte Testfälle bei Programmieraufgaben"
             },
             "settingDescriptions": {
                 "exerciseCreatedOrStartedDescription": "Erhalte eine Mitteilung wenn eine neue Aufgabe veröffentlicht wurde",
                 "exerciseOpenForPracticeDescription": "Erhalte eine Mitteilung, wenn eine Aufgabe zum Üben freigeschalten wurde (z.B. ein Quiz)",
+                "exerciseSubmissionAssessedDescription": "Erhalte eine Mitteilung, wenn deine eingereichten Aufgaben bewertet wurden",
                 "newExercisePostDescription": "Erhalte eine Mitteilung, wenn ein neuer Beitrag zu einer Aufgabe erstellt wurde",
                 "newReplyForExercisePostDescription": "Erhalte eine Mitteilung, wenn eine neue Antwort auf einen Beitrag, welcher Aufgaben betrifft, erstellt wurde",
                 "attachmentChangesDescription": "Erhalte eine Mitteilung, wenn ein Anhang aktualisiert wurde",
@@ -47,7 +52,9 @@
                 "newCoursePostDescription": "Erhalte eine Mitteilung, wenn ein neuer Beitrag in den Kursdiskussionen erstellt wurde",
                 "newReplyForCoursePostDescription": "Erhalte eine Mitteilung, wenn eine neue Antwort auf einen Beitrag, welcher eine Kursdiskussion betrifft, erstellt wurde",
                 "newAnnouncementPostDescription": "Erhalte eine Mitteilung, wenn eine neue Ankündigung erstellt wurde",
-                "courseAndExamArchivingStartedDescription": "Erhalte eine Mitteilung, wenn das Archivieren eines Kurses oder einer Klausur angefangen hat"
+                "courseAndExamArchivingStartedDescription": "Erhalte eine Mitteilung, wenn das Archivieren eines Kurses oder einer Klausur angefangen hat",
+                "fileSubmissionSuccessfulDescription": "Erhalte eine Mitteilung nach dem erfolgreichen Einreichen von Dateiupload-Aufgaben",
+                "programmingTestCasesChangedDescription": "Erhalte eine Mitteilung bei Änderungen von Testfällen in Programmieraufgaben"
             }
         }
     }

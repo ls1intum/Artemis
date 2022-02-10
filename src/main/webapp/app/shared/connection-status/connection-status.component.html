@@ -1,5 +1,5 @@
 <div class="connection-status" [ngClass]="{ disconnected: disconnected }">
-    <fa-icon [icon]="'circle'" size="sm"></fa-icon>
+    <fa-icon [icon]="faCircle" size="sm"></fa-icon>
     <span *ngIf="!disconnected" jhiTranslate="connectionStatus.connected"></span>
     <span *ngIf="disconnected" jhiTranslate="connectionStatus.disconnected"></span>
     <ng-content select="[innerContent]"></ng-content>

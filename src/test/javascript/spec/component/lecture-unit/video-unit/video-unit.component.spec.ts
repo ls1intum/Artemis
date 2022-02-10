@@ -1,7 +1,3 @@
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-import * as chai from 'chai';
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -13,11 +9,7 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { BrowserModule } from '@angular/platform-browser';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('VideoUnitComponent', () => {
-    const sandbox = sinon.createSandbox();
     const exampleName = 'Test';
     const exampleDescription = 'Lorem Ipsum';
     const exampleSource = 'https://www.youtube.com/embed/8iU8LPEa4o0';
@@ -35,6 +27,7 @@ describe('VideoUnitComponent', () => {
             imports: [BrowserModule],
             declarations: [
                 VideoUnitComponent,
+                SafeResourceUrlPipe,
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
@@ -51,35 +44,35 @@ describe('VideoUnitComponent', () => {
             });
     });
 
-    afterEach(function () {
-        sandbox.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         videoUnitComponentFixture.detectChanges();
-        expect(videoUnitComponent).to.be.ok;
+        expect(videoUnitComponent).not.toBeNull();
     });
 
     it('should iFrame correctly', () => {
         videoUnitComponent.videoUnit = videoUnit;
         videoUnitComponentFixture.detectChanges(); // ngInit
         const iFrame = videoUnitComponentFixture.debugElement.nativeElement.querySelector('#videoFrame');
-        expect(iFrame.src).to.equal(videoUnit.source);
+        expect(iFrame.src).toEqual(videoUnit.source);
     });
 
     it('should collapse when clicked', () => {
         videoUnitComponent.videoUnit = videoUnit;
         videoUnitComponentFixture.detectChanges(); // ngInit
-        expect(videoUnitComponent.isCollapsed).to.be.true;
-        const handleCollapseSpy = sinon.spy(videoUnitComponent, 'handleCollapse');
+        expect(videoUnitComponent.isCollapsed).toBeTrue();
+        const handleCollapseSpy = jest.spyOn(videoUnitComponent, 'handleCollapse');
 
         const container = videoUnitComponentFixture.debugElement.nativeElement.querySelector('.card-header');
-        expect(container).to.be.ok;
+        expect(container).not.toBeNull();
         container.click();
 
-        expect(handleCollapseSpy).to.have.been.called;
-        expect(videoUnitComponent.isCollapsed).to.be.false;
+        expect(handleCollapseSpy).toHaveBeenCalled();
+        expect(videoUnitComponent.isCollapsed).toBeFalse();
 
-        handleCollapseSpy.restore();
+        handleCollapseSpy.mockRestore();
     });
 });

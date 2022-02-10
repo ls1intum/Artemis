@@ -5,23 +5,19 @@
             <span class="text-muted">({{ exam.title }})</span>
         </h3>
         <div>
-            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span><span>: {{ allRegisteredUsers.length }}</span>
+            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span
+            ><span id="#registered-users">: {{ allRegisteredUsers.length }}</span>
             <span *ngIf="filteredUsersSize < allRegisteredUsers.length" class="text-muted">
                 (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize }})
             </span>
-            <jhi-students-exam-import-button
-                class="ms-4"
-                [courseId]="courseId"
-                [exam]="exam"
-                [buttonSize]="ButtonSize.MEDIUM"
-                (finish)="reloadExamWithRegisteredUsers()"
-            ></jhi-students-exam-import-button>
+            <jhi-user-import-button class="ms-4" [courseId]="courseId" [exam]="exam" (finish)="reloadExamWithRegisteredUsers()"></jhi-user-import-button>
             <button
                 class="btn btn btn-primary ms-auto"
+                id="register-course-students"
                 (click)="registerAllStudentsFromCourse()"
                 title="{{ 'artemisApp.examManagement.examStudents.registerAllFromCourseTooltip' | artemisTranslate }}"
             >
-                <fa-icon [icon]="'plus'" [fixedWidth]="true"></fa-icon>&nbsp;
+                <fa-icon [icon]="faPlus" [fixedWidth]="true"></fa-icon>&nbsp;
                 <span jhiTranslate="artemisApp.examManagement.examStudents.registerAllFromCourse"></span>
             </button>
             <button
@@ -41,7 +37,7 @@
                 deleteConfirmationText="artemisApp.studentExams.removeAllStudents.confirmationText"
             >
                 <span jhiTranslate="artemisApp.studentExams.removeAllStudents.title"></span>
-                <fa-icon [icon]="'user-slash'"></fa-icon>
+                <fa-icon [icon]="faUserSlash"></fa-icon>
             </button>
         </div>
     </div>
@@ -67,6 +63,7 @@
     >
         <ng-template let-settings="settings" let-controls="controls">
             <ngx-datatable
+                id="registered-students"
                 class="bootstrap"
                 [limit]="settings.limit"
                 [sortType]="settings.sortType"
@@ -161,7 +158,7 @@
                                 [dialogError]="dialogError$"
                                 [requireConfirmationOnlyForAdditionalChecks]="true"
                             >
-                                <fa-icon [icon]="'user-slash'" class="me-1"></fa-icon>
+                                <fa-icon [icon]="faUserSlash" class="me-1"></fa-icon>
                             </button>
                         </div>
                     </ng-template>

@@ -38,7 +38,7 @@ public class FlowchartTest extends AbstractUMLDiagramTest {
         assertThat(flowchart.getInputOutputs()).hasSize(2);
         assertThat(flowchart.getDecisions()).hasSize(2);
         assertThat(flowchart.getProcesses()).hasSize(2);
-        assertThat(flowchart.getFlowlines()).hasSize(10);
+        assertThat(flowchart.getFlowLines()).hasSize(10);
         assertThat(flowchart.getFunctionCalls()).hasSize(1);
 
         assertThat(flowchart.getElementByJSONID("129c296b-1927-49e4-b021-5d496d33f5f6")).asInstanceOf(type(FlowchartTerminal.class)).satisfies(terminal -> {

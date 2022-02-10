@@ -1,6 +1,6 @@
 <div class="w-100 d-flex" *ngIf="!startView">
     <div class="col-md-3"></div>
-    <h2 class="col-md-6" style="text-align: center; font-weight: normal">
+    <h2 class="col-md-6" style="text-align: center; font-weight: normal" id="exam-finished-title">
         <span>
             {{
                 'artemisApp.examParticipation.finish'
@@ -30,7 +30,7 @@
     <jhi-exam-information *ngIf="startView" [exam]="exam" [studentExam]="studentExam"></jhi-exam-information>
     <div><span style="display: table; margin-left: auto; margin-right: auto" [innerHTML]="formattedGeneralInformation"></span></div>
     <div *ngIf="studentFailedToSubmit" class="mb-2 font-weight-bold text-danger">
-        {{ 'studentExam.submissionNotInTime' | artemisTranslate }}
+        {{ 'artemisApp.studentExam.submissionNotInTime' | artemisTranslate }}
     </div>
     <ng-container *ngIf="!studentFailedToSubmit">
         <div class="d-flex justify-content-center">
@@ -90,7 +90,7 @@
             </div>
             <ng-container #startButton *ngIf="startView; else endButton">
                 <div *ngIf="!startButtonEnabled">{{ 'artemisApp.exam.startExamToolTip' | artemisTranslate }}</div>
-                <button [disabled]="!startButtonEnabled || waitingForExamStart" type="submit" (click)="startExam()" class="btn btn-primary">
+                <button id="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart" type="submit" (click)="startExam()" class="btn btn-primary">
                     <span jhiTranslate="artemisApp.exam.startExam">Start Exam</span>
                 </button>
             </ng-container>
@@ -100,8 +100,8 @@
                     <br />
                     <span jhiTranslate="artemisApp.examParticipation.handInEarlyNoticeSecondSentence"></span>
                 </div>
-                <button [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
-                    <fa-icon *ngIf="submitInProgress" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+                <button id="end-exam" [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
+                    <fa-icon *ngIf="submitInProgress" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
                     <span jhiTranslate="artemisApp.exam.endExam">Finish</span>
                 </button>
             </ng-template>
@@ -110,7 +110,7 @@
                     {{ 'artemisApp.examParticipation.continueAfterHandInEarlyDescription' | artemisTranslate }}
                 </div>
                 <button [disabled]="submitInProgress" class="btn btn-secondary mt-2" (click)="continueAfterHandInEarly()">
-                    <fa-icon [icon]="'arrow-left'"></fa-icon>
+                    <fa-icon [icon]="faArrowLeft"></fa-icon>
                     {{ 'artemisApp.examParticipation.continueAfterHandInEarly' | artemisTranslate }}
                 </button>
             </div>

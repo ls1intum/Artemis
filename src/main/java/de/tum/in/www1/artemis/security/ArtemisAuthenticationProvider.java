@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.security;
 
 import java.util.Optional;
 
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
+
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 

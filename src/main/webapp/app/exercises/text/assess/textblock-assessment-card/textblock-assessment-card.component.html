@@ -3,7 +3,7 @@
     [draggable]="true"
     (drop)="connectStructuredGradingInstructionsWithTextBlock($event)"
     (dragover)="$event.preventDefault()"
-    [innerText]="textBlockRef.block!.text"
+    [textContent]="textBlockRef.block!.text"
     (click)="select()"
     [class.text-with-feedback]="!!textBlockRef.feedback"
     [class.active]="selected"

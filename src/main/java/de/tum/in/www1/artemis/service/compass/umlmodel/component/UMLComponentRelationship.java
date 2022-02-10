@@ -31,11 +31,9 @@ public class UMLComponentRelationship extends UMLElement {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLComponentRelationship)) {
+        if (!(reference instanceof UMLComponentRelationship referenceRelationship)) {
             return 0;
         }
-
-        UMLComponentRelationship referenceRelationship = (UMLComponentRelationship) reference;
 
         double similarity = 0;
 

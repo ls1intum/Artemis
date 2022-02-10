@@ -96,8 +96,8 @@ public class LtiResource {
             return;
         }
 
-        log.info("Request header X-Forwarded-Proto: {}", request.getHeader("X-Forwarded-Proto"));
-        log.info("Request header X-Forwarded-For: {}", request.getHeader("X-Forwarded-For"));
+        log.debug("Request header X-Forwarded-Proto: {}", request.getHeader("X-Forwarded-Proto"));
+        log.debug("Request header X-Forwarded-For: {}", request.getHeader("X-Forwarded-For"));
 
         if (!request.getRequestURL().toString().startsWith("https")) {
             log.error("The request url {} does not start with 'https'. Verification of the request will most probably fail."
@@ -105,7 +105,7 @@ public class LtiResource {
                     + "X-Forwarded-Proto and forward-headers-strategy: native", request.getRequestURL().toString());
         }
 
-        log.info("Try to verify LTI Oauth Request");
+        log.debug("Try to verify LTI Oauth Request");
 
         // Verify request
         String error = ltiService.verifyRequest(request);
@@ -115,7 +115,7 @@ public class LtiResource {
             return;
         }
 
-        log.info("Oauth Verification succeeded");
+        log.debug("Oauth Verification succeeded");
 
         // Check if exercise ID is valid
         Optional<Exercise> optionalExercise = exerciseRepository.findById(exerciseId);
@@ -125,7 +125,7 @@ public class LtiResource {
         }
 
         Exercise exercise = optionalExercise.get();
-        log.info("found exercise {}", exercise.getTitle());
+        log.debug("found exercise {}", exercise.getTitle());
         // Handle the launch request using LtiService
         try {
             ltiService.handleLaunchRequest(launchRequest, exercise);
@@ -136,19 +136,19 @@ public class LtiResource {
             return;
         }
 
-        log.info("handleLaunchRequest done");
+        log.debug("handleLaunchRequest done");
 
         // If the current user was created within the last 15 minutes, we just created the user
         // Display a welcome message to the user
         boolean isNewUser = SecurityUtils.isAuthenticated()
                 && TimeUnit.SECONDS.toMinutes(timeService.now().toEpochSecond() - userRepository.getUser().getCreatedDate().getEpochSecond()) < 15;
 
-        log.info("isNewUser: {}", isNewUser);
+        log.debug("isNewUser: {}", isNewUser);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String jwt = tokenProvider.createToken(authentication, true);
 
-        log.info("created jwt token: {}", jwt);
+        log.debug("created jwt token: {}", jwt);
 
         // Note: The following redirect URL has to match the URL in user-route-access-service.ts in the method canActivate(...)
 

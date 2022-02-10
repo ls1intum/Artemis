@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
@@ -9,6 +8,8 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-plagiarism-header',
@@ -17,11 +18,10 @@ import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types
 })
 export class PlagiarismHeaderComponent {
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+    @Input() course: Course;
     @Input() splitControlSubject: Subject<string>;
 
-    private resourceUrl = SERVER_API_URL + 'api/plagiarism-comparisons';
-
-    constructor(public http: HttpClient) {}
+    constructor(private plagiarismCasesService: PlagiarismCasesService) {}
 
     /**
      * Set the status of the currently selected comparison to CONFIRMED.
@@ -44,7 +44,7 @@ export class PlagiarismHeaderComponent {
     updatePlagiarismStatus(status: PlagiarismStatus) {
         // store comparison in variable in case comparison changes while request is made
         const comparison = this.comparison;
-        return this.http.put<void>(`${this.resourceUrl}/${comparison.id}/status`, { status }, { observe: 'response' }).subscribe(() => {
+        this.plagiarismCasesService.updatePlagiarismComparisonStatus(this.course.id!, comparison.id, status).subscribe(() => {
             comparison.status = status;
         });
     }

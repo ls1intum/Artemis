@@ -34,10 +34,9 @@ public class UMLActor extends UMLElement {
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (!(reference instanceof UMLActor)) {
+        if (!(reference instanceof UMLActor referenceObject)) {
             return similarity;
         }
-        UMLActor referenceObject = (UMLActor) reference;
 
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceObject.getName());
 
@@ -54,11 +53,9 @@ public class UMLActor extends UMLElement {
      */
     @Override
     public double overallSimilarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLActor)) {
+        if (!(reference instanceof UMLActor referenceObject)) {
             return 0;
         }
-
-        UMLActor referenceObject = (UMLActor) reference;
 
         double similarity = similarity(referenceObject);
 

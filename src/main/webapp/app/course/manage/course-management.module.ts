@@ -5,8 +5,7 @@ import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-up
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
-import { ImageCropperModule } from 'ngx-image-cropper';
-import { TagInputModule } from 'ngx-chips';
+import { MatChipsModule } from '@angular/material/chips';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
@@ -49,8 +48,13 @@ import { CourseManagementStatisticsComponent } from 'app/course/manage/course-ma
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
+import { UserImportModule } from 'app/shared/import/user-import.module';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
+import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
+import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
+import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 
 @NgModule({
     imports: [
@@ -60,9 +64,10 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
         ReactiveFormsModule,
         ImageCropperModule,
         OrionModule,
-        TagInputModule,
+        MatChipsModule,
         ArtemisExerciseModule,
         ArtemisLectureModule,
+        ArtemisFullscreenModule,
         ArtemisCourseScoresModule,
         ArtemisLearningGoalsModule,
         ArtemisExerciseScoresModule,
@@ -83,6 +88,7 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
         ArtemisFileUploadAssessmentModule,
         ArtemisModelingAssessmentEditorModule,
         NgxDatatableModule,
+        NgxChartsModule,
         ArtemisDataTableModule,
         ArtemisAssessmentSharedModule,
         ArtemisSharedPipesModule,
@@ -90,7 +96,10 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
         ArtemisMarkdownModule,
         ArtemisCourseParticipantScoresModule,
         ArtemisSharedComponentModule,
+        UserImportModule,
         NgxChartsModule,
+        ArtemisPlagiarismModule,
+        ArtemisChartsModule,
     ],
     declarations: [
         CourseManagementComponent,

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 import org.springframework.stereotype.Service;
 
@@ -12,8 +13,8 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 @Service
 public class ModelingSubmissionExportService extends SubmissionExportService {
 
-    public ModelingSubmissionExportService(ExerciseRepository exerciseRepository, ZipFileService zipFileService, FileService fileService) {
-        super(exerciseRepository, zipFileService, fileService);
+    public ModelingSubmissionExportService(ExerciseRepository exerciseRepository, ExerciseDateService exerciseDateService, ZipFileService zipFileService, FileService fileService) {
+        super(exerciseRepository, exerciseDateService, zipFileService, fileService);
     }
 
     @Override
@@ -24,7 +25,7 @@ public class ModelingSubmissionExportService extends SubmissionExportService {
             }
         }
         else {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8));
             writer.write(((ModelingSubmission) submission).getModel()); // TODO: save explanation text
             writer.close();
         }

@@ -34,11 +34,9 @@ public class UMLUseCaseAssociation extends UMLElement {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLUseCaseAssociation)) {
+        if (!(reference instanceof UMLUseCaseAssociation referenceAssociation)) {
             return 0;
         }
-
-        UMLUseCaseAssociation referenceAssociation = (UMLUseCaseAssociation) reference;
 
         double similarity = 0;
 

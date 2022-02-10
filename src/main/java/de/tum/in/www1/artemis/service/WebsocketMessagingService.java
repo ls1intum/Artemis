@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -27,9 +28,12 @@ public class WebsocketMessagingService {
 
     private final ExamDateService examDateService;
 
-    public WebsocketMessagingService(SimpMessageSendingOperations messagingTemplate, ExamDateService examDateService) {
+    private final ExerciseDateService exerciseDateService;
+
+    public WebsocketMessagingService(SimpMessageSendingOperations messagingTemplate, ExamDateService examDateService, ExerciseDateService exerciseDateService) {
         this.messagingTemplate = messagingTemplate;
         this.examDateService = examDateService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -59,8 +63,14 @@ public class WebsocketMessagingService {
 
         // TODO: Are there other cases that must be handled here?
         if (participation instanceof StudentParticipation) {
-            var exercise = participation.getExercise();
-            boolean isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise);
+            final Exercise exercise = participation.getExercise();
+            final boolean isWorkingPeriodOver;
+            if (exercise.isExamExercise()) {
+                isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise);
+            }
+            else {
+                isWorkingPeriodOver = exerciseDateService.isAfterLatestDueDate(exercise);
+            }
             // Don't send students results after the exam ended
             boolean isAfterExamEnd = isWorkingPeriodOver && exercise.isExamExercise();
             // If the assessment due date is not over yet, do not send manual feedback to students!

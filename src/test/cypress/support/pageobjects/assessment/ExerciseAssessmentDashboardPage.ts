@@ -2,11 +2,14 @@
  * A class which encapsulates UI selectors and actions for the exercise assessment dashboard page.
  */
 export class ExerciseAssessmentDashboardPage {
+    readonly startAssessingSelector = '#start-new-assessment';
+
     clickHaveReadInstructionsButton() {
-        cy.get('.guided-tour-instructions-button').click();
+        cy.get('#participate-in-assessment').click();
     }
 
     clickStartNewAssessment() {
-        cy.get('.guided-tour-new-assessment-btn').click();
+        cy.reloadUntilFound(this.startAssessingSelector);
+        cy.get(this.startAssessingSelector).click();
     }
 }

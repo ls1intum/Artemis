@@ -12,6 +12,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { faBan, faCircleNotch, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -32,6 +33,11 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     domainCommands = [new KatexCommand()];
     editorMode = EditorMode.LATEX;
+
+    // Icons
+    faCircleNotch = faCircleNotch;
+    faBan = faBan;
+    faSave = faSave;
 
     constructor(
         private route: ActivatedRoute,

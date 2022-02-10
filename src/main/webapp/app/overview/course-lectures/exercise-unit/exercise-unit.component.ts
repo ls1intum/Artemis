@@ -15,12 +15,7 @@ export class ExerciseUnitComponent {
         this.componentClass = 'exercise-unit';
     }
 
-    @Input()
-    exerciseUnit: ExerciseUnit;
-
-    @Input()
-    course: Course;
-
-    @Input()
-    isPresentationMode = false;
+    @Input() exerciseUnit: ExerciseUnit;
+    @Input() course: Course;
+    @Input() isPresentationMode = false;
 }

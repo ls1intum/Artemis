@@ -271,7 +271,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         final var received = request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.OK, Complaint.class);
 
-        assertThat(received.getResult().getAssessor()).as("Tutors should not see the assessor of a complaint").isNull();
         assertThat(received.getParticipant()).as("Tutors should not see the student of a complaint").isNull();
     }
 

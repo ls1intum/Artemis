@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
@@ -17,16 +17,17 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { FileService } from 'app/shared/http/file.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getLatestSubmissionResult, getFirstResultWithComplaint } from 'app/entities/submission.model';
-import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
+import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { Feedback } from 'app/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -56,6 +57,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
 
     private submissionConfirmationText: string;
     private examMode = false;
+
+    // Icons
+    farListAlt = faListAlt;
 
     constructor(
         private route: ActivatedRoute,
@@ -107,7 +111,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     this.fileUploadExercise &&
                     !!this.fileUploadExercise.dueDate &&
                     !!this.participation.initializationDate &&
-                    dayjs(this.participation.initializationDate).isAfter(this.fileUploadExercise.dueDate);
+                    dayjs(this.participation.initializationDate).isAfter(getExerciseDueDate(this.fileUploadExercise, this.participation));
 
                 this.acceptedFileExtensions = this.fileUploadExercise
                     .filePattern!.split(',')
@@ -226,7 +230,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return !this.examMode && this.fileUploadExercise && (!this.fileUploadExercise.dueDate || !dayjs(this.fileUploadExercise.dueDate).isBefore(dayjs()));
+        return !this.examMode && this.fileUploadExercise && !hasExerciseDueDatePassed(this.fileUploadExercise, this.participation);
     }
 
     get submitButtonTooltip(): string {

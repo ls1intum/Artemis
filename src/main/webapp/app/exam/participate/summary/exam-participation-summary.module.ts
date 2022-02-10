@@ -20,6 +20,7 @@ import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercise
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
 @NgModule({
     imports: [
@@ -35,6 +36,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
         ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisMarkdownModule,
+        SubmissionResultStatusModule,
     ],
     declarations: [
         ExamParticipationSummaryComponent,

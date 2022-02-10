@@ -2,8 +2,6 @@ import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/co
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
-import { ChartsModule } from 'ng2-charts';
-import { ClipboardModule } from 'ngx-clipboard';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
@@ -12,20 +10,21 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { OrionCourseExerciseDetailsComponent } from 'app/orion/participation/orion-course-exercise-details.component';
 import { isOrion } from 'app/shared/orion/orion';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
 const routes: Routes = [
     {
-        path: 'courses/:courseId/exercises/:exerciseId',
+        path: '',
         component: !isOrion ? CourseExerciseDetailsComponent : OrionCourseExerciseDetailsComponent,
         data: {
             authorities: [Authority.USER],
@@ -36,7 +35,7 @@ const routes: Routes = [
             {
                 path: '',
                 pathMatch: 'full',
-                loadChildren: () => import('../page-discussion-section/page-discussion-section.module').then((m) => m.PageDiscussionSectionModule),
+                loadChildren: () => import('../discussion-section/discussion-section.module').then((m) => m.DiscussionSectionModule),
             },
         ],
     },
@@ -48,8 +47,6 @@ const routes: Routes = [
         ArtemisCourseExerciseRowModule,
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
-        ChartsModule,
-        ClipboardModule,
         ArtemisSharedPipesModule,
         ArtemisResultModule,
         ArtemisSidePanelModule,
@@ -57,11 +54,12 @@ const routes: Routes = [
         OrionModule,
         ArtemisComplaintsModule,
         FeatureToggleModule,
-        ArtemisTeamModule,
+        FontAwesomeModule,
         RatingModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
         RouterModule.forChild(routes),
         ArtemisMarkdownModule,
+        SubmissionResultStatusModule,
     ],
     declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],

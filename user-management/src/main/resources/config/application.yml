@@ -20,6 +20,7 @@ logging:
         de.tum.in.www1.artemis: TRACE
         io.github.jhipster: TRACE
         org.springframework.web.socket.config: TRACE
+        liquibase: INFO
 
 artemis:
     version: #project.version#
@@ -47,6 +48,10 @@ management:
     info:
         git:
             mode: full
+        java:
+            enabled: true
+        env:
+            enabled: true
     health:
         group:
             liveness:
@@ -130,6 +135,7 @@ spring:
     main:
         allow-bean-definition-overriding: true
         lazy-initialization: false
+        allow-circular-references: true # TODO: we should deactivate this in the future, however currently securityConfiguration has a circular dependency to itself
     task:
         execution:
             thread-name-prefix: user-management-task-

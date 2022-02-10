@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-repository-is-locked',
     template: `
-        <span class="badge bg-warning d-flex align-items-center locked-container">
-            <fa-icon [icon]="'info-circle'" class="text-white" size="2x"></fa-icon>
+        <span id="repository-locked-warning" class="badge bg-warning d-flex align-items-center locked-container">
+            <fa-icon [icon]="faInfoCircle" class="text-white" size="2x"></fa-icon>
             <span
                 class="ms-2 locked-lable"
                 jhiTranslate="artemisApp.programmingExercise.repositoryIsLocked.title"
@@ -16,4 +17,7 @@ import { Component } from '@angular/core';
     `,
     styles: ['.locked-lable {font-size: 1.2rem; color: white}'],
 })
-export class CodeEditorRepositoryIsLockedComponent {}
+export class CodeEditorRepositoryIsLockedComponent {
+    // Icons
+    faInfoCircle = faInfoCircle;
+}

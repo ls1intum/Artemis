@@ -9,10 +9,15 @@ import { OrganizationSelectorComponent } from 'app/shared/organization-selector/
 import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
+import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
+import { FormControl } from '@angular/forms';
+import { MatChipInputEvent } from '@angular/material/chips';
 
 @Component({
     selector: 'jhi-user-management-update',
     templateUrl: './user-management-update.component.html',
+    styleUrls: ['./user-management-update.component.scss'],
 })
 export class UserManagementUpdateComponent implements OnInit {
     readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
@@ -24,6 +29,15 @@ export class UserManagementUpdateComponent implements OnInit {
     languages: string[];
     authorities: string[];
     isSaving: boolean;
+
+    separatorKeysCodes = [ENTER, COMMA, TAB];
+
+    groupCtrl = new FormControl();
+
+    // Icons
+    faTimes = faTimes;
+    faBan = faBan;
+    faSave = faSave;
 
     constructor(
         private languageHelper: JhiLanguageHelper,
@@ -65,8 +79,8 @@ export class UserManagementUpdateComponent implements OnInit {
 
     /**
      * Navigate to the previous page when the user cancels the update process
-     * Returns to the detail page if there is no previous state and we edited an existing user
-     * Returns to the overview page if there is no previous state and we created a new user
+     * Returns to the detail page if there is no previous state, and we edited an existing user
+     * Returns to the overview page if there is no previous state, and we created a new user
      */
     previousState() {
         if (this.user.id) {
@@ -138,6 +152,17 @@ export class UserManagementUpdateComponent implements OnInit {
      * @param organization to remove
      */
     removeOrganizationFromUser(organization: Organization) {
-        this.user.organizations = this.user.organizations!.filter((o) => o.id !== organization.id);
+        this.user.organizations = this.user.organizations!.filter((userOrganization) => userOrganization.id !== organization.id);
+    }
+
+    onGroupAdd(user: User, event: MatChipInputEvent) {
+        user.groups?.push(event.value);
+        // Clear the input value
+        event.chipInput!.clear();
+        this.groupCtrl.setValue(null);
+    }
+
+    onGroupRemove(user: User, group: string) {
+        user.groups = user.groups?.filter((userGroup) => userGroup !== group);
     }
 }

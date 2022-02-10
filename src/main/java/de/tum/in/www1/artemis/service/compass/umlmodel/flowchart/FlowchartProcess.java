@@ -34,10 +34,9 @@ public class FlowchartProcess extends UMLElement {
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (!(reference instanceof FlowchartProcess)) {
+        if (!(reference instanceof FlowchartProcess referenceProcess)) {
             return similarity;
         }
-        FlowchartProcess referenceProcess = (FlowchartProcess) reference;
 
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceProcess.getName());
 
@@ -52,11 +51,9 @@ public class FlowchartProcess extends UMLElement {
      */
     @Override
     public double overallSimilarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof FlowchartProcess)) {
+        if (!(reference instanceof FlowchartProcess referenceProcess)) {
             return 0;
         }
-
-        FlowchartProcess referenceProcess = (FlowchartProcess) reference;
 
         double similarity = similarity(referenceProcess);
 

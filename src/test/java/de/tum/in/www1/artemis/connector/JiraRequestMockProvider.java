@@ -50,27 +50,27 @@ public class JiraRequestMockProvider {
         mockServer = MockRestServiceServer.createServer(restTemplate);
     }
 
-    public void mockIsGroupAvailable(String group) throws URISyntaxException {
+    public void mockIsGroupAvailable(String group) {
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/member\\?groupname=" + group);
 
         mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockIsGroupAvailableForMultiple(Set<String> groups) throws URISyntaxException {
+    public void mockIsGroupAvailableForMultiple(Set<String> groups) {
         final var regexGroups = String.join("|", groups);
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/member\\?groupname=(" + regexGroups + ")");
         mockServer.expect(ExpectedCount.times(groups.size()), requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockAddUserToGroup(String group, boolean shouldFail) throws URISyntaxException {
+    public void mockAddUserToGroup(String group, boolean shouldFail) {
         mockIsGroupAvailable(group);
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=" + group);
         var status = shouldFail ? HttpStatus.NOT_FOUND : HttpStatus.OK;
         mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST)).andRespond(withStatus(status));
     }
 
-    public void mockAddUserToGroupForMultipleGroups(Set<String> groups) throws URISyntaxException {
+    public void mockAddUserToGroupForMultipleGroups(Set<String> groups) {
         mockIsGroupAvailableForMultiple(groups);
         final var regexGroups = String.join("|", groups);
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=(" + regexGroups + ")");

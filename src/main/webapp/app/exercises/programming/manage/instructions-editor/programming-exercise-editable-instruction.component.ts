@@ -4,7 +4,6 @@ import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
-import { compose, filter, flatten, map, sortBy, toPairs, values } from 'lodash/fp';
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
@@ -14,7 +13,7 @@ import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instr
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise-utils';
+import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise.utils';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
@@ -22,6 +21,7 @@ import { ProgrammingExerciseGradingService } from 'app/exercises/programming/man
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { Result } from 'app/entities/result.model';
+import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -100,6 +100,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.hasUnsavedChanges.emit(hasChanges);
         }
     }
+
+    // Icons
+    faSave = faSave;
+    faCheckCircle = faCheckCircle;
+    faExclamationTriangle = faExclamationTriangle;
+    faCircleNotch = faCircleNotch;
+    faGripLines = faGripLines;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -243,11 +250,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     switchMap((testCases: ProgrammingExerciseTestCase[] | undefined) => {
                         // If there are test cases, map them to their names, sort them and use them for the markdown editor.
                         if (testCases) {
-                            const sortedTestCaseNames = compose(
-                                map(({ testName }) => testName),
-                                filter(({ active }) => active),
-                                sortBy('testName'),
-                            )(testCases);
+                            const sortedTestCaseNames = testCases
+                                .filter((testCase) => testCase.active)
+                                .map((testCase) => testCase.testName)
+                                .sort();
                             return of(sortedTestCaseNames);
                         } else if (this.exercise.templateParticipation) {
                             // Legacy case: If there are no test cases, but a template participation, use its feedbacks for generating test names.
@@ -270,34 +276,23 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * This is the fallback for older programming exercises without test cases in the database.
      * @param templateParticipationId
      */
-    loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<string[]> => {
+    loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<Array<string | undefined>> => {
         // Fallback for exercises that don't have test cases yet.
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
             rxMap((result) => (!result || !result.feedbacks ? throwError('no result available') : result)),
-            rxMap(({ feedbacks }: Result) =>
-                compose(
-                    map(({ text }) => text),
-                    sortBy('text'),
-                )(feedbacks),
-            ),
+            rxMap(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text).sort()),
             catchError(() => of([])),
         );
     };
 
     /**
-     * On every update of the problem statement analysis, update the appropriate line numbers of the editor with the resuls of the analysis.
+     * On every update of the problem statement analysis, update the appropriate line numbers of the editor with the results of the analysis.
      * Will show warning symbols for every item.
      *
      * @param analysis that contains the resulting issues of the problem statement.
      */
     onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
-        const mapIssuesToAnnotations = ([lineNumber, issues]: [number, { [issueType: string]: string[] }]) =>
-            compose(
-                map((analysisIssues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + analysisIssues.join('\n - '), type: 'warning' })),
-                values,
-            )(issues);
-
-        const lineWarnings = compose(flatten, map(mapIssuesToAnnotations), toPairs)(analysis);
+        const lineWarnings = this.mapAnalysisToWarnings(analysis);
 
         this.markdownEditor.aceEditorContainer.getEditor().getSession().clearAnnotations();
         // We need to wait for the annotations to be removed before we can set the new annotations.
@@ -305,5 +300,23 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         setTimeout(() => {
             this.markdownEditor.aceEditorContainer.getEditor().getSession().setAnnotations(lineWarnings);
         }, 0);
+    };
+
+    private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
+        return Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases, invalidHints }) => this.mapIssuesToAnnotations(lineNumber, invalidTestCases, invalidHints));
+    };
+
+    private mapIssuesToAnnotations = (lineNumber: number, invalidTestCases?: string[], invalidHints?: string[]) => {
+        const mapIssues = (issues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + issues.join('\n - '), type: 'warning' });
+
+        const annotations = [];
+        if (invalidTestCases) {
+            annotations.push(mapIssues(invalidTestCases));
+        }
+        if (invalidHints) {
+            annotations.push(mapIssues(invalidHints));
+        }
+
+        return annotations;
     };
 }

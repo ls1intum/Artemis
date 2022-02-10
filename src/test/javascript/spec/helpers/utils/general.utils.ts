@@ -1,12 +1,9 @@
 import { DebugElement, OnChanges, SimpleChange, SimpleChanges } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import * as chai from 'chai';
-
-const expect = chai.expect;
 
 export const getFocusedElement = (debugElement: DebugElement) => {
     const focusedElement = debugElement.query(By.css(':focus')).nativeElement;
-    expect(focusedElement).to.deep.equal(debugElement.nativeElement);
+    expect(focusedElement).toEqual(debugElement.nativeElement);
 };
 
 export const getElement = (debugElement: DebugElement, identifier: string) => {
@@ -20,13 +17,13 @@ export const getElements = (debugElement: DebugElement, identifier: string) => {
 };
 
 export const expectElementToBeEnabled = (element: null | any) => {
-    expect(element).to.exist;
-    expect(element.disabled).to.be.false;
+    expect(element).not.toBeNull();
+    expect(element.disabled).toBeFalse();
 };
 
 export const expectElementToBeDisabled = (element: null | any) => {
-    expect(element).to.exist;
-    expect(element.disabled).to.be.true;
+    expect(element).not.toBeNull();
+    expect(element.disabled).toBeTrue();
 };
 
 /**

@@ -21,11 +21,13 @@
                 "exerciseNotifications": "Exercise Notifications",
                 "lectureNotifications": "Lecture Notifications",
                 "courseWideDiscussionNotifications": "Course-wide Discussion Notifications",
-                "instructorExclusiveNotifications": "Instructor Exclusive Notifications"
+                "editorNotifications": "Editor Notifications",
+                "instructorNotifications": "Instructor Notifications"
             },
             "settingNames": {
                 "exerciseReleased": "Exercise released",
                 "exerciseOpenForPractice": "Exercise Open for Practice",
+                "exerciseSubmissionAssessed": "Exercise Submission assessed",
                 "attachmentChanges": "Attachment Changes",
                 "newExercisePost": "New Exercise Post",
                 "newReplyForExercisePost": "New Reply for Exercise Post",
@@ -34,11 +36,14 @@
                 "newCoursePost": "New Course Post",
                 "newReplyForCoursePost": "New Reply for Course Post",
                 "newAnnouncementPost": "New Announcement",
-                "courseAndExamArchivingStarted": "Course & Exam Archiving Started"
+                "courseAndExamArchivingStarted": "Course & Exam Archiving Started",
+                "fileSubmissionSuccessful": "File Submission Successful",
+                "programmingTestCasesChanged": "Changed Test Cases for Programming Exercises"
             },
             "settingDescriptions": {
                 "exerciseReleasedDescription": "Get notified when a new exercise has been released",
                 "exerciseOpenForPracticeDescription": "Get notified when an exercise has been opened for practice (e.g. Quiz)",
+                "exerciseSubmissionAssessedDescription": "Get notified when your exercise submissions get assessed",
                 "attachmentChangesDescription": "Receive a notification when an attachment was changed",
                 "newExercisePostDescription": "Get notified when a new exercise post has been created",
                 "newReplyForExercisePostDescription": "Get notified when a new reply for an exercise post has been created",
@@ -47,7 +52,9 @@
                 "newCoursePostDescription": "Receive a notification when a new course-wide post has been created",
                 "newReplyForCoursePostDescription": "Receive a notification when a new reply for a course-wide post has been created",
                 "newAnnouncementPostDescription": "Receive a notification when a new announcement has been created",
-                "courseAndExamArchivingStartedDescription": "Receive a notification when the process of archiving a course or exam has been started"
+                "courseAndExamArchivingStartedDescription": "Receive a notification when the process of archiving a course or exam has been started",
+                "fileSubmissionSuccessfulDescription": "Receive a notification after you successfully submitted a file upload exercise",
+                "programmingTestCasesChangedDescription": "Get notified if test cases for a programming exercises have been changed"
             }
         }
     }

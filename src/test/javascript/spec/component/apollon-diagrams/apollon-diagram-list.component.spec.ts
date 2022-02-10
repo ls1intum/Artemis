@@ -1,5 +1,4 @@
 import { Course } from 'app/entities/course.model';
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -24,7 +23,7 @@ describe('ApollonDiagramList Component', () => {
     let apollonDiagramService: ApollonDiagramService;
     let courseService: CourseManagementService;
     let fixture: ComponentFixture<ApollonDiagramListComponent>;
-    const sandbox = sinon.createSandbox();
+
     const course: Course = { id: 123 } as Course;
 
     beforeEach(() => {
@@ -55,8 +54,8 @@ describe('ApollonDiagramList Component', () => {
             });
     });
 
-    afterEach(function () {
-        sandbox.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('ngOnInit', () => {
@@ -64,8 +63,8 @@ describe('ApollonDiagramList Component', () => {
         const diagramResponse: HttpResponse<ApollonDiagram[]> = new HttpResponse({ body: apollonDiagrams });
         const courseResponse: HttpResponse<Course> = new HttpResponse({ body: course });
 
-        sandbox.stub(apollonDiagramService, 'getDiagramsByCourse').returns(of(diagramResponse));
-        sandbox.stub(courseService, 'find').returns(of(courseResponse));
+        jest.spyOn(apollonDiagramService, 'getDiagramsByCourse').mockReturnValue(of(diagramResponse));
+        jest.spyOn(courseService, 'find').mockReturnValue(of(courseResponse));
 
         // test
         fixture.componentInstance.ngOnInit();
@@ -75,7 +74,7 @@ describe('ApollonDiagramList Component', () => {
     it('delete', () => {
         // setup
         const response: HttpResponse<void> = new HttpResponse();
-        sandbox.stub(apollonDiagramService, 'delete').returns(of(response));
+        jest.spyOn(apollonDiagramService, 'delete').mockReturnValue(of(response));
 
         const apollonDiagrams = [];
         for (let i = 0; i < 3; i++) {

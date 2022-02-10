@@ -32,7 +32,7 @@ public class PlagiarismWebsocketService {
      * @param plagiarismCheckState The plagiarism check state
      * @param messages  optional messages to send
      */
-    public void notifyUserAboutPlagiarismState(String topic, PlagiarismCheckState plagiarismCheckState, List<String> messages) {
+    public void notifyInstructorAboutPlagiarismState(String topic, PlagiarismCheckState plagiarismCheckState, List<String> messages) {
         Map<String, String> payload = new HashMap<>();
         payload.put("state", plagiarismCheckState.toString());
         payload.put("messages", String.join("\n", messages));

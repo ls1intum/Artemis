@@ -54,7 +54,7 @@ public abstract class UMLActivityElement extends UMLElement implements Serializa
      *
      * @param parentActivity the parent activity that contains this activity element
      */
-    public void setParentActivity(UMLActivity parentActivity) {
+    public void setParentActivity(@Nullable UMLActivity parentActivity) {
         this.parentActivity = parentActivity;
     }
 

@@ -38,8 +38,8 @@ public class TeamSearchUserDTO {
 
     private Long assignedTeamId;
 
+    // Empty constructor needed for Jackson.
     public TeamSearchUserDTO() {
-        // Empty constructor needed for Jackson.
     }
 
     public TeamSearchUserDTO(User user) {

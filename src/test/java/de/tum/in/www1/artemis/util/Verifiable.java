@@ -9,7 +9,7 @@ package de.tum.in.www1.artemis.util;
  * @Service
  * public class FooMockService {
  *     public List<Verifiable> setUpSomeMocks() {
- *          final var verifications = new LinkedList<Verifiable>();
+ *          final var verifications = new ArrayList<Verifiable>();
  *          ...
  *          verifications.add(() -> Mockito.verify(...));
  *          ...
@@ -24,7 +24,7 @@ package de.tum.in.www1.artemis.util;
  * public class TestBar {
  *     @Test
  *     public void testSomeStuff() {
- *          final var verifications = new LinkedList<Verifiable>();
+ *          final var verifications = new ArrayList<Verifiable>();
  *          verifications.addAll(fooMockService.setUpSomeMocks());
  *          verifications.addAll(fooMockService.setUpSomeMoreMocks());
  *

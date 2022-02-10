@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 /**
@@ -30,6 +32,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
  * 1) Bamboo + Bitbucket
  * 2) Jenkins + Gitlab
  */
+@Deprecated // Moved to user management microservice. To be removed.
 @Service
 public class UserTestService {
 
@@ -410,6 +413,9 @@ public class UserTestService {
 
     // Test
     public void createUserWithGroups() throws Exception {
+        assertThrows(EntityNotFoundException.class, () -> userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(Long.MAX_VALUE));
+        assertThrows(EntityNotFoundException.class, () -> userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
+
         var course = database.addEmptyCourse();
         database.addProgrammingExerciseToCourse(course, false);
         course = database.addEmptyCourse();
@@ -517,6 +523,21 @@ public class UserTestService {
         request.put("/api/users/notification-date", null, HttpStatus.OK);
         User userInDB = userRepository.findOneByLogin("student1").get();
         assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(1));
+    }
+
+    // Test
+    public void updateUserNotificationVisibilityShowAllAsStudentIsSuccessful() throws Exception {
+        request.put("/api/users/notification-visibility", true, HttpStatus.OK);
+        User userInDB = userRepository.findOneByLogin("student1").get();
+        assertThat(userInDB.getHideNotificationsUntil()).isNull();
+    }
+
+    // Test
+    public void updateUserNotificationVisibilityHideUntilAsStudentIsSuccessful() throws Exception {
+        request.put("/api/users/notification-visibility", false, HttpStatus.OK);
+        User userInDB = userRepository.findOneByLogin("student1").get();
+        assertThat(userInDB.getHideNotificationsUntil()).isNotNull();
+        assertThat(userInDB.getHideNotificationsUntil()).isStrictlyBetween(ZonedDateTime.now().minusSeconds(1), ZonedDateTime.now().plusSeconds(1));
     }
 
     public UserRepository getUserRepository() {

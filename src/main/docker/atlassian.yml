@@ -2,7 +2,7 @@ version: "2"
 services:
     jira:
         container_name: artemis_jira
-        image: atlassian/jira-core:8.15.3
+        image: ghcr.io/ls1intum/artemis-jira:8.15.0
         volumes:
           - artemis-jira:/var/atlassian/application-data/jira
         ports:
@@ -13,7 +13,7 @@ services:
                 ipv4_address: 172.20.0.2
     bitbucket:
         container_name: artemis_bitbucket
-        image: atlassian/bitbucket-server:7.10.1
+        image: ghcr.io/ls1intum/artemis-bitbucket:7.17.1
         volumes:
             - artemis-bitbucket:/var/atlassian/application-data/bitbucket
         environment:

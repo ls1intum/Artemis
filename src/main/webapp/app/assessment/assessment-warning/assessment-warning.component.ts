@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/entities/exercise.model';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 /*
 Display warning for instructors on submission page, team page and the assessment page.
@@ -12,7 +13,7 @@ and student submission would still be possible.
     template: `
         <h6>
             <div class="card-header" *ngIf="isBeforeDueDate">
-                <fa-icon [icon]="'exclamation-triangle'" size="2x" class="text-warning" placement="bottom"></fa-icon>
+                <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom"></fa-icon>
                 {{ 'artemisApp.assessment.dashboard.warning' | artemisTranslate }}
             </div>
         </h6>
@@ -21,6 +22,8 @@ and student submission would still be possible.
 export class AssessmentWarningComponent implements OnChanges {
     @Input() exercise: Exercise;
     isBeforeDueDate = false;
+    // Icons
+    faExclamationTriangle = faExclamationTriangle;
 
     /**
      * Checks if the due date of the exercise is over

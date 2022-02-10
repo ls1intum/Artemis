@@ -43,7 +43,7 @@
             [question]="question"
             [mappings]="dragAndDropMappings.get(question.id!)!"
             (mappingsChange)="dragAndDropMappings.set(question.id!, $event)"
-            [fnOnMappingUpdate]="onSelectionChanged.bind(this)"
+            [onMappingUpdate]="onSelectionChanged.bind(this)"
             [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
             [showResult]="showingResult"
             [forceSampleSolution]="mode === 'solution'"
@@ -181,7 +181,7 @@
                 [btnType]="ButtonType.PRIMARY"
                 [title]="'artemisApp.exercise.refresh'"
                 [disabled]="refreshingQuiz"
-                [icon]="'sync'"
+                [icon]="faSync"
             ></jhi-button>
             <div class="submit-button">
                 <jhi-button
@@ -215,5 +215,5 @@
     </div>
 </div>
 <div class="quiz-refresh-overlay" [class.active]="refreshingQuiz">
-    <fa-icon size="lg" [icon]="'circle-notch'" [spin]="true"></fa-icon>
+    <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
 </div>

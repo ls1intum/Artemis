@@ -34,7 +34,7 @@ public class SyntaxTreeTest extends AbstractUMLDiagramTest {
         assertThat(diagram).isInstanceOf(SyntaxTree.class);
         SyntaxTree syntaxTree = (SyntaxTree) diagram;
 
-        assertThat(syntaxTree.getNonterminals()).hasSize(1);
+        assertThat(syntaxTree.getNonTerminals()).hasSize(1);
         assertThat(syntaxTree.getTerminals()).hasSize(4);
         assertThat(syntaxTree.getLinks()).hasSize(4);
 

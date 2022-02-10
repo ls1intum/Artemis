@@ -18,17 +18,17 @@ public class Flowchart extends UMLDiagram {
 
     private final List<FlowchartFunctionCall> functionCalls;
 
-    private final List<FlowchartFlowline> flowlines;
+    private final List<FlowchartFlowline> flowLines;
 
     public Flowchart(long modelSubmissionId, List<FlowchartTerminal> terminals, List<FlowchartProcess> processes, List<FlowchartDecision> decisions,
-            List<FlowchartInputOutput> inputOutputs, List<FlowchartFunctionCall> functionCalls, List<FlowchartFlowline> flowlines) {
+            List<FlowchartInputOutput> inputOutputs, List<FlowchartFunctionCall> functionCalls, List<FlowchartFlowline> flowLines) {
         super(modelSubmissionId);
         this.terminals = terminals;
         this.processes = processes;
         this.decisions = decisions;
         this.inputOutputs = inputOutputs;
         this.functionCalls = functionCalls;
-        this.flowlines = flowlines;
+        this.flowLines = flowLines;
     }
 
     @Override
@@ -63,8 +63,8 @@ public class Flowchart extends UMLDiagram {
         return functionCalls;
     }
 
-    public List<FlowchartFlowline> getFlowlines() {
-        return flowlines;
+    public List<FlowchartFlowline> getFlowLines() {
+        return flowLines;
     }
 
     @Override
@@ -75,7 +75,7 @@ public class Flowchart extends UMLDiagram {
         modelElements.addAll(decisions);
         modelElements.addAll(inputOutputs);
         modelElements.addAll(functionCalls);
-        modelElements.addAll(flowlines);
+        modelElements.addAll(flowLines);
         return modelElements;
     }
 }

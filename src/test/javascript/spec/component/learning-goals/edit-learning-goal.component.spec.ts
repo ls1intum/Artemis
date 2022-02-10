@@ -72,7 +72,7 @@ describe('EditLearningGoalComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

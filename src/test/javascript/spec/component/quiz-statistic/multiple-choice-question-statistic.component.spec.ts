@@ -17,6 +17,8 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
 import { AnswerCounter } from 'app/entities/quiz/answer-counter.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
+import { MockProvider } from 'ng-mocks';
+import { ChangeDetectorRef } from '@angular/core';
 
 const route = { params: of({ courseId: 3, exerciseId: 22, questionId: 1 }) };
 const answerOption1 = { id: 5 } as AnswerOption;
@@ -44,6 +46,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                MockProvider(ChangeDetectorRef),
             ],
         })
             .overrideTemplate(MultipleChoiceQuestionStatisticComponent, '')
@@ -61,7 +64,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
         quizExercise = { id: 22, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
     });
 
-    describe('OnInit', function () {
+    describe('OnInit', () => {
         it('should call functions on Init', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
@@ -87,7 +90,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
         });
     });
 
-    describe('loadLayout', function () {
+    describe('loadLayout', () => {
         it('should call functions from loadLayout', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const resetLabelsSpy = jest.spyOn(comp, 'resetLabelsColors');
@@ -105,7 +108,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
         });
     });
 
-    describe('loadData', function () {
+    describe('loadData', () => {
         it('should call functions from loadData', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const resetDataSpy = jest.spyOn(comp, 'resetData');

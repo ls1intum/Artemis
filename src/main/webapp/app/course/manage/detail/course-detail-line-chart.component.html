@@ -1,7 +1,14 @@
 <div class="course-detail-parent-container col">
-    <h5 class="col-md-12 text-center" style="margin-top: 15px">{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h5>
-    <div class="row flex-nowrap" style="display: flex; justify-content: center; align-items: center; flex: 1">
-        <fa-icon [icon]="'arrow-left'" size="2x" class="col-md-1 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
+    <div class="row justify-content-center chart-title-line">
+        <div class="d-inline-flex flex-nowrap justify-content-center">
+            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="text-center">
+                <h5>{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h5>
+            </a>
+            <jhi-help-icon class="chart-explanation-tooltip" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation"></jhi-help-icon>
+        </div>
+    </div>
+    <div class="row d-flex justify-content-center align-items-center flex-nowrap" style="flex: 1">
+        <fa-icon [icon]="faArrowLeft" size="2x" class="col-md-1 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
         <div #containerRef class="chart col-md-9 mt-1 justify-content-center h-99">
             <ngx-charts-line-chart
                 [view]="[containerRef.offsetWidth, 450]"
@@ -18,21 +25,25 @@
                 [yScaleMin]="0"
                 [yScaleMax]="100"
                 [yAxisTickFormatting]="formatYAxis"
+                [curve]="curve"
+                [referenceLines]="[average]"
+                [showRefLines]="showAverage"
+                [showRefLabels]="showAverage"
             >
                 <ng-template #tooltipTemplate let-model="model">
-                    <h3 class="tooltip-header">{{ findAbsoluteValue(model) }}</h3>
-                    <span>{{ model.series }} in {{ model.name }}</span>
+                    <span>{{ model.series }} in {{ model.name }}: </span><br />
+                    <b class="tooltip-header">{{ findAbsoluteValue(model) }} ({{ model.value }}%)</b>
                 </ng-template>
                 <ng-template #seriesTooltipTemplate let-model="model">
                     <span> {{ model[0].name }}: {{ findAbsoluteValue(model[0]) }} </span>
                 </ng-template>
             </ngx-charts-line-chart>
         </div>
-        <h1 *ngIf="loading" style="z-index: 1; display: flex; justify-content: center; align-items: center; position: absolute">
-            <fa-icon [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+        <h1 *ngIf="loading" class="spinner">
+            <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
         </h1>
         <fa-icon
-            [icon]="'arrow-right'"
+            [icon]="faArrowRight"
             size="2x"
             class="col-md-1 d-flex justify-content-start align-items-center"
             role="button"
@@ -40,5 +51,11 @@
             [ngClass]="showsCurrentWeek ? 'hide-arrow' : ''"
         ></fa-icon>
     </div>
-    <h5 class="col-md-10 offset-md-1 text-center mt-4">{{ chartTime }}</h5>
+    <div class="col-md-10 offset-md-1 text-center mt-4 justify-content-center">
+        <h5>{{ chartTime }}</h5>
+        <div class="d-flex align-items-center justify-content-center">
+            <input type="checkbox" [checked]="showAverage" (change)="toggleAverageLine()" />
+            <label class="checkbox-label">{{ 'artemisApp.courseStatistics.averageReferenceLineCheckboxLabel' | artemisTranslate }}</label>
+        </div>
+    </div>
 </div>

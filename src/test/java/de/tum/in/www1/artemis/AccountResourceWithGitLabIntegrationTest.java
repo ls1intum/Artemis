@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
+@Deprecated // Moved to user management microservice. To be removed.
 public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
@@ -116,7 +117,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testShouldNotRegisterUserIfCannotCreateInGitlab() throws Exception {
         // create unactivated user in repo
         User user = ModelFactory.generateActivatedUser("ab123cd");
@@ -144,7 +145,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testShouldRegisterUserIfCanCreateAndDeactivateAccountInGitlab() throws Exception {
         // create unactivated user in repo
         User user = ModelFactory.generateActivatedUser("ab123cd");
@@ -163,7 +164,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testShouldAbortRegistrationAndFailIfCannotDeactivateAccountInGitlab() throws Exception {
         // create unactivated user in repo
         User user = ModelFactory.generateActivatedUser("ab123cd");
@@ -182,7 +183,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testShouldActivateUserInGitlab() throws Exception {
         // create unactivated user in repo
         User user = ModelFactory.generateActivatedUser("ab123cd");
@@ -208,7 +209,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testShouldThrowErrorIfCannotActivateUserInGitlab() throws Exception {
         // create unactivated user in repo
         User user = ModelFactory.generateActivatedUser("ab123cd");
@@ -235,7 +236,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testShouldBlockRegistrationIfUnactivatedUserWithSameLogin() throws Exception {
         // Create existing non activated user
         User user = ModelFactory.generateActivatedUser("userLogin");
@@ -256,7 +257,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testShouldBlockRegistrationIfUnactivatedUserWithSameEmail() throws Exception {
         User user = ModelFactory.generateActivatedUser("existingLogin");
         user.setEmail("existingUser@mytum.de");
@@ -276,7 +277,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testShouldFailRegistrationIfActivatedUserWithSameEmail() throws Exception {
         User user = ModelFactory.generateActivatedUser("existingLogin");
         user.setEmail("existingUser@mytum.de");

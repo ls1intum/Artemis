@@ -3,17 +3,48 @@ services:
     artemis-app:
         image: ghcr.io/ls1intum/artemis-service:${TAG:-latest}
         volumes:
-            - ${PWD}/config/application-prod.yml:/home/artemis/application-prod.yml:ro
             - ${PWD}/config/application-artemis.yml:/home/artemis/application-artemis.yml:ro
         environment:
-            - _JAVA_OPTIONS=-Xmx512m -Xms256m
             - SPRING_PROFILES_ACTIVE=prod,artemis,openapi,jira,bamboo,bitbucket,scheduling
+            - SPRING_CLOUD_CONFIG_NAME=artemis
+            - SERVER_PORT=8080
+            # common environment variables
+            - _JAVA_OPTIONS=-Xmx512m -Xms256m
             - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
+            - SPRING_DEVTOOLS_RESTART_ENABLED=true
+            - SPRING_DEVTOOLS_LIVERELOAD_ENABLED=false
+            - SPRING_DATASOURCE_TYPE=com.zaxxer.hikari.HikariDataSource
             - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+            - SPRING_DATASOURCE_USERNAME=root
+            - SPRING_DATASOURCE_HIKARI_POOLNAME=Hikari
+            - SPRING_DATASOURCE_HIKARI_AUTO_COMMIT=false
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_CACHEPREPSTMTS=true
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_PREPSTMTCACHESIZE=250
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_PREPSTMTCACHESQLLIMIT=2048
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_USESERVERPREPSTMTS=true
+            - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQL8Dialect
+            - SPRING_JPA_DATABASE=MYSQL
+            - SPRING_JPA_SHOW_SQL=false
+            - SPRING_LIQUIBASE_CONTEXTS=prod
+            - SPRING_THYMELEAF_CACHE=true
             - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
             - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
+            - SPRING_CLOUD_CONFIG_FAILFAST=true
+            - SPRING_CLOUD_CONFIG_PROFILE=prod
+            - SPRING_CLOUD_CONFIG_LABEL=main
+            - SPRING_CLOUD_CONFIG_ENABLED=false
+            - SPRING_MESSAGES_CACHEDURATION=PT1S
+            - SPRING_SLEUTH_SAMPLER_PROBABILITY=1
             - JHIPSTER_SLEEP=30 # gives time for other services to boot before the application
+            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET=bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
+            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKEN_VALIDITY_IN_SECONDS=86400
+            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKEN_VALIDITY_IN_SECONDS_FOR_REMEMBER_ME=2592000
+            - JHIPSTER_LOGGING_LOGSTASH_ENABLED=false
+            - JHIPSTER_LOGGING_AUDIT_EVENTS_RETENTION_PERIOD=120
             - SPRING_ARTEMIS_HOST=activemq-broker
+            - SERVER_COMPRESSION_ENABLED=true
+            - SERVER_COMPRESSION_MIMETYPES=text/html,text/xml,text/plain,text/css, application/javascript, application/json
+            - SERVER_COMPRESSION_MINRESPONSESIZE=1024
         expose:
             - "8080"
         networks:
@@ -25,17 +56,48 @@ services:
     usermanagement-app:
         image: ghcr.io/ls1intum/artemis-usermanagement-service:${TAG:-latest}
         volumes:
-            - ${PWD}/config/application-prod-user-management.yml:/home/artemis/user-management/application-prod.yml:ro
             - ${PWD}/config/application-artemis.yml:/home/artemis/user-management/application-artemis.yml:ro
         environment:
-            - _JAVA_OPTIONS=-Xmx512m -Xms256m
             - SPRING_PROFILES_ACTIVE=prod,artemis,jira,scheduling
+            - SPRING_CLOUD_CONFIG_NAME=userManagement
+            - SERVER_PORT=8087
+            # common environment variables
+            - _JAVA_OPTIONS=-Xmx512m -Xms256m
             - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
+            - SPRING_DEVTOOLS_RESTART_ENABLED=true
+            - SPRING_DEVTOOLS_LIVERELOAD_ENABLED=false
+            - SPRING_DATASOURCE_TYPE=com.zaxxer.hikari.HikariDataSource
             - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+            - SPRING_DATASOURCE_USERNAME=root
+            - SPRING_DATASOURCE_HIKARI_POOLNAME=Hikari
+            - SPRING_DATASOURCE_HIKARI_AUTO_COMMIT=false
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_CACHEPREPSTMTS=true
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_PREPSTMTCACHESIZE=250
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_PREPSTMTCACHESQLLIMIT=2048
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_USESERVERPREPSTMTS=true
+            - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQL8Dialect
+            - SPRING_JPA_DATABASE=MYSQL
+            - SPRING_JPA_SHOW_SQL=false
+            - SPRING_LIQUIBASE_CONTEXTS=prod
+            - SPRING_THYMELEAF_CACHE=true
             - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
             - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
+            - SPRING_CLOUD_CONFIG_FAILFAST=true
+            - SPRING_CLOUD_CONFIG_PROFILE=prod
+            - SPRING_CLOUD_CONFIG_LABEL=main
+            - SPRING_CLOUD_CONFIG_ENABLED=false
+            - SPRING_MESSAGES_CACHEDURATION=PT1S
+            - SPRING_SLEUTH_SAMPLER_PROBABILITY=1
             - JHIPSTER_SLEEP=30 # gives time for other services to boot before the application
+            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET=bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
+            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKEN_VALIDITY_IN_SECONDS=86400
+            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKEN_VALIDITY_IN_SECONDS_FOR_REMEMBER_ME=2592000
+            - JHIPSTER_LOGGING_LOGSTASH_ENABLED=false
+            - JHIPSTER_LOGGING_AUDIT_EVENTS_RETENTION_PERIOD=120
             - SPRING_ARTEMIS_HOST=activemq-broker
+            - SERVER_COMPRESSION_ENABLED=true
+            - SERVER_COMPRESSION_MIMETYPES=text/html,text/xml,text/plain,text/css, application/javascript, application/json
+            - SERVER_COMPRESSION_MINRESPONSESIZE=1024
         expose:
             - "8087"
         networks:
@@ -44,17 +106,87 @@ services:
             - artemis-mysql
             - jhipster-registry
 
-    gateway-app:
-        image: ghcr.io/ls1intum/artemis-gateway:${TAG:-latest}
+    lecture-app:
+        image: ghcr.io/ls1intum/artemis-lecture-service:${TAG:-latest}
         volumes:
-            - ${PWD}/config/application-prod-gateway.yml:/home/artemis/gateway/application-prod.yml:ro
+            - ${PWD}/config/application-artemis.yml:/home/artemis/lecture/application-artemis.yml:ro
         environment:
+            - SPRING_PROFILES_ACTIVE=prod,artemis
+            - SPRING_CLOUD_CONFIG_NAME=lecture
+            - SERVER_PORT=8086
+            # common environment variables
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
-            - SPRING_PROFILES_ACTIVE=prod,api-docs
             - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
+            - SPRING_DEVTOOLS_RESTART_ENABLED=true
+            - SPRING_DEVTOOLS_LIVERELOAD_ENABLED=false
+            - SPRING_DATASOURCE_TYPE=com.zaxxer.hikari.HikariDataSource
+            - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+            - SPRING_DATASOURCE_USERNAME=root
+            - SPRING_DATASOURCE_HIKARI_POOLNAME=Hikari
+            - SPRING_DATASOURCE_HIKARI_AUTO_COMMIT=false
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_CACHEPREPSTMTS=true
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_PREPSTMTCACHESIZE=250
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_PREPSTMTCACHESQLLIMIT=2048
+            - SPRING_DATASOURCE_HIKARI_DATA_SOURCE_PROPERTIES_USESERVERPREPSTMTS=true
+            - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQL8Dialect
+            - SPRING_JPA_DATABASE=MYSQL
+            - SPRING_JPA_SHOW_SQL=false
+            - SPRING_LIQUIBASE_CONTEXTS=prod
+            - SPRING_THYMELEAF_CACHE=true
             - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
             - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
+            - SPRING_CLOUD_CONFIG_FAILFAST=true
+            - SPRING_CLOUD_CONFIG_PROFILE=prod
+            - SPRING_CLOUD_CONFIG_LABEL=main
+            - SPRING_CLOUD_CONFIG_ENABLED=false
+            - SPRING_MESSAGES_CACHEDURATION=PT1S
+            - SPRING_SLEUTH_SAMPLER_PROBABILITY=1
             - JHIPSTER_SLEEP=30 # gives time for other services to boot before the application
+            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET=bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
+            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKEN_VALIDITY_IN_SECONDS=86400
+            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKEN_VALIDITY_IN_SECONDS_FOR_REMEMBER_ME=2592000
+            - JHIPSTER_LOGGING_LOGSTASH_ENABLED=false
+            - JHIPSTER_LOGGING_AUDIT_EVENTS_RETENTION_PERIOD=120
+            - SPRING_ARTEMIS_HOST=activemq-broker
+            - SERVER_COMPRESSION_ENABLED=true
+            - SERVER_COMPRESSION_MIMETYPES=text/html,text/xml,text/plain,text/css, application/javascript, application/json
+            - SERVER_COMPRESSION_MINRESPONSESIZE=1024
+        expose:
+            - "8086"
+        networks:
+            - artemis
+        depends_on:
+            - artemis-mysql
+            - jhipster-registry
+
+    gateway-app:
+        image: ghcr.io/ls1intum/artemis-gateway:${TAG:-latest}
+        environment:
+            - SPRING_PROFILES_ACTIVE=prod
+            - SPRING_CLOUD_CONFIG_NAME=gateway
+            - SERVER_PORT=8089
+            - _JAVA_OPTIONS=-Xmx512m -Xms256m
+            - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
+            - SPRING_DEVTOOLS_RESTART_ENABLED=true
+            - SPRING_DEVTOOLS_LIVERELOAD_ENABLED=false
+            - SPRING_THYMELEAF_CACHE=true
+            - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
+            - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
+            - SPRING_CLOUD_CONFIG_FAILFAST=true
+            - SPRING_CLOUD_CONFIG_PROFILE=prod
+            - SPRING_CLOUD_CONFIG_LABEL=main
+            - SPRING_CLOUD_CONFIG_ENABLED=false
+            - SPRING_MESSAGES_CACHEDURATION=PT1S
+            - SPRING_SLEUTH_SAMPLER_PROBABILITY=1
+            - JHIPSTER_SLEEP=30 # gives time for other services to boot before the application
+            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET=bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
+            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKEN_VALIDITY_IN_SECONDS=86400
+            - JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKEN_VALIDITY_IN_SECONDS_FOR_REMEMBER_ME=2592000
+            - JHIPSTER_LOGGING_LOGSTASH_ENABLED=false
+            - JHIPSTER_LOGGING_AUDIT_EVENTS_RETENTION_PERIOD=120
+            - SERVER_COMPRESSION_ENABLED=true
+            - SERVER_COMPRESSION_MIMETYPES=text/html,text/xml,text/plain,text/css, application/javascript, application/json
+            - SERVER_COMPRESSION_MINRESPONSESIZE=1024
         ports:
             - 8089:8089
         networks:
@@ -87,8 +219,8 @@ services:
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes
             - MYSQL_ROOT_PASSWORD=
             - MYSQL_DATABASE=Artemis
-        ports:
-            - 3306:3306
+        expose:
+            - "3306"
         command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
         networks:
             - artemis

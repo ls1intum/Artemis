@@ -1,16 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TextFeedbackConflictsComponent } from 'app/exercises/text/assess/conflicts/text-feedback-conflicts.component';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/text-submission-assessment.component';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
@@ -21,7 +17,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { FeedbackConflict, FeedbackConflictType } from 'app/entities/feedback-conflict';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -32,26 +28,14 @@ import { ParticipationType } from 'app/entities/participation/participation.mode
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
-import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
-import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
-import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
-import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
-import { NgModel } from '@angular/forms';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TextFeedbackConflictsComponent', () => {
     let component: TextFeedbackConflictsComponent;
     let fixture: ComponentFixture<TextFeedbackConflictsComponent>;
     let textAssessmentService: TextAssessmentService;
-    let router: Router;
 
     const exercise = {
         id: 20,
@@ -161,60 +145,39 @@ describe('TextFeedbackConflictsComponent', () => {
         } as unknown as TextBlock,
     ];
 
-    beforeEach(async () => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), RouterTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [
+                TextFeedbackConflictsHeaderComponent,
                 TextFeedbackConflictsComponent,
-                TextSubmissionAssessmentComponent,
                 TextAssessmentAreaComponent,
                 TextblockAssessmentCardComponent,
-                TextblockFeedbackEditorComponent,
-                ManualTextblockSelectionComponent,
-                TextFeedbackConflictsHeaderComponent,
+                MockComponent(TextblockFeedbackEditorComponent),
+                MockComponent(ManualTextblockSelectionComponent),
                 MockComponent(ScoreDisplayComponent),
-                MockComponent(FaIconComponent),
-                MockComponent(FaLayersComponent),
-                MockTranslateValuesDirective,
-                MockComponent(AssessmentLayoutComponent),
-                MockComponent(AssessmentInstructionsComponent),
-                MockComponent(ResizeableContainerComponent),
-                MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
-                MockDirective(NgbTooltip),
-                MockComponent(ConfirmIconComponent),
-                MockDirective(NgModel),
-                MockComponent(GradingInstructionLinkIconComponent),
-                MockComponent(AssessmentCorrectionRoundBadgeComponent),
-                MockComponent(ManualTextSelectionComponent),
                 MockComponent(AlertComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ feedbackId: 1 }) } } },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                MockProvider(Router),
             ],
-        })
-            .overrideModule(ArtemisTestModule, {
-                remove: {
-                    declarations: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
-                    exports: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
-                },
-            })
-            .compileComponents();
+        }).compileComponents();
     });
 
     beforeEach(() => {
-        router = TestBed.inject(Router);
-        jest.spyOn(router, 'getCurrentNavigation').mockReturnValue({ extras: { state: { submission: textSubmission } } } as any);
+        jest.spyOn(TestBed.inject(Router), 'getCurrentNavigation').mockReturnValue({ extras: { state: { submission: textSubmission } } } as any);
         fixture = TestBed.createComponent(TextFeedbackConflictsComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should set passed parameters correctly in constructor', () => {
@@ -225,7 +188,7 @@ describe('TextFeedbackConflictsComponent', () => {
 
     it('should use jhi-text-feedback-conflicts-header', () => {
         const headerComponent = fixture.debugElement.query(By.directive(TextFeedbackConflictsHeaderComponent));
-        expect(headerComponent).toBeTruthy();
+        expect(headerComponent).not.toBe(null);
     });
 
     it('should set conflicting submission correctly', () => {
@@ -241,7 +204,7 @@ describe('TextFeedbackConflictsComponent', () => {
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
         const textAssessmentAreaComponent = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
-        expect(textAssessmentAreaComponent).toBeTruthy();
+        expect(textAssessmentAreaComponent).not.toBe(null);
     });
 
     it('should solve conflict by overriding left submission', () => {
@@ -289,7 +252,7 @@ describe('TextFeedbackConflictsComponent', () => {
             }
         });
 
-        expect(component.selectedRightFeedbackId).toBeTruthy();
+        expect(component.selectedRightFeedbackId).not.toBe(undefined);
         expect(component.selectedRightFeedbackId).toBe(conflictingSubmission.latestResult!.feedbacks![0].id);
     });
 
@@ -307,7 +270,6 @@ describe('TextFeedbackConflictsComponent', () => {
             }
         });
 
-        expect(component.selectedRightFeedbackId).toBeFalsy();
         expect(component.selectedRightFeedbackId).toBe(undefined);
     });
 
@@ -325,7 +287,6 @@ describe('TextFeedbackConflictsComponent', () => {
             }
         });
 
-        expect(component.selectedRightFeedbackId).toBeFalsy();
         expect(component.selectedRightFeedbackId).toBe(undefined);
     });
 

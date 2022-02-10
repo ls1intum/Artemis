@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -18,7 +19,7 @@ import { ButtonType } from 'app/shared/components/button.component';
                 [title]="'artemisApp.programmingExercise.submissionPolicy.updateButton.title'"
                 [tooltip]="'artemisApp.programmingExercise.submissionPolicy.updateButton.tooltip'"
                 (onClick)="onUpdate.emit()"
-                [icon]="'save'"
+                [icon]="faSave"
                 [disabled]="
                     isSaving || exercise.submissionPolicy == undefined || (exercise.submissionPolicy?.type === SubmissionPolicyType.NONE && !hadPolicyBefore) || formInvalid
                 "
@@ -53,4 +54,7 @@ export class ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsCompo
 
     @Output() onUpdate = new EventEmitter();
     @Output() onToggle = new EventEmitter();
+
+    // Icons
+    faSave = faSave;
 }

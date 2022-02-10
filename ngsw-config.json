@@ -17,5 +17,16 @@
         "files": ["/content/**", "/*.(eot|svg|cur|jpg|png|webp|gif|otf|ttf|woff|woff2|ani)"]
       }
     }
+  ],
+  "navigationUrls": [
+    "!/**/*.*",
+    "!/api/**",
+    "!/login/**",
+    "!/management/**",
+    "!/public/**",
+    "!/saml2/**",
+    "!/time",
+    "!/v2/**",
+    "!/websocket/**"
   ]
 }

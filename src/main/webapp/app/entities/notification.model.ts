@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { User } from 'app/core/user/user.model';
 
@@ -26,6 +26,8 @@ export class Notification implements BaseEntity {
 /**
  * Corresponds to the server-side NotificationTitleTypeConstants(.java) constant Strings
  */
+export const EXERCISE_SUBMISSION_ASSESSED_TITLE = 'Exercise Submission Assessed';
+
 export const ATTACHMENT_CHANGE_TITLE = 'Attachment updated';
 
 export const EXERCISE_RELEASED_TITLE = 'Exercise released';
@@ -54,6 +56,8 @@ export const NEW_REPLY_FOR_LECTURE_POST_TITLE = 'New reply for lecture post';
 
 export const NEW_REPLY_FOR_COURSE_POST_TITLE = 'New reply for course-wide post';
 
+export const FILE_SUBMISSION_SUCCESSFUL_TITLE = 'File submission successful';
+
 export const COURSE_ARCHIVE_STARTED_TITLE = 'Course archival started';
 
 export const COURSE_ARCHIVE_FINISHED_TITLE = 'Course archival finished';
@@ -65,6 +69,12 @@ export const EXAM_ARCHIVE_STARTED_TITLE = 'Exam archival started';
 export const EXAM_ARCHIVE_FINISHED_TITLE = 'Exam archival finished';
 
 export const EXAM_ARCHIVE_FAILED_TITLE = 'Exam archival failed';
+
+export const PROGRAMMING_TEST_CASES_CHANGED_TITLE = 'Test cases for programming exercise changed';
+
+export const NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE = 'New possible plagiarism case';
+
+export const PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE = 'Final state for plagiarism case';
 
 // edge case: has no separate notificationType. Is created based on EXERCISE_UPDATED for exam exercises
 export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'Live Exam Exercise Update';

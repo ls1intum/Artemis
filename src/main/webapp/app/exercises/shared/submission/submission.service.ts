@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import dayjs from 'dayjs';
-import { createRequestOption } from 'app/shared/util/request-util';
+import dayjs from 'dayjs/esm';
+import { createRequestOption } from 'app/shared/util/request.util';
 import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
@@ -10,6 +10,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -24,7 +25,7 @@ export class SubmissionService {
     public resourceUrl = SERVER_API_URL + 'api/submissions';
     public resourceUrlParticipation = SERVER_API_URL + 'api/participations';
 
-    constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService) {}
+    constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService, private accountService: AccountService) {}
 
     /**
      * Delete an existing submission
@@ -47,6 +48,7 @@ export class SubmissionService {
             tap((res) =>
                 res.body!.forEach((submission) => {
                     this.reconnectSubmissionAndResult(submission);
+                    this.setSubmissionAccessRights(submission);
                 }),
             ),
         );
@@ -77,6 +79,7 @@ export class SubmissionService {
             res.body.forEach((dto) => {
                 dto.submission = this.convertSubmissionDateFromServer(dto.submission);
                 dto.complaint = this.convertDateFromServerComplaint(dto.complaint);
+                this.setSubmissionAccessRights(dto.submission);
             });
         }
         return res;
@@ -148,20 +151,52 @@ export class SubmissionService {
             .pipe(map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res)));
     }
 
-    private convertArrayResponse(res: HttpResponse<Submission[]>): HttpResponse<Submission[]> {
-        const jsonResponse: Submission[] = res.body!;
-        const body: Submission[] = [];
+    public convertResponse(res: EntityResponseType): EntityResponseType {
+        const body: Submission = this.convertSubmissionFromServer(res.body!);
+        return res.clone({ body });
+    }
+
+    public convertArrayResponse<T>(res: HttpResponse<T[]>): HttpResponse<T[]> {
+        const jsonResponse: T[] = res.body!;
+        const body: T[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
+            body.push(this.convertSubmissionFromServer(jsonResponse[i]));
         }
         return res.clone({ body });
     }
 
     /**
-     * Convert a returned JSON object to TextSubmission.
+     * Sets the result and the access rights for the submission.
+     *
+     * @param submission
+     * @return convertedSubmission with set result and access rights
+     * @private
      */
-    private convertItemFromServer(submission: Submission): Submission {
+    public convertSubmissionFromServer<T>(submission: T): T {
+        const convertedSubmission = this.convert(submission);
+        setLatestSubmissionResult(convertedSubmission, getLatestSubmissionResult(convertedSubmission));
+        this.setSubmissionAccessRights(convertedSubmission);
+        return convertedSubmission;
+    }
+
+    /**
+     * Convert a Submission to a JSON which can be sent to the server.
+     */
+    public convert<T>(submission: T): T {
         return Object.assign({}, submission);
+    }
+
+    /**
+     * Sets the access rights for the exercise that is referenced by the participation of the submission.
+     *
+     * @param submission
+     * @return submission with set access rights
+     */
+    public setSubmissionAccessRights(submission: Submission): Submission {
+        if (submission.participation?.exercise) {
+            this.accountService.setAccessRightsForExerciseAndReferencedCourse(submission.participation.exercise);
+        }
+        return submission;
     }
 
     /**

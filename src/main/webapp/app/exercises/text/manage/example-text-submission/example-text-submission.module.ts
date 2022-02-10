@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { ClipboardModule } from 'ngx-clipboard';
 import { exampleTextSubmissionRoute } from 'app/exercises/text/manage/example-text-submission/example-text-submission.route';
 import { ExampleTextSubmissionComponent } from 'app/exercises/text/manage/example-text-submission/example-text-submission.component';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
@@ -17,7 +16,6 @@ const ENTITY_STATES = [...exampleTextSubmissionRoute];
     imports: [
         ArtemisSharedModule,
         ArtemisResultModule,
-        ClipboardModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTextSubmissionAssessmentModule,
         ArtemisAssessmentSharedModule,

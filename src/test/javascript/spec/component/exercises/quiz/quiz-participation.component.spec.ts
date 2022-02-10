@@ -23,13 +23,10 @@ import { JhiConnectionStatusComponent } from 'app/shared/connection-status/conne
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
-import * as chai from 'chai';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -41,16 +38,13 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 // Store a copy of now to avoid timing issues
 const now = dayjs();
-const question1 = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1 } as QuizQuestion;
-const question2 = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [] } as QuizQuestion;
-const question3 = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3 } as QuizQuestion;
+const question1 = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1, dragItems: [], invalid: false, exportQuiz: false, randomizeOrder: true } as QuizQuestion;
+const question2 = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [], invalid: false, exportQuiz: false, randomizeOrder: true } as QuizQuestion;
+const question3 = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3, invalid: false, exportQuiz: false, randomizeOrder: true } as QuizQuestion;
 
-const quizExercise = (<any>{
+const quizExercise = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(2, 'minutes'),
@@ -58,8 +52,8 @@ const quizExercise = (<any>{
     dueDate: dayjs(now).add(2, 'minutes'),
     adjustedDueDate: dayjs(now).add(2, 'minutes'),
     started: true,
-}) as QuizExercise;
-const quizExerciseForPractice = (<any>{
+} as QuizExercise;
+const quizExerciseForPractice = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(4, 'minutes'),
@@ -67,8 +61,8 @@ const quizExerciseForPractice = (<any>{
     dueDate: dayjs(now).subtract(2, 'minutes'),
     adjustedDueDate: dayjs(now).subtract(2, 'minutes'),
     isOpenForPractice: true,
-}) as QuizExercise;
-const quizExerciseForResults = (<any>{
+} as QuizExercise;
+const quizExerciseForResults = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(4, 'minutes'),
@@ -76,8 +70,8 @@ const quizExerciseForResults = (<any>{
     dueDate: dayjs(now).subtract(2, 'minutes'),
     adjustedDueDate: dayjs(now).subtract(2, 'minutes'),
     ended: true,
-}) as QuizExercise;
-const quizExerciseUnreleased = (<any>{
+} as QuizExercise;
+const quizExerciseUnreleased = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).add(2, 'days'),
@@ -85,7 +79,7 @@ const quizExerciseUnreleased = (<any>{
     dueDate: dayjs(now).add(4, 'days'),
     adjustedDueDate: dayjs(now).add(4, 'days'),
     ended: true,
-}) as QuizExercise;
+} as QuizExercise;
 
 const testBedDeclarations = [
     QuizParticipationComponent,
@@ -105,8 +99,8 @@ const testBedDeclarations = [
 describe('QuizParticipationComponent', () => {
     let fixture: ComponentFixture<QuizParticipationComponent>;
     let component: QuizParticipationComponent;
-    let participationStub: sinon.SinonStub;
-    let resultForSolutionServiceStub: sinon.SinonStub;
+    let participationSpy: jest.SpyInstance;
+    let resultForSolutionServiceSpy: jest.SpyInstance;
     let httpMock: HttpTestingController;
     let exerciseService: QuizExerciseService;
 
@@ -144,14 +138,16 @@ describe('QuizParticipationComponent', () => {
 
                     const participationService = fixture.debugElement.injector.get(ParticipationService);
                     const participation = { exercise: quizExercise } as StudentParticipation;
-                    participationStub = sinon.stub(participationService, 'findParticipation').returns(of({ body: participation } as HttpResponse<StudentParticipation>));
+                    participationSpy = jest
+                        .spyOn(participationService, 'findParticipationForCurrentUser')
+                        .mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
                     httpMock = fixture.debugElement.injector.get(HttpTestingController);
                 });
         });
 
-        afterEach(function () {
+        afterEach(() => {
             httpMock.verify();
-            sinon.restore();
+            jest.restoreAllMocks();
         });
 
         afterEach(fakeAsync(function () {
@@ -160,32 +156,31 @@ describe('QuizParticipationComponent', () => {
 
         it('should initialize', () => {
             fixture.detectChanges();
-            expect(component).to.be.ok;
-            expect(participationStub).to.have.been.calledWith(quizExercise.id);
+            expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
         });
 
         it('should fetch exercise and create a new submission', () => {
             fixture.detectChanges();
 
-            expect(participationStub).to.have.been.calledWith(quizExercise.id);
-            expect(component.quizExercise).to.equal(quizExercise);
-            expect(component.waitingForQuizStart).to.be.false;
-            expect(component.totalScore).to.equal(6);
-            expect(component.dragAndDropMappings.get(question1.id!)).to.deep.equal([]);
-            expect(component.selectedAnswerOptions.get(question2.id!)).to.deep.equal([]);
-            expect(component.shortAnswerSubmittedTexts.get(question3.id!)).to.deep.equal([]);
-            expect(component.submission).to.be.ok;
+            expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
+            expect(component.quizExercise).toEqual(quizExercise);
+            expect(component.waitingForQuizStart).toBe(false);
+            expect(component.totalScore).toBe(6);
+            expect(component.dragAndDropMappings.get(question1.id!)).toEqual([]);
+            expect(component.selectedAnswerOptions.get(question2.id!)).toEqual([]);
+            expect(component.shortAnswerSubmittedTexts.get(question3.id!)).toEqual([]);
+            expect(component.submission).not.toBe(null);
         });
 
         it('should update in intervals', fakeAsync(() => {
             fixture.detectChanges();
 
-            const updateSpy = sinon.spy(component, 'updateDisplayedTimes');
+            const updateSpy = jest.spyOn(component, 'updateDisplayedTimes');
             tick(5000);
             fixture.detectChanges();
             discardPeriodicTasks();
 
-            expect(updateSpy).to.have.been.called;
+            expect(updateSpy).toHaveBeenCalled();
         }));
 
         it('should refresh quiz', () => {
@@ -195,79 +190,79 @@ describe('QuizParticipationComponent', () => {
             component.quizExercise.started = false;
 
             // Returns the started exercise
-            const findStudentStub = sinon.stub(exerciseService, 'findForStudent').returns(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+            const findStudentSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
             fixture.detectChanges();
 
             const refreshButton = fixture.debugElement.nativeElement.querySelector('#refresh-quiz button');
-            expect(refreshButton).to.exist;
+            expect(refreshButton).not.toBe(null);
 
             refreshButton.click();
             fixture.detectChanges();
 
-            expect(findStudentStub).to.have.been.calledWith(quizExercise.id);
-            expect(participationStub).to.have.been.calledWith(quizExercise.id);
+            expect(findStudentSpy).toHaveBeenCalledWith(quizExercise.id);
+            expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
         });
 
         it('should submit quiz', () => {
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).to.exist;
+            expect(submitButton).not.toBe(null);
 
             submitButton.click();
             fixture.detectChanges();
 
             const request = httpMock.expectOne({ method: 'POST' });
             request.flush({ submissionDate: now } as QuizSubmission);
-            expect(request.request.url).to.equal(`api/exercises/${quizExercise.id}/submissions/live`);
+            expect(request.request.url).toBe(`api/exercises/${quizExercise.id}/submissions/live`);
             fixture.detectChanges();
 
-            expect(participationStub).to.have.been.calledWith(quizExercise.id);
-            expect(component.isSubmitting).to.be.false;
+            expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
+            expect(component.isSubmitting).toBe(false);
         });
 
         it('should return true if student didnt interact with any question', () => {
             component.quizExercise = { ...quizExercise, quizQuestions: undefined };
-            expect(component.areAllQuestionsAnswered()).to.be.true;
+            expect(component.areAllQuestionsAnswered()).toBe(true);
 
             component.quizExercise = quizExercise;
             component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
             component.selectedAnswerOptions.set(2, []);
-            expect(component.areAllQuestionsAnswered()).to.be.false;
+            expect(component.areAllQuestionsAnswered()).toBe(false);
 
             component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
             component.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
             component.dragAndDropMappings.set(1, []);
-            expect(component.areAllQuestionsAnswered()).to.be.false;
+            expect(component.areAllQuestionsAnswered()).toBe(false);
 
             component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
             component.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
             component.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
             component.shortAnswerSubmittedTexts.set(3, []);
-            expect(component.areAllQuestionsAnswered()).to.be.false;
+            expect(component.areAllQuestionsAnswered()).toBe(false);
         });
 
         it('should show warning on submit', () => {
-            const confirmStub = sinon.stub(window, 'confirm').returns(true);
+            const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
             fixture.detectChanges();
 
             // Set a value > 15 to simulate an early hand in without answered questions
             component.remainingTimeSeconds = 200;
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).to.exist;
+            expect(submitButton).not.toBe(null);
 
             submitButton.click();
             fixture.detectChanges();
 
             const request = httpMock.expectOne({ method: 'POST' });
             request.flush({ submissionDate: now } as QuizSubmission);
-            expect(request.request.url).to.equal(`api/exercises/${quizExercise.id}/submissions/live`);
+            expect(request.request.url).toBe(`api/exercises/${quizExercise.id}/submissions/live`);
             fixture.detectChanges();
 
-            expect(confirmStub).to.have.been.called;
-            expect(participationStub).to.have.been.calledWith(quizExercise.id);
-            expect(component.isSubmitting).to.be.false;
+            expect(confirmSpy).toHaveBeenCalled();
+            expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
+            expect(component.isSubmitting).toBe(false);
         });
 
         it('should show results after ending', () => {
@@ -279,43 +274,43 @@ describe('QuizParticipationComponent', () => {
             const participation = { exercise: quizExerciseForResults, results: [result] } as StudentParticipation;
             component.showQuizResultAfterQuizEnd(participation);
 
-            expect(participationStub).to.have.been.calledWith(quizExercise.id);
-            expect(component.questionScores[question2.id!]).to.equal(answer.scoreInPoints);
-            expect(component.userScore).to.equal(quizSubmission.scoreInPoints);
-            expect(component.showingResult).to.be.true;
+            expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
+            expect(component.questionScores[question2.id!]).toBe(answer.scoreInPoints);
+            expect(component.userScore).toBe(quizSubmission.scoreInPoints);
+            expect(component.showingResult).toBe(true);
         });
 
         it('should update on selection changes', () => {
             const webSocketService = fixture.debugElement.injector.get(JhiWebsocketService);
-            const webSocketStub = sinon.stub(webSocketService, 'send');
-            const applySpy = sinon.spy(component, 'applySelection');
+            const webSocketSpy = jest.spyOn(webSocketService, 'send').mockImplementation();
+            const applySpy = jest.spyOn(component, 'applySelection');
             fixture.detectChanges();
 
             component.onSelectionChanged();
 
-            expect(applySpy).to.have.been.called;
-            expect(webSocketStub).to.have.been.called;
+            expect(applySpy).toHaveBeenCalled();
+            expect(webSocketSpy).toHaveBeenCalled();
         });
 
         it('should react to errors', () => {
             const alertService = fixture.debugElement.injector.get(AlertService);
-            const alertStub = sinon.stub(alertService, 'error').returns({ msg: '' } as any);
+            const alertSpy = jest.spyOn(alertService, 'error').mockReturnValue({ msg: '' } as any);
             fixture.detectChanges();
 
             component.onSubmitError({ message: 'error' } as any);
-            expect(component.isSubmitting).to.be.false;
+            expect(component.isSubmitting).toBe(false);
 
             component.onSaveError('error');
-            expect(component.isSubmitting).to.be.false;
-            expect(component.unsavedChanges).to.be.true;
+            expect(component.isSubmitting).toBe(false);
+            expect(component.unsavedChanges).toBe(true);
 
-            expect(alertStub).to.have.been.called;
+            expect(alertSpy).toHaveBeenCalled();
         });
 
         it('should express timespan in humanized text', () => {
-            expect(component.relativeTimeText(100020)).to.equal('1667 min');
-            expect(component.relativeTimeText(60)).to.equal('1 min 0 s');
-            expect(component.relativeTimeText(5)).to.equal('5 s');
+            expect(component.relativeTimeText(100020)).toBe('1667 min');
+            expect(component.relativeTimeText(60)).toBe('1 min 0 s');
+            expect(component.relativeTimeText(5)).toBe('5 s');
         });
 
         it('should adjust release date of the quiz if it didnt start', () => {
@@ -324,8 +319,8 @@ describe('QuizParticipationComponent', () => {
             const quizToApply = { ...quizExercise, started: false, isPlannedToStart: true, releaseDate, timeUntilPlannedStart };
 
             component.applyQuizFull(quizToApply);
-            expect(component.quizExercise).to.equal(quizToApply);
-            expect(component.quizExercise.releaseDate!.toString()).to.equal(releaseDate.toString());
+            expect(component.quizExercise).toEqual(quizToApply);
+            expect(component.quizExercise.releaseDate!.toString()).toBe(releaseDate.toString());
         });
 
         it('should apply participation', () => {
@@ -338,8 +333,8 @@ describe('QuizParticipationComponent', () => {
             component.timeDifference = 10;
             component.updateParticipationFromServer(participation);
 
-            expect(component.submission.id).to.equal(submission.id);
-            expect(component.quizExercise.ended).to.be.true;
+            expect(component.submission.id).toBe(submission.id);
+            expect(component.quizExercise.ended).toBe(true);
         });
     });
 
@@ -380,48 +375,45 @@ describe('QuizParticipationComponent', () => {
                 });
         });
 
-        afterEach(function () {
+        afterEach(() => {
             httpMock.verify();
-            sinon.restore();
+            jest.restoreAllMocks();
         });
 
         it('should initialize', () => {
-            const serviceStub = sinon.stub(exerciseService, 'find');
+            const serviceStub = jest.spyOn(exerciseService, 'find').mockImplementation();
             fixture.detectChanges();
-
-            expect(component).to.be.ok;
-            expect(serviceStub).to.have.been.calledWith(quizExercise.id);
+            expect(serviceStub).toHaveBeenCalledWith(quizExercise.id);
         });
 
         it('should initialize and start', () => {
             const quizService = fixture.debugElement.injector.get(ArtemisQuizService);
-            const serviceStub = sinon.stub(exerciseService, 'find').returns(of({ body: quizExercise } as HttpResponse<QuizExercise>));
-            const startSpy = sinon.spy(component, 'startQuizPreviewOrPractice');
-            const randomizeStub = sinon.stub(quizService, 'randomizeOrder');
+            const serviceSpy = jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+            const startSpy = jest.spyOn(component, 'startQuizPreviewOrPractice');
+            const randomizeSpy = jest.spyOn(quizService, 'randomizeOrder');
             fixture.detectChanges();
 
-            expect(component).to.be.ok;
-            expect(serviceStub).to.have.been.calledWith(quizExercise.id);
-            expect(startSpy).to.have.been.called;
-            expect(randomizeStub).to.have.been.called;
+            expect(serviceSpy).toHaveBeenCalledWith(quizExercise.id);
+            expect(startSpy).toHaveBeenCalled();
+            expect(randomizeSpy).toHaveBeenCalled();
         });
 
         it('should submit quiz', () => {
-            const serviceStub = sinon.stub(exerciseService, 'find').returns(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+            const serviceSpy = jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).to.exist;
+            expect(submitButton).not.toBe(null);
 
             submitButton.click();
             fixture.detectChanges();
 
             const request = httpMock.expectOne({ method: 'POST' });
             request.flush({ submission: { submissionDate: now, submitted: true } as QuizSubmission } as Result);
-            expect(request.request.url).to.equal(`api/exercises/${quizExercise.id}/submissions/preview`);
+            expect(request.request.url).toBe(`api/exercises/${quizExercise.id}/submissions/preview`);
             fixture.detectChanges();
 
-            expect(serviceStub).to.have.been.calledWith(quizExercise.id);
+            expect(serviceSpy).toHaveBeenCalledWith(quizExercise.id);
         });
     });
 
@@ -462,38 +454,36 @@ describe('QuizParticipationComponent', () => {
                 });
         });
 
-        afterEach(function () {
+        afterEach(() => {
             httpMock.verify();
-            sinon.restore();
+            jest.restoreAllMocks();
         });
 
         it('should initialize', () => {
-            const serviceStub = sinon.stub(exerciseService, 'findForStudent');
+            const serviceSpy = jest.spyOn(exerciseService, 'findForStudent').mockImplementation();
             fixture.detectChanges();
 
-            expect(component).to.be.ok;
-            expect(serviceStub).to.have.been.calledWith(quizExerciseForPractice.id);
+            expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
         });
 
         it('should initialize and start', () => {
             const quizService = fixture.debugElement.injector.get(ArtemisQuizService);
-            const serviceStub = sinon.stub(exerciseService, 'findForStudent').returns(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
-            const startSpy = sinon.spy(component, 'startQuizPreviewOrPractice');
-            const randomizeStub = sinon.stub(quizService, 'randomizeOrder');
+            const serviceSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+            const startSpy = jest.spyOn(component, 'startQuizPreviewOrPractice');
+            const randomizeSpy = jest.spyOn(quizService, 'randomizeOrder');
             fixture.detectChanges();
 
-            expect(component).to.be.ok;
-            expect(serviceStub).to.have.been.calledWith(quizExerciseForPractice.id);
-            expect(startSpy).to.have.been.called;
-            expect(randomizeStub).to.have.been.called;
+            expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
+            expect(startSpy).toHaveBeenCalled();
+            expect(randomizeSpy).toHaveBeenCalled();
         });
 
         it('should submit quiz', () => {
-            const serviceStub = sinon.stub(exerciseService, 'findForStudent').returns(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+            const serviceSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).to.exist;
+            expect(submitButton).not.toBe(null);
 
             submitButton.click();
             fixture.detectChanges();
@@ -501,10 +491,10 @@ describe('QuizParticipationComponent', () => {
             const request = httpMock.expectOne({ method: 'POST' });
             const quizSubmission = { submissionDate: now, submitted: true } as QuizSubmission;
             request.flush({ submission: quizSubmission, participation: { exercise: quizExerciseForPractice } as StudentParticipation } as Result);
-            expect(request.request.url).to.equal(`api/exercises/${quizExerciseForPractice.id}/submissions/practice`);
+            expect(request.request.url).toBe(`api/exercises/${quizExerciseForPractice.id}/submissions/practice`);
             fixture.detectChanges();
 
-            expect(serviceStub).to.have.been.calledWith(quizExerciseForPractice.id);
+            expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
         });
     });
 
@@ -541,25 +531,24 @@ describe('QuizParticipationComponent', () => {
                     component = fixture.componentInstance;
 
                     exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
-                    resultForSolutionServiceStub = sinon.stub(exerciseService, 'find').returns(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+                    resultForSolutionServiceSpy = jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
                 });
         });
 
-        afterEach(function () {
-            sinon.restore();
+        afterEach(() => {
+            jest.restoreAllMocks();
         });
 
         it('should initialize', () => {
             fixture.detectChanges();
-            expect(component).to.be.ok;
         });
 
         it('should initialize and show solution', () => {
             fixture.detectChanges();
 
-            expect(resultForSolutionServiceStub).to.have.been.calledWith(quizExerciseForPractice.id);
-            expect(component.showingResult).to.be.true;
-            expect(component.totalScore).to.equal(6);
+            expect(resultForSolutionServiceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
+            expect(component.showingResult).toBe(true);
+            expect(component.totalScore).toBe(6);
         });
 
         it('should update time', () => {
@@ -572,9 +561,9 @@ describe('QuizParticipationComponent', () => {
             component.updateDisplayedTimes();
             fixture.detectChanges();
 
-            expect(component.remainingTimeSeconds).to.equal(0);
-            expect(component.remainingTimeText).to.equal('?');
-            expect(component.timeUntilStart).to.equal('');
+            expect(component.remainingTimeSeconds).toBe(0);
+            expect(component.remainingTimeText).toBe('?');
+            expect(component.timeUntilStart).toBe('');
 
             // Now test the remaining non-error branches
             component.quizExercise = quizExerciseUnreleased;
@@ -586,8 +575,8 @@ describe('QuizParticipationComponent', () => {
             component.updateDisplayedTimes();
             fixture.detectChanges();
 
-            expect(component.remainingTimeText).to.equal('showStatistic.quizhasEnded');
-            expect(component.timeUntilStart).to.equal('showStatistic.now');
+            expect(component.remainingTimeText).toBe('showStatistic.quizHasEnded');
+            expect(component.timeUntilStart).toBe('showStatistic.now');
         });
     });
 });

@@ -5,7 +5,7 @@
 <ng-template #longText>
     <div *ngIf="isCollapsed; else opened">
         <div class="d-inline fa-angle" (click)="isCollapsed = !isCollapsed">
-            <fa-icon [icon]="'angle-right'"></fa-icon>
+            <fa-icon [icon]="faAngleRight"></fa-icon>
             <strong> ({{ 'artemisApp.result.seeMore' | artemisTranslate }}) </strong>
         </div>
         <!-- Only show first line as preview -->
@@ -13,7 +13,7 @@
     </div>
     <ng-template #opened>
         <div class="feedback-text">
-            <fa-icon class="fa-angle" [icon]="'angle-down'" (click)="isCollapsed = !isCollapsed"></fa-icon>
+            <fa-icon class="fa-angle" [icon]="faAngleDown" (click)="isCollapsed = !isCollapsed"></fa-icon>
             <p>{{ text }}</p>
         </div>
     </ng-template>

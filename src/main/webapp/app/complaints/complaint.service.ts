@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
@@ -26,12 +26,12 @@ export class ComplaintService implements IComplaintService {
     constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService) {}
 
     /**
-     * Checks if a complaint is locked for the currently logged in user
+     * Checks if a complaint is locked for the currently logged-in user
      *
      * A complaint is locked if the associated complaint response is locked
      *
      * @param complaint complaint to check the lock status for
-     * @param exercise exercise used to find out if currently logged in user is instructor
+     * @param exercise exercise used to find out if currently logged-in user is instructor
      */
     isComplaintLockedForLoggedInUser(complaint: Complaint, exercise: Exercise) {
         if (complaint.complaintResponse && complaint.accepted === undefined) {
@@ -42,7 +42,7 @@ export class ComplaintService implements IComplaintService {
     }
 
     /**
-     * Checks if the lock on a complaint is active and if the currently logged in user is the creator of the lock
+     * Checks if the lock on a complaint is active and if the currently logged-in user is the creator of the lock
      * @param complaint complaint to check the lock status for
      */
     isComplaintLockedByLoggedInUser(complaint: Complaint) {
@@ -68,10 +68,10 @@ export class ComplaintService implements IComplaintService {
     /**
      * Create a new complaint.
      * @param complaint
-     * @param examId the Id of the exam
+     * @param examId the id of the exam
      */
     create(complaint: Complaint, examId?: number): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(complaint);
+        const copy = ComplaintService.convertDateFromClient(complaint);
         if (examId) {
             return this.http
                 .post<Complaint>(`${this.resourceUrl}/exam/${examId}`, copy, { observe: 'response' })
@@ -175,7 +175,7 @@ export class ComplaintService implements IComplaintService {
         return this.http.get<Complaint[]>(url, { observe: 'response' }).pipe(map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res)));
     }
 
-    private convertDateFromClient(complaint: Complaint): Complaint {
+    private static convertDateFromClient(complaint: Complaint): Complaint {
         return Object.assign({}, complaint, {
             submittedTime: complaint.submittedTime && dayjs(complaint.submittedTime).isValid ? complaint.submittedTime.toJSON() : undefined,
         });

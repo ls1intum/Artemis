@@ -5,16 +5,16 @@ import { BASE_API, POST } from '../../../constants';
  */
 export class TextExerciseExampleSubmissionCreationPage {
     getInstructionsRootElement() {
-        return cy.get('[jhitranslate="artemisApp.textAssessment.instructions"]').parents('.card');
+        return cy.get('#instructions');
     }
 
     typeExampleSubmission(example: string) {
-        cy.get('textarea').type(example, { parseSpecialCharSequences: false });
+        cy.get('#example-text-submission-input').type(example, { parseSpecialCharSequences: false });
     }
 
     clickCreateNewExampleSubmission() {
         cy.intercept(POST, BASE_API + 'exercises/*/example-submissions').as('createExampleSubmission');
-        cy.get('[data-icon="save"]').click();
+        cy.get('#create-example-submission').click();
         return cy.wait('@createExampleSubmission');
     }
 

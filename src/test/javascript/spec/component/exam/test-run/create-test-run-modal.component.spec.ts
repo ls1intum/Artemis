@@ -2,22 +2,16 @@ import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { By } from '@angular/platform-browser';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('Create Test Run Modal Component', () => {
     let comp: CreateTestRunModalComponent;
@@ -46,7 +40,7 @@ describe('Create Test Run Modal Component', () => {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     describe('OnInit', () => {
@@ -55,42 +49,42 @@ describe('Create Test Run Modal Component', () => {
             // WHEN
             comp.ngOnInit();
             // THEN
-            expect(!!comp.workingTimeForm).to.be.ok;
+            expect(!!comp.workingTimeForm).not.toBeNull();
         }));
     });
 
     describe('creating test run workflow', () => {
         it('should create a new test run and close the modal', () => {
             const activeModal = TestBed.inject(NgbActiveModal);
-            const closeStub = sinon.stub(activeModal, 'close');
+            const closeStub = jest.spyOn(activeModal, 'close');
             comp.exam = exam;
             fixture.detectChanges();
             comp.workingTimeForm.controls['minutes'].setValue(30);
             comp.workingTimeForm.controls['seconds'].setValue(0);
             const exerciseRow = fixture.debugElement.query(By.css('#exercise-1')).nativeElement;
-            expect(exerciseRow).to.be.ok;
+            expect(exerciseRow).not.toBeNull();
             exerciseRow.click();
             fixture.detectChanges();
-            expect(comp.testRunConfiguration[1]).to.deep.equal(exercise);
-            expect(comp.exam.exerciseGroups!.length).to.equal(1);
-            expect(comp.testRunConfigured).to.equal(true);
+            expect(comp.testRunConfiguration[1]).toEqual(exercise);
+            expect(comp.exam.exerciseGroups!.length).toEqual(1);
+            expect(comp.testRunConfigured).toEqual(true);
             const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton')).nativeElement;
             createTestRunButton.click();
-            expect(closeStub).to.have.been.called;
-            const testRun = closeStub.getCall(0).args[0] as StudentExam;
-            expect(testRun).to.be.ok;
-            expect(testRun.exam).to.equal(exam);
-            expect(testRun.exercises).to.contain(exercise);
-            expect(testRun.workingTime).to.equal(1800);
+            expect(closeStub).toHaveBeenCalled();
+            const testRun = closeStub.mock.calls[0][0] as StudentExam;
+            expect(testRun).not.toBeNull();
+            expect(testRun.exam).toEqual(exam);
+            expect(testRun.exercises).toContain(exercise);
+            expect(testRun.workingTime).toEqual(1800);
         });
     });
 
     describe('Ignore Exercise groups', () => {
-        it('should ignore exercise groups with no exercises', function () {
+        it('should ignore exercise groups with no exercises', () => {
             comp.exam = exam;
             comp.exam.exerciseGroups = [exerciseGroup1, exerciseGroup2];
             fixture.detectChanges();
-            expect(comp.exam.exerciseGroups!.length).to.equal(1);
+            expect(comp.exam.exerciseGroups!.length).toEqual(1);
         });
     });
 
@@ -101,7 +95,7 @@ describe('Create Test Run Modal Component', () => {
             // @ts-ignore
             comp.onSelectExercise(exercise, exam.exerciseGroups[0]!);
             // THEN
-            expect(Object.values(comp.testRunConfiguration).length).to.be.above(0);
+            expect(Object.values(comp.testRunConfiguration).length).toBeGreaterThan(0);
         }));
         it('should allow submit when an exercise has been selected for every exercise group', fakeAsync(() => {
             comp.exam = exam;
@@ -109,7 +103,7 @@ describe('Create Test Run Modal Component', () => {
             // @ts-ignore
             comp.onSelectExercise(exercise, exam.exerciseGroups[0]!);
             // THEN
-            expect(comp.testRunConfigured).to.be.ok;
+            expect(comp.testRunConfigured).not.toBeNull();
         }));
     });
 });

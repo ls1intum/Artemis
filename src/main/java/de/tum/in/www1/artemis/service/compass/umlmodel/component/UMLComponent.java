@@ -20,13 +20,12 @@ public class UMLComponent extends UMLContainerElement {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLComponent)) {
+        if (!(reference instanceof UMLComponent referenceComponent)) {
             return 0;
         }
 
         double similarity = 0;
 
-        UMLComponent referenceComponent = (UMLComponent) reference;
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceComponent.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
 
         if (SimilarityUtils.parentsSimilarOrEqual(getParentElement(), referenceComponent.getParentElement())) {

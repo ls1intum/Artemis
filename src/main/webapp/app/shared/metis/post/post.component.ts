@@ -4,6 +4,7 @@ import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, CourseWideContext, PageType } from '../metis.util';
+import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-post',
@@ -20,6 +21,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     contextInformation: ContextInformation;
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
+
+    // Icons
+    faBullhorn = faBullhorn;
+    faCheckSquare = faCheckSquare;
 
     constructor(public metisService: MetisService) {
         super();

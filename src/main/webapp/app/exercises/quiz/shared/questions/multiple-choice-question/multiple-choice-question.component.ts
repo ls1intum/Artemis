@@ -5,6 +5,8 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
 import { Result } from 'app/entities/result.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { faExclamationCircle, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckSquare, faSquare } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-multiple-choice-question',
@@ -48,22 +50,28 @@ export class MultipleChoiceQuestionComponent {
 
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
 
+    // Icons
+    faQuestionCircle = faQuestionCircle;
+    faExclamationTriangle = faExclamationTriangle;
+    faExclamationCircle = faExclamationCircle;
+    farSquare = faSquare;
+    farCheckSquare = faCheckSquare;
+
     constructor(private artemisMarkdown: ArtemisMarkdownService) {}
 
     /**
      * Update html for text, hint and explanation for the question and every answer option
      */
     watchCollection(): void {
-        const artemisMarkdown = this.artemisMarkdown;
         this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
-        this.renderedQuestion.text = artemisMarkdown.safeHtmlForMarkdown(this.question.text);
-        this.renderedQuestion.hint = artemisMarkdown.safeHtmlForMarkdown(this.question.hint);
-        this.renderedQuestion.explanation = artemisMarkdown.safeHtmlForMarkdown(this.question.explanation);
+        this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.question.text);
+        this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.question.hint);
+        this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.question.explanation);
         this.renderedQuestion.renderedSubElements = this.question.answerOptions!.map((answerOption) => {
             const renderedAnswerOption = new RenderedQuizQuestionMarkDownElement();
-            renderedAnswerOption.text = artemisMarkdown.safeHtmlForMarkdown(answerOption.text);
-            renderedAnswerOption.hint = artemisMarkdown.safeHtmlForMarkdown(answerOption.hint);
-            renderedAnswerOption.explanation = artemisMarkdown.safeHtmlForMarkdown(answerOption.explanation);
+            renderedAnswerOption.text = this.artemisMarkdown.safeHtmlForMarkdown(answerOption.text);
+            renderedAnswerOption.hint = this.artemisMarkdown.safeHtmlForMarkdown(answerOption.hint);
+            renderedAnswerOption.explanation = this.artemisMarkdown.safeHtmlForMarkdown(answerOption.explanation);
             return renderedAnswerOption;
         });
     }

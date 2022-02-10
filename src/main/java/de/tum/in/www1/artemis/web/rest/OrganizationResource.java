@@ -64,7 +64,7 @@ public class OrganizationResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> addCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
         log.debug("REST request to add course to organization : {}", organizationId);
-        Organization organization = organizationRepository.findOneOrElseThrow(organizationId);
+        Organization organization = organizationRepository.findByIdElseThrow(organizationId);
         courseRepository.addOrganizationToCourse(courseId, organization);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, courseId.toString())).build();
@@ -81,7 +81,7 @@ public class OrganizationResource {
     @DeleteMapping("organizations/{organizationId}/courses/{courseId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> removeCourseFromOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
-        Organization organization = organizationRepository.findOneOrElseThrow(organizationId);
+        Organization organization = organizationRepository.findByIdElseThrow(organizationId);
         courseRepository.removeOrganizationFromCourse(courseId, organization);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, courseId.toString())).build();
@@ -99,7 +99,7 @@ public class OrganizationResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> addUserToOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
         User user = userRepository.getUserByLoginElseThrow(userLogin);
-        Organization organization = organizationRepository.findOneOrElseThrow(organizationId);
+        Organization organization = organizationRepository.findByIdElseThrow(organizationId);
         userRepository.addOrganizationToUser(user.getId(), organization);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, user.getLogin())).build();
@@ -121,7 +121,7 @@ public class OrganizationResource {
     public ResponseEntity<Void> removeUserFromOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
         log.debug("REST request to remove course to organization : {}", organizationId);
         User user = userRepository.getUserByLoginElseThrow(userLogin);
-        Organization organization = organizationRepository.findOneOrElseThrow(organizationId);
+        Organization organization = organizationRepository.findByIdElseThrow(organizationId);
         userRepository.removeOrganizationFromUser(user.getId(), organization);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, user.getLogin())).build();
@@ -159,7 +159,7 @@ public class OrganizationResource {
         if (!organization.getId().equals(organizationId)) {
             return badRequest("organizationId", "400", "organizationId in path doesn't match the one in the RequestBody!");
         }
-        organizationRepository.findOneOrElseThrow(organization.getId());
+        organizationRepository.findByIdElseThrow(organization.getId());
         Organization updated = organizationService.update(organization);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updated.getName())).body(updated);
     }
@@ -175,7 +175,6 @@ public class OrganizationResource {
     public ResponseEntity<Void> deleteOrganization(@PathVariable Long organizationId) {
         log.debug("REST request to delete organization : {}", organizationId);
         organizationService.deleteOrganization(organizationId);
-
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, organizationId.toString())).build();
     }
 
@@ -241,7 +240,7 @@ public class OrganizationResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Organization> getOrganizationById(@PathVariable long organizationId) {
         log.debug("REST request to get organization : {}", organizationId);
-        Organization organization = organizationRepository.findOneOrElseThrow(organizationId);
+        Organization organization = organizationRepository.findByIdElseThrow(organizationId);
         return new ResponseEntity<>(organization, HttpStatus.OK);
     }
 
@@ -256,7 +255,7 @@ public class OrganizationResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Organization> getOrganizationByIdWithUsersAndCourses(@PathVariable long organizationId) {
         log.debug("REST request to get organization with users and courses : {}", organizationId);
-        Organization organization = organizationRepository.findOneWithEagerUsersAndCoursesOrElseThrow(organizationId);
+        Organization organization = organizationRepository.findByIdWithEagerUsersAndCoursesElseThrow(organizationId);
         return new ResponseEntity<>(organization, HttpStatus.OK);
     }
 

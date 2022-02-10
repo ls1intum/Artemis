@@ -44,7 +44,7 @@ describe('ShortAnswerQuestionComponent', () => {
         component.shortAnswerQuestion = question;
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

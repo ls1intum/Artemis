@@ -71,7 +71,7 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the modeling submission with the given id
      */
-    default ModelingSubmission findOne(Long submissionId) {
+    default ModelingSubmission findByIdElseThrow(Long submissionId) {
         return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Modeling Submission", submissionId));
     }
 
@@ -82,7 +82,7 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the modeling submission with the given id
      */
-    default ModelingSubmission findOneWithEagerResultAndFeedback(Long submissionId) {
+    default ModelingSubmission findByIdWithEagerResultAndFeedbackElseThrow(Long submissionId) {
         return findByIdWithEagerResultAndAssessorAndFeedback(submissionId).orElseThrow(() -> new EntityNotFoundException("Modeling Submission", submissionId));
     }
 
@@ -93,7 +93,7 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the modeling submission with the given id
      */
-    default ModelingSubmission findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
+    default ModelingSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(Long submissionId) {
         return findWithResultsFeedbacksAssessorAndParticipationResultsById(submissionId).orElseThrow(() -> new EntityNotFoundException("Modeling Submission", submissionId));
     }
 }

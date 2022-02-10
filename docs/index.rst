@@ -35,6 +35,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    dev/setup
    dev/guidelines
    dev/system-design
+   dev/migration
    dev/use-local-user-management
    dev/saml2-shibboleth
    Guided Tour <dev/guided-tour>

@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Two status indicators for the test case table:
@@ -13,7 +14,7 @@ import { Subscription } from 'rxjs';
     template: `
         <ng-container *ngIf="hasUpdatedGradingConfig">
             <fa-icon
-                icon="exclamation-triangle"
+                [icon]="faExclamationTriangle"
                 class="text-warning"
                 size="2x"
                 ngbTooltip="{{ 'artemisApp.programmingExercise.configureGrading.updatedGradingConfigTooltip' | artemisTranslate }}"
@@ -28,6 +29,9 @@ export class ProgrammingExerciseGradingDirtyWarningComponent implements OnChange
 
     hasUpdatedGradingConfig?: boolean;
     testCaseStateSubscription: Subscription;
+
+    // Icons
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService) {}
 

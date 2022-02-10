@@ -5,7 +5,7 @@ import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, resetDates } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -17,11 +17,12 @@ import { cloneDeep } from 'lodash-es';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/shared/util/global.utils';
-import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise-utils';
+import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
 import { UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from '../shared/modeling-editor.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -52,6 +53,10 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     isImport: boolean;
     isExamMode: boolean;
     semiAutomaticAssessmentAvailable = true;
+
+    // Icons
+    faSave = faSave;
+    faBan = faBan;
 
     constructor(
         private alertService: AlertService,
@@ -144,10 +149,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                             // We reference normal exercises by their course, having both would lead to conflicts on the server
                             this.modelingExercise.exerciseGroup = undefined;
                         }
-                        // Reset the due dates
-                        this.modelingExercise.dueDate = undefined;
-                        this.modelingExercise.releaseDate = undefined;
-                        this.modelingExercise.assessmentDueDate = undefined;
+                        resetDates(this.modelingExercise);
                     }
                 }),
             )

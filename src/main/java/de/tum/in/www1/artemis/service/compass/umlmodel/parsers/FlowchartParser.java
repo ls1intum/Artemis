@@ -10,10 +10,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activity.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.usecase.*;
 
 public class FlowchartParser {
 

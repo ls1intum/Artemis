@@ -11,9 +11,9 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 describe('FileUploadExercise Management Component', () => {
     let comp: FileUploadExerciseComponent;

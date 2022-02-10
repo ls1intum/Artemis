@@ -9,6 +9,7 @@
             <property name="accessModifiers" value="public" />
             <property name="tokens" value="METHOD_DEF,ANNOTATION_FIELD_DEF"/>
             <property name="severity" value="error"/>
+            <property name="allowedAnnotations" value="Override,Test,ParameterizedTest,BeforeEach,AfterEach,BeforeAll,AfterAll"/>
         </module>
         <module name="MissingJavadocMethod">
             <property name="scope" value="public" />
@@ -16,6 +17,7 @@
             <property name="minLineCount" value="4" />
             <property name="tokens" value="METHOD_DEF,ANNOTATION_FIELD_DEF"/>
             <property name="severity" value="error"/>
+            <property name="allowedAnnotations" value="Override,Test,ParameterizedTest,BeforeEach,AfterEach,BeforeAll,AfterAll"/>
         </module>
     </module>
 </module>

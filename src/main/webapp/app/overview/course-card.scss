@@ -72,6 +72,11 @@
             .chart-text {
                 position: absolute;
             }
+
+            .chart-level {
+                z-index: 2;
+                cursor: pointer;
+            }
         }
 
         .points {

@@ -3,22 +3,24 @@
         <h4 class="mb-0">{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</h4>
     </div>
     <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']" class="d-flex justify-content-end" style="flex: 1">
-        <a *ngIf="course?.isAtLeastEditor" class="btn btn-primary jh-create-entity create-course" [routerLink]="['new']">
-            <fa-icon [icon]="'plus'"></fa-icon>
+        <a *ngIf="course?.isAtLeastEditor" class="btn btn-primary jh-create-entity create-course" id="create-new-group" [routerLink]="['new']">
+            <fa-icon [icon]="faPlus"></fa-icon>
             <span class="hidden-sm-down" jhiTranslate="artemisApp.examManagement.exerciseGroup.create"> Create new Exercise Group </span>
         </a>
     </div>
 </div>
 <jhi-alert></jhi-alert>
-<div class="mt-3 text-end" style="font-size: 0.85rem">Number of exercise groups: {{ exerciseGroups ? exerciseGroups.length : 0 }}</div>
+<div class="mt-3 text-end" id="number-groups" style="font-size: 0.85rem">
+    {{ 'artemisApp.examManagement.numberOfExerciseGroups' | artemisTranslate }} {{ exerciseGroups ? exerciseGroups.length : 0 }}
+</div>
 <div *ngFor="let exerciseGroup of exerciseGroups; let i = index" class="mt-3" style="border: 1px solid #cccccc">
     <div class="d-flex p-3" style="background-color: #e1e1e1">
         <div class="me-3 d-flex justify-content-center" style="align-items: center">
             <a (click)="moveUp(i)" [class.disabled]="i == 0" class="border-0 p-0 me-1 bg-transparent">
-                <fa-icon [icon]="'angle-up'" style="font-size: 1.3rem"></fa-icon>
+                <fa-icon [icon]="faAngleUp" style="font-size: 1.3rem"></fa-icon>
             </a>
             <a (click)="moveDown(i)" [class.disabled]="i >= exerciseGroups!.length - 1" class="border-0 p-0 bg-transparent">
-                <fa-icon [icon]="'angle-down'" style="font-size: 1.3rem"></fa-icon>
+                <fa-icon [icon]="faAngleDown" style="font-size: 1.3rem"></fa-icon>
             </a>
         </div>
         <div class="d-flex flex-column justify-content-center">
@@ -38,8 +40,8 @@
                 <div class="btn-group flex-btn-group-container">
                     <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']" style="justify-content: end">
                         <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1" style="max-height: 44%">
-                            <fa-icon [icon]="'plus'"></fa-icon>
-                            <fa-icon class="d-xl-none" [icon]="'check-double'"></fa-icon>
+                            <fa-icon [icon]="faPlus"></fa-icon>
+                            <fa-icon class="d-xl-none" [icon]="faCheckDouble"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addQuizExercise' | artemisTranslate }}</span>
                         </a>
                     </div>
@@ -50,51 +52,51 @@
                             class="btn btn-info btn-sm me-1 mb-1"
                             style="max-height: 44%"
                         >
-                            <fa-icon [icon]="'plus'"></fa-icon>
-                            <fa-icon class="d-xl-none" [icon]="'file-upload'"></fa-icon>
+                            <fa-icon [icon]="faPlus"></fa-icon>
+                            <fa-icon class="d-xl-none" [icon]="faFileUpload"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addFileUploadExercise' | artemisTranslate }}</span>
                         </a>
                     </div>
                     <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']">
                         <a *ngIf="course?.isAtLeastEditor" (click)="openImportModal(exerciseGroup, exerciseType.TEXT)" class="btn btn-info btn-sm me-1 mb-1">
-                            <fa-icon [icon]="'plus'"></fa-icon>
-                            <fa-icon class="d-xl-none" [icon]="'font'"></fa-icon>
+                            <fa-icon [icon]="faPlus"></fa-icon>
+                            <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.textExercise.home.importLabel' | artemisTranslate }}</span>
                         </a>
-                        <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1">
-                            <fa-icon [icon]="'plus'"></fa-icon>
-                            <fa-icon class="d-xl-none" [icon]="'font'"></fa-icon>
+                        <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1" id="add-text-exercise">
+                            <fa-icon [icon]="faPlus"></fa-icon>
+                            <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addTextExercise' | artemisTranslate }}</span>
                         </a>
                     </div>
                     <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']">
                         <a *ngIf="course?.isAtLeastEditor" (click)="openImportModal(exerciseGroup, exerciseType.MODELING)" class="btn btn-info btn-sm me-1 mb-1">
-                            <fa-icon [icon]="'plus'"></fa-icon>
-                            <fa-icon class="d-xl-none" [icon]="'project-diagram'"></fa-icon>
+                            <fa-icon [icon]="faPlus"></fa-icon>
+                            <fa-icon class="d-xl-none" [icon]="faProjectDiagram"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.modelingExercise.home.importLabel' | artemisTranslate }}</span>
                         </a>
                         <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'modeling-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1">
-                            <fa-icon [icon]="'plus'"></fa-icon>
-                            <fa-icon class="d-xl-none" [icon]="'project-diagram'"></fa-icon>
+                            <fa-icon [icon]="faPlus"></fa-icon>
+                            <fa-icon class="d-xl-none" [icon]="faProjectDiagram"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addModelingExercise' | artemisTranslate }}</span>
                         </a>
                     </div>
                     <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']">
                         <a *ngIf="course?.isAtLeastEditor" (click)="openImportModal(exerciseGroup, exerciseType.PROGRAMMING)" class="btn btn-info btn-sm me-1 mb-1">
-                            <fa-icon [icon]="'plus'"></fa-icon>
-                            <fa-icon class="d-xl-none" [icon]="'keyboard'"></fa-icon>
+                            <fa-icon [icon]="faPlus"></fa-icon>
+                            <fa-icon class="d-xl-none" [icon]="faKeyboard"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.programmingExercise.home.importLabel' | artemisTranslate }}</span>
                         </a>
                         <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'programming-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1">
-                            <fa-icon [icon]="'plus'"></fa-icon>
-                            <fa-icon class="d-xl-none" [icon]="'keyboard'"></fa-icon>
+                            <fa-icon [icon]="faPlus"></fa-icon>
+                            <fa-icon class="d-xl-none" [icon]="faKeyboard"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addProgrammingExercise' | artemisTranslate }}</span>
                         </a>
                     </div>
                     <div class="btn-group-vertical me-1 mb-1">
                         <div class="d-flex flex-column me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']">
                             <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'edit']" class="btn btn-warning btn-sm me-1 mb-1">
-                                <fa-icon [icon]="'wrench'"></fa-icon>
+                                <fa-icon [icon]="faWrench"></fa-icon>
                                 <span class="d-none d-xl-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
                             </a>
                             <button
@@ -114,7 +116,7 @@
                                 [dialogError]="dialogError"
                                 class="mb-0"
                             >
-                                <fa-icon [icon]="'times'"></fa-icon>
+                                <fa-icon [icon]="faTimes"></fa-icon>
                             </button>
                             <ng-template #containsNoProgrammingExercise>
                                 <button
@@ -127,7 +129,7 @@
                                     [dialogError]="dialogError"
                                     class="mb-0"
                                 >
-                                    <fa-icon [icon]="'times'"></fa-icon>
+                                    <fa-icon [icon]="faTimes"></fa-icon>
                                 </button>
                             </ng-template>
                         </div>
@@ -174,7 +176,7 @@
                             </th>
                         </ng-container>
                         <th *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.QUIZ)">
-                            <span>{{ 'artemisApp.quizExercise.numberOfPosts' | artemisTranslate }}</span>
+                            <span>{{ 'artemisApp.quizExercise.numberOfQuestions' | artemisTranslate }}</span>
                         </th>
                         <th *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING)">
                             <span>{{ 'artemisApp.modelingExercise.diagramType' | artemisTranslate }}</span>
@@ -195,7 +197,7 @@
                         <th></th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="exercises">
                     <tr *ngFor="let exercise of exerciseGroup.exercises">
                         <td class="align-middle">
                             <a

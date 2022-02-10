@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.FILE_UPLOAD;
+
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 
 /**
  * A FileUploadExercise.
@@ -40,4 +44,8 @@ public class FileUploadExercise extends Exercise {
         return "FileUploadExercise{" + "id=" + getId() + "}";
     }
 
+    @Override
+    public ExerciseType getExerciseType() {
+        return FILE_UPLOAD;
+    }
 }

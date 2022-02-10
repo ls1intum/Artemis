@@ -8,6 +8,7 @@ import { BuildRunState, ProgrammingBuildRunService } from 'app/exercises/program
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
+import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * A button that triggers the build for all participations of the given programming exercise.
@@ -22,7 +23,7 @@ import { ButtonType } from 'app/shared/components/button.component';
             [btnType]="ButtonType.ERROR"
             [isLoading]="isTriggeringBuildAll"
             [tooltip]="'artemisApp.programmingExercise.resubmitAllTooltip'"
-            [icon]="'redo'"
+            [icon]="faRedo"
             [title]="'artemisApp.programmingExercise.resubmitAll'"
             [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             (onClick)="openTriggerAllModal()"
@@ -37,6 +38,8 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     @Input() disabled = false;
     @Output() onBuildTriggered = new EventEmitter();
     isTriggeringBuildAll = false;
+    // Icons
+    faRedo = faRedo;
 
     constructor(private submissionService: ProgrammingSubmissionService, private programmingBuildRunService: ProgrammingBuildRunService, private modalService: NgbModal) {}
 
@@ -94,10 +97,10 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="cancel()">
-                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                    <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
                 <button type="submit" class="btn btn-danger">
-                    <fa-icon [icon]="'times'"></fa-icon>&nbsp;
+                    <fa-icon [icon]="faTimes"></fa-icon>&nbsp;
                     <span jhiTranslate="entity.action.confirm">Confirm</span>
                 </button>
             </div>
@@ -107,6 +110,10 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
 export class ProgrammingExerciseInstructorTriggerAllDialogComponent {
     @Input() exerciseId: number;
     @Input() deadlinePassed: boolean;
+
+    // Icons
+    faBan = faBan;
+    faTimes = faTimes;
 
     constructor(private activeModal: NgbActiveModal) {}
 

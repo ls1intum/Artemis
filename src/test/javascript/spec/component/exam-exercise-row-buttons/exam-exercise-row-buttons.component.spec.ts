@@ -1,5 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
@@ -8,7 +6,7 @@ import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -16,19 +14,14 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { SinonSpy, SinonStub, stub } from 'sinon';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import * as sinon from 'sinon';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { MockRouterLinkDirective } from '../shared/metis/post/post.component.spec';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('ExamExerciseRowButtonsComponent', () => {
     const course = { id: 3 } as Course;
@@ -47,15 +40,15 @@ describe('ExamExerciseRowButtonsComponent', () => {
     const programmingExercise = { id: 963, type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
     const quizResponse = { body: { id: 789, type: ExerciseType.QUIZ, quizQuestions: {} } as QuizExercise };
 
-    let deleteTextExerciseStub: SinonStub;
-    let deleteModelingExerciseStub: SinonStub;
-    let deleteQuizExerciseStub: SinonStub;
-    let deleteFileUploadExerciseStub: SinonStub;
-    let deleteProgrammingExerciseStub: SinonStub;
-    let quizExerciseServiceFindStub: SinonStub;
+    let deleteTextExerciseStub: jest.SpyInstance;
+    let deleteModelingExerciseStub: jest.SpyInstance;
+    let deleteQuizExerciseStub: jest.SpyInstance;
+    let deleteFileUploadExerciseStub: jest.SpyInstance;
+    let deleteProgrammingExerciseStub: jest.SpyInstance;
+    let quizExerciseServiceFindStub: jest.SpyInstance;
 
-    let onDeleteExerciseEmitSpy: SinonSpy;
-    let quizExerciseExportSpy: SinonSpy;
+    let onDeleteExerciseEmitSpy: jest.SpyInstance;
+    let quizExerciseExportSpy: jest.SpyInstance;
 
     let fixture: ComponentFixture<ExamExerciseRowButtonsComponent>;
     let component: ExamExerciseRowButtonsComponent;
@@ -84,144 +77,144 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 component.course = course;
                 component.exam = exam;
 
-                deleteTextExerciseStub = stub(textExerciseService, 'delete');
-                deleteModelingExerciseStub = stub(modelingExerciseService, 'delete');
-                deleteQuizExerciseStub = stub(quizExerciseService, 'delete');
-                deleteFileUploadExerciseStub = stub(fileUploadExerciseService, 'delete');
-                deleteProgrammingExerciseStub = stub(programmingExerciseService, 'delete');
-                quizExerciseServiceFindStub = stub(quizExerciseService, 'find');
-                onDeleteExerciseEmitSpy = sinon.spy(component.onDeleteExercise, 'emit');
-                quizExerciseExportSpy = sinon.spy(quizExerciseService, 'exportQuiz');
+                deleteTextExerciseStub = jest.spyOn(textExerciseService, 'delete');
+                deleteModelingExerciseStub = jest.spyOn(modelingExerciseService, 'delete');
+                deleteQuizExerciseStub = jest.spyOn(quizExerciseService, 'delete');
+                deleteFileUploadExerciseStub = jest.spyOn(fileUploadExerciseService, 'delete');
+                deleteProgrammingExerciseStub = jest.spyOn(programmingExerciseService, 'delete');
+                quizExerciseServiceFindStub = jest.spyOn(quizExerciseService, 'find');
+                onDeleteExerciseEmitSpy = jest.spyOn(component.onDeleteExercise, 'emit');
+                quizExerciseExportSpy = jest.spyOn(quizExerciseService, 'exportQuiz');
             });
     });
 
     describe('isExamOver', () => {
         it('should return true if over', () => {
             component.latestIndividualEndDate = dayjs().subtract(1, 'hours');
-            expect(component.isExamOver()).is.true;
+            expect(component.isExamOver()).toBeTrue();
         });
         it('should return false if not yet over', () => {
             component.latestIndividualEndDate = dayjs().add(1, 'hours');
-            expect(component.isExamOver()).is.false;
+            expect(component.isExamOver()).toBeFalse();
         });
         it('should return false if endDate is undefined', () => {
-            expect(component.isExamOver()).is.false;
+            expect(component.isExamOver()).toBeFalse();
         });
     });
     describe('hasExamStarted', () => {
         it('should return true if started', () => {
             component.exam.startDate = dayjs().subtract(1, 'hours');
-            expect(component.hasExamStarted()).is.true;
+            expect(component.hasExamStarted()).toBeTrue();
         });
         it('should return false if not yet started', () => {
             component.exam.startDate = dayjs().add(1, 'hours');
-            expect(component.hasExamStarted()).is.false;
+            expect(component.hasExamStarted()).toBeFalse();
         });
         it('should return false if startDate is undefined', () => {
-            expect(component.hasExamStarted()).is.false;
+            expect(component.hasExamStarted()).toBeFalse();
         });
     });
     describe('deleteExercise', () => {
         describe('deleteTextExercise', () => {
             it('should deleteTextExercise', () => {
-                deleteTextExerciseStub.returns(of({}));
+                deleteTextExerciseStub.mockReturnValue(of({}));
                 component.exercise = textExercise;
                 component.deleteExercise();
-                expect(deleteTextExerciseStub).to.have.been.calledOnce;
-                expect(onDeleteExerciseEmitSpy).to.have.been.calledOnce;
+                expect(deleteTextExerciseStub).toHaveBeenCalledTimes(1);
+                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledTimes(1);
             });
             it('should handle error for textexercise', () => {
                 const error = { message: 'error occurred!' } as HttpErrorResponse;
-                deleteTextExerciseStub.returns(throwError(error));
+                deleteTextExerciseStub.mockReturnValue(throwError(error));
                 component.exercise = textExercise;
                 component.deleteExercise();
-                expect(deleteTextExerciseStub).to.have.been.calledOnce;
-                expect(onDeleteExerciseEmitSpy).to.not.have.been.calledOnce;
+                expect(deleteTextExerciseStub).toHaveBeenCalledTimes(1);
+                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledTimes(0);
             });
         });
         describe('deleteModelingExercise', () => {
             it('should deleteModelingExercise', () => {
-                deleteModelingExerciseStub.returns(of({}));
+                deleteModelingExerciseStub.mockReturnValue(of({}));
                 component.exercise = modelingExercise;
                 component.deleteExercise();
-                expect(deleteModelingExerciseStub).to.have.been.calledOnce;
-                expect(onDeleteExerciseEmitSpy).to.have.been.calledOnce;
+                expect(deleteModelingExerciseStub).toHaveBeenCalledTimes(1);
+                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledTimes(1);
             });
             it('should handle error for modelingexercise', () => {
                 const error = { message: 'error occurred!' } as HttpErrorResponse;
-                deleteModelingExerciseStub.returns(throwError(error));
+                deleteModelingExerciseStub.mockReturnValue(throwError(error));
                 component.exercise = modelingExercise;
                 component.deleteExercise();
-                expect(deleteModelingExerciseStub).to.have.been.calledOnce;
-                expect(onDeleteExerciseEmitSpy).to.not.have.been.called;
+                expect(deleteModelingExerciseStub).toHaveBeenCalledTimes(1);
+                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledTimes(0);
             });
         });
         describe('deleteFileUploadExercise', () => {
             it('should deleteFileUploadExercise', () => {
-                deleteFileUploadExerciseStub.returns(of({}));
+                deleteFileUploadExerciseStub.mockReturnValue(of({}));
                 component.exercise = fileUploadExercise;
                 component.deleteExercise();
-                expect(deleteFileUploadExerciseStub).to.have.been.calledOnce;
-                expect(onDeleteExerciseEmitSpy).to.have.been.calledOnce;
+                expect(deleteFileUploadExerciseStub).toHaveBeenCalledTimes(1);
+                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledTimes(1);
             });
             it('should handle error for fileupload exercise', () => {
                 const error = { message: 'error occurred!' } as HttpErrorResponse;
-                deleteFileUploadExerciseStub.returns(throwError(error));
+                deleteFileUploadExerciseStub.mockReturnValue(throwError(error));
                 component.exercise = fileUploadExercise;
                 component.deleteExercise();
-                expect(deleteFileUploadExerciseStub).to.have.been.calledOnce;
-                expect(onDeleteExerciseEmitSpy).to.not.have.been.called;
+                expect(deleteFileUploadExerciseStub).toHaveBeenCalledTimes(1);
+                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledTimes(0);
             });
         });
         describe('should deleteQuizExercise', () => {
             it('should deleteQuizExercise', () => {
-                deleteQuizExerciseStub.returns(of({}));
+                deleteQuizExerciseStub.mockReturnValue(of({}));
                 component.exercise = quizExercise;
                 component.deleteExercise();
-                expect(deleteQuizExerciseStub).to.have.been.calledOnce;
-                expect(onDeleteExerciseEmitSpy).to.have.been.calledOnce;
+                expect(deleteQuizExerciseStub).toHaveBeenCalledTimes(1);
+                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledTimes(1);
             });
             it('should handle error for quizexercise', () => {
                 const error = { message: 'error occurred!' } as HttpErrorResponse;
-                deleteQuizExerciseStub.returns(throwError(error));
+                deleteQuizExerciseStub.mockReturnValue(throwError(error));
                 component.exercise = quizExercise;
                 component.deleteExercise();
-                expect(deleteQuizExerciseStub).to.have.been.calledOnce;
-                expect(onDeleteExerciseEmitSpy).to.not.have.been.called;
+                expect(deleteQuizExerciseStub).toHaveBeenCalledTimes(1);
+                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledTimes(0);
             });
         });
     });
     describe('deleteProgrammingExercise', () => {
         it('should deleteProgrammingExercise', () => {
-            deleteProgrammingExerciseStub.returns(of({}));
+            deleteProgrammingExerciseStub.mockReturnValue(of({}));
             component.exercise = programmingExercise;
             component.deleteProgrammingExercise({});
-            expect(deleteProgrammingExerciseStub).to.have.been.calledOnce;
-            expect(onDeleteExerciseEmitSpy).to.have.been.calledOnce;
+            expect(deleteProgrammingExerciseStub).toHaveBeenCalledTimes(1);
+            expect(onDeleteExerciseEmitSpy).toHaveBeenCalledTimes(1);
         });
         it('should handle error for programmingExercise', () => {
             const error = { message: 'error occurred!' } as HttpErrorResponse;
-            deleteProgrammingExerciseStub.returns(throwError(error));
+            deleteProgrammingExerciseStub.mockReturnValue(throwError(error));
             component.exercise = programmingExercise;
             component.deleteProgrammingExercise({});
-            expect(deleteProgrammingExerciseStub).to.have.been.calledOnce;
-            expect(onDeleteExerciseEmitSpy).to.not.have.been.called;
+            expect(deleteProgrammingExerciseStub).toHaveBeenCalledTimes(1);
+            expect(onDeleteExerciseEmitSpy).toHaveBeenCalledTimes(0);
         });
     });
     describe('exportQuizById', () => {
         it('should export Quiz, exportAll true', () => {
-            quizExerciseServiceFindStub.returns(of(quizResponse));
+            quizExerciseServiceFindStub.mockReturnValue(of(quizResponse));
             component.exercise = quizExercise;
             component.exportQuizById(true);
-            expect(quizExerciseExportSpy).to.have.been.called;
-            expect(quizExerciseExportSpy).to.have.been.calledWith({}, true, quizExercise.title);
+            expect(quizExerciseExportSpy).toHaveBeenCalled();
+            expect(quizExerciseExportSpy).toHaveBeenCalledWith({}, true, quizExercise.title);
         });
         it('should export Quiz, exportAll false', () => {
-            quizExerciseServiceFindStub.returns(of(quizResponse));
+            quizExerciseServiceFindStub.mockReturnValue(of(quizResponse));
             component.exercise = quizExercise;
             component.exportQuizById(false);
-            expect(quizExerciseExportSpy).to.have.been.called;
-            expect(quizExerciseExportSpy).to.have.been.calledWith({}, false, quizExercise.title);
+            expect(quizExerciseExportSpy).toHaveBeenCalled();
+            expect(quizExerciseExportSpy).toHaveBeenCalledWith({}, false, quizExercise.title);
         });
     });
 });

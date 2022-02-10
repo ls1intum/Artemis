@@ -48,10 +48,9 @@ public class PetriNetPlace extends UMLElement {
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (!(reference instanceof PetriNetPlace)) {
+        if (!(reference instanceof PetriNetPlace referencePlace)) {
             return similarity;
         }
-        PetriNetPlace referencePlace = (PetriNetPlace) reference;
 
         double nameWeight = 0.5;
         double amountOfTokensWeight = 0.25;
@@ -72,11 +71,9 @@ public class PetriNetPlace extends UMLElement {
      */
     @Override
     public double overallSimilarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof PetriNetPlace)) {
+        if (!(reference instanceof PetriNetPlace referencePlace)) {
             return 0;
         }
-
-        PetriNetPlace referencePlace = (PetriNetPlace) reference;
 
         double similarity = similarity(referencePlace);
 

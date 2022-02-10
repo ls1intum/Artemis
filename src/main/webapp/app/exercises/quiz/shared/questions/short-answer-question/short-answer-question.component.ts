@@ -5,6 +5,8 @@ import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.mod
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
+import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-short-answer-question',
@@ -56,21 +58,24 @@ export class ShortAnswerQuestionComponent {
     sampleSolutions: ShortAnswerSolution[] = [];
     textParts: string[][];
 
+    // Icons
+    faExclamationCircle = faExclamationCircle;
+    farQuestionCircle = faQuestionCircle;
+
     constructor(private artemisMarkdown: ArtemisMarkdownService, public shortAnswerQuestionUtil: ShortAnswerQuestionUtil) {}
 
     /**
      * Update html for text, hint and explanation for the question and every answer option
      */
     watchCollection() {
-        const artemisMarkdown = this.artemisMarkdown;
         this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
 
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text!);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
 
-        this.renderedQuestion.text = artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.text);
-        this.renderedQuestion.hint = artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.hint);
-        this.renderedQuestion.explanation = artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.explanation);
+        this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.text);
+        this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.hint);
+        this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.explanation);
     }
 
     /**

@@ -14,6 +14,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TextResultBlock } from 'app/exercises/text/participate/text-result/text-result-block';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 describe('TextResultComponent', () => {
     let fixture: ComponentFixture<TextResultComponent>;
@@ -130,14 +131,14 @@ describe('TextResultComponent', () => {
 
         expect(textResultBlock.length).toBe(5);
         expect(textResultBlock.cssClass).toBe('text-with-feedback positive-feedback');
-        expect(textResultBlock.icon).toBe('check');
+        expect(textResultBlock.icon).toBe(faCheck);
         expect(textResultBlock.iconCssClass).toBe('feedback-icon positive-feedback');
         expect(textResultBlock.feedbackCssClass).toBe('alert alert-success');
 
         textResultBlock = new TextResultBlock(textBlock, feedbacks[2]);
 
         expect(textResultBlock.cssClass).toBe('text-with-feedback neutral-feedback');
-        expect(textResultBlock.icon).toBe('circle');
+        expect(textResultBlock.icon).toBe(faCircle);
         expect(textResultBlock.iconCssClass).toBe('feedback-icon neutral-feedback');
         expect(textResultBlock.feedbackCssClass).toBe('alert alert-secondary');
 
@@ -151,7 +152,7 @@ describe('TextResultComponent', () => {
         textResultBlock = new TextResultBlock(textBlock, feedback);
 
         expect(textResultBlock.cssClass).toBe('text-with-feedback negative-feedback');
-        expect(textResultBlock.icon).toBe('times');
+        expect(textResultBlock.icon).toBe(faTimes);
         expect(textResultBlock.iconCssClass).toBe('feedback-icon negative-feedback');
         expect(textResultBlock.feedbackCssClass).toBe('alert alert-danger');
     });

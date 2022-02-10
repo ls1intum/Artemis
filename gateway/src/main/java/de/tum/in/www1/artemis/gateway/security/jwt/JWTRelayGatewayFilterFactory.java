@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.gateway.security.jwt;
 
 import static de.tum.in.www1.artemis.gateway.security.jwt.JWTFilter.AUTHORIZATION_HEADER;
 
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.server.reactive.ServerHttpRequest;

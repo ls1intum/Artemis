@@ -20,6 +20,8 @@ import { ShortAnswerSpotCounter } from 'app/entities/quiz/short-answer-spot-coun
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
+import { MockProvider } from 'ng-mocks';
+import { ChangeDetectorRef } from '@angular/core';
 
 const route = { params: of({ courseId: 1, exerciseId: 4, questionId: 1 }) };
 const answerSpot = { posX: 5, invalid: false, id: 1, tempID: 2 } as ShortAnswerSpot;
@@ -65,6 +67,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                MockProvider(ChangeDetectorRef),
             ],
         })
             .overrideTemplate(ShortAnswerQuestionStatisticComponent, '')
@@ -91,7 +94,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
         } as QuizExercise;
     });
 
-    describe('OnInit', function () {
+    describe('OnInit', () => {
         it('should call functions on Init', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
@@ -117,7 +120,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
         });
     });
 
-    describe('loadQuiz', function () {
+    describe('loadQuiz', () => {
         it('should call functions from loadQuiz', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const generateStructureSpy = jest.spyOn(comp, 'generateShortAnswerStructure');
@@ -137,7 +140,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
         });
     });
 
-    describe('loadLayout', function () {
+    describe('loadLayout', () => {
         it('should call functions from loadLayout', () => {
             const resetLabelsSpy = jest.spyOn(comp, 'resetLabelsColors');
             const addLastBarSpy = jest.spyOn(comp, 'addLastBarLayout');
@@ -152,7 +155,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
         });
     });
 
-    describe('loadData', function () {
+    describe('loadData', () => {
         it('should call functions from loadData', () => {
             const resetDataSpy = jest.spyOn(comp, 'resetData');
             const addDataSpy = jest.spyOn(comp, 'addData');
@@ -167,7 +170,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
         });
     });
 
-    describe('switchSolution', function () {
+    describe('switchSolution', () => {
         it('should call functions and set values from switchSolution', () => {
             const loadDataInDiagramSpy = jest.spyOn(comp, 'loadDataInDiagram');
 
@@ -180,7 +183,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
         });
     });
 
-    describe('switchRated', function () {
+    describe('switchRated', () => {
         it('should call functions and set values from switchRated', () => {
             const loadDataInDiagramSpy = jest.spyOn(comp, 'loadDataInDiagram');
 

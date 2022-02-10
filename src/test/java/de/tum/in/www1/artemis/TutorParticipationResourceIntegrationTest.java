@@ -45,7 +45,7 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testRemoveTutorParticipationForGuidedTour() throws Exception {
         assertThat(tutorParticipationRepository.findAll().size()).isEqualTo(5);
 
@@ -69,7 +69,7 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testRemoveTutorParticipationForGuidedTour_noMatchingExercise() throws Exception {
         exercise.setTitle("Patterns in Software Engineering");
         exerciseRepository.save(exercise);
@@ -78,7 +78,7 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testRemoveTutorParticipationForGuidedTour_forbidden() throws Exception {
         request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.FORBIDDEN);
 

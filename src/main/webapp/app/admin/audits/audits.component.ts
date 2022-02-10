@@ -7,6 +7,7 @@ import { combineLatest } from 'rxjs';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { Audit } from './audit.model';
 import { AuditsService } from './audits.service';
+import { faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-audit',
@@ -25,6 +26,9 @@ export class AuditsComponent implements OnInit {
     totalItems = 0;
 
     private dateFormat = 'yyyy-MM-dd';
+
+    // Icon
+    faSort = faSort;
 
     constructor(private auditsService: AuditsService, private activatedRoute: ActivatedRoute, private datePipe: DatePipe, private router: Router) {}
 

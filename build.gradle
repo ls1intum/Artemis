@@ -18,16 +18,16 @@ plugins {
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "3.1.4"
     id "com.github.node-gradle.node" version "3.1.1"
-    id "com.diffplug.spotless" version "5.15.0"
+    id "com.diffplug.spotless" version "6.1.2"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-    id "com.github.ben-manes.versions" version "0.39.0"
+    id "com.github.ben-manes.versions" version "0.41.0"
     id "com.github.andygoossens.modernizer" version "1.6.1"
 }
 
 group = "de.tum.in.www1.artemis"
 
 allprojects {
-    version = "5.3.3"
+    version = "5.5.0"
     description = "Interactive Learning with Individual Feedback"
 }
 
@@ -61,10 +61,10 @@ spotless {
     java {
         target project.fileTree(project.rootDir) {
             include "**/*.java"
-            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/main/java/de/tum/in/www1/artemis/config/SAML2Configuration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**", "**/gateway/**", "**/user-management/**"
+            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/main/java/de/tum/in/www1/artemis/config/SAML2Configuration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**", "**/gateway/**", "**/user-management/**", "**/lecture/**"
         }
         importOrderFile "artemis-spotless.importorder"
-        eclipse().configFile "artemis-spotless-style.xml"
+        eclipse("4.19.0").configFile "artemis-spotless-style.xml"
 
         removeUnusedImports()
     }
@@ -94,7 +94,8 @@ private excludedClassFilesForReport(classDirectories) {
             exclude: [
                 "**/de/tum/in/www1/artemis/domain/**/*_*",
                 "gateway/**", // exclude the gateway project from test coverage report for the moment until it is activated
-                "user-management/**" // exclude the user-management project from test coverage report for the moment until it is activated
+                "user-management/**", // exclude the user-management project from test coverage report for the moment until it is activated
+                "**/de/tum/in/www1/artemis/config/migration/entries/*_*"
             ]
         )
     }))
@@ -104,6 +105,7 @@ jacocoTestReport.configure {
     // we want to ignore some generated files in the domain folders as well as files from different projects
     afterEvaluate { excludedClassFilesForReport(classDirectories) }
 }
+
 jacocoTestCoverageVerification.configure {
     // we want to ignore some generated files in the domain folders as well as files from different projects
     afterEvaluate { excludedClassFilesForReport(classDirectories) }
@@ -126,8 +128,7 @@ dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:${offbytwo_jenkins_client_version}"
     implementation "org.gitlab4j:gitlab4j-api:${gitlab4j_api_version}"
 
-    implementation files("libs/jplag-${jplag_version}.jar")
-    implementation files("libs/athene-protobuf-client-${athene_protobuf_client_version}.jar")
+    implementation "de.jplag:jplag:${jplag_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:${sourceforge_plantuml_version}"
@@ -137,7 +138,6 @@ dependencies {
     implementation "com.thoughtworks.qdox:qdox:${thoughtworks_qdox_version}"
 
     implementation "org.springdoc:springdoc-openapi-ui:${springdoc_openapi_ui_version}"
-
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-hibernate53:${hazelcast_hibernate53_version}"
@@ -176,7 +176,10 @@ dependencies {
     implementation "org.apache.pdfbox:pdfbox:${apache_pdfbox_version}"
     implementation "com.google.protobuf:protobuf-java:${google_protobuf_java_version}"
 
+    implementation "org.commonmark:commonmark:${commonmark_version}"
     implementation "org.springframework.boot:spring-boot-starter-artemis:${spring_boot_version}"
+
+    implementation "de.tum.in.ase.athene:client:${athene_client_version}"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
@@ -192,7 +195,7 @@ task executeTests (type: Exec) {
 
 allprojects {
     wrapper {
-        gradleVersion = "7.2"
+        gradleVersion = "7.3.3"
     }
 }
 
@@ -273,6 +276,18 @@ gradle.taskGraph.whenReady { graph ->
             }
         }
     }
+
+    def hasRootLectureTask = tasks.contains(":lecture:")
+
+    if (!hasRootLectureTask) {
+        graph.getAllTasks().each { task ->
+            def subLectureTask = (task.path =~ /:lecture.+/)
+            if (subLectureTask) {
+                println "TRACER skipping task ${task.path}"
+                task.enabled = false
+            }
+        }
+    }
 }
 
 // Available commands:
@@ -288,4 +303,6 @@ gradle.taskGraph.whenReady { graph ->
 // 7) Generate Liquibase diff:                      ./gradlew liquibaseDiffChangelog
 // 8) Clear Liquibase checksums:                    ./gradlew liquibaseClearChecksums
 // 9) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
-// 10) Build server only in a war:                  ./gradlew -Pwar clean serverBootWar
+// 10) Build server only in a war:                  ./gradlew -Pprod -Pwar clean bootWar -x webapp
+// 11) Detects uses of legacy code:                 ./gradlew modernizer -x webapp
+

@@ -1,24 +1,16 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { Observable, of } from 'rxjs';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import { SinonSpy, SinonStub, spy, stub } from 'sinon';
-import { ArtemisTestModule } from '../../test.module';
-import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-instructions-editor.module';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
-import { HttpResponse } from '@angular/common/http';
 import { triggerChanges } from '../../helpers/utils/general.utils';
-import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockProgrammingExerciseInstructionAnalysisService } from '../../helpers/mocks/service/mock-programming-exericse-instruction-analysis.service';
 
 describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     let comp: ProgrammingExerciseInstructionAnalysisComponent;
@@ -42,12 +34,14 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     describe('Component tests', () => {
         let analysisService: ProgrammingExerciseInstructionAnalysisService;
 
-        let analyzeProblemStatementStub: SinonStub;
-        let emitAnalysisSpy: SinonSpy;
+        let analyzeProblemStatementStub: jest.SpyInstance;
+        let emitAnalysisSpy: jest.SpyInstance;
 
-        beforeEach(async () => {
-            return TestBed.configureTestingModule({
-                imports: [TranslateModule.forRoot(), ArtemisTestModule, NgbModule, ArtemisProgrammingExerciseInstructionsEditorModule],
+        beforeEach(() => {
+            TestBed.configureTestingModule({
+                imports: [],
+                declarations: [ProgrammingExerciseInstructionAnalysisComponent, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+                providers: [{ provide: ProgrammingExerciseInstructionAnalysisService, useClass: MockProgrammingExerciseInstructionAnalysisService }],
             })
                 .compileComponents()
                 .then(() => {
@@ -57,14 +51,13 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
 
                     analysisService = debugElement.injector.get(ProgrammingExerciseInstructionAnalysisService);
 
-                    analyzeProblemStatementStub = stub(analysisService, 'analyzeProblemStatement');
-                    emitAnalysisSpy = spy(comp.problemStatementAnalysis, 'emit');
+                    analyzeProblemStatementStub = jest.spyOn(analysisService, 'analyzeProblemStatement');
+                    emitAnalysisSpy = jest.spyOn(comp.problemStatementAnalysis, 'emit');
                 });
         });
 
         afterEach(() => {
-            analyzeProblemStatementStub.restore();
-            emitAnalysisSpy.restore();
+            jest.restoreAllMocks();
         });
 
         it('should display the received analysis from the service', fakeAsync(() => {
@@ -78,7 +71,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             const invalidHints: string[] = [];
             const missingTestCases = ['testBubbleSort'];
 
-            analyzeProblemStatementStub.returns({ completeAnalysis, invalidTestCases, invalidHints, missingTestCases });
+            analyzeProblemStatementStub.mockReturnValue({ completeAnalysis, invalidTestCases, invalidHints, missingTestCases });
 
             // dummy data.
             const hints = [{ id: 3 }] as ExerciseHint[];
@@ -94,11 +87,14 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             tick(500); // Update is debounced, otherwise we would send updates on every change.
             fixture.detectChanges();
 
-            // Check internal state and output of component.
-            expect(comp.missingTestCases).to.deep.equal(missingTestCases);
-            expect(comp.invalidTestCases).to.deep.equal(invalidTestCases);
-            expect(comp.invalidHints).to.deep.equal(invalidHints);
-            expect(emitAnalysisSpy).to.have.been.calledOnceWithExactly(completeAnalysis);
+            // Check internal state of the component.
+            expect(comp.missingTestCases).toEqual(missingTestCases);
+            expect(comp.invalidTestCases).toEqual(invalidTestCases);
+            expect(comp.invalidHints).toEqual(invalidHints);
+
+            // Check that an event with the updated analysis is emitted.
+            expect(emitAnalysisSpy).toHaveBeenCalledTimes(1);
+            expect(emitAnalysisSpy).toHaveBeenCalledWith(completeAnalysis);
 
             // Check rendered html.
             const testCaseOk = debugElement.query(By.css(`#${testCaseOkId}`));
@@ -107,72 +103,60 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             const hintIssues = debugElement.query(By.css(`#${hintIssuesId}`));
 
             // Test cases are not ok according to the analysis.
-            expect(testCaseOk).not.to.exist;
-            expect(testCaseIssues).to.exist;
+            expect(testCaseOk).toBe(null);
+            expect(testCaseIssues).not.toBe(null);
 
             // Hints are ok according to the analysis.
-            expect(hintOk).to.exist;
-            expect(hintIssues).not.to.exist;
+            expect(hintOk).not.toBe(null);
+            expect(hintIssues).toBe(null);
         }));
-    });
 
-    describe('Analysis service integration test', () => {
-        let exerciseHintService: IExerciseHintService;
-        let getHintsForExerciseStub: SinonStub;
+        describe('Analysis service integration test', () => {
+            const missingTestCases = ['test6', 'test7'];
+            const invalidTestCases = ['test3', 'test4'];
 
-        const missingTestCases = ['test6', 'test7'];
-        const invalidTestCases = ['test3', 'test4'];
+            it('should not render if no test cases were provided', () => {
+                comp.problemStatement = problemStatement;
+                comp.taskRegex = taskRegex;
+                triggerChanges(comp, { property: 'problemStatement', currentValue: problemStatement });
+                fixture.detectChanges();
 
-        beforeEach(async () => {
-            return TestBed.configureTestingModule({
-                imports: [TranslateModule.forRoot(), ArtemisTestModule, NgbModule, ArtemisProgrammingExerciseInstructionsEditorModule],
-            })
-                .compileComponents()
-                .then(() => {
-                    fixture = TestBed.createComponent(ProgrammingExerciseInstructionAnalysisComponent);
-                    comp = fixture.componentInstance;
-                    debugElement = fixture.debugElement;
+                expect(debugElement.nativeElement.innerHtml).toBe(undefined);
+                expect(comp.missingTestCases).toEqual([]);
+                expect(comp.invalidTestCases).toEqual([]);
+            });
 
-                    exerciseHintService = debugElement.injector.get(ExerciseHintService);
-                    getHintsForExerciseStub = stub(exerciseHintService, 'findByExerciseId').returns(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
-                });
+            it('should render warnings on missing and invalid test cases', fakeAsync(() => {
+                comp.problemStatement = problemStatement;
+                comp.taskRegex = taskRegex;
+                comp.exerciseTestCases = exerciseTestCases;
+                comp.exerciseHints = exerciseHints;
+
+                const completeAnalysis = {
+                    '0': { invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'] },
+                    '2': {
+                        invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'],
+                    },
+                };
+
+                analyzeProblemStatementStub.mockReturnValue({ completeAnalysis, invalidTestCases, missingTestCases });
+
+                comp.ngOnInit();
+
+                triggerChanges(
+                    comp,
+                    { property: 'problemStatement', currentValue: problemStatement, firstChange: false },
+                    { property: 'exerciseTestCases', currentValue: exerciseTestCases },
+                );
+
+                fixture.detectChanges();
+                tick(500);
+
+                expect(debugElement.nativeElement.innerHtml).toBe(undefined);
+                expect(debugElement.query(By.css('fa-icon'))).not.toBe(null);
+                expect(comp.missingTestCases).toEqual(missingTestCases);
+                expect(comp.invalidTestCases).toEqual(invalidTestCases);
+            }));
         });
-
-        afterEach(() => {
-            getHintsForExerciseStub.restore();
-        });
-
-        it('should not render if no test cases were provided', () => {
-            comp.problemStatement = problemStatement;
-            comp.taskRegex = taskRegex;
-            triggerChanges(comp, { property: 'problemStatement', currentValue: problemStatement });
-            fixture.detectChanges();
-
-            expect(debugElement.nativeElement.innerHtml).to.be.undefined;
-            expect(comp.missingTestCases).to.be.empty;
-            expect(comp.invalidTestCases).to.be.empty;
-        });
-
-        it('should render warnings on missing and invalid test cases', fakeAsync(() => {
-            comp.problemStatement = problemStatement;
-            comp.taskRegex = taskRegex;
-            comp.exerciseTestCases = exerciseTestCases;
-            comp.exerciseHints = exerciseHints;
-            comp.ngOnInit();
-
-            triggerChanges(
-                comp,
-                { property: 'problemStatement', currentValue: problemStatement, firstChange: false },
-                { property: 'exerciseTestCases', currentValue: exerciseTestCases },
-            );
-
-            fixture.detectChanges();
-            tick(500);
-
-            expect(debugElement.nativeElement.innerHtml).not.to.equal('');
-            expect(debugElement.query(By.css('fa-icon'))).to.exist;
-            expect(comp.missingTestCases).to.be.deep.equal(missingTestCases);
-            expect(comp.invalidTestCases).to.be.deep.equal(invalidTestCases);
-        }));
     });
 });

@@ -1,6 +1,21 @@
 <div *ngIf="complaint || showSection">
+    <p *ngIf="course!.complaintsEnabled">
+        <span
+            *ngIf="!isExamMode && remainingNumberOfComplaints == undefined"
+            [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeam' : 'description')"
+            [translateValues]="{ maxComplaintNumber: course!.maxComplaints! }"
+        ></span>
+        <span
+            *ngIf="!isExamMode && remainingNumberOfComplaints >= 0"
+            [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
+            [translateValues]="{ maxComplaintNumber: course!.maxComplaints!, allowedComplaints: remainingNumberOfComplaints }"
+        ></span>
+        <span *ngIf="isExamMode" [jhiTranslate]="'artemisApp.complaint.descriptionExam'"></span>
+        <fa-icon *ngIf="!isExamMode" [icon]="faInfoCircle" title="{{ 'artemisApp.complaint.info' | artemisTranslate }}" class="info-icon"></fa-icon>
+    </p>
     <div class="mt-4" *ngIf="isCorrectUserToFileAction && !complaint">
         <button
+            id="complain"
             *ngIf="isExamMode || (course?.maxComplaints && course!.maxComplaints! > 0)"
             class="btn btn-primary"
             [class.not-allowed]="(!isExamMode && remainingNumberOfComplaints == 0) || !timeOfComplaintValid"

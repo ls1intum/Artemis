@@ -62,8 +62,10 @@ jobs:
       run: ./gradlew -Pprod -Pwar :gateway:clean :gateway:bootWar
       env:
         NODE_OPTIONS: --max_old_space_size=6144
-    - name: Production Build User Management
+    - name: Production Build User Management Microservice
       run: ./gradlew -Pprod -Pwar :user-management:clean :user-management:bootWar
+    - name: Production Build Lecture Microservice
+      run: ./gradlew -Pprod -Pwar :lecture:clean :lecture:bootWar
     - name: Upload Artemis Artifact
       uses: actions/upload-artifact@v2
       with:
@@ -79,6 +81,11 @@ jobs:
       with:
         name: user-management.war
         path: user-management/build/libs/user-management-*.war
+    - name: Upload Lecture Microservice Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: lecture.war
+        path: lecture/build/libs/lecture-*.war
 #    - name: Upload Release Artifact
 #      if: github.event_name == 'release' && github.event.action == 'created'
 #      uses: actions/upload-release-asset@v1
@@ -105,6 +112,9 @@ jobs:
         - image_name: "artemis-usermanagement-service"
           dockerfile_path: "user-management/src/main/docker"
           war_name: "user-management.war"
+        - image_name: "artemis-lecture-service"
+          dockerfile_path: "lecture/src/main/docker"
+          war_name: "lecture.war"
     steps:
     - name: Download Artifact
       uses: actions/download-artifact@v2
@@ -180,7 +190,7 @@ jobs:
           }
           if (context.eventName === "push") {
             if (context.ref.startsWith("refs/tags/")) {
-              return context.ref.slice(10); 
+              return context.ref.slice(10);
             }
             if (context.ref === "refs/heads/develop") {
               return "latest";
@@ -240,22 +250,22 @@ jobs:
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
           ssh-add - <<< $SSH_PRIVATE_KEY
 
-    - name: Deploy Docker Compose Files 
+    - name: Deploy Docker Compose Files
       env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
           DEPLOYMENT_HOSTS: "${{ secrets.DEPLOYMENT_HOSTS }}"
           DEPLOYMENT_USER: ${{ secrets.DEPLOYMENT_USER }}
       run: |
         for host in $DEPLOYMENT_HOSTS; do
-          # Copy docker-compose files to remote host 
+          # Copy docker-compose files to remote host
           scp docker-compose-microservices* $DEPLOYMENT_USER@$host:/opt/artemis/
 
           # Pull and Start images
           ssh -t $DEPLOYMENT_USER@$host "
-            cd /opt/artemis && 
-            echo TAG=${{ steps.compute-tag.outputs.result }} > .env && 
-            docker-compose -f docker-compose-microservices.yml -f docker-compose-microservices.override-prod.yml down && 
-            docker-compose -f docker-compose-microservices.yml -f docker-compose-microservices.override-prod.yml pull && 
+            cd /opt/artemis &&
+            echo TAG=${{ steps.compute-tag.outputs.result }} > .env &&
+            docker-compose -f docker-compose-microservices.yml -f docker-compose-microservices.override-prod.yml down &&
+            docker-compose -f docker-compose-microservices.yml -f docker-compose-microservices.override-prod.yml pull &&
             docker-compose -f docker-compose-microservices.yml -f docker-compose-microservices.override-prod.yml up -d"
 
           sleep 20

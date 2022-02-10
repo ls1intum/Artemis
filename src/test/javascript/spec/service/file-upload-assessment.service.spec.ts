@@ -1,21 +1,13 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
-import * as chai from 'chai';
-import dayjs from 'dayjs';
-import sinonChai from 'sinon-chai';
+import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ArtemisTestModule } from '../test.module';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { HttpResponse } from '@angular/common/http';
-import { SessionStorageService } from 'ngx-webstorage';
-import { TranslateService } from '@ngx-translate/core';
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('Modeling Assessment Service', () => {
     let injector: TestBed;
@@ -28,10 +20,6 @@ describe('Modeling Assessment Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
-            providers: [
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
         });
         injector = getTestBed();
         service = injector.get(FileUploadAssessmentService);
@@ -78,10 +66,10 @@ describe('Modeling Assessment Service', () => {
                     method: 'PUT',
                 });
                 req.flush(returnedFromService);
-                expect(expectedResult).to.deep.equal(elemDefault);
+                expect(expectedResult).toEqual(elemDefault);
             });
 
-            it('should submit an assessment', async () => {
+            it('should submit an assessment', () => {
                 const submissionId = 187;
                 const feedbacks = [
                     {
@@ -104,10 +92,10 @@ describe('Modeling Assessment Service', () => {
                     method: 'PUT',
                 });
                 req.flush(returnedFromService);
-                expect(expectedResult).to.deep.equal(elemDefault);
+                expect(expectedResult).toEqual(elemDefault);
             });
 
-            it('should get an assessment', async () => {
+            it('should get an assessment', () => {
                 const submissionId = 187;
                 const returnedFromService = Object.assign({}, elemDefault);
                 service
@@ -119,10 +107,10 @@ describe('Modeling Assessment Service', () => {
                     method: 'GET',
                 });
                 req.flush(returnedFromService);
-                expect(expectedResult).to.deep.equal(elemDefault);
+                expect(expectedResult).toEqual(elemDefault);
             });
 
-            it('should update assessment after complaint', async () => {
+            it('should update assessment after complaint', () => {
                 const feedbacks = [
                     {
                         id: 0,
@@ -146,7 +134,7 @@ describe('Modeling Assessment Service', () => {
                     .subscribe((resp) => (httpExpectedResult = resp));
                 const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/file-upload-submissions/${submissionId}/assessment-after-complaint`, method: 'PUT' });
                 req.flush(returnedFromService);
-                expect(httpExpectedResult.body).to.deep.equal(expected);
+                expect(httpExpectedResult.body).toEqual(expected);
             });
         });
         describe('methods not returning a result', () => {
@@ -160,7 +148,7 @@ describe('Modeling Assessment Service', () => {
                     url: `${SERVER_API_URL}api/file-upload-submissions/${submissionId}/cancel-assessment`,
                     method: 'PUT',
                 });
-                expect(expectedResult).to.deep.equal({});
+                expect(expectedResult).toEqual({});
             });
         });
     });

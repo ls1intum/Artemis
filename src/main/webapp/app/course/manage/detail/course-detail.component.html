@@ -23,47 +23,51 @@
         <jhi-alert></jhi-alert>
         <div class="tab-bar tab-bar-course-detail">
             <a [routerLink]="['/course-management', course.id, 'exercises']" class="tab-item btn btn-primary btn-md ms-1">
-                <fa-icon [icon]="'list-alt'"></fa-icon>
+                <fa-icon [icon]="faListAlt"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</span>
             </a>
             <a [routerLink]="['/course-management', course.id, 'exams']" class="tab-item btn btn-primary btn-md ms-1">
-                <fa-icon [icon]="'graduation-cap'"></fa-icon>
+                <fa-icon [icon]="faGraduationCap"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</span>
             </a>
-            <a *ngIf="course.isAtLeastEditor" [routerLink]="['/course-management', course.id, 'lectures']" class="tab-item btn btn-primary btn-md ms-1">
-                <fa-icon [icon]="'file-pdf'"></fa-icon>
+            <a *ngIf="course.isAtLeastEditor" [routerLink]="['/course-management', course.id, 'lectures']" class="tab-item btn btn-primary btn-md ms-1" id="lectures">
+                <fa-icon [icon]="faFilePdf"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
             </a>
             <a *ngIf="course.postsEnabled && course.isAtLeastTutor" [routerLink]="['/courses', course.id, 'discussion']" class="tab-item btn btn-primary btn-md ms-1">
-                <fa-icon [icon]="'comments'"></fa-icon>
+                <fa-icon [icon]="faComments"></fa-icon>
                 <span jhiTranslate="artemisApp.metis.discussion.label">Discussion</span>
             </a>
             <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'goal-management']" class="tab-item btn btn-primary btn-md ms-1">
-                <fa-icon [icon]="'flag'"></fa-icon>
+                <fa-icon [icon]="faFlag"></fa-icon>
                 <span jhiTranslate="artemisApp.learningGoal.learningGoalButton">Learning Goals</span>
             </a>
             <a [routerLink]="['/course-management', course.id, 'assessment-dashboard']" class="tab-item btn btn-info btn-md ms-1">
-                <fa-icon [icon]="'user-check'"></fa-icon>
+                <fa-icon [icon]="faUserCheck"></fa-icon>
                 <span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
             </a>
             <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-info btn-md ms-1">
-                <fa-icon [icon]="'table'"></fa-icon>
+                <fa-icon [icon]="faTable"></fa-icon>
                 <span jhiTranslate="entity.action.scores">Scores</span>
             </a>
             <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn btn-info btn-md ms-1">
-                <fa-icon [icon]="'clipboard'"></fa-icon> <span jhitranslate="artemisApp.course.gradingSystem">Grading Key</span>
+                <fa-icon [icon]="faClipboard"></fa-icon> <span jhitranslate="artemisApp.course.gradingSystem">Grading Key</span>
             </a>
             <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'participant-scores']" class="tab-item btn btn-info btn-md ms-1">
-                <fa-icon [icon]="'eye'"></fa-icon>
+                <fa-icon [icon]="faEye"></fa-icon>
                 <span jhiTranslate="artemisApp.participantScores.pageTitle">Participant Score</span>
             </a>
-            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="tab-item btn btn-info btn-md ms-1">
-                <fa-icon [icon]="'chart-bar'"></fa-icon>
+            <a *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="tab-item btn btn-info btn-md ms-1">
+                <fa-icon [icon]="faChartBar"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
+            </a>
+            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn btn-info btn-md ms-1">
+                <fa-icon [icon]="faHeartBroken"></fa-icon>
+                <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</span>
             </a>
             <div class="ms-auto">
                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'edit']" class="tab-item btn btn-warning btn-md">
-                    <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+                    <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
                 </a>
                 <jhi-course-exam-archive-button
                     *ngIf="course.isAtLeastInstructor"
@@ -72,6 +76,7 @@
                     class="archive-button ms-1"
                 ></jhi-course-exam-archive-button>
                 <button
+                    id="delete-course"
                     class="tab-item btn btn-md ms-1 me-1"
                     *jhiHasAnyAuthority="['ROLE_ADMIN']"
                     [buttonSize]="ButtonSize.MEDIUM"
@@ -82,7 +87,7 @@
                     (delete)="deleteCourse(course.id!)"
                     [dialogError]="dialogError$"
                 >
-                    <fa-icon [icon]="'times'"></fa-icon>
+                    <fa-icon [icon]="faTimes"></fa-icon>
                 </button>
             </div>
         </div>
@@ -125,12 +130,14 @@
                     ></jhi-course-detail-doughnut-chart>
                 </div>
             </div>
-            <jhi-course-detail-line-chart
-                class="col-md-8"
-                [course]="course"
-                [numberOfStudentsInCourse]="course.numberOfStudents!"
-                [initialStats]="activeStudents"
-            ></jhi-course-detail-line-chart>
+            <jhi-fullscreen class="col-md-8 fullscreen align-items-center">
+                <jhi-course-detail-line-chart
+                    class="col-12"
+                    [course]="course"
+                    [numberOfStudentsInCourse]="course.numberOfStudents!"
+                    [initialStats]="activeStudents"
+                ></jhi-course-detail-line-chart>
+            </jhi-fullscreen>
         </div>
         <hr />
         <div>
@@ -151,19 +158,23 @@
             <div *ngIf="course.isAtLeastInstructor">
                 <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
                 <dd>
-                    <a [routerLink]="['/course-management', course.id, 'groups', 'students']"> {{ course.studentGroupName }} ({{ course.numberOfStudents }})</a>
+                    <a [routerLink]="['/course-management', course.id, 'groups', 'students']" id="add-students"> {{ course.studentGroupName }} ({{ course.numberOfStudents }})</a>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></dt>
                 <dd>
-                    <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']"> {{ course.teachingAssistantGroupName }} ({{ course.numberOfTeachingAssistants }})</a>
+                    <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" id="add-tutors">
+                        {{ course.teachingAssistantGroupName }} ({{ course.numberOfTeachingAssistants }})</a
+                    >
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.editorGroupName">Editor Group Name</span></dt>
                 <dd>
-                    <a [routerLink]="['/course-management', course.id, 'groups', 'editors']"> {{ course.editorGroupName }} ({{ course.numberOfEditors }})</a>
+                    <a [routerLink]="['/course-management', course.id, 'groups', 'editors']" id="add-editors"> {{ course.editorGroupName }} ({{ course.numberOfEditors }})</a>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
                 <dd>
-                    <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']"> {{ course.instructorGroupName }} ({{ course.numberOfInstructors }})</a>
+                    <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" id="add-instructors">
+                        {{ course.instructorGroupName }} ({{ course.numberOfInstructors }})</a
+                    >
                 </dd>
             </div>
             <div *ngIf="!course.isAtLeastInstructor">

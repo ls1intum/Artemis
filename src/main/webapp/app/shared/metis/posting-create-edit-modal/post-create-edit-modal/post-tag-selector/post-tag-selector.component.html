@@ -1,0 +1,28 @@
+<mat-form-field class="post-tag-list" appearance="outline">
+    <mat-chip-list #chipList aria-label="Tag selection">
+        <mat-chip *ngFor="let tag of tags" (removed)="onItemRemove(tag)" class="post-tag">
+            <div class="custom-tag">
+                {{ tag }}
+                <button matChipRemove>
+                    <fa-icon [icon]="faTimes" class="post-tag-remove"></fa-icon>
+                </button>
+            </div>
+        </mat-chip>
+        <input
+            *ngIf="tags.length < 3"
+            class="post-tag-input"
+            [placeholder]="'artemisApp.metis.post.tagPlaceholder' | artemisTranslate"
+            #tagInput
+            [formControl]="tagCtrl"
+            [matAutocomplete]="auto"
+            [matChipInputFor]="chipList"
+            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+            (matChipInputTokenEnd)="onItemAdd($event)"
+        />
+    </mat-chip-list>
+    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onItemSelect($event)">
+        <mat-option *ngFor="let tag of existingPostTags | async" [value]="tag" class="tag-option">
+            {{ tag }}
+        </mat-option>
+    </mat-autocomplete>
+</mat-form-field>

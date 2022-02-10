@@ -1,5 +1,6 @@
 import { Component, HostBinding, Input } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     /* tslint:disable-next-line component-selector */
@@ -21,4 +22,7 @@ export class ExerciseActionButtonComponent {
     public get btnPrimary(): boolean {
         return !this.outlined;
     }
+
+    // Icons
+    faCircleNotch = faCircleNotch;
 }

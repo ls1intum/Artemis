@@ -2,16 +2,16 @@ import { POST, EXERCISE_BASE } from '../../../constants';
 
 export class ShortAnswerQuiz {
     getQuizBody() {
-        return cy.get('.sa-question');
+        return cy.get('#question0').children().first();
     }
 
-    typeAnswer(optionNumber: number, answer: string) {
-        this.getQuizBody().get('.short-answer-question-container__input').eq(optionNumber).type(answer);
+    typeAnswer(line: number, column: number, quizQuestionId: number, answer: string) {
+        this.getQuizBody().find(`#solution-${line}-${column}-${quizQuestionId}`).type(answer);
     }
 
     submit() {
         cy.intercept(POST, EXERCISE_BASE + '*/submissions/live').as('createQuizExercise');
-        cy.get('.jhi-btn').contains('Submit').click();
+        cy.get('#submit-quiz').click();
         return cy.wait('@createQuizExercise');
     }
 }

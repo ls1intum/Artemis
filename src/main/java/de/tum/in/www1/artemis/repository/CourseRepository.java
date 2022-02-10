@@ -96,17 +96,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals" })
     Course findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
 
-    @Query("""
-            SELECT DISTINCT c FROM Course c
-            WHERE (c.startDate IS NULL
-            	OR c.startDate <= :#{#now})
-            AND (c.endDate IS NULL
-            	OR c.endDate >= :#{#now})
-            AND c.onlineCourse = FALSE
-            AND c.registrationEnabled = TRUE
-            """)
-    List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabled(@Param("now") ZonedDateTime now);
-
     @Query("select distinct course from Course course left join fetch course.organizations co where (course.startDate is null or course.startDate <= :#{#now}) and (course.endDate is null or course.endDate >= :#{#now}) and course.onlineCourse = false and course.registrationEnabled = true")
     List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations(@Param("now") ZonedDateTime now);
 
@@ -195,16 +184,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
 
     @NotNull
-    default Course findByIdElseThrow(Long courseId) throws EntityNotFoundException {
+    default Course findByIdElseThrow(long courseId) throws EntityNotFoundException {
         return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
-    default Course findByIdWithEagerExercisesElseThrow(Long courseId) throws EntityNotFoundException {
+    default Course findByIdWithEagerExercisesElseThrow(long courseId) throws EntityNotFoundException {
         return Optional.ofNullable(findWithEagerExercisesById(courseId)).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     @NotNull
-    default Course findWithEagerOrganizationsElseThrow(Long courseId) throws EntityNotFoundException {
+    default Course findWithEagerOrganizationsElseThrow(long courseId) throws EntityNotFoundException {
         return findWithEagerOrganizations(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
@@ -217,8 +206,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     default Set<Exercise> getInterestingExercisesForAssessmentDashboards(Set<Exercise> exercises) {
         return exercises.stream()
                 .filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
-                        || (exercise instanceof ProgrammingExercise
-                                && (exercise.getAssessmentType() != AUTOMATIC || ((ProgrammingExercise) exercise).getAllowComplaintsForAutomaticAssessments())))
+                        || (exercise instanceof ProgrammingExercise && (exercise.getAssessmentType() != AUTOMATIC || exercise.getAllowComplaintsForAutomaticAssessments())))
                 .collect(Collectors.toSet());
     }
 
@@ -229,15 +217,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     default List<Course> findAllActiveWithLecturesAndExams() {
         return findAllActiveWithLecturesAndExams(ZonedDateTime.now());
-    }
-
-    /**
-     * Get all the courses.
-     *
-     * @return the list of entities
-     */
-    default List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabled() {
-        return findAllCurrentlyActiveNotOnlineAndRegistrationEnabled(ZonedDateTime.now());
     }
 
     /**
@@ -291,5 +270,22 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @NotNull
     default Course findByIdWithExercisesAndLecturesElseThrow(long courseId) {
         return findWithEagerExercisesAndLecturesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    /**
+     * Utility method used to check whether a user is member of at least one organization of a given course
+     * @param user the user to check
+     * @param course the course to check
+     * @return true if the user is member of at least one organization of the course. false otherwise
+     */
+    default boolean checkIfUserIsMemberOfCourseOrganizations(User user, Course course) {
+        boolean isMember = false;
+        for (Organization organization : findWithEagerOrganizationsElseThrow(course.getId()).getOrganizations()) {
+            if (user.getOrganizations().contains(organization)) {
+                isMember = true;
+                break;
+            }
+        }
+        return isMember;
     }
 }

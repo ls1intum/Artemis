@@ -75,6 +75,7 @@
                         <div class="btn-toolbar">
                             <button
                                 type="submit"
+                                id="login-button"
                                 [disabled]="
                                     isSubmittingLogin ||
                                     (!userAcceptTerms && needsToAcceptTerms) ||
@@ -85,7 +86,7 @@
                                 "
                                 class="btn btn-primary btn-space"
                             >
-                                <span *ngIf="isSubmittingLogin" class="me-1"><fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon></span>
+                                <span *ngIf="isSubmittingLogin" class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon></span>
                                 <span jhiTranslate="login.form.button"> Sign in </span>
                             </button>
                             <div *ngIf="profileInfo && profileInfo.saml2">

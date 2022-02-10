@@ -18,7 +18,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Submission } from 'app/entities/submission.model';
@@ -26,6 +26,19 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
+import {
+    faBook,
+    faChartBar,
+    faCheckDouble,
+    faEraser,
+    faExclamationTriangle,
+    faListAlt,
+    faPencilAlt,
+    faTable,
+    faTimes,
+    faUserCheck,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -54,6 +67,19 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faTimes = faTimes;
+    faBook = faBook;
+    faWrench = faWrench;
+    faCheckDouble = faCheckDouble;
+    faTable = faTable;
+    faExclamationTriangle = faExclamationTriangle;
+    faUserCheck = faUserCheck;
+    faListAlt = faListAlt;
+    faChartBar = faChartBar;
+    faPencilAlt = faPencilAlt;
+    faEraser = faEraser;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -312,7 +338,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     /**
      * Opens modal and executes a consistency check for the given programming exercise
-     * @param exerciseId id of the programming exercise to check
+     * @param exercise the programming exercise to check
      */
     checkConsistencies(exercise: ProgrammingExercise) {
         const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });

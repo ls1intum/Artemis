@@ -5,13 +5,13 @@ import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/quest
 import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { DragItemComponent } from './drag-and-drop-question/drag-item.component';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { AngularFittextModule } from 'angular-fittext';
-import { DndModule } from 'ng2-dnd';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, AngularFittextModule, DndModule.forRoot(), ArtemisMarkdownModule],
+    imports: [ArtemisSharedModule, DragDropModule, ArtemisMarkdownModule, FitTextModule],
     declarations: [DragItemComponent, DragAndDropQuestionComponent, MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, QuizScoringInfoStudentModalComponent],
     providers: [DeviceDetectorService],
     exports: [DragItemComponent, DragAndDropQuestionComponent, MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent],

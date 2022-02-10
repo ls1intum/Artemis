@@ -1,5 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -8,10 +6,10 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementExerciseRowComponent } from 'app/course/manage/overview/course-management-exercise-row.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementOverviewStatisticsComponent } from 'app/course/manage/overview/course-management-overview-statistics.component';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Course } from 'app/entities/course.model';
@@ -19,9 +17,6 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/entities/exercise.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('CourseManagementCardComponent', () => {
     let fixture: ComponentFixture<CourseManagementCardComponent>;
@@ -80,13 +75,13 @@ describe('CourseManagementCardComponent', () => {
     it('should initialize component', () => {
         component.courseStatistics = courseStatisticsDTO;
         component.ngOnChanges();
-        expect(component.statisticsPerExercise[exerciseDTO.exerciseId!]).to.deep.equal(exerciseDTO);
+        expect(component.statisticsPerExercise[exerciseDTO.exerciseId!]).toEqual(exerciseDTO);
 
         component.courseWithExercises = course;
         component.ngOnChanges();
-        expect(component.futureExercises).to.deep.equal([futureExercise1, futureExercise2]);
-        expect(component.currentExercises).to.deep.equal([currentExercise]);
-        expect(component.pastExercises).to.deep.equal([pastExercise]);
+        expect(component.futureExercises).toEqual([futureExercise1, futureExercise2]);
+        expect(component.currentExercises).toEqual([currentExercise]);
+        expect(component.pastExercises).toEqual([pastExercise]);
     });
 
     it('should only display the latest five past exercises', () => {
@@ -100,6 +95,6 @@ describe('CourseManagementCardComponent', () => {
         } as Course;
 
         component.ngOnChanges();
-        expect(component.pastExercises).to.deep.equal([pastExercise, pastExercise2, pastExercise5, pastExercise3, pastExercise4]);
+        expect(component.pastExercises).toEqual([pastExercise, pastExercise2, pastExercise5, pastExercise3, pastExercise4]);
     });
 });

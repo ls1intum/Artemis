@@ -17,7 +17,6 @@ import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/entities/quiz/drag-state.enum';
-import $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
@@ -33,6 +32,26 @@ import { round } from 'app/shared/util/utils';
 import { MAX_SIZE_UNIT } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { filter, debounceTime } from 'rxjs/operators';
 import { SecuredImageComponent, ImageLoadingStatus } from 'app/shared/image/secured-image.component';
+import { generateTextHintExplanation } from 'app/shared/util/markdown.util';
+import {
+    faAngleDown,
+    faAngleRight,
+    faBan,
+    faBars,
+    faChevronDown,
+    faChevronUp,
+    faCopy,
+    faEye,
+    faFont,
+    faPencilAlt,
+    faPlus,
+    faTrash,
+    faUndo,
+    faUnlink,
+    faUpload,
+} from '@fortawesome/free-solid-svg-icons';
+import { faFileImage } from '@fortawesome/free-regular-svg-icons';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -42,29 +61,19 @@ import { SecuredImageComponent, ImageLoadingStatus } from 'app/shared/image/secu
     encapsulation: ViewEncapsulation.None,
 })
 export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
-    @ViewChild('clickLayer', { static: false })
-    private clickLayer: ElementRef;
-    @ViewChild('backgroundImage', { static: false })
-    private backgroundImage: SecuredImageComponent;
-    @ViewChild('markdownEditor', { static: false })
-    private markdownEditor: MarkdownEditorComponent;
+    @ViewChild('clickLayer', { static: false }) private clickLayer: ElementRef;
+    @ViewChild('backgroundImage', { static: false }) private backgroundImage: SecuredImageComponent;
+    @ViewChild('markdownEditor', { static: false }) private markdownEditor: MarkdownEditorComponent;
 
-    @Input()
-    question: DragAndDropQuestion;
-    @Input()
-    questionIndex: number;
-    @Input()
-    reEvaluationInProgress: boolean;
+    @Input() question: DragAndDropQuestion;
+    @Input() questionIndex: number;
+    @Input() reEvaluationInProgress: boolean;
 
-    @Output()
-    questionUpdated = new EventEmitter();
-    @Output()
-    questionDeleted = new EventEmitter();
+    @Output() questionUpdated = new EventEmitter();
+    @Output() questionDeleted = new EventEmitter();
     /** Question move up and down are used for re-evaluate **/
-    @Output()
-    questionMoveUp = new EventEmitter();
-    @Output()
-    questionMoveDown = new EventEmitter();
+    @Output() questionMoveUp = new EventEmitter();
+    @Output() questionMoveDown = new EventEmitter();
 
     /** Ace Editor configuration constants **/
     questionEditorText = '';
@@ -111,6 +120,24 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     /** {array} with domainCommands that are needed for a drag and drop question **/
     dragAndDropQuestionDomainCommands: DomainCommand[] = [this.explanationCommand, this.hintCommand];
 
+    // Icons
+    faBan = faBan;
+    faPlus = faPlus;
+    faTrash = faTrash;
+    faUndo = faUndo;
+    faFont = faFont;
+    faEye = faEye;
+    faChevronUp = faChevronUp;
+    faChevronDown = faChevronDown;
+    faPencilAlt = faPencilAlt;
+    faBars = faBars;
+    faUnlink = faUnlink;
+    faCopy = faCopy;
+    farFileImage = faFileImage;
+    faAngleRight = faAngleRight;
+    faAngleDown = faAngleDown;
+    faUpload = faUpload;
+
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
@@ -123,7 +150,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * Actions when initializing component.
      */
     ngOnInit(): void {
-        // create deepcopy as backup
+        // create deep copy as backup
         this.backupQuestion = cloneDeep(this.question);
 
         /** Assign status booleans and strings **/
@@ -138,7 +165,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         /** Initialize DropLocation and MouseEvent objects **/
         this.currentDropLocation = new DropLocation();
         this.mouse = new DragAndDropMouseEvent();
-        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
+        this.questionEditorText = generateTextHintExplanation(this.question);
     }
 
     /**
@@ -254,27 +281,25 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * React to mousemove events on the entire page to update:
      * - mouse object (always)
      * - current drop location (only while dragging)
-     * @param e {object} Mouse move event
+     * @param event {object} Mouse move event
      */
-    mouseMove(e: any): void {
+    mouseMove(event: MouseEvent): void {
         // Update mouse x and y value
-        const event: MouseEvent = e || window.event; // Moz || IE
-        const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-        const jQueryBackgroundOffset = jQueryBackgroundElement.offset()!;
-        const backgroundWidth = jQueryBackgroundElement.width()!;
-        const backgroundHeight = jQueryBackgroundElement.height()!;
-        this.mouseMoveAction(event, jQueryBackgroundOffset, backgroundWidth, backgroundHeight);
+        const backgroundElement = this.clickLayer.nativeElement;
+        const backgroundOffsetLeft = backgroundElement.getBoundingClientRect().x + window.scrollX;
+        const backgroundOffsetTop = backgroundElement.getBoundingClientRect().y + window.scrollY;
+        const backgroundWidth = backgroundElement.offsetWidth;
+        const backgroundHeight = backgroundElement.offsetHeight;
+        this.mouseMoveAction(event, backgroundOffsetLeft, backgroundOffsetTop, backgroundWidth, backgroundHeight);
     }
 
-    private mouseMoveAction(event: MouseEvent, jQueryBackgroundOffset: { left: number; top: number }, backgroundWidth: number, backgroundHeight: number) {
+    private mouseMoveAction(event: MouseEvent, backgroundOffsetLeft: number, backgroundOffsetTop: number, backgroundWidth: number, backgroundHeight: number) {
         if (event.pageX) {
-            // Moz
-            this.mouse.x = event.pageX - jQueryBackgroundOffset.left;
-            this.mouse.y = event.pageY - jQueryBackgroundOffset.top;
+            this.mouse.x = event.pageX - backgroundOffsetLeft;
+            this.mouse.y = event.pageY - backgroundOffsetTop;
         } else if (event.clientX) {
-            // IE
-            this.mouse.x = event.clientX - jQueryBackgroundOffset.left;
-            this.mouse.y = event.clientY - jQueryBackgroundOffset.top;
+            this.mouse.x = event.clientX - backgroundOffsetLeft;
+            this.mouse.y = event.clientY - backgroundOffsetTop;
         }
         this.mouse.x = Math.min(Math.max(0, this.mouse.x), backgroundWidth);
         this.mouse.y = Math.min(Math.max(0, this.mouse.y), backgroundHeight);
@@ -319,9 +344,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         if (this.draggingState !== DragState.NONE) {
             switch (this.draggingState) {
                 case DragState.CREATE:
-                    const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-                    const backgroundWidth = jQueryBackgroundElement.width()!;
-                    const backgroundHeight = jQueryBackgroundElement.height()!;
+                    const backgroundElement = this.clickLayer.nativeElement;
+                    const backgroundWidth = backgroundElement.offsetWidth;
+                    const backgroundHeight = backgroundElement.offsetHeight;
                     if ((this.currentDropLocation!.width! / MAX_SIZE_UNIT) * backgroundWidth < 14 && (this.currentDropLocation!.height! / MAX_SIZE_UNIT) * backgroundHeight < 14) {
                         // Remove drop Location if too small (assume it was an accidental click/drag),
                         this.deleteDropLocation(this.currentDropLocation!);
@@ -377,9 +402,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     dropLocationMouseDown(dropLocation: DropLocation): void {
         if (this.draggingState === DragState.NONE) {
-            const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-            const backgroundWidth = jQueryBackgroundElement.width()!;
-            const backgroundHeight = jQueryBackgroundElement.height()!;
+            const backgroundElement = this.clickLayer.nativeElement;
+            const backgroundWidth = backgroundElement.offsetWidth;
+            const backgroundHeight = backgroundElement.offsetHeight;
 
             const dropLocationX = (dropLocation.posX! / MAX_SIZE_UNIT) * backgroundWidth;
             const dropLocationY = (dropLocation.posY! / MAX_SIZE_UNIT) * backgroundHeight;
@@ -553,14 +578,16 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     /**
      * React to a drag item being dropped on a drop location
      * @param dropLocation {object} the drop location involved
-     * @param dragEvent {object} the drag item involved (may be a copy at this point)
+     * @param dropEvent {object} an event containing the drag item involved (can be a copy at this point)
      */
-    onDragDrop(dropLocation: DropLocation, dragEvent: any): void {
-        let dragItem = dragEvent.dragData;
+    onDragDrop(dropLocation: DropLocation, dropEvent: CdkDragDrop<DragItem, DragItem>): void {
+        const dragItem = dropEvent.item.data as DragItem;
         // Replace dragItem with original (because it may be a copy)
-        dragItem = this.question.dragItems!.find((originalDragItem) => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID));
+        const questionDragItem = this.question.dragItems!.find((originalDragItem) =>
+            dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID,
+        );
 
-        if (!dragItem) {
+        if (!questionDragItem) {
             // Drag item was not found in question => do nothing
             return;
         }
@@ -573,12 +600,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         if (
             !this.question.correctMappings.some(
                 (existingMapping) =>
-                    this.dragAndDropQuestionUtil.isSameDropLocation(existingMapping.dropLocation!, dropLocation) &&
-                    this.dragAndDropQuestionUtil.isSameDragItem(existingMapping.dragItem!, dragItem),
+                    this.dragAndDropQuestionUtil.isSameEntityWithTempId(existingMapping.dropLocation, dropLocation) &&
+                    this.dragAndDropQuestionUtil.isSameEntityWithTempId(existingMapping.dragItem, questionDragItem),
             )
         ) {
             // Mapping doesn't exit yet => add this mapping
-            const dndMapping = new DragAndDropMapping(dragItem, dropLocation);
+            const dndMapping = new DragAndDropMapping(questionDragItem, dropLocation);
             this.question.correctMappings.push(dndMapping);
 
             // Notify parent of changes
@@ -593,18 +620,18 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     getMappingIndex(mapping: DragAndDropMapping): number {
         const visitedDropLocations: DropLocation[] = [];
-        // Save reference to this due to nested some calls
+        // Save reference to this due nested some calls
         const that = this;
         if (
             this.question.correctMappings!.some(function (correctMapping) {
                 if (
                     !visitedDropLocations.some((dropLocation: DropLocation) => {
-                        return that.dragAndDropQuestionUtil.isSameDropLocation(dropLocation, correctMapping.dropLocation!);
+                        return that.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, correctMapping.dropLocation);
                     })
                 ) {
                     visitedDropLocations.push(correctMapping.dropLocation!);
                 }
-                return that.dragAndDropQuestionUtil.isSameDropLocation(correctMapping.dropLocation!, mapping.dropLocation!);
+                return that.dragAndDropQuestionUtil.isSameEntityWithTempId(correctMapping.dropLocation, mapping.dropLocation);
             })
         ) {
             return visitedDropLocations.length;
@@ -622,7 +649,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        return this.question.correctMappings.filter((mapping) => this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation!, dropLocation));
+        return this.question.correctMappings.filter((mapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation));
     }
 
     /**
@@ -636,7 +663,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         }
         return (
             this.question.correctMappings
-                .filter((mapping) => this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem))
+                .filter((mapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem))
                 /** Moved the sorting from the template to the function call **/
                 .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
         );
@@ -650,7 +677,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation!, dropLocation));
+        this.question.correctMappings = this.question.correctMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation));
         // Notify parent of changes
         this.questionUpdated.emit();
     }
@@ -663,7 +690,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem));
+        this.question.correctMappings = this.question.correctMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem));
         // Notify parent of changes
         this.questionUpdated.emit();
     }
@@ -751,7 +778,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.question.text = this.backupQuestion.text;
         this.question.explanation = this.backupQuestion.explanation;
         this.question.hint = this.backupQuestion.hint;
-        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
+        this.questionEditorText = generateTextHintExplanation(this.question);
     }
 
     /**

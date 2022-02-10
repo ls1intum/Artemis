@@ -1,6 +1,6 @@
 <div>
     <span class="badge bg-primary" title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}" *ngIf="feedback.type === FeedbackType.AUTOMATIC">
-        <fa-icon [icon]="'robot'"></fa-icon>
+        <fa-icon [icon]="faRobot"></fa-icon>
         <span [jhiTranslate]="'artemisApp.AssessmentType.' + feedback.type"></span>
     </span>
 
@@ -11,7 +11,7 @@
         [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.trace' | artemisTranslate"
         placement="top"
     >
-        <fa-icon [icon]="'search'"></fa-icon>
+        <fa-icon [icon]="faSearch"></fa-icon>
     </span>
 
     <span
@@ -19,24 +19,24 @@
         *ngIf="!conflictMode && feedback.conflictingTextAssessments && feedback.conflictingTextAssessments.length > 0"
         (click)="onConflictClicked(feedback.id)"
     >
-        <fa-icon [icon]="'balance-scale-right'"></fa-icon>
+        <fa-icon [icon]="faBalanceScaleRight"></fa-icon>
         <span jhiTranslate="artemisApp.textAssessment.conflict.conflictingAssessments" [translateValues]="{ number: feedback.conflictingTextAssessments?.length }"></span>
     </span>
 
     <span class="badge bg-warning" title="{{ conflictType }}" *ngIf="conflictType && conflictMode">
-        <fa-icon [icon]="'balance-scale-right'"></fa-icon>
+        <fa-icon [icon]="faBalanceScaleRight"></fa-icon>
         <span [jhiTranslate]="'artemisApp.textAssessment.conflict.type.' + conflictType"></span>
     </span>
 
     <div class="close" *ngIf="!readOnly">
         <ng-container *ngIf="canDismiss; then closeButton; else trashButton"></ng-container>
         <ng-template #closeButton>
-            <fa-icon icon="times" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()"> </fa-icon>
+            <fa-icon [icon]="faTimes" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()"> </fa-icon>
         </ng-template>
         <ng-template #trashButton>
             <jhi-confirm-icon
-                initialIcon="times"
-                confirmIcon="trash"
+                [initialIcon]="faTimes"
+                [confirmIcon]="faTrash"
                 [initialTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate"
                 [confirmTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation' | artemisTranslate"
                 (confirmEvent)="dismiss()"
@@ -46,10 +46,10 @@
 
     <div class="row">
         <div class="form-group col-md-10 m-0">
-            <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedback" [for]="'detailText-' + textBlock.id"></label>
+            <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedbackWithColon" [for]="'detailText-' + textBlock.id"></label>
             <div class="d-inline" *ngIf="feedback.gradingInstruction!">
-                <fa-icon [icon]="'question-circle'" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate" container="body"></fa-icon>
-                <span>{{ feedback.gradingInstruction!.feedback }}</span>
+                <span class="fw-bold">{{ feedback.gradingInstruction!.feedback }}</span>
+                <fa-icon [icon]="faQuestionCircle" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate" container="body"></fa-icon>
             </div>
         </div>
         <div class="form-group col-md-1 text-end m-0">
@@ -69,7 +69,7 @@
                         ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
                         : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
                 "
-                id="detailText-{{ textBlock.id }}"
+                id="feedback-editor-text-input"
                 [(ngModel)]="feedback.detailText"
                 #detailText
                 (keyup)="textareaAutogrow()"
@@ -79,7 +79,7 @@
                 (ngModelChange)="didChange()"
             ></textarea>
             <div class="card-header" *ngIf="!conflictMode && feedback.credits !== 0 && textBlock?.numberOfAffectedSubmissions && feedback.type === FeedbackType.MANUAL">
-                <fa-icon [icon]="'info-circle'" size="1x" class="text-info" placement="left"></fa-icon>
+                <fa-icon [icon]="faInfoCircle" size="1x" class="text-info" placement="left"></fa-icon>
                 <span
                     jhiTranslate="artemisApp.textAssessment.feedbackEditor.impactWarning"
                     [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.impactWarningTooltip' | artemisTranslate"
@@ -97,7 +97,7 @@
                 type="number"
                 step="0.5"
                 [(ngModel)]="feedback.credits"
-                id="score-{{ textBlock.id }}"
+                id="feedback-editor-points-input"
                 (keydown.escape)="escKeyup()"
                 (click)="onScoreClick($event)"
                 (focus)="inFocus()"
@@ -108,13 +108,18 @@
     </div>
 
     <!-- Text showing whether the tutor feedback is correct or not (upon validation on the server) -->
-    <div *ngIf="feedback.correctionStatus != undefined">
-        <span>{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }} </span>
+    <div *ngIf="feedback.correctionStatus !== undefined">
+        <span *ngIf="feedback.correctionStatus === 'CORRECT'" class="text-success"
+            >{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }}
+        </span>
+        <span *ngIf="feedback.correctionStatus !== 'CORRECT'" class="text-danger"
+            >{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }}
+        </span>
 
         <!-- :warning: emoji was rendered as a black-white glyph, hence the solution with the fa-icon -->
-        <fa-layers *ngIf="feedback.correctionStatus != 'CORRECT'">
-            <fa-icon class="text-warning" [icon]="'exclamation-triangle'"></fa-icon>
-            <fa-icon [icon]="'exclamation'" size="2x" [styles]="{ width: '16px', 'margin-top': '-6px' }" transform="shrink-10"></fa-icon>
+        <fa-layers *ngIf="feedback.correctionStatus !== 'CORRECT'">
+            <fa-icon class="text-warning" [icon]="faExclamationTriangle"></fa-icon>
+            <fa-icon [icon]="faExclamation" size="2x" [styles]="{ width: '16px', 'margin-top': '-6px' }" [classes]="['text-dark']" transform="shrink-10"></fa-icon>
         </fa-layers>
     </div>
 
@@ -136,7 +141,7 @@
 
                     <div class="{{ (block.type === FeedbackType.AUTOMATIC ? 'alert-primary' : 'alert-secondary') + ' alert white-space' }}" *ngIf="block.credits">
                         <div *ngIf="block.type === FeedbackType.AUTOMATIC">
-                            <fa-icon [icon]="'robot'"></fa-icon>
+                            <fa-icon [icon]="faRobot"></fa-icon>
                             <span
                                 style="font-weight: bold"
                                 jhiTranslate="artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.reused"
@@ -145,12 +150,12 @@
                             >
                         </div>
                         <div>
-                            <fa-icon [icon]="'info-circle'"></fa-icon>&nbsp;
+                            <fa-icon [icon]="faInfoCircle"></fa-icon>&nbsp;
                             <span style="font-weight: bold" jhiTranslate="artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.points"> Points: </span
                             ><span>: {{ block.credits }}</span>
                         </div>
                         <div *ngIf="block.feedback">
-                            <fa-icon [icon]="'edit'"></fa-icon>&nbsp; <span style="font-weight: bold" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:
+                            <fa-icon [icon]="faEdit"></fa-icon>&nbsp; <span style="font-weight: bold" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:
                             {{ block.feedback }}
                         </div>
                     </div>

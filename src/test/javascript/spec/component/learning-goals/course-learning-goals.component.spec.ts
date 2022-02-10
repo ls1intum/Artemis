@@ -68,7 +68,7 @@ describe('CourseLearningGoals', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

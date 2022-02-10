@@ -16,12 +16,13 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
-import { problemStatementHasChanged } from 'app/exercises/shared/exercise/exercise-utils';
+import { problemStatementHasChanged } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { hasParticipationChanged } from 'app/overview/participation-utils';
 import { Result } from 'app/entities/result.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { findLatestResult } from 'app/shared/util/utils';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -64,6 +65,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private injectableContentFoundSubscription: Subscription;
     private tasksSubscription: Subscription;
     private generateHtmlSubscription: Subscription;
+
+    // Icons
+    faSpinner = faSpinner;
 
     constructor(
         private translateService: TranslateService,

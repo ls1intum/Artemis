@@ -5,6 +5,25 @@ $draggable-width: 15px;
     height: 100%;
     display: flex;
     flex-flow: column nowrap;
+
+    .help-and-status {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        margin-bottom: 5px;
+        gap: 20px;
+
+        .spin {
+            display: inline-block;
+            animation: spin 4s linear infinite;
+        }
+    }
+}
+
+@media screen and (max-width: 400px) {
+    .modeling-editor .help-and-status .status-hint > span {
+        display: none;
+    }
 }
 
 .resizable {
@@ -22,4 +41,13 @@ $draggable-width: 15px;
     height: 100%;
     min-height: 750px;
     overflow: hidden;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }

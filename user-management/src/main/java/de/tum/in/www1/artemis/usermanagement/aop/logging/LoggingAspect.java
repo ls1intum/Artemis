@@ -31,19 +31,21 @@ public class LoggingAspect {
 
     /**
      * Pointcut that matches all repositories, services and Web REST endpoints.
+     * Method is empty as this is just a Pointcut, the implementations are in the advices
+     * {@link #logAround(ProceedingJoinPoint)} and {@link #logAfterThrowing(JoinPoint, Throwable)}
      */
     @Pointcut("within(@org.springframework.stereotype.Repository *)" + " || within(@org.springframework.stereotype.Service *)"
             + " || within(@org.springframework.web.bind.annotation.RestController *)")
     public void springBeanPointcut() {
-        // Method is empty as this is just a Pointcut, the implementations are in the advices.
     }
 
     /**
      * Pointcut that matches all Spring beans in the application's main packages.
+     * Method is empty as this is just a Pointcut, the implementations are in the advices
+     * {@link #logAround(ProceedingJoinPoint)} and {@link #logAfterThrowing(JoinPoint, Throwable)}
      */
     @Pointcut("within(de.tum.in.www1.artemis.repository..*)" + " || within(de.tum.in.www1.artemis.service..*)" + " || within(de.tum.in.www1.artemis.web.rest..*)")
     public void applicationPackagePointcut() {
-        // Method is empty as this is just a Pointcut, the implementations are in the advices.
     }
 
     /**
@@ -60,16 +62,16 @@ public class LoggingAspect {
      * Advice that logs methods throwing exceptions.
      *
      * @param joinPoint join point for advice.
-     * @param e exception.
+     * @param throwable exception.
      */
-    @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut()", throwing = "e")
-    public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
+    @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut()", throwing = "throwable")
+    public void logAfterThrowing(JoinPoint joinPoint, Throwable throwable) {
         if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT))) {
             logger(joinPoint).error("Exception in {}() with cause = \'{}\' and exception = \'{}\'", joinPoint.getSignature().getName(),
-                    e.getCause() != null ? e.getCause() : "NULL", e.getMessage(), e);
+                    throwable.getCause() != null ? throwable.getCause() : "NULL", throwable.getMessage(), throwable);
         }
         else {
-            logger(joinPoint).error("Exception in {}() with cause = {}", joinPoint.getSignature().getName(), e.getCause() != null ? e.getCause() : "NULL");
+            logger(joinPoint).error("Exception in {}() with cause = {}", joinPoint.getSignature().getName(), throwable.getCause() != null ? throwable.getCause() : "NULL");
         }
     }
 

@@ -14,7 +14,7 @@ import { MockComponent, MockDirective, MockProvider, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
-import { MockRouterLinkDirective } from '../shared/navbar.component.spec';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('ConsistencyCheckComponent', () => {
     let component: ConsistencyCheckComponent;

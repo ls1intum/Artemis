@@ -8,7 +8,7 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import * as helper from 'app/shared/util/download.util';
@@ -106,7 +106,7 @@ describe('ModelingExercise Service', () => {
     }));
 
     it('should convert model to pdf', fakeAsync(() => {
-        spyOn(helper, 'downloadStream').and.returnValue({});
+        jest.spyOn(helper, 'downloadStream').mockReturnValue();
         const blob = new Blob(['test'], { type: 'text/html' }) as File;
         service.convertToPdf('model1', 'filename').subscribe((resp) => expect(resp).resolves);
 

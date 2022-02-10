@@ -82,54 +82,54 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     public void normalizeFileEndingsUnix_noChange() throws IOException {
         writeFile("LineEndingsUnix.java", FILE_WITH_UNIX_LINE_ENDINGS);
-        int size = FileUtils.readFileToByteArray(new File("./exportTest/LineEndingsUnix.java")).length;
+        int size = Files.readAllBytes(new File("./exportTest/LineEndingsUnix.java").toPath()).length;
         assertThat(size).isEqualTo(129);
     }
 
     @Test
     public void normalizeFileEndingsUnix_normalized() throws IOException {
         writeFile("LineEndingsUnix.java", FILE_WITH_UNIX_LINE_ENDINGS);
-        int size = FileUtils.readFileToByteArray(new File("./exportTest/LineEndingsUnix.java")).length;
+        int size = Files.readAllBytes(new File("./exportTest/LineEndingsUnix.java").toPath()).length;
         assertThat(size).isEqualTo(129);
 
         fileService.normalizeLineEndings("./exportTest/LineEndingsUnix.java");
-        size = FileUtils.readFileToByteArray(new File("./exportTest/LineEndingsUnix.java")).length;
+        size = Files.readAllBytes(new File("./exportTest/LineEndingsUnix.java").toPath()).length;
         assertThat(size).isEqualTo(129);
     }
 
     @Test
     public void normalizeFileEndingsWindows_noChange() throws IOException {
         writeFile("LineEndingsWindows.java", FILE_WITH_WINDOWS_LINE_ENDINGS);
-        int size = FileUtils.readFileToByteArray(new File("./exportTest/LineEndingsWindows.java")).length;
+        int size = Files.readAllBytes(new File("./exportTest/LineEndingsWindows.java").toPath()).length;
         assertThat(size).isEqualTo(136);
     }
 
     @Test
     public void normalizeFileEndingsWindows_normalized() throws IOException {
         writeFile("LineEndingsWindows.java", FILE_WITH_WINDOWS_LINE_ENDINGS);
-        int size = FileUtils.readFileToByteArray(new File("./exportTest/LineEndingsWindows.java")).length;
+        int size = Files.readAllBytes(new File("./exportTest/LineEndingsWindows.java").toPath()).length;
         assertThat(size).isEqualTo(136);
 
         fileService.normalizeLineEndings("./exportTest/LineEndingsWindows.java");
-        size = FileUtils.readFileToByteArray(new File("./exportTest/LineEndingsWindows.java")).length;
+        size = Files.readAllBytes(new File("./exportTest/LineEndingsWindows.java").toPath()).length;
         assertThat(size).isEqualTo(129);
     }
 
     @Test
     public void normalizeEncodingUTF8() throws IOException {
         copyFile("EncodingUTF8.java", "EncodingUTF8.java");
-        Charset charset = fileService.detectCharset(FileUtils.readFileToByteArray(new File("./exportTest/EncodingUTF8.java")));
+        Charset charset = fileService.detectCharset(Files.readAllBytes(new File("./exportTest/EncodingUTF8.java").toPath()));
         assertThat(charset).isEqualTo(StandardCharsets.UTF_8);
     }
 
     @Test
     public void normalizeEncodingISO_8559_1() throws IOException {
         copyFile("EncodingISO_8559_1.java", "EncodingISO_8559_1.java");
-        Charset charset = fileService.detectCharset(FileUtils.readFileToByteArray(new File("./exportTest/EncodingISO_8559_1.java")));
+        Charset charset = fileService.detectCharset(Files.readAllBytes(new File("./exportTest/EncodingISO_8559_1.java").toPath()));
         assertThat(charset).isEqualTo(StandardCharsets.ISO_8859_1);
 
         fileService.convertToUTF8("./exportTest/EncodingISO_8559_1.java");
-        charset = fileService.detectCharset(FileUtils.readFileToByteArray(new File("./exportTest/EncodingISO_8559_1.java")));
+        charset = fileService.detectCharset(Files.readAllBytes(new File("./exportTest/EncodingISO_8559_1.java").toPath()));
         assertThat(charset).isEqualTo(StandardCharsets.UTF_8);
     }
 
@@ -222,14 +222,10 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     public void testActualPathForPublicFileUploadExercisePath_shouldThrowException() {
-        Exception exception = assertThrows(FilePathParsingException.class, () -> {
-            fileService.actualPathForPublicPath("asdasdfiles/file-upload-exercises");
-        });
+        Exception exception = assertThrows(FilePathParsingException.class, () -> fileService.actualPathForPublicPath("asdasdfiles/file-upload-exercises"));
         assertThat(exception.getMessage()).startsWith("Public path does not contain correct exerciseId or submissionId:");
 
-        exception = assertThrows(FilePathParsingException.class, () -> {
-            fileService.actualPathForPublicPath("asdasdfiles/file-asd-exercises");
-        });
+        exception = assertThrows(FilePathParsingException.class, () -> fileService.actualPathForPublicPath("asdasdfiles/file-asd-exercises"));
         assertThat(exception.getMessage()).startsWith("Unknown Filepath:");
     }
 
@@ -248,33 +244,25 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         });
         assertThat(exception.getMessage()).startsWith("Unexpected String in upload file path. Exercise ID should be present here:");
 
-        exception = assertThrows(FilePathParsingException.class, () -> {
-            fileService.publicPathForActualPath("asdasdfiles/file-asd-exercises", 1L);
-        });
+        exception = assertThrows(FilePathParsingException.class, () -> fileService.publicPathForActualPath("asdasdfiles/file-asd-exercises", 1L));
         assertThat(exception.getMessage()).startsWith("Unknown Filepath:");
     }
 
     @Test
     public void testReplaceVariablesInFileRecursive_shouldThrowException() {
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            fileService.replaceVariablesInFileRecursive("some-path", new HashMap<>());
-        });
+        Exception exception = assertThrows(RuntimeException.class, () -> fileService.replaceVariablesInFileRecursive("some-path", new HashMap<>()));
         assertThat(exception.getMessage()).endsWith("should be replaced but the directory does not exist.");
     }
 
     @Test
     public void testNormalizeLineEndingsDirectory_shouldThrowException() {
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            fileService.normalizeLineEndingsDirectory("some-path");
-        });
+        Exception exception = assertThrows(RuntimeException.class, () -> fileService.normalizeLineEndingsDirectory("some-path"));
         assertThat(exception.getMessage()).endsWith("should be normalized but the directory does not exist.");
     }
 
     @Test
     public void testConvertToUTF8Directory_shouldThrowException() {
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            fileService.convertToUTF8Directory("some-path");
-        });
+        Exception exception = assertThrows(RuntimeException.class, () -> fileService.convertToUTF8Directory("some-path"));
         assertThat(exception.getMessage()).endsWith("should be converted to UTF-8 but the directory does not exist.");
     }
 
@@ -295,9 +283,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         Path path = Path.of("some-path");
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.createDirectories(path)).thenThrow(NoSuchFileException.class);
-        assertDoesNotThrow(() -> {
-            fileService.createDirectory(path);
-        });
+        assertDoesNotThrow(() -> fileService.createDirectory(path));
         mockedFiles.close();
     }
 
@@ -306,9 +292,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         Path path = Path.of("some-path");
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.delete(path)).thenThrow(NoSuchFileException.class);
-        assertDoesNotThrow(() -> {
-            fileService.deleteFiles(List.of(path));
-        });
+        assertDoesNotThrow(() -> fileService.deleteFiles(List.of(path)));
         mockedFiles.close();
     }
 }

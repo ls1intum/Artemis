@@ -21,7 +21,7 @@ export class DeleteButtonDirective implements OnInit {
 
     deleteTextSpan: HTMLElement;
 
-    constructor(private deleteDialogService: DeleteDialogService, private renderer: Renderer2, private el: ElementRef, private translateService: TranslateService) {}
+    constructor(private deleteDialogService: DeleteDialogService, private renderer: Renderer2, private elementRef: ElementRef, private translateService: TranslateService) {}
 
     /**
      * This method appends classes and type property to the button on which directive was used, additionally adds a span tag with delete text.
@@ -30,12 +30,12 @@ export class DeleteButtonDirective implements OnInit {
     ngOnInit() {
         // set button classes and submit property
         if (this.renderButtonStyle) {
-            this.renderer.addClass(this.el.nativeElement, 'btn');
-            this.renderer.addClass(this.el.nativeElement, 'btn-danger');
-            this.renderer.addClass(this.el.nativeElement, this.buttonSize);
-            this.renderer.addClass(this.el.nativeElement, 'me-1');
+            this.renderer.addClass(this.elementRef.nativeElement, 'btn');
+            this.renderer.addClass(this.elementRef.nativeElement, 'btn-danger');
+            this.renderer.addClass(this.elementRef.nativeElement, this.buttonSize);
+            this.renderer.addClass(this.elementRef.nativeElement, 'me-1');
         }
-        this.renderer.setProperty(this.el.nativeElement, 'type', 'submit');
+        this.renderer.setProperty(this.elementRef.nativeElement, 'type', 'submit');
 
         // create a span with delete text
         if (this.renderButtonText) {
@@ -43,7 +43,7 @@ export class DeleteButtonDirective implements OnInit {
             this.renderer.addClass(this.deleteTextSpan, 'd-none');
             this.renderer.addClass(this.deleteTextSpan, 'd-md-inline');
             this.setTextContent();
-            this.renderer.appendChild(this.el.nativeElement, this.deleteTextSpan);
+            this.renderer.appendChild(this.elementRef.nativeElement, this.deleteTextSpan);
 
             // update the span title on each language change
             this.translateService.onLangChange.subscribe(() => {

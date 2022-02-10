@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,27 +16,20 @@ import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ImageCropperModule } from 'ngx-image-cropper';
+import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of } from 'rxjs';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { SinonStub, stub } from 'sinon';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-uploader.service';
-import { base64StringToBlob } from 'blob-util';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
+import { base64StringToBlob } from 'app/utils/blob-util';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -53,7 +46,7 @@ describe('Course Management Update Component', () => {
     let organizationService: OrganizationManagementService;
     let course: Course;
     let fileUploaderService: FileUploaderService;
-    let uploadStub: SinonStub;
+    let uploadStub: jest.SpyInstance;
 
     beforeEach(() => {
         course = new Course();
@@ -84,7 +77,7 @@ describe('Course Management Update Component', () => {
         } as any as ActivatedRoute;
         const route = { parent: parentRoute } as any as ActivatedRoute;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, ReactiveFormsModule, ImageCropperModule],
+            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), ImageCropperModule],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -108,65 +101,68 @@ describe('Course Management Update Component', () => {
                 MockDirective(TranslateDirective),
                 MockPipe(RemoveKeysPipe),
             ],
-        }).compileComponents();
-
-        fixture = TestBed.createComponent(CourseUpdateComponent);
-        comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(CourseManagementService);
-        profileService = fixture.debugElement.injector.get(ProfileService);
-        organizationService = fixture.debugElement.injector.get(OrganizationManagementService);
-        fileUploaderService = fixture.debugElement.injector.get(FileUploaderService);
-        uploadStub = stub(fileUploaderService, 'uploadFile');
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(CourseUpdateComponent);
+                comp = fixture.componentInstance;
+                service = TestBed.inject(CourseManagementService);
+                profileService = TestBed.inject(ProfileService);
+                organizationService = TestBed.inject(OrganizationManagementService);
+                fileUploaderService = TestBed.inject(FileUploaderService);
+                uploadStub = jest.spyOn(fileUploaderService, 'uploadFile');
+            });
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     describe('ngOnInit', () => {
         it('should get course, profile and fill the form', fakeAsync(() => {
             const profileInfo = { inProduction: false } as ProfileInfo;
             const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
-            const getProfileStub = stub(profileService, 'getProfileInfo').returns(profileInfoSubject);
+            const getProfileStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoSubject);
             const organization = new Organization();
             organization.id = 12344;
-            const getOrganizationsStub = sinon.stub(organizationService, 'getOrganizationsByCourse').returns(of([organization]));
+            const getOrganizationsStub = jest.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([organization]));
 
             comp.ngOnInit();
-            expect(comp.course).to.eq(course);
-            expect(comp.courseOrganizations).to.deep.equal([organization]);
-            expect(comp.presentationScoreEnabled).to.equal(true);
-            expect(getOrganizationsStub).to.have.been.calledWith(course.id);
-            expect(getProfileStub).to.have.been.called;
-            expect(comp.customizeGroupNames).to.equal(true);
-            expect(comp.course.studentGroupName).to.equal('artemis-dev');
-            expect(comp.course.teachingAssistantGroupName).to.equal('artemis-dev');
-            expect(comp.course.editorGroupName).to.equal('artemis-dev');
-            expect(comp.course.instructorGroupName).to.equal('artemis-dev');
-            expect(comp.courseForm.get(['id'])?.value).to.equal(course.id);
-            expect(comp.courseForm.get(['title'])?.value).to.equal(course.title);
-            expect(comp.shortName.value).to.equal(course.shortName);
-            expect(comp.courseForm.get(['studentGroupName'])?.value).to.equal(course.studentGroupName);
-            expect(comp.courseForm.get(['teachingAssistantGroupName'])?.value).to.equal(course.teachingAssistantGroupName);
-            expect(comp.courseForm.get(['editorGroupName'])?.value).to.equal(course.editorGroupName);
-            expect(comp.courseForm.get(['instructorGroupName'])?.value).to.equal(course.instructorGroupName);
-            expect(comp.courseForm.get(['startDate'])?.value).to.equal(course.startDate);
-            expect(comp.courseForm.get(['endDate'])?.value).to.equal(course.endDate);
-            expect(comp.courseForm.get(['semester'])?.value).to.equal(course.semester);
-            expect(comp.courseForm.get(['testCourse'])?.value).to.equal(course.testCourse);
-            expect(comp.courseForm.get(['onlineCourse'])?.value).to.equal(course.onlineCourse);
-            expect(comp.courseForm.get(['complaintsEnabled'])?.value).to.equal(course.complaintsEnabled);
-            expect(comp.courseForm.get(['requestMoreFeedbackEnabled'])?.value).to.equal(course.requestMoreFeedbackEnabled);
-            expect(comp.courseForm.get(['maxComplaints'])?.value).to.equal(course.maxComplaints);
-            expect(comp.courseForm.get(['maxTeamComplaints'])?.value).to.equal(course.maxTeamComplaints);
-            expect(comp.courseForm.get(['maxComplaintTimeDays'])?.value).to.equal(course.maxComplaintTimeDays);
-            expect(comp.courseForm.get(['maxRequestMoreFeedbackTimeDays'])?.value).to.equal(course.maxRequestMoreFeedbackTimeDays);
-            expect(comp.courseForm.get(['postsEnabled'])?.value).to.equal(course.postsEnabled);
-            expect(comp.courseForm.get(['registrationEnabled'])?.value).to.equal(course.registrationEnabled);
-            expect(comp.courseForm.get(['registrationConfirmationMessage'])?.value).to.equal(course.registrationConfirmationMessage);
-            expect(comp.courseForm.get(['presentationScore'])?.value).to.equal(course.presentationScore);
-            expect(comp.courseForm.get(['color'])?.value).to.equal(course.color);
-            expect(comp.courseForm.get(['courseIcon'])?.value).to.equal(course.courseIcon);
+            expect(comp.course).toEqual(course);
+            expect(comp.courseOrganizations).toEqual([organization]);
+            expect(comp.presentationScoreEnabled).toBe(true);
+            expect(getOrganizationsStub).toHaveBeenCalledTimes(1);
+            expect(getOrganizationsStub).toHaveBeenCalledWith(course.id);
+            expect(getProfileStub).toHaveBeenCalledTimes(1);
+            expect(comp.customizeGroupNames).toBe(true);
+            expect(comp.course.studentGroupName).toBe('artemis-dev');
+            expect(comp.course.teachingAssistantGroupName).toBe('artemis-dev');
+            expect(comp.course.editorGroupName).toBe('artemis-dev');
+            expect(comp.course.instructorGroupName).toBe('artemis-dev');
+            expect(comp.courseForm.get(['id'])?.value).toBe(course.id);
+            expect(comp.courseForm.get(['title'])?.value).toBe(course.title);
+            expect(comp.shortName.value).toBe(course.shortName);
+            expect(comp.courseForm.get(['studentGroupName'])?.value).toBe(course.studentGroupName);
+            expect(comp.courseForm.get(['teachingAssistantGroupName'])?.value).toBe(course.teachingAssistantGroupName);
+            expect(comp.courseForm.get(['editorGroupName'])?.value).toBe(course.editorGroupName);
+            expect(comp.courseForm.get(['instructorGroupName'])?.value).toBe(course.instructorGroupName);
+            expect(comp.courseForm.get(['startDate'])?.value).toBe(course.startDate);
+            expect(comp.courseForm.get(['endDate'])?.value).toBe(course.endDate);
+            expect(comp.courseForm.get(['semester'])?.value).toBe(course.semester);
+            expect(comp.courseForm.get(['testCourse'])?.value).toBe(course.testCourse);
+            expect(comp.courseForm.get(['onlineCourse'])?.value).toBe(course.onlineCourse);
+            expect(comp.courseForm.get(['complaintsEnabled'])?.value).toBe(course.complaintsEnabled);
+            expect(comp.courseForm.get(['requestMoreFeedbackEnabled'])?.value).toBe(course.requestMoreFeedbackEnabled);
+            expect(comp.courseForm.get(['maxComplaints'])?.value).toBe(course.maxComplaints);
+            expect(comp.courseForm.get(['maxTeamComplaints'])?.value).toBe(course.maxTeamComplaints);
+            expect(comp.courseForm.get(['maxComplaintTimeDays'])?.value).toBe(course.maxComplaintTimeDays);
+            expect(comp.courseForm.get(['maxRequestMoreFeedbackTimeDays'])?.value).toBe(course.maxRequestMoreFeedbackTimeDays);
+            expect(comp.courseForm.get(['postsEnabled'])?.value).toBe(course.postsEnabled);
+            expect(comp.courseForm.get(['registrationEnabled'])?.value).toBe(course.registrationEnabled);
+            expect(comp.courseForm.get(['registrationConfirmationMessage'])?.value).toBe(course.registrationConfirmationMessage);
+            expect(comp.courseForm.get(['presentationScore'])?.value).toBe(course.presentationScore);
+            expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
+            expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
         }));
     });
 
@@ -175,7 +171,7 @@ describe('Course Management Update Component', () => {
             // GIVEN
             const entity = new Course();
             entity.id = 123;
-            const updateStub = sinon.stub(service, 'update').returns(of(new HttpResponse({ body: entity })));
+            const updateStub = jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 id: new FormControl(entity.id),
@@ -199,14 +195,15 @@ describe('Course Management Update Component', () => {
             tick(); // simulate async
 
             // THEN
-            expect(updateStub).to.have.been.calledWithExactly({ ...entity });
-            expect(comp.isSaving).to.equal(false);
+            expect(updateStub).toHaveBeenCalledTimes(1);
+            expect(updateStub).toHaveBeenCalledWith({ ...entity });
+            expect(comp.isSaving).toBe(false);
         }));
 
         it('Should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
             const entity = new Course();
-            const createStub = sinon.stub(service, 'create').returns(of(new HttpResponse({ body: entity })));
+            const createStub = jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),
@@ -229,8 +226,9 @@ describe('Course Management Update Component', () => {
             tick(); // simulate async
 
             // THEN
-            expect(createStub).to.have.been.calledWith({ ...entity });
-            expect(comp.isSaving).to.equal(false);
+            expect(createStub).toHaveBeenCalledTimes(1);
+            expect(createStub).toHaveBeenCalledWith({ ...entity });
+            expect(comp.isSaving).toBe(false);
         }));
     });
 
@@ -239,7 +237,7 @@ describe('Course Management Update Component', () => {
             const selectedColor = 'testSelectedColor';
             comp.ngOnInit();
             comp.onSelectedColor(selectedColor);
-            expect(comp.courseForm.get(['color'])?.value).to.equal(selectedColor);
+            expect(comp.courseForm.get(['color'])?.value).toBe(selectedColor);
         });
     });
 
@@ -253,17 +251,17 @@ describe('Course Management Update Component', () => {
             } as unknown as FileList;
             const event = { target: { files: fileList } };
             comp.setCourseImage(event);
-            expect(comp.courseImageFile).to.equal(file);
-            expect(comp.courseImageFileName).to.equal('testFilename');
-            expect(comp.imageChangedEvent).to.equal(event);
+            expect(comp.courseImageFile).toEqual(file);
+            expect(comp.courseImageFileName).toBe('testFilename');
+            expect(comp.imageChangedEvent).toBe(event);
         });
     });
 
     describe('imageLoaded', () => {
         it('should show cropper', () => {
-            expect(comp.showCropper).to.equal(false);
+            expect(comp.showCropper).toBe(false);
             comp.imageLoaded();
-            expect(comp.showCropper).to.equal(true);
+            expect(comp.showCropper).toBe(true);
         });
     });
 
@@ -277,21 +275,21 @@ describe('Course Management Update Component', () => {
             comp.ngOnInit();
         });
         it('should upload new image and update form', () => {
-            uploadStub.resolves({ path: 'testPath' } as FileUploadResponse);
+            uploadStub.mockResolvedValue({ path: 'testPath' } as FileUploadResponse);
             comp.uploadCourseImage();
             const file = base64StringToBlob(croppedImage, 'image/*');
             file['name'] = comp.courseImageFileName;
-            expect(uploadStub.getCall(0).args[1]).to.deep.equal(comp.courseImageFileName);
-            expect(comp.showCropper).to.equal(false);
+            expect(uploadStub.mock.calls[0][1]).toBe(comp.courseImageFileName);
+            expect(comp.showCropper).toBe(false);
         });
         it('should set image name to course icon if upload fails', () => {
-            uploadStub.rejects({} as FileUploadResponse);
+            uploadStub.mockRejectedValue({} as FileUploadResponse);
             comp.course = new Course();
             comp.course.courseIcon = 'testCourseIcon';
             comp.uploadCourseImage();
-            expect(uploadStub.getCall(0).args[1]).to.deep.equal(comp.courseImageFileName);
-            expect(comp.courseImageFileName).to.equal(comp.course.courseIcon);
-            expect(comp.showCropper).to.equal(false);
+            expect(uploadStub.mock.calls[0][1]).toBe(comp.courseImageFileName);
+            expect(comp.courseImageFileName).toBe(comp.course.courseIcon);
+            expect(comp.showCropper).toBe(false);
         });
     });
 
@@ -302,21 +300,21 @@ describe('Course Management Update Component', () => {
             comp.courseForm = new FormGroup({
                 presentationScore: control,
             });
-            expect(comp.courseForm.controls['presentationScore'].disabled).to.equal(true);
+            expect(comp.courseForm.controls['presentationScore'].disabled).toBe(true);
             comp.changePresentationScoreInput();
-            expect(comp.courseForm.controls['presentationScore'].disabled).to.equal(false);
-            expect(comp.presentationScoreEnabled).to.equal(true);
+            expect(comp.courseForm.controls['presentationScore'].disabled).toBe(false);
+            expect(comp.presentationScoreEnabled).toBe(true);
         });
         it('should reset if control has value', () => {
             const control = new FormControl(12);
             comp.courseForm = new FormGroup({
                 presentationScore: control,
             });
-            expect(comp.courseForm.controls['presentationScore'].disabled).to.equal(false);
+            expect(comp.courseForm.controls['presentationScore'].disabled).toBe(false);
             comp.changePresentationScoreInput();
-            expect(comp.courseForm.controls['presentationScore'].disabled).to.equal(true);
-            expect(comp.courseForm.controls['presentationScore'].value).to.equal(0);
-            expect(comp.presentationScoreEnabled).to.equal(false);
+            expect(comp.courseForm.controls['presentationScore'].disabled).toBe(true);
+            expect(comp.courseForm.controls['presentationScore'].value).toBe(0);
+            expect(comp.presentationScoreEnabled).toBe(false);
         });
     });
 
@@ -328,12 +326,12 @@ describe('Course Management Update Component', () => {
                 onlineCourse: new FormControl(false),
                 registrationEnabled: new FormControl(true),
             });
-            expect(comp.courseForm.controls['registrationEnabled'].value).to.equal(true);
-            expect(comp.courseForm.controls['onlineCourse'].value).to.equal(false);
+            expect(comp.courseForm.controls['registrationEnabled'].value).toBe(true);
+            expect(comp.courseForm.controls['onlineCourse'].value).toBe(false);
             comp.changeOnlineCourse();
-            expect(comp.courseForm.controls['registrationEnabled'].value).to.equal(false);
-            expect(comp.courseForm.controls['onlineCourse'].value).to.equal(true);
-            expect(comp.course.onlineCourse).to.equal(true);
+            expect(comp.courseForm.controls['registrationEnabled'].value).toBe(false);
+            expect(comp.courseForm.controls['onlineCourse'].value).toBe(true);
+            expect(comp.course.onlineCourse).toBe(true);
         });
     });
 
@@ -345,12 +343,12 @@ describe('Course Management Update Component', () => {
                 registrationEnabled: new FormControl(false),
                 onlineCourse: new FormControl(true),
             });
-            expect(comp.courseForm.controls['registrationEnabled'].value).to.equal(false);
-            expect(comp.courseForm.controls['onlineCourse'].value).to.equal(true);
+            expect(comp.courseForm.controls['registrationEnabled'].value).toBe(false);
+            expect(comp.courseForm.controls['onlineCourse'].value).toBe(true);
             comp.changeRegistrationEnabled();
-            expect(comp.courseForm.controls['onlineCourse'].value).to.equal(false);
-            expect(comp.courseForm.controls['registrationEnabled'].value).to.equal(true);
-            expect(comp.course.registrationEnabled).to.equal(true);
+            expect(comp.courseForm.controls['onlineCourse'].value).toBe(false);
+            expect(comp.courseForm.controls['registrationEnabled'].value).toBe(true);
+            expect(comp.course.registrationEnabled).toBe(true);
         });
     });
 
@@ -363,15 +361,15 @@ describe('Course Management Update Component', () => {
             });
             comp.complaintsEnabled = false;
             comp.changeComplaintsEnabled();
-            expect(comp.courseForm.controls['maxComplaints'].value).to.equal(3);
-            expect(comp.courseForm.controls['maxTeamComplaints'].value).to.equal(3);
-            expect(comp.courseForm.controls['maxComplaintTimeDays'].value).to.equal(7);
-            expect(comp.complaintsEnabled).to.equal(true);
+            expect(comp.courseForm.controls['maxComplaints'].value).toBe(3);
+            expect(comp.courseForm.controls['maxTeamComplaints'].value).toBe(3);
+            expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(7);
+            expect(comp.complaintsEnabled).toBe(true);
             comp.changeComplaintsEnabled();
-            expect(comp.courseForm.controls['maxComplaints'].value).to.equal(0);
-            expect(comp.courseForm.controls['maxTeamComplaints'].value).to.equal(0);
-            expect(comp.courseForm.controls['maxComplaintTimeDays'].value).to.equal(0);
-            expect(comp.complaintsEnabled).to.equal(false);
+            expect(comp.courseForm.controls['maxComplaints'].value).toBe(0);
+            expect(comp.courseForm.controls['maxTeamComplaints'].value).toBe(0);
+            expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(0);
+            expect(comp.complaintsEnabled).toBe(false);
         });
     });
 
@@ -382,11 +380,11 @@ describe('Course Management Update Component', () => {
             });
             comp.requestMoreFeedbackEnabled = false;
             comp.changeRequestMoreFeedbackEnabled();
-            expect(comp.courseForm.controls['maxRequestMoreFeedbackTimeDays'].value).to.equal(7);
-            expect(comp.requestMoreFeedbackEnabled).to.equal(true);
+            expect(comp.courseForm.controls['maxRequestMoreFeedbackTimeDays'].value).toBe(7);
+            expect(comp.requestMoreFeedbackEnabled).toBe(true);
             comp.changeRequestMoreFeedbackEnabled();
-            expect(comp.courseForm.controls['maxRequestMoreFeedbackTimeDays'].value).to.equal(0);
-            expect(comp.requestMoreFeedbackEnabled).to.equal(false);
+            expect(comp.courseForm.controls['maxRequestMoreFeedbackTimeDays'].value).toBe(0);
+            expect(comp.requestMoreFeedbackEnabled).toBe(false);
         });
     });
 
@@ -400,17 +398,17 @@ describe('Course Management Update Component', () => {
             });
             comp.customizeGroupNames = false;
             comp.changeCustomizeGroupNames();
-            expect(comp.courseForm.controls['studentGroupName'].value).to.equal('artemis-dev');
-            expect(comp.courseForm.controls['teachingAssistantGroupName'].value).to.equal('artemis-dev');
-            expect(comp.courseForm.controls['editorGroupName'].value).to.equal('artemis-dev');
-            expect(comp.courseForm.controls['instructorGroupName'].value).to.equal('artemis-dev');
-            expect(comp.customizeGroupNames).to.equal(true);
+            expect(comp.courseForm.controls['studentGroupName'].value).toBe('artemis-dev');
+            expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBe('artemis-dev');
+            expect(comp.courseForm.controls['editorGroupName'].value).toBe('artemis-dev');
+            expect(comp.courseForm.controls['instructorGroupName'].value).toBe('artemis-dev');
+            expect(comp.customizeGroupNames).toBe(true);
             comp.changeCustomizeGroupNames();
-            expect(comp.courseForm.controls['studentGroupName'].value).to.equal(undefined);
-            expect(comp.courseForm.controls['teachingAssistantGroupName'].value).to.equal(undefined);
-            expect(comp.courseForm.controls['editorGroupName'].value).to.equal(undefined);
-            expect(comp.courseForm.controls['instructorGroupName'].value).to.equal(undefined);
-            expect(comp.customizeGroupNames).to.equal(false);
+            expect(comp.courseForm.controls['studentGroupName'].value).toBe(undefined);
+            expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBe(undefined);
+            expect(comp.courseForm.controls['editorGroupName'].value).toBe(undefined);
+            expect(comp.courseForm.controls['instructorGroupName'].value).toBe(undefined);
+            expect(comp.customizeGroupNames).toBe(false);
         });
     });
 
@@ -418,11 +416,11 @@ describe('Course Management Update Component', () => {
         it('should toggle test course', () => {
             comp.course = new Course();
             comp.course.testCourse = true;
-            expect(comp.course.testCourse).to.equal(true);
+            expect(comp.course.testCourse).toBe(true);
             comp.changeTestCourseEnabled();
-            expect(comp.course.testCourse).to.equal(false);
+            expect(comp.course.testCourse).toBe(false);
             comp.changeTestCourseEnabled();
-            expect(comp.course.testCourse).to.equal(true);
+            expect(comp.course.testCourse).toBe(true);
         });
     });
 
@@ -430,10 +428,10 @@ describe('Course Management Update Component', () => {
         it('should get semesters around current year', () => {
             const years = dayjs().year() - 2018 + 1;
             const semesters = comp.getSemesters();
-            expect(semesters[0]).to.equal('');
+            expect(semesters[0]).toBe('');
             for (let i = 0; i <= years; i++) {
-                expect(semesters[2 * i + 1]).to.equal('SS' + (18 + i));
-                expect(semesters[2 * i + 2]).to.equal('WS' + (18 + i) + '/' + (19 + i));
+                expect(semesters[2 * i + 1]).toBe('SS' + (18 + i));
+                expect(semesters[2 * i + 2]).toBe('WS' + (18 + i) + '/' + (19 + i));
             }
         });
     });
@@ -446,7 +444,7 @@ describe('Course Management Update Component', () => {
             secondOrganization.id = 124;
             comp.courseOrganizations = [organization, secondOrganization];
             comp.removeOrganizationFromCourse(organization);
-            expect(comp.courseOrganizations).to.deep.equal([secondOrganization]);
+            expect(comp.courseOrganizations).toEqual([secondOrganization]);
         });
     });
 });

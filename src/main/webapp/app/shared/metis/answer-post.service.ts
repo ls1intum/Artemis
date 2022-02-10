@@ -3,12 +3,12 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { PostingsService } from 'app/shared/metis/postings.service';
+import { PostingService } from 'app/shared/metis/posting.service';
 
 type EntityResponseType = HttpResponse<AnswerPost>;
 
 @Injectable({ providedIn: 'root' })
-export class AnswerPostService extends PostingsService<AnswerPost> {
+export class AnswerPostService extends PostingService<AnswerPost> {
     public resourceUrl = SERVER_API_URL + 'api/courses/';
 
     constructor(protected http: HttpClient) {

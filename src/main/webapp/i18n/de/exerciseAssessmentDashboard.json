@@ -19,7 +19,7 @@
                 },
                 "description": {
                     "NOT_PARTICIPATED": "Bitte lies die Bewertungsrichtlinien sorgfältig und bestätige, dass du sie verstanden hast.",
-                    "REVIEWED_INSTRUCTIONS": "Bitte öffne die Beispielabgaben und beginn das Training.",
+                    "REVIEWED_INSTRUCTIONS": "Bitte öffne die Beispielabgaben und beginne das Training.",
                     "TRAINED": "Du kannst nun beginnen, die Abgaben der Studierenden zu bewerten.",
                     "COMPLETED": ""
                 }
@@ -39,13 +39,13 @@
             "readAndUnderstood": "Ich habe die Anleitung gelesen und verstanden.",
             "toRead": "zum Lesen",
             "toReview": "zur Überprüfung",
-            "totalExampleSubmissions": "Es gibt {{total}} Beispielabgaben: {{toReview}} zur Überprüfung und {{toAssess}} zur Bewertung.",
-            "reviewSubmissions": "Überprüfung von Beispielabgaben",
+            "totalExampleSubmissions": "Es gibt {{total}} Beispielabgaben: {{toRead}} zum Lesen und {{toAssess}} zur Bewertung.",
+            "readSubmissions": "Überprüfung von Beispielabgaben",
             "start": "",
             "continue": "",
-            "reviewingExampleSubmissions": "Beispielabgaben ansehen",
-            "reviewExampleSubmission": "Geprüfte Beispielabgabe",
-            "tutorialSubmissions": "Bewertung von Beispielabgaben",
+            "readingExampleSubmissions": "Beispielabgaben ansehen",
+            "readExampleSubmission": "Geprüfte Beispielabgabe",
+            "assessedSubmissions": "Bewertung von Beispielabgaben",
             "assessingExampleSubmission": "Beispielabgaben bewerten",
             "assessExampleSubmission": "Bewertete Beispielabgabe",
             "studentsSubmissions": "Abgaben der Studierenden",

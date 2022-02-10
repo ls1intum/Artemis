@@ -5,8 +5,9 @@
     [class.node-selected]="item.checked"
     [class.text-danger]="!item.checked && hasError"
     [class.bg-warning]="hasChanges"
+    id="file-browser-file"
 >
-    <fa-icon aria-hidden="true" [icon]="'file'" [fixedWidth]="true"></fa-icon>
+    <fa-icon aria-hidden="true" [icon]="faFile" [fixedWidth]="true"></fa-icon>
     <span class="ms-1 list-group-item__fileName" *ngIf="!isBeingRenamed" [ngClass]="item.checked ? 'text-white' : 'primary'">{{ item.text }}</span>
     <!-- Renaming file tree item -->
     <span class="ms-1" *ngIf="isBeingRenamed"
@@ -21,10 +22,10 @@
     <!-- File level actions -->
     <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
         <button [disabled]="disableActions" (click)="setRenamingNode($event)" class="btn btn-small">
-            <fa-icon [icon]="'edit'" title="{{ 'artemisApp.editor.fileBrowser.renameFile' | artemisTranslate }}"></fa-icon>
+            <fa-icon id="file-browser-file-edit" [icon]="faEdit" title="{{ 'artemisApp.editor.fileBrowser.renameFile' | artemisTranslate }}"></fa-icon>
         </button>
         <button [disabled]="disableActions" (click)="deleteNode($event)" class="btn btn-small">
-            <fa-icon [icon]="'trash'" title="{{ 'artemisApp.editor.fileBrowser.deleteFile' | artemisTranslate }}"></fa-icon>
+            <fa-icon id="file-browser-file-delete" [icon]="faTrash" title="{{ 'artemisApp.editor.fileBrowser.deleteFile' | artemisTranslate }}"></fa-icon>
         </button>
     </span>
 </li>

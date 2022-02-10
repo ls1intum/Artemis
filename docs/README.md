@@ -20,10 +20,16 @@ or
 pip3 install -r requirements.txt
 ```
 The [Installing Sphinx] documentation explains more install options.
+For macOS, it is recommended to installation it using homebrew:
+```bash
+brew install sphinx-doc
+brew link sphinx-doc --force
+pip3 install -r requirements.txtclient-tests.rst
+```
 
 ## Running Sphinx Locally
 
-To  generate the documentation as single HTML file, use the provided `Makefile`/`make.bat` files:
+To  generate the documentation as single HTML file, use the provided `Makefile`/`make.bat` files in the folder `docs`:
 ```bash
 # maxOS / Linux
 make singlehtml

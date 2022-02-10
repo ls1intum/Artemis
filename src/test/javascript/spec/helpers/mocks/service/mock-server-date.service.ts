@@ -1,5 +1,5 @@
 import { ServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { HttpClient } from '@angular/common/http';
 
 export class MockArtemisServerDateService implements ServerDateService {

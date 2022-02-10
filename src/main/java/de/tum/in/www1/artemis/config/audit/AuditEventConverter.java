@@ -50,18 +50,11 @@ public class AuditEventConverter {
      * @return a map of String, Object
      */
     public Map<String, Object> convertDataToObjects(Map<String, String> data) {
-        Map<String, Object> results = new HashMap<>();
-
-        if (data != null) {
-            for (Map.Entry<String, String> entry : data.entrySet()) {
-                results.put(entry.getKey(), entry.getValue());
-            }
-        }
-        return results;
+        return data != null ? new HashMap<>(data) : new HashMap<>();
     }
 
     /**
-     * Internal conversion. This method will allow to save additional data. By default, it will save the object as string
+     * Internal conversion. This method will allow saving additional data. By default, it will save the object as string
      *
      * @param data the data to convert
      * @return a map of String, String

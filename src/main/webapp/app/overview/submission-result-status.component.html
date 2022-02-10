@@ -26,6 +26,7 @@
     <!-- Updating result -->
     <span *ngIf="['initialized', 'inactive', 'quiz-finished', 'exercise-submitted'].includes(exercise.participationStatus!) && participation">
         <jhi-updating-result
+            id="submission-result-graded"
             [exercise]="exercise"
             [participation]="participation!"
             [class]="updatingResultClass"

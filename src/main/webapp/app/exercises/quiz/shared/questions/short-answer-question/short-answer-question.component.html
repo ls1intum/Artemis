@@ -13,7 +13,7 @@
         <div class="short-answer-question-display" *ngFor="let textPart of textParts; let i = index">
             <div class="short-answer-question-display__element" *ngFor="let element of textPart; let j = index">
                 <div *ngIf="!shortAnswerQuestionUtil.isInputField(element)" [innerHTML]="element"></div>
-                <div class="short-answer-question-container" *ngIf="shortAnswerQuestionUtil.isInputField(element)">
+                <div class="short-answer-question-container" id="sa-question-container-A" *ngIf="shortAnswerQuestionUtil.isInputField(element)">
                     <input
                         class="short-answer-question-container__input"
                         type="text"
@@ -34,6 +34,7 @@
                 <div *ngIf="!shortAnswerQuestionUtil.isInputField(element)" [innerHTML]="element"></div>
                 <div
                     class="short-answer-question-container"
+                    id="sa-question-container-B"
                     *ngIf="
                         shortAnswerQuestionUtil.isInputField(element) &&
                         !showingSampleSolution &&
@@ -60,7 +61,7 @@
                         />
                     </div>
                 </div>
-                <div class="short-answer-question-container" *ngIf="shortAnswerQuestionUtil.isInputField(element) && showingSampleSolution">
+                <div class="short-answer-question-container" id="sa-question-container-C" *ngIf="shortAnswerQuestionUtil.isInputField(element) && showingSampleSolution">
                     <input
                         class="short-answer-question-container__input"
                         disabled
@@ -80,7 +81,7 @@
             <div [innerHTML]="renderedQuestion.hint"></div>
         </ng-template>
         <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="shortAnswerQuestion.hint">
-            <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
+            <fa-icon [icon]="farQuestionCircle"></fa-icon>
             <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
         </span>
         <br />
@@ -94,7 +95,7 @@
             triggers="mouseenter:mouseleave"
             *ngIf="shortAnswerQuestion.explanation && showResult"
         >
-            <fa-icon [icon]="'exclamation-circle'"></fa-icon>
+            <fa-icon [icon]="faExclamationCircle"></fa-icon>
             <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
         </span>
     </div>

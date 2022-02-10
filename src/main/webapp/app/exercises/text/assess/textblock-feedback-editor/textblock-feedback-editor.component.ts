@@ -11,6 +11,18 @@ import { ActivatedRoute } from '@angular/router';
 import { lastValueFrom } from 'rxjs';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
+import {
+    faBalanceScaleRight,
+    faEdit,
+    faExclamation,
+    faExclamationTriangle,
+    faInfoCircle,
+    faQuestionCircle,
+    faRobot,
+    faSearch,
+    faTimes,
+    faTrash,
+} from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -59,6 +71,18 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @HostBinding('class.alert-info') get selectedConflictingFeedbackClass(): boolean {
         return this.isSelectedConflict;
     }
+
+    // Icons
+    faEdit = faEdit;
+    faQuestionCircle = faQuestionCircle;
+    faExclamationTriangle = faExclamationTriangle;
+    faInfoCircle = faInfoCircle;
+    faRobot = faRobot;
+    faExclamation = faExclamation;
+    faSearch = faSearch;
+    faBalanceScaleRight = faBalanceScaleRight;
+    faTimes = faTimes;
+    faTrash = faTrash;
 
     constructor(
         public structuredGradingCriterionService: StructuredGradingCriterionService,

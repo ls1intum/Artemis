@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 public abstract class AssessmentResource {
@@ -42,9 +44,11 @@ public abstract class AssessmentResource {
 
     protected final SubmissionRepository submissionRepository;
 
+    protected final SingleUserNotificationService singleUserNotificationService;
+
     public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, AssessmentService assessmentService,
             ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -54,6 +58,7 @@ public abstract class AssessmentResource {
         this.messagingService = messagingService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     abstract String getEntityName();
@@ -115,6 +120,10 @@ public abstract class AssessmentResource {
         Result result = assessmentService.saveManualAssessment(submission, feedbackList, resultId);
         if (submit) {
             result = assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
+            Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
+            if (optionalStudent.isPresent()) {
+                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, optionalStudent.get(), result);
+            }
         }
         var participation = result.getParticipation();
         // remove information about the student for tutors to ensure double-blind assessment
@@ -146,6 +155,7 @@ public abstract class AssessmentResource {
         else {
             result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId());
         }
+        result = resultRepository.submitResult(result, exercise, Optional.empty());
         return ResponseEntity.ok(result);
     }
 

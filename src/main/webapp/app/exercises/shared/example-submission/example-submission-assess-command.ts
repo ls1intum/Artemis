@@ -22,7 +22,7 @@ export class ExampleSubmissionAssessCommand {
 
     private onSuccess() {
         this.feedbackMarker.markAllFeedbackToCorrect();
-        this.alertService.success('artemisApp.exampleSubmission.assessScore.success');
+        this.alertService.success('artemisApp.exampleSubmission.correctTutorAssessment');
     }
 
     private onFailure(error: HttpErrorResponse) {
