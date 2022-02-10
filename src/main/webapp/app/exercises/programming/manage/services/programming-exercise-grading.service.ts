@@ -85,7 +85,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      * Executes a REST request to the test case endpoint.
      * @param exerciseId
      */
-    private getTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
+    getTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
         return this.http.get<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/test-cases`);
     }
 

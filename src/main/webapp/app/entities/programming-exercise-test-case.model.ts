@@ -7,6 +7,12 @@ export enum Visibility {
     Never = 'NEVER',
 }
 
+export enum ProgrammingExerciseTestCaseType {
+    STRUCTURAL,
+    BEHAVIORAL,
+    DEFAULT,
+}
+
 export class ProgrammingExerciseTestCase implements BaseEntity {
     id?: number;
     testName?: string;
@@ -16,4 +22,5 @@ export class ProgrammingExerciseTestCase implements BaseEntity {
     active?: boolean;
     visibility?: Visibility;
     exercise?: ProgrammingExercise;
+    programmingExerciseTestCaseType?: ProgrammingExerciseTestCaseType;
 }
