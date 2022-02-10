@@ -299,6 +299,7 @@ public class ProgrammingExerciseImportService {
             copy.setBonusMultiplier(testCase.getBonusMultiplier());
             copy.setBonusPoints(testCase.getBonusPoints());
             copy.setExercise(targetExercise);
+            copy.setProgrammingExerciseTestCaseType(testCase.getProgrammingExerciseTestCaseType());
             programmingExerciseTestCaseRepository.save(copy);
             return copy;
         }).collect(Collectors.toSet()));
