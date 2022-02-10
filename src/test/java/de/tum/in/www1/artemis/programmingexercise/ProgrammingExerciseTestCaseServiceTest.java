@@ -241,7 +241,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
                 new ProgrammingExerciseTestCase().testName("testMethods[Context]").exercise(programmingExercise),
                 new ProgrammingExerciseTestCase().testName("testAttributes[Starter]").exercise(programmingExercise));
 
-        testCaseService.setTestCasesWithTestCaseType(structuralTestCases, ProgrammingLanguage.JAVA);
+        testCaseService.setTestCaseType(structuralTestCases, ProgrammingLanguage.JAVA);
         assertThat(structuralTestCases).allMatch(testCase -> testCase.getProgrammingExerciseTestCaseType() == ProgrammingExerciseTestCaseType.STRUCTURAL);
     }
 
@@ -252,7 +252,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
                 new ProgrammingExerciseTestCase().testName("test13412").exercise(programmingExercise),
                 new ProgrammingExerciseTestCase().testName("HiddenRandomTest").exercise(programmingExercise));
 
-        testCaseService.setTestCasesWithTestCaseType(behavioralTestCases, ProgrammingLanguage.JAVA);
+        testCaseService.setTestCaseType(behavioralTestCases, ProgrammingLanguage.JAVA);
         assertThat(behavioralTestCases).allMatch(testCase -> testCase.getProgrammingExerciseTestCaseType() == ProgrammingExerciseTestCaseType.BEHAVIORAL);
     }
 
@@ -268,7 +268,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
                     new ProgrammingExerciseTestCase().testName("testMergeSort").exercise(programmingExercise),
                     new ProgrammingExerciseTestCase().testName("test13412").exercise(programmingExercise),
                     new ProgrammingExerciseTestCase().testName("HiddenRandomTest").exercise(programmingExercise));
-            testCaseService.setTestCasesWithTestCaseType(testCases, language);
+            testCaseService.setTestCaseType(testCases, language);
             assertThat(testCases).allMatch(testCase -> testCase.getProgrammingExerciseTestCaseType() == ProgrammingExerciseTestCaseType.DEFAULT);
         }
     }
