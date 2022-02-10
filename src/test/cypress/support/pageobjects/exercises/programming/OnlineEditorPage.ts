@@ -3,8 +3,6 @@ import { artemis } from './../../../ArtemisTesting';
 import { GET, BASE_API, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 
-const buildingAndTesting = 'Building and testing...';
-
 /**
  * A class which encapsulates UI selectors and actions for the Online Editor Page.
  */
@@ -86,8 +84,6 @@ export class OnlineEditorPage {
      */
     submit() {
         cy.get('#submit_button').click();
-        this.getResultPanel().contains(buildingAndTesting, { timeout: 15000 }).should('be.visible');
-        this.getBuildOutput().contains(buildingAndTesting).should('be.visible');
         this.getResultPanel().contains('GRADED', { timeout: 140000 }).should('be.visible');
     }
 
