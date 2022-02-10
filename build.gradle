@@ -175,7 +175,6 @@ dependencies {
     implementation "org.apache.maven:maven-model:${apache_model_version}"
     implementation "org.apache.pdfbox:pdfbox:${apache_pdfbox_version}"
     implementation "com.google.protobuf:protobuf-java:${google_protobuf_java_version}"
-
     implementation "org.commonmark:commonmark:${commonmark_version}"
     implementation "org.springframework.boot:spring-boot-starter-artemis:${spring_boot_version}"
 
