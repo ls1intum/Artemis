@@ -238,7 +238,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     /**
      * Parse tasks and corresponding test cases from problem statement for this exercise
      */
-    extractTasksFromProblemStatement() {
+    extractTasksFromProblemStatement(): void {
         this.programmingExerciseService.extractTasksFromProblemStatement(this.programmingExercise.id!).subscribe({
             next: (res) => {
                 const numberTests = res.map((task) => task.tests.length).reduce((numberTests1, numberTests2) => numberTests1 + numberTests2, 0);
@@ -263,7 +263,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     /**
      * Delete all tasks and solution entries for this exercise
      */
-    deleteTasksWithSolutionEntries() {
+    deleteTasksWithSolutionEntries(): void {
         this.programmingExerciseService.deleteTasksWithSolutionEntries(this.programmingExercise.id!).subscribe({
             next: () => {
                 this.alertService.addAlert({
