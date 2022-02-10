@@ -124,6 +124,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
             this.subscribeToSaveResponse(this.exerciseHintService.create(this.exerciseHint));
         }
     }
+
     protected subscribeToSaveResponse(result: Observable<HttpResponse<ExerciseHint>>) {
         result.subscribe({
             next: () => this.onSaveSuccess(),

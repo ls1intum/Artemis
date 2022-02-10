@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -95,7 +94,7 @@ public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(testCases).isNotEmpty();
         for (ProgrammingExerciseTestCase testCase : testCases) {
             var solutionEntries = addSolutionEntriesToTestCase(2, testCase);
-            assertThat(programmingExerciseSolutionEntryRepository.findByTestCaseId(testCase.getId())).hasSize(2).containsExactly(solutionEntries);
+            assertThat(programmingExerciseSolutionEntryRepository.findByTestCaseId(testCase.getId())).containsExactly(solutionEntries);
         }
     }
 
@@ -191,7 +190,7 @@ public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucket
         task.setTestCases(testCases);
         task = programmingExerciseTaskRepository.save(task);
         task = programmingExerciseTaskRepository.findByNameAndExerciseId("Task 1", programmingExerciseId).get();
-        assertThat(testCases.stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.toList()))
-                .isEqualTo(task.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.toList()));
+        assertThat(testCases.stream().map(ProgrammingExerciseTestCase::getTestName).toList())
+                .isEqualTo(task.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList());
     }
 }

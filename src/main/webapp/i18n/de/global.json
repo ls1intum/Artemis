@@ -308,7 +308,12 @@
         "invalid.auxiliary.repository.description": "Die Beschreibung von mindestens einem Hilfs-Repository ist zu lang!",
         "invalid.testcases.weights": "Vor Deaktivierung der manuellen Bewertung muss für mindestens einen Testfall die Bewertungsgewichtung größer Null gesetzt werden.",
         "idnull": "Ungültige ID",
-        "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}"
+        "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}",
+        "manualCodeHintOperation": "Dieser Endpoint erlaubt keine manuelle Bearbeitung von Codehinweisen.",
+        "exerciseNotDefined": "Die Aufgabe ist nicht definiert.",
+        "exerciseIdMismatch": "Die Aufgaben-IDs stimmen nicht überein.",
+        "solutionEntryIdMismatch": "Die Solution-Entries-IDs stimmen nicht überein.",
+        "solutionEntryTestCaseMismatch": "Der Tests gehört nicht zu dem SolutionEntry."
     },
     "aboutUs": "Über uns",
     "contact": "Kontaktiere uns",

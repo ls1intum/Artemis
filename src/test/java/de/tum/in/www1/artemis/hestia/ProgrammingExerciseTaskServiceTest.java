@@ -65,16 +65,8 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
         var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
         assertThat(tasks).hasSize(2);
 
-        assertThat(tasks).anyMatch(programmingExerciseTask -> {
-            var testCases = programmingExerciseTask.getTestCases();
-            return "Task 1".equals(programmingExerciseTask.getTaskName()) && !testCases.isEmpty()
-                    && "testClass[BubbleSort]".equals(testCases.stream().findFirst().get().getTestName());
-        });
-        assertThat(tasks).anyMatch(programmingExerciseTask -> {
-            var testCases = programmingExerciseTask.getTestCases();
-            return "Task 2".equals(programmingExerciseTask.getTaskName()) && !testCases.isEmpty()
-                    && "testMethods[Context]".equals(testCases.stream().findFirst().get().getTestName());
-        });
+        assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1", "testClass[BubbleSort]"));
+        assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 2", "testMethods[Context]"));
     }
 
     @Test
@@ -91,21 +83,9 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
         var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
         assertThat(tasks).hasSize(3);
 
-        assertThat(tasks).anyMatch(programmingExerciseTask -> {
-            var testCases = programmingExerciseTask.getTestCases();
-            return "Task 1".equals(programmingExerciseTask.getTaskName()) && !testCases.isEmpty()
-                    && "testClass[BubbleSort]".equals(testCases.stream().findFirst().get().getTestName());
-        });
-        assertThat(tasks).anyMatch(programmingExerciseTask -> {
-            var testCases = programmingExerciseTask.getTestCases();
-            return "Task 2".equals(programmingExerciseTask.getTaskName()) && !testCases.isEmpty()
-                    && "testMethods[Context]".equals(testCases.stream().findFirst().get().getTestName());
-        });
-        assertThat(tasks).anyMatch(programmingExerciseTask -> {
-            var testCases = programmingExerciseTask.getTestCases();
-            return "Task 3".equals(programmingExerciseTask.getTaskName()) && !testCases.isEmpty()
-                    && "testMethods[Policy]".equals(testCases.stream().findFirst().get().getTestName());
-        });
+        assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1", "testClass[BubbleSort]"));
+        assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 2", "testMethods[Context]"));
+        assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 3", "testMethods[Policy]"));
 
         // Test that the other tasks were not removed and re-added.
         var newTaskIds = tasks.stream().map(ProgrammingExerciseTask::getId).collect(Collectors.toSet());
@@ -127,8 +107,9 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
         var task = tasks.stream().findFirst().get();
         assertThat(task.getTaskName()).isEqualTo("Task 1");
         assertThat(task.getTestCases()).hasSize(3);
-        assertThat(Set.of("testClass[BubbleSort]", "testMethods[Context]", "testMethods[Policy]"))
-                .isEqualTo(task.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.toSet()));
+        var expectedTestCaseNames = Set.of("testClass[BubbleSort]", "testMethods[Context]", "testMethods[Policy]");
+        var actualTestCaseNames = task.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.toSet());
+        assertThat(actualTestCaseNames).isEqualTo(expectedTestCaseNames);
     }
 
     /**
@@ -150,18 +131,10 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
         var newTaskIds = tasks.stream().map(ProgrammingExerciseTask::getId).collect(Collectors.toSet());
         assertThat(previousTaskIds).isEqualTo(newTaskIds);
 
-        assertThat(tasks).isEqualTo(programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()));
+        assertThat(programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId())).isEqualTo(tasks);
 
-        assertThat(tasks).anyMatch(programmingExerciseTask -> {
-            var testCases = programmingExerciseTask.getTestCases();
-            return "Task 1a".equals(programmingExerciseTask.getTaskName()) && !testCases.isEmpty()
-                    && "testClass[BubbleSort]".equals(testCases.stream().findFirst().get().getTestName());
-        });
-        assertThat(tasks).anyMatch(programmingExerciseTask -> {
-            var testCases = programmingExerciseTask.getTestCases();
-            return "Task 2".equals(programmingExerciseTask.getTaskName()) && !testCases.isEmpty()
-                    && "testMethods[Context]".equals(testCases.stream().findFirst().get().getTestName());
-        });
+        assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1a", "testClass[BubbleSort]"));
+        assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 2", "testMethods[Context]"));
     }
 
     /**
@@ -200,5 +173,10 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
         assertThat(programmingExerciseTaskRepository.findAll()).hasSize(1);
         assertThat(programmingExerciseTaskRepository.findById(task.getId())).isEmpty();
         assertThat(codeHintRepository.findAll()).isEmpty();
+    }
+
+    private boolean checkTaskEqual(ProgrammingExerciseTask task, String expectedName, String expectedTestName) {
+        var testCases = task.getTestCases();
+        return expectedName.equals(task.getTaskName()) && !testCases.isEmpty() && expectedTestName.equals(testCases.stream().findFirst().get().getTestName());
     }
 }

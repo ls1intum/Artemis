@@ -41,20 +41,15 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
      */
     default void copyExerciseHints(final Exercise template, final Exercise target) {
         final Map<Long, Long> hintIdMapping = new HashMap<>();
-        target.setExerciseHints(template.getExerciseHints().stream().map(hint -> {
-            // Copying non text hints is currently not supported
-            if (hint instanceof CodeHint) {
-                return null;
-            }
-            else {
-                final var copiedHint = new ExerciseHint();
-                copiedHint.setExercise(target);
-                copiedHint.setContent(hint.getContent());
-                copiedHint.setTitle(hint.getTitle());
-                save(copiedHint);
-                hintIdMapping.put(hint.getId(), copiedHint.getId());
-                return copiedHint;
-            }
+        // Copying non text hints is currently not supported
+        target.setExerciseHints(template.getExerciseHints().stream().filter(exerciseHint -> !(exerciseHint instanceof CodeHint)).map(hint -> {
+            final var copiedHint = new ExerciseHint();
+            copiedHint.setExercise(target);
+            copiedHint.setContent(hint.getContent());
+            copiedHint.setTitle(hint.getTitle());
+            save(copiedHint);
+            hintIdMapping.put(hint.getId(), copiedHint.getId());
+            return copiedHint;
         }).collect(Collectors.toSet()));
 
         String patchedStatement = target.getProblemStatement();

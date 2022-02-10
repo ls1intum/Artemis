@@ -101,7 +101,7 @@
             "extractTasksFromProblemStatementWarning": "Nur zu Testzwecken: Extrahiere alle Aufgaben und Tests aus der Aufgabenstellung.",
             "extractTasksFromProblemStatementSuccess": "{{numberTasks}} Aufgaben mit {{numberTestCases}} Tests aus der Aufgabenstellung extrahiert:\n{{detailedResult}}",
             "extractTasksFromProblemStatementTitle": "Extrahiere Aufgaben",
-            "deleteTasksAndSolutionEntriesSuccess": "Alle Aufgaben und Solution Entries wurden gelöscht..",
+            "deleteTasksAndSolutionEntriesSuccess": "Alle Aufgaben und Solution Entries wurden gelöscht.",
             "deleteTasksAndSolutionEntriesWarning": "Nur zu Testzwecken: Lösche alle Aufgaben und Solution Entries.",
             "deleteTasksAndSolutionEntriesTitle": "Lösche Aufgaben",
             "editable": {

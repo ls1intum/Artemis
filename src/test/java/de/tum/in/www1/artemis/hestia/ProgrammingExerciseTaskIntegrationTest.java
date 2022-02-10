@@ -97,8 +97,8 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
         programmingExerciseTaskRepository.save(task);
 
         request.delete("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.NO_CONTENT);
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).hasSize(0);
-        assertThat(programmingExerciseSolutionEntryRepository.findAllById(solutionEntryIdsBeforeDeleting)).hasSize(0);
+        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
+        assertThat(programmingExerciseSolutionEntryRepository.findAllById(solutionEntryIdsBeforeDeleting)).isEmpty();
     }
 
     @Test
@@ -119,26 +119,33 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/extract-tasks", null, HttpStatus.OK);
     }
 
-    // TODO: uncomment after service for problem statement has been implemented
-    /*
-     * @Test
-     * @WithMockUser(username = "instructor1", roles = "INSTRUCTOR") public void testTaskExtractionForProgrammingExercise() throws Exception { String taskName1 =
-     * "Implement Bubble Sort"; String taskName2 = "Implement Policy and Context"; programmingExercise.setProblemStatement("# Sorting with the Strategy Pattern\n" + "\n" +
-     * "In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.\n" + "\n" + "### Part 1: Sorting\n" + "\n" +
-     * "First, we need to implement two sorting algorithms, in this case `MergeSort` and `BubbleSort`.\n" + "\n" + "**You have the following tasks:**\n" + "\n" + "1. [task][" +
-     * taskName1 + "](testClass[BubbleSort])\n" + "Implement the class `BubbleSort`.\n" + "2. [task][" + taskName2 + "](testMethods[Context],testMethods[Policy],)\n" +
-     * "Implement the classes `Context` and `Policy`. Make sure to follow.."); programmingExerciseRepository.save(programmingExercise); request.put("/api/programming-exercises/" +
-     * programmingExercise.getId() + "/extract-tasks", null, HttpStatus.OK); Set<ProgrammingExerciseTask> extractedTasks =
-     * programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(programmingExercise.getId()); Optional<ProgrammingExerciseTask> task1Optional =
-     * extractedTasks.stream().filter(task -> task.getTaskName().equals(taskName1)).findFirst(); Optional<ProgrammingExerciseTask> task2Optional =
-     * extractedTasks.stream().filter(task -> task.getTaskName().equals(taskName2)).findFirst(); assertThat(task1Optional).isPresent(); assertThat(task2Optional).isPresent();
-     * ProgrammingExerciseTask task1 = task1Optional.get(); ProgrammingExerciseTask task2 = task2Optional.get(); Set<ProgrammingExerciseTestCase> expectedTestCasesForTask1 = new
-     * HashSet<>(); expectedTestCasesForTask1.add(testCases.stream().filter(testCase -> testCase.getTestName().equals("testClass[BubbleSort]")).findFirst().orElseThrow());
-     * Set<ProgrammingExerciseTestCase> expectedTestCasesForTask2 = new HashSet<>(); expectedTestCasesForTask2.add(testCases.stream().filter(testCase ->
-     * testCase.getTestName().equals("testMethods[Context]")).findFirst().orElseThrow()); expectedTestCasesForTask2.add(testCases.stream().filter(testCase ->
-     * testCase.getTestName().equals("testMethods[Policy]")).findFirst().orElseThrow()); assertThat(task1.getTestCases()).isEqualTo(expectedTestCasesForTask1);
-     * assertThat(task2.getTestCases()).isEqualTo(expectedTestCasesForTask2); }
-     */
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testTaskExtractionForProgrammingExercise() throws Exception {
+        String taskName1 = "Implement Bubble Sort";
+        String taskName2 = "Implement Policy and Context";
+        programmingExercise.setProblemStatement(
+                "# Sorting with the Strategy Pattern\n" + "\n" + "In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.\n"
+                        + "\n" + "### Part 1: Sorting\n" + "\n" + "First, we need to implement two sorting algorithms, in this case `MergeSort` and `BubbleSort`.\n" + "\n"
+                        + "**You have the following tasks:**\n" + "\n" + "1. [task][" + taskName1 + "](testClass[BubbleSort])\n" + "Implement the class `BubbleSort`.\n"
+                        + "2. [task][" + taskName2 + "](testMethods[Context],testMethods[Policy],)\n" + "Implement the classes `Context` and `Policy`. Make sure to follow..");
+        programmingExerciseRepository.save(programmingExercise);
+        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/extract-tasks", null, HttpStatus.OK);
+        Set<ProgrammingExerciseTask> extractedTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(programmingExercise.getId());
+        Optional<ProgrammingExerciseTask> task1Optional = extractedTasks.stream().filter(task -> task.getTaskName().equals(taskName1)).findFirst();
+        Optional<ProgrammingExerciseTask> task2Optional = extractedTasks.stream().filter(task -> task.getTaskName().equals(taskName2)).findFirst();
+        assertThat(task1Optional).isPresent();
+        assertThat(task2Optional).isPresent();
+        ProgrammingExerciseTask task1 = task1Optional.get();
+        ProgrammingExerciseTask task2 = task2Optional.get();
+        Set<ProgrammingExerciseTestCase> expectedTestCasesForTask1 = new HashSet<>();
+        expectedTestCasesForTask1.add(testCases.stream().filter(testCase -> testCase.getTestName().equals("testClass[BubbleSort]")).findFirst().orElseThrow());
+        Set<ProgrammingExerciseTestCase> expectedTestCasesForTask2 = new HashSet<>();
+        expectedTestCasesForTask2.add(testCases.stream().filter(testCase -> testCase.getTestName().equals("testMethods[Context]")).findFirst().orElseThrow());
+        expectedTestCasesForTask2.add(testCases.stream().filter(testCase -> testCase.getTestName().equals("testMethods[Policy]")).findFirst().orElseThrow());
+        assertThat(task1.getTestCases()).isEqualTo(expectedTestCasesForTask1);
+        assertThat(task2.getTestCases()).isEqualTo(expectedTestCasesForTask2);
+    }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -148,6 +155,6 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
 
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/extract-tasks", null, HttpStatus.OK);
 
-        assertThat(programmingExerciseTaskRepository.findAll()).hasSize(0);
+        assertThat(programmingExerciseTaskRepository.findAll()).isEmpty();
     }
 }

@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the ProgrammingExerciseSolutionEntry entity.
  */
-@SuppressWarnings("unused")
 public interface ProgrammingExerciseSolutionEntryRepository extends JpaRepository<ProgrammingExerciseSolutionEntry, Long> {
 
     /**
@@ -43,7 +42,7 @@ public interface ProgrammingExerciseSolutionEntryRepository extends JpaRepositor
             LEFT JOIN FETCH tc.exercise pe
             WHERE se.id = :entryId
             """)
-    Optional<ProgrammingExerciseSolutionEntry> findByIdWithTestCaseAndProgrammingExercise(long entryId);
+    Optional<ProgrammingExerciseSolutionEntry> findByIdWithTestCaseAndProgrammingExercise(@Param("entryId") long entryId);
 
     @Query("""
             SELECT h.solutionEntries

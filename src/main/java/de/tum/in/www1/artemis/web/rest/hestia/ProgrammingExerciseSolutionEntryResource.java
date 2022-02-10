@@ -21,14 +21,14 @@ import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import tech.jhipster.web.util.HeaderUtil;
 
 /**
  * REST controller for managing {@link de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry}.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ProgrammingExerciseSolutionEntryResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseHintResource.class);
@@ -59,32 +59,32 @@ public class ProgrammingExerciseSolutionEntryResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/solution-entries/:solutionEntryId : Get the solution entry with test cases and programming exercise
+     * GET programming-exercises/:exerciseId/solution-entries/:solutionEntryId : Get the solution entry with test cases and programming exercise
      * @param exerciseId of the exercise
      * @param solutionEntryId of the solution entry
      * @return the {@link ResponseEntity} with status {@code 200} and with body the solution entries with test cases and exercise,
-     * or with status {@code 400 (Bad Request) if the exerciseId or solutionEntryId are not valid}.
+     * or with status {@code 409 (Conflict)} if the exerciseId or solutionEntryId are not valid.
      */
-    @GetMapping("/programming-exercises/{exerciseId}/solution-entries/{solutionEntryId}")
+    @GetMapping("programming-exercises/{exerciseId}/solution-entries/{solutionEntryId}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ProgrammingExerciseSolutionEntry> getSolutionEntry(@PathVariable Long exerciseId, @PathVariable Long solutionEntryId) {
         log.debug("REST request to retrieve SolutionEntry : {}", solutionEntryId);
         ProgrammingExerciseSolutionEntry solutionEntry = programmingExerciseSolutionEntryRepository.findByIdWithTestCaseAndProgrammingExerciseElseThrow(solutionEntryId);
 
         if (!exerciseId.equals(solutionEntry.getTestCase().getExercise().getId())) {
-            throw new BadRequestAlertException("A solution entry can only be retrieved if the exercise match", ENTITY_NAME, "idnull");
+            throw new ConflictException("A solution entry can only be retrieved if the exercise match", ENTITY_NAME, "exerciseIdsMismatch");
         }
         return ResponseEntity.ok(solutionEntry);
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/code-hints/:codeHintId/solution-entries : Get all solution entries for a given code hint
+     * GET programming-exercises/:exerciseId/code-hints/:codeHintId/solution-entries : Get all solution entries for a given code hint
      * @param exerciseId of the exercise
      * @param codeHintId of the code hint
      * @return the {@link ResponseEntity} with status {@code 200} and with body the solution entries,
-     * or with status {@code 400 (Bad Request) if the exerciseId or codeHintId are not valid}.
+     * or with status {@code 409 (Conflict)} if the exerciseId or codeHintId are not valid.
      */
-    @GetMapping("/programming-exercises/{exerciseId}/code-hints/{codeHintId}/solution-entries")
+    @GetMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/solution-entries")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<ProgrammingExerciseSolutionEntry>> getSolutionEntriesForCodeHint(@PathVariable Long exerciseId, @PathVariable Long codeHintId) {
         log.debug("REST request to retrieve SolutionEntry for CodeHint with id : {}", codeHintId);
@@ -92,7 +92,7 @@ public class ProgrammingExerciseSolutionEntryResource {
 
         CodeHint codeHint = codeHintRepository.findByIdElseThrow(codeHintId);
         if (!exercise.getId().equals(codeHint.getExercise().getId())) {
-            throw new BadRequestAlertException("A solution entry can only be retrieved if the code hint belongs to the exercise", ENTITY_NAME, "idnull");
+            throw new ConflictException("A solution entry can only be retrieved if the code hint belongs to the exercise", ENTITY_NAME, "exerciseIdsMismatch");
         }
 
         Set<ProgrammingExerciseSolutionEntry> solutionEntries = programmingExerciseSolutionEntryRepository.findByCodeHintId(codeHintId);
@@ -100,13 +100,13 @@ public class ProgrammingExerciseSolutionEntryResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries : Get all solution entries for a given test case
+     * GET programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries : Get all solution entries for a given test case
      * @param exerciseId of the exercise
      * @param testCaseId of the test case
      * @return the {@link ResponseEntity} with status {@code 200} and with body the solution entries,
-     * or with status {@code 400 (Bad Request) if the exerciseId or testCaseId are not valid}.
+     * or with status {@code 409 (Conflict)} if the exerciseId or testCaseId are not valid.
      */
-    @GetMapping("/programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries")
+    @GetMapping("programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<ProgrammingExerciseSolutionEntry>> getSolutionEntriesForTestCase(@PathVariable Long exerciseId, @PathVariable Long testCaseId) {
         log.debug("REST request to retrieve SolutionEntry for ProgrammingExerciseTestCase with id : {}", testCaseId);
@@ -114,7 +114,7 @@ public class ProgrammingExerciseSolutionEntryResource {
 
         ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByIdWithExerciseElseThrow(testCaseId);
         if (!exercise.getId().equals(testCase.getExercise().getId())) {
-            throw new BadRequestAlertException("A solution entry can only be retrieved if the test case belongs to the exercise", ENTITY_NAME, "idnull");
+            throw new ConflictException("A solution entry can only be retrieved if the test case belongs to the exercise", ENTITY_NAME, "exerciseIdsMismatch");
         }
 
         Set<ProgrammingExerciseSolutionEntry> solutionEntries = programmingExerciseSolutionEntryRepository.findByTestCaseId(testCaseId);
@@ -122,14 +122,14 @@ public class ProgrammingExerciseSolutionEntryResource {
     }
 
     /**
-     * POST /programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries : Create a solution entry for a test case
+     * POST programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries : Create a solution entry for a test case
      * @param exerciseId of the exercise
      * @param testCaseId of the test case
      * @param programmingExerciseSolutionEntry the solution entry to be created
      * @return the {@link ResponseEntity} with status {@code 201} and with body the created solution entry,
-     * or with status {@code 400 (Bad Request) if the exerciseId, testcaseId, or solution entry are not valid}.
+     * or with status {@code 409 (Conflict)} if the exerciseId, testcaseId, or solution entry are not valid.
      */
-    @PostMapping("/programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries")
+    @PostMapping("programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ProgrammingExerciseSolutionEntry> createSolutionEntryForTestCase(@PathVariable Long exerciseId, @PathVariable Long testCaseId,
             @RequestBody ProgrammingExerciseSolutionEntry programmingExerciseSolutionEntry) throws URISyntaxException {
@@ -146,15 +146,15 @@ public class ProgrammingExerciseSolutionEntryResource {
     }
 
     /**
-     * PUT /programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries/:solutionEntryId : Update a solution entry
+     * PUT programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries/:solutionEntryId : Update a solution entry
      * @param exerciseId of the exercise
      * @param testCaseId of the test case
      * @param solutionEntryId of the solution entry
      * @param solutionEntry the updated solution entry
      * @return the {@link ResponseEntity} with status {@code 200} and with body the updated solution entry,
-     * or with status {@code 400 (Bad Request) if the exerciseId, testcaseId, solutionEntryId, or solution entry are not valid}.
+     * or with status {@code 409 (Conflict)} if the exerciseId, testcaseId, solutionEntryId, or solution entry are not valid.
      */
-    @PutMapping("/programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries/{solutionEntryId}")
+    @PutMapping("programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries/{solutionEntryId}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ProgrammingExerciseSolutionEntry> updateSolutionEntry(@PathVariable Long exerciseId, @PathVariable Long testCaseId, @PathVariable Long solutionEntryId,
             @RequestBody ProgrammingExerciseSolutionEntry solutionEntry) {
@@ -168,7 +168,7 @@ public class ProgrammingExerciseSolutionEntryResource {
 
         checkExerciseContainsTestCaseElseThrow(exercise, testCase);
         if (!solutionEntryId.equals(solutionEntryBeforeSaving.getId())) {
-            throw new BadRequestAlertException("A solution entry can only be updated if the solutionEntryIds match", ENTITY_NAME, "idnull");
+            throw new ConflictException("A solution entry can only be updated if the solutionEntryIds match", ENTITY_NAME, "solutionEntryIdsMismatch");
         }
 
         ProgrammingExerciseSolutionEntry solutionEntryAfterSaving = programmingExerciseSolutionEntryRepository.save(solutionEntry);
@@ -177,14 +177,14 @@ public class ProgrammingExerciseSolutionEntryResource {
     }
 
     /**
-     * DELETE /programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries/:solutionEntryId : Delete a solution entry
+     * DELETE programming-exercises/:exerciseId/test-cases/:testCaseId/solution-entries/:solutionEntryId : Delete a solution entry
      * @param exerciseId of the exercise
      * @param testCaseId of the test case
      * @param solutionEntryId of the solution entry that is to be deleted
      * @return the {@link ResponseEntity} with status {@code 204},
-     * or with status {@code 400 (Bad Request) if the exerciseId, testcaseId, or solutionEntryId are not valid}.
+     * or with status {@code 409 (Conflict)} if the exerciseId, testcaseId, or solutionEntryId are not valid.
      */
-    @DeleteMapping("/programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries/{solutionEntryId}")
+    @DeleteMapping("programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries/{solutionEntryId}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> deleteSolutionEntry(@PathVariable Long exerciseId, @PathVariable Long testCaseId, @PathVariable Long solutionEntryId) {
         log.debug("REST request to delete SolutionEntry with id : {}", solutionEntryId);
@@ -203,13 +203,13 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     private void checkExerciseContainsTestCaseElseThrow(ProgrammingExercise exercise, ProgrammingExerciseTestCase testCase) {
         if (!exercise.getId().equals(testCase.getExercise().getId())) {
-            throw new BadRequestAlertException("The test case of the solution entry does not belong to the exercise", ENTITY_NAME, "idnull");
+            throw new ConflictException("The test case of the solution entry does not belong to the exercise.", ENTITY_NAME, "exerciseIdsMismatch");
         }
     }
 
     private void checkTestCaseContainsSolutionEntryElseThrow(ProgrammingExerciseTestCase testCase, ProgrammingExerciseSolutionEntry solutionEntry) {
         if (solutionEntry.getTestCase() == null || !testCase.getId().equals(solutionEntry.getTestCase().getId())) {
-            throw new BadRequestAlertException("The test case of the solution entry does not belong to the solution entry", ENTITY_NAME, "idnull");
+            throw new ConflictException("The test case of the solution entry does not belong to the solution entry.", ENTITY_NAME, "solutionEntryTestCaseMismatch");
         }
     }
 }

@@ -189,7 +189,6 @@ public class ProgrammingExerciseTestCaseService {
 
         if (testCasesToSave.size() > 0) {
             testCaseRepository.saveAll(testCasesToSave);
-            // Extract the tasks from the problem statement
             programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
             return true;
         }

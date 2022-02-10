@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
  * REST controller for managing {@link de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask}.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ProgrammingExerciseTaskResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTaskResource.class);
@@ -30,12 +30,13 @@ public class ProgrammingExerciseTaskResource {
     }
 
     /**
-     * Get all tasks with test cases and solution entries for a programming exercise
+     * GET programming-exercises/:exerciseId/tasks
+     * Get all tasks with test cases and solution entries for a programming exercise.
      *
      * @param exerciseId of the exercise
-     * @return All tasks with test cases and solution entries
+     * @return the {@link ResponseEntity} with status {@code 200}.
      */
-    @GetMapping("/programming-exercises/{exerciseId}/tasks")
+    @GetMapping("programming-exercises/{exerciseId}/tasks")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Set<ProgrammingExerciseTask>> getTasks(@PathVariable Long exerciseId) {
         log.debug("REST request to retrieve ProgrammingExerciseTasks for ProgrammingExercise with id : {}", exerciseId);

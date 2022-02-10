@@ -30,11 +30,11 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
      * @return the test case with the programming exercise
      */
     @Query("""
-                        SELECT tc FROM ProgrammingExerciseTestCase tc
-                        LEFT JOIN FETCH tc.exercise ex
-                        WHERE tc.id = :testCaseId
+            SELECT tc FROM ProgrammingExerciseTestCase tc
+            LEFT JOIN FETCH tc.exercise ex
+            WHERE tc.id = :testCaseId
             """)
-    Optional<ProgrammingExerciseTestCase> findByIdWithExercise(Long testCaseId);
+    Optional<ProgrammingExerciseTestCase> findByIdWithExercise(@Param("testCaseId") Long testCaseId);
 
     /**
      * Returns all test cases with the associated solution entries for a programming exercise
@@ -44,9 +44,9 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
     @Query("""
             SELECT DISTINCT tc FROM ProgrammingExerciseTestCase tc
             LEFT JOIN FETCH tc.solutionEntries se
-            WHERE tc.exercise.id = :#{#exerciseId}
+            WHERE tc.exercise.id = :exerciseId
             """)
-    Set<ProgrammingExerciseTestCase> findByExerciseIdWithSolutionEntries(Long exerciseId);
+    Set<ProgrammingExerciseTestCase> findByExerciseIdWithSolutionEntries(@Param("exerciseId") Long exerciseId);
 
     Set<ProgrammingExerciseTestCase> findByExerciseIdAndActive(Long exerciseId, Boolean active);
 
@@ -57,8 +57,8 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
      */
     @Query("""
             SELECT COUNT (DISTINCT testCase) FROM ProgrammingExerciseTestCase testCase
-            WHERE testCase.exercise.id = :#{#exerciseId}
-                AND testCase.visibility = 'AFTER_DUE_DATE'
+            WHERE testCase.exercise.id = :exerciseId
+            AND testCase.visibility = 'AFTER_DUE_DATE'
             """)
     long countAfterDueDateByExerciseId(@Param("exerciseId") Long exerciseId);
 }

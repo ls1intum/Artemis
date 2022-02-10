@@ -22,6 +22,14 @@ public class ProgrammingExerciseTaskService {
 
     private CodeHintRepository codeHintRepository;
 
+    /**
+     * Pattern that is used to extract the tasks (capturing group "name") and test case names (capturing group "tests") from the problem statement.
+     * Example: "[task][Implement BubbleSort](testBubbleSort,testBubbleSortHidden)". Following values are extracted by the named capturing groups:
+     * - name: "Implement BubbleSort"
+     * - tests: "testBubbleSort,testBubbleSortHidden"
+     */
+    private final Pattern pattern = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.*)\\)");
+
     public ProgrammingExerciseTaskService(ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, CodeHintRepository codeHintRepository) {
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
@@ -91,7 +99,6 @@ public class ProgrammingExerciseTaskService {
 
     private Set<ProgrammingExerciseTask> extractTasks(ProgrammingExercise exercise) {
         var problemStatement = exercise.getProblemStatement();
-        var pattern = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.*)\\)");
         var matcher = pattern.matcher(problemStatement);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
         var tasks = new HashSet<ProgrammingExerciseTask>();

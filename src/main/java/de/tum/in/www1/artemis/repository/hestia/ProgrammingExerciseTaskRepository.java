@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the ProgrammingExerciseTask entity.
  */
-@SuppressWarnings("unused")
 public interface ProgrammingExerciseTaskRepository extends JpaRepository<ProgrammingExerciseTask, Long> {
 
     Set<ProgrammingExerciseTask> findByExerciseId(Long exerciseId);
@@ -50,7 +49,7 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
             LEFT JOIN FETCH tc.solutionEntries
             WHERE t.id = :entryId
             """)
-    Optional<ProgrammingExerciseTask> findByIdWithTestCaseAndSolutionEntries(long entryId);
+    Optional<ProgrammingExerciseTask> findByIdWithTestCaseAndSolutionEntries(@Param("entryId") long entryId);
 
     /**
      * Gets a task by its name and associated programming exercise
@@ -66,7 +65,7 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
             WHERE t.taskName = :taskName
             AND t.exercise.id = :exerciseId
             """)
-    Optional<ProgrammingExerciseTask> findByNameAndExerciseId(String taskName, long exerciseId);
+    Optional<ProgrammingExerciseTask> findByNameAndExerciseId(@Param("taskName") String taskName, @Param("exerciseId") long exerciseId);
 
     /**
      * Gets all tasks with its test cases and solution entries of the test case for a programming exercise
@@ -92,7 +91,7 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
             WHERE t.exercise.id = :exerciseId
             AND tc.exercise.id = :exerciseId
             """)
-    Optional<Set<ProgrammingExerciseTask>> findByExerciseIdWithTestCaseAndSolutionEntries(long exerciseId);
+    Optional<Set<ProgrammingExerciseTask>> findByExerciseIdWithTestCaseAndSolutionEntries(@Param("exerciseId") long exerciseId);
 
     /**
      * Gets all tasks with its test cases for a programming exercise
@@ -106,7 +105,7 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
             LEFT JOIN FETCH tc.solutionEntries
             WHERE t.exercise.id = :exerciseId
             """)
-    Set<ProgrammingExerciseTask> findByExerciseIdWithTestCases(Long exerciseId);
+    Set<ProgrammingExerciseTask> findByExerciseIdWithTestCases(@Param("exerciseId") Long exerciseId);
 
     /**
      * Returns the task name with the given id

@@ -418,7 +418,6 @@ public class ProgrammingExerciseService {
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
 
-        // Extract the tasks from the problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
         // TODO: in case of an exam exercise, this is not necessary
@@ -722,7 +721,6 @@ public class ProgrammingExerciseService {
         programmingExercise.setProblemStatement(problemStatement);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        // Extract the tasks from the problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(updatedProgrammingExercise);
 
         groupNotificationService.notifyAboutExerciseUpdate(programmingExercise, notificationText);

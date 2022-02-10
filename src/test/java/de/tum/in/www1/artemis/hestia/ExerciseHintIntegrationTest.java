@@ -124,7 +124,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(exerciseHints).hasSize(4);
 
         exerciseHint.setExercise(null);
-        request.post("/api/exercises/" + exercise.getId() + "/exercise-hints/", exerciseHint, HttpStatus.BAD_REQUEST);
+        request.post("/api/exercises/" + exercise.getId() + "/exercise-hints/", exerciseHint, HttpStatus.CONFLICT);
     }
 
     @Test
@@ -135,7 +135,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
         codeHint.setExercise(exercise);
 
         int sizeBefore = exerciseHintRepository.findAll().size();
-        request.post("/api/exercises/" + codeHint.getExercise().getId() + "/exercise-hints/", codeHint, HttpStatus.FORBIDDEN);
+        request.post("/api/exercises/" + codeHint.getExercise().getId() + "/exercise-hints/", codeHint, HttpStatus.BAD_REQUEST);
         int sizeAfter = exerciseHintRepository.findAll().size();
         assertThat(sizeAfter).isEqualTo(sizeBefore);
     }
@@ -172,7 +172,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
         String newContent = "new content value!";
         exerciseHint.setContent(newContent);
         request.put("/api/exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.OK);
-        request.put("/api/exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/" + 0L, exerciseHint, HttpStatus.BAD_REQUEST);
+        request.put("/api/exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/" + 0L, exerciseHint, HttpStatus.CONFLICT);
         Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
         assertThat(hintAfterSave).isPresent();
         assertThat(hintAfterSave.get()).isInstanceOf(ExerciseHint.class);
@@ -204,7 +204,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
 
         codeHint.setTitle("New Title");
 
-        request.put("/api/exercises/" + codeHint.getExercise().getId() + "/exercise-hints/" + codeHint.getId(), codeHint, HttpStatus.FORBIDDEN);
+        request.put("/api/exercises/" + codeHint.getExercise().getId() + "/exercise-hints/" + codeHint.getId(), codeHint, HttpStatus.BAD_REQUEST);
         Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(codeHint.getId());
         assertThat(hintAfterSave).isPresent();
         assertThat(hintAfterSave.get()).isInstanceOf(CodeHint.class);
@@ -230,7 +230,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
         exerciseHintRepository.save(codeHint);
 
         int sizeBefore = exerciseHintRepository.findAll().size();
-        request.delete("/api/exercises/" + codeHint.getExercise().getId() + "/exercise-hints/" + codeHint.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/exercises/" + codeHint.getExercise().getId() + "/exercise-hints/" + codeHint.getId(), HttpStatus.BAD_REQUEST);
         int sizeAfter = exerciseHintRepository.findAll().size();
         assertThat(sizeAfter).isEqualTo(sizeBefore);
     }
@@ -277,7 +277,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
         exerciseHint.setTitle("Test Title");
         exerciseHint.setExercise(exercise);
 
-        request.post("/api/exercises/" + Long.MAX_VALUE + "/exercise-hints", exerciseHint, HttpStatus.BAD_REQUEST);
+        request.post("/api/exercises/" + Long.MAX_VALUE + "/exercise-hints", exerciseHint, HttpStatus.CONFLICT);
     }
 
     @Test
@@ -286,7 +286,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
         exerciseHint.setTitle("New Title");
 
-        request.put("/api/exercises/" + Long.MAX_VALUE + "/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.BAD_REQUEST);
+        request.put("/api/exercises/" + Long.MAX_VALUE + "/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.CONFLICT);
     }
 
     @Test
@@ -294,7 +294,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     public void getHintTitleWithInvalidExerciseIds() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
 
-        request.get("/api/exercises/" + Long.MAX_VALUE + "/exercise-hints/" + exerciseHint.getId(), HttpStatus.BAD_REQUEST, String.class);
+        request.get("/api/exercises/" + Long.MAX_VALUE + "/exercise-hints/" + exerciseHint.getId(), HttpStatus.CONFLICT, String.class);
     }
 
     @Test
@@ -302,7 +302,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     public void getExerciseHintWithInvalidExerciseIds() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
 
-        request.get("/api/exercises/" + Long.MAX_VALUE + "/exercise-hints/" + exerciseHint.getId(), HttpStatus.BAD_REQUEST, String.class);
+        request.get("/api/exercises/" + Long.MAX_VALUE + "/exercise-hints/" + exerciseHint.getId(), HttpStatus.CONFLICT, String.class);
     }
 
     @Test
@@ -310,6 +310,6 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     public void deleteHintWithInvalidExerciseIds() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
 
-        request.delete("/api/exercises/" + Long.MAX_VALUE + "/exercise-hints/" + exerciseHint.getId(), HttpStatus.BAD_REQUEST);
+        request.delete("/api/exercises/" + Long.MAX_VALUE + "/exercise-hints/" + exerciseHint.getId(), HttpStatus.CONFLICT);
     }
 }

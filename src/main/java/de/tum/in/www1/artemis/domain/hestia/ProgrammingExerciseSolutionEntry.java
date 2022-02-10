@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
  * It is structured similarly to a git diff entry.
  * If it replaces existing code it will contain the previous code that it replaces otherwise previousCode will be null.
  * If it is only removing existing code the code attribute will be null.
- * If it encompasses the addition entire file, previousLine will be null.
+ * If it encompasses the addition of an entire file, previousLine will be null.
  * If it deletes an entire file, line will be null.
  * previousLine and line will be different when there are other changes higher up in the file.
  *
