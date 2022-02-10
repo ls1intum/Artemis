@@ -12,6 +12,8 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { Exam } from 'app/entities/exam.model';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -41,6 +43,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: ProfileService, useValue: new MockProfileService() },
+                { provide: ProgrammingExerciseGradingService, useValue: MockProgrammingExerciseService },
             ],
         })
             .overrideTemplate(ProgrammingExerciseDetailComponent, '')
