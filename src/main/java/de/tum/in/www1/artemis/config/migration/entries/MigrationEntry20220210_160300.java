@@ -40,6 +40,9 @@ public class MigrationEntry20220210_160300 extends MigrationEntry {
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
     }
 
+    /**
+     * Retrieves all programming exercises from the database and executes the processing method in batches of 80 exercises to prevent database timeouts
+     */
     @Override
     public void execute() {
         int listSize = 80;
