@@ -20,10 +20,10 @@ plugins {
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "3.2.0"
-    id "com.github.node-gradle.node" version "3.1.1"
-    id "com.diffplug.spotless" version "6.2.1"
+    id "com.github.node-gradle.node" version "3.2.0"
+    id "com.diffplug.spotless" version "6.2.2"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-    id "com.github.ben-manes.versions" version "0.41.0"
+    id "com.github.ben-manes.versions" version "0.42.0"
     id "com.github.andygoossens.modernizer" version "1.6.2"
 }
 
@@ -182,7 +182,7 @@ dependencies {
     implementation "org.jsoup:jsoup:1.14.3"
     implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.6.5"
+    implementation "org.springdoc:springdoc-openapi-ui:1.6.6"
 
     // import JHipster dependencies BOM
     implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
@@ -229,7 +229,7 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.0"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
-    implementation "io.netty:netty-all:4.1.73.Final"
+    implementation "io.netty:netty-all:4.1.74.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.0.15"
     implementation "org.springframework:spring-messaging:5.3.15"
 
@@ -324,7 +324,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "7.3.3"
+    gradleVersion = "7.4"
 }
 
 task stage(dependsOn: "bootWar") {
