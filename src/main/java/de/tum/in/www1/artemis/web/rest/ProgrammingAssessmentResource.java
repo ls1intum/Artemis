@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.Optional;
@@ -24,6 +22,7 @@ import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -73,7 +72,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
         if (!programmingExercise.areManualResultsAllowed()) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getLatestResult(), programmingExercise, assessmentUpdate);
@@ -142,11 +141,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         final boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(programmingExercise, user);
         if (!assessmentService.isAllowedToCreateOrOverrideResult(existingManualResult, programmingExercise, participation, user, isAtLeastInstructor)) {
             log.debug("The user {} is not allowed to override the assessment for the participation {} for User {}", user.getLogin(), participation.getId(), user.getLogin());
-            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
+            throw new AccessForbiddenException("The user is not allowed to override the assessment");
         }
 
         if (!programmingExercise.areManualResultsAllowed()) {
-            return forbidden("assessment", "assessmentSaveNotAllowed", "Creating manual results is disabled for this exercise!");
+            throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
         if (Boolean.FALSE.equals(newManualResult.isRated())) {
             throw new BadRequestAlertException("Result is not rated", ENTITY_NAME, "resultNotRated");

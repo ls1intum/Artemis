@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,20 +10,23 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionResultSimulationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -87,15 +87,9 @@ public class ProgrammingSubmissionResultSimulationResource {
     @PostMapping(Endpoints.SUBMISSIONS_SIMULATION)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ProgrammingSubmission> createParticipationAndSubmissionSimulation(@PathVariable Long exerciseId) {
-
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastEditorForExercise(exercise, user)) {
-            return forbidden();
-        }
-
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
         ProgrammingSubmission programmingSubmission = programmingSubmissionResultSimulationService.createSubmission(exerciseId);
-
         programmingSubmissionService.notifyUserAboutSubmission(programmingSubmission);
 
         try {
@@ -122,17 +116,13 @@ public class ProgrammingSubmissionResultSimulationResource {
         log.debug("Received result notify (NEW)");
         User user = userRepository.getUserWithGroupsAndAuthorities();
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
-        Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise, user);
-
-        if (optionalStudentParticipation.isEmpty()) {
-            return forbidden();
-        }
-
-        ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) optionalStudentParticipation.get();
+        var studentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise, user).orElseThrow(
+                () -> new EntityNotFoundException("Participation for programming exercise " + programmingExercise.getId() + " and user " + user.getLogin() + " not found!"));
+        var programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
         Result result = programmingSubmissionResultSimulationService.createResult(programmingExerciseStudentParticipation);
 
-        messagingService.broadcastNewResult((Participation) optionalStudentParticipation.get(), result);
-        log.info("The new result for {} was saved successfully", ((ProgrammingExerciseStudentParticipation) optionalStudentParticipation.get()).getBuildPlanId());
+        messagingService.broadcastNewResult(programmingExerciseStudentParticipation, result);
+        log.info("The new result for {} was saved successfully", programmingExerciseStudentParticipation.getBuildPlanId());
         try {
             return ResponseEntity.created(new URI("/api/results" + result.getId())).body(result);
         }

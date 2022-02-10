@@ -29,7 +29,7 @@ export function submitRandomModelingAnswerExam(artemis, exercise, submissionId, 
 export function newModelingExercise(artemis, exerciseGroup, courseId) {
     const exercise = {
         maxPoints: 1,
-        title: 'modeling' + nextAlphanumeric(5),
+        title: 'Modeling K6 ' + nextAlphanumeric(5),
         type: 'modeling',
         mode: 'INDIVIDUAL',
         assessmentType: 'SEMI_AUTOMATIC',

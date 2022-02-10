@@ -21,6 +21,7 @@ import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbo
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 
 @NgModule({
     imports: [
@@ -37,6 +38,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisMarkdownModule,
         SubmissionResultStatusModule,
+        ArtemisExamSharedModule,
     ],
     declarations: [
         ExamParticipationSummaryComponent,

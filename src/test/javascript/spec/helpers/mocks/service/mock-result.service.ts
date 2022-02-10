@@ -7,7 +7,7 @@ import { Exercise } from 'app/entities/exercise.model';
 export class MockResultService implements IResultService {
     create = (result: Result) => of();
     delete = (participationId: number, resultId: number) => EMPTY;
-    find = (id: number) => EMPTY;
+    find = (resultId: number) => EMPTY;
     getFeedbackDetailsForResult = (participationId: number, resultId: number) => EMPTY;
     getResultsForExercise = (courseId: number, exerciseId: number, req?: any) => EMPTY;
     getResultsForExerciseWithPointsPerGradingCriterion = (exerciseId: number, req: any) => EMPTY;

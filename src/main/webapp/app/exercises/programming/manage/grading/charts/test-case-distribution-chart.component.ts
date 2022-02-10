@@ -3,8 +3,10 @@ import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programmin
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { TranslateService } from '@ngx-translate/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { getColor, xAxisFormatting } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.utils';
+import { getColor } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.utils';
+import { Router } from '@angular/router';
+import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
+import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 enum TestCaseBarTitle {
     WEIGHT_EN = 'Weight',
@@ -19,7 +21,12 @@ enum TestCaseBarTitle {
     template: `
         <div>
             <div>
-                <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.title' | artemisTranslate }}</h4>
+                <div class="d-flex justify-content-between">
+                    <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.title' | artemisTranslate }}</h4>
+                    <button *ngIf="tableFiltered" type="button" class="btn btn-info" (click)="resetTableFilter()">
+                        {{ 'artemisApp.programmingExercise.configureGrading.charts.resetFilter' | artemisTranslate }}
+                    </button>
+                </div>
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.description' | artemisTranslate"></p>
             </div>
             <div #containerRefWeight class="chart bg-light">
@@ -30,6 +37,7 @@ enum TestCaseBarTitle {
                     [yAxis]="true"
                     [xAxisTickFormatting]="xAxisFormatting"
                     [scheme]="ngxColors"
+                    (select)="onSelectWeight($event)"
                 >
                     <ng-template #tooltipTemplate let-model="model">
                         <b>{{ model.name }}</b>
@@ -80,6 +88,7 @@ enum TestCaseBarTitle {
                     [xAxisTickFormatting]="xAxisFormatting"
                     [scheme]="ngxColors"
                     [xScaleMax]="100"
+                    (select)="onSelectPoints()"
                 >
                     <ng-template #tooltipTemplate let-model="model">
                         <b>{{ model.name }}</b>
@@ -93,33 +102,34 @@ enum TestCaseBarTitle {
         </div>
     `,
 })
-export class TestCaseDistributionChartComponent implements OnChanges {
+export class TestCaseDistributionChartComponent extends ProgrammingGradingChartsDirective implements OnChanges {
     @Input() testCases: ProgrammingExerciseTestCase[];
     @Input() testCaseStatsMap?: TestCaseStatsMap;
     @Input() totalParticipations?: number;
     @Input() exercise: ProgrammingExercise;
 
     @Output() testCaseColorsChange = new EventEmitter<{}>();
+    @Output() testCaseRowFilter = new EventEmitter<number>();
 
     readonly testCaseBarTitle = TestCaseBarTitle;
 
     // ngx
-    ngxWeightData: any[] = [
+    // array containing the ngx-dedicated objects in order to display the weight and bonus chart
+    ngxWeightData: NgxChartsMultiSeriesDataEntry[] = [
         { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weight'), series: [] as any[] },
         { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonus'), series: [] as any[] },
     ];
-    ngxPointsData: any[] = [{ name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.points'), series: [] as any[] }];
+    // array containing the ngx-dedicated objects in order to display the points chart
+    ngxPointsData: NgxChartsMultiSeriesDataEntry[] = [
+        { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.points'), series: [] as any[] },
+    ];
 
-    ngxColors = {
-        name: 'test case distribution',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [],
-    } as Color;
-
-    readonly xAxisFormatting = xAxisFormatting;
-
-    constructor(private translateService: TranslateService) {}
+    constructor(private translateService: TranslateService, private router: Router) {
+        super();
+        this.translateService.onLangChange.subscribe(() => {
+            this.updateTranslation();
+        });
+    }
 
     ngOnChanges(): void {
         if (this.testCases == undefined) {
@@ -145,6 +155,7 @@ export class TestCaseDistributionChartComponent implements OnChanges {
             const stats = this.testCaseStatsMap ? this.testCaseStatsMap[testCase.testName!] : undefined;
 
             return {
+                id: testCase.id,
                 label: testCase.testName!,
                 // relative weight percentage
                 relWeight: totalWeight > 0 ? (testCase.weight! / totalWeight) * 100 : 0,
@@ -175,8 +186,8 @@ export class TestCaseDistributionChartComponent implements OnChanges {
                 const label = element.label;
                 const color = getColor(i / this.testCases.length, 50);
 
-                weight.series.push({ name: label, value: Math.max(element.relWeight, 0), bonus: Math.max(element.relScore, 0) });
-                weightAndBonus.series.push({ name: label, value: Math.max(element.relScore, 0), weight: Math.max(element.relScore, 0) });
+                weight.series.push({ name: label, value: Math.max(element.relWeight, 0), bonus: Math.max(element.relScore, 0), id: element.id });
+                weightAndBonus.series.push({ name: label, value: Math.max(element.relScore, 0), weight: Math.max(element.relScore, 0), id: element.id });
 
                 points.series.push({ name: label, value: Math.max(element.relPoints, 0) });
 
@@ -193,15 +204,62 @@ export class TestCaseDistributionChartComponent implements OnChanges {
             this.testCaseColorsChange.emit(testCaseColors);
         } else {
             // update values in-place
-            for (let i = 0; i < testCaseScores.length; i++) {
-                const element = testCaseScores[i];
-                this.ngxWeightData[0].series[i].value = Math.max(element.relWeight, 0);
-                this.ngxWeightData[0].series[i].bonus = Math.max(element.relScore, 0);
-                this.ngxWeightData[1].series[i].value = Math.max(element.relScore, 0);
-                this.ngxWeightData[1].series[i].weight = Math.max(element.relWeight, 0);
-                this.ngxPointsData[0].series[i].value = Math.max(element.relPoints, 0);
-            }
+            testCaseScores.forEach((score) => {
+                this.ngxWeightData[0].series.forEach((weight, index) => {
+                    if (weight.id === score.id) {
+                        weight.value = Math.max(score.relWeight, 0);
+                        weight.bonus = Math.max(score.relScore, 0);
+                        // the bars are set up symmetrically, which means if we have the index of the corresponding test case in one bar, it is the same for all other bars
+                        this.ngxWeightData[1].series[index].value = Math.max(score.relScore, 0);
+                        this.ngxWeightData[1].series[index].weight = Math.max(score.relWeight, 0);
+                        this.ngxPointsData[0].series[index].value = Math.max(score.relPoints, 0);
+                    }
+                });
+            });
         }
+
+        this.ngxWeightData = [...this.ngxWeightData];
+        this.ngxPointsData = [...this.ngxPointsData];
+    }
+
+    /**
+     * Auxiliary method that handles the click on the points chart
+     * Delegates the user to the statistics page of the programming exercise
+     */
+    onSelectPoints(): void {
+        const url = ['course-management', this.exercise.course!.id, 'programming-exercises', this.exercise.id, 'exercise-statistics'];
+        this.router.navigate(url);
+    }
+
+    /**
+     * Auxiliary method that handles the click on the weight and bonus chart
+     * Filters the table left to the charts in order to display only the test case that is clicked
+     * @param event event that is delegated by ngx-charts and contains the test case ID
+     */
+    onSelectWeight(event: any): void {
+        this.tableFiltered = true;
+        this.testCaseRowFilter.emit(event.id as number);
+    }
+
+    /**
+     * Auxiliary method that
+     */
+    resetTableFilter(): void {
+        this.tableFiltered = false;
+        this.testCaseRowFilter.emit(ProgrammingGradingChartsDirective.RESET_TABLE);
+    }
+
+    /**
+     * Auxiliary method in order to keep the translation of the bar labels up to date
+     */
+    updateTranslation(): void {
+        const weightLabel = this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weight');
+        const weightAndBonusLabel = this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonus');
+        const pointsLabel = this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.points');
+
+        this.ngxWeightData[0].name = weightLabel;
+        this.ngxWeightData[1].name = weightAndBonusLabel;
+        this.ngxPointsData[0].name = pointsLabel;
 
         this.ngxWeightData = [...this.ngxWeightData];
         this.ngxPointsData = [...this.ngxPointsData];

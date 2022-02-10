@@ -4,13 +4,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { navigateToExamExercise } from 'app/utils/navigation.utils';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course, NgxDataEntry } from 'app/entities/course.model';
+import { Course } from 'app/entities/course.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 type NameToValueMap = { [name: string]: any };
 
@@ -26,7 +27,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     examId: number;
 
     // ngx
-    ngxData: NgxDataEntry[] = [];
+    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
     ngxColor = {
         name: 'exercise groups',
         selectable: true,
@@ -76,7 +77,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     }
 
     roundAndPerformLocalConversion(points: number | undefined) {
-        return this.localeConversionService.toLocaleString(roundScoreSpecifiedByCourseSettings(points, this.course), this.course!.accuracyOfScores!);
+        return this.localeConversionService.toLocaleString(roundValueSpecifiedByCourseSettings(points, this.course), this.course!.accuracyOfScores!);
     }
 
     /**
