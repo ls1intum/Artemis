@@ -11,7 +11,6 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/e
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 describe('ExerciseHint Management Update Component', () => {
@@ -26,15 +25,15 @@ describe('ExerciseHint Management Update Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ExerciseHintUpdateComponent],
-            providers: [FormBuilder, MockExerciseService, MockProvider(TranslateService), { provide: ActivatedRoute, useValue: route }],
+            providers: [FormBuilder, MockProvider(TranslateService), { provide: ActivatedRoute, useValue: route }],
         })
-            .overrideTemplate(ExerciseHintUpdateComponent, '')
-            .compileComponents();
-
-        fixture = TestBed.createComponent(ExerciseHintUpdateComponent);
-        comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(ExerciseHintService);
-        exerciseService = fixture.debugElement.injector.get(ExerciseService);
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ExerciseHintUpdateComponent);
+                comp = fixture.componentInstance;
+                service = TestBed.inject(ExerciseHintService);
+                exerciseService = TestBed.inject(ExerciseService);
+            });
     });
 
     it('should load params and data onInit', () => {

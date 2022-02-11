@@ -26,13 +26,13 @@ describe('ExerciseHint Hint Student Component', () => {
             declarations: [ExerciseHintUpdateComponent],
             providers: [FormBuilder, MockExerciseService, MockProvider(TranslateService), { provide: NgbModal, useClass: MockNgbModalService }],
         })
-            .overrideTemplate(ExerciseHintUpdateComponent, '')
-            .compileComponents();
-
-        fixture = TestBed.createComponent(ExerciseHintStudentComponent);
-        comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(ExerciseHintService);
-        modalService = TestBed.inject(NgbModal);
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ExerciseHintStudentComponent);
+                comp = fixture.componentInstance;
+                service = TestBed.inject(ExerciseHintService);
+                modalService = TestBed.inject(NgbModal);
+            });
     });
 
     it('should load all hints onInit', () => {
