@@ -35,6 +35,18 @@ public class ProgrammingExerciseTestCaseService {
 
     private final AuditEventRepository auditEventRepository;
 
+    /**
+     * Regex for structural test case names in Java. The names of classes, attributes, methods and constructors have not
+     * to be checked since the oracle would not create structural tests for invalid names.
+     */
+    private static final String METHOD_TEST_REGEX = "testMethods\\[.+]";
+
+    private static final String ATTRIBUTES_TEST_REGEX = "testAttributes\\[.+]";
+
+    private static final String CONSTRUCTORS_TEST_REGEX = "testConstructors\\[.+]";
+
+    private static final String CLASS_TEST_REGEX = "testClass\\[.+]";
+
     public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingSubmissionService programmingSubmissionService, AuditEventRepository auditEventRepository) {
         this.testCaseRepository = testCaseRepository;
@@ -216,18 +228,6 @@ public class ProgrammingExerciseTestCaseService {
         auditEventRepository.add(auditEvent);
         log.info("User {} requested to reset the grading configuration for exercise {} with id {}", user.getLogin(), exercise.getTitle(), exercise.getId());
     }
-
-    /**
-     * Regex for structural test case names in Java. The names of classes, attributes, methods and constructors have not
-     * to be checked since the oracle would not create structural tests for invalid names.
-     */
-    private static final String METHOD_TEST_REGEX = "testMethods\\[.+]";
-
-    private static final String ATTRIBUTES_TEST_REGEX = "testAttributes\\[.+]";
-
-    private static final String CONSTRUCTORS_TEST_REGEX = "testConstructors\\[.+]";
-
-    private static final String CLASS_TEST_REGEX = "testClass\\[.+]";
 
     /**
      * Sets the enum value test case type for every test case and saves to the database. Implicitly, all tests are of the same programming language.
