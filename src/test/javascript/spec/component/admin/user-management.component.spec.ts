@@ -194,7 +194,7 @@ describe('UserManagementComponent', () => {
             expect(broadcastSpy).toHaveBeenCalledTimes(1);
             expect(broadcastSpy).toHaveBeenCalledWith({ name: 'userListModification', content: 'Deleted a user' });
         } else {
-            expect(broadcastSpy).toHaveBeenCalledTimes(0);
+            expect(broadcastSpy).not.toHaveBeenCalled();
         }
         expect(errorText).toInclude(statusText);
 

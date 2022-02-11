@@ -36,6 +36,6 @@ describe('UserManagementResolve', () => {
 
         expect(returnedUser).not.toBe(mockReturnUser);
         expect(returnedUser).toBeInstanceOf(User);
-        expect(userService.find).toHaveBeenCalledTimes(0);
+        expect(userService.find).not.toHaveBeenCalled();
     });
 });
