@@ -93,4 +93,4 @@ Adjust the agent-args and add the environment block.
 You have to add permissions to the folder (which will be located at the $HOME folder of the user that jenkins uses), e.g. with ``sudo chmod 777 maven-cache-docker -R``.
 
 Note that this might allow students to access shared resources (e.g. jars used by Maven), and they might be able to overwrite them.
-You can use `Ares <https://github.com/ls1intum/artemis-java-test-sandbox>`__ to prevent this by restricting the resources the student's code can access.
+You can use `Ares <https://github.com/ls1intum/Ares>`__ to prevent this by restricting the resources the student's code can access.

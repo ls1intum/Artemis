@@ -103,7 +103,7 @@ Its main features are
   or pointing to a possible location that caused an Exception
 * utilities to test exercises using System.out and System.in comfortably
 
-**For more information see** `Ares GitHub <https://github.com/ls1intum/artemis-java-test-sandbox>`__
+**For more information see** `Ares GitHub <https://github.com/ls1intum/Ares>`__
 
 Best practices for writing test cases
 -------------------------------------
