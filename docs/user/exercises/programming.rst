@@ -109,7 +109,7 @@ Best practices for writing test cases
 -------------------------------------
 
 The following sections describe best practices for writing test cases.
-The examples and explanations are specifically written for Java (using AJTS/JUnit5), but the practices can also be generalized
+The examples and explanations are specifically written for Java (using Ares/JUnit5), but the practices can also be generalized
 for other programming languages.
 
 .. include:: test-case-best-practices.inc
