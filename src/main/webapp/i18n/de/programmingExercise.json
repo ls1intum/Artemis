@@ -297,7 +297,7 @@
             "lockAllRepositoriesSuccess": "Die Repositories werden nun gesperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
             "testCasesWithTypeSuccess": "Folgende Tests wurden geladen:\n{{detailedContent}}",
             "testCasesWithTypeWarning": "Nur zu Testzwecken: Alle Tests mit Typ für diese Aufgabe laden.",
-            "testCasesWithTypeTitle": "Tests mit Typ",
+            "testCasesWithTypeTitle": "Lade Tests mit Typ",
             "auxiliaryRepository": {
                 "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",

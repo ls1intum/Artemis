@@ -297,7 +297,7 @@
             "lockAllRepositoriesSuccess": "The repositories are now being locked. Please be patient for a while. You will soon be notified whether the operation was successful.",
             "testCasesWithTypeSuccess": "Following test cases of type have been retrieved:\n{{detailedContent}}",
             "testCasesWithTypeWarning": "For testing purpose only: Load all test cases with it's type for this exercise.",
-            "testCasesWithTypeTitle": "Test Cases with Type",
+            "testCasesWithTypeTitle": "Load Test Cases with Type",
             "auxiliaryRepository": {
                 "error": "There is a problem with the auxiliary repository.",
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
