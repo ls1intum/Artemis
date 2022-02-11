@@ -193,7 +193,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     private highlightMedian(medianValue: number) {
         const index = this.determineIndex(medianValue);
         if (this.ngxData[index].value > 0) {
-            this.ngxColor.domain[index] = GraphColors.DARK_BLUE;
+            this.ngxColor.domain[index] = GraphColors.BLUE;
             this.showMedianLegend = true;
         } else {
             this.showMedianLegend = false;
