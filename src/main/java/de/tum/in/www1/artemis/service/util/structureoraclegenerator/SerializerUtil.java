@@ -55,11 +55,22 @@ class SerializerUtil {
      * @return The JSON array containing the string representations of the modifiers.
      */
     static JsonArray serializeAnnotations(List<JavaAnnotation> annotations) {
+        filterAnnotations(annotations);
         JsonArray annotationsArray = new JsonArray();
         for (JavaAnnotation annotation : annotations) {
             annotationsArray.add(annotation.getType().getSimpleName());
         }
         return annotationsArray;
+    }
+
+    /**
+     * This method removes the @Override annotation from the list
+     * since it cannot be tested against later.
+     *
+     * @param annotations List of annotations to filter
+     */
+    private static void filterAnnotations(List<JavaAnnotation> annotations) {
+        annotations.removeIf(javaAnnotation -> javaAnnotation.getType().isA(Override.class.getName()));
     }
 
     /**
@@ -90,10 +101,8 @@ class SerializerUtil {
     static JsonObject createJsonObject(String name, Set<String> modifiers, JavaMember javaMember, List<JavaAnnotation> annotations) {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("name", name);
-
         jsonObject.add("modifiers", serializeModifiers(modifiers, javaMember));
         if (!annotations.isEmpty()) {
-            // TODO: do not add the "Override" annotation here, because it causes problems
             jsonObject.add("annotations", serializeAnnotations(annotations));
         }
         return jsonObject;
