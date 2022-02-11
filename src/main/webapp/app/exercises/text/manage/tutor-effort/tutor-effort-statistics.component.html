@@ -1,46 +1,68 @@
 <div>
-    <h4 jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title"></h4>
-    <button *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']" class="btn btn-primary btn-sm mb-2" (click)="loadTutorEfforts()">
-        <fa-icon [icon]="faSync" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'showStatistic.recalculateStatistics' | artemisTranslate }}
-    </button>
+    <div class="d-flex flex-row justify-content-between align items center">
+        <h4 jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title"></h4>
+        <button *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']" class="btn btn-primary btn-sm mb-2" (click)="loadTutorEfforts()">
+            <fa-icon [icon]="faSync" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'showStatistic.recalculateStatistics' | artemisTranslate }}
+        </button>
+    </div>
     <div *ngIf="tutorEfforts && tutorEfforts.length > 0">
         <table class="table">
             <tr>
                 <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.numberOfSubmissionsAssessed"></span></th>
                 <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.totalTimeSpent"></span></th>
                 <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.averageTime"></span></th>
+                <th class="d-flex flex-row align-items-center justify-content-center">
+                    <div *ngIf="showMedianLegend" class="color-legend"></div>
+                    <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.effortMedian"></span>
+                </th>
                 <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.numberOfTutorsInvolved"></span></th>
             </tr>
             <tr>
                 <td>{{ numberOfSubmissions ? numberOfSubmissions : '0' }}</td>
                 <td>{{ totalTimeSpent ? totalTimeSpent : '< 1 min' }}</td>
                 <td>{{ averageTimeSpent ? averageTimeSpent : '0' }}</td>
+                <td>{{ medianValue ? medianValue : '0.00' }}</td>
                 <td>{{ numberOfTutorsInvolvedInCourse ? numberOfTutorsInvolvedInCourse : '0' }}</td>
             </tr>
-            <tr>
-                <td colspan="3">
-                    <div #containerRef class="col-9 justify-content-center">
-                        <h3 jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title">Tutor Effort Statistics</h3>
-                        <ngx-charts-bar-vertical
-                            [view]="[containerRef.offsetWidth, 600]"
-                            [scheme]="ngxColor"
-                            [results]="ngxData"
-                            [xAxis]="true"
-                            [yAxis]="true"
-                            [showXAxisLabel]="true"
-                            [showYAxisLabel]="true"
-                            [xAxisLabel]="xAxisLabel"
-                            [yAxisLabel]="yAxisLabel"
-                            [yAxisTickFormatting]="yAxisTickFormatting"
-                            [yScaleMax]="yScaleMax"
-                        >
-                        </ngx-charts-bar-vertical>
-                    </div>
-                </td>
-            </tr>
+            <tr></tr>
         </table>
+        <div class="row d-flex justify-content-center">
+            <div #containerRef class="col-10">
+                <div class="d-flex flex-row justify-content-center align-items-center">
+                    <h3 jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title">Tutor Effort Statistics</h3>
+                    <jhi-help-icon [text]="'artemisApp.textExercise.tutorEffortStatistics.titleDescription'" [placement]="'right'"></jhi-help-icon>
+                </div>
+                <ngx-charts-bar-vertical
+                    [view]="[containerRef.offsetWidth, 600]"
+                    [scheme]="ngxColor"
+                    [results]="ngxData"
+                    [xAxis]="true"
+                    [yAxis]="true"
+                    [showXAxisLabel]="true"
+                    [showYAxisLabel]="true"
+                    [xAxisLabel]="xAxisLabel"
+                    [yAxisLabel]="yAxisLabel"
+                    [yAxisTickFormatting]="yAxisTickFormatting"
+                    [yScaleMax]="yScaleMax"
+                    (select)="onSelect()"
+                >
+                    <ng-template #tooltipTemplate let-model="model">
+                        <b>{{ model.value }} </b>
+                        <b *ngIf="model.value !== 1" jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.multipleTutors"></b>
+                        <b *ngIf="model.value === 1" jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.singleTutor"></b>
+                        <br />
+                        <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.forMinutes" [translateValues]="{ interval: model.label }"></span>
+                        <br />
+                        <b
+                            jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.medianOfSubmissions"
+                            [translateValues]="{ average: getMedianAmountOfAssessedSubmissions(model.label) }"
+                        ></b>
+                    </ng-template>
+                </ngx-charts-bar-vertical>
+            </div>
+        </div>
     </div>
-    <div *ngIf="(tutorEfforts && tutorEfforts.length == 0) || !tutorEfforts">
+    <div class="text-center" *ngIf="(tutorEfforts && tutorEfforts.length == 0) || !tutorEfforts">
         <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.noData"></span>
     </div>
 </div>
