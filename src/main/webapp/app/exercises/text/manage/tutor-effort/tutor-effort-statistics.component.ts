@@ -59,6 +59,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     ngOnInit(): void {
         this.translateLabels();
         this.ngxChartLabels = ['[0-10)', '[10-20)', '[20-30)', '[30-40)', '[40-50)', '[50-60)', '[60-70)', '[70-80)', '[80-90)', '[90-100)', '[100-110)', '[110-120)', '120+'];
+        this.ngxColor.domain = Array(13).fill(GraphColors.LIGHT_BLUE);
         this.route.params.subscribe((params) => {
             this.currentExerciseId = Number(params['exerciseId']);
             this.currentCourseId = Number(params['courseId']);

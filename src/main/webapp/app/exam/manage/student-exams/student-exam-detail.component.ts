@@ -7,7 +7,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { User } from 'app/core/user/user.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/util/alert.service';
-import { round, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { round, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
@@ -160,7 +160,7 @@ export class StudentExamDetailComponent implements OnInit {
                 setLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0], getLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0]));
             }
 
-            this.achievedTotalPoints += roundScoreSpecifiedByCourseSettings((exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100, this.course);
+            this.achievedTotalPoints += roundValueSpecifiedByCourseSettings((exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100, this.course);
         }
     }
 
