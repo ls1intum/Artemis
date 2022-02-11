@@ -387,7 +387,7 @@ describe('CourseScoresComponent', () => {
         fixture.detectChanges();
         const exportAsCsvStub = jest.spyOn(component, 'exportAsCsv').mockImplementation();
         component.exportResults();
-        const generatedRows = exportAsCsvStub.mock.calls[0][0];
+        const generatedRows = exportAsCsvStub.mock.calls[0][1];
         const user1Row = generatedRows[0];
         validateUserRow(
             user1Row,
@@ -396,6 +396,7 @@ describe('CourseScoresComponent', () => {
             user1.email!,
             '0',
             '0%',
+            '10',
             '10',
             '100%',
             '20',
@@ -406,7 +407,7 @@ describe('CourseScoresComponent', () => {
             roundScorePercentSpecifiedByCourseSettings(40 / 30, course).toLocaleString() + '%',
         );
         const user2Row = generatedRows[1];
-        validateUserRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '50%', '0', '0%', '10', '0%', '15', '50%');
+        validateUserRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '5', '50%', '0', '0%', '10', '0%', '15', '50%');
         const maxRow = generatedRows[3];
         expect(maxRow[OVERALL_COURSE_POINTS_KEY]).toEqual('30');
     });
@@ -444,6 +445,7 @@ describe('CourseScoresComponent', () => {
         expectedEmail: string,
         expectedQuizPoints: string,
         expectedQuizScore: string,
+        expectedScoreModelingExercise: string,
         expectedModelingPoints: string,
         expectedModelingScore: string,
         expectedTextPoints: string,
@@ -458,6 +460,7 @@ describe('CourseScoresComponent', () => {
         expect(userRow[EMAIL_KEY]).toEqual(expectedEmail);
         expect(userRow['Quiz Points']).toEqual(expectedQuizPoints);
         expect(userRow['Quiz Score']).toEqual(expectedQuizScore);
+        expect(userRow['exercise four']).toEqual(expectedScoreModelingExercise);
         expect(userRow['Modeling Points']).toEqual(expectedModelingPoints);
         expect(userRow['Modeling Score']).toEqual(expectedModelingScore);
         expect(userRow['File-upload Points']).toEqual(expectedFileUploadPoints);

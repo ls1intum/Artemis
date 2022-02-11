@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
@@ -6,10 +6,13 @@ import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { PasswordComponent } from 'app/account/password/password.component';
 import { PasswordService } from 'app/account/password/password.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('Component Tests', () => {
     describe('PasswordComponent', () => {
@@ -25,11 +28,10 @@ describe('Component Tests', () => {
                     FormBuilder,
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
+                    { provide: AccountService, useClass: MockAccountService },
                     { provide: ProfileService, useClass: MockProfileService },
                 ],
-            })
-                .overrideTemplate(PasswordComponent, '')
-                .compileComponents();
+            }).compileComponents();
         });
 
         beforeEach(() => {
@@ -108,5 +110,12 @@ describe('Component Tests', () => {
             expect(comp.success).toBe(false);
             expect(comp.error).toBe(true);
         });
+
+        it('sets user on init', fakeAsync(() => {
+            fixture.detectChanges();
+            tick(1000);
+            const expectedUser = { id: 99 } as User;
+            expect(comp.user).toEqual(expectedUser);
+        }));
     });
 });
