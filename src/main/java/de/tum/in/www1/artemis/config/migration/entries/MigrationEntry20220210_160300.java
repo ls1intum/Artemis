@@ -24,18 +24,6 @@ public class MigrationEntry20220210_160300 extends MigrationEntry {
 
     private final ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
 
-    /**
-     * Regex for structural test case names in Java. The names of classes, attributes, methods and constructors have not
-     * to be checked since the oracle would not create structural tests for invalid names
-     */
-    private static final String METHODS_TEST_REGEX = "testMethods\\[.+]";
-
-    private static final String ATTRIBUTES_TEST_REGEX = "testAttributes\\[.+]";
-
-    private static final String CONSTRUCTORS_TEST_REGEX = "testConstructors\\[.+]";
-
-    private static final String CLASS_TEST_REGEX = "testClass\\[.+]";
-
     public MigrationEntry20220210_160300(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseTestCaseService programmingExerciseTestCaseService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
