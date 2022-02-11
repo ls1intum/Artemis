@@ -138,11 +138,12 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
         assertThat(task2Optional).isPresent();
         ProgrammingExerciseTask task1 = task1Optional.get();
         ProgrammingExerciseTask task2 = task2Optional.get();
+
         Set<ProgrammingExerciseTestCase> expectedTestCasesForTask1 = new HashSet<>();
-        expectedTestCasesForTask1.add(testCases.stream().filter(testCase -> testCase.getTestName().equals("testClass[BubbleSort]")).findFirst().orElseThrow());
+        expectedTestCasesForTask1.add(testCases.stream().filter(testCase -> "testClass[BubbleSort]".equals(testCase.getTestName())).findFirst().orElseThrow());
         Set<ProgrammingExerciseTestCase> expectedTestCasesForTask2 = new HashSet<>();
-        expectedTestCasesForTask2.add(testCases.stream().filter(testCase -> testCase.getTestName().equals("testMethods[Context]")).findFirst().orElseThrow());
-        expectedTestCasesForTask2.add(testCases.stream().filter(testCase -> testCase.getTestName().equals("testMethods[Policy]")).findFirst().orElseThrow());
+        expectedTestCasesForTask2.add(testCases.stream().filter(testCase -> "testMethods[Context]".equals(testCase.getTestName())).findFirst().orElseThrow());
+        expectedTestCasesForTask2.add(testCases.stream().filter(testCase -> "testMethods[Policy]".equals(testCase.getTestName())).findFirst().orElseThrow());
         assertThat(task1.getTestCases()).isEqualTo(expectedTestCasesForTask1);
         assertThat(task2.getTestCases()).isEqualTo(expectedTestCasesForTask2);
     }

@@ -116,7 +116,7 @@ public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucket
         task.setTestCases(testCases);
         task = programmingExerciseTaskRepository.save(task);
         programmingExerciseTaskRepository.delete(task);
-        assertThat(programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId)).hasSize(3).isEqualTo(testCases);
+        assertThat(programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId)).isEqualTo(testCases);
     }
 
     @Test
@@ -131,7 +131,7 @@ public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucket
         Set<ProgrammingExerciseSolutionEntry> allSolutionEntries = new HashSet<>();
         for (ProgrammingExerciseTestCase testCase : testCases) {
             var solutionEntries = addSolutionEntriesToTestCase(2, testCase);
-            assertThat(programmingExerciseSolutionEntryRepository.findByTestCaseId(testCase.getId())).hasSize(2).containsExactly(solutionEntries);
+            assertThat(programmingExerciseSolutionEntryRepository.findByTestCaseId(testCase.getId())).containsExactly(solutionEntries);
             allSolutionEntries.addAll(List.of(solutionEntries));
         }
         var codeHint = (CodeHint) new CodeHint();
@@ -147,7 +147,7 @@ public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucket
         codeHint = codeHintRepository.save(codeHint);
         task.setCodeHints(Set.of(codeHint));
         programmingExerciseTaskRepository.save(task);
-        assertThat(programmingExerciseSolutionEntryRepository.findByCodeHintId(codeHint.getId())).hasSize(6).isEqualTo(allSolutionEntries);
+        assertThat(programmingExerciseSolutionEntryRepository.findByCodeHintId(codeHint.getId())).isEqualTo(allSolutionEntries);
         assertThat(codeHintRepository.findByExerciseId(programmingExerciseId)).containsExactly(codeHint);
     }
 
