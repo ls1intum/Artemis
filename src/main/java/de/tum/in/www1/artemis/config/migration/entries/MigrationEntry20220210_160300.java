@@ -2,16 +2,15 @@ package de.tum.in.www1.artemis.config.migration.entries;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 
 /**
  * This migration sets the enum value testCaseType for every existing test case depending on its name and exercise's programming language.
@@ -22,6 +21,8 @@ public class MigrationEntry20220210_160300 extends MigrationEntry {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
+    private final ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
 
     /**
      * Regex for structural test case names in Java. The names of classes, attributes, methods and constructors have not
@@ -35,9 +36,11 @@ public class MigrationEntry20220210_160300 extends MigrationEntry {
 
     private static final String CLASS_TEST_REGEX = "testClass\\[.+]";
 
-    public MigrationEntry20220210_160300(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
+    public MigrationEntry20220210_160300(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
+            ProgrammingExerciseTestCaseService programmingExerciseTestCaseService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
+        this.programmingExerciseTestCaseService = programmingExerciseTestCaseService;
     }
 
     /**
@@ -79,23 +82,7 @@ public class MigrationEntry20220210_160300 extends MigrationEntry {
      * @param language  the programming language the test cases are written in
      */
     private void processTestCases(Set<ProgrammingExerciseTestCase> testCases, ProgrammingLanguage language) {
-        if (language == ProgrammingLanguage.JAVA) {
-            testCases = testCases.stream().peek(testCase -> {
-                String testCaseName = testCase.getTestName();
-                // set type depending on the test case name
-                if (testCaseName.matches(METHODS_TEST_REGEX) || testCaseName.matches(ATTRIBUTES_TEST_REGEX) || testCaseName.matches(CONSTRUCTORS_TEST_REGEX)
-                        || testCaseName.matches(CLASS_TEST_REGEX)) {
-                    testCase.setProgrammingExerciseTestCaseType(ProgrammingExerciseTestCaseType.STRUCTURAL);
-                }
-                else {
-                    testCase.setProgrammingExerciseTestCaseType(ProgrammingExerciseTestCaseType.BEHAVIORAL);
-                }
-            }).collect(Collectors.toSet());
-        }
-        else {
-            testCases = testCases.stream().peek(testCase -> testCase.setProgrammingExerciseTestCaseType(ProgrammingExerciseTestCaseType.DEFAULT)).collect(Collectors.toSet());
-        }
-
+        programmingExerciseTestCaseService.setTestCaseType(testCases, language);
         programmingExerciseTestCaseRepository.saveAll(testCases);
     }
 

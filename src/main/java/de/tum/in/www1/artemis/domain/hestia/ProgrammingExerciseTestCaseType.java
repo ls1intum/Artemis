@@ -14,7 +14,7 @@ public enum ProgrammingExerciseTestCaseType {
      */
     BEHAVIORAL,
     /**
-     * Type for test cases in all programming exercises except for Java
+     * Type for all programming exercises not supported by Hestia
      */
     DEFAULT,
 }
