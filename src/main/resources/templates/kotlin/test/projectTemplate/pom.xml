@@ -126,6 +126,7 @@
                                 <file>${project.build.outputDirectory}/java/</file>
                                 <file>${project.build.outputDirectory}/javax/</file>
                                 <file>${project.build.outputDirectory}/jdk/</file>
+                                <file>${project.build.outputDirectory}/kotlin/</file>
                                 <file>${project.build.outputDirectory}/net/jqwik/</file>
                                 <file>${project.build.outputDirectory}/org/apache/</file>
                                 <file>${project.build.outputDirectory}/org/assertj/</file>
