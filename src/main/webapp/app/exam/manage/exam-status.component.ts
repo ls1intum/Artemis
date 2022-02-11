@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { faArrowRight, faCalendarCheck, faCheckCircle, faTimes, faTimesCircle, faCalendarTimes, faDotCircle } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faCheckCircle, faTimes, faTimesCircle, faDotCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
@@ -52,8 +52,6 @@ export class ExamStatusComponent implements OnChanges {
     faCheckCircle = faCheckCircle;
     faArrowRight = faArrowRight;
     faDotCircle = faDotCircle;
-    faCalendarCheck = faCalendarCheck;
-    faCalendarTimes = faCalendarTimes;
 
     constructor(private examChecklistService: ExamChecklistService) {}
 
@@ -102,9 +100,9 @@ export class ExamStatusComponent implements OnChanges {
      * @private
      */
     private setConductionState(): void {
-        if (this.examAlreadyEnded()) {
+        if (this.examAlreadyEnded() && this.examPreparationFinished) {
             this.examConductionState = ExamConductionState.FINISHED;
-        } else if (this.examAlreadyStarted()) {
+        } else if (this.examAlreadyStarted() && !this.examAlreadyEnded()) {
             this.examConductionState = ExamConductionState.RUNNING;
         } else {
             this.examConductionState = ExamConductionState.PLANNED;

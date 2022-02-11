@@ -52,9 +52,9 @@
                         </ng-template>
                     </td>
                     <td class="d-md-table-cell">
-                        <jhi-exam-status [exam]="exam"></jhi-exam-status>
+                        <jhi-exam-status [exam]="exam" class="d-flex justify-content-center"></jhi-exam-status>
                     </td>
-                    <td class="text-end">
+                    <td class="d-md-table-cell">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a
@@ -66,27 +66,6 @@
                                     <fa-icon [icon]="faListAlt"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</span>
                                 </a>
-                            </div>
-                            <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                <a *ngIf="course.isAtLeastInstructor" [routerLink]="[exam.id, 'test-runs']" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
-                                    <fa-icon [icon]="faUser"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="btn-group flex-btn-group-container">
-                            <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                <a
-                                    *ngIf="course.isAtLeastInstructor"
-                                    [routerLink]="[exam.id, 'students']"
-                                    class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard"
-                                    id="student-button-{{ exam.id }}"
-                                >
-                                    <fa-icon [icon]="faUser"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
-                                </a>
-                            </div>
-                            <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                 <a
                                     *ngIf="course.isAtLeastInstructor"
                                     [routerLink]="[exam.id, 'student-exams']"
@@ -96,16 +75,6 @@
                                     <fa-icon [icon]="faEye"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
                                 </a>
-                            </div>
-                            <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                <a *ngIf="course.isAtLeastInstructor" [routerLink]="[exam.id]" class="btn btn-info btn-sm me-1 mb-1" id="checklist-button-{{ exam.id }}">
-                                    <fa-icon [icon]="faThList"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examChecklist' | artemisTranslate }}</span>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="btn-group flex-btn-group-container">
-                            <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR', 'ROLE_TA']">
                                 <a
                                     *ngIf="(course.isAtLeastTutor && examHasFinished(exam)) || course.isAtLeastInstructor"
                                     [routerLink]="[exam.id, 'assessment-dashboard']"
@@ -115,8 +84,25 @@
                                     <fa-icon [icon]="faThList"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
                                 </a>
+                                <a *ngIf="course.isAtLeastInstructor" [routerLink]="[exam.id, 'edit']" class="btn btn-warning btn-sm me-1 mb-1">
+                                    <fa-icon [icon]="faWrench"></fa-icon>
+                                    <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                                </a>
                             </div>
-                            <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                            <div class="btn-group-vertical me-1 mb-1">
+                                <a *ngIf="course.isAtLeastInstructor" [routerLink]="[exam.id, 'test-runs']" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
+                                    <fa-icon [icon]="faUser"></fa-icon>
+                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>
+                                </a>
+                                <a
+                                    *ngIf="course.isAtLeastInstructor"
+                                    [routerLink]="[exam.id, 'students']"
+                                    class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard"
+                                    id="student-button-{{ exam.id }}"
+                                >
+                                    <fa-icon [icon]="faUser"></fa-icon>
+                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
+                                </a>
                                 <a
                                     *ngIf="course.isAtLeastInstructor"
                                     [routerLink]="['/course-management', course.id, 'exams', exam.id, 'scores']"
@@ -125,28 +111,10 @@
                                     <fa-icon [icon]="faEye"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
                                 </a>
-                            </div>
-                        </div>
-                        <div class="btn-group flex-btn-group-container">
-                            <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                <a *ngIf="course.isAtLeastInstructor" [routerLink]="[exam.id, 'edit']" class="btn btn-warning btn-sm me-1 mb-1">
-                                    <fa-icon [icon]="faWrench"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                                <a *ngIf="course.isAtLeastInstructor" [routerLink]="[exam.id]" class="btn btn-info btn-sm me-1 mb-1" id="checklist-button-{{ exam.id }}">
+                                    <fa-icon [icon]="faThList"></fa-icon>
+                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examChecklist' | artemisTranslate }}</span>
                                 </a>
-                            </div>
-                            <div class="d-flex flex-column mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                <button
-                                    id="delete-exam-{{ exam.id }}"
-                                    *ngIf="course.isAtLeastInstructor && exam"
-                                    jhiDeleteButton
-                                    [entityTitle]="exam.title || ''"
-                                    deleteQuestion="artemisApp.examManagement.delete.question"
-                                    deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
-                                    (delete)="deleteExam(exam.id!)"
-                                    [dialogError]="dialogError$"
-                                >
-                                    <fa-icon [icon]="faTimes"></fa-icon>
-                                </button>
                             </div>
                         </div>
                     </td>

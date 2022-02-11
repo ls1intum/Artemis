@@ -41,11 +41,11 @@
 
     <!-- 2. Exam conduction -->
     <div class="status-step">
-        <!-- If exam conduction is planned, but not started yet, show a green calendar with a check,
+        <!-- If exam conduction is planned, but not started yet, show a red cross,
              If exam is currently conducted, show a yellow dot
-             If exam is finished, show a green check -->
+             If the exam preparation and the conduction period is finished, show a green check -->
         <div class="d-flex justify-content-center header-icon" [ngSwitch]="examConductionState">
-            <fa-icon *ngSwitchCase="examConductionStateEnum.PLANNED" [icon]="faCalendarCheck" class="check"></fa-icon>
+            <fa-icon *ngSwitchCase="examConductionStateEnum.PLANNED" [icon]="faTimesCircle" class="cross"></fa-icon>
             <fa-icon *ngSwitchCase="examConductionStateEnum.RUNNING" [icon]="faDotCircle" class="running"></fa-icon>
             <fa-icon *ngSwitchCase="examConductionStateEnum.FINISHED" [icon]="faCheckCircle" class="check"></fa-icon>
         </div>
@@ -75,15 +75,13 @@
     <div class="connector" [ngClass]="examConductionState === examConductionStateEnum.FINISHED ? 'check' : ''"></div>
     <!-- 3. Exam correction -->
     <div class="status-step">
-        <!-- If exam review phase or result publication date is unset, show a red calendar with a cross,
-             If exam review phase is planned and result publication date is set, show a green calendar with a check,
-             If exam review phase is running or there are still open complaints, show a yellow dot,
-             If exam review phase is finished and all complaints are resolved, show a green check -->
+        <!-- If exam review phase is running or there are still open complaints, show a yellow dot,
+             If exam review phase is finished and all complaints are resolved, show a green check
+             Else, show a red cross -->
         <div class="d-flex justify-content-center header-icon" [ngSwitch]="examCorrectionState">
-            <fa-icon *ngSwitchCase="examReviewStateEnum.UNSET" [icon]="faCalendarTimes" class="cross"></fa-icon>
-            <fa-icon *ngSwitchCase="examReviewStateEnum.PLANNED" [icon]="faCalendarCheck" class="check"></fa-icon>
             <fa-icon *ngSwitchCase="examReviewStateEnum.RUNNING" [icon]="faDotCircle" class="running"></fa-icon>
             <fa-icon *ngSwitchCase="examReviewStateEnum.FINISHED" [icon]="faCheckCircle" class="check"></fa-icon>
+            <fa-icon *ngSwitchDefault [icon]="faTimesCircle" class="cross"></fa-icon>
         </div>
         <div class="status-step-content">
             <h6 class="text-center">{{ 'artemisApp.examStatus.correction.examCorrection' | artemisTranslate }}</h6>
