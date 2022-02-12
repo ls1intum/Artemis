@@ -181,8 +181,9 @@ public class Post extends Posting {
         else if (getLecture() != null && otherPost.getLecture() != null && getLecture().getId().equals(otherPost.getLecture().getId())) {
             return true;
         }
-        else
+        else {
             return getCourseWideContext() != null && otherPost.getCourseWideContext() != null && getCourseWideContext() == otherPost.getCourseWideContext();
+        }
     }
 
     @Override
