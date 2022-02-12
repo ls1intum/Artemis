@@ -76,7 +76,8 @@ final class QuizCache {
      * @implNote This is the {@linkplain Map#values() value collection} of the map of this cache.
      */
     Collection<QuizExerciseCache> getAllQuizExerciseCaches() {
-        // We do that here to avoid the distributed query of IMap.values() and its deserialization and benefit from the near cache
+        // We do that here to avoid the distributed query of IMap.values() and its deserialization and benefit from the near cache.
+        // due to concurrency, we need the filter here
         return cachedQuizExercises.keySet().stream().map(this::getCacheFor).filter(Objects::nonNull).toList();
     }
 
