@@ -565,15 +565,8 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters().size()).isEqualTo(questionScore + 1);
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 0.0f) {
-                // all participants have 0 points (and are unrated)
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-            else {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
+            assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+            assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
         }
         // check statistic for each question
         for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
