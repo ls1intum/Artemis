@@ -5,7 +5,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +17,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaClass;
+
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * This generator is used to parse the structure of a programming exercise to be then assessed from Artemis.
@@ -162,14 +163,16 @@ public class OracleGenerator {
 
     private static Collection<JavaClass> getClassesFromFiles(List<Path> javaSourceFiles) {
         JavaProjectBuilder builder = new JavaProjectBuilder();
-        javaSourceFiles.forEach(source -> {
-            try {
+        try {
+            for (Path source : javaSourceFiles) {
                 builder.addSource(source.toFile());
             }
-            catch (IOException e) {
-                log.error("Could not add java source to builder", e);
-            }
-        });
+        }
+        catch (IOException e) {
+            var error = "Could not add java source to builder";
+            log.error(error, e);
+            throw new InternalServerErrorException(error);
+        }
         return builder.getClasses();
     }
 
@@ -179,9 +182,10 @@ public class OracleGenerator {
             return Files.walk(start).filter(Files::isRegularFile).filter(matcher::matches).toList();
         }
         catch (IOException e) {
-            log.error("Could not retrieve the project files to generate the oracle", e);
+            var error = "Could not retrieve the project files to generate the oracle";
+            log.error(error, e);
+            throw new InternalServerErrorException(error);
         }
-        return Collections.emptyList();
     }
 
 }
