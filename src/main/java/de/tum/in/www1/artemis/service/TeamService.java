@@ -138,7 +138,7 @@ public class TeamService {
      */
     public List<Team> convertTeamsStudentsToUsersInDatabase(Course course, List<Team> teams) {
         // Put all students from given team list into a list of users
-        List<User> students = teams.stream().flatMap(team -> team.getStudents().stream()).collect(Collectors.toList());
+        List<User> students = teams.stream().flatMap(team -> team.getStudents().stream()).toList();
         // Put logins of students which have login information into a list
         List<String> logins = students.stream().map(User::getLogin).filter(Objects::nonNull).collect(Collectors.toList());
         // Put registration numbers of students which have no login information but have registration number into a list
@@ -202,7 +202,7 @@ public class TeamService {
             // Find all users whose login is in the given login list and who have the given group name
             existingStudentsWithLogin = userRepository.findAllByLoginsInGroup(groupName, new HashSet<>(logins));
             // Get the list of logins of found users
-            List<String> existingLogins = existingStudentsWithLogin.stream().map(User::getLogin).collect(Collectors.toList());
+            List<String> existingLogins = existingStudentsWithLogin.stream().map(User::getLogin).toList();
             // Add logins that are in given login list but not in found users to notFoundLogins
             notFoundLogins = logins.stream().filter(login -> !existingLogins.contains(login)).collect(Collectors.toList());
         }
@@ -242,7 +242,7 @@ public class TeamService {
                 throw new StudentsAppearMultipleTimesException(usersWhoAppearsMoreThanOnce);
             }
             // Get the list of registration numbers of found users
-            List<String> existingRegistrationNumbers = existingStudentsWithRegistrationNumber.stream().map(User::getRegistrationNumber).collect(Collectors.toList());
+            List<String> existingRegistrationNumbers = existingStudentsWithRegistrationNumber.stream().map(User::getRegistrationNumber).toList();
             // Add registration numbers that are in given registration number list but not in found users to notFoundRegistrationNumbers
             notFoundRegistrationNumbers = registrationNumbers.stream().filter(registrationNumber -> !existingRegistrationNumbers.contains(registrationNumber))
                     .collect(Collectors.toList());

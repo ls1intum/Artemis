@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,8 +77,7 @@ final class QuizCache {
      */
     Collection<QuizExerciseCache> getAllQuizExerciseCaches() {
         // We do that here to avoid the distributed query of IMap.values() and its deserialization and benefit from the near cache
-        return cachedQuizExercises.keySet().stream().map(this::getCacheFor).filter(Objects::nonNull) // due to concurrency, we need the filter here
-                .collect(Collectors.toUnmodifiableList());
+        return cachedQuizExercises.keySet().stream().map(this::getCacheFor).filter(Objects::nonNull).toList();
     }
 
     /**
