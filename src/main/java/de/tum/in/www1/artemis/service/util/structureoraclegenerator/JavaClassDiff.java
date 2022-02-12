@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import com.thoughtworks.qdox.model.*;
 
@@ -92,7 +93,7 @@ public class JavaClassDiff {
      * @return True, if the solution type is an interface and the template is not, false if they are both interfaces or not.
      */
     private boolean isInterfaceDifferent() {
-        return (templateClass == null ? solutionClass.isInterface() : (solutionClass.isInterface() && !templateClass.isInterface()));
+        return isValueDifferent(JavaClass::isInterface);
     }
 
     /**
@@ -101,7 +102,7 @@ public class JavaClassDiff {
      * @return True, if the solution type is an enum and the template is not, false if they are both enums or not.
      */
     private boolean isEnumDifferent() {
-        return (templateClass == null ? solutionClass.isEnum() : (solutionClass.isEnum() && !templateClass.isEnum()));
+        return isValueDifferent(JavaClass::isEnum);
     }
 
     /**
@@ -110,7 +111,11 @@ public class JavaClassDiff {
      * @return True, if the solution type is abstract and the template is not, false if they are both abstract or not abstract.
      */
     private boolean isAbstractDifferent() {
-        return (templateClass == null ? solutionClass.isAbstract() : (solutionClass.isAbstract() && !templateClass.isAbstract()));
+        return isValueDifferent(JavaClass::isAbstract);
+    }
+
+    private boolean isValueDifferent(Function<JavaClass, Boolean> valueGetter) {
+        return templateClass == null ? valueGetter.apply(solutionClass) : (valueGetter.apply(solutionClass) && !valueGetter.apply(templateClass));
     }
 
     /**
@@ -129,7 +134,7 @@ public class JavaClassDiff {
         }
 
         if (templateSuperClass == null) {
-            // there was not super class in the template
+            // there was no superclass in the template
             if (solutionSuperClass == null) {
                 return "";
             }
