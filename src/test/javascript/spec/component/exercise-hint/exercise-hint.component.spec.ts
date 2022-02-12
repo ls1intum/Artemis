@@ -20,12 +20,12 @@ describe('ExerciseHint Management Component', () => {
             declarations: [ExerciseHintComponent],
             providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute({ exerciseId: 15 }) }],
         })
-            .overrideTemplate(ExerciseHintComponent, '')
-            .compileComponents();
-
-        fixture = TestBed.createComponent(ExerciseHintComponent);
-        comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(ExerciseHintService);
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ExerciseHintComponent);
+                comp = fixture.componentInstance;
+                service = fixture.debugElement.injector.get(ExerciseHintService);
+            });
     });
 
     it('Should call load all on init with exerciseId from route', () => {
