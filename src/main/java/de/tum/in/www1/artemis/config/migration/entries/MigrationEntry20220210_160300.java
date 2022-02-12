@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
-import java.util.List;
 import java.util.Set;
 
 import org.springframework.stereotype.Component;
@@ -37,8 +36,8 @@ public class MigrationEntry20220210_160300 extends MigrationEntry {
      */
     @Override
     public void execute() {
-        List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllWithEagerTestCases().stream().toList();
-        programmingExercises.forEach(programmingExercise -> processTestCases(programmingExercise.getTestCases(), programmingExercise.getProgrammingLanguage()));
+        programmingExerciseRepository.findAllWithEagerTestCases()
+                .forEach(programmingExercise -> processTestCases(programmingExercise.getTestCases(), programmingExercise.getProgrammingLanguage()));
     }
 
     /**
