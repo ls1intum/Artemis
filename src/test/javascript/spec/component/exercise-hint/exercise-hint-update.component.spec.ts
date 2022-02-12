@@ -1,5 +1,5 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { FormBuilder } from '@angular/forms';
+import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core/testing';
+import { FormBuilder, FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
@@ -21,20 +21,28 @@ describe('ExerciseHint Management Update Component', () => {
     const exerciseHint = new ExerciseHint();
     const route = { data: of({ exerciseHint }), params: of({ courseId: 12, exerciseId: 15 }) } as any as ActivatedRoute;
 
-    beforeEach(() => {
+    beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FormsModule],
             declarations: [ExerciseHintUpdateComponent],
-            providers: [FormBuilder, MockProvider(TranslateService), { provide: ActivatedRoute, useValue: route }],
+            providers: [
+                FormBuilder,
+                MockProvider(ExerciseService),
+                MockProvider(ExerciseHintService),
+                MockProvider(TranslateService),
+                { provide: ActivatedRoute, useValue: route },
+            ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseHintUpdateComponent);
                 comp = fixture.componentInstance;
+
                 service = TestBed.inject(ExerciseHintService);
                 exerciseService = TestBed.inject(ExerciseService);
+                flush();
             });
-    });
+    }));
 
     it('should load params and data onInit', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
