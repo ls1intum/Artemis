@@ -32,31 +32,13 @@ public class MigrationEntry20220210_160300 extends MigrationEntry {
     }
 
     /**
-     * Retrieves all programming exercises from the database and executes the processing method in batches of 80 exercises to prevent database timeouts
+     * Invokes saving the type for all test cases for a list of programming exercises to the database.
+     * No batch processing is required as all database calls are made sequentially per exercise.
      */
     @Override
     public void execute() {
-        int listSize = 80;
         List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllWithEagerTestCases().stream().toList();
-        int remainder = programmingExercises.size() % listSize;
-        int listCount = (int) Math.floor(programmingExercises.size() / 80f);
-        for (int i = 0; i < listCount; i++) {
-            List<ProgrammingExercise> sublist = programmingExercises.subList(i * listSize, (i + 1) * listSize);
-            processExercises(sublist);
-        }
-        if (remainder > 0) {
-            List<ProgrammingExercise> sublist = programmingExercises.subList(listCount * listSize, (listCount * listSize) + remainder);
-            processExercises(sublist);
-        }
-    }
-
-    /**
-     * Invokes saving the type for all test cases for a list of programming exercises to the database
-     *
-     * @param exercises a batch of at max 80 programming exercises to be processed
-     */
-    private void processExercises(List<ProgrammingExercise> exercises) {
-        exercises.forEach(programmingExercise -> processTestCases(programmingExercise.getTestCases(), programmingExercise.getProgrammingLanguage()));
+        programmingExercises.forEach(programmingExercise -> processTestCases(programmingExercise.getTestCases(), programmingExercise.getProgrammingLanguage()));
     }
 
     /**
