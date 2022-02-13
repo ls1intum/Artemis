@@ -40,6 +40,7 @@ describe('Course management', () => {
         });
 
         it('Adds a student manually to the course', () => {
+            throw new Error('This error should fail this test for demonstration purposes.');
             const username = artemis.users.getStudentOne().username;
             navigationBar.openCourseManagement();
             courseManagementPage.openStudentOverviewOfCourse(courseId);
