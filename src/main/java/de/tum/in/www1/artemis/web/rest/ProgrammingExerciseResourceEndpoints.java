@@ -54,8 +54,6 @@ public final class ProgrammingExerciseResourceEndpoints {
 
     public static final String REEVALUATE_EXERCISE = PROGRAMMING_EXERCISE + "/re-evaluate";
 
-    public static final String EXTRACT_TASKS = PROGRAMMING_EXERCISE + "/extract-tasks";
-
     public static final String TASKS = PROGRAMMING_EXERCISE + "/tasks";
 
     private ProgrammingExerciseResourceEndpoints() {

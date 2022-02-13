@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
 /**
  * REST controller for managing {@link de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask}.
@@ -31,12 +32,15 @@ public class ProgrammingExerciseTaskResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
     private final AuthorizationCheckService authCheckService;
 
     public ProgrammingExerciseTaskResource(ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService) {
+            ProgrammingExerciseTaskService programmingExerciseTaskService, AuthorizationCheckService authCheckService) {
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.authCheckService = authCheckService;
     }
 
@@ -53,7 +57,10 @@ public class ProgrammingExerciseTaskResource {
         log.debug("REST request to retrieve ProgrammingExerciseTasks for ProgrammingExercise with id : {}", exerciseId);
         // Reload the exercise from the database as we can't trust data from the client
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+
+        // updates in cases changes have been made that are not yet saved
+        programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
         Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
         return ResponseEntity.ok(tasks);
     }

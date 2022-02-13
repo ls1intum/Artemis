@@ -104,23 +104,11 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testTaskExtractionAsStudent() throws Exception {
-        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/extract-tasks", null, HttpStatus.FORBIDDEN);
+        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.FORBIDDEN, Set.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testTaskExtractionAsTutor() throws Exception {
-        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/extract-tasks", null, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testTaskExtractionAsEditor() throws Exception {
-        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/extract-tasks", null, HttpStatus.OK);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testTaskExtractionForProgrammingExercise() throws Exception {
         String taskName1 = "Implement Bubble Sort";
         String taskName2 = "Implement Policy and Context";
@@ -130,7 +118,7 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
                         + "**You have the following tasks:**\n" + "\n" + "1. [task][" + taskName1 + "](testClass[BubbleSort])\n" + "Implement the class `BubbleSort`.\n"
                         + "2. [task][" + taskName2 + "](testMethods[Context],testMethods[Policy],)\n" + "Implement the classes `Context` and `Policy`. Make sure to follow..");
         programmingExerciseRepository.save(programmingExercise);
-        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/extract-tasks", null, HttpStatus.OK);
+        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.OK, Set.class);
         Set<ProgrammingExerciseTask> extractedTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(programmingExercise.getId());
         Optional<ProgrammingExerciseTask> task1Optional = extractedTasks.stream().filter(task -> task.getTaskName().equals(taskName1)).findFirst();
         Optional<ProgrammingExerciseTask> task2Optional = extractedTasks.stream().filter(task -> task.getTaskName().equals(taskName2)).findFirst();
@@ -149,12 +137,12 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testTaskExtractionForEmptyProblemStatement() throws Exception {
         programmingExercise.setProblemStatement("");
         programmingExerciseRepository.save(programmingExercise);
 
-        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/extract-tasks", null, HttpStatus.OK);
+        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.OK, Set.class);
 
         assertThat(programmingExerciseTaskRepository.findAll()).isEmpty();
     }

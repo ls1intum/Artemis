@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
@@ -708,25 +707,6 @@ public class ProgrammingExerciseResource {
 
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
         return updateProgrammingExercise(programmingExercise, null);
-    }
-
-    /**
-     * PUT programming-exercises/:exerciseId/tasks : Parse tasks and corresponding test cases from problem statement on an existing ProgrammingExercise.
-     * @param exerciseId of the exercise
-     * @return the {@link ResponseEntity} with status {@code 200} and with body the tasks with test cases,
-     * or with status {@code 400 (Bad Request) if the exerciseId is not valid}.
-     */
-    @PutMapping(EXTRACT_TASKS)
-    @PreAuthorize("hasRole('EDITOR')")
-    @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Set<ProgrammingExerciseTask>> updateTasksFromProblemStatement(@PathVariable Long exerciseId) {
-        log.debug("REST request to create ProgrammingExerciseTasks from problem statement : {}", exerciseId);
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
-
-        programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
-        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exerciseId);
-        return ResponseEntity.ok(tasks);
     }
 
     /**
