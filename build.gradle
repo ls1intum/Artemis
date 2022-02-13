@@ -99,7 +99,7 @@ test {
 }
 
 task testReport(type: TestReport) {
-    destinationDir = file("$buildDir/reports/tests")
+    destinationDirectory = file("$buildDir/reports/tests")
     reportOn test
 }
 
