@@ -32,7 +32,7 @@
             "error": "An error occurred. Please try again later.",
             "tutorEffortStatistics": {
                 "title": "Tutor Effort Statistics",
-                "titleDescription": "Distribution of the tutor effort: Displays how many students spent how many minutes for correcting submissions of this exercise. The interval containing the median of this distribution is highlighted in dark blue if at least one Tutor satisfies this interval.",
+                "titleDescription": "Distribution of the tutor effort: Displays how many students spent how many minutes for correcting submissions of this exercise. The interval containing the median of this distribution is highlighted in dark blue if at least one tutor satisfies this interval.",
                 "numberOfSubmissionsAssessed": "Number of total submissions involved",
                 "totalTimeSpent": "Total time spent grading (Minutes)",
                 "averageTime": "Grading Speed (Submissions/Minute)",
