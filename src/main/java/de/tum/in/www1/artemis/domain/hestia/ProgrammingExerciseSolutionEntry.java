@@ -39,11 +39,11 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
     @Column(name = "file_path")
     private String filePath;
 
-    // The line where the previous code segment is in the template
+    // The line at which the previous code segment is in the template
     @Column(name = "previous_line")
     private Integer previousLine;
 
-    // The line where the new code segment is in the solution
+    // The line at which the new code segment is in the solution
     @Column(name = "line")
     private Integer line;
 

@@ -75,6 +75,10 @@ public class ExerciseHintResource {
             throw new BadRequestAlertException("A code hint cannot be created manually.", CODE_HINT_ENTITY_NAME, "manualCodeHintOperation");
         }
 
+        // Reload the exercise from the database as we can't trust data from the client
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseHint.getExercise().getId());
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
         if (exerciseHint.getExercise() == null) {
             throw new ConflictException("An exercise hint can only be created if the exercise is defined.", EXERCISE_HINT_ENTITY_NAME, "exerciseNotDefined");
         }
@@ -83,14 +87,10 @@ public class ExerciseHintResource {
             throw new ConflictException("An exercise hint can only be created if the exerciseIds match.", EXERCISE_HINT_ENTITY_NAME, "exerciseIdMismatch");
         }
 
-        // Reload the exercise from the database as we can't trust data from the client
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseHint.getExercise().getId());
-
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {
             throw new AccessForbiddenException("Exercise hints for exams are currently not supported");
         }
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
         ExerciseHint result = exerciseHintRepository.save(exerciseHint);
         return ResponseEntity.created(new URI("/api/exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, EXERCISE_HINT_ENTITY_NAME, result.getId().toString())).body(result);
@@ -116,6 +116,12 @@ public class ExerciseHintResource {
             throw new BadRequestAlertException("A code hint cannot be updated manually.", CODE_HINT_ENTITY_NAME, "manualCodeHintOperation");
         }
 
+        var hintBeforeSaving = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
+        // Reload the exercise from the database as we can't trust data from the client
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseHint.getExercise().getId());
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, hintBeforeSaving.getExercise(), null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exerciseHint.getExercise(), null);
+
         if (exerciseHint.getId() == null || !exerciseHintId.equals(exerciseHint.getId()) || exerciseHint.getExercise() == null) {
             throw new ConflictException("An exercise hint can only be changed if it has an ID and if the exercise is not null.", EXERCISE_HINT_ENTITY_NAME, "exerciseNotDefined");
         }
@@ -124,16 +130,10 @@ public class ExerciseHintResource {
             throw new ConflictException("An exercise hint can only be updated if the exerciseIds match.", EXERCISE_HINT_ENTITY_NAME, "exerciseIdsMismatch");
         }
 
-        var hintBeforeSaving = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
-        // Reload the exercise from the database as we can't trust data from the client
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseHint.getExercise().getId());
-
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {
             throw new AccessForbiddenException("Exercise hints for exams are currently not supported");
         }
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, hintBeforeSaving.getExercise(), null);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exerciseHint.getExercise(), null);
         ExerciseHint result = exerciseHintRepository.save(exerciseHint);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, EXERCISE_HINT_ENTITY_NAME, exerciseHint.getId().toString())).body(result);
     }
@@ -172,12 +172,12 @@ public class ExerciseHintResource {
     public ResponseEntity<ExerciseHint> getExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseHintId);
         var exerciseHint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exerciseHint.getExercise(), null);
 
         if (!exerciseHint.getExercise().getId().equals(exerciseId)) {
             throw new ConflictException("An exercise hint can only be retrieved if the exerciseIds match.", EXERCISE_HINT_ENTITY_NAME, "exerciseIdsMismatch");
         }
 
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exerciseHint.getExercise(), null);
         return ResponseEntity.ok().body(exerciseHint);
     }
 
@@ -217,11 +217,12 @@ public class ExerciseHintResource {
             throw new BadRequestAlertException("A code hint cannot be deleted manually.", CODE_HINT_ENTITY_NAME, "manualCodeHintOperation");
         }
 
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exerciseHint.getExercise(), null);
+
         if (!exerciseHint.getExercise().getId().equals(exerciseId)) {
             throw new ConflictException("An exercise hint can only be deleted if the exerciseIds match.", EXERCISE_HINT_ENTITY_NAME, "exerciseIdsMismatch");
         }
 
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exerciseHint.getExercise(), null);
         exerciseHintRepository.deleteById(exerciseHintId);
         return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, EXERCISE_HINT_ENTITY_NAME, exerciseHintId.toString())).build();
     }

@@ -711,7 +711,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * PUT /programming-exercises/:exerciseId/tasks : Parse tasks and corresponding test cases from problem statement on an existing ProgrammingExercise.
+     * PUT programming-exercises/:exerciseId/tasks : Parse tasks and corresponding test cases from problem statement on an existing ProgrammingExercise.
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200} and with body the tasks with test cases,
      * or with status {@code 400 (Bad Request) if the exerciseId is not valid}.
@@ -730,7 +730,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * DELETE /programming-exercises/:exerciseId/tasks : Delete all tasks and solution entries for an existing ProgrammingExercise
+     * DELETE programming-exercises/:exerciseId/tasks : Delete all tasks and solution entries for an existing ProgrammingExercise
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 204},
      * or with status {@code 400 (Bad Request) if the exerciseId is not valid}.

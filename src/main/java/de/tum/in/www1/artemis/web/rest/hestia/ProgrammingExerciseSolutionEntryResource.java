@@ -69,6 +69,10 @@ public class ProgrammingExerciseSolutionEntryResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ProgrammingExerciseSolutionEntry> getSolutionEntry(@PathVariable Long exerciseId, @PathVariable Long solutionEntryId) {
         log.debug("REST request to retrieve SolutionEntry : {}", solutionEntryId);
+        // Reload the exercise from the database as we can't trust data from the client
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
         ProgrammingExerciseSolutionEntry solutionEntry = programmingExerciseSolutionEntryRepository.findByIdWithTestCaseAndProgrammingExerciseElseThrow(solutionEntryId);
 
         if (!exerciseId.equals(solutionEntry.getTestCase().getExercise().getId())) {
@@ -88,7 +92,9 @@ public class ProgrammingExerciseSolutionEntryResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<ProgrammingExerciseSolutionEntry>> getSolutionEntriesForCodeHint(@PathVariable Long exerciseId, @PathVariable Long codeHintId) {
         log.debug("REST request to retrieve SolutionEntry for CodeHint with id : {}", codeHintId);
+        // Reload the exercise from the database as we can't trust data from the client
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
         CodeHint codeHint = codeHintRepository.findByIdElseThrow(codeHintId);
         if (!exercise.getId().equals(codeHint.getExercise().getId())) {
@@ -110,7 +116,9 @@ public class ProgrammingExerciseSolutionEntryResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<ProgrammingExerciseSolutionEntry>> getSolutionEntriesForTestCase(@PathVariable Long exerciseId, @PathVariable Long testCaseId) {
         log.debug("REST request to retrieve SolutionEntry for ProgrammingExerciseTestCase with id : {}", testCaseId);
+        // Reload the exercise from the database as we can't trust data from the client
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
         ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByIdWithExerciseElseThrow(testCaseId);
         if (!exercise.getId().equals(testCase.getExercise().getId())) {

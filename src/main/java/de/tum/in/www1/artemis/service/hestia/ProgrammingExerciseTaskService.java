@@ -28,7 +28,7 @@ public class ProgrammingExerciseTaskService {
      * - name: "Implement BubbleSort"
      * - tests: "testBubbleSort,testBubbleSortHidden"
      */
-    private final Pattern pattern = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.*)\\)");
+    private final Pattern taskPatternForProblemStatementMarkdown = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.*)\\)");
 
     public ProgrammingExerciseTaskService(ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, CodeHintRepository codeHintRepository) {
@@ -99,7 +99,7 @@ public class ProgrammingExerciseTaskService {
 
     private Set<ProgrammingExerciseTask> extractTasks(ProgrammingExercise exercise) {
         var problemStatement = exercise.getProblemStatement();
-        var matcher = pattern.matcher(problemStatement);
+        var matcher = taskPatternForProblemStatementMarkdown.matcher(problemStatement);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
         var tasks = new HashSet<ProgrammingExerciseTask>();
         while (matcher.find()) {
@@ -111,7 +111,8 @@ public class ProgrammingExerciseTaskService {
             task.setExercise(exercise);
             String[] testNames = testCaseNames.split(",");
             for (String testName : testNames) {
-                testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst().ifPresent(task.getTestCases()::add);
+                String finalTestName = testName.trim();
+                testCases.stream().filter(tc -> tc.getTestName().equals(finalTestName)).findFirst().ifPresent(task.getTestCases()::add);
             }
             tasks.add(task);
         }

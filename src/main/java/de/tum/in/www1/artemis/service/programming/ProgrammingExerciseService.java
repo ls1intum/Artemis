@@ -977,7 +977,8 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Delete all tasks with solution entries for an existing ProgrammingExercise
+     * Delete all tasks with solution entries for an existing ProgrammingExercise.
+     * This method can be used to reset the mappings in case of unconsidered edge cases.
      *
      * @param exerciseId of the exercise
      */
