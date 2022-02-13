@@ -57,7 +57,7 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
      */
     @Query("""
             SELECT COUNT (DISTINCT testCase) FROM ProgrammingExerciseTestCase testCase
-            WHERE testCase.exercise.id = :exerciseId
+            WHERE testCase.exercise.id = #{#exerciseId}
             AND testCase.visibility = 'AFTER_DUE_DATE'
             """)
     long countAfterDueDateByExerciseId(@Param("exerciseId") Long exerciseId);
