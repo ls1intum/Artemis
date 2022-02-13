@@ -57,27 +57,27 @@ public class ProgrammingExerciseTaskService {
      * @param exercise The programming exercise to extract the tasks from
      */
     public void updateTasksFromProblemStatement(ProgrammingExercise exercise) {
-        var previousTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId());
-        var extractedTasks = extractTasks(exercise);
+        var tasksToBeDeleted = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId());
+        var tasksToBeAdded = extractTasks(exercise);
         // No changes
-        if (previousTasks.equals(extractedTasks)) {
+        if (tasksToBeDeleted.equals(tasksToBeAdded)) {
             return;
         }
         // Add all tasks that did not change
-        var newTasks = new HashSet<>(previousTasks);
-        newTasks.retainAll(extractedTasks);
-        previousTasks.removeAll(newTasks);
-        extractedTasks.removeAll(newTasks);
+        var tasksToBeSaved = new HashSet<>(tasksToBeDeleted);
+        tasksToBeSaved.retainAll(tasksToBeAdded);
+        tasksToBeDeleted.removeAll(tasksToBeSaved);
+        tasksToBeAdded.removeAll(tasksToBeSaved);
         // Check for tasks where only the name changed
-        Iterator<ProgrammingExerciseTask> extractedTaskIterator = extractedTasks.iterator();
+        Iterator<ProgrammingExerciseTask> extractedTaskIterator = tasksToBeAdded.iterator();
         while (extractedTaskIterator.hasNext()) {
             ProgrammingExerciseTask extractedTask = extractedTaskIterator.next();
-            Iterator<ProgrammingExerciseTask> previousTaskIterator = previousTasks.iterator();
+            Iterator<ProgrammingExerciseTask> previousTaskIterator = tasksToBeDeleted.iterator();
             while (previousTaskIterator.hasNext()) {
                 ProgrammingExerciseTask previousTask = previousTaskIterator.next();
                 if (previousTask.getTestCases().equals(extractedTask.getTestCases())) {
                     previousTask.setTaskName(extractedTask.getTaskName());
-                    newTasks.add(previousTask);
+                    tasksToBeSaved.add(previousTask);
                     extractedTaskIterator.remove();
                     previousTaskIterator.remove();
                     break;
@@ -85,13 +85,13 @@ public class ProgrammingExerciseTaskService {
             }
         }
         // Add all newly created tasks
-        newTasks.addAll(extractedTasks);
+        tasksToBeSaved.addAll(tasksToBeAdded);
         // Remove old tasks
-        for (ProgrammingExerciseTask task : previousTasks) {
+        for (ProgrammingExerciseTask task : tasksToBeDeleted) {
             delete(task);
         }
         // Save all tasks
-        for (ProgrammingExerciseTask task : newTasks) {
+        for (ProgrammingExerciseTask task : tasksToBeSaved) {
             task.setExercise(exercise);
             programmingExerciseTaskRepository.save(task);
         }
