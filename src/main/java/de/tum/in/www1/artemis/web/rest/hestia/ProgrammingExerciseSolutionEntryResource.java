@@ -71,7 +71,7 @@ public class ProgrammingExerciseSolutionEntryResource {
         log.debug("REST request to retrieve SolutionEntry : {}", solutionEntryId);
         // Reload the exercise from the database as we can't trust data from the client
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         ProgrammingExerciseSolutionEntry solutionEntry = programmingExerciseSolutionEntryRepository.findByIdWithTestCaseAndProgrammingExerciseElseThrow(solutionEntryId);
 
@@ -94,7 +94,7 @@ public class ProgrammingExerciseSolutionEntryResource {
         log.debug("REST request to retrieve SolutionEntry for CodeHint with id : {}", codeHintId);
         // Reload the exercise from the database as we can't trust data from the client
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, null);
 
         CodeHint codeHint = codeHintRepository.findByIdElseThrow(codeHintId);
         if (!exercise.getId().equals(codeHint.getExercise().getId())) {
@@ -118,7 +118,7 @@ public class ProgrammingExerciseSolutionEntryResource {
         log.debug("REST request to retrieve SolutionEntry for ProgrammingExerciseTestCase with id : {}", testCaseId);
         // Reload the exercise from the database as we can't trust data from the client
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, null);
 
         ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByIdWithExerciseElseThrow(testCaseId);
         if (!exercise.getId().equals(testCase.getExercise().getId())) {

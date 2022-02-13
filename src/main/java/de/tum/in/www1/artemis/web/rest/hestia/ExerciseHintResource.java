@@ -74,11 +74,6 @@ public class ExerciseHintResource {
         if (exerciseHint instanceof CodeHint) {
             throw new BadRequestAlertException("A code hint cannot be created manually.", CODE_HINT_ENTITY_NAME, "manualCodeHintOperation");
         }
-
-        // Reload the exercise from the database as we can't trust data from the client
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseHint.getExercise().getId());
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
-
         if (exerciseHint.getExercise() == null) {
             throw new ConflictException("An exercise hint can only be created if the exercise is defined.", EXERCISE_HINT_ENTITY_NAME, "exerciseNotDefined");
         }
@@ -86,6 +81,10 @@ public class ExerciseHintResource {
         if (!exerciseHint.getExercise().getId().equals(exerciseId)) {
             throw new ConflictException("An exercise hint can only be created if the exerciseIds match.", EXERCISE_HINT_ENTITY_NAME, "exerciseIdMismatch");
         }
+
+        // Reload the exercise from the database as we can't trust data from the client
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseHint.getExercise().getId());
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {

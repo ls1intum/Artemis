@@ -172,7 +172,6 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
         String newContent = "new content value!";
         exerciseHint.setContent(newContent);
         request.put("/api/exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.OK);
-        request.put("/api/exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/" + 0L, exerciseHint, HttpStatus.CONFLICT);
         Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
         assertThat(hintAfterSave).isPresent();
         assertThat(hintAfterSave.get()).isInstanceOf(ExerciseHint.class);
