@@ -14,7 +14,7 @@
             ><!-- we need to make sure that result is not null, otherwise the compiler complains below -->
             <span [ngClass]="textColorClass" class="guided-tour" id="result-score">
                 <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
-                <span class="score" *ngIf="exercise">
+                <span class="score" *ngIf="exercise" id="result-score-percentage">
                     <span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score</span>
                     {{ roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise!)) }}%,
                 </span>
@@ -45,7 +45,7 @@
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
                 </a>
             </span>
-            <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'bg-info': !result.rated, 'bg-success': result.rated }">
+            <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'bg-info': !result.rated, 'bg-success': result.rated }" id="result-score-graded">
                 {{ (result.rated ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded') | artemisTranslate | uppercase }}
             </span>
         </ng-container>
