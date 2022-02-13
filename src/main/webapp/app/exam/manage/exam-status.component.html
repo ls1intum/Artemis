@@ -43,7 +43,7 @@
     <div class="status-step">
         <!-- If exam conduction is planned, but not started yet, show a red cross,
              If exam is currently conducted, show a yellow dot
-             If the exam preparation and the conduction period is finished, show a green check -->
+             If the exam preparation and the conduction period are finished, show a green check -->
         <div class="d-flex justify-content-center header-icon" [ngSwitch]="examConductionState">
             <fa-icon *ngSwitchCase="examConductionStateEnum.PLANNED" [icon]="faTimesCircle" class="cross"></fa-icon>
             <fa-icon *ngSwitchCase="examConductionStateEnum.RUNNING" [icon]="faDotCircle" class="running"></fa-icon>
