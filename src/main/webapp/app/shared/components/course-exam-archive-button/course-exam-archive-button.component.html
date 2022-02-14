@@ -77,7 +77,15 @@
             <button type="button" class="btn btn-success" [jhiTranslate]="'global.generic.no'" (click)="modal.dismiss()">No</button>
         </div>
     </ng-template>
-    <button *ngIf="canArchive()" [disabled]="isBeingArchived" type="button" [attr.data-mode]="archiveMode" id="archiveButton" class="btn btn-warning mb-1" (click)="openModal(archiveWarningPopup)">
+    <button
+        *ngIf="canArchive()"
+        [disabled]="isBeingArchived"
+        type="button"
+        [attr.data-mode]="archiveMode"
+        id="archiveButton"
+        class="btn btn-warning mb-1"
+        (click)="openModal(archiveWarningPopup)"
+    >
         <fa-icon [hidden]="!isBeingArchived" [spin]="true" [icon]="faCircleNotch"></fa-icon>
         <fa-icon [hidden]="isBeingArchived" [icon]="faArchive"></fa-icon>&nbsp;
         <span>{{ archiveButtonText }}</span>
