@@ -30,11 +30,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
 
-const generateCsv = jest.fn();
-
 jest.mock('export-to-csv', () => ({
     ExportToCsv: jest.fn().mockImplementation(() => ({
-        generateCsv,
+        generateCsv: jest.fn(),
     })),
 }));
 
@@ -280,12 +278,20 @@ describe('Course Management Detail Component', () => {
         expect(exportAsCsvMock).toHaveBeenCalledTimes(1);
         const generatedRows = exportAsCsvMock.mock.calls[0][0];
 
-        for (let index = 0; index < generatedRows.length; index++) {
-            const userRow = generatedRows[index];
-            expect(userRow[NAME_KEY]).toBe(comp.allCourseGroupUsers[index].name ?? '');
-            expect(userRow[USERNAME_KEY]).toBe(comp.allCourseGroupUsers[index].login ?? '');
-            expect(userRow[EMAIL_KEY]).toBe(comp.allCourseGroupUsers[index].email ?? '');
-            expect(userRow[REGISTRATION_NUMBER_KEY]).toBe(comp.allCourseGroupUsers[index].visibleRegistrationNumber ?? '');
-        }
+        const expectedRow1 = {};
+        expectedRow1[NAME_KEY] = '';
+        expectedRow1[USERNAME_KEY] = courseGroupUser.login;
+        expectedRow1[EMAIL_KEY] = '';
+        expectedRow1[REGISTRATION_NUMBER_KEY] = '';
+
+        const expectedRow2 = {};
+        expectedRow2[NAME_KEY] = '';
+        expectedRow2[USERNAME_KEY] = courseGroupUser2.login;
+        expectedRow2[EMAIL_KEY] = '';
+        expectedRow2[REGISTRATION_NUMBER_KEY] = '';
+
+        const expectedRows = [expectedRow1, expectedRow2];
+
+        expect(generatedRows).toEqual(expectedRows);
     });
 });

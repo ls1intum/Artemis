@@ -277,6 +277,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
         this.rowClass = className;
         setTimeout(() => (this.rowClass = undefined));
     };
+
     /**
      * Method for exporting the csv with the needed data
      */
@@ -284,16 +285,20 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
         if (this.allCourseGroupUsers.length > 0) {
             const rows: any[] = this.allCourseGroupUsers.map((user: User) => {
                 const data = {};
-                data[NAME_KEY] = user.name ? user.name!.trim() : '';
-                data[USERNAME_KEY] = user.login ? user.login!.trim() : '';
-                data[EMAIL_KEY] = user.email ? user.email!.trim() : '';
-                data[REGISTRATION_NUMBER_KEY] = user.visibleRegistrationNumber ? user.visibleRegistrationNumber!.trim() : '';
+                data[NAME_KEY] = user.name?.trim() ?? '';
+                data[USERNAME_KEY] = user.login?.trim() ?? '';
+                data[EMAIL_KEY] = user.email?.trim() ?? '';
+                data[REGISTRATION_NUMBER_KEY] = user.visibleRegistrationNumber?.trim() ?? '';
                 return data;
             });
             const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
             this.exportAsCsv(rows, keys);
         }
     }
+
+    /**
+     * Method for generating the csv file with its corresponding features
+     */
     exportAsCsv(rows: any[], keys: string[]) {
         const options = {
             fieldSeparator: ';',
