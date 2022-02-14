@@ -214,12 +214,13 @@ public class ExerciseHintResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> deleteExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
         log.debug("REST request to delete ExerciseHint : {}", exerciseHintId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
         var exerciseHint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
         if (exerciseHint instanceof CodeHint) {
             throw new BadRequestAlertException("A code hint cannot be deleted manually.", CODE_HINT_ENTITY_NAME, "manualCodeHintOperation");
         }
-
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exerciseHint.getExercise(), null);
 
         if (!exerciseHint.getExercise().getId().equals(exerciseId)) {
             throw new ConflictException("An exercise hint can only be deleted if the exerciseIds match.", EXERCISE_HINT_ENTITY_NAME, "exerciseIdsMismatch");
