@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
 /**
  * REST controller for managing {@link de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask}.
@@ -32,15 +31,12 @@ public class ProgrammingExerciseTaskResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
-
     private final AuthorizationCheckService authCheckService;
 
     public ProgrammingExerciseTaskResource(ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService) {
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.authCheckService = authCheckService;
     }
 
