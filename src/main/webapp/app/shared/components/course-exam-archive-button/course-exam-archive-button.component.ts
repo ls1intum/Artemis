@@ -24,7 +24,7 @@ export type CourseExamArchiveState = {
 @Component({
     selector: 'jhi-course-exam-archive-button',
     templateUrl: './course-exam-archive-button.component.html',
-    styles: [],
+    styleUrls: ['./course-exam-archive-button.component.scss'],
 })
 export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     ButtonSize = ButtonSize;
