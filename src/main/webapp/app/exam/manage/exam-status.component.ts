@@ -138,6 +138,8 @@ export class ExamStatusComponent implements OnChanges {
             this.examCorrectionState = ExamReviewState.PLANNED;
         } else if (this.examReviewState === ExamReviewState.FINISHED && this.allComplaintsResolved()) {
             this.examCorrectionState = ExamReviewState.FINISHED;
+        } else {
+            this.examCorrectionState = ExamReviewState.RUNNING;
         }
     }
 
