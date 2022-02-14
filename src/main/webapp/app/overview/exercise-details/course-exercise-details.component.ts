@@ -239,6 +239,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
     }
 
+    /**
+     * Sets example solution and related fields if exampleSolution exists on newExercise,
+     * otherwise clears the previously set example solution related fields.
+     *
+     * @param newExercise Exercise model that may have an exampleSolution.
+     */
     showIfExampleSolutionPresent(newExercise: Exercise) {
         // Clear fields below to avoid displaying old data if this method is called more than once.
         this.modelingExercise = undefined;
