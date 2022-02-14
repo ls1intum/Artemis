@@ -25,7 +25,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 
 describe('Example Modeling Submission Component', () => {
-    // needed to make sure ace is defined
     let comp: ExampleModelingSubmissionComponent;
     let fixture: ComponentFixture<ExampleModelingSubmissionComponent>;
     let debugElement: DebugElement;
@@ -40,7 +39,7 @@ describe('Example Modeling Submission Component', () => {
     const submission = { id: 20, submitted: true, participation } as ModelingSubmission;
 
     const exampleSubmission: ExampleSubmission = {
-        submission: submission,
+        submission,
     };
 
     const exercise = {
@@ -112,7 +111,7 @@ describe('Example Modeling Submission Component', () => {
     it('should upsert a new modeling submission', () => {
         // GIVEN
         const alertSpy = jest.spyOn(alertService, 'success');
-        const serviceSpy = jest.spyOn(service, 'create').mockImplementation((newExampleSubmission, _) => of(new HttpResponse({ body: newExampleSubmission })));
+        const serviceSpy = jest.spyOn(service, 'create').mockImplementation((newExampleSubmission) => of(new HttpResponse({ body: newExampleSubmission })));
         comp.isNewSubmission = true;
         comp.exercise = exercise;
         // WHEN
@@ -131,7 +130,7 @@ describe('Example Modeling Submission Component', () => {
         // GIVEN
         jest.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
         const alertSpy = jest.spyOn(alertService, 'success');
-        const serviceSpy = jest.spyOn(service, 'update').mockImplementation((updatedExampleSubmission, _) => of(new HttpResponse({ body: updatedExampleSubmission })));
+        const serviceSpy = jest.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
         comp.isNewSubmission = false;
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
@@ -184,13 +183,10 @@ describe('Example Modeling Submission Component', () => {
         jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: {} })));
         const alertSpy = jest.spyOn(alertService, 'success');
         const routerSpy = jest.spyOn(router, 'navigate');
-        // const serviceSpy = jest.spyOn(service, 'update').mockImplementation((updatedExampleSubmission, _) => of(new HttpResponse({ body: updatedExampleSubmission })));
-        // comp.isNewSubmission = false;
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
 
         // WHEN
-        // fixture.detectChanges();
         comp.readAndUnderstood();
 
         // THEN
