@@ -238,7 +238,7 @@ Java best practices
 - **Use JUnit5 and Ares Features**
 
   More information can be found in the `JUnit5 <https://junit.org/junit5/docs/current/user-guide/#writing-tests>`__ and
-  `Ares <https://github.com/ls1intum/artemis-java-test-sandbox#readme>`__ documentation. The following list adds some
+  `Ares <https://github.com/ls1intum/Ares#readme>`__ documentation. The following list adds some
   useful notes:
 
   - Use `Nested Tests <https://junit.org/junit5/docs/current/user-guide/#writing-tests-nested>`__ to group tests
