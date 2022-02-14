@@ -47,15 +47,16 @@ module.exports = {
         'src/main/webapp/app/exam/participate/exam-participation.route.ts',
         'src/main/webapp/app/exercises/file-upload/manage/file-upload-exercise-management.route.ts',
         'src/main/webapp/app/exercises/modeling/manage/modeling-exercise.route.ts',
-        'src/main/webapp/app/exam/manage/exam-management.route.ts'
+        'src/main/webapp/app/exam/manage/exam-management.route.ts',
+        'src/main/webapp/app/exercises/shared/exercise-hint/manage/exercise-hint.route.ts',
     ],
     coverageThreshold: {
         global: {
-            // TODO: in the future, the following values should be increase to at least 80%
-            statements: 79.9,
-            branches: 67.3,
-            functions: 71.9,
-            lines: 79.6,
+            // TODO: in the future, the following values should be increase to at least 85%
+            statements: 80.3,
+            branches: 67.6,
+            functions: 72.2,
+            lines: 79.9,
         },
     },
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
