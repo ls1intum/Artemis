@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
@@ -272,43 +273,58 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createHintWithInvalidExerciseIds() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        var unrelatedExercise = course.getExercises().stream().findFirst().orElseThrow();
+
         ExerciseHint exerciseHint = new ExerciseHint();
         exerciseHint.setTitle("Test Title");
         exerciseHint.setExercise(exercise);
 
-        request.post("/api/exercises/" + Long.MAX_VALUE + "/exercise-hints", exerciseHint, HttpStatus.CONFLICT);
+        request.post("/api/exercises/" + unrelatedExercise.getId() + "/exercise-hints", exerciseHint, HttpStatus.CONFLICT);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateHintWithInvalidExerciseIds() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        var unrelatedExercise = course.getExercises().stream().findFirst().orElseThrow();
+
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
         exerciseHint.setTitle("New Title");
 
-        request.put("/api/exercises/" + Long.MAX_VALUE + "/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.CONFLICT);
+        request.put("/api/exercises/" + unrelatedExercise.getId() + "/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.CONFLICT);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getHintTitleWithInvalidExerciseIds() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        var unrelatedExercise = course.getExercises().stream().findFirst().orElseThrow();
+
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
 
-        request.get("/api/exercises/" + Long.MAX_VALUE + "/exercise-hints/" + exerciseHint.getId(), HttpStatus.CONFLICT, String.class);
+        request.get("/api/exercises/" + unrelatedExercise.getId() + "/exercise-hints/" + exerciseHint.getId(), HttpStatus.CONFLICT, String.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getExerciseHintWithInvalidExerciseIds() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        var unrelatedExercise = course.getExercises().stream().findFirst().orElseThrow();
+
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
 
-        request.get("/api/exercises/" + Long.MAX_VALUE + "/exercise-hints/" + exerciseHint.getId(), HttpStatus.CONFLICT, String.class);
+        request.get("/api/exercises/" + unrelatedExercise.getId() + "/exercise-hints/" + exerciseHint.getId(), HttpStatus.CONFLICT, String.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteHintWithInvalidExerciseIds() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        var unrelatedExercise = course.getExercises().stream().findFirst().orElseThrow();
+
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
 
-        request.delete("/api/exercises/" + Long.MAX_VALUE + "/exercise-hints/" + exerciseHint.getId(), HttpStatus.CONFLICT);
+        request.delete("/api/exercises/" + unrelatedExercise.getId() + "/exercise-hints/" + exerciseHint.getId(), HttpStatus.CONFLICT);
     }
 }

@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
 public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -36,6 +37,9 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
 
     @Autowired
     private ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository;
+
+    @Autowired
+    private ProgrammingExerciseTaskService programmingExerciseTaskService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -118,6 +122,8 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
                         + "**You have the following tasks:**\n" + "\n" + "1. [task][" + taskName1 + "](testClass[BubbleSort])\n" + "Implement the class `BubbleSort`.\n"
                         + "2. [task][" + taskName2 + "](testMethods[Context],testMethods[Policy],)\n" + "Implement the classes `Context` and `Policy`. Make sure to follow..");
         programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
+
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.OK, Set.class);
         Set<ProgrammingExerciseTask> extractedTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(programmingExercise.getId());
         Optional<ProgrammingExerciseTask> task1Optional = extractedTasks.stream().filter(task -> task.getTaskName().equals(taskName1)).findFirst();

@@ -71,6 +71,11 @@ public class ExerciseHintResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseHint> createExerciseHint(@RequestBody ExerciseHint exerciseHint, @PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to save ExerciseHint : {}", exerciseHint);
+
+        // Reload the exercise from the database as we can't trust data from the client
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
         if (exerciseHint instanceof CodeHint) {
             throw new BadRequestAlertException("A code hint cannot be created manually.", CODE_HINT_ENTITY_NAME, "manualCodeHintOperation");
         }
@@ -81,10 +86,6 @@ public class ExerciseHintResource {
         if (!exerciseHint.getExercise().getId().equals(exerciseId)) {
             throw new ConflictException("An exercise hint can only be created if the exerciseIds match.", EXERCISE_HINT_ENTITY_NAME, "exerciseIdMismatch");
         }
-
-        // Reload the exercise from the database as we can't trust data from the client
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseHint.getExercise().getId());
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {
@@ -111,15 +112,16 @@ public class ExerciseHintResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseHint> updateExerciseHint(@RequestBody ExerciseHint exerciseHint, @PathVariable Long exerciseHintId, @PathVariable Long exerciseId) {
         log.debug("REST request to update ExerciseHint : {}", exerciseHint);
+
+        // Reload the exercise from the database as we can't trust data from the client
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        var hintBeforeSaving = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, hintBeforeSaving.getExercise(), null);
+
         if (exerciseHint instanceof CodeHint) {
             throw new BadRequestAlertException("A code hint cannot be updated manually.", CODE_HINT_ENTITY_NAME, "manualCodeHintOperation");
         }
-
-        var hintBeforeSaving = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
-        // Reload the exercise from the database as we can't trust data from the client
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseHint.getExercise().getId());
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, hintBeforeSaving.getExercise(), null);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exerciseHint.getExercise(), null);
 
         if (exerciseHint.getId() == null || !exerciseHintId.equals(exerciseHint.getId()) || exerciseHint.getExercise() == null) {
             throw new ConflictException("An exercise hint can only be changed if it has an ID and if the exercise is not null.", EXERCISE_HINT_ENTITY_NAME, "exerciseNotDefined");
@@ -170,8 +172,9 @@ public class ExerciseHintResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseHint> getExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseHintId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
         var exerciseHint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exerciseHint.getExercise(), null);
 
         if (!exerciseHint.getExercise().getId().equals(exerciseId)) {
             throw new ConflictException("An exercise hint can only be retrieved if the exerciseIds match.", EXERCISE_HINT_ENTITY_NAME, "exerciseIdsMismatch");

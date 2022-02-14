@@ -59,8 +59,6 @@ public class ProgrammingExerciseTaskResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
-        // updates in cases changes have been made that are not yet saved
-        programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
         Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
         return ResponseEntity.ok(tasks);
     }
