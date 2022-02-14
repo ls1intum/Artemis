@@ -618,7 +618,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testdeleteResult() throws Exception {
         Course course = database.addCourseWithOneExerciseAndSubmissions("file-upload", 1);
-        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
@@ -639,7 +639,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testdeleteResult_invalidResultSubmissionCombination() throws Exception {
         Course course = database.addCourseWithOneExerciseAndSubmissions("file-upload", 2);
-        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
@@ -663,7 +663,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testdeleteResult_failAsResultHasAComplaint() throws Exception {
         Course course = database.addCourseWithOneExerciseAndSubmissions("file-upload", 1);
-        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
 

@@ -162,7 +162,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         // Create a manual feedback and attach first block to it as reference
         Feedback feedback = new Feedback().credits(10.0).type(FeedbackType.MANUAL).detailText("gj");
-        feedback.setReference(textBlocks.stream().toList().get(0).getId());
+        feedback.setReference(textBlocks.iterator().next().getId());
 
         // Set feedback to result
         firstResult.addFeedback(feedback);
@@ -476,7 +476,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         assertThat(result).as("saved result found").isNotNull();
         assertThat(submissionWithoutAssessment.getBlocks().size()).isEqualTo(1);
-        assertThat(submissionWithoutAssessment.getBlocks().stream().toList().get(0).getNumberOfAffectedSubmissions()).isEqualTo(numberOfBlocksTotally - 1);
+        assertThat(submissionWithoutAssessment.getBlocks().stream().findFirst()).isPresent().get().hasFieldOrPropertyWithValue("numberOfAffectedSubmissions",
+                numberOfBlocksTotally - 1);
     }
 
     @Test
@@ -1493,7 +1494,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testdeleteResult() throws Exception {
         Course course = database.addCourseWithOneExerciseAndSubmissions("text", 1);
-        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
 

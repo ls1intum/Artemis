@@ -748,15 +748,15 @@ public class DatabaseUtilService {
         List<Post> posts = createPostsWithinCourse();
 
         // add answer for one post in each context (lecture, exercise, course-wide)
-        Post lecturePost = posts.stream().filter(coursePost -> coursePost.getLecture() != null).toList().get(0);
+        Post lecturePost = posts.stream().filter(coursePost -> coursePost.getLecture() != null).findFirst().orElseThrow();
         lecturePost.setAnswers(createBasicAnswers(lecturePost));
         postRepository.save(lecturePost);
 
-        Post exercisePost = posts.stream().filter(coursePost -> coursePost.getExercise() != null).toList().get(0);
+        Post exercisePost = posts.stream().filter(coursePost -> coursePost.getExercise() != null).findFirst().orElseThrow();
         exercisePost.setAnswers(createBasicAnswers(exercisePost));
         postRepository.save(exercisePost);
 
-        Post courseWidePost = posts.stream().filter(coursePost -> coursePost.getCourseWideContext() != null).toList().get(0);
+        Post courseWidePost = posts.stream().filter(coursePost -> coursePost.getCourseWideContext() != null).findFirst().orElseThrow();
         courseWidePost.setAnswers(createBasicAnswers(courseWidePost));
         postRepository.save(courseWidePost);
 
@@ -2296,7 +2296,7 @@ public class DatabaseUtilService {
         switch (exerciseType) {
             case "modeling":
                 course = addCourseWithOneModelingExercise();
-                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     StudentParticipation participation = createAndSaveParticipationForExercise(exercise, "student" + j);
                     assertThat(modelForModelingExercise).isNotEmpty();
@@ -2307,7 +2307,7 @@ public class DatabaseUtilService {
                 return course;
             case "programming":
                 course = addCourseWithOneProgrammingExercise();
-                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     ProgrammingSubmission submission = new ProgrammingSubmission();
                     addProgrammingSubmission((ProgrammingExercise) exercise, submission, "student" + j);
@@ -2315,7 +2315,7 @@ public class DatabaseUtilService {
                 return course;
             case "text":
                 course = addCourseWithOneFinishedTextExercise();
-                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     TextSubmission textSubmission = ModelFactory.generateTextSubmission("Text" + j + j, null, true);
                     saveTextSubmission((TextExercise) exercise, textSubmission, "student" + j);
@@ -2323,7 +2323,7 @@ public class DatabaseUtilService {
                 return course;
             case "file-upload":
                 course = addCourseWithFileUploadExercise();
-                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
 
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");

@@ -181,7 +181,7 @@ public class StudentExamService {
         // if exercise is either QuizExercise, TextExercise or ModelingExercise and exactly one participation exists
         if (exercise.getStudentParticipations() != null && exercise.getStudentParticipations().size() == 1) {
             for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
-                StudentParticipation existingParticipation = existingParticipations.stream().filter(p -> p.getId().equals(studentParticipation.getId())).toList().get(0);
+                StudentParticipation existingParticipation = existingParticipations.stream().filter(p -> p.getId().equals(studentParticipation.getId())).findFirst().orElseThrow();
                 // if exactly one submission exists we save the submission
                 if (studentParticipation.getSubmissions() != null && studentParticipation.getSubmissions().size() == 1) {
                     // check that the current user owns the participation

@@ -1496,7 +1496,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testdeleteResult() throws Exception {
         Course course = database.addCourseWithOneExerciseAndSubmissions("modeling", 1, Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
-        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
 
