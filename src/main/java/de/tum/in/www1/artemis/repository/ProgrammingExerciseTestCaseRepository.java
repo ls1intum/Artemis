@@ -32,7 +32,7 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
     @Query("""
             SELECT tc FROM ProgrammingExerciseTestCase tc
             LEFT JOIN FETCH tc.exercise ex
-            WHERE tc.id = :testCaseId
+            WHERE tc.id = :#{#testCaseId}
             """)
     Optional<ProgrammingExerciseTestCase> findByIdWithExercise(@Param("testCaseId") Long testCaseId);
 
@@ -44,7 +44,7 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
     @Query("""
             SELECT DISTINCT tc FROM ProgrammingExerciseTestCase tc
             LEFT JOIN FETCH tc.solutionEntries se
-            WHERE tc.exercise.id = :exerciseId
+            WHERE tc.exercise.id = :#{#exerciseId}
             """)
     Set<ProgrammingExerciseTestCase> findByExerciseIdWithSolutionEntries(@Param("exerciseId") Long exerciseId);
 

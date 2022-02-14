@@ -34,7 +34,7 @@ public interface CodeHintRepository extends JpaRepository<CodeHint, Long> {
     @Query("""
             SELECT h.title
             FROM CodeHint h
-            WHERE h.id = :hintId
+            WHERE h.id = :#{#hintId}
             """)
     String getHintTitle(@Param("hintId") Long hintId);
 }
