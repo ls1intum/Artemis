@@ -94,8 +94,6 @@ public class DatabaseUtilService {
 
     private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority, adminAuthority);
 
-    private static int dayCount = 1;
-
     @Autowired
     private CourseRepository courseRepo;
 
@@ -595,6 +593,8 @@ public class DatabaseUtilService {
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
         modelingExercise.setGradingInstructions("some grading instructions");
+        modelingExercise.setSampleSolutionModel("Example solution model");
+        modelingExercise.setSampleSolutionExplanation("Example Solution");
         addGradingInstructionsToExercise(modelingExercise);
         modelingExercise.getCategories().add("Modeling");
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
@@ -602,6 +602,7 @@ public class DatabaseUtilService {
 
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         textExercise.setGradingInstructions("some grading instructions");
+        textExercise.setSampleSolution("Sample Solution");
         addGradingInstructionsToExercise(textExercise);
         textExercise.getCategories().add("Text");
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
@@ -750,17 +751,16 @@ public class DatabaseUtilService {
         List<Post> posts = createPostsWithinCourse();
 
         // add answer for one post in each context (lecture, exercise, course-wide)
-        Post lecturePost = posts.stream().filter(coursePost -> (coursePost.getLecture() != null)).collect(Collectors.toList()).get(0);
+        Post lecturePost = posts.stream().filter(coursePost -> (coursePost.getLecture() != null)).toList().get(0);
         lecturePost.setAnswers(createBasicAnswers(lecturePost));
         postRepository.save(lecturePost);
 
-        Post exercisePost = posts.stream().filter(coursePost -> (coursePost.getExercise() != null)).collect(Collectors.toList()).get(0);
+        Post exercisePost = posts.stream().filter(coursePost -> (coursePost.getExercise() != null)).toList().get(0);
         exercisePost.setAnswers(createBasicAnswers(exercisePost));
         postRepository.save(exercisePost);
 
-        // resolved post
-        Post courseWidePost = posts.stream().filter(coursePost -> (coursePost.getCourseWideContext() != null)).collect(Collectors.toList()).get(0);
-        courseWidePost.setAnswers(createBasicAnswersThatResolves(courseWidePost));
+        Post courseWidePost = posts.stream().filter(coursePost -> (coursePost.getCourseWideContext() != null)).toList().get(0);
+        courseWidePost.setAnswers(createBasicAnswers(courseWidePost));
         postRepository.save(courseWidePost);
 
         return posts;
@@ -807,13 +807,11 @@ public class DatabaseUtilService {
         post.setVisibleForStudents(true);
         post.setDisplayPriority(DisplayPriority.NONE);
         post.setAuthor(getUserByLoginWithoutAuthorities(String.format("student%s", (i + 1))));
-        post.setCreationDate(ZonedDateTime.of(2015, 11, dayCount, 23, 45, 59, 1234, ZoneId.of("UTC")));
+        post.setCreationDate(ZonedDateTime.of(2015, 11, 28, 23, 45, 59, 1234, ZoneId.of("UTC")));
         String tag = String.format("Tag %s", (i + 1));
         Set<String> tags = new HashSet<>();
         tags.add(tag);
         post.setTags(tags);
-
-        dayCount = (dayCount % 25) + 1;
         return post;
     }
 
@@ -823,18 +821,6 @@ public class DatabaseUtilService {
         answerPost.setContent(post.getContent() + " Answer");
         answerPost.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         answerPost.setPost(post);
-        answerPosts.add(answerPost);
-        answerPostRepository.save(answerPost);
-        return answerPosts;
-    }
-
-    private Set<AnswerPost> createBasicAnswersThatResolves(Post post) {
-        Set<AnswerPost> answerPosts = new HashSet<>();
-        AnswerPost answerPost = new AnswerPost();
-        answerPost.setContent(post.getContent() + " Answer");
-        answerPost.setAuthor(getUserByLoginWithoutAuthorities("student1"));
-        answerPost.setPost(post);
-        answerPost.setResolvesPost(true);
         answerPosts.add(answerPost);
         answerPostRepository.save(answerPost);
         return answerPosts;
