@@ -62,6 +62,6 @@ describe('ExerciseHint Management Component', () => {
         comp.deleteExerciseHint(123);
 
         expect(deleteHintMock).toHaveBeenCalledTimes(1);
-        expect(deleteHintMock).toHaveBeenCalledWith(123);
+        expect(deleteHintMock).toHaveBeenCalledWith(15, 123);
     });
 });
