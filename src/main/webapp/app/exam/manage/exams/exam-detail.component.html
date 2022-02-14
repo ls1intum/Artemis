@@ -55,7 +55,7 @@
                 >
                     <fa-icon [icon]="faUndo"></fa-icon>
                 </button>
-                <div *ngIf="exam && isExamOver && exam.course" class="my-2 me-1 mt-1">
+                <div *ngIf="exam && isExamOver && exam.course" class="mt-1 d-inline">
                     <jhi-course-exam-archive-button [archiveMode]="'Exam'" [exam]="exam" [course]="exam.course"></jhi-course-exam-archive-button>
                 </div>
             </div>
