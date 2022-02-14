@@ -12,7 +12,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { captureException } from '@sentry/browser';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -21,6 +21,7 @@ import { HttpResponse } from '@angular/common/http';
 import { faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CourseScoresCsvRow, CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
+import { mean, median, standardDeviation } from 'simple-statistics';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -84,6 +85,21 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     isBonus?: boolean;
     maxGrade?: string;
     averageGrade?: string;
+    scoresToDisplay: number[];
+
+    numberOfReleasedExercises: number;
+    averageScoreIncluded = 0;
+    averagePointsIncluded = 0;
+    medianScoreIncluded = 0;
+    medianPointsIncluded = 0;
+
+    averageScoreTotal = 0;
+    averagePointsTotal = 0;
+    medianScoreTotal = 0;
+    medianPointsTotal = 0;
+
+    standardDeviationPointsIncluded = 0;
+    standardDeviationPointsTotal = 0;
 
     private languageChangeSubscription?: Subscription;
 
@@ -147,6 +163,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.course = course;
         this.initializeExerciseTitles();
         this.exercisesOfCourseThatAreIncludedInScoreCalculation = this.determineExercisesIncludedInScore(this.course);
+        this.numberOfReleasedExercises = this.determineNumberOfReleasedExercises(this.course);
         this.calculateCourseStatistics(this.course.id!);
     }
 
@@ -214,6 +231,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const courseScoresObservable = this.participantScoresService.findCourseScores(courseId);
         // find grading scale if it exists for course
         const gradingScaleObservable = this.gradingSystemService.findGradingScaleForCourse(courseId).pipe(catchError(() => of(new HttpResponse<GradingScale>())));
+        // eslint-disable-next-line @typescript-eslint/tslint/config
         forkJoin([findParticipationsObservable, courseScoresObservable, gradingScaleObservable]).subscribe(([participationsOfCourse, courseScoresResult, gradingScaleResponse]) => {
             this.allParticipationsOfCourse = participationsOfCourse;
 
@@ -230,6 +248,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             // comparing with calculation from course scores (using new participation score table)
             const courseScoreDTOs = courseScoresResult.body!;
             this.compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs);
+            this.calculateAverageAndMedianScores();
+            // this.createChart(this.students.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course)));
+            this.scoresToDisplay = this.students.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course));
             this.changeDetector.detectChanges();
         });
     }
@@ -339,8 +360,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
         studentsMap.forEach((student) => {
             this.students.push(student);
-
-            for (const exercise of this.exercisesOfCourseThatAreIncludedInScoreCalculation) {
+            // We need the information of not included exercises as well in order to compute the total average and median
+            for (const exercise of this.course.exercises!) {
                 this.updateStudentStatisticsWithExerciseResults(student, exercise);
             }
 
@@ -407,7 +428,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
-
         return studentsMap;
     }
 
@@ -434,17 +454,20 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             // If the student adds up the displayed points, he gets a total of 5.5 points.
             // In order to get the same total result as the student, we have to round before summing.
             const pointsAchievedByStudentInExercise = roundValueSpecifiedByCourseSettings((result.score! * relevantMaxPoints) / 100, this.course);
-            student.overallPoints += pointsAchievedByStudentInExercise;
             student.pointsPerExercise.set(exercise.id!, pointsAchievedByStudentInExercise);
-            student.sumPointsPerExerciseType.set(exercise.type!, student.sumPointsPerExerciseType.get(exercise.type!)! + pointsAchievedByStudentInExercise);
-            student.numberOfParticipatedExercises += 1;
-            exercise.numberOfParticipationsWithRatedResult! += 1;
-            if (result.score! >= 100) {
-                student.numberOfSuccessfulExercises += 1;
-                exercise.numberOfSuccessfulParticipations! += 1;
-            }
+            const includedIDs = this.exercisesOfCourseThatAreIncludedInScoreCalculation.map((includedExercise) => includedExercise.id);
+            if (includedIDs.includes(exercise.id)) {
+                student.overallPoints += pointsAchievedByStudentInExercise;
+                student.sumPointsPerExerciseType.set(exercise.type!, student.sumPointsPerExerciseType.get(exercise.type!)! + pointsAchievedByStudentInExercise);
+                student.numberOfParticipatedExercises += 1;
+                exercise.numberOfParticipationsWithRatedResult! += 1;
+                if (result.score! >= 100) {
+                    student.numberOfSuccessfulExercises += 1;
+                    exercise.numberOfSuccessfulParticipations! += 1;
+                }
 
-            student.pointsPerExerciseType.get(exercise.type!)!.push(pointsAchievedByStudentInExercise);
+                student.pointsPerExerciseType.get(exercise.type!)!.push(pointsAchievedByStudentInExercise);
+            }
         } else {
             // there is no result, the student has not participated or submitted too late
             student.pointsPerExercise.set(exercise.id!, 0);
@@ -797,5 +820,61 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             return -1;
         }
         return 0;
+    }
+
+    private determineNumberOfReleasedExercises(course: Course): number {
+        return course.exercises!.filter((exercise) => !exercise.releaseDate || exercise.releaseDate.isBefore(dayjs())).length;
+    }
+
+    private calculateAverageScoreIncluded(scores: number[], points: number[]) {
+        this.averageScoreIncluded = roundScorePercentSpecifiedByCourseSettings(mean(scores), this.course);
+        this.averagePointsIncluded = roundValueSpecifiedByCourseSettings(mean(points), this.course);
+    }
+
+    private calculateAverageScoreTotal(achievedPointsTotal: number[], averageScores: number[]) {
+        this.averagePointsTotal = roundValueSpecifiedByCourseSettings(mean(achievedPointsTotal), this.course);
+        this.averageScoreTotal = roundScorePercentSpecifiedByCourseSettings(mean(averageScores), this.course);
+    }
+
+    private calculateMedianScoreIncluded(scores: number[], points: number[]) {
+        this.medianScoreIncluded = roundScorePercentSpecifiedByCourseSettings(median(scores), this.course);
+        this.medianPointsIncluded = roundValueSpecifiedByCourseSettings(median(points), this.course);
+    }
+
+    private calculateMedianScoreTotal(achievedPointsTotal: number[], averageScores: number[]) {
+        this.medianPointsTotal = roundValueSpecifiedByCourseSettings(median(achievedPointsTotal), this.course);
+        this.medianScoreTotal = roundScorePercentSpecifiedByCourseSettings(median(averageScores), this.course);
+    }
+
+    private calculateAverageAndMedianScores() {
+        const allCoursePoints = this.course.exercises!.map((exercise) => exercise.maxPoints ?? 0).reduce((points1, points2) => points1 + points2, 0);
+        const includedPointsPerStudent = this.students.map((student) => student.overallPoints);
+        // average points and score included
+        const scores = includedPointsPerStudent.map((point) => point / this.maxNumberOfOverallPoints);
+        this.calculateAverageScoreIncluded(scores, includedPointsPerStudent);
+
+        // average points and score total
+        const achievedPointsTotal = this.students.map((student) => {
+            return Array.from(student.pointsPerExercise.values()).reduce((points1, points2) => points1 + points2, 0);
+        });
+        const averageScores = achievedPointsTotal.map((totalPoints) => totalPoints / allCoursePoints);
+        this.calculateAverageScoreTotal(achievedPointsTotal, averageScores);
+
+        // median points and score included
+        this.calculateMedianScoreIncluded(scores, includedPointsPerStudent);
+
+        // median points and score total
+        this.calculateMedianScoreTotal(achievedPointsTotal, averageScores);
+
+        // Since these two values are only statistical details, there is no need to make the rounding dependent of the course settings
+        // standard deviation points included
+        this.standardDeviationPointsIncluded = round(standardDeviation(includedPointsPerStudent), 2);
+
+        // standard deviation points total
+        this.standardDeviationPointsTotal = round(standardDeviation(achievedPointsTotal), 2);
+    }
+
+    onSelect(event: any) {
+        console.log(event);
     }
 }

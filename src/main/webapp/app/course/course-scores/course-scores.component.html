@@ -15,6 +15,60 @@
     <span *ngIf="!exportReady" style="color: grey"
         ><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span jhitranslate="instructorDashboard.loadingStudents">Loading the results of all students...</span></span
     >
+    <div class="row d-flex align-items-center">
+        <div class="col-8">
+            <div class="text-center">
+                <h4 jhiTranslate="instructorDashboard.courseScoreChart.scoreDistribution">Course score distribution</h4>
+            </div>
+            <jhi-participant-scores-distribution [gradingScale]="gradingScale" [scores]="scoresToDisplay"></jhi-participant-scores-distribution>
+        </div>
+        <div class="col-4">
+            <table class="table table-bordered table-sm table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th></th>
+                        <th>
+                            <span jhiTranslate="instructorDashboard.statisticsTable.included">Included in score</span>
+                        </th>
+                        <th>
+                            <span jhiTranslate="instructorDashboard.statisticsTable.total">Total</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>
+                            <span jhiTranslate="instructorDashboard.statisticsTable.amountOfReleasedExercises"># of released exercises</span>
+                        </th>
+                        <td>{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }}</td>
+                        <td>{{ this.numberOfReleasedExercises }}</td>
+                    </tr>
+                    <tr>
+                        <th>
+                            <span jhiTranslate="instructorDashboard.statisticsTable.averagePoints">Average points (score)</span>
+                        </th>
+                        <td>{{ this.averagePointsIncluded }} ({{ this.averageScoreIncluded }}%)</td>
+                        <td>{{ this.averagePointsTotal }} ({{ this.averageScoreTotal }}%)</td>
+                    </tr>
+                    <tr>
+                        <th>
+                            <span (click)="onSelect($event)" style="cursor: pointer" jhiTranslate="instructorDashboard.statisticsTable.medianPoints">Median points (score)</span>
+                        </th>
+                        <td>{{ this.medianPointsIncluded }} ({{ this.medianScoreIncluded }}%)</td>
+                        <td>{{ this.medianPointsTotal }} ({{ this.medianScoreTotal }}%)</td>
+                    </tr>
+                    <tr>
+                        <th>
+                            <span jhiTranslate="instructorDashboard.statisticsTable.standardPointDeviation">Standard point deviation</span>
+                        </th>
+                        <td>{{ this.standardDeviationPointsIncluded }}</td>
+                        <td>{{ this.standardDeviationPointsTotal }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div style="border-top: 2px solid; width: 100%; margin-bottom: 0.5em; margin-top: 1em"></div>
     <div class="table-responsive" *ngIf="exportReady">
         <table class="table table-striped">
             <thead>
