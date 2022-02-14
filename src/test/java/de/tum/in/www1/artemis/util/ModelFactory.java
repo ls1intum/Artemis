@@ -55,8 +55,7 @@ public class ModelFactory {
     }
 
     public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
-        QuizExercise quizExercise = new QuizExercise();
-        quizExercise = (QuizExercise) populateExercise(quizExercise, releaseDate, dueDate, null, course);
+        var quizExercise = (QuizExercise) populateExercise(new QuizExercise(), releaseDate, dueDate, null, course);
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
@@ -70,8 +69,7 @@ public class ModelFactory {
     }
 
     public static QuizExercise generateQuizExerciseForExam(ExerciseGroup exerciseGroup) {
-        QuizExercise quizExercise = new QuizExercise();
-        quizExercise = (QuizExercise) populateExerciseForExam(quizExercise, exerciseGroup);
+        var quizExercise = (QuizExercise) populateExerciseForExam(new QuizExercise(), exerciseGroup);
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
@@ -101,8 +99,7 @@ public class ModelFactory {
     }
 
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course, ProgrammingLanguage programmingLanguage) {
-        ProgrammingExercise programmingExercise = new ProgrammingExercise();
-        programmingExercise = (ProgrammingExercise) populateExercise(programmingExercise, releaseDate, dueDate, null, course);
+        var programmingExercise = (ProgrammingExercise) populateExercise(new ProgrammingExercise(), releaseDate, dueDate, null, course);
         populateProgrammingExercise(programmingExercise, programmingLanguage);
         return programmingExercise;
     }
@@ -112,8 +109,7 @@ public class ModelFactory {
     }
 
     public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup, ProgrammingLanguage programmingLanguage) {
-        ProgrammingExercise programmingExercise = new ProgrammingExercise();
-        programmingExercise = (ProgrammingExercise) populateExerciseForExam(programmingExercise, exerciseGroup);
+        var programmingExercise = (ProgrammingExercise) populateExerciseForExam(new ProgrammingExercise(), exerciseGroup);
         populateProgrammingExercise(programmingExercise, programmingLanguage);
         return programmingExercise;
     }
@@ -141,34 +137,39 @@ public class ModelFactory {
 
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
             Course course) {
-        ModelingExercise modelingExercise = new ModelingExercise();
-        modelingExercise = (ModelingExercise) populateExercise(modelingExercise, releaseDate, dueDate, assessmentDueDate, course);
+        var modelingExercise = (ModelingExercise) populateExercise(new ModelingExercise(), releaseDate, dueDate, assessmentDueDate, course);
         modelingExercise.setDiagramType(diagramType);
+        modelingExercise.setSampleSolutionModel("This is my example solution model");
+        modelingExercise.setSampleSolutionExplanation("This is my example solution model");
         return modelingExercise;
     }
 
     public static ModelingExercise generateModelingExerciseForExam(DiagramType diagramType, ExerciseGroup exerciseGroup) {
-        ModelingExercise modelingExercise = new ModelingExercise();
-        modelingExercise = (ModelingExercise) populateExerciseForExam(modelingExercise, exerciseGroup);
+        var modelingExercise = (ModelingExercise) populateExerciseForExam(new ModelingExercise(), exerciseGroup);
         modelingExercise.setDiagramType(diagramType);
+        modelingExercise.setSampleSolutionModel("This is my example solution model");
+        modelingExercise.setSampleSolutionExplanation("This is my example solution model");
         return modelingExercise;
     }
 
     public static TextExercise generateTextExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
-        TextExercise textExercise = new TextExercise();
-        return (TextExercise) populateExercise(textExercise, releaseDate, dueDate, assessmentDueDate, course);
+        var textExercise = (TextExercise) populateExercise(new TextExercise(), releaseDate, dueDate, assessmentDueDate, course);
+        textExercise.setSampleSolution("This is my example solution");
+        return textExercise;
     }
 
     public static TextExercise generateTextExerciseForExam(ExerciseGroup exerciseGroup) {
-        TextExercise textExercise = new TextExercise();
-        return (TextExercise) populateExerciseForExam(textExercise, exerciseGroup);
+        var textExercise = (TextExercise) populateExerciseForExam(new TextExercise(), exerciseGroup);
+        textExercise.setSampleSolution("This is my example solution");
+        return textExercise;
     }
 
     public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,
             Course course) {
-        FileUploadExercise fileUploadExercise = new FileUploadExercise();
+        var fileUploadExercise = (FileUploadExercise) populateExercise(new FileUploadExercise(), releaseDate, dueDate, assessmentDueDate, course);
         fileUploadExercise.setFilePattern(filePattern);
-        return (FileUploadExercise) populateExercise(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, course);
+        fileUploadExercise.setSampleSolution("This is my example solution");
+        return fileUploadExercise;
     }
 
     public static FileUploadExercise generateFileUploadExerciseForExam(String filePattern, ExerciseGroup exerciseGroup) {
