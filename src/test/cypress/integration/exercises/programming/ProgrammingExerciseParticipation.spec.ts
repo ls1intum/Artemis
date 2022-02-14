@@ -67,7 +67,7 @@ describe('Programming exercise participations', () => {
         const submission = { files: [{ name: 'BubbleSort.java', path: 'programming_exercise_submissions/build_error/BubbleSort.txt' }] };
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, submission, () => {
             editorPage.getResultPanel().contains('Build Failed').should('be.visible');
-            editorPage.getResultPanel().contains('0%').should('be.visible');
+            editorPage.getResultScorePercentage().should('contain.text', '0%').and('be.visible');
         });
     }
 
@@ -76,9 +76,8 @@ describe('Programming exercise participations', () => {
      */
     function makePartiallySuccessfulSubmission() {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, partiallySuccessful, () => {
-            editorPage.getResultPanel().contains('46.2%').should('be.visible');
+            editorPage.getResultScorePercentage().should('contain.text', '46.2%').and('be.visible');
             editorPage.getResultPanel().contains('6 of 13 passed').should('be.visible');
-            editorPage.getBuildOutput().contains('No build results available').should('be.visible');
         });
     }
 
@@ -87,7 +86,7 @@ describe('Programming exercise participations', () => {
      */
     function makeSuccessfulSubmission() {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, allSuccessful, () => {
-            editorPage.getResultPanel().contains('100%').should('be.visible');
+            editorPage.getResultScorePercentage().should('contain.text', '100%').should('be.visible');
             editorPage.getResultPanel().contains('13 of 13 passed').should('be.visible');
         });
     }
