@@ -18,9 +18,7 @@ describe('Component Tests', () => {
                     imports: [HttpClientTestingModule],
                     declarations: [LogsComponent],
                     providers: [LogsService],
-                })
-                    .overrideTemplate(LogsComponent, '')
-                    .compileComponents();
+                }).compileComponents();
             }),
         );
 
@@ -30,58 +28,111 @@ describe('Component Tests', () => {
             service = TestBed.inject(LogsService);
         });
 
-        describe('OnInit', () => {
-            it('should set all default values correctly', () => {
-                expect(comp.filter).toBe('');
-                expect(comp.orderProp).toBe('name');
-                expect(comp.ascending).toBe(true);
-            });
-
-            it('Should call load all on init', () => {
-                // GIVEN
-                const log = new Log('main', 'WARN');
-                jest.spyOn(service, 'findAll').mockReturnValue(
-                    of({
-                        loggers: {
-                            main: {
-                                effectiveLevel: 'WARN',
-                            },
-                        },
-                    } as unknown as LoggersResponse),
-                );
-
-                // WHEN
-                comp.ngOnInit();
-
-                // THEN
-                expect(service.findAll).toHaveBeenCalled();
-                expect(comp.loggers?.[0]).toEqual(expect.objectContaining(log));
-            });
+        it('should set all default values correctly', () => {
+            expect(comp.filter).toBe('');
+            expect(comp.orderProp).toBe('name');
+            expect(comp.ascending).toBe(true);
         });
 
-        describe('change log level', () => {
-            it('should change log level correctly', () => {
-                // GIVEN
-                const log = new Log('main', 'ERROR');
-                jest.spyOn(service, 'changeLevel').mockReturnValue(of({}));
-                jest.spyOn(service, 'findAll').mockReturnValue(
-                    of({
-                        loggers: {
-                            main: {
-                                effectiveLevel: 'ERROR',
-                            },
+        it('should call load all on init', () => {
+            // GIVEN
+            const log = new Log('main', 'WARN');
+            jest.spyOn(service, 'findAll').mockReturnValue(
+                of({
+                    loggers: {
+                        main: {
+                            effectiveLevel: 'WARN',
                         },
-                    } as unknown as LoggersResponse),
-                );
+                    },
+                } as unknown as LoggersResponse),
+            );
 
-                // WHEN
-                comp.changeLevel('main', 'ERROR');
+            // WHEN
+            comp.ngOnInit();
 
-                // THEN
-                expect(service.changeLevel).toHaveBeenCalled();
-                expect(service.findAll).toHaveBeenCalled();
-                expect(comp.loggers?.[0]).toEqual(expect.objectContaining(log));
-            });
+            // THEN
+            expect(service.findAll).toHaveBeenCalledTimes(1);
+            expect(comp.loggers?.[0]).toEqual(expect.objectContaining(log));
+        });
+
+        it('should change log level correctly', () => {
+            // GIVEN
+            const log = new Log('main', 'ERROR');
+            jest.spyOn(service, 'changeLevel').mockReturnValue(of({}));
+            jest.spyOn(service, 'findAll').mockReturnValue(
+                of({
+                    loggers: {
+                        main: {
+                            effectiveLevel: 'ERROR',
+                        },
+                    },
+                } as unknown as LoggersResponse),
+            );
+
+            // WHEN
+            comp.changeLevel('main', 'ERROR');
+
+            // THEN
+            expect(service.changeLevel).toHaveBeenCalledTimes(1);
+            expect(service.findAll).toHaveBeenCalledTimes(1);
+            expect(comp.loggers?.[0]).toEqual(expect.objectContaining(log));
+        });
+
+        it('should filter loggers correctly', () => {
+            comp.filter = 'test';
+            comp.loggers = [
+                { name: 'footestbar', level: 'DEBUG' },
+                { name: 'somethingelse', level: 'DEBUG' },
+            ];
+            comp.filterAndSort();
+            expect(comp.filteredAndOrderedLoggers).toEqual([{ name: 'footestbar', level: 'DEBUG' }]);
+        });
+
+        it('should sort loggers correctly', () => {
+            // Order by name
+            comp.orderProp = 'name';
+            comp.loggers = [
+                { name: 'test2', level: 'DEBUG' },
+                { name: 'test1', level: 'WARN' },
+                { name: 'test3', level: 'WARN' },
+                { name: 'test3', level: 'TRACE' },
+            ];
+
+            comp.filterAndSort();
+
+            expect(comp.filteredAndOrderedLoggers).toEqual([
+                { name: 'test1', level: 'WARN' },
+                { name: 'test2', level: 'DEBUG' },
+                { name: 'test3', level: 'WARN' },
+                { name: 'test3', level: 'TRACE' },
+            ]);
+
+            // Order by level
+            comp.orderProp = 'level';
+            comp.loggers = [
+                { name: 'test1', level: 'WARN' },
+                { name: 'test2', level: 'TRACE' },
+            ];
+
+            comp.filterAndSort();
+
+            expect(comp.filteredAndOrderedLoggers).toEqual([
+                { name: 'test2', level: 'TRACE' },
+                { name: 'test1', level: 'WARN' },
+            ]);
+
+            // Order by level: If equal level, should order by name
+            comp.loggers = [
+                { name: 'test2', level: 'WARN' },
+                { name: 'test1', level: 'WARN' },
+            ];
+
+            comp.filterAndSort();
+
+            expect(comp.filteredAndOrderedLoggers).toEqual([
+                { name: 'test1', level: 'WARN' },
+                { name: 'test2', level: 'WARN' },
+            ]);
         });
     });
 });
