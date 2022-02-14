@@ -61,7 +61,7 @@ describe('CourseLearningGoals', () => {
             .then(() => {
                 courseLearningGoalsComponentFixture = TestBed.createComponent(CourseLearningGoalsComponent);
                 courseLearningGoalsComponent = courseLearningGoalsComponentFixture.componentInstance;
-                const accountService = TestBed.get(AccountService);
+                const accountService = TestBed.inject(AccountService);
                 const user = new User();
                 user.login = 'testUser';
                 jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue(user);
@@ -79,7 +79,7 @@ describe('CourseLearningGoals', () => {
     });
 
     it('should load learning goal and associated progress and display a card for each of them', () => {
-        const learningGoalService = TestBed.get(LearningGoalService);
+        const learningGoalService = TestBed.inject(LearningGoalService);
         const learningGoal = new LearningGoal();
         const textUnit = new TextUnit();
         learningGoal.id = 1;

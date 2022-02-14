@@ -1,7 +1,7 @@
 <span *ngIf="exercise">
     <h4 [translateValues]="{ exerciseTitle: exercise.title }" jhiTranslate="artemisApp.programmingAssessment.dashboard.heading"></h4>
     <jhi-assessment-filters (filterChange)="updateFilteredSubmissions($event)" [submissions]="submissions"></jhi-assessment-filters>
-    <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
+    <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
     <span *ngIf="submissions && submissions.length > 0; else emptyTable" class="table-responsive">
         <table class="table table-striped exercise-table">
             <thead>

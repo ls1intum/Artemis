@@ -8,7 +8,7 @@ import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 
@@ -76,7 +76,7 @@ export class CourseCardComponent implements OnChanges {
             this.totalReachableScore = scores.get('reachableScore')!;
 
             // Adjust for bonus points, i.e. when the student has achieved more than is reachable
-            const scoreNotReached = roundScoreSpecifiedByCourseSettings(Math.max(0, this.totalReachableScore - this.totalAbsoluteScore), this.course);
+            const scoreNotReached = roundValueSpecifiedByCourseSettings(Math.max(0, this.totalReachableScore - this.totalAbsoluteScore), this.course);
             this.ngxDoughnutData[0].value = this.totalAbsoluteScore;
             this.ngxDoughnutData[1].value = scoreNotReached;
             this.ngxDoughnutData = [...this.ngxDoughnutData];

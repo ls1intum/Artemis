@@ -11,11 +11,17 @@
         *ngFor="let singleFeedback of feedback"
         [class.positive-feedback]="singleFeedback?.credits && singleFeedback.credits! > 0"
         [class.negative-feedback]="singleFeedback?.credits && singleFeedback.credits! < 0"
-        [class.neutral-feedback]="singleFeedback?.credits && singleFeedback.credits! === 0"
+        [class.neutral-feedback]="(singleFeedback?.credits && singleFeedback.credits! === 0) || singleFeedback?.isSubsequent"
     >
         <strong>
             <span> {{ roundScoreSpecifiedByCourseSettings(singleFeedback.credits, course) + ' Points: ' }} </span>
         </strong>
         <span [innerHTML]="buildFeedbackTextForReview(singleFeedback)"></span>
+        <fa-icon
+            *ngIf="singleFeedback.isSubsequent"
+            class="float-end"
+            [icon]="faExclamationTriangle"
+            [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
+        ></fa-icon>
     </div>
 </div>

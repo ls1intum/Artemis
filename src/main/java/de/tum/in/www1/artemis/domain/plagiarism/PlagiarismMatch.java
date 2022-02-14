@@ -36,11 +36,9 @@ public class PlagiarismMatch {
      */
     public static PlagiarismMatch fromJPlagMatch(Match jplagMatch) {
         PlagiarismMatch match = new PlagiarismMatch();
-
         match.setStartA(jplagMatch.getStartOfFirst());
         match.setStartB(jplagMatch.getStartOfSecond());
         match.setLength(jplagMatch.getLength());
-
         return match;
     }
 

@@ -1,4 +1,4 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
@@ -19,7 +19,6 @@ import { TutorEffort } from 'app/entities/tutor-effort.model';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 
 describe('TextExercise Service', () => {
-    let injector: TestBed;
     let service: TextExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: TextExercise;
@@ -37,9 +36,8 @@ describe('TextExercise Service', () => {
             ],
         });
         requestResult = {} as HttpResponse<TextExercise>;
-        injector = getTestBed();
-        service = injector.get(TextExerciseService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(TextExerciseService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         elemDefault = new TextExercise(new Course(), undefined);
         elemDefault.assessmentDueDate = dayjs();

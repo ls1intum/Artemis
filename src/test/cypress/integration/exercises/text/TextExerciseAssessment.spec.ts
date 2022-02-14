@@ -21,11 +21,6 @@ const textAssessment = artemis.pageobjects.assessment.text;
 const exerciseResult = artemis.pageobjects.exercise.result;
 const textFeedback = artemis.pageobjects.exercise.text.feedback;
 
-// This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
-Cypress.on('uncaught:exception', () => {
-    return false;
-});
-
 describe('Text exercise assessment', () => {
     let course: Course;
     let exercise: TextExercise;

@@ -1,7 +1,12 @@
 package de.tum.in.www1.artemis.config;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +16,11 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties("saml2")
 public class SAML2Properties {
+
+    /**
+     * The name of the regular expression capture group which should match the actual value.
+     */
+    public static final String ATTRIBUTE_VALUE_EXTRACTION_GROUP_NAME = "value";
 
     private String usernamePattern;
 
@@ -25,6 +35,28 @@ public class SAML2Properties {
     private String langKeyPattern;
 
     private List<RelyingPartyProperties> identityProviders;
+
+    private Set<ExtractionPattern> valueExtractionPatterns = Set.of();
+
+    @PostConstruct
+    private void init() {
+        final Set<String> extractionKeys = new HashSet<>();
+
+        for (ExtractionPattern pattern : valueExtractionPatterns) {
+            final String key = pattern.getKey();
+
+            if (!pattern.isValidPattern()) {
+                String message = String.format("The extraction pattern for key '%s' does not contain a capture group with name '%s'!", key, ATTRIBUTE_VALUE_EXTRACTION_GROUP_NAME);
+                throw new BeanInitializationException(message);
+            }
+
+            if (extractionKeys.contains(key)) {
+                throw new BeanInitializationException(String.format("The attribute key '%s' cannot have more than one extraction pattern!", key));
+            }
+
+            extractionKeys.add(key);
+        }
+    }
 
     /**
      * Gets the username pattern.
@@ -153,6 +185,24 @@ public class SAML2Properties {
     }
 
     /**
+     * Gets the extraction patterns.
+     *
+     * @return The extraction patterns.
+     */
+    public Set<ExtractionPattern> getValueExtractionPatterns() {
+        return valueExtractionPatterns;
+    }
+
+    /**
+     * Sets the extraction patterns.
+     *
+     * @param valueExtractionPatterns The extraction patterns.
+     */
+    public void setValueExtractionPatterns(Set<ExtractionPattern> valueExtractionPatterns) {
+        this.valueExtractionPatterns = valueExtractionPatterns;
+    }
+
+    /**
      * This class describes a relying party configuration.
      */
     public static class RelyingPartyProperties {
@@ -255,6 +305,61 @@ public class SAML2Properties {
          */
         public void setKeyFile(String keyFile) {
             this.keyFile = keyFile;
+        }
+    }
+
+    /**
+     * Used to define a regular expression with which only a part of an attribute value is extracted.
+     */
+    public static class ExtractionPattern {
+
+        private String key;
+
+        private String valuePattern;
+
+        /**
+         * Checks that this pattern contains a correctly named capture group.
+         *
+         * @return true, if the pattern can be used to extract parts from attribute values.
+         */
+        protected boolean isValidPattern() {
+            return this.valuePattern.contains(String.format("(?<%s>", ATTRIBUTE_VALUE_EXTRACTION_GROUP_NAME));
+        }
+
+        /**
+         * Gets the key for which the value extraction should be applied.
+         *
+         * @return The key for which the value extraction should be applied.
+         */
+        public String getKey() {
+            return key;
+        }
+
+        /**
+         * Sets the key for which the value extraction should be applied.
+         *
+         * @param key The key for which the value extraction should be applied.
+         */
+        public void setKey(String key) {
+            this.key = key;
+        }
+
+        /**
+         * Gets the pattern that defines which part of the value should be extracted.
+         *
+         * @return The pattern that defines which part of the value should be extracted.
+         */
+        public String getValuePattern() {
+            return valuePattern;
+        }
+
+        /**
+         * Sets the pattern that defines which part of the value should be extracted.
+         *
+         * @param valuePattern The pattern that defines which part of the value should be extracted.
+         */
+        public void setValuePattern(String valuePattern) {
+            this.valuePattern = valuePattern;
         }
     }
 }

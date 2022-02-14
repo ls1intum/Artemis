@@ -65,7 +65,7 @@ export class ExamManagementPage {
      * @param examId the id of the exam
      * @param timeout how long to wait for the assessment dashboard button
      */
-    openAssessmentDashboard(examId: string, timeout: number) {
+    openAssessmentDashboard(examId: number, timeout: number) {
         cy.get('#exercises-button-' + examId, { timeout }).click();
     }
 }

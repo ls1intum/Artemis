@@ -11,6 +11,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -176,6 +177,7 @@ export class SubmissionService {
         const convertedSubmission = this.convert(submission);
         setLatestSubmissionResult(convertedSubmission, getLatestSubmissionResult(convertedSubmission));
         this.setSubmissionAccessRights(convertedSubmission);
+        SubmissionService.convertConnectedParticipationFromServer(convertedSubmission);
         return convertedSubmission;
     }
 
@@ -195,6 +197,18 @@ export class SubmissionService {
     public setSubmissionAccessRights(submission: Submission): Submission {
         if (submission.participation?.exercise) {
             this.accountService.setAccessRightsForExerciseAndReferencedCourse(submission.participation.exercise);
+        }
+        return submission;
+    }
+
+    /**
+     * Converts the participation that is connected to the given submission from server to client format.
+     * @param submission to which the conversion should be applied.
+     * @private
+     */
+    private static convertConnectedParticipationFromServer(submission: Submission): Submission {
+        if (submission.participation) {
+            submission.participation = ParticipationService.convertParticipationDatesFromServer(submission.participation);
         }
         return submission;
     }

@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleCha
 import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { ShowdownExtension } from 'showdown';
-import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, mergeMap, map, switchMap, tap } from 'rxjs/operators';
 import { merge, Observable, of, Subscription } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -261,7 +261,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     loadLatestResult(): Observable<Result | undefined> {
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id!).pipe(
             catchError(() => of(undefined)),
-            flatMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
+            mergeMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
         );
     }
 

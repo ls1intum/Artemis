@@ -72,24 +72,24 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
      */
     deleteExampleSubmission(index: number) {
         const submissionId = this.exercise.exampleSubmissions![index].id!;
-        this.exampleSubmissionService.delete(submissionId).subscribe(
-            () => {
+        this.exampleSubmissionService.delete(submissionId).subscribe({
+            next: () => {
                 this.exercise.exampleSubmissions!.splice(index, 1);
                 this.createdExampleAssessment.splice(index, 1);
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 this.alertService.error(error.message);
             },
-        );
+        });
     }
 
     /**
      * Navigates to the detail view of the example submission
-     * @param id id of the submission or new for a new submission
+     * @param exampleSubmissionId id of the submission or new for a new submission
      */
-    getLinkToExampleSubmission(id: number | 'new') {
+    getLinkToExampleSubmission(exampleSubmissionId: number | 'new') {
         if (!this.exercise.exerciseGroup) {
-            return ['/course-management', this.exercise.course!.id, this.exercise.type + '-exercises', this.exercise.id, 'example-submissions', id];
+            return ['/course-management', this.exercise.course!.id, this.exercise.type + '-exercises', this.exercise.id, 'example-submissions', exampleSubmissionId];
         } else {
             return [
                 '/course-management',
@@ -101,7 +101,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
                 this.exercise.type + '-exercises',
                 this.exercise.id,
                 'example-submissions',
-                id,
+                exampleSubmissionId,
             ];
         }
     }
@@ -117,13 +117,13 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
         });
         exampleSubmissionImportModalRef.componentInstance.exercise = this.exercise;
         exampleSubmissionImportModalRef.result.then((selectedSubmission: Submission) => {
-            this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise.id!).subscribe(
-                () => {
+            this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise.id!).subscribe({
+                next: () => {
                     this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
                     location.reload();
                 },
-                (error: HttpErrorResponse) => onError(this.alertService, error),
-            );
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
         });
     }
 }

@@ -1,4 +1,4 @@
-import { ComponentFixture, getTestBed, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -26,7 +26,6 @@ import { metisCourse, metisUser1 } from '../../../../../helpers/sample/metis-sam
 
 describe('AnswerPostReactionsBarComponent', () => {
     let component: AnswerPostReactionsBarComponent;
-    let injector: TestBed;
     let fixture: ComponentFixture<AnswerPostReactionsBarComponent>;
     let metisService: MetisService;
     let answerPost: AnswerPost;
@@ -56,8 +55,7 @@ describe('AnswerPostReactionsBarComponent', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(AnswerPostReactionsBarComponent);
-                injector = getTestBed();
-                metisService = injector.get(MetisService);
+                metisService = TestBed.inject(MetisService);
                 component = fixture.componentInstance;
                 answerPost = new AnswerPost();
                 answerPost.id = 1;

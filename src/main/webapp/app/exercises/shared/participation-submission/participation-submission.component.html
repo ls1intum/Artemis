@@ -97,8 +97,8 @@
             </ng-template>
             <ng-template ngx-datatable-cell-template let-row="row" let-value="value">
                 <div *ngIf="value; else displayNa">
-                    <a *ngIf="getCommitUrl(row); else commitWithoutLink" href="{{ getCommitUrl(row) }}" target="_blank" rel="noopener noreferrer">{{ value.substr(0, 11) }}</a>
-                    <ng-template #commitWithoutLink>{{ value.substr(0, 11) }}</ng-template>
+                    <a *ngIf="getCommitUrl(row); else commitWithoutLink" href="{{ getCommitUrl(row) }}" target="_blank" rel="noopener noreferrer">{{ value.slice(0, 11) }}</a>
+                    <ng-template #commitWithoutLink>{{ value.slice(0, 11) }}</ng-template>
                 </div>
                 <ng-template #displayNa>
                     {{ 'n.a' }}

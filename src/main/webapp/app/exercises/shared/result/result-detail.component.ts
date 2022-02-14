@@ -4,7 +4,13 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
-import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
+import {
+    Feedback,
+    FeedbackType,
+    STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
+    SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
+    checkSubsequentFeedbackInAssessment,
+} from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { getExercise } from 'app/entities/participation/participation.model';
@@ -21,17 +27,21 @@ import {
     isResultPreliminary,
 } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { round, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { round, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { GraphColors } from 'app/entities/statistics.model';
+import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 
 export enum FeedbackItemType {
     Issue,
     Test,
     Feedback,
     Policy,
+    Subsequent,
 }
 
 export class FeedbackItem {
@@ -57,8 +67,9 @@ export class ResultDetailComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
-    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
+    readonly FeedbackItemType = FeedbackItemType;
 
     @Input() result: Result;
     // Specify the feedback.text values that should be shown, all other values will not be visible.
@@ -83,6 +94,7 @@ export class ResultDetailComponent implements OnInit {
     loadingFailed = false;
     feedbackList: FeedbackItem[];
     filteredFeedbackList: FeedbackItem[];
+    backupFilteredFeedbackList: FeedbackItem[];
     buildLogs: BuildLogEntryArray;
 
     showScoreChartTooltip = false;
@@ -91,16 +103,20 @@ export class ResultDetailComponent implements OnInit {
     commitHash?: string;
     commitUrl?: string;
 
-    ngxData: any[] = [];
+    ngxData: NgxChartsMultiSeriesDataEntry[] = [];
     labels: string[];
     ngxColors = {
         name: 'Feedback Detail',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['#28a745', '#dc3545'], // colors: green, red
+        domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
     xScaleMax = 100;
     legendPosition = LegendPosition.Below;
+    showOnlyPositiveFeedback = false;
+    showOnlyNegativeFeedback = false;
+
+    readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
 
     get exercise(): Exercise | undefined {
         if (this.result.participation) {
@@ -110,6 +126,7 @@ export class ResultDetailComponent implements OnInit {
 
     // Icons
     faCircleNotch = faCircleNotch;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -149,8 +166,10 @@ export class ResultDetailComponent implements OnInit {
                     if (feedbacks && feedbacks.length) {
                         this.result.feedbacks = feedbacks!;
                         const filteredFeedback = this.filterFeedback(feedbacks);
+                        checkSubsequentFeedbackInAssessment(filteredFeedback);
                         this.feedbackList = this.createFeedbackItems(filteredFeedback);
                         this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
+                        this.backupFilteredFeedbackList = this.filteredFeedbackList;
                         if (this.showScoreChart) {
                             this.updateChart(this.feedbackList);
                         }
@@ -174,7 +193,7 @@ export class ResultDetailComponent implements OnInit {
                 this.isLoading = false;
             });
 
-        this.commitHash = this.getCommitHash().substr(0, 11);
+        this.commitHash = this.getCommitHash().slice(0, 11);
 
         // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
         this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
@@ -218,14 +237,14 @@ export class ResultDetailComponent implements OnInit {
         if (text) {
             if (text.includes('\n')) {
                 // if there are multiple lines, only use the first one
-                const firstLine = text.substr(0, text.indexOf('\n'));
+                const firstLine = text.slice(0, text.indexOf('\n'));
                 if (firstLine.length > feedbackPreviewCharacterLimit) {
-                    return firstLine.substr(0, feedbackPreviewCharacterLimit);
+                    return firstLine.slice(0, feedbackPreviewCharacterLimit);
                 } else {
                     return firstLine;
                 }
             } else if (text.length > feedbackPreviewCharacterLimit) {
-                return text.substr(0, feedbackPreviewCharacterLimit);
+                return text.slice(0, feedbackPreviewCharacterLimit);
             }
         }
         // for all other cases
@@ -284,7 +303,7 @@ export class ResultDetailComponent implements OnInit {
                     };
                 } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
                     return {
-                        type: FeedbackItemType.Feedback,
+                        type: feedback.isSubsequent ? FeedbackItemType.Subsequent : FeedbackItemType.Feedback,
                         category: this.showTestDetails ? 'Tutor' : 'Feedback',
                         title: feedback.text,
                         text: feedback.detailText ? feedback.gradingInstruction.feedback + '\n' + feedback.detailText : feedback.gradingInstruction.feedback,
@@ -349,7 +368,7 @@ export class ResultDetailComponent implements OnInit {
                 if (error.status === 403) {
                     return of(null);
                 }
-                return throwError(error);
+                return throwError(() => error);
             }),
         );
     };
@@ -392,6 +411,8 @@ export class ResultDetailComponent implements OnInit {
             return 'alert-warning';
         } else if (feedback.type === FeedbackItemType.Test) {
             return feedback.positive ? 'alert-success' : 'alert-danger';
+        } else if (feedback.type === FeedbackItemType.Subsequent) {
+            return 'alert-secondary';
         } else {
             if (feedback.credits === 0) {
                 return 'alert-warning';
@@ -441,9 +462,9 @@ export class ResultDetailComponent implements OnInit {
 
         const course = getCourseFromExercise(this.exercise!);
 
-        const appliedNegativePoints = roundScoreSpecifiedByCourseSettings(codeIssueCredits + negativeCredits, course);
-        const receivedNegativePoints = roundScoreSpecifiedByCourseSettings(codeIssuePenalties + negativeCredits, course);
-        const positivePoints = roundScoreSpecifiedByCourseSettings(testCaseCredits + positiveCredits, course);
+        const appliedNegativePoints = roundValueSpecifiedByCourseSettings(codeIssueCredits + negativeCredits, course);
+        const receivedNegativePoints = roundValueSpecifiedByCourseSettings(codeIssuePenalties + negativeCredits, course);
+        const positivePoints = roundValueSpecifiedByCourseSettings(testCaseCredits + positiveCredits, course);
 
         if (appliedNegativePoints !== receivedNegativePoints) {
             this.showScoreChartTooltip = true;
@@ -485,8 +506,8 @@ export class ResultDetailComponent implements OnInit {
             {
                 name: 'Score',
                 series: [
-                    { name: this.labels[0], value: 0 },
-                    { name: this.labels[1], value: 0 },
+                    { name: this.labels[0], value: 0, isPositive: true },
+                    { name: this.labels[1], value: 0, isPositive: false },
                 ],
             },
         ];
@@ -519,16 +540,12 @@ export class ResultDetailComponent implements OnInit {
     }
 
     /**
-     * Adds a percentage sign to every x axis tick
-     * @param tick the default x axis tick
-     * @returns string representing custom x axis tick
-     */
-    xAxisFormatting(tick: string): string {
-        return tick + '%';
-    }
-
-    /**
-     * Handles the event if the user clicks on a legend entry. Then, the corresponding bar should disappear
+     * Handles the event if the user clicks on a part of the chart.
+     * If the user clicks on a legend entry, the corresponding bar disappears.
+     * If the user clicks on a bar, the feedback items get filtered accordingly:
+     * Click on the green bar -> Only the positive feedback is shown
+     * Click in the red bar -> Only the feedback concerning deductions is shown
+     * In order to prevent confusion, additionally a disclaimer is shown that states that the feedback items are currently filtered.
      * @param event the information that is delegated by the chart framework. It is dependent on the spot
      * the user clicks
      */
@@ -539,12 +556,47 @@ export class ResultDetailComponent implements OnInit {
                 if (points.name === name) {
                     const color = this.ngxColors.domain[index];
                     // if the bar is not transparent yet, make it transparent. Else, reset the normal color
-                    this.ngxColors.domain[index] = color !== 'rgba(255,255,255,0)' ? 'rgba(255,255,255,0)' : index === 0 ? '#28a745' : '#dc3545';
+                    this.ngxColors.domain[index] = color !== 'rgba(255,255,255,0)' ? 'rgba(255,255,255,0)' : index === 0 ? GraphColors.GREEN : GraphColors.RED;
 
                     // update is necessary for the colors to change
                     this.ngxData = [...this.ngxData];
                 }
             });
+        } else {
+            this.filterFeedbackListByChart(event.isPositive);
+        }
+    }
+
+    /**
+     * Method that handles the filter reset applied by the chart
+     */
+    resetChartFilter() {
+        this.showOnlyNegativeFeedback = false;
+        this.showOnlyPositiveFeedback = false;
+        this.filteredFeedbackList = this.backupFilteredFeedbackList;
+    }
+
+    /**
+     * Auxiliary method that handles the filtering of the feedback items if a chart bar is clicked
+     * @param isPositive the indicator whether the bar representing the positive (point achieving) or the negative (point deducting) feedback is clicked
+     * @private
+     */
+    private filterFeedbackListByChart(isPositive: boolean) {
+        let filterPredicate;
+        if (isPositive) {
+            this.showOnlyPositiveFeedback = !this.showOnlyPositiveFeedback;
+            filterPredicate = (feedback: FeedbackItem) => feedback.positive === true;
+            this.showOnlyNegativeFeedback = false;
+        } else {
+            this.showOnlyNegativeFeedback = !this.showOnlyNegativeFeedback;
+            // by the second predicate we filter all feedback items that do not deduct any points
+            filterPredicate = (feedback: FeedbackItem) => feedback.positive === false && feedback.appliedCredits;
+            this.showOnlyPositiveFeedback = false;
+        }
+        // we reset the item list in order to make sure that maximal one feedback type is filtered at any time by the chart
+        this.filteredFeedbackList = this.backupFilteredFeedbackList;
+        if (this.showOnlyNegativeFeedback || this.showOnlyPositiveFeedback) {
+            this.filteredFeedbackList = this.filteredFeedbackList.filter(filterPredicate);
         }
     }
 }

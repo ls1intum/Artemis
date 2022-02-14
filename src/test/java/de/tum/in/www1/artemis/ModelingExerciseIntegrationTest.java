@@ -174,8 +174,8 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
 
         // use an arbitrary course id that was not yet stored on the server to get a bad request in the PUT call
-        modelingExercise = modelingExerciseUtilService.createModelingExercise(100L, classExercise.getId());
-        request.put("/api/modeling-exercises", modelingExercise, HttpStatus.NOT_FOUND);
+        modelingExercise = modelingExerciseUtilService.createModelingExercise(Long.MAX_VALUE, classExercise.getId());
+        request.put("/api/modeling-exercises", modelingExercise, HttpStatus.CONFLICT);
     }
 
     @Test

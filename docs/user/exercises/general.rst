@@ -19,7 +19,7 @@ Artemis offers different exercise types that have these things in common:
 Complaints
 ----------
 
-After receiving an assessment, students can complain about the assessment, if the instructor enabled this option.
+After receiving an assessment, students can complain once about the assessment of an exercise, if the instructor enabled this option.
 A complaint leads to a reevaluation of the submission by another tutor.
 The student can also write an additional text when submitting a complaint to justify the reevaluation.
 

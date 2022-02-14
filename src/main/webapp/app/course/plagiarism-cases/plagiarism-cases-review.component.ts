@@ -3,7 +3,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
-import { Subject } from 'rxjs';
+import { firstValueFrom, Subject } from 'rxjs';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
 import { ActivatedRoute } from '@angular/router';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
@@ -64,13 +64,10 @@ export class PlagiarismCasesReviewComponent implements OnInit {
         } else {
             this.comparison.studentStatementB = this.studentStatement;
         }
-        this.plagiarismCasesService
-            .saveStudentStatement(this.courseId, this.comparisonId, this.studentStatement)
-            .toPromise()
-            .catch(() => {
-                this.comparison.studentStatementA = undefined;
-                this.comparison.studentStatementB = undefined;
-            });
+        firstValueFrom(this.plagiarismCasesService.saveStudentStatement(this.courseId, this.comparisonId, this.studentStatement)).catch(() => {
+            this.comparison.studentStatementA = undefined;
+            this.comparison.studentStatementB = undefined;
+        });
     }
 
     isConfirmed(): boolean {

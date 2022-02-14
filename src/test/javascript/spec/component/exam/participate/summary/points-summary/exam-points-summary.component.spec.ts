@@ -149,7 +149,9 @@ describe('ExamPointsSummaryComponent', () => {
     });
 
     it('should handle error correctly', () => {
-        const gradingSystemServiceMatchPercentageErrorStub = jest.spyOn(gradingSystemService, 'matchPercentageToGradeStepForExam').mockReturnValue(throwError({ status: 404 }));
+        const gradingSystemServiceMatchPercentageErrorStub = jest
+            .spyOn(gradingSystemService, 'matchPercentageToGradeStepForExam')
+            .mockReturnValue(throwError(() => ({ status: 404 })));
 
         fixture.detectChanges();
 

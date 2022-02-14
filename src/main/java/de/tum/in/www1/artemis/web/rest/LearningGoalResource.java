@@ -18,11 +18,18 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LearningGoalRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LearningGoalService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -64,29 +71,14 @@ public class LearningGoalResource {
      * @param courseId                 the id of the course to which the learning goal belongs
      * @param learningGoalId           the id of the learning goal for which to get the progress
      * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result
-     * @return the ResponseEntity with status 200 (OK) and with the learning goal cours performance in the body
+     * @return the ResponseEntity with status 200 (OK) and with the learning goal course performance in the body
      */
     @GetMapping("/courses/{courseId}/goals/{learningGoalId}/course-progress")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<CourseLearningGoalProgress> getLearningGoalProgressOfCourse(@PathVariable Long learningGoalId, @PathVariable Long courseId,
             @RequestParam(defaultValue = "false", required = false) boolean useParticipantScoreTable) {
         log.debug("REST request to get course progress for LearningGoal : {}", learningGoalId);
-        Optional<LearningGoal> optionalLearningGoal = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoalId);
-        if (optionalLearningGoal.isEmpty()) {
-            return notFound();
-        }
-        LearningGoal learningGoal = optionalLearningGoal.get();
-        if (learningGoal.getCourse() == null) {
-            return conflict();
-        }
-        if (!learningGoal.getCourse().getId().equals(courseId)) {
-            return conflict();
-        }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(learningGoal.getCourse(), user)) {
-            return forbidden();
-        }
-
+        var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, courseId);
         CourseLearningGoalProgress courseLearningGoalProgress = learningGoalService.calculateLearningGoalCourseProgress(learningGoal, useParticipantScoreTable);
         return ResponseEntity.ok().body(courseLearningGoalProgress);
     }
@@ -104,23 +96,9 @@ public class LearningGoalResource {
     public ResponseEntity<IndividualLearningGoalProgress> getLearningGoalProgress(@PathVariable Long learningGoalId, @PathVariable Long courseId,
             @RequestParam(defaultValue = "false", required = false) boolean useParticipantScoreTable) {
         log.debug("REST request to get performance for LearningGoal : {}", learningGoalId);
-        Optional<LearningGoal> optionalLearningGoal = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoalId);
-        if (optionalLearningGoal.isEmpty()) {
-            return notFound();
-        }
-        LearningGoal learningGoal = optionalLearningGoal.get();
-        if (learningGoal.getCourse() == null) {
-            return conflict();
-        }
-        if (!learningGoal.getCourse().getId().equals(courseId)) {
-            return conflict();
-        }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authorizationCheckService.isAtLeastStudentInCourse(learningGoal.getCourse(), user)) {
-            return forbidden();
-        }
-
-        IndividualLearningGoalProgress individualLearningGoalProgress = learningGoalService.calculateLearningGoalProgress(learningGoal, user, useParticipantScoreTable);
+        var learningGoal = findLearningGoal(Role.STUDENT, learningGoalId, courseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var individualLearningGoalProgress = learningGoalService.calculateLearningGoalProgress(learningGoal, user, useParticipantScoreTable);
         return ResponseEntity.ok().body(individualLearningGoalProgress);
     }
 
@@ -134,19 +112,9 @@ public class LearningGoalResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.info("REST request to remove a LearningGoal : {}", learningGoalId);
-        Optional<LearningGoal> learningGoalOptional = this.learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoalId);
-        if (learningGoalOptional.isEmpty()) {
-            return badRequest();
-        }
-        LearningGoal learningGoalFromDb = learningGoalOptional.get();
-        if (learningGoalFromDb.getCourse() == null || !learningGoalFromDb.getCourse().getId().equals(courseId)) {
-            return badRequest();
-        }
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(learningGoalFromDb.getCourse(), null)) {
-            return forbidden();
-        }
-        learningGoalRepository.deleteById(learningGoalFromDb.getId());
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, learningGoalFromDb.getTitle())).build();
+        var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, courseId);
+        learningGoalRepository.deleteById(learningGoal.getId());
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, learningGoal.getTitle())).build();
     }
 
     /**
@@ -160,10 +128,7 @@ public class LearningGoalResource {
         log.debug("REST request to get learning goals for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         Set<LearningGoal> learningGoals = learningGoalRepository.findAllByCourseIdWithLectureUnitsUnidirectional(courseId);
         // if the user is a student the not yet released lecture units need to be filtered out
@@ -188,21 +153,20 @@ public class LearningGoalResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<LearningGoal> getLearningGoal(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.debug("REST request to get LearningGoal : {}", learningGoalId);
-        Optional<LearningGoal> optionalLearningGoal = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoalId);
-        if (optionalLearningGoal.isEmpty()) {
-            return notFound();
-        }
-        LearningGoal learningGoal = optionalLearningGoal.get();
+        var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, courseId);
+        return ResponseEntity.ok().body(learningGoal);
+    }
+
+    private LearningGoal findLearningGoal(Role role, Long learningGoalId, Long courseId) {
+        var learningGoal = learningGoalRepository.findByIdWithLectureUnitsBidirectionalElseThrow(learningGoalId);
         if (learningGoal.getCourse() == null) {
-            return conflict();
+            throw new ConflictException("A learning goal must belong to a course", "LearningGoal", "learningGoalNoCourse");
         }
         if (!learningGoal.getCourse().getId().equals(courseId)) {
-            return conflict();
+            throw new ConflictException("The learning goal does not belong to the correct course", "LearningGoal", "learningGoalWrongCourse");
         }
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(learningGoal.getCourse(), null)) {
-            return forbidden();
-        }
-        return ResponseEntity.ok().body(learningGoal);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(role, learningGoal.getCourse(), null);
+        return learningGoal;
     }
 
     /**
@@ -219,28 +183,15 @@ public class LearningGoalResource {
         if (learningGoal.getId() == null) {
             return badRequest();
         }
-        Optional<LearningGoal> learningGoalOptional = this.learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoal.getId());
-        if (learningGoalOptional.isEmpty()) {
-            return badRequest();
-        }
-        LearningGoal learningGoalFromDb = learningGoalOptional.get();
+        var learningGoalFromDb = this.learningGoalRepository.findByIdWithLectureUnitsBidirectionalElseThrow(learningGoal.getId());
         if (learningGoalFromDb.getCourse() == null || !learningGoalFromDb.getCourse().getId().equals(courseId)) {
             return badRequest();
         }
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(learningGoalFromDb.getCourse(), null)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, learningGoalFromDb.getCourse(), null);
         learningGoalFromDb.setTitle(learningGoal.getTitle());
         learningGoalFromDb.setDescription(learningGoal.getDescription());
         // exchanging the lecture units send by the client to the corresponding entities from the database
-        Set<LectureUnit> lectureUnitsToConnectWithLearningGoal;
-        try {
-            lectureUnitsToConnectWithLearningGoal = getLectureUnitsFromDatabase(learningGoal.getLectureUnits());
-        }
-        catch (IllegalArgumentException e) {
-            return badRequest();
-        }
-
+        Set<LectureUnit> lectureUnitsToConnectWithLearningGoal = getLectureUnitsFromDatabase(learningGoal.getLectureUnits());
         // remove lecture units no longer associated with learning goal
         Set<LectureUnit> lectureUnitsToRemove = learningGoalFromDb.getLectureUnits().stream().filter(lectureUnit -> !lectureUnitsToConnectWithLearningGoal.contains(lectureUnit))
                 .collect(Collectors.toSet());
@@ -276,34 +227,19 @@ public class LearningGoalResource {
         if (learningGoalFromClient.getId() != null || learningGoalFromClient.getTitle() == null) {
             return badRequest();
         }
-        Optional<Course> courseOptional = courseRepository.findWithEagerLearningGoalsById(courseId);
-        if (courseOptional.isEmpty()) {
-            return badRequest();
-        }
-        Course course = courseOptional.get();
-
+        Course course = courseRepository.findWithEagerLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
         if (course.getLearningGoals().stream().map(LearningGoal::getTitle).anyMatch(title -> title.equals(learningGoalFromClient.getTitle()))) {
             return badRequest();
         }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
-            return forbidden();
-        }
-
-        Set<LectureUnit> lectureUnitsToConnectWithLearningGoal;
-        try {
-            lectureUnitsToConnectWithLearningGoal = getLectureUnitsFromDatabase(learningGoalFromClient.getLectureUnits());
-        }
-        catch (IllegalArgumentException e) {
-            return badRequest();
-        }
-
+        Set<LectureUnit> lectureUnitsToConnectWithLearningGoal = getLectureUnitsFromDatabase(learningGoalFromClient.getLectureUnits());
         LearningGoal learningGoalToCreate = new LearningGoal();
         learningGoalToCreate.setTitle(learningGoalFromClient.getTitle());
         learningGoalToCreate.setDescription(learningGoalFromClient.getDescription());
         learningGoalToCreate.setCourse(course);
         LearningGoal persistedLearningGoal = learningGoalRepository.save(learningGoalToCreate);
-        persistedLearningGoal = this.learningGoalRepository.findByIdWithLectureUnitsBidirectional(persistedLearningGoal.getId()).get();
+        persistedLearningGoal = this.learningGoalRepository.findByIdWithLectureUnitsBidirectionalElseThrow(persistedLearningGoal.getId());
 
         for (LectureUnit lectureUnit : lectureUnitsToConnectWithLearningGoal) {
             persistedLearningGoal.addLectureUnit(lectureUnit);
@@ -315,18 +251,16 @@ public class LearningGoalResource {
 
     }
 
-    private Set<LectureUnit> getLectureUnitsFromDatabase(Set<LectureUnit> lectureUnitsFromClient) throws IllegalArgumentException {
+    private Set<LectureUnit> getLectureUnitsFromDatabase(Set<LectureUnit> lectureUnitsFromClient) {
         Set<LectureUnit> lectureUnitsFromDatabase = new HashSet<>();
         if (lectureUnitsFromClient != null && !lectureUnitsFromClient.isEmpty()) {
             for (LectureUnit lectureUnit : lectureUnitsFromClient) {
                 if (lectureUnit.getId() == null) {
-                    throw new IllegalArgumentException();
+                    throw new BadRequestAlertException("The lecture unit does not have an ID", "LectureUnit", "noId");
                 }
-                Optional<LectureUnit> lectureUnitFromDbOptional = lectureUnitRepository.findByIdWithLearningGoals(lectureUnit.getId());
-                if (lectureUnitFromDbOptional.isEmpty()) {
-                    throw new IllegalArgumentException();
-                }
-                lectureUnitsFromDatabase.add(lectureUnitFromDbOptional.get());
+                var lectureUnitFromDb = lectureUnitRepository.findByIdWithLearningGoals(lectureUnit.getId())
+                        .orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnit.getId()));
+                lectureUnitsFromDatabase.add(lectureUnitFromDb);
             }
         }
         return lectureUnitsFromDatabase;

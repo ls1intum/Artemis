@@ -855,7 +855,7 @@ public abstract class Exercise extends BaseExercise {
     public void validateScoreSettings() {
         // Check if max score is set
         if (getMaxPoints() == null || getMaxPoints() <= 0) {
-            throw new BadRequestAlertException("The max score needs to be greater than 0", "Exercise", "maxScoreInvalid");
+            throw new BadRequestAlertException("The max points needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 
         if (getBonusPoints() == null) {

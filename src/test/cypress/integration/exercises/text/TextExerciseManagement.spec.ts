@@ -91,7 +91,7 @@ describe('Text exercise management', () => {
             cy.intercept(DELETE, BASE_API + 'text-exercises/*').as('deleteTextExercise');
             cy.get('#delete').click();
             cy.wait('@deleteTextExercise');
-            cy.contains(exercise.title!).should('not.exist');
+            courseManagementExercises.getExerciseRowRootElement(exercise.id!).should('not.exist');
         });
     });
 

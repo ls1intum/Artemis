@@ -111,7 +111,7 @@ describe('User Settings Directive', () => {
             it('should handle error correctly when loading fails', () => {
                 const alertServiceSpy = jest.spyOn(comp.alertService, 'error');
                 const errorResponse = new HttpErrorResponse({ status: 403 });
-                jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(throwError(errorResponse));
+                jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(throwError(() => errorResponse));
 
                 comp.ngOnInit();
 
