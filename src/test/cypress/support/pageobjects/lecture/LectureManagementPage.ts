@@ -51,7 +51,9 @@ export class LectureManagementPage {
 
     addExerciseUnit(exerciseId: number) {
         this.openCreateUnit(UnitType.EXERCISE);
-        cy.contains(exerciseId).click();
+        const exerciseRow = '#exercise-' + exerciseId;
+        cy.reloadUntilFound(exerciseRow);
+        cy.get(exerciseRow).click();
         return this.submitUnit('#createButton');
     }
 
