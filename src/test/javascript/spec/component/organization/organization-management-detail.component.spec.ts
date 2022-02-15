@@ -75,16 +75,16 @@ describe('OrganizationManagementDetailComponent', () => {
         component.ngOnInit();
         tick();
 
-        expect(component.organization.id).toEqual(organization1.id);
-        expect(component.organization.users?.length).toEqual(1);
-        expect(component.organization.courses?.length).toEqual(1);
+        expect(component.organization.id).toBe(organization1.id);
+        expect(component.organization.users?.length).toBe(1);
+        expect(component.organization.courses?.length).toBe(1);
     }));
 
     it('should track id', fakeAsync(() => {
         const user = new User();
         user.id = 5;
 
-        expect(component.trackIdentity(0, user)).toEqual(5);
+        expect(component.trackIdentity(0, user)).toBe(5);
     }));
 
     it('should remove user from organization', fakeAsync(() => {
@@ -94,7 +94,7 @@ describe('OrganizationManagementDetailComponent', () => {
 
         component.removeFromOrganization(organization1.users[0]);
         tick();
-        expect(component.organization.users?.length).toEqual(2);
+        expect(component.organization.users).toHaveLength(2);
     }));
 
     it('should not remove user from organization if error occurred', fakeAsync(() => {
@@ -104,7 +104,7 @@ describe('OrganizationManagementDetailComponent', () => {
 
         component.removeFromOrganization(organization1.users[0]);
         tick();
-        expect(component.organization.users?.length).toEqual(3);
+        expect(component.organization.users).toHaveLength(3);
     }));
 
     it('should load all current organization users', fakeAsync(() => {
@@ -120,8 +120,8 @@ describe('OrganizationManagementDetailComponent', () => {
         jest.spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').mockReturnValue(of(organization1));
 
         component.loadAll();
-        expect(component.organization.users?.length).toEqual(2);
-        expect(component.organization.courses?.length).toEqual(1);
+        expect(component.organization.users).toHaveLength(2);
+        expect(component.organization.courses).toHaveLength(1);
     }));
 
     it('should search users in the used DataTable component and return them and add organization icons', fakeAsync(() => {
@@ -144,8 +144,8 @@ describe('OrganizationManagementDetailComponent', () => {
                 { id: user1.id, login: user1.login },
                 { id: user2.id, login: user2.login },
             ]);
-            expect(component.searchNoResults).toEqual(false);
-            expect(component.searchFailed).toEqual(false);
+            expect(component.searchNoResults).toBe(false);
+            expect(component.searchFailed).toBe(false);
         });
 
         tick(100);
@@ -185,8 +185,8 @@ describe('OrganizationManagementDetailComponent', () => {
 
         result.subscribe((a) => {
             expect(a).toStrictEqual([]);
-            expect(component.searchNoResults).toEqual(false);
-            expect(component.searchFailed).toEqual(false);
+            expect(component.searchNoResults).toBe(false);
+            expect(component.searchFailed).toBe(false);
         });
 
         tick(100);
@@ -201,8 +201,8 @@ describe('OrganizationManagementDetailComponent', () => {
 
         result.subscribe((a) => {
             expect(a).toStrictEqual([]);
-            expect(component.searchNoResults).toEqual(true);
-            expect(component.searchFailed).toEqual(false);
+            expect(component.searchNoResults).toBe(true);
+            expect(component.searchFailed).toBe(false);
         });
 
         tick(100);
@@ -217,8 +217,8 @@ describe('OrganizationManagementDetailComponent', () => {
 
         result.subscribe((a) => {
             expect(a).toStrictEqual([]);
-            expect(component.searchNoResults).toEqual(false);
-            expect(component.searchFailed).toEqual(true);
+            expect(component.searchNoResults).toBe(false);
+            expect(component.searchFailed).toBe(true);
         });
 
         tick(100);
