@@ -18,7 +18,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ExportToCsv } from 'export-to-csv';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
-
+import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
 const NAME_KEY = 'Name';
 const USERNAME_KEY = 'Username';
 const EMAIL_KEY = 'Email';
@@ -60,6 +60,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
 
     // Icons
     faDownload = faDownload;
+    faUserSlash = faUserSlash;
 
     constructor(
         private router: Router,
@@ -297,7 +298,10 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Method for generating the csv file with its corresponding features
+     * Method for generating the csv file containing the user information
+     *
+     *@param rows  the data to export
+     * @param keys the keys of the data
      */
     exportAsCsv(rows: any[], keys: string[]) {
         const options = {

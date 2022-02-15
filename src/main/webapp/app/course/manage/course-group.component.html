@@ -106,7 +106,9 @@
                                 deleteQuestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"
                                 (delete)="removeFromGroup(value)"
                                 [dialogError]="dialogError$"
-                            ></button>
+                            >
+                                <fa-icon [icon]="faUserSlash" class="me-1"></fa-icon>
+                            </button>
                         </div>
                     </ng-template>
                 </ngx-datatable-column>
