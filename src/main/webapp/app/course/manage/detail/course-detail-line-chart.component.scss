@@ -47,5 +47,6 @@
 :host ::ng-deep .refline-path {
     stroke-width: 2 !important;
     stroke-dasharray: 10 !important;
+    stroke-dashoffset: 0 !important;
     stroke: $primary !important;
 }

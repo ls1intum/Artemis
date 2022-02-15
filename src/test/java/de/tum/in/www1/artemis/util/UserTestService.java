@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
@@ -148,7 +149,7 @@ public class UserTestService {
         final var newLastName = "Wayne";
         final var newImageUrl = "foobar.png";
         final var newLangKey = "DE";
-        final var newAuthorities = Set.of(Role.TEACHING_ASSISTANT.getAuthority()).stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get)
+        final var newAuthorities = Stream.of(Role.TEACHING_ASSISTANT.getAuthority()).map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toSet());
         final var oldGroups = student.getGroups();
         student.setAuthorities(newAuthorities);

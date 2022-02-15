@@ -384,7 +384,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
                     newStudent.setVisibleRegistrationNumber(student.getRegistrationNumber());
                 }
                 return newStudent;
-            }).collect(Collectors.toList());
+            }).toList();
             newTeam.setStudents(new HashSet<>(newStudents));
             return newTeam;
         }).collect(Collectors.toList());
