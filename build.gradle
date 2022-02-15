@@ -107,6 +107,10 @@ jacoco {
     toolVersion = "0.8.7"
 }
 
+jar {
+    enabled = false
+}
+
 private excludedClassFilesForReport(classDirectories) {
     classDirectories.setFrom(files(classDirectories.files.collect {
         fileTree(dir: it,

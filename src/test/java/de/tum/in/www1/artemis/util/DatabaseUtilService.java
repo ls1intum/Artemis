@@ -593,6 +593,8 @@ public class DatabaseUtilService {
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
         modelingExercise.setGradingInstructions("some grading instructions");
+        modelingExercise.setSampleSolutionModel("Example solution model");
+        modelingExercise.setSampleSolutionExplanation("Example Solution");
         addGradingInstructionsToExercise(modelingExercise);
         modelingExercise.getCategories().add("Modeling");
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
@@ -600,6 +602,7 @@ public class DatabaseUtilService {
 
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         textExercise.setGradingInstructions("some grading instructions");
+        textExercise.setSampleSolution("Sample Solution");
         addGradingInstructionsToExercise(textExercise);
         textExercise.getCategories().add("Text");
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
