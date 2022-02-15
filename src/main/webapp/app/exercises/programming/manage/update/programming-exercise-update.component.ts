@@ -264,11 +264,18 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private updateProjectTypeSettings(type: ProjectType) {
         if (ProjectType.XCODE === type) {
             // Disable SCA for Xcode
-            this.programmingExercise.staticCodeAnalysisEnabled = false;
-            this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
+            this.disableStaticCodeAnalysis();
             // Disable Online Editor
             this.programmingExercise.allowOnlineEditor = false;
+        } else if (ProjectType.FACT === type) {
+            // Disallow SCA for C (FACT)
+            this.disableStaticCodeAnalysis();
         }
+    }
+
+    private disableStaticCodeAnalysis() {
+        this.programmingExercise.staticCodeAnalysisEnabled = false;
+        this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
     }
 
     /**

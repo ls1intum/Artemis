@@ -378,7 +378,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void passwordReset() throws Exception {
+    public void passwordResetByEmail() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         User createdUser = userCreationService.createUser(new ManagedUserVM(user));
@@ -395,6 +395,31 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
         ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
 
+        verifyPasswordReset(createdUser, resetKeyBefore);
+    }
+
+    @Test
+    public void passwordResetByUsername() throws Exception {
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+
+        Optional<User> userBefore = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
+        assertThat(userBefore).isPresent();
+        String resetKeyBefore = userBefore.get().getResetKey();
+
+        // init password reset
+        // no helper method from request can be used since the String needs to be transferred unaltered; The helpers would add quotes around it
+        // previous, faulty call:
+        // request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
+        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(createdUser.getLogin());
+        request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
+        ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
+
+        verifyPasswordReset(createdUser, resetKeyBefore);
+    }
+
+    private void verifyPasswordReset(User createdUser, String resetKeyBefore) throws Exception {
         // check user data
         Optional<User> userPasswordResetInit = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userPasswordResetInit).isPresent();

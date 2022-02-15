@@ -76,7 +76,7 @@
                 <ng-template ngx-datatable-cell-template let-value="row">
                     <ng-container *ngIf="value.participation; else participationIdUnavailable">
                         <div *ngIf="exercise.isAtLeastInstructor; else displayId">
-                            <a [routerLink]="['/course-management', course.id, exercise.type + '-exercises', value.id, 'participations', value.participation.id, 'submissions']">
+                            <a [routerLink]="['/course-management', course.id, value.type + '-exercises', value.id, 'participations', value.participation.id, 'submissions']">
                                 {{ value.participation.id }}
                             </a>
                         </div>
@@ -123,7 +123,7 @@
                         >
                             <a
                                 [class.disabled]="isAssessmentButtonDisabled(value, value.submission)"
-                                [routerLink]="getAssessmentLink(exercise, value.participation, value.submission)"
+                                [routerLink]="getAssessmentLink(value, value.participation, value.submission)"
                                 class="btn btn-warning btn-sm"
                                 ><fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                                 {{ 'artemisApp.exerciseAssessmentDashboard.' + assessmentAction(value.submission) + 'Assessment' | artemisTranslate }}</a

@@ -237,6 +237,8 @@
             "unlockAllRepositoriesFailure": "There was an error during the unlocking of the programming exercises:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were locked.",
             "lockAllRepositoriesFailure": "There was an error during the locking of the programming exercises:\n {{message}}",
+            "setWorkingTime": "Absolute:",
+            "setWorkingTimeRelative": "Addition relative to regular working time:",
             "removeAllStudents": {
                 "title": "Remove all students",
                 "question": "Are you sure you want to remove <strong class='text-danger'>all students</strong> from the exam?",
@@ -458,6 +460,33 @@
             "alreadySubmitted": "You have already submitted.",
             "submissionNotInTime": "You have not submitted your exam on time. It will not be graded!",
             "handInFailed": "Submission of your exam failed. Please try again!"
+        },
+        "examStatus": {
+            "columnTitle": "Exam status",
+            "preparation": {
+                "examPreparation": "Exam preparation",
+                "configureExercises": "Configure exercises: {{ amount }} exercise groups",
+                "registerStudents": "Register students: {{ registered }} registered",
+                "generateStudentExams": "Generate student exams: ",
+                "registered": "{{ generated }} of {{ total }}",
+                "notRegistered": "No students registered",
+                "prepareExerciseStart": "Prepare exercise start"
+            },
+            "conduction": {
+                "examConduction": "Exam conduction",
+                "startedExams": "Started exams",
+                "submittedExams": "Submitted exams"
+            },
+            "correction": {
+                "examCorrection": "Exam correction",
+                "correctionRoundProgress": "Correction progress in round {{ index }}",
+                "examReview": "Exam review",
+                "unset": "Unset",
+                "planned": "Planned",
+                "running": "Running",
+                "finished": "Finished",
+                "complaints": "Complaints"
+            }
         }
     }
 }

@@ -12,7 +12,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GraphColors } from 'app/entities/statistics.model';
-import { NgxDataEntry } from 'app/entities/course.model';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {
     let fixture: ComponentFixture<ExamScoresAverageScoresGraphComponent>;
@@ -88,7 +88,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
         adaptExpectedData(2, GraphColors.RED, expectedColorDomain, expectedData);
     });
 
-    const adaptExpectedData = (averagePoints: number, newColor: GraphColors, expectedColorDomain: string[], expectedData: NgxDataEntry[]) => {
+    const adaptExpectedData = (averagePoints: number, newColor: GraphColors, expectedColorDomain: string[], expectedData: NgxChartsSingleSeriesDataEntry[]) => {
         component.averageScores.averagePoints = averagePoints;
         component.averageScores.averagePercentage = averagePoints * 10;
         expectedColorDomain[0] = newColor;
@@ -101,7 +101,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
         executeExpectStatements(expectedData, expectedColorDomain);
     };
 
-    const executeExpectStatements = (expectedData: NgxDataEntry[], expectedColorDomain: string[]) => {
+    const executeExpectStatements = (expectedData: NgxChartsSingleSeriesDataEntry[], expectedColorDomain: string[]) => {
         expect(component.ngxData).toEqual(expectedData);
         expect(component.ngxColor.domain).toEqual(expectedColorDomain);
     };

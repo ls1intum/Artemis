@@ -121,7 +121,7 @@ describe('Exam participation', () => {
         onlineEditor.deleteFile('MergeSort.java');
         onlineEditor.typeSubmission(submission, 'de.test');
         onlineEditor.submit();
-        onlineEditor.getResultPanel().contains('100%').should('be.visible');
+        onlineEditor.getResultScorePercentage().should('contain.text', '100%').should('be.visible');
         onlineEditor.getResultPanel().contains('13 of 13 passed').should('be.visible');
     }
 

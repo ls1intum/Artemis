@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { MetricsModalThreadsComponent } from 'app/admin/metrics/blocks/metrics-modal-threads/metrics-modal-threads.component';
 import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -38,10 +38,10 @@ describe('MetricsModalThreadsComponent', () => {
         jest.clearAllMocks();
     });
 
-    function createThread(id: number, threadState: ThreadState): Thread {
+    function createThread(threadId: number, threadState: ThreadState): Thread {
         return {
             threadName: '',
-            threadId: id,
+            threadId,
             blockedTime: -1,
             blockedCount: -1,
             waitedTime: -1,
