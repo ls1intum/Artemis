@@ -1,13 +1,4 @@
-package de.tum.in.www1.artemis;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
+package de.tum.in.www1.artemis.lecture;
 
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
@@ -15,9 +6,16 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.VideoUnitRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 
-// Moved to Lecture microservice. To be removed
-public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class VideoUnitIntegrationTest extends AbstractSpringDevelopmentTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -39,7 +37,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
         this.videoUnit = new VideoUnit();
         this.videoUnit.setDescription("LoremIpsum");
         this.videoUnit.setName("LoremIpsum");
-        this.videoUnit.setSource("oHg5SJYRHA0");
+        this.videoUnit.setSource("https://tum.de");
 
         // Add users that are not in the course
         userRepository.save(ModelFactory.generateActivatedUser("student42"));
@@ -73,7 +71,6 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createVideoUnit_asInstructor_shouldCreateVideoUnit() throws Exception {
-        videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         var persistedVideoUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.CREATED);
         assertThat(persistedVideoUnit.getId()).isNotNull();
     }
@@ -81,7 +78,6 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
     public void createVideoUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
-        videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.FORBIDDEN);
     }
 
@@ -94,7 +90,6 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
         lecture1 = lectureRepository.save(lecture1);
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
-        this.videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         this.videoUnit.setDescription("Changed");
         this.videoUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.OK);
         assertThat(this.videoUnit.getDescription()).isEqualTo("Changed");
@@ -110,7 +105,6 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
         this.videoUnit.setDescription("Changed");
-        this.videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         this.videoUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.FORBIDDEN);
     }
 
