@@ -148,7 +148,7 @@ describe('OrganizationManagementDetailComponent', () => {
             expect(component.searchFailed).toBe(false);
         });
 
-        tick(100);
+        tick();
         expect(userService.search).toHaveBeenCalledTimes(1);
 
         typeAheadButtons.forEach((button) => {
@@ -163,7 +163,7 @@ describe('OrganizationManagementDetailComponent', () => {
         ];
         component.dataTable = { typeaheadButtons: typeAheadButtons } as any as DataTableComponent;
         component.searchAllUsers(of({ text: 'user', entities: [] })).subscribe();
-        tick(100);
+        tick();
 
         expect(typeAheadButtons[0].insertAdjacentHTML).toHaveBeenCalledTimes(1);
         expect(typeAheadButtons[0].insertAdjacentHTML).toHaveBeenCalledWith('beforeend', iconsAsHTML['users']);
@@ -189,7 +189,7 @@ describe('OrganizationManagementDetailComponent', () => {
             expect(component.searchFailed).toBe(false);
         });
 
-        tick(100);
+        tick();
         expect(userService.search).toHaveBeenCalledTimes(0);
     }));
 
@@ -205,7 +205,7 @@ describe('OrganizationManagementDetailComponent', () => {
             expect(component.searchFailed).toBe(false);
         });
 
-        tick(100);
+        tick();
         expect(userService.search).toHaveBeenCalledTimes(1);
     }));
 
@@ -221,7 +221,7 @@ describe('OrganizationManagementDetailComponent', () => {
             expect(component.searchFailed).toBe(true);
         });
 
-        tick(100);
+        tick();
         expect(userService.search).toHaveBeenCalledTimes(1);
     }));
 
