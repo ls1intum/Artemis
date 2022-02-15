@@ -229,6 +229,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         }
 
         this.checkPermissions();
+        this.calculateTotalScore();
 
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
 
@@ -392,6 +393,18 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
         this.assessmentsAreValid = hasUnreferencedFeedback;
 
+        this.calculateTotalScore();
+
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+    }
+
+    /**
+     * Calculates the total score of the current assessment.
+     * This function originally checked whether the total score is negative
+     * or greater than the max. score, but we decided to remove the restriction
+     * and instead set the score boundaries on the server.
+     */
+    private calculateTotalScore() {
         this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
         // Cap totalScore to maxPoints
         if (this.exercise) {
@@ -404,8 +417,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 this.totalScore = 0;
             }
         }
-
-        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
     }
 
     downloadFile(filePath: string) {

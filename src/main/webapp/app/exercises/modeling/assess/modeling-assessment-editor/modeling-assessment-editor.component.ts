@@ -417,13 +417,15 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     onFeedbackChanged(feedback: Feedback[]) {
+        this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
+
         if (!this.isApollonModelLoaded) {
             this.isApollonModelLoaded = true;
+            this.calculateTotalScore();
             this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
             return;
         }
 
-        this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
         this.validateFeedback();
     }
 
