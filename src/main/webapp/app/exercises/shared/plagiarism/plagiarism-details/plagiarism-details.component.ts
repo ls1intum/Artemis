@@ -22,13 +22,4 @@ export class PlagiarismDetailsComponent {
      * Subject to be passed into PlagiarismSplitViewComponent to control the split view.
      */
     splitControlSubject: Subject<string> = new Subject<string>();
-
-    /**
-     * Handle the 'splitViewChange' event emitted by PlagiarismHeaderComponent.
-     *
-     * @param pane
-     */
-    handleSplitViewChange(pane: string) {
-        this.splitControlSubject.next(pane);
-    }
 }

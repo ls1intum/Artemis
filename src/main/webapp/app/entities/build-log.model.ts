@@ -33,9 +33,9 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
         const mappedLogs = buildLogs.map(({ log, ...rest }) => {
             let logType = BuildLogType.OTHER;
             if (log) {
-                if (log.trimLeft().startsWith('[ERROR]')) {
+                if (log.trimStart().startsWith('[ERROR]')) {
                     logType = BuildLogType.ERROR;
-                } else if (log.trimLeft().startsWith('WARNING')) {
+                } else if (log.trimStart().startsWith('WARNING')) {
                     logType = BuildLogType.WARNING;
                 }
             }

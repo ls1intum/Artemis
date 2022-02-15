@@ -109,7 +109,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         const orionStateStub = jest.spyOn(orionConnectorService, 'state').mockReturnValue(stateObservable);
 
         const error = new HttpErrorResponse({ status: 400 });
-        const getForTutorsStub = jest.spyOn(exerciseService, 'getForTutors').mockReturnValue(throwError(error));
+        const getForTutorsStub = jest.spyOn(exerciseService, 'getForTutors').mockReturnValue(throwError(() => error));
 
         const errorSpy = jest.spyOn(alertService, 'error');
         // counter the initialization in beforeEach. as any required to cheat the typecheck

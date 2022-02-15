@@ -91,7 +91,7 @@
                             [columnMode]="'force'"
                             [footerHeight]="50"
                             [rowHeight]="'auto'"
-                            [rows]="filteredTestCases"
+                            [rows]="filteredTestCasesForTable"
                             [rowClass]="getRowClass"
                             [sorts]="tableSorts.testCases"
                             (sort)="onSort('testCases', $event)"
@@ -229,11 +229,12 @@
                         </h2>
 
                         <jhi-test-case-distribution-chart
-                            [testCases]="filteredTestCases"
+                            [testCases]="filteredTestCasesForCharts"
                             [testCaseStatsMap]="gradingStatistics?.testCaseStatsMap"
                             [totalParticipations]="gradingStatistics?.numParticipations"
                             [exercise]="programmingExercise"
                             (testCaseColorsChange)="testCaseColors = $event"
+                            (testCaseRowFilter)="filterByChart($event, chartFilterType.TEST_CASES)"
                         ></jhi-test-case-distribution-chart>
                     </div>
                 </div>
@@ -262,7 +263,7 @@
                             [columnMode]="'force'"
                             [footerHeight]="50"
                             [rowHeight]="'auto'"
-                            [rows]="staticCodeAnalysisCategories"
+                            [rows]="staticCodeAnalysisCategoriesForTable"
                             [sorts]="tableSorts.codeAnalysis"
                             (sort)="onSort('codeAnalysis', $event)"
                         >
@@ -386,10 +387,11 @@
                         </h2>
 
                         <jhi-sca-category-distribution-chart
-                            [categories]="staticCodeAnalysisCategories"
+                            [categories]="staticCodeAnalysisCategoriesForCharts"
                             [categoryIssuesMap]="gradingStatistics?.categoryIssuesMap"
                             [exercise]="programmingExercise"
                             (categoryColorsChange)="categoryColors = $event"
+                            (scaCategoryFilter)="filterByChart($event, chartFilterType.CATEGORIES)"
                         ></jhi-sca-category-distribution-chart>
                     </div>
                 </div>

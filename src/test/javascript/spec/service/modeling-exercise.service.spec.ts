@@ -1,4 +1,4 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
@@ -16,7 +16,6 @@ import { Router } from '@angular/router';
 import { MockRouter } from '../helpers/mocks/mock-router';
 
 describe('ModelingExercise Service', () => {
-    let injector: TestBed;
     let service: ModelingExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: ModelingExercise;
@@ -33,10 +32,9 @@ describe('ModelingExercise Service', () => {
                 { provide: Router, useClass: MockRouter },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(ModelingExerciseService);
+        service = TestBed.inject(ModelingExerciseService);
         service.resourceUrl = 'resourceUrl';
-        httpMock = injector.get(HttpTestingController);
+        httpMock = TestBed.inject(HttpTestingController);
 
         elemDefault = new ModelingExercise(UMLDiagramType.ComponentDiagram, undefined, undefined);
         elemDefault.dueDate = dayjs();

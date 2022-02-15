@@ -1,4 +1,4 @@
-import { getTestBed, TestBed, tick, fakeAsync } from '@angular/core/testing';
+import { TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take, isEmpty } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
@@ -11,7 +11,6 @@ import { MockAccountService } from '../helpers/mocks/service/mock-account.servic
 import { AccountService } from 'app/core/auth/account.service';
 
 describe('Rating Service', () => {
-    let injector: TestBed;
     let service: TutorParticipationService;
     let httpMock: HttpTestingController;
     let accountServiceMock: AccountService;
@@ -23,10 +22,9 @@ describe('Rating Service', () => {
             imports: [ArtemisTestModule, HttpClientTestingModule],
             providers: [{ provide: AccountService, useClass: MockAccountService }],
         });
-        injector = getTestBed();
-        service = injector.get(TutorParticipationService);
-        httpMock = injector.get(HttpTestingController);
-        accountServiceMock = injector.get(AccountService);
+        service = TestBed.inject(TutorParticipationService);
+        httpMock = TestBed.inject(HttpTestingController);
+        accountServiceMock = TestBed.inject(AccountService);
     });
 
     it('should create a TutorParticipation for an exercise', fakeAsync(() => {

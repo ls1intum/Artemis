@@ -201,10 +201,10 @@ export class TeamUpdateDialogComponent implements OnInit {
 
     private subscribeToSaveResponse(team: Observable<HttpResponse<Team>>) {
         this.isSaving = true;
-        team.subscribe(
-            (res) => this.onSaveSuccess(res),
-            (error) => this.onSaveError(error),
-        );
+        team.subscribe({
+            next: (res) => this.onSaveSuccess(res),
+            error: (error) => this.onSaveError(error),
+        });
     }
 
     /**
@@ -241,15 +241,12 @@ export class TeamUpdateDialogComponent implements OnInit {
                 debounceTime(500),
                 switchMap((shortName) => this.teamService.existsByShortName(this.exercise.course!, shortName)),
             )
-            .subscribe(
-                (alreadyTakenResponse) => {
-                    const alreadyTaken = alreadyTakenResponse.body;
-                    const errors = alreadyTaken
-                        ? { ...this.shortNameControl.errors, [this.shortNameAlreadyTakenErrorCode]: alreadyTaken }
-                        : omit(this.shortNameControl.errors, this.shortNameAlreadyTakenErrorCode);
-                    this.shortNameControl.setErrors(isEmpty(errors) ? null : errors);
-                },
-                () => {},
-            );
+            .subscribe((alreadyTakenResponse) => {
+                const alreadyTaken = alreadyTakenResponse.body;
+                const errors = alreadyTaken
+                    ? { ...this.shortNameControl.errors, [this.shortNameAlreadyTakenErrorCode]: alreadyTaken }
+                    : omit(this.shortNameControl.errors, this.shortNameAlreadyTakenErrorCode);
+                this.shortNameControl.setErrors(isEmpty(errors) ? null : errors);
+            });
     }
 }

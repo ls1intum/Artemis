@@ -33,7 +33,7 @@ describe('PresentationScoreComponent', () => {
         isAtLeastInstructor: true,
     } as Exercise;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             declarations: [PresentationScoreComponent],
         })

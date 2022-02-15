@@ -22,12 +22,7 @@ export class ExamParticipationService {
         return `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}`;
     }
 
-    constructor(
-        private httpClient: HttpClient,
-        private localStorageService: LocalStorageService,
-        private sessionStorage: SessionStorageService,
-        private exerciseService: ExerciseService,
-    ) {}
+    constructor(private httpClient: HttpClient, private localStorageService: LocalStorageService, private sessionStorage: SessionStorageService) {}
 
     private static getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
         const prefix = 'artemis_student_exam';
@@ -128,11 +123,11 @@ export class ExamParticipationService {
             }),
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
-                    return throwError(new Error('artemisApp.studentExam.submissionNotInTime'));
+                    return throwError(() => new Error('artemisApp.studentExam.submissionNotInTime'));
                 } else if (error.status === 409 && error.headers.get('x-null-error') === 'error.alreadySubmitted') {
-                    return throwError(new Error('artemisApp.studentExam.alreadySubmitted'));
+                    return throwError(() => new Error('artemisApp.studentExam.alreadySubmitted'));
                 } else {
-                    return throwError(new Error('artemisApp.studentExam.handInFailed'));
+                    return throwError(() => new Error('artemisApp.studentExam.handInFailed'));
                 }
             }),
         );
@@ -206,7 +201,7 @@ export class ExamParticipationService {
     }
 
     private convertStudentExamFromServer(studentExam: StudentExam): StudentExam {
-        studentExam.exercises = this.exerciseService.convertExercisesDateFromServer(studentExam.exercises);
+        studentExam.exercises = ExerciseService.convertExercisesDateFromServer(studentExam.exercises);
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
         return studentExam;
     }

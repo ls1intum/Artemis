@@ -143,6 +143,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
     }
 
+    /**
+     * Checks if scheduled tasks have to be started for the given exercise.
+     * @param exercise for which the check should be performed.
+     * @return true, if the exercise needs to be scheduled.
+     */
     private boolean needsToBeScheduled(ProgrammingExercise exercise) {
         // Exam exercises need to be scheduled
         if (exercise.isExamExercise()) {
@@ -157,8 +162,20 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             return true;
         }
 
-        ZonedDateTime now = ZonedDateTime.now();
-        // Exercises with a release date in the future must be scheduled as well
+        return needsToBeScheduledDueToDates(exercise);
+    }
+
+    /**
+     * Checks if the exercise needs to be scheduled because any of its relevant
+     * dates are in the future.
+     *
+     * @param exercise for which the check should be performed.
+     * @return true, if the exercise needs to be scheduled.
+     */
+    private boolean needsToBeScheduledDueToDates(ProgrammingExercise exercise) {
+        final ZonedDateTime now = ZonedDateTime.now();
+
+        // Exercises with a release date in the future must be scheduled
         if (exercise.getReleaseDate() != null && now.isBefore(exercise.getReleaseDate())) {
             return true;
         }

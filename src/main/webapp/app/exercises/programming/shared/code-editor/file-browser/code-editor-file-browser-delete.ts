@@ -41,16 +41,16 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
         this.isLoading = true;
         // Make sure we have a filename
         if (this.fileNameToDelete) {
-            this.repositoryFileService.deleteFile(this.fileNameToDelete).subscribe(
-                () => {
+            this.repositoryFileService.deleteFile(this.fileNameToDelete).subscribe({
+                next: () => {
                     this.closeModal();
                     this.parent.onFileDeleted(new DeleteFileChange(this.fileType, this.fileNameToDelete));
                 },
-                (err) => {
+                error: (err) => {
                     captureException(err);
                     // TODO: show the error to the user
                 },
-            );
+            });
         }
         this.isLoading = false;
     }

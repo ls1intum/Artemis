@@ -25,7 +25,7 @@ export class EditVideoUnitComponent implements OnInit {
     ngOnInit(): void {
         this.isLoading = true;
         const lectureRoute = this.activatedRoute.parent!.parent!;
-        combineLatest(this.activatedRoute.paramMap, lectureRoute.paramMap)
+        combineLatest([this.activatedRoute.paramMap, lectureRoute.paramMap])
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
@@ -37,8 +37,8 @@ export class EditVideoUnitComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                (videoUnitResponse: HttpResponse<VideoUnit>) => {
+            .subscribe({
+                next: (videoUnitResponse: HttpResponse<VideoUnit>) => {
                     this.videoUnit = videoUnitResponse.body!;
 
                     this.formData = {
@@ -48,8 +48,8 @@ export class EditVideoUnitComponent implements OnInit {
                         source: this.videoUnit.source,
                     };
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     updateVideoUnit(formData: VideoUnitFormData) {
@@ -68,9 +68,8 @@ export class EditVideoUnitComponent implements OnInit {
                     this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
                 }),
             )
-            .subscribe(
-                () => {},
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+            .subscribe({
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 }

@@ -1,5 +1,5 @@
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { getTestBed, TestBed, tick, fakeAsync } from '@angular/core/testing';
+import { TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
@@ -13,7 +13,6 @@ import { Feedback } from 'app/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';
 import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 describe('Submission Service', () => {
-    let injector: TestBed;
     let service: SubmissionService;
     let httpMock: HttpTestingController;
     let expectedResult: any;
@@ -43,9 +42,8 @@ describe('Submission Service', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(SubmissionService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(SubmissionService);
+        httpMock = TestBed.inject(HttpTestingController);
         expectedResult = {} as HttpResponse<Submission[]>;
     });
 

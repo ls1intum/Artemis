@@ -111,12 +111,7 @@ public class LectureUnitResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
-        Optional<LectureUnit> lectureUnitOptional = lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnitId);
-        if (lectureUnitOptional.isEmpty()) {
-            throw new EntityNotFoundException("LectureUnit", lectureUnitId);
-        }
-        LectureUnit lectureUnit = lectureUnitOptional.get();
-
+        LectureUnit lectureUnit = lectureUnitRepository.findByIdWithLearningGoalsBidirectionalElseThrow(lectureUnitId);
         if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
             return conflict();
         }

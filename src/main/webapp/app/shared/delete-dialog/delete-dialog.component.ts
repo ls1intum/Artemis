@@ -65,7 +65,8 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
      * Closes the dialog
      */
     clear(): void {
-        this.activeModal.dismiss();
+        // intentionally use close instead of dismiss here, because dismiss leads to a non-traceable runtime error
+        this.activeModal.close();
     }
 
     /**

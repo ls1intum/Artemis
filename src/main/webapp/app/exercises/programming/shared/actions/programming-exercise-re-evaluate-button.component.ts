@@ -22,7 +22,7 @@ import { faRedo } from '@fortawesome/free-solid-svg-icons';
             [tooltip]="'artemisApp.programmingExercise.reEvaluateTooltip'"
             [icon]="faRedo"
             [title]="'artemisApp.programmingExercise.reEvaluate'"
-            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [featureToggle]="FeatureToggle.ProgrammingExercises"
             (onClick)="triggerReEvaluate()"
         >
         </jhi-button>
@@ -46,15 +46,15 @@ export class ProgrammingExerciseReEvaluateButtonComponent {
      */
     triggerReEvaluate() {
         this.isReEvaluationRunning = true;
-        this.testCaseService.reEvaluate(this.exercise.id!).subscribe(
-            (updatedResultsCount: number) => {
+        this.testCaseService.reEvaluate(this.exercise.id!).subscribe({
+            next: (updatedResultsCount: number) => {
                 this.isReEvaluationRunning = false;
                 this.alertService.success(`artemisApp.programmingExercise.reEvaluateSuccessful`, { number: updatedResultsCount });
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 this.isReEvaluationRunning = false;
                 this.alertService.error(`artemisApp.programmingExercise.reEvaluateFailed`, { message: error.message });
             },
-        );
+        });
     }
 }

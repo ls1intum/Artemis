@@ -21,7 +21,7 @@ import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-sta
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
-    styleUrls: ['./quiz-point-statistic.component.scss'],
+    styleUrls: ['./quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
 })
 export class QuizPointStatisticComponent extends QuizStatisticsDirective implements OnInit, OnDestroy {
     readonly round = round;
@@ -91,14 +91,11 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
 
                 // quizExercise channel => react to changes made to quizExercise (e.g. start date)
                 this.jhiWebsocketService.subscribe(this.quizExerciseChannel);
-                this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe(
-                    (quiz) => {
-                        if (this.waitingForQuizStart && params['exerciseId'] === quiz.id) {
-                            this.loadQuizSuccess(quiz);
-                        }
-                    },
-                    () => {},
-                );
+                this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe((quiz) => {
+                    if (this.waitingForQuizStart && params['exerciseId'] === quiz.id) {
+                        this.loadQuizSuccess(quiz);
+                    }
+                });
             }
 
             // ask for new Data if the websocket for new statistical data was notified
@@ -206,8 +203,19 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
         this.ratedData = [];
         this.unratedData = [];
         // set data based on the pointCounters
-        this.order(this.quizPointStatistic.pointCounters!).forEach((pointCounter) => {
-            this.label.push(pointCounter.points!.toString());
+        this.order(this.quizPointStatistic.pointCounters!).forEach((pointCounter, index) => {
+            /*
+            The label represents the value range covered by the corresponding bar.
+            As we round the individual student scores to integers for the statistic,
+            each bar covers the range from integer - 0.5 to integer + 0.5, the lower border is always included.
+            Ex.: integer 2: chart bar summarizes all values between [1.5 - 2.5)
+            We additionally have to make sure that the range is limited by the maximum and minimum reachable points in the quiz
+            (no negative points are achievable and the maximum points are defined by the quiz itself)
+            Lastly, the last bar in the chart also covers the maximum points, that is why we change the upper border notation in this case from ')' to ']'
+             */
+            let label = '[' + Math.max(pointCounter.points! - 0.5, 0) + ' - ' + Math.min(pointCounter.points! + 0.5, this.maxScore);
+            label += index !== this.quizPointStatistic.pointCounters!.length - 1 ? ')' : ']';
+            this.label.push(label);
             this.ratedData.push(pointCounter.ratedCounter!);
             this.unratedData.push(pointCounter.unRatedCounter!);
             this.backgroundColor.push(blueColor);

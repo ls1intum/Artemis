@@ -223,13 +223,14 @@ describe('QuizExercise Point Statistic Component', () => {
             const loadDataInDiagramSpy = jest.spyOn(comp, 'loadDataInDiagram');
             comp.quizPointStatistic = new QuizPointStatistic();
             comp.quizPointStatistic.pointCounters = pointCounters;
+            comp.maxScore = 4;
 
             // call
             comp.loadData();
 
             // check
             expect(loadDataInDiagramSpy).toHaveBeenCalled();
-            expect(comp.label).toEqual(['1', '4']);
+            expect(comp.label).toEqual(['[0.5 - 1.5)', '[3.5 - 4]']);
             expect(comp.ratedData).toEqual([2, 5]);
             expect(comp.unratedData).toEqual([3, 6]);
         });

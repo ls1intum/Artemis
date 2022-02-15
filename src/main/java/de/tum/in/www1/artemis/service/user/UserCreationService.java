@@ -23,7 +23,10 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.OrganizationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
@@ -92,10 +95,11 @@ public class UserCreationService {
      * @param registrationNumber the matriculation number of the student*
      * @param imageUrl           user image url
      * @param langKey            user language
+     * @param isInternal         true if the actual password gets saved in the database
      * @return newly created user
      */
-    public User createInternalUser(String login, @Nullable String password, @Nullable Set<String> groups, String firstName, String lastName, String email,
-            String registrationNumber, String imageUrl, String langKey) {
+    public User createUser(String login, @Nullable String password, @Nullable Set<String> groups, String firstName, String lastName, String email, String registrationNumber,
+            String imageUrl, String langKey, boolean isInternal) {
         User newUser = new User();
 
         // Set random password for null passwords
@@ -119,6 +123,7 @@ public class UserCreationService {
         newUser.setActivated(false);
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
+        newUser.setInternal(isInternal);
 
         final var authority = authorityRepository.findById(STUDENT.getAuthority()).get();
         // needs to be mutable --> new HashSet<>(Set.of(...))
@@ -177,6 +182,7 @@ public class UserCreationService {
         }
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
+        user.setInternal(true);
         user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         saveUser(user);
 
@@ -267,6 +273,30 @@ public class UserCreationService {
         clearUserCaches(user);
         log.debug("Save user {}", user);
         return userRepository.save(user);
+    }
+
+    /**
+     * Sets for the provided user a random password and ends the initialization process.
+     * Updates the password on CI and VCS systems
+     *
+     * @param user the user to update
+     * @return the newly created password
+     */
+    public String setRandomPasswordAndReturn(User user) {
+        String newPassword = RandomUtil.generatePassword();
+        user.setPassword(passwordService.encryptPassword(newPassword));
+        user.setActivated(true);
+        userRepository.save(user);
+
+        optionalCIUserManagementService.ifPresent(service -> {
+            service.updateUser(user);
+        });
+
+        optionalVcsUserManagementService.ifPresent(service -> {
+            service.updateVcsUser(user.getLogin(), user, new HashSet<>(), new HashSet<>(), true);
+        });
+
+        return newPassword;
     }
 
     // TODO: this is duplicated code, we should move it into e.g. a CacheService

@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -81,6 +82,7 @@ public class StudentDTO {
                 + '\'' + '}';
     }
 
+    @JsonIgnore
     public String toDatabaseString() {
         return "Student: login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber + '\'';
     }

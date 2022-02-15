@@ -1,4 +1,4 @@
-version: '2'
+version: '2.4'
 services:
     artemis-app:
         platform: linux/x86_64

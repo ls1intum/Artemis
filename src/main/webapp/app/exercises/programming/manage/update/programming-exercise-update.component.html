@@ -179,6 +179,8 @@
                 <option value="MAVEN" *ngIf="projectTypes.includes(ProjectType.MAVEN)">Maven</option>
                 <option value="PLAIN" *ngIf="projectTypes.includes(ProjectType.PLAIN)">Plain</option>
                 <option value="XCODE" *ngIf="projectTypes.includes(ProjectType.XCODE)">Xcode</option>
+                <option value="GCC" *ngIf="projectTypes.includes(ProjectType.GCC)">GCC</option>
+                <option value="FACT" *ngIf="projectTypes.includes(ProjectType.FACT)">FACT</option>
             </select>
         </div>
 
@@ -291,7 +293,10 @@
                 </ngb-alert>
             </ng-container>
         </div>
-        <div class="form-group mt-2" *ngIf="programmingExercise.programmingLanguage && staticCodeAnalysisAllowed && ProjectType.XCODE !== selectedProjectType">
+        <div
+            class="form-group mt-2"
+            *ngIf="programmingExercise.programmingLanguage && staticCodeAnalysisAllowed && ProjectType.XCODE !== selectedProjectType && ProjectType.FACT !== selectedProjectType"
+        >
             <div class="form-check custom-control custom-checkbox">
                 <input
                     type="checkbox"
@@ -552,7 +557,7 @@
                 </button>
                 <jhi-button
                     id="save-entity"
-                    [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                    [featureToggle]="FeatureToggle.ProgrammingExercises"
                     [disabled]="getInvalidReasons().length > 0"
                     [isLoading]="isSaving"
                     [icon]="faSave"

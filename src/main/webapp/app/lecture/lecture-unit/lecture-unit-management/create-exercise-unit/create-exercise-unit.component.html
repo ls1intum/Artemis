@@ -61,6 +61,7 @@
                             *ngFor="let exercise of exercisesAvailableForUnitCreation"
                             (click)="selectExerciseForUnitCreation(exercise)"
                             [class.table-primary]="isExerciseSelectedForUnitCreation(exercise)"
+                            id="exercise-{{ exercise.id }}"
                         >
                             <td>{{ exercise.id ? exercise.id : '' }}</td>
                             <td>{{ exercise.type ? exercise.type : '' }}</td>

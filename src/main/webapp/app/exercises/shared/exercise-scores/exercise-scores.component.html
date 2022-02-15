@@ -262,7 +262,7 @@
                             [routerLink]="['/courses', course.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id]"
                             class="btn btn-info btn-sm me-1"
                             *ngIf="value.participation.exercise.allowOnlineEditor"
-                            [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
+                            [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                         >
                             <fa-icon class="me-1" [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                             Online editor

@@ -12,6 +12,7 @@ import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionType } 
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -622,6 +623,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private static convertItemWithLatestSubmissionResultFromServer(programmingSubmission: ProgrammingSubmission): ProgrammingSubmission {
         const convertedProgrammingSubmission = Object.assign({}, programmingSubmission);
         setLatestSubmissionResult(convertedProgrammingSubmission, getLatestSubmissionResult(convertedProgrammingSubmission));
+        convertedProgrammingSubmission.participation = ParticipationService.convertParticipationDatesFromServer(programmingSubmission.participation);
         return convertedProgrammingSubmission;
     }
 

@@ -81,7 +81,7 @@ export class OrionAssessmentService {
                 reader.onloadend = () => {
                     const result = reader.result as string;
                     // remove prefix
-                    const base64data = result.substr(result.indexOf(',') + 1);
+                    const base64data = result.slice(result.indexOf(',') + 1);
                     this.orionConnectorService.downloadSubmission(submissionId, correctionRound, testRun, base64data);
                 };
                 reader.onerror = () => {

@@ -33,7 +33,7 @@ export class EditLearningGoalComponent implements OnInit {
 
     ngOnInit(): void {
         this.isLoading = true;
-        combineLatest(this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap)
+        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
@@ -46,8 +46,8 @@ export class EditLearningGoalComponent implements OnInit {
                 }),
                 finalize(() => (this.isLoading = false)),
             )
-            .subscribe(
-                ([learningGoalResult, lecturesResult]) => {
+            .subscribe({
+                next: ([learningGoalResult, lecturesResult]) => {
                     if (learningGoalResult.body) {
                         this.learningGoal = learningGoalResult.body;
                         // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
@@ -71,8 +71,8 @@ export class EditLearningGoalComponent implements OnInit {
                         connectedLectureUnits: this.learningGoal.lectureUnits,
                     };
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     updateLearningGoal(formData: LearningGoalFormData) {
@@ -90,9 +90,8 @@ export class EditLearningGoalComponent implements OnInit {
                     this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                 }),
             )
-            .subscribe(
-                () => {},
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+            .subscribe({
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 }

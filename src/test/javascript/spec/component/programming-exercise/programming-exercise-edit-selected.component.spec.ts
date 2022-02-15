@@ -89,7 +89,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             comp.selectedProgrammingExercises = selectedProgrammingExercises;
             comp.newProgrammingExercise = newProgrammingExercise;
 
-            jest.spyOn(programmingExerciseService, 'updateTimeline').mockReturnValue(throwError(new HttpErrorResponse({ status: 500 })));
+            jest.spyOn(programmingExerciseService, 'updateTimeline').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
             jest.spyOn(comp, 'closeModal');
             // WHEN
             comp.saveAll();

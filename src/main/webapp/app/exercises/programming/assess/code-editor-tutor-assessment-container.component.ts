@@ -32,7 +32,7 @@ import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { getLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
@@ -153,8 +153,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             const submissionObservable = submissionId === 'new' ? this.loadRandomSubmission(this.exerciseId) : this.loadSubmission(Number(submissionId));
             submissionObservable
                 .pipe(
-                    tap(
-                        (submission: ProgrammingSubmission) => {
+                    tap({
+                        next: (submission: ProgrammingSubmission) => {
                             this.handleReceivedSubmission(submission);
                             if (submissionId === 'new') {
                                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -162,11 +162,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                                 this.location.go(newUrl);
                             }
                         },
-                        (error: HttpErrorResponse) => {
+                        error: (error: HttpErrorResponse) => {
                             this.handleErrorResponse(error);
                         },
-                        () => (this.loadingParticipation = false),
-                    ),
+                        complete: () => (this.loadingParticipation = false),
+                    }),
                     // The following is needed for highlighting changed code lines
                     switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!)),
                     tap((programmingExercise) => (this.templateParticipation = programmingExercise.body!.templateParticipation!)),
@@ -316,10 +316,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     private handleSaveOrSubmit(submit: boolean | undefined, translationKey: string) {
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, submit).subscribe(
-            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, translationKey),
-            (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
-        );
+        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, submit).subscribe({
+            next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, translationKey),
+            error: (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
+        });
     }
 
     /**
@@ -340,8 +340,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     nextSubmission() {
         this.loadingParticipation = true;
         this.submission = undefined;
-        this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe(
-            (response: ProgrammingSubmission) => {
+        this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe({
+            next: (response: ProgrammingSubmission) => {
                 this.loadingParticipation = false;
 
                 // if override set, skip navigation
@@ -364,7 +364,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 );
                 this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 // there are no unassessed submission, nothing we have to worry about
                 if (error.status === 404) {
                     return;
@@ -378,7 +378,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     this.onError(error?.message);
                 }
             },
-        );
+        });
     }
 
     /**
@@ -389,13 +389,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
         this.setFeedbacksForManualResult();
-        this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, complaintResponse, this.submission!.id!).subscribe(
-            (result: Result) => {
+        this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, complaintResponse, this.submission!.id!).subscribe({
+            next: (result: Result) => {
                 this.participation.results![0] = this.manualResult = result;
                 this.alertService.clear();
                 this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
-            (httpErrorResponse: HttpErrorResponse) => {
+            error: (httpErrorResponse: HttpErrorResponse) => {
                 this.alertService.clear();
                 const error = httpErrorResponse.error;
                 if (error && error.errorKey && error.errorKey === 'complaintLock') {
@@ -404,7 +404,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
                 }
             },
-        );
+        });
     }
 
     /**
@@ -515,17 +515,17 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (!this.submission) {
             return;
         }
-        this.complaintService.findBySubmissionId(this.submission.id!).subscribe(
-            (res) => {
+        this.complaintService.findBySubmissionId(this.submission.id!).subscribe({
+            next: (res) => {
                 if (!res.body) {
                     return;
                 }
                 this.complaint = res.body;
             },
-            (err: HttpErrorResponse) => {
+            error: (err: HttpErrorResponse) => {
                 this.onError(err?.message);
             },
-        );
+        });
     }
 
     private handleFeedback(): void {
@@ -547,7 +547,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private createResultString(totalScore: number, maxScore: number | undefined): string {
-        return `${roundScoreSpecifiedByCourseSettings(totalScore, getCourseFromExercise(this.exercise))} of ${roundScoreSpecifiedByCourseSettings(
+        return `${roundValueSpecifiedByCourseSettings(totalScore, getCourseFromExercise(this.exercise))} of ${roundValueSpecifiedByCourseSettings(
             maxScore,
             getCourseFromExercise(this.exercise),
         )} points`;

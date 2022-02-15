@@ -14,6 +14,7 @@ import { MissingResultInfo, ResultComponent } from 'app/exercises/shared/result/
 import { Result } from 'app/entities/result.model';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent } from 'ng-mocks';
+import { Submission } from 'app/entities/submission.model';
 
 describe('UpdatingResultComponent', () => {
     let comp: UpdatingResultComponent;
@@ -38,7 +39,7 @@ describe('UpdatingResultComponent', () => {
     const newGradedResult = { id: 14, rated: true } as Result;
     const newUngradedResult = { id: 15, rated: false } as Result;
 
-    const submission = { id: 1 } as any;
+    const submission = { id: 1 } as Submission;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -194,6 +195,24 @@ describe('UpdatingResultComponent', () => {
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).not.toHaveBeenCalled();
+        expect(comp.isBuilding).toBe(undefined);
+        expect(comp.missingResultInfo).toBe(MissingResultInfo.NONE);
+    });
+
+    it('should update the building status if the submission was before the due date', () => {
+        submission.submissionDate = dayjs();
+        comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING, dueDate: submission.submissionDate.add(1, 'hour') } as Exercise;
+        getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
+        cleanInitializeGraded();
+        expect(comp.isBuilding).toBe(true);
+        expect(comp.missingResultInfo).toBe(MissingResultInfo.NONE);
+    });
+
+    it('should not update the building status if the submission was after the due date', () => {
+        submission.submissionDate = dayjs();
+        comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING, dueDate: submission.submissionDate.subtract(1, 'minute') } as Exercise;
+        getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
+        cleanInitializeGraded();
         expect(comp.isBuilding).toBe(undefined);
         expect(comp.missingResultInfo).toBe(MissingResultInfo.NONE);
     });

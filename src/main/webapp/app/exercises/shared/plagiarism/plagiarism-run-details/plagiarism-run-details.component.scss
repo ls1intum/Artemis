@@ -25,7 +25,13 @@
 
     &-info {
         font-size: 2rem;
-        font-weight: bold;
-        max-width: 800px;
     }
+
+    .duration {
+        font-weight: bold;
+    }
+}
+
+:host::ng-deep.tick {
+    font-weight: bold;
 }

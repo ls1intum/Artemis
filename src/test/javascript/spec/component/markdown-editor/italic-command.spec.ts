@@ -11,7 +11,7 @@ describe('ItalicCommand', () => {
     let comp: MarkdownEditorComponent;
     let fixture: ComponentFixture<MarkdownEditorComponent>;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
         })
