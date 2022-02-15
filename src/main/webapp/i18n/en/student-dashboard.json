@@ -126,7 +126,11 @@
                 "textPointLabel": "Text Points",
                 "fileUploadPointLabel": "File upload Points",
                 "missingPointsLabel": "Missing Points",
-                "achievedPointsLabel": "Achieved Points"
+                "achievedPointsLabel": "Achieved Points",
+                "includeStandardCategories": "Hide Artemis standard categories:",
+                "includeIndividualCategories": "Include course specific categories:",
+                "includeAllCategories": "Select all options",
+                "exercisesWithNoCategories": "Exercises with no categories"
             },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",

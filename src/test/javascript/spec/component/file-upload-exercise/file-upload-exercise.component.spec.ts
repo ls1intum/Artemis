@@ -43,8 +43,8 @@ describe('FileUploadExercise Management Component', () => {
 
         fixture = TestBed.createComponent(FileUploadExerciseComponent);
         comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(CourseExerciseService);
-        fileUploadExerciseService = fixture.debugElement.injector.get(FileUploadExerciseService);
+        service = TestBed.inject(CourseExerciseService);
+        fileUploadExerciseService = TestBed.inject(FileUploadExerciseService);
 
         comp.fileUploadExercises = [fileUploadExercise];
     });

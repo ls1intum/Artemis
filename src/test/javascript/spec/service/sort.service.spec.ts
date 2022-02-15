@@ -1,4 +1,4 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { SortService } from 'app/shared/service/sort.service';
 
@@ -6,19 +6,17 @@ type TestObject = {
     a: number;
     b: string;
     c: dayjs.Dayjs;
-    d?: number | null;
+    d: number | null | undefined;
     e: Map<string, number>;
 };
 
 describe('Sort Service', () => {
-    let injector: TestBed;
     let service: SortService;
     let e1: TestObject, e2: TestObject, e3: TestObject, e4: TestObject, e5: TestObject, e6: TestObject;
 
     beforeEach(() => {
         TestBed.configureTestingModule({});
-        injector = getTestBed();
-        service = injector.get(SortService);
+        service = TestBed.inject(SortService);
 
         e1 = {
             a: 10,
@@ -59,6 +57,7 @@ describe('Sort Service', () => {
             a: 7,
             b: 'tiger',
             c: dayjs().subtract(5, 'minutes'),
+            d: undefined,
             e: new Map().set('f', 16),
         };
     });
@@ -89,10 +88,21 @@ describe('Sort Service', () => {
         );
 
         it(
-            'should sort array with null properties',
+            'should sort array with null properties ascending',
             repeatWithRandomArray(10, (arr) => {
                 service.sortByProperty(arr, 'd', true);
                 expect(arr.slice(0, 4)).toEqual([e4, e1, e5, e2]);
+                expect(arr.slice(4, 6)).toIncludeSameMembers([e3, e6]);
+            }),
+        );
+
+        it(
+            'should sort array with null properties descending',
+            repeatWithRandomArray(10, (arr) => {
+                service.sortByProperty(arr, 'd', false);
+                expect(arr.length).toEqual(6);
+                expect(arr.slice(0, 2)).toIncludeSameMembers([e3, e6]);
+                expect(arr.slice(2, 6)).toEqual([e2, e5, e1, e4]);
             }),
         );
 
@@ -101,6 +111,14 @@ describe('Sort Service', () => {
             repeatWithRandomArray(10, (arr) => {
                 service.sortByProperty(arr, 'e.f', true);
                 expect(arr).toEqual([e1, e5, e2, e6, e3, e4]);
+            }),
+        );
+
+        it(
+            'should sort array using a function for the compare value',
+            repeatWithRandomArray(10, (arr) => {
+                service.sortByFunction(arr, (element) => 2 * element.a - 5, true);
+                expect(arr).toEqual([e3, e6, e1, e5, e2, e4]);
             }),
         );
     });

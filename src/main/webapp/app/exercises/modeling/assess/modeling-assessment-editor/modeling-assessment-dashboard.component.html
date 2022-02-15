@@ -3,7 +3,7 @@
         {{ 'modelingAssessment.dashboard.heading' | artemisTranslate: { title: exercise.title } }}
     </h4>
     <jhi-assessment-filters (filterChange)="updateFilteredSubmissions($event)" [submissions]="submissions"></jhi-assessment-filters>
-    <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
+    <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
     <h4>
         <small [ngStyle]="assessedSubmissions === submissions.length && submissions.length > 0 ? { color: '#5cb85c' } : {}">
             <strong>Progress: {{ (assessedSubmissions / submissions.length) * 100 | number: '0.0-0' }} % </strong>({{ assessedSubmissions }} out of

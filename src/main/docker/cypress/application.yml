@@ -1,0 +1,76 @@
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&allowPublicKeyRetrieval=true&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+    username: Artemis
+    password: eeNg6Ahcooasdfthafie
+    hikari:
+      poolName: Hikari
+      auto-commit: false
+      maximumPoolSize: 100
+      data-source-properties:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+        useServerPrepStmts: true
+  jpa:
+    hibernate:
+      connection:
+        charSet: utf8mb4
+        characterEncoding: utf8mb4
+        useUnicode: true
+  prometheus:
+    monitoringIp: "131.159.89.160"
+  mail:
+      host: localhost
+      port: 25
+      username:
+      password:
+  thymeleaf:
+      cache: true
+
+server:
+  port: 8080
+  url: http://localhost
+
+artemis:
+  course-archives-path: ./course-archives
+  repo-clone-path: ./repos
+  repo-download-clone-path: repos-download
+  file-upload-path: ./uploads
+  submission-export-path: exports
+  encryption-password: cypressEncryptionPassword
+  user-management:
+    use-external: true
+    external:
+      admin-group-name: artemis-dev
+    login:
+      account-name: TUM
+  continuous-integration:
+    vcs-application-link-name: Bitbucket Prelive
+    empty-commit-necessary: true
+  apollon:
+    conversion-service-url: https://apollon.ase.in.tum.de/api/converter
+
+jhipster:
+  security:
+    authentication:
+      jwt:
+        token-validity-in-seconds: 259200                   # Token is valid 3 days
+        token-validity-in-seconds-for-remember-me: 2592000  # Token is valid 30 days
+
+# Properties to be exposed on the /info management endpoint
+info:
+  imprint: https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint
+  test-server: true
+  text-assessment-analytics-enabled: true
+
+logging:
+  file:
+    name: '/home/artemis/artemis.log'
+
+management:
+  metrics:
+    export:
+      prometheus:
+        enabled: true

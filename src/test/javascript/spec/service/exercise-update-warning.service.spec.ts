@@ -1,5 +1,5 @@
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
-import { getTestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -18,8 +18,7 @@ describe('Exercise Update Warning Service', () => {
     const backupExercise = { id: 1 } as Exercise;
 
     beforeEach(() => {
-        const injector = getTestBed();
-        updateWarningService = injector.get(ExerciseUpdateWarningService);
+        updateWarningService = TestBed.inject(ExerciseUpdateWarningService);
 
         updateWarningService.instructionDeleted = false;
         updateWarningService.creditChanged = false;

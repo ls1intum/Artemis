@@ -30,7 +30,7 @@ export class CourseManagementService {
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
     private fetchingCoursesForNotifications = false;
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService, private lectureService: LectureService, private accountService: AccountService) {}
+    constructor(private http: HttpClient, private lectureService: LectureService, private accountService: AccountService) {}
 
     /**
      * creates a course using a POST request
@@ -391,12 +391,12 @@ export class CourseManagementService {
         setTimeout(() => {
             // Retrieve courses if no courses were fetched before and are not queried at the moment.
             if (!this.fetchingCoursesForNotifications && !this.coursesForNotifications.getValue()) {
-                this.findAllForNotifications().subscribe(
-                    (res: HttpResponse<Course[]>) => {
+                this.findAllForNotifications().subscribe({
+                    next: (res: HttpResponse<Course[]>) => {
                         this.coursesForNotifications.next(res.body || undefined);
                     },
-                    () => (this.fetchingCoursesForNotifications = false),
-                );
+                    error: () => (this.fetchingCoursesForNotifications = false),
+                });
             }
         }, 500);
         return this.coursesForNotifications;
@@ -463,7 +463,7 @@ export class CourseManagementService {
      */
     private convertExerciseCategoriesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body && res.body.exercises) {
-            res.body.exercises.forEach((exercise) => this.exerciseService.parseExerciseCategories(exercise));
+            res.body.exercises.forEach((exercise) => ExerciseService.parseExerciseCategories(exercise));
         }
         return res;
     }
@@ -477,7 +477,7 @@ export class CourseManagementService {
         if (res.body) {
             res.body.forEach((course: Course) => {
                 if (course.exercises) {
-                    course.exercises.forEach((exercise) => this.exerciseService.parseExerciseCategories(exercise));
+                    course.exercises.forEach((exercise) => ExerciseService.parseExerciseCategories(exercise));
                 }
             });
         }
@@ -487,7 +487,7 @@ export class CourseManagementService {
     private setCourseDates(course: Course) {
         course.startDate = course.startDate ? dayjs(course.startDate) : undefined;
         course.endDate = course.endDate ? dayjs(course.endDate) : undefined;
-        course.exercises = this.exerciseService.convertExercisesDateFromServer(course.exercises);
+        course.exercises = ExerciseService.convertExercisesDateFromServer(course.exercises);
         course.lectures = this.lectureService.convertDatesForLecturesFromServer(course.lectures);
     }
 

@@ -9,11 +9,11 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/ex
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { SubmissionType } from 'app/entities/submission.model';
+import { Submission, SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { MissingResultInfo } from 'app/exercises/shared/result/result.component';
-import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 
 /**
@@ -117,27 +117,8 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         this.submissionSubscription = this.submissionService
             .getLatestPendingSubmissionByParticipationId(this.participation.id!, this.exercise.id!, this.personalParticipation)
             .pipe(
-                // The updating result must ignore submissions that are ungraded if ungraded results should not be shown
-                // (otherwise the building animation will be shown even though not relevant).
-                filter(
-                    ({ submission }) =>
-                        this.showUngradedResults ||
-                        !submission ||
-                        !this.exercise.dueDate ||
-                        submission.type === SubmissionType.INSTRUCTOR ||
-                        submission.type === SubmissionType.TEST ||
-                        hasExerciseDueDatePassed(this.exercise, this.participation),
-                ),
-                tap(({ submissionState }) => {
-                    this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
-
-                    if (submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION) {
-                        this.missingResultInfo = this.generateMissingResultInfoForFailedProgrammingExerciseSubmission();
-                    } else {
-                        // everything ok, remove the warning
-                        this.missingResultInfo = MissingResultInfo.NONE;
-                    }
-                }),
+                filter(({ submission }) => this.shouldUpdateSubmissionState(submission)),
+                tap(({ submissionState }) => this.updateSubmissionState(submissionState)),
             )
             .subscribe();
     }
@@ -148,5 +129,41 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             return MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
         }
         return MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE;
+    }
+
+    /**
+     * Checks if a status update should be shown for this submission.
+     *
+     * @param submission for which a status update should be shown.
+     * @private
+     */
+    private shouldUpdateSubmissionState(submission?: Submission): boolean {
+        // The updating result must ignore submissions that are ungraded if ungraded results should not be shown
+        // (otherwise the building animation will be shown even though not relevant).
+        return (
+            this.showUngradedResults ||
+            !submission ||
+            !this.exercise.dueDate ||
+            submission.type === SubmissionType.INSTRUCTOR ||
+            submission.type === SubmissionType.TEST ||
+            dayjs(submission.submissionDate).isBefore(getExerciseDueDate(this.exercise, this.participation))
+        );
+    }
+
+    /**
+     * Updates the shown status based on the given state of a submission.
+     *
+     * @param submissionState the submission is currently in.
+     * @private
+     */
+    private updateSubmissionState(submissionState: ProgrammingSubmissionState) {
+        this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
+
+        if (submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION) {
+            this.missingResultInfo = this.generateMissingResultInfoForFailedProgrammingExerciseSubmission();
+        } else {
+            // everything ok, remove the warning
+            this.missingResultInfo = MissingResultInfo.NONE;
+        }
     }
 }

@@ -79,12 +79,12 @@ export class AssessmentLocksComponent implements OnInit {
         } else {
             lockedSubmissionsObservable = this.courseService.findAllLockedSubmissionsOfCourse(this.courseId);
         }
-        lockedSubmissionsObservable.subscribe(
-            (response: HttpResponse<Submission[]>) => {
+        lockedSubmissionsObservable.subscribe({
+            next: (response: HttpResponse<Submission[]>) => {
                 this.submissions.push(...(response.body ?? []));
             },
-            (response: string) => this.onError(response),
-        );
+            error: (response: string) => this.onError(response),
+        });
     }
 
     /**

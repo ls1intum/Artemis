@@ -5,7 +5,6 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
@@ -13,7 +12,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faFolderOpen, faSort, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-complaint-list',
@@ -30,7 +29,7 @@ export class ListOfComplaintsComponent implements OnInit {
     private exerciseId: number;
     private tutorId: number;
     private examId?: number;
-    private correctionRound?: number;
+    correctionRound?: number;
     complaintsSortingPredicate = 'id';
     complaintsReverseOrder = false;
     complaintsToShow: Complaint[] = [];
@@ -40,9 +39,10 @@ export class ListOfComplaintsComponent implements OnInit {
     // Icons
     faSort = faSort;
     faFolderOpen = faFolderOpen;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
-        private complaintService: ComplaintService,
+        public complaintService: ComplaintService,
         private alertService: AlertService,
         private route: ActivatedRoute,
         private router: Router,
@@ -88,18 +88,18 @@ export class ListOfComplaintsComponent implements OnInit {
             }
         }
 
-        complaintResponse.subscribe(
-            (res) => {
+        complaintResponse.subscribe({
+            next: (res) => {
                 this.complaints = res.body!;
                 this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
 
-                if (this.complaints.length > 0 && this.complaints[0].student) {
+                if (this.complaints.some((complaint) => complaint.student)) {
                     this.hasStudentInformation = true;
                 }
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-            () => (this.loading = false),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            complete: () => (this.loading = false),
+        });
     }
 
     openAssessmentEditor(complaint: Complaint) {
@@ -133,7 +133,16 @@ export class ListOfComplaintsComponent implements OnInit {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.complaintsToShow, this.complaintsSortingPredicate, this.complaintsReverseOrder);
+        switch (this.complaintsSortingPredicate) {
+            case 'responseTime':
+                this.sortService.sortByFunction(this.complaintsToShow, (complaint) => this.complaintService.getResponseTimeInSeconds(complaint), this.complaintsReverseOrder);
+                break;
+            case 'lockStatus':
+                this.sortService.sortByFunction(this.complaintsToShow, (complaint) => this.calculateComplaintLockStatus(complaint), this.complaintsReverseOrder);
+                break;
+            default:
+                this.sortService.sortByProperty(this.complaintsToShow, this.complaintsSortingPredicate, this.complaintsReverseOrder);
+        }
     }
 
     triggerAddressedComplaints() {
@@ -144,20 +153,6 @@ export class ListOfComplaintsComponent implements OnInit {
         } else {
             this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
         }
-    }
-
-    shouldHighlightComplaint(complaint: Complaint) {
-        // Reviewed complaints shouldn't be highlight
-        if (complaint.accepted !== undefined) {
-            return false;
-        }
-
-        const complaintSubmittedTime = complaint.submittedTime;
-        if (complaintSubmittedTime) {
-            return dayjs().diff(complaintSubmittedTime, 'days') > 7; // We highlight complaints older than a week
-        }
-
-        return false;
     }
 
     calculateComplaintLockStatus(complaint: Complaint) {

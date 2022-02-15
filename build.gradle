@@ -16,18 +16,18 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "com.google.cloud.tools.jib" version "3.1.4"
-    id "com.github.node-gradle.node" version "3.1.1"
-    id "com.diffplug.spotless" version "6.1.2"
+    id "com.google.cloud.tools.jib" version "3.2.0"
+    id "com.github.node-gradle.node" version "3.2.0"
+    id "com.diffplug.spotless" version "6.2.2"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-    id "com.github.ben-manes.versions" version "0.41.0"
-    id "com.github.andygoossens.modernizer" version "1.6.1"
+    id "com.github.ben-manes.versions" version "0.42.0"
+    id "com.github.andygoossens.modernizer" version "1.6.2"
 }
 
 group = "de.tum.in.www1.artemis"
 
 allprojects {
-    version = "5.5.0"
+    version = "5.5.5"
     description = "Interactive Learning with Individual Feedback"
 }
 
@@ -194,7 +194,7 @@ task executeTests (type: Exec) {
 
 allprojects {
     wrapper {
-        gradleVersion = "7.3.3"
+        gradleVersion = "7.4"
     }
 }
 

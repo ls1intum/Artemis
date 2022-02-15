@@ -76,18 +76,18 @@ export class ComplaintsForTutorComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                (response) => {
+            .subscribe({
+                next: (response) => {
                     this.complaintResponse = response.body!;
                     this.complaint = this.complaintResponse.complaint!;
                     this.showRemoveLockButton = true;
                     this.showLockDuration = true;
                     this.alertService.success('artemisApp.locks.acquired');
                 },
-                (err: HttpErrorResponse) => {
+                error: (err: HttpErrorResponse) => {
                     this.onError(err);
                 },
-            );
+            });
     }
 
     private refreshLock() {
@@ -105,17 +105,17 @@ export class ComplaintsForTutorComponent implements OnInit {
                         this.isLoading = false;
                     }),
                 )
-                .subscribe(
-                    (response) => {
+                .subscribe({
+                    next: (response) => {
                         this.complaintResponse = response.body!;
                         this.complaint = this.complaintResponse.complaint!;
                         this.showRemoveLockButton = true;
                         this.alertService.success('artemisApp.locks.acquired');
                     },
-                    (err: HttpErrorResponse) => {
+                    error: (err: HttpErrorResponse) => {
                         this.onError(err);
                     },
-                );
+                });
         } else {
             this.showRemoveLockButton = false;
         }
@@ -126,15 +126,15 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     removeLock() {
-        this.complaintResponseService.removeLock(this.complaint.id!).subscribe(
-            () => {
+        this.complaintResponseService.removeLock(this.complaint.id!).subscribe({
+            next: () => {
                 this.alertService.success('artemisApp.locks.lockRemoved');
                 this.navigateBack();
             },
-            (err: HttpErrorResponse) => {
+            error: (err: HttpErrorResponse) => {
                 this.onError(err);
             },
-        );
+        });
     }
 
     respondToComplaint(acceptComplaint: boolean): void {
@@ -172,8 +172,8 @@ export class ComplaintsForTutorComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                (response) => {
+            .subscribe({
+                next: (response) => {
                     this.handled = true;
                     if (this.complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
                         this.alertService.success('artemisApp.moreFeedbackResponse.created');
@@ -186,10 +186,10 @@ export class ComplaintsForTutorComponent implements OnInit {
                     this.showLockDuration = false;
                     this.showRemoveLockButton = false;
                 },
-                (err: HttpErrorResponse) => {
+                error: (err: HttpErrorResponse) => {
                     this.onError(err);
                 },
-            );
+            });
     }
 
     onError(httpErrorResponse: HttpErrorResponse) {

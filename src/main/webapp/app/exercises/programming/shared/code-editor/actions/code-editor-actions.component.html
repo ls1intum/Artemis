@@ -3,7 +3,7 @@
         id="resolve_conflict_button"
         type="button"
         class="btn btn-danger navbar-btn me-3"
-        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [overwriteDisabled]="disableActions"
         (click)="resetRepository()"
         data-toggle="tooltip"
@@ -25,7 +25,7 @@
         id="refresh_button"
         type="button"
         class="btn btn-primary navbar-btn me-3"
-        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [overwriteDisabled]="disableActions || editorState === EditorState.REFRESHING || editorState === EditorState.SAVING || commitState === CommitState.COMMITTING"
         (click)="onRefresh()"
         data-toggle="tooltip"
@@ -45,7 +45,7 @@
         id="submit_button"
         type="button"
         class="guided-tour-submit-button btn btn-success navbar-btn"
-        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [overwriteDisabled]="
             disableActions ||
             editorState === EditorState.REFRESHING ||

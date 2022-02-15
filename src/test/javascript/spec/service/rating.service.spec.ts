@@ -1,4 +1,4 @@
-import { getTestBed, TestBed, tick, fakeAsync } from '@angular/core/testing';
+import { TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
@@ -7,7 +7,6 @@ import { Rating } from 'app/entities/rating.model';
 import { Result } from 'app/entities/result.model';
 
 describe('Rating Service', () => {
-    let injector: TestBed;
     let service: RatingService;
     let httpMock: HttpTestingController;
     let elemDefault: Rating;
@@ -15,9 +14,8 @@ describe('Rating Service', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
         });
-        injector = getTestBed();
-        service = injector.get(RatingService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(RatingService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         elemDefault = new Rating(new Result(), 3);
     });

@@ -1,11 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.conflict;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +23,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -84,17 +82,14 @@ public class ExerciseGroupResource {
         }
 
         if (exerciseGroup.getExam() == null) {
-            return conflict();
+            throw new ConflictException("The exercise group has to belong no an exam.", ENTITY_NAME, "missingExam");
         }
 
         if (!exerciseGroup.getExam().getId().equals(examId)) {
-            return conflict();
+            throw new ConflictException("The exam connected to this group does not have the given exam id.", ENTITY_NAME, "wrongExamId");
         }
 
-        Optional<ResponseEntity<ExerciseGroup>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForEditor(courseId, examId);
-        if (courseAndExamAccessFailure.isPresent()) {
-            return courseAndExamAccessFailure.get();
-        }
+        examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
 
         // Save the exerciseGroup as part of the exam to ensure that the order column is set correctly
         Exam examFromDB = examRepository.findByIdWithExerciseGroupsElseThrow(examId);
@@ -125,13 +120,10 @@ public class ExerciseGroupResource {
         }
 
         if (updatedExerciseGroup.getExam() == null) {
-            return conflict();
+            throw new ConflictException("The exercise group has to belong to an exam.", ENTITY_NAME, "missingExam");
         }
 
-        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, courseId, examId, updatedExerciseGroup);
-        if (accessFailure.isPresent()) {
-            return accessFailure.get();
-        }
+        examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, courseId, examId, updatedExerciseGroup);
 
         ExerciseGroup result = exerciseGroupRepository.save(updatedExerciseGroup);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
@@ -149,9 +141,11 @@ public class ExerciseGroupResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseGroup> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
+
         ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdElseThrow(exerciseGroupId);
-        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, courseId, examId, exerciseGroup);
-        return accessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroup));
+        examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, courseId, examId, exerciseGroup);
+
+        return ResponseEntity.ok(exerciseGroup);
     }
 
     /**
@@ -165,10 +159,11 @@ public class ExerciseGroupResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<ExerciseGroup>> getExerciseGroupsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all exercise groups for exam : {}", examId);
-        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForEditor(courseId, examId);
+
+        examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
 
         List<ExerciseGroup> exerciseGroupList = exerciseGroupRepository.findWithExamAndExercisesByExamId(examId);
-        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupList));
+        return ResponseEntity.ok(exerciseGroupList);
     }
 
     /**
@@ -186,11 +181,9 @@ public class ExerciseGroupResource {
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId,
             @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans, @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete exercise group : {}", exerciseGroupId);
+
         ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdWithExercisesElseThrow(exerciseGroupId);
-        Optional<ResponseEntity<Void>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.INSTRUCTOR, courseId, examId, exerciseGroup);
-        if (accessFailure.isPresent()) {
-            return accessFailure.get();
-        }
+        examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.INSTRUCTOR, courseId, examId, exerciseGroup);
 
         User user = userRepository.getUser();
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE_GROUP, "exerciseGroup=" + exerciseGroup.getTitle());

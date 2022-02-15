@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -29,13 +30,13 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 /**
  * This class describes a service for SAML2 authentication.
- * 
+ *
  * The main method is {@link #handleAuthentication(Saml2AuthenticatedPrincipal)}. The service extracts the user information
- * from the {@link Saml2AuthenticatedPrincipal} and creates the user, if it does not exist already. 
- * 
+ * from the {@link Saml2AuthenticatedPrincipal} and creates the user, if it does not exist already.
+ *
  * When the user gets created, the SAML2 attributes can be used to fill in user information. The configuration happens
  * via patterns for every field in the SAML2 configuration.
- * 
+ *
  * The service creates a {@link UsernamePasswordAuthenticationToken} which can then be used by the client to authenticate.
  * This is needed, since the client "does not know" that he is already authenticated via SAML2.
  */
@@ -58,6 +59,8 @@ public class SAML2Service {
 
     private final MailService mailService;
 
+    private final Map<String, Pattern> extractionPatterns;
+
     /**
      * Constructs a new instance.
      *
@@ -72,11 +75,18 @@ public class SAML2Service {
         this.userCreationService = userCreationService;
         this.mailService = mailService;
         this.userService = userService;
+
+        this.extractionPatterns = generateExtractionPatterns(properties);
+    }
+
+    private Map<String, Pattern> generateExtractionPatterns(final SAML2Properties properties) {
+        return properties.getValueExtractionPatterns().stream()
+                .collect(Collectors.toMap(SAML2Properties.ExtractionPattern::getKey, pattern -> Pattern.compile(pattern.getValuePattern())));
     }
 
     /**
      * Handles an authentication via SAML2.
-     * 
+     *
      * Registers new users and returns a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user.
      *
      * @param principal the principal, containing the user information
@@ -96,9 +106,8 @@ public class SAML2Service {
 
             if (saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get())) {
                 log.debug("Sending SAML2 creation mail");
-                Optional<User> mailUser = userService.requestPasswordReset(user.get().getEmail());
-                if (mailUser.isPresent()) {
-                    mailService.sendSAML2SetPasswordMail(mailUser.get());
+                if (userService.prepareUserForPasswordReset(user.get())) {
+                    mailService.sendSAML2SetPasswordMail(user.get());
                 }
                 else {
                     log.error("User {} was created but could not be found in the database!", user.get());
@@ -139,13 +148,39 @@ public class SAML2Service {
         return authorities.stream().map(Authority::getName).map(SimpleGrantedAuthority::new).collect(Collectors.toSet());
     }
 
-    private static String substituteAttributes(final String input, final Saml2AuthenticatedPrincipal principal) {
+    private String substituteAttributes(final String input, final Saml2AuthenticatedPrincipal principal) {
         String output = input;
         for (String key : principal.getAttributes().keySet()) {
             final String escapedKey = Pattern.quote(key);
-            output = output.replaceAll("\\{" + escapedKey + "\\}", principal.getFirstAttribute(key));
+            output = output.replaceAll("\\{" + escapedKey + "\\}", getAttributeValue(principal, key));
         }
         return output.replaceAll("\\{[^\\}]*?\\}", "");
     }
 
+    /**
+     * Gets the value associated with the given key from the principal.
+     *
+     * @param principal containing the user information.
+     * @param key of the attribute that should be extracted.
+     * @return the value associated with the given key.
+     */
+    private String getAttributeValue(final Saml2AuthenticatedPrincipal principal, final String key) {
+        final String value = principal.getFirstAttribute(key);
+        if (value == null) {
+            return "";
+        }
+
+        final Pattern extractionPattern = extractionPatterns.get(key);
+        if (extractionPattern == null) {
+            return value;
+        }
+
+        final Matcher matcher = extractionPattern.matcher(value);
+        if (matcher.matches()) {
+            return matcher.group(SAML2Properties.ATTRIBUTE_VALUE_EXTRACTION_GROUP_NAME);
+        }
+        else {
+            return value;
+        }
+    }
 }

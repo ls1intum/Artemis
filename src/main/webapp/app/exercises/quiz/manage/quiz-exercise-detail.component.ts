@@ -219,12 +219,12 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         }
         if (!this.isExamMode) {
             this.exerciseCategories = this.quizExercise.categories || [];
-            this.courseService.findAllCategoriesOfCourse(this.quizExercise.course!.id!).subscribe(
-                (response: HttpResponse<string[]>) => {
+            this.courseService.findAllCategoriesOfCourse(this.quizExercise.course!.id!).subscribe({
+                next: (response: HttpResponse<string[]>) => {
                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(response.body!);
                 },
-                (error: HttpErrorResponse) => onError(this.alertService, error),
-            );
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
         }
         this.updateDuration();
         this.cacheValidation();
@@ -428,14 +428,14 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
         // TODO: the following code seems duplicated (see quiz-exercise-export.component.ts in the method loadForCourse). Try to avoid duplication!
         // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
-        this.quizExerciseService.findForCourse(selectedCourse.id!).subscribe(
-            (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
+        this.quizExerciseService.findForCourse(selectedCourse.id!).subscribe({
+            next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
                     this.applyQuestionsAndFilter(quizExercisesResponse.body!);
                 }
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     onExamSelect(): void {
@@ -448,14 +448,14 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         const selectedExam = this.exams.find((exam) => exam.id === Number(this.selectedExamId))!;
 
         // For the given exam, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise
-        this.quizExerciseService.findForExam(selectedExam.id!).subscribe(
-            (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
+        this.quizExerciseService.findForExam(selectedExam.id!).subscribe({
+            next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
                     this.applyQuestionsAndFilter(quizExercisesResponse.body!);
                 }
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     private applyQuestionsAndFilter(quizExercises: QuizExercise[]) {
@@ -562,7 +562,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                 reasonString += res + '   -   ';
             });
         }
-        return reasonString.substr(0, reasonString.length - 5);
+        return reasonString.slice(0, reasonString.length - 5);
     }
 
     /**
@@ -758,8 +758,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }
-            this.quizExerciseService.update(this.quizExercise, requestOptions).subscribe(
-                (quizExerciseResponse: HttpResponse<QuizExercise>) => {
+            this.quizExerciseService.update(this.quizExercise, requestOptions).subscribe({
+                next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                     this.notificationText = undefined;
                     if (quizExerciseResponse.body) {
                         this.onSaveSuccess(quizExerciseResponse.body);
@@ -767,19 +767,19 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                         this.onSaveError();
                     }
                 },
-                () => this.onSaveError(),
-            );
+                error: () => this.onSaveError(),
+            });
         } else {
-            this.quizExerciseService.create(this.quizExercise).subscribe(
-                (quizExerciseResponse: HttpResponse<QuizExercise>) => {
+            this.quizExerciseService.create(this.quizExercise).subscribe({
+                next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                     if (quizExerciseResponse.body) {
                         this.onSaveSuccess(quizExerciseResponse.body);
                     } else {
                         this.onSaveError();
                     }
                 },
-                () => this.onSaveError(),
-            );
+                error: () => this.onSaveError(),
+            });
         }
     }
 

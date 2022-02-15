@@ -49,8 +49,8 @@ export class TextExerciseComponent extends ExerciseComponent {
     }
 
     protected loadExercises(): void {
-        this.courseExerciseService.findAllTextExercisesForCourse(this.courseId).subscribe(
-            (res: HttpResponse<TextExercise[]>) => {
+        this.courseExerciseService.findAllTextExercisesForCourse(this.courseId).subscribe({
+            next: (res: HttpResponse<TextExercise[]>) => {
                 this.textExercises = res.body!;
 
                 // reconnect exercise with course
@@ -61,8 +61,8 @@ export class TextExerciseComponent extends ExerciseComponent {
                 this.applyFilter();
                 this.emitExerciseCount(this.textExercises.length);
             },
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     protected applyFilter(): void {

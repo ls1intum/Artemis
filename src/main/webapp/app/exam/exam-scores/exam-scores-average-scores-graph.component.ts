@@ -4,13 +4,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { navigateToExamExercise } from 'app/utils/navigation.utils';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course, NgxDataEntry } from 'app/entities/course.model';
+import { Course } from 'app/entities/course.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 type NameToValueMap = { [name: string]: any };
 
@@ -26,12 +27,12 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     examId: number;
 
     // ngx
-    ngxData: NgxDataEntry[] = [];
+    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
     ngxColor = {
         name: 'exercise groups',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [GraphColors.BLUE],
+        domain: [],
     } as Color;
     xScaleMax = 100;
     lookup: NameToValueMap = {};
@@ -58,6 +59,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         this.lookup[this.averageScores.title] = { absoluteValue: this.averageScores.averagePoints! };
         const exerciseGroupAverage = this.averageScores.averagePercentage ? this.averageScores.averagePercentage : 0;
         this.ngxData.push({ name: this.averageScores.title, value: exerciseGroupAverage });
+        this.ngxColor.domain.push(this.determineColor(true, exerciseGroupAverage));
         this.xScaleMax = this.xScaleMax > exerciseGroupAverage ? this.xScaleMax : exerciseGroupAverage;
         this.averageScores.exerciseResults.forEach((exercise) => {
             const exerciseAverage = exercise.averagePercentage ?? 0;
@@ -68,14 +70,14 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                 exerciseId: exercise.exerciseId,
                 exerciseType: exercise.exerciseType,
             };
-            this.ngxColor.domain.push(GraphColors.DARK_BLUE);
+            this.ngxColor.domain.push(this.determineColor(false, exerciseAverage));
         });
 
         this.ngxData = [...this.ngxData];
     }
 
     roundAndPerformLocalConversion(points: number | undefined) {
-        return this.localeConversionService.toLocaleString(roundScoreSpecifiedByCourseSettings(points, this.course), this.course!.accuracyOfScores!);
+        return this.localeConversionService.toLocaleString(roundValueSpecifiedByCourseSettings(points, this.course), this.course!.accuracyOfScores!);
     }
 
     /**
@@ -111,6 +113,23 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         const type = this.lookup[event.name].exerciseType;
         if (id && type) {
             this.navigateToExercise(id, type);
+        }
+    }
+
+    /**
+     * Determines the color for a given bar
+     * @param isExerciseGroup boolean that indicates if the currently determined color is assigned to a bar representing the exercise group average
+     * This is necessary because we have a color difference between the exercise group average representation and an exercise average representation
+     * @param score the score the bar will represent
+     * @private
+     */
+    private determineColor(isExerciseGroup: boolean, score: number): string {
+        if (score >= 50) {
+            return isExerciseGroup ? GraphColors.BLUE : GraphColors.DARK_BLUE;
+        } else if (score > 25) {
+            return GraphColors.YELLOW;
+        } else {
+            return GraphColors.RED;
         }
     }
 }

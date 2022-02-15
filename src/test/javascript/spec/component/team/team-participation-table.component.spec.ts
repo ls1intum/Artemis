@@ -24,6 +24,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 
 describe('TeamParticipationTableComponent', () => {
     let comp: TeamParticipationTableComponent;
@@ -160,6 +161,7 @@ describe('TeamParticipationTableComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
+                MockComponent(AssessmentWarningComponent),
                 MockComponent(DataTableComponent),
             ],
             providers: [

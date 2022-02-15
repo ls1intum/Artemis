@@ -86,6 +86,13 @@ export class UserService {
      * Get the authorities.
      */
     authorities(): Observable<string[]> {
-        return this.http.get<string[]>(SERVER_API_URL + 'api/users/authorities');
+        return this.http.get<string[]>(`${this.resourceUrl}/authorities`);
+    }
+
+    /**
+     * Initializes an LTI user and returns the newly generated password.
+     */
+    initializeLTIUser(): Observable<HttpResponse<{ password: string }>> {
+        return this.http.put<{ password: string }>(`${this.resourceUrl}/initialize`, null, { observe: 'response' });
     }
 }

@@ -73,6 +73,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createVideoUnit_asInstructor_shouldCreateVideoUnit() throws Exception {
+        videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         var persistedVideoUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.CREATED);
         assertThat(persistedVideoUnit.getId()).isNotNull();
     }
@@ -80,6 +81,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
     public void createVideoUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
+        videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.FORBIDDEN);
     }
 
@@ -92,6 +94,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
         lecture1 = lectureRepository.save(lecture1);
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         this.videoUnit.setDescription("Changed");
         this.videoUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.OK);
         assertThat(this.videoUnit.getDescription()).isEqualTo("Changed");
@@ -107,6 +110,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
         this.videoUnit.setDescription("Changed");
+        this.videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         this.videoUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.FORBIDDEN);
     }
 
