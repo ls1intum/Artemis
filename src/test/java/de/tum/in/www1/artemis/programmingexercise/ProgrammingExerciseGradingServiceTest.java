@@ -225,7 +225,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         gradingService.calculateScoreForResult(result, programmingExercise, true);
 
         var duplicateFeedbackEntries = result.getFeedbacks().stream()
-                .filter(feedback -> feedback.getDetailText() != null && feedback.getDetailText().contains("This is a duplicate test case.")).collect(Collectors.toList());
+                .filter(feedback -> feedback.getDetailText() != null && feedback.getDetailText().contains("This is a duplicate test case.")).toList();
         assertThat(result.getScore()).isEqualTo(0D);
         assertThat(duplicateFeedbackEntries.size()).isEqualTo(2);
         int countOfNewFeedbacks = originalFeedbackSize + duplicateFeedbackEntries.size();
