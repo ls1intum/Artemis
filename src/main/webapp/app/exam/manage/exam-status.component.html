@@ -120,7 +120,7 @@
                     <span>
                         {{ 'artemisApp.examStatus.correction.complaints' | artemisTranslate }}:
                         {{
-                            examChecklist.numberOfAllComplaintsDone && examChecklist.numberOfAllComplaints && examChecklist.numberOfAllComplaints > 0
+                            examChecklist.numberOfAllComplaintsDone !== undefined && examChecklist.numberOfAllComplaints && examChecklist.numberOfAllComplaints > 0
                                 ? round((examChecklist.numberOfAllComplaintsDone * 100) / examChecklist.numberOfAllComplaints, 1)
                                 : 100
                         }}%
