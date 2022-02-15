@@ -1,11 +1,14 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.lecture;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.TextUnit;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.TextUnitRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,15 +16,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.domain.lecture.TextUnit;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-// Moved to Lecture microservice. To be removed
-public class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class LectureUnitIntegrationTest extends AbstractSpringDevelopmentTest {
 
     @Autowired
     private CourseRepository courseRepository;

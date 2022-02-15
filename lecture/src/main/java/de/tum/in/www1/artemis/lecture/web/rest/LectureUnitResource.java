@@ -1,33 +1,30 @@
-package de.tum.in.www1.artemis.web.rest.lecture;
-
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+package de.tum.in.www1.artemis.lecture.web.rest;
 
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.lecture.service.LectureUnitService;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
-@Deprecated // Moved to Lecture microservice. To be removed
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class LectureUnitResource {
 
     private final Logger log = LoggerFactory.getLogger(LectureUnitResource.class);
@@ -46,7 +43,7 @@ public class LectureUnitResource {
     private final LectureUnitService lectureUnitService;
 
     public LectureUnitResource(AuthorizationCheckService authorizationCheckService, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
-            LectureUnitService lectureUnitService) {
+                               LectureUnitService lectureUnitService) {
         this.authorizationCheckService = authorizationCheckService;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
@@ -54,13 +51,13 @@ public class LectureUnitResource {
     }
 
     /**
-     * PUT /lectures/:lectureId/lecture-units-order
+     * PUT lectures/:lectureId/lecture-units-order
      *
      * @param lectureId           the id of the lecture for which to update the lecture unit order
      * @param orderedLectureUnits ordered lecture units
      * @return the ResponseEntity with status 200 (OK) and with body the ordered lecture units
      */
-    @PutMapping("/lectures/{lectureId}/lecture-units-order")
+    @PutMapping("lectures/{lectureId}/lecture-units-order")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<LectureUnit> orderedLectureUnits) {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
@@ -70,20 +67,20 @@ public class LectureUnitResource {
         }
         Lecture lecture = lectureOptional.get();
         if (lecture.getCourse() == null) {
-            return conflict();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         // Ensure that exactly as many lecture units have been received as are currently related to the lecture
         if (orderedLectureUnits.size() != lecture.getLectureUnits().size()) {
-            return conflict();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         // Ensure that all received lecture units are already related to the lecture
         for (LectureUnit lectureUnit : orderedLectureUnits) {
             if (!lecture.getLectureUnits().contains(lectureUnit)) {
-                return conflict();
+                return new ResponseEntity<>(HttpStatus.CONFLICT);
             }
             // Set the lecture manually as it won't be included in orderedLectureUnits
             lectureUnit.setLecture(lecture);
@@ -107,16 +104,21 @@ public class LectureUnitResource {
      * @param lectureUnitId the id of the lecture unit to remove
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}")
+    @DeleteMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
-        LectureUnit lectureUnit = lectureUnitRepository.findByIdWithLearningGoalsBidirectionalElseThrow(lectureUnitId);
+        Optional<LectureUnit> lectureUnitOptional = lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnitId);
+        if (lectureUnitOptional.isEmpty()) {
+            throw new EntityNotFoundException("LectureUnit", lectureUnitId);
+        }
+        LectureUnit lectureUnit = lectureUnitOptional.get();
+
         if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
-            return conflict();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         if (!lectureUnit.getLecture().getId().equals(lectureId)) {
-            return conflict();
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, lectureUnit.getLecture().getCourse(), null);

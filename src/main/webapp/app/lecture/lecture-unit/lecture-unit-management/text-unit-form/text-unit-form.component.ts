@@ -62,7 +62,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
         if (window.localStorage && window.localStorage.getItem(this.router.url)) {
             const cache = JSON.parse(window.localStorage.getItem(this.router.url)!);
 
-            if (confirm(this.translateService.instant('artemisApp.textUnit.cachedMarkdown') + ' ' + cache.date)) {
+            if (confirm(this.translateService.instant('lectureApp.textUnit.cachedMarkdown') + ' ' + cache.date)) {
                 this.content = cache.markdown!;
                 this.contentLoadedFromCache = true;
             }

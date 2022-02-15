@@ -137,7 +137,7 @@ spring:
                 -   id: lecture
                     uri: lb://LECTURE
                     predicates:
-                        - Path=/api/lectures/{segment}/attachment-units/**,/api/lectures/{segment}/text-units/**,/api/lectures/{segment}/video-units/**,/api/lectures/{segment}/exercise-units/**
+                        - Path=/api/lectures/{segment}/attachment-units/**,/api/lectures/{segment}/text-units/**,/api/lectures/{segment}/video-units/**,/api/lectures/{segment}/exercise-units/**,/api/lectures/{segment}/lecture-units/**
                 -   id: usermanagement
                     uri: lb://usermanagement
                     predicates:

@@ -129,13 +129,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     getDeleteQuestionKey(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
             case LectureUnitType.EXERCISE:
-                return 'artemisApp.exerciseUnit.delete.question';
+                return 'lectureApp.exerciseUnit.delete.question';
             case LectureUnitType.ATTACHMENT:
-                return 'artemisApp.attachmentUnit.delete.question';
+                return 'lectureApp.attachmentUnit.delete.question';
             case LectureUnitType.VIDEO:
-                return 'artemisApp.videoUnit.delete.question';
+                return 'lectureApp.videoUnit.delete.question';
             case LectureUnitType.TEXT:
-                return 'artemisApp.textUnit.delete.question';
+                return 'lectureApp.textUnit.delete.question';
             default:
                 return '';
         }
@@ -144,13 +144,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     getDeleteConfirmationTextKey(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
             case LectureUnitType.EXERCISE:
-                return 'artemisApp.exerciseUnit.delete.typeNameToConfirm';
+                return 'lectureApp.exerciseUnit.delete.typeNameToConfirm';
             case LectureUnitType.ATTACHMENT:
-                return 'artemisApp.attachmentUnit.delete.typeNameToConfirm';
+                return 'lectureApp.attachmentUnit.delete.typeNameToConfirm';
             case LectureUnitType.VIDEO:
-                return 'artemisApp.videoUnit.delete.typeNameToConfirm';
+                return 'lectureApp.videoUnit.delete.typeNameToConfirm';
             case LectureUnitType.TEXT:
-                return 'artemisApp.textUnit.delete.typeNameToConfirm';
+                return 'lectureApp.textUnit.delete.typeNameToConfirm';
             default:
                 return '';
         }

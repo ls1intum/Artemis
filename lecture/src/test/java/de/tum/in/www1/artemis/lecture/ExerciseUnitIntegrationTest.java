@@ -149,10 +149,9 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringDevelopmentTest {
         }
         assertThat(persistedExerciseUnits.size()).isEqualTo(exercisesOfCourse.size());
 
-        // TODO uncomment when lecture units are moved
-        // for (ExerciseUnit exerciseUnit : persistedExerciseUnits) {
-        //     request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + exerciseUnit.getId(), HttpStatus.OK);
-        // }
+         for (ExerciseUnit exerciseUnit : persistedExerciseUnits) {
+             request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + exerciseUnit.getId(), HttpStatus.OK);
+         }
     }
 
 }
