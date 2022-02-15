@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -13,11 +13,13 @@ import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AttachmentRepository;
+import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-// Moved to Lecture microservice. To be removed
-public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+public class AttachmentUnitIntegrationTest extends AbstractSpringDevelopmentTest {
 
     @Autowired
     private AttachmentRepository attachmentRepository;
@@ -80,12 +82,8 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
         var persistedAttachmentUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class,
                 HttpStatus.CREATED);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
-        this.attachment.setAttachmentUnit(persistedAttachmentUnit);
-        var persistedAttachment = request.postWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.CREATED);
-        assertThat(persistedAttachment.getId()).isNotNull();
-        assertThat(persistedAttachment.getAttachmentUnit()).isEqualTo(persistedAttachmentUnit);
         var updatedAttachmentUnit = attachmentUnitRepository.findById(persistedAttachmentUnit.getId()).get();
-        assertThat(updatedAttachmentUnit.getAttachment()).isEqualTo(persistedAttachment);
+        assertThat(updatedAttachmentUnit.getAttachment()).isEqualTo(persistedAttachmentUnit.getAttachment());
     }
 
     @Test
@@ -168,10 +166,8 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
         var persistedAttachmentUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class,
                 HttpStatus.CREATED);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
-        this.attachment.setAttachmentUnit(persistedAttachmentUnit);
-        var persistedAttachment = request.postWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.CREATED);
 
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachment.getId(), HttpStatus.NOT_FOUND, Attachment.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, Attachment.class);
     }
 }

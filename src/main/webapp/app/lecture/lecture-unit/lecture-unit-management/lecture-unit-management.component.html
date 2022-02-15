@@ -21,15 +21,15 @@
             <span class="badge bg-info">
                 {{
                     getLectureUnitReleaseDate(lectureUnit)
-                        ? ('artemisApp.lectureUnit.details.releaseDateSet' | artemisTranslate) + (getLectureUnitReleaseDate(lectureUnit) | artemisDate)
-                        : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
+                        ? ('lectureApp.lectureUnit.details.releaseDateSet' | artemisTranslate) + (getLectureUnitReleaseDate(lectureUnit) | artemisDate)
+                        : ('lectureApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
                 }}
             </span>
 
             <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!"></jhi-exercise-unit>
             <div *ngSwitchCase="LectureUnitType.ATTACHMENT">
                 <span class="badge bg-info">
-                    {{ ('artemisApp.lectureUnit.details.attachmentVersion' | artemisTranslate) + getAttachmentVersion(lectureUnit) }}
+                    {{ ('lectureApp.lectureUnit.details.attachmentVersion' | artemisTranslate) + getAttachmentVersion(lectureUnit) }}
                 </span>
                 <jhi-attachment-unit [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
             </div>

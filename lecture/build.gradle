@@ -97,6 +97,7 @@ sourceSets {
             include 'de/tum/in/www1/artemis/config/LocaleConfiguration.*'
 
             // de.tum.in.www1.artemis.service
+            include 'de/tum/in/www1/artemis/service/AuthorizationCheckService.*'
             include 'de/tum/in/www1/artemis/service/FilePathService.*'
             include 'de/tum/in/www1/artemis/service/FileService.*'
             include 'de/tum/in/www1/artemis/service/ScoreService.*'
@@ -126,6 +127,8 @@ sourceSets {
             include 'de/tum/in/www1/artemis/web/rest/errors/InternalServerErrorException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/AccessForbiddenException.*'
             include 'de/tum/in/www1/artemis/web/rest/errors/ErrorConstants.*'
+            include 'de/tum/in/www1/artemis/web/rest/errors/ConflictException.*'
+            include 'de/tum/in/www1/artemis/web/rest/util/HeaderUtil.*'
         }
         resources {
             srcDir '../src/main/resources'
@@ -139,6 +142,13 @@ sourceSets {
         java {
             srcDir file("../src/test")
             include "java/de/tum/in/www1/artemis/util/RequestUtilService.*"
+            include "java/de/tum/in/www1/artemis/util/ModelFactory.*"
+            include "java/de/tum/in/www1/artemis/util/DatabaseCleanupService.*"
+            include "java/de/tum/in/www1/artemis/util/TestConstants.*"
+
+            srcDir file("../src/main/java")
+            include "de/tum/in/www1/artemis/service/connectors/bamboo/dto/**"
+            include "de/tum/in/www1/artemis/service/connectors/jenkins/dto/**"
         }
     }
     main {
@@ -207,6 +217,7 @@ apply from: "../gradle/dependencies.gradle"
 dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:${offbytwo_jenkins_client_version}"
     implementation "org.gitlab4j:gitlab4j-api:${gitlab4j_api_version}"
+
     implementation "de.jplag:jplag:3.0.0"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml

@@ -77,6 +77,7 @@ spring:
         host: localhost
     main:
         allow-bean-definition-overriding: true
+        allow-circular-references: true # TODO: we should deactivate this in the future, however currently securityConfiguration has a circular dependency to itself
     messages:
         basename: i18n/messages
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
@@ -112,9 +113,15 @@ spring:
             addresses: ""
     hazelcast:
         interface: "127.0.0.1"
+    artemis: # ActiveMQ Artemis configuration
+        mode: native
+        host: localhost
+        port: 61616
+        user: guest
+        password: guest
 
 server:
-    port: 8080
+    port: 8086
     url: https://artemislocal.ase.in.tum.de
     forward-headers-strategy: native
 
@@ -140,17 +147,6 @@ info:
     display-ribbon-on-profiles: "dev"
     sentry:
         dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029
-    guided-tour:
-        courseShortName: 'artemistutorial'
-        tours:
-            -   cancel_tour: ''
-            -   code_editor_tour: 'test'
-            -   course_overview_tour: ''
-            -   course_exercise_overview_tour: 'test'
-            -   modeling_tour: 'UML Class Diagram'
-            -   programming_exercise_fail_tour: 'test'
-            -   programming_exercise_success_tour: 'test'
-            -   tutor_assessment_tour: 'Patterns in Software Engineering'
     # Allowed Orion version range. Should only be changed on major version releases
     allowed-minimum-orion-version: 1.0.0
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
@@ -176,9 +172,6 @@ jhipster:
             host: localhost
             port: 5000
             queue-size: 512
-    mail: # specific JHipster mail property, for standard properties see MailProperties
-        from: Artemis@localhost
-        base-url: http://127.0.0.1:8080
     security:
         authentication:
             jwt:
