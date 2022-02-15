@@ -15,6 +15,7 @@ import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-assessment-buttons',
@@ -32,6 +33,9 @@ export class ExamAssessmentButtonsComponent implements OnInit {
     isExamOver = false;
     longestWorkingTime?: number;
     isAdmin = false;
+
+    // icons
+    faClipboard = faClipboard;
 
     constructor(
         private route: ActivatedRoute,
