@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.util.Optional;
 import java.util.Set;
 
@@ -21,7 +19,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.GradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.GradeStepsDTO;
-import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
  * REST controller for managing grade steps of a grading scale
@@ -89,7 +87,7 @@ public class GradeStepResource {
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
         if (!isInstructor && !exam.resultsPublished()) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
         GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, exam.getMaxPoints(), exam.getTitle());
         return ResponseEntity.ok(gradeStepsDTO);
@@ -120,8 +118,8 @@ public class GradeStepResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        Optional<GradeStep> gradeStep = gradeStepRepository.findById(gradeStepId);
-        return gradeStep.map(ResponseEntity::ok).orElseGet(ResponseUtil::notFound);
+        var gradeStep = gradeStepRepository.findByIdElseThrow(gradeStepId);
+        return ResponseEntity.ok(gradeStep);
     }
 
     /**
@@ -139,8 +137,8 @@ public class GradeStepResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         gradingScaleRepository.findByExamIdOrElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        Optional<GradeStep> gradeStep = gradeStepRepository.findById(gradeStepId);
-        return gradeStep.map(ResponseEntity::ok).orElseGet(ResponseUtil::notFound);
+        var gradeStep = gradeStepRepository.findByIdElseThrow(gradeStepId);
+        return ResponseEntity.ok(gradeStep);
     }
 
     /**
@@ -187,7 +185,7 @@ public class GradeStepResource {
             return ResponseEntity.ok(null);
         }
         else if (!isInstructor && !exam.resultsPublished()) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.get().getId());
         GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradeStep.getGradingScale().getGradeType());

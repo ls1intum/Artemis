@@ -200,7 +200,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
         Pattern findGeneralTimeoutPattern = Pattern.compile("^.*:(.*timed out after.*)", Pattern.CASE_INSENSITIVE);
         matcher = findGeneralTimeoutPattern.matcher(message);
         if (matcher.find()) {
-            // overwrite AJTS: TimeoutException
+            // overwrite Ares: TimeoutException
             String generalTimeOutExceptionText = matcher.group(1);
             return timeoutDetailText + "\n" + exceptionPrefix + generalTimeOutExceptionText.trim();
         }

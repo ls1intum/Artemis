@@ -16,7 +16,9 @@ export class LectureManagementPage {
     }
 
     getLectureRow(lectureIndex: number) {
-        return cy.get('#lecture-row-' + lectureIndex);
+        const selector = '#lecture-row-' + lectureIndex;
+        cy.reloadUntilFound(selector);
+        return cy.get(selector);
     }
 
     getLectureSelector(lectureTitle: string) {
@@ -49,7 +51,9 @@ export class LectureManagementPage {
 
     addExerciseUnit(exerciseId: number) {
         this.openCreateUnit(UnitType.EXERCISE);
-        cy.contains(exerciseId).click();
+        const exerciseRow = '#exercise-' + exerciseId;
+        cy.reloadUntilFound(exerciseRow);
+        cy.get(exerciseRow).click();
         return this.submitUnit('#createButton');
     }
 

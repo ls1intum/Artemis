@@ -1,15 +1,22 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.USERNAME_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.USERNAME_MIN_LENGTH;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
-import javax.validation.constraints.*;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.BatchSize;
@@ -100,6 +107,9 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Nullable
     @Column(name = "hide_notifications_until")
     private ZonedDateTime hideNotificationsUntil = null;
+
+    @Column(name = "is_internal")
+    private boolean isInternal;
 
     /**
      * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
@@ -325,5 +335,18 @@ public class User extends AbstractAuditingEntity implements Participant {
     public String toString() {
         return "User{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='" + imageUrl
                 + '\'' + ", activated='" + activated + '\'' + ", langKey='" + langKey + '\'' + ", activationKey='" + activationKey + '\'' + "}";
+    }
+
+    @JsonIgnore
+    public String toDatabaseString() {
+        return "Student: login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber + '\'';
+    }
+
+    public boolean isInternal() {
+        return isInternal;
+    }
+
+    public void setInternal(boolean internal) {
+        isInternal = internal;
     }
 }

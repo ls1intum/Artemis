@@ -28,6 +28,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     eventSubscriber: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    currentTime: dayjs.Dayjs;
 
     // Icons
     faSort = faSort;
@@ -64,6 +65,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
                 this.course = res.body!;
                 this.loadAllExamsForCourse();
                 this.registerChangeInExams();
+                this.currentTime = dayjs();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -104,6 +106,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     registerChangeInExams() {
         this.eventSubscriber = this.eventManager.subscribe('examListModification', () => {
             this.loadAllExamsForCourse();
+            this.currentTime = dayjs();
         });
     }
 

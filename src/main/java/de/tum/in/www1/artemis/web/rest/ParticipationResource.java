@@ -124,7 +124,7 @@ public class ParticipationResource {
     }
 
     /**
-     * POST /courses/:courseId/exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
+     * POST /exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
      *
      * @param exerciseId the participationId of the exercise for which to init a participation
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
@@ -163,6 +163,16 @@ public class ParticipationResource {
         }
 
         StudentParticipation participation = participationService.startExercise(exercise, participant, true);
+
+        if (exercise.isExamExercise() && exercise instanceof ProgrammingExercise) {
+            // TODO: this programming exercise was started during an exam (the instructor did not invoke "prepare exercise start" before the exam or it failed in this case)
+            // 1) check that now is between exam start and individual exam end
+            // 2) create a scheduled lock operation (see ProgrammingExerciseScheduleService)
+            // var task = programmingExerciseScheduleService.lockStudentRepository(participation);
+            // 3) add the task to the schedule service
+            // scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, task);
+        }
+
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);

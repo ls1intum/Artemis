@@ -5,9 +5,9 @@ import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { Router } from '@angular/router';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { NgxDataEntry } from 'app/entities/course.model';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
-interface ExerciseStatisticsEntry extends NgxDataEntry {
+interface ExerciseStatisticsEntry extends NgxChartsSingleSeriesDataEntry {
     exerciseType: ExerciseType;
     exerciseId: number;
 }
