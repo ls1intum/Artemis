@@ -1,5 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -11,7 +11,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 
 describe('Example Submission Import Paging Service', () => {
-    let injector: TestBed;
     let service: ExampleSubmissionImportPagingService;
     let httpMock: HttpTestingController;
 
@@ -24,9 +23,8 @@ describe('Example Submission Import Paging Service', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(ExampleSubmissionImportPagingService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(ExampleSubmissionImportPagingService);
+        httpMock = TestBed.inject(HttpTestingController);
     });
 
     afterEach(() => {

@@ -1,10 +1,8 @@
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
@@ -38,7 +36,6 @@ describe('Text Submission Viewer Component', () => {
             imports: [ArtemisTestModule],
             declarations: [TextSubmissionViewerComponent, MockComponent(SplitPaneHeaderComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
@@ -46,8 +43,12 @@ describe('Text Submission Viewer Component', () => {
 
         fixture = TestBed.createComponent(TextSubmissionViewerComponent);
         comp = fixture.componentInstance;
-        repositoryService = fixture.debugElement.injector.get(CodeEditorRepositoryFileService);
-        textSubmissionService = fixture.debugElement.injector.get(TextSubmissionService);
+        repositoryService = TestBed.inject(CodeEditorRepositoryFileService);
+        textSubmissionService = TestBed.inject(TextSubmissionService);
+    });
+
+    afterEach(() => {
+        jest.resetAllMocks();
     });
 
     it('fetches a text submission', () => {

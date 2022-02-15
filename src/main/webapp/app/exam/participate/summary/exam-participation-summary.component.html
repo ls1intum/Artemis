@@ -15,7 +15,7 @@
 <jhi-exam-information [exam]="studentExam.exam!" [studentExam]="studentExam"></jhi-exam-information>
 <div class="mb-4 text-center" *ngIf="studentExam && studentExam.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart()">
     <a class="btn btn-success" style="cursor: default; pointer-events: none">
-        {{ 'artemisApp.examManagement.studentReviewEnabled' | artemisTranslate }}
+        {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}
     </a>
 </div>
 <div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam">

@@ -39,8 +39,8 @@ export class ProgrammingExerciseService {
      */
     automaticSetup(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
         let copy = this.convertDataFromClient(programmingExercise);
-        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
+        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
@@ -128,8 +128,8 @@ export class ProgrammingExerciseService {
      */
     importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise, recreateBuildPlans: boolean, updateTemplate: boolean): Observable<EntityResponseType> {
         const options = createRequestOption({ recreateBuildPlans, updateTemplate });
-        const exercise = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceProgrammingExercise);
-        exercise.categories = this.exerciseService.stringifyExerciseCategories(exercise);
+        const exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceProgrammingExercise);
+        exercise.categories = ExerciseService.stringifyExerciseCategories(exercise);
         return this.http
             .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, exercise, {
                 params: options,
@@ -146,8 +146,8 @@ export class ProgrammingExerciseService {
     update(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         let copy = this.convertDataFromClient(programmingExercise);
-        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
+        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .put<ProgrammingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
@@ -280,7 +280,7 @@ export class ProgrammingExerciseService {
      */
     convertDataFromClient(exercise: ProgrammingExercise) {
         const copy = {
-            ...this.exerciseService.convertDateFromClient(exercise),
+            ...ExerciseService.convertDateFromClient(exercise),
             buildAndTestStudentSubmissionsAfterDueDate:
                 exercise.buildAndTestStudentSubmissionsAfterDueDate && dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).isValid()
                     ? dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).toJSON()
@@ -304,8 +304,8 @@ export class ProgrammingExerciseService {
      *
      * @param entity ProgrammingExercise
      */
-    convertDateFromServer(entity: EntityResponseType) {
-        const res = this.exerciseService.convertDateFromServer(entity);
+    static convertDateFromServer(entity: EntityResponseType) {
+        const res = ExerciseService.convertDateFromServer(entity);
         if (!res.body) {
             return res;
         }
@@ -371,8 +371,8 @@ export class ProgrammingExerciseService {
     reevaluateAndUpdate(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         let copy = this.convertDataFromClient(programmingExercise);
-        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
+        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .put<ProgrammingExercise>(`${this.resourceUrl}/${programmingExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
@@ -386,8 +386,8 @@ export class ProgrammingExerciseService {
      * @param exerciseRes
      */
     private processProgrammingExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
-        this.convertDateFromServer(exerciseRes);
-        this.exerciseService.convertExerciseCategoriesFromServer(exerciseRes);
+        ProgrammingExerciseService.convertDateFromServer(exerciseRes);
+        ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.exerciseService.setAccessRightsExerciseEntityResponseType(exerciseRes);
         return exerciseRes;
     }

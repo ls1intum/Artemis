@@ -17,11 +17,12 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.env.Environment;
 
+import de.tum.in.www1.artemis.service.connectors.ProgrammingLanguageConfiguration;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
 @SpringBootApplication
-@EnableConfigurationProperties(LiquibaseProperties.class)
+@EnableConfigurationProperties({ LiquibaseProperties.class, ProgrammingLanguageConfiguration.class })
 public class ArtemisApp {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisApp.class);

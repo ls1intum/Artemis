@@ -124,7 +124,7 @@ public class ParticipationResource {
     }
 
     /**
-     * POST /courses/:courseId/exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
+     * POST /exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
      *
      * @param exerciseId the participationId of the exercise for which to init a participation
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
@@ -150,7 +150,7 @@ public class ParticipationResource {
         if (exercise instanceof ProgrammingExercise) {
             // fetch additional objects needed for the startExercise method below
             var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-            if (!featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES) || isNotAllowedToStartProgrammingExercise(programmingExercise, null)) {
+            if (!featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises) || isNotAllowedToStartProgrammingExercise(programmingExercise, null)) {
                 throw new AccessForbiddenException("Not allowed");
             }
             exercise = programmingExercise;
@@ -163,6 +163,16 @@ public class ParticipationResource {
         }
 
         StudentParticipation participation = participationService.startExercise(exercise, participant, true);
+
+        if (exercise.isExamExercise() && exercise instanceof ProgrammingExercise) {
+            // TODO: this programming exercise was started during an exam (the instructor did not invoke "prepare exercise start" before the exam or it failed in this case)
+            // 1) check that now is between exam start and individual exam end
+            // 2) create a scheduled lock operation (see ProgrammingExerciseScheduleService)
+            // var task = programmingExerciseScheduleService.lockStudentRepository(participation);
+            // 3) add the task to the schedule service
+            // scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, task);
+        }
+
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
@@ -177,7 +187,7 @@ public class ParticipationResource {
      */
     @PutMapping("exercises/{exerciseId}/resume-programming-participation")
     @PreAuthorize("hasRole('USER')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExerciseStudentParticipation> resumeParticipation(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
@@ -551,7 +561,7 @@ public class ParticipationResource {
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
-        if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)) {
+        if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
             throw new AccessForbiddenException("Programming Exercise Feature is disabled.");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -573,7 +583,7 @@ public class ParticipationResource {
     public ResponseEntity<Void> deleteParticipationForGuidedTour(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
-        if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)) {
+        if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
             throw new AccessForbiddenException("Programming Exercise Feature is disabled.");
         }
 
@@ -621,7 +631,7 @@ public class ParticipationResource {
      */
     @PutMapping("participations/{participationId}/cleanupBuildPlan")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
         ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();

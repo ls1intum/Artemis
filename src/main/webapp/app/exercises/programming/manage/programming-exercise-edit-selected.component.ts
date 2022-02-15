@@ -72,10 +72,10 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(exerciseTitle: string | undefined, result: Observable<HttpResponse<ProgrammingExercise>>) {
-        result.subscribe(
-            () => this.onSaveSuccess(),
-            (res: HttpErrorResponse) => this.onSaveError(res, exerciseTitle),
-        );
+        result.subscribe({
+            next: () => this.onSaveSuccess(),
+            error: (res: HttpErrorResponse) => this.onSaveError(res, exerciseTitle),
+        });
     }
 
     private onSaveSuccess() {

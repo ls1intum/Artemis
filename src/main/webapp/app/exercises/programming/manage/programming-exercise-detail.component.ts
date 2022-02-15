@@ -191,44 +191,44 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     combineTemplateCommits() {
-        this.programmingExerciseService.combineTemplateRepositoryCommits(this.programmingExercise.id!).subscribe(
-            () => {
+        this.programmingExerciseService.combineTemplateRepositoryCommits(this.programmingExercise.id!).subscribe({
+            next: () => {
                 this.alertService.success('artemisApp.programmingExercise.combineTemplateCommitsSuccess');
             },
-            () => {
+            error: () => {
                 this.alertService.error('artemisApp.programmingExercise.combineTemplateCommitsError');
             },
-        );
+        });
     }
 
     generateStructureOracle() {
-        this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id!).subscribe(
-            (res) => {
+        this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id!).subscribe({
+            next: (res) => {
                 const jhiAlert = this.alertService.success(res);
                 jhiAlert.message = res;
             },
-            (error) => {
+            error: (error) => {
                 const errorMessage = error.headers.get('X-artemisApp-alert');
                 // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
                 const jhiAlert = this.alertService.error(errorMessage);
                 jhiAlert.message = errorMessage;
             },
-        );
+        });
     }
 
     recreateBuildPlans() {
-        this.programmingExerciseService.recreateBuildPlans(this.programmingExercise.id!).subscribe(
-            (res) => {
+        this.programmingExerciseService.recreateBuildPlans(this.programmingExercise.id!).subscribe({
+            next: (res) => {
                 const jhiAlert = this.alertService.success(res);
                 jhiAlert.message = res;
             },
-            (error) => {
+            error: (error) => {
                 const errorMessage = error.headers.get('X-artemisApp-alert');
                 // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
                 const jhiAlert = this.alertService.error(errorMessage);
                 jhiAlert.message = errorMessage;
             },
-        );
+        });
     }
 
     /**
@@ -236,8 +236,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param event contains additional checks from the dialog
      */
     cleanupProgrammingExercise(event: { [key: string]: boolean }) {
-        return this.exerciseService.cleanup(this.programmingExercise.id!, event.deleteRepositories).subscribe(
-            () => {
+        return this.exerciseService.cleanup(this.programmingExercise.id!, event.deleteRepositories).subscribe({
+            next: () => {
                 if (event.deleteRepositories) {
                     this.alertService.success('artemisApp.programmingExercise.cleanup.successMessageWithRepositories');
                 } else {
@@ -245,13 +245,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 }
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     public deleteProgrammingExercise(event: { [key: string]: boolean }) {
-        this.programmingExerciseService.delete(this.programmingExercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe(
-            () => {
+        this.programmingExerciseService.delete(this.programmingExercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',
                     content: 'Deleted a programming exercise',
@@ -264,8 +264,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.router.navigateByUrl(`/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/exercise-groups`);
                 }
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     /**
@@ -285,8 +285,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      */
     private unlockAllRepositories() {
         this.lockingOrUnlockingRepositories = true;
-        this.programmingExerciseService.unlockAllRepositories(this.programmingExercise.id!).subscribe(
-            (res) => {
+        this.programmingExerciseService.unlockAllRepositories(this.programmingExercise.id!).subscribe({
+            next: (res) => {
                 this.alertService.addAlert({
                     type: 'success',
                     message: 'artemisApp.programmingExercise.unlockAllRepositoriesSuccess',
@@ -295,11 +295,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 });
                 this.lockingOrUnlockingRepositories = false;
             },
-            (err: HttpErrorResponse) => {
+            error: (err: HttpErrorResponse) => {
                 this.lockingOrUnlockingRepositories = false;
                 this.onError(err);
             },
-        );
+        });
     }
 
     /**
@@ -319,8 +319,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      */
     private lockAllRepositories() {
         this.lockingOrUnlockingRepositories = true;
-        this.programmingExerciseService.lockAllRepositories(this.programmingExercise.id!).subscribe(
-            (res) => {
+        this.programmingExerciseService.lockAllRepositories(this.programmingExercise.id!).subscribe({
+            next: (res) => {
                 this.alertService.addAlert({
                     type: 'success',
                     message: 'artemisApp.programmingExercise.lockAllRepositoriesSuccess',
@@ -329,11 +329,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 });
                 this.lockingOrUnlockingRepositories = false;
             },
-            (err: HttpErrorResponse) => {
+            error: (err: HttpErrorResponse) => {
                 this.lockingOrUnlockingRepositories = false;
                 this.onError(err);
             },
-        );
+        });
     }
 
     /**
@@ -351,10 +351,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     /**
      * Generates the link to any participation's submissions, used for the link to template and solution submissions
-     * @param id of the participation
+     * @param participationId of the participation
      */
-    getParticipationSubmissionLink(id: number) {
-        const link = [this.baseResource, 'participations', id];
+    getParticipationSubmissionLink(participationId: number) {
+        const link = [this.baseResource, 'participations', participationId];
         // For unknown reason normal exercises append /submissions to the submission view whereas exam exercises do not
         if (!this.isExamExercise) {
             link.push('submissions');

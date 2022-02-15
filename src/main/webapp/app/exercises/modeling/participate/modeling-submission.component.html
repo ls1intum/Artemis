@@ -94,11 +94,23 @@
                                         ><br *ngIf="feedback.reference" />
                                         <span
                                             *ngIf="feedback.text || feedback.detailText || feedback.gradingInstruction"
-                                            [ngClass]="{ 'text-success': feedback.credits! > 0, 'text-danger': feedback.credits! < 0 }"
+                                            [ngClass]="{
+                                                'text-secondary': feedback.isSubsequent,
+                                                'text-success': feedback.credits! > 0 && feedback.isSubsequent === undefined,
+                                                'text-danger': feedback.credits! < 0 && feedback.isSubsequent === undefined
+                                            }"
                                             ><strong>Feedback:</strong> <span [innerHTML]="buildFeedbackTextForReview(feedback)"></span
                                         ></span>
                                     </td>
-                                    <td class="text-center">{{ feedback.credits | number: '1.0-1' }}</td>
+                                    <td class="text-center">
+                                        {{ feedback.credits | number: '1.0-1' }}
+                                        <fa-icon
+                                            *ngIf="feedback.isSubsequent"
+                                            class="text-secondary"
+                                            [icon]="faExclamationTriangle"
+                                            [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
+                                        ></fa-icon>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>

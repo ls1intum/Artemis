@@ -6,7 +6,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +18,9 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.VideoUnitRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -56,20 +57,14 @@ public class VideoUnitResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<VideoUnit> getVideoUnit(@PathVariable Long videoUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get VideoUnit : {}", videoUnitId);
-        Optional<VideoUnit> optionalVideoUnit = videoUnitRepository.findById(videoUnitId);
-        if (optionalVideoUnit.isEmpty()) {
-            return notFound();
-        }
-        VideoUnit videoUnit = optionalVideoUnit.get();
+        var videoUnit = videoUnitRepository.findById(videoUnitId).orElseThrow(() -> new EntityNotFoundException("VideoUnit", videoUnitId));
         if (videoUnit.getLecture() == null || videoUnit.getLecture().getCourse() == null) {
             return conflict();
         }
         if (!videoUnit.getLecture().getId().equals(lectureId)) {
             return conflict();
         }
-        if (!authorizationCheckService.isAtLeastEditorInCourse(videoUnit.getLecture().getCourse(), null)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(videoUnit);
     }
 
@@ -79,11 +74,10 @@ public class VideoUnitResource {
      * @param lectureId      the id of the lecture to which the video unit belongs to update
      * @param videoUnit the video unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated videoUnit
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lectures/{lectureId}/video-units")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<VideoUnit> updateVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) throws URISyntaxException {
+    public ResponseEntity<VideoUnit> updateVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) {
         log.debug("REST request to update an video unit : {}", videoUnit);
         if (videoUnit.getId() == null) {
             return badRequest();
@@ -98,12 +92,10 @@ public class VideoUnitResource {
             new URL(videoUnit.getSource());
         }
         catch (MalformedURLException exception) {
-            badRequest();
+            return badRequest();
         }
 
-        if (!authorizationCheckService.isAtLeastEditorInCourse(videoUnit.getLecture().getCourse(), null)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
 
         if (!videoUnit.getLecture().getId().equals(lectureId)) {
             return conflict();
@@ -134,20 +126,14 @@ public class VideoUnitResource {
             new URL(videoUnit.getSource());
         }
         catch (MalformedURLException exception) {
-            badRequest();
-        }
-
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
-        if (lectureOptional.isEmpty()) {
             return badRequest();
         }
-        Lecture lecture = lectureOptional.get();
+
+        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             return conflict();
         }
-        if (!authorizationCheckService.isAtLeastEditorInCourse(lecture.getCourse(), null)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         videoUnit.setLecture(null);

@@ -86,7 +86,7 @@ function getExifRotation(imageBase64: string): number {
 
 function base64ToArrayBuffer(imageBase64: string) {
     imageBase64 = imageBase64.replace(/^data\:([^\;]+)\;base64,/gim, '');
-    const binaryString = atob(imageBase64);
+    const binaryString = window.atob(imageBase64);
     const len = binaryString.length;
     const bytes = new Uint8Array(len);
     for (let i = 0; i < len; i++) {

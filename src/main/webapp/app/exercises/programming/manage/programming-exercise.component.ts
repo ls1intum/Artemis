@@ -86,8 +86,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     protected loadExercises(): void {
-        this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId).subscribe(
-            (res: HttpResponse<ProgrammingExercise[]>) => {
+        this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId).subscribe({
+            next: (res: HttpResponse<ProgrammingExercise[]>) => {
                 this.programmingExercises = res.body!;
                 this.profileService.getProfileInfo().subscribe((profileInfo) => {
                     this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
@@ -116,8 +116,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 this.applyFilter();
                 this.emitExerciseCount(this.programmingExercises.length);
             },
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     protected applyFilter(): void {
@@ -135,16 +135,16 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param event contains additional checks for deleting exercise
      */
     deleteProgrammingExercise(programmingExerciseId: number, event: { [key: string]: boolean }) {
-        return this.programmingExerciseService.delete(programmingExerciseId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe(
-            () => {
+        return this.programmingExerciseService.delete(programmingExerciseId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',
                     content: 'Deleted an programmingExercise',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     /**
@@ -152,10 +152,10 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param programmingExerciseId the id of the programming exercise that we want to delete
      */
     resetProgrammingExercise(programmingExerciseId: number) {
-        this.exerciseService.reset(programmingExerciseId).subscribe(
-            () => this.dialogErrorSource.next(''),
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+        this.exerciseService.reset(programmingExerciseId).subscribe({
+            next: () => this.dialogErrorSource.next(''),
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     protected getChangeEventName(): string {

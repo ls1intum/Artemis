@@ -22,63 +22,61 @@ public class FeatureToggleServiceTest extends AbstractSpringIntegrationBambooBit
     public void checkReset() {
         // Verify that the test has reset the state
         // Must be extended if additional features are added
-        assertTrue(featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES));
+        assertTrue(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
     }
 
     @Test
     public void testSetFeaturesEnabled() {
         Map<Feature, Boolean> featureStates = new HashMap<>();
-        featureStates.put(Feature.PROGRAMMING_EXERCISES, true);
+        featureStates.put(Feature.ProgrammingExercises, true);
         featureToggleService.updateFeatureToggles(featureStates);
-        assertTrue(featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES));
+        assertTrue(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
     }
 
     @Test
     public void testSetFeaturesDisabled() {
-        assertTrue(featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES));
+        assertTrue(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
 
         Map<Feature, Boolean> featureStates = new HashMap<>();
-        featureStates.put(Feature.PROGRAMMING_EXERCISES, false);
+        featureStates.put(Feature.ProgrammingExercises, false);
         featureToggleService.updateFeatureToggles(featureStates);
-        assertFalse(featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES));
+        assertFalse(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
 
         // Reset
-        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
+        featureToggleService.enableFeature(Feature.ProgrammingExercises);
     }
 
     @Test
     public void testEnableDisableFeature() {
-        assertTrue(featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES));
+        assertTrue(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
 
-        featureToggleService.disableFeature(Feature.PROGRAMMING_EXERCISES);
-        assertFalse(featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES));
+        featureToggleService.disableFeature(Feature.ProgrammingExercises);
+        assertFalse(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
 
-        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
-        assertTrue(featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES));
+        featureToggleService.enableFeature(Feature.ProgrammingExercises);
+        assertTrue(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
     }
 
     @Test
     public void testShouldNotEnableTwice() {
-        // Must be updated if additional features are added
-        assertEquals(1, featureToggleService.enabledFeatures().size());
-        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
+        assertEquals(Feature.values().length, featureToggleService.enabledFeatures().size());
+        featureToggleService.enableFeature(Feature.ProgrammingExercises);
 
         // Feature should not be added multiple times
-        assertEquals(1, featureToggleService.enabledFeatures().size());
+        assertEquals(Feature.values().length, featureToggleService.enabledFeatures().size());
     }
 
     @Test
     public void testShouldNotDisableTwice() {
-        featureToggleService.disableFeature(Feature.PROGRAMMING_EXERCISES);
+        featureToggleService.disableFeature(Feature.ProgrammingExercises);
 
-        // Must be updated if additional features are added
         assertEquals(1, featureToggleService.disabledFeatures().size());
-        featureToggleService.disableFeature(Feature.PROGRAMMING_EXERCISES);
+        featureToggleService.disableFeature(Feature.ProgrammingExercises);
 
         // Feature should not be added multiple times
         assertEquals(1, featureToggleService.disabledFeatures().size());
 
         // Reset
-        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
+        featureToggleService.enableFeature(Feature.ProgrammingExercises);
     }
 }

@@ -53,7 +53,7 @@ describe('OrganizationManagementDetailComponent', () => {
         userService = TestBed.inject(UserService);
     });
 
-    afterEach(async () => {
+    beforeEach(() => {
         jest.clearAllMocks();
     });
 
@@ -101,7 +101,7 @@ describe('OrganizationManagementDetailComponent', () => {
     it('should not remove user from organization if error occurred', fakeAsync(() => {
         organization1.users = createTestUsers();
         component.organization = organization1;
-        jest.spyOn(organizationService, 'removeUserFromOrganization').mockReturnValue(throwError(new HttpErrorResponse({ status: 404 })));
+        jest.spyOn(organizationService, 'removeUserFromOrganization').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
 
         component.removeFromOrganization(organization1.users[0]);
         tick();

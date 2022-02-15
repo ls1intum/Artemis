@@ -243,10 +243,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.assessmentsService.trackAssessment(this.submission, 'save');
 
         this.saveBusy = true;
-        this.assessmentsService.save(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe(
-            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
-            (error: HttpErrorResponse) => this.handleError(error),
-        );
+        this.assessmentsService.save(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe({
+            next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
+            error: (error: HttpErrorResponse) => this.handleError(error),
+        });
     }
 
     /**
@@ -266,10 +266,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.assessmentsService.trackAssessment(this.submission, 'submit');
 
         this.submitBusy = true;
-        this.assessmentsService.submit(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe(
-            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
-            (error: HttpErrorResponse) => this.handleError(error),
-        );
+        this.assessmentsService.submit(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe({
+            next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
+            error: (error: HttpErrorResponse) => this.handleError(error),
+        });
     }
 
     protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
@@ -361,9 +361,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         this.assessmentsService
             .updateAssessmentAfterComplaint(this.assessments, this.textBlocksWithFeedback, complaintResponse, this.submission?.id!, this.participation?.id!)
-            .subscribe(
-                (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
-                (httpErrorResponse: HttpErrorResponse) => {
+            .subscribe({
+                next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
+                error: (httpErrorResponse: HttpErrorResponse) => {
                     this.alertService.clear();
                     const error = httpErrorResponse.error;
                     if (error && error.errorKey && error.errorKey === 'complaintLock') {
@@ -372,7 +372,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                         this.alertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
                     }
                 },
-            );
+            });
     }
 
     navigateBack() {
@@ -409,18 +409,18 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
 
         this.isLoading = true;
-        this.complaintService.findBySubmissionId(this.submission.id!).subscribe(
-            (res) => {
+        this.complaintService.findBySubmissionId(this.submission.id!).subscribe({
+            next: (res) => {
                 if (!res.body) {
                     return;
                 }
                 this.complaint = res.body;
                 this.isLoading = false;
             },
-            (err: HttpErrorResponse) => {
+            error: (err: HttpErrorResponse) => {
                 this.handleError(err.error);
             },
-        );
+        });
     }
 
     /**
@@ -473,10 +473,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     useStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.exercise) {
-            this.exampleSubmissionService.import(this.submission.id!, this.exercise.id!).subscribe(
-                () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
-                (error: HttpErrorResponse) => onError(this.alertService, error),
-            );
+            this.exampleSubmissionService.import(this.submission.id!, this.exercise.id!).subscribe({
+                next: () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
         }
     }
 }

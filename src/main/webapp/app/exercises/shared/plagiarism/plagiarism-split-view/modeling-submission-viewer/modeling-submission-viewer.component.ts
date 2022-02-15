@@ -26,15 +26,15 @@ export class ModelingSubmissionViewerComponent implements OnChanges {
 
             const currentPlagiarismSubmission: PlagiarismSubmission<ModelingSubmissionElement> = changes.plagiarismSubmission.currentValue;
 
-            this.modelingSubmissionService.getSubmissionWithoutLock(currentPlagiarismSubmission.submissionId).subscribe(
-                (submission: ModelingSubmission) => {
+            this.modelingSubmissionService.getSubmissionWithoutLock(currentPlagiarismSubmission.submissionId).subscribe({
+                next: (submission: ModelingSubmission) => {
                     this.loading = false;
                     this.submissionModel = JSON.parse(submission.model!) as UMLModel;
                 },
-                () => {
+                error: () => {
                     this.loading = false;
                 },
-            );
+            });
         }
     }
 }

@@ -1,5 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
@@ -18,7 +18,6 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 describe('Course Management Service', () => {
-    let injector: TestBed;
     let service: CourseExerciseService;
     let httpMock: HttpTestingController;
     let exerciseId: number;
@@ -50,9 +49,8 @@ describe('Course Management Service', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(CourseExerciseService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(CourseExerciseService);
+        httpMock = TestBed.inject(HttpTestingController);
         exerciseId = 123;
 
         course = new Course();

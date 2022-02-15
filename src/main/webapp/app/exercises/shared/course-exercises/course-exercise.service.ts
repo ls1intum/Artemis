@@ -16,12 +16,7 @@ import dayjs from 'dayjs/esm';
 export class CourseExerciseService {
     private resourceUrl = SERVER_API_URL + `api/courses`;
 
-    constructor(
-        private http: HttpClient,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private exerciseService: ExerciseService,
-        private accountService: AccountService,
-    ) {}
+    constructor(private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService, private accountService: AccountService) {}
 
     /**
      * returns all programming exercises for the course corresponding to courseId
@@ -74,7 +69,7 @@ export class CourseExerciseService {
      */
     private processExercisesHttpResponses(exercisesRes: HttpResponse<Exercise[]>): HttpResponse<Exercise[]> {
         this.convertDateArrayFromServer(exercisesRes);
-        this.exerciseService.convertExerciseCategoryArrayFromServer(exercisesRes);
+        ExerciseService.convertExerciseCategoryArrayFromServer(exercisesRes);
         if (exercisesRes.body) {
             exercisesRes.body.forEach((exercise) => this.accountService.setAccessRightsForExercise(exercise));
         }
