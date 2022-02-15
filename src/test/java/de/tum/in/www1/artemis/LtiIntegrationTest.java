@@ -74,9 +74,8 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @BeforeEach
     void init() {
-        /* We mock the following methods because we don't have the OAuth secret for edx */
+        /* We mock the following method because we don't have the OAuth secret for edx */
         doReturn(null).when(ltiService).verifyRequest(any());
-        doNothing().when(ltiService).handleLaunchRequest(any(), any());
 
         database.addUsers(1, 1, 0, 1);
 
@@ -99,8 +98,8 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var uriComponents = UriComponentsBuilder.fromUri(header).build();
         MultiValueMap<String, String> parameters = UriComponentsBuilder.fromUri(header).build().getQueryParams();
         assertThat(parameters.getFirst("jwt")).isNotBlank();
-        assertThat(parameters.getFirst("login")).isNotNull();
-        assertThat(parameters.getFirst("welcome")).isNull();
+        assertThat(parameters.getFirst("login")).isNull();
+        assertThat(parameters.getFirst("initialize")).isNotNull();
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
 
         this.checkExceptions();
@@ -117,7 +116,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void launchAsNewStudent() throws Exception {
+    void launchAsRecentlyCreatedStudent() throws Exception {
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
@@ -125,7 +124,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var uriComponents = UriComponentsBuilder.fromUri(header).build();
         MultiValueMap<String, String> parameters = UriComponentsBuilder.fromUri(header).build().getQueryParams();
         assertThat(parameters.getFirst("jwt")).isNotBlank();
-        assertThat(parameters.getFirst("welcome")).isNotNull();
+        assertThat(parameters.getFirst("initialize")).isNull();
         assertThat(parameters.getFirst("login")).isNull();
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
 
@@ -148,7 +147,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var uriComponents = UriComponentsBuilder.fromUri(header).build();
         MultiValueMap<String, String> parameters = UriComponentsBuilder.fromUri(header).build().getQueryParams();
         assertThat(parameters.getFirst("jwt")).isNotBlank();
-        assertThat(parameters.getFirst("welcome")).isNull();
+        assertThat(parameters.getFirst("initialize")).isNull();
         assertThat(parameters.getFirst("login")).isNull();
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
 

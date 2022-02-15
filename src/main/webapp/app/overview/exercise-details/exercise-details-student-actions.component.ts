@@ -151,6 +151,20 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     /**
+     * Display the 'open code editor' or 'clone repo' buttons if
+     * - the participation is initialized (build plan exists, no clean up happened), or
+     * - the participation is inactive (build plan cleaned up), but can not be resumed (e.g. because we're after the due date)
+     */
+    shouldDisplayIDEButtons(): boolean {
+        const status = participationStatus(this.exercise);
+        return (
+            (status === ParticipationStatus.INITIALIZED || (status === ParticipationStatus.INACTIVE && !isStartExerciseAvailable(this.exercise))) &&
+            !!this.exercise.studentParticipations &&
+            this.exercise.studentParticipations!.length > 0
+        );
+    }
+
+    /**
      * Returns the id of the team that the student is assigned to (only applicable to team-based exercises)
      *
      * @return {assignedTeamId}

@@ -10,6 +10,7 @@ describe('TextSubmission Service', () => {
     let service: TextSubmissionService;
     let httpMock: HttpTestingController;
     let elemDefault: TextSubmission;
+
     const mockResponse = {
         submissionExerciseType: 'text',
         id: 1,
@@ -112,6 +113,7 @@ describe('TextSubmission Service', () => {
         const exerciseId = 1;
         elemDefault = new TextSubmission();
         elemDefault.latestResult = undefined;
+        elemDefault.participation = undefined;
         const returnedFromService = [elemDefault];
         const expected = returnedFromService;
         let response: any;

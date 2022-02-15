@@ -39,11 +39,14 @@ export enum StatisticsView {
 }
 
 export enum GraphColors {
+    GREY = 'rgba(127,127,127,255)',
     DARK_BLUE = 'rgba(53,61,71,1)',
     BLUE = 'rgba(93,138,201,1)',
+    LIGHT_BLUE = 'rgba(135, 206, 250, 1)',
     TRANSPARENT = 'rgba(93,138,201,0)',
     GREEN = 'rgba(40,164,40,1)',
     RED = 'rgba(204,0,0,1)',
+    YELLOW = 'rgba(230, 174, 6, 1)',
 }
 
 export const ngxColor = {

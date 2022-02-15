@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
@@ -110,18 +110,18 @@ public class ExerciseResource {
                 ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
                 if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                     // When there is no due date or the due date is in the future, we return forbidden here
-                    return forbidden();
+                    throw new AccessForbiddenException();
                 }
             }
             else {
                 // Students should never access exercises
-                return forbidden();
+                throw new AccessForbiddenException();
             }
         }
         // Normal exercise
         else {
             if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
-                return forbidden();
+                throw new AccessForbiddenException();
             }
             if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                 exercise.filterSensitiveInformation();
@@ -180,11 +180,7 @@ public class ExerciseResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Set<Exercise>> getUpcomingExercises() {
         log.debug("REST request to get all upcoming exercises");
-
-        if (!authCheckService.isAdmin()) {
-            return forbidden();
-        }
-
+        authCheckService.checkIsAdminElseThrow(null);
         Set<Exercise> upcomingExercises = exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDate();
         return ResponseEntity.ok(upcomingExercises);
     }
@@ -212,13 +208,8 @@ public class ExerciseResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<StatsForDashboardDTO> getStatsForExerciseAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            return forbidden();
-        }
-
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         StatsForDashboardDTO stats = exerciseService.populateCommonStatistics(exercise, exercise.isExamExercise());
-
         return ResponseEntity.ok(stats);
     }
 
@@ -250,10 +241,8 @@ public class ExerciseResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> cleanup(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", exerciseId, deleteRepositories);
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            return forbidden();
-        }
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         exerciseDeletionService.cleanup(exerciseId, deleteRepositories);
         log.info("Cleanup build plans was successful for Exercise : {}", exerciseId);
         return ResponseEntity.ok().build();
@@ -275,12 +264,12 @@ public class ExerciseResource {
         // TODO: Create alternative route so that instructors and admins can access the exercise details
         // The users are not allowed to access the exercise details over this route if the exercise belongs to an exam
         if (exercise.isExamExercise()) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         // if exercise is not yet released to the students they should not have any access to it
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerResultsAndSubmissions(exercise, user.getId());
@@ -322,12 +311,7 @@ public class ExerciseResource {
     public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
         log.debug("toggleSecondCorrectionEnabled for exercise with id: {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (exercise == null) {
-            throw new EntityNotFoundException("Exercise not found with id " + exerciseId);
-        }
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         return ResponseEntity.ok(exerciseRepository.toggleSecondCorrection(exercise));
     }
 

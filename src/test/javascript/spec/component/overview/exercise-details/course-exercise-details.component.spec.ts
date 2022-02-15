@@ -58,6 +58,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
+import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initializer.component';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -101,6 +102,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockDirective(ExtensionPointDirective),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(NgbTooltip),
+                MockComponent(LtiInitializerComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -163,7 +165,6 @@ describe('CourseExerciseDetailsComponent', () => {
     it('should initialize', fakeAsync(() => {
         fixture.detectChanges();
         tick(500);
-        expect(comp.showWelcomeAlert).toBe(true);
         expect(comp.inProductionEnvironment).toBe(false);
         expect(comp.courseId).toBe(1);
         expect(comp.exercise).toStrictEqual(exercise);

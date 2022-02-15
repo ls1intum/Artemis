@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -114,6 +115,39 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         var activeStudents = courseService.getActiveStudents(exerciseList, 0, 4, date);
         assertThat(activeStudents.size()).isEqualTo(4);
         assertThat(activeStudents).containsExactly(0, 1, 1, 2);
+    }
+
+    @Test
+    public void testGetActiveStudents_UTCConversion() {
+        ZonedDateTime date = ZonedDateTime.of(2022, 1, 2, 0, 0, 0, 0, ZonedDateTime.now().getZone());
+        SecurityUtils.setAuthorizationObject();
+        var course = database.addEmptyCourse();
+        var exercise = ModelFactory.generateTextExercise(date, date, date, course);
+        course.addExercises(exercise);
+        exercise = exerciseRepo.save(exercise);
+
+        var users = database.addUsers(2, 0, 0, 0);
+        var student1 = users.get(0);
+        var participation1 = new StudentParticipation();
+        participation1.setParticipant(student1);
+        participation1.exercise(exercise);
+
+        studentParticipationRepo.save(participation1);
+
+        var submission1 = new TextSubmission();
+        submission1.text("text of text submission1");
+        submission1.setLanguage(Language.ENGLISH);
+        submission1.setSubmitted(true);
+        submission1.setParticipation(participation1);
+        submission1.setSubmissionDate(date.plusDays(1).plusMinutes(59).plusSeconds(59).plusNanos(59));
+
+        submissionRepository.save(submission1);
+
+        var exerciseList = new HashSet<Long>();
+        exerciseList.add(exercise.getId());
+        var activeStudents = courseService.getActiveStudents(exerciseList, 0, 4, ZonedDateTime.of(2022, 1, 25, 0, 0, 0, 0, ZoneId.systemDefault()));
+        assertThat(activeStudents.size()).isEqualTo(4);
+        assertThat(activeStudents).containsExactly(1, 0, 0, 0);
     }
 
     @Test

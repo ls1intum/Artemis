@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
@@ -16,7 +16,7 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
     styleUrls: ['./category-selector.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class CategorySelectorComponent implements OnInit, OnChanges {
+export class CategorySelectorComponent implements OnChanges {
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
     // the selected categories, which can be manipulated by the user in the UI
@@ -39,8 +39,6 @@ export class CategorySelectorComponent implements OnInit, OnChanges {
     // Icons
     faTimes = faTimes;
 
-    ngOnInit() {}
-
     ngOnChanges() {
         this.uniqueCategoriesForAutocomplete = this.categoryCtrl.valueChanges.pipe(
             startWith(undefined),
@@ -52,18 +50,18 @@ export class CategorySelectorComponent implements OnInit, OnChanges {
         );
     }
 
-    private categoriesAsStringArray() {
+    private categoriesAsStringArray(): string[] {
         if (!this.categories) {
             return [];
         }
-        return this.categories.map((exerciseCategory) => exerciseCategory.category?.toLowerCase());
+        return this.categories.map((exerciseCategory) => exerciseCategory.category!.toLowerCase());
     }
 
-    private existingCategoriesAsStringArray() {
+    private existingCategoriesAsStringArray(): string[] {
         if (!this.existingCategories) {
             return [];
         }
-        return this.existingCategories.map((exerciseCategory) => exerciseCategory.category?.toLowerCase());
+        return this.existingCategories.map((exerciseCategory) => exerciseCategory.category!.toLowerCase());
     }
 
     // if the user types in something, we need to filter for the matching categories
@@ -86,7 +84,7 @@ export class CategorySelectorComponent implements OnInit, OnChanges {
      * set color of selected category
      * @param {string} selectedColor
      */
-    onSelectedColor(selectedColor: string) {
+    onSelectedColor(selectedColor: string): void {
         this.selectedCategory.color = selectedColor;
         this.categories = this.categories.map((category) => {
             if (category.category === this.selectedCategory.category) {
@@ -125,14 +123,14 @@ export class CategorySelectorComponent implements OnInit, OnChanges {
         this.categoryCtrl.setValue(null);
     }
 
-    private createCategory(categoryString: string) {
+    private createCategory(categoryString: string): ExerciseCategory {
         const category = new ExerciseCategory();
         category.category = categoryString;
         category.color = this.chooseRandomColor();
         return category;
     }
 
-    private chooseRandomColor() {
+    private chooseRandomColor(): string {
         const randomIndex = Math.floor(Math.random() * this.categoryColors.length);
         return this.categoryColors[randomIndex];
     }
@@ -152,7 +150,7 @@ export class CategorySelectorComponent implements OnInit, OnChanges {
         this.categoryCtrl.setValue(null);
     }
 
-    private findExistingCategory(categoryString: string) {
+    private findExistingCategory(categoryString: string): ExerciseCategory | undefined {
         return this.existingCategories.find((existingCategory) => existingCategory.category?.toLowerCase() === categoryString.toLowerCase());
     }
 
@@ -160,7 +158,7 @@ export class CategorySelectorComponent implements OnInit, OnChanges {
      * cancel colorSelector and remove exerciseCategory
      * @param {ExerciseCategory} categoryToRemove
      */
-    onItemRemove(categoryToRemove: ExerciseCategory) {
+    onItemRemove(categoryToRemove: ExerciseCategory): void {
         this.colorSelector.cancelColorSelector();
         this.categories = this.categories.filter((exerciseCategory) => exerciseCategory.category !== categoryToRemove.category);
         this.selectedCategories.emit(this.categories);
