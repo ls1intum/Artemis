@@ -46,6 +46,7 @@ import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner, faSort, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { GraphColors } from 'app/entities/statistics.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -144,9 +145,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     ratingsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
 
     // graph
-    unassessessedSubmissions: string;
-    automaticAssisstedSubmissions: string;
-    manualAssessedSubmissions: string;
     view: [number, number] = [350, 150];
     legendPosition = LegendPosition.Below;
     assessments: any[];
@@ -211,39 +209,49 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     setupGraph() {
-        this.unassessessedSubmissions = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions');
-        this.automaticAssisstedSubmissions = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions');
-        this.manualAssessedSubmissions = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions');
-
-        this.customColors = [
-            {
-                name: this.unassessessedSubmissions,
-                value: '#F4A7B6',
-            },
-            {
-                name: this.manualAssessedSubmissions,
-                value: '#98C7EF',
-            },
-            {
-                name: this.automaticAssisstedSubmissions,
-                value: '#FFDD9C',
-            },
-        ];
-
-        this.assessments = [
-            {
-                name: this.unassessessedSubmissions,
-                value: this.numberOfSubmissions.total - this.totalNumberOfAssessments.total,
-            },
-            {
-                name: this.manualAssessedSubmissions,
-                value: this.totalNumberOfAssessments.total - this.numberOfAutomaticAssistedAssessments.total,
-            },
-            {
-                name: this.automaticAssisstedSubmissions,
-                value: this.numberOfAutomaticAssistedAssessments.total,
-            },
-        ];
+        // If the programming exercise is assessed automatically but complaints are enabled, the term "unassessed submissions" might be misleading.
+        // In this case, we only show open and resolved complaints
+        if (this.programmingExercise && this.programmingExercise.assessmentType === AssessmentType.AUTOMATIC && this.programmingExercise.allowComplaintsForAutomaticAssessments) {
+            const numberOfComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfOpenComplaints');
+            const numberOfResolvedComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfResolvedComplaints');
+            this.customColors = [
+                { name: numberOfComplaintsLabel, value: GraphColors.YELLOW },
+                { name: numberOfResolvedComplaintsLabel, value: GraphColors.GREEN },
+            ];
+            this.assessments = [
+                {
+                    name: numberOfComplaintsLabel,
+                    value: this.statsForDashboard.numberOfOpenComplaints,
+                },
+                {
+                    name: numberOfResolvedComplaintsLabel,
+                    value: this.statsForDashboard.numberOfComplaints - this.statsForDashboard.numberOfOpenComplaints,
+                },
+            ];
+        } else {
+            const numberOfUnassessedSubmissionLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions');
+            const numberOfAutomaticAssistedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions');
+            const numberOfManualAssessedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions');
+            this.customColors = [
+                { name: numberOfUnassessedSubmissionLabel, value: GraphColors.RED },
+                { name: numberOfManualAssessedSubmissionsLabel, value: GraphColors.BLUE },
+                { name: numberOfAutomaticAssistedSubmissionsLabel, value: GraphColors.YELLOW },
+            ];
+            this.assessments = [
+                {
+                    name: numberOfUnassessedSubmissionLabel,
+                    value: this.numberOfSubmissions.total - this.totalNumberOfAssessments.total,
+                },
+                {
+                    name: numberOfManualAssessedSubmissionsLabel,
+                    value: this.totalNumberOfAssessments.total - this.numberOfAutomaticAssistedAssessments.total,
+                },
+                {
+                    name: numberOfAutomaticAssistedSubmissionsLabel,
+                    value: this.numberOfAutomaticAssistedAssessments.total,
+                },
+            ];
+        }
     }
 
     setupLinks() {
