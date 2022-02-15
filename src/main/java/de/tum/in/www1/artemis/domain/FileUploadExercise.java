@@ -44,7 +44,9 @@ public class FileUploadExercise extends Exercise {
      */
     @Override
     public void filterSensitiveInformation() {
-        setSampleSolution(null);
+        if (!isExampleSolutionPublished()) {
+            setExampleSolution(null);
+        }
         super.filterSensitiveInformation();
     }
 
@@ -56,16 +58,5 @@ public class FileUploadExercise extends Exercise {
     @Override
     public ExerciseType getExerciseType() {
         return FILE_UPLOAD;
-    }
-
-    /**
-     * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
-     */
-    @Override
-    public void filterSensitiveInformation() {
-        if (!isExampleSolutionPublished()) {
-            setExampleSolution(null);
-        }
-        super.filterSensitiveInformation();
     }
 }
