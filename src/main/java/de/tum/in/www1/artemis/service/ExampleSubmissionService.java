@@ -83,7 +83,7 @@ public class ExampleSubmissionService {
             // Remove the reference to the exercise when the example submission is deleted
             exerciseWithExampleSubmission.ifPresent(exercise -> exercise.removeExampleSubmission(exampleSubmission));
 
-            // due to Cascade.Remove this will also remove the submission and the result in case they exist
+            // due to Cascade.Remove this will also remove the submission and the result(s) in case they exist
             exampleSubmissionRepository.delete(exampleSubmission);
         }
     }

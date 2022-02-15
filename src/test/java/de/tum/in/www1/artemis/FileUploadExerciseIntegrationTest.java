@@ -555,7 +555,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     public void testReEvaluateAndUpdateFileUploadExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
-        FileUploadExercise fileUploadExerciseToBeConflicted = fileUploadExerciseRepository.findOneByIdElseThrow(fileUploadExercise.getId());
+        FileUploadExercise fileUploadExerciseToBeConflicted = fileUploadExerciseRepository.findByIdElseThrow(fileUploadExercise.getId());
         fileUploadExerciseToBeConflicted.setId(123456789L);
         fileUploadExerciseRepository.save(fileUploadExerciseToBeConflicted);
 

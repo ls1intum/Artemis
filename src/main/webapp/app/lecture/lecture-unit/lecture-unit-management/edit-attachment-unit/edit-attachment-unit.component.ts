@@ -40,7 +40,7 @@ export class EditAttachmentUnitComponent implements OnInit {
     ngOnInit(): void {
         this.isLoading = true;
         const lectureRoute = this.activatedRoute.parent!.parent!;
-        combineLatest(this.activatedRoute.paramMap, lectureRoute.paramMap)
+        combineLatest([this.activatedRoute.paramMap, lectureRoute.paramMap])
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
@@ -52,8 +52,8 @@ export class EditAttachmentUnitComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                (attachmentUnitResponse: HttpResponse<AttachmentUnit>) => {
+            .subscribe({
+                next: (attachmentUnitResponse: HttpResponse<AttachmentUnit>) => {
                     this.attachmentUnit = attachmentUnitResponse.body!;
                     this.attachment = this.attachmentUnit.attachment!;
                     // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
@@ -72,8 +72,8 @@ export class EditAttachmentUnitComponent implements OnInit {
                         },
                     };
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     updateAttachmentUnit(formData: AttachmentUnitFormData) {
@@ -129,9 +129,8 @@ export class EditAttachmentUnitComponent implements OnInit {
                     this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
                 }),
             )
-            .subscribe(
-                () => {},
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+            .subscribe({
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 }

@@ -140,7 +140,7 @@ describe('Course Management Detail Component', () => {
         });
 
         it('should return empty if search fails', () => {
-            searchStub.mockReturnValue(throwError(new Error('')));
+            searchStub.mockReturnValue(throwError(() => new Error('')));
             comp.searchAllUsers(loginStream).subscribe((users: any) => {
                 expect(users).toEqual([]);
             });

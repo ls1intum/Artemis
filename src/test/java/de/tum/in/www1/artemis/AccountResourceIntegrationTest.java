@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
-import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -248,20 +247,6 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "authenticateduser")
-    public void getPassword() throws Exception {
-        // create user in repo
-        User user = ModelFactory.generateActivatedUser("authenticateduser");
-        userCreationService.createUser(new ManagedUserVM(user));
-
-        // make request
-        @SuppressWarnings("rawtypes")
-        Map response = request.get("/api/account/password", HttpStatus.OK, Map.class);
-        assertThat(response.get("password")).isNotNull();
-        assertThat(response.get("password")).isNotEqualTo("");
-    }
-
-    @Test
-    @WithMockUser(username = "authenticateduser")
     public void saveAccount() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
@@ -394,7 +379,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void passwordReset() throws Exception {
+    public void passwordResetByEmail() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         User createdUser = userCreationService.createUser(new ManagedUserVM(user));
@@ -411,6 +396,31 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
         ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
 
+        verifyPasswordReset(createdUser, resetKeyBefore);
+    }
+
+    @Test
+    public void passwordResetByUsername() throws Exception {
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+
+        Optional<User> userBefore = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
+        assertThat(userBefore).isPresent();
+        String resetKeyBefore = userBefore.get().getResetKey();
+
+        // init password reset
+        // no helper method from request can be used since the String needs to be transferred unaltered; The helpers would add quotes around it
+        // previous, faulty call:
+        // request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
+        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(createdUser.getLogin());
+        request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
+        ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
+
+        verifyPasswordReset(createdUser, resetKeyBefore);
+    }
+
+    private void verifyPasswordReset(User createdUser, String resetKeyBefore) throws Exception {
         // check user data
         Optional<User> userPasswordResetInit = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userPasswordResetInit).isPresent();
@@ -459,30 +469,18 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void passwordResetInitRegistrationDisabled() throws Throwable {
-        testWithRegistrationDisabled(() -> {
-            // attempt password reset
-            request.postWithoutLocation("/api/account/reset-password/init", "", HttpStatus.FORBIDDEN, null);
-        });
-    }
+    public void passwordResetInitUserExternal() throws Throwable {
+        String login = "testLogin";
+        String email = "test@mail.com";
+        User user = new User();
+        user.setLogin(login);
+        user.setEmail(email);
+        user.setInternal(false);
+        userRepository.saveAndFlush(user);
 
-    @Test
-    public void passwordResetInitSaml2Disabled() throws Throwable {
-        testWithRegistrationDisabled(() -> {
-            ConfigUtil.testWithChangedConfig(accountResource, "saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
-                // attempt password reset
-                request.postWithoutLocation("/api/account/reset-password/init", "", HttpStatus.FORBIDDEN, null);
-            });
-        });
-    }
-
-    @Test
-    @WithMockUser("authenticateduser")
-    public void passwordResetFinishRegistrationDisabled() throws Throwable {
-        testWithRegistrationDisabled(() -> {
-            KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
-            request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
-        });
+        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(email);
+        request.getMvc().perform(req).andExpect(status().is(HttpStatus.BAD_REQUEST.value())).andReturn();
+        ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
     }
 
     @Test

@@ -50,10 +50,10 @@ export class DiscussionSectionComponent implements OnInit, AfterViewInit, OnDest
      * creates the subscription to posts to stay updated on any changes of posts in this course
      */
     ngOnInit(): void {
-        this.paramSubscription = combineLatest(this.activatedRoute.params, this.activatedRoute.queryParams, (params: Params, queryParams: Params) => ({
-            params,
-            queryParams,
-        })).subscribe((routeParams: { params: Params; queryParams: Params }) => {
+        this.paramSubscription = combineLatest({
+            params: this.activatedRoute.params,
+            queryParams: this.activatedRoute.queryParams,
+        }).subscribe((routeParams: { params: Params; queryParams: Params }) => {
             const { params, queryParams } = routeParams;
             const courseId = params.courseId;
             this.currentPostId = +queryParams.postId;

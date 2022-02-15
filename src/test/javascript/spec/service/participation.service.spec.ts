@@ -1,4 +1,4 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
@@ -17,11 +17,11 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 
 describe('Participation Service', () => {
-    let injector: TestBed;
     let service: ParticipationService;
     let httpMock: HttpTestingController;
     let participationDefault: Participation;
     let currentDate: dayjs.Dayjs;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -32,9 +32,8 @@ describe('Participation Service', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(ParticipationService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(ParticipationService);
+        httpMock = TestBed.inject(HttpTestingController);
         currentDate = dayjs();
 
         participationDefault = new StudentParticipation();
@@ -185,6 +184,8 @@ describe('Participation Service', () => {
     it('should update a Participation', fakeAsync(() => {
         const exercise = new TextExercise(new Course(), undefined);
         exercise.id = 1;
+        exercise.categories = undefined;
+
         const returnedFromService = Object.assign(
             {
                 repositoryUrl: 'BBBBBB',

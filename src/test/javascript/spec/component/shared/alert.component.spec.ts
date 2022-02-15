@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -8,14 +8,14 @@ describe('Alert Component Tests', () => {
     let fixture: ComponentFixture<AlertComponent>;
     let alertService: AlertService;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [AlertComponent],
         })
             .overrideTemplate(AlertComponent, '')
             .compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(AlertComponent);

@@ -290,7 +290,7 @@ export class MetisService implements OnDestroy {
             emptyPost.courseWideContext = courseWideContext;
             emptyPost.course = this.course;
         } else if (exercise) {
-            const exercisePost = this.exerciseService.convertExerciseForServer(exercise);
+            const exercisePost = ExerciseService.convertExerciseForServer(exercise);
             emptyPost.exercise = { id: exercisePost.id, title: exercisePost.title, type: exercisePost.type } as Exercise;
         } else if (lecture) {
             emptyPost.lecture = { id: lecture.id, title: lecture.title } as Lecture;

@@ -279,7 +279,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<Array<string | undefined>> => {
         // Fallback for exercises that don't have test cases yet.
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
-            rxMap((result) => (!result || !result.feedbacks ? throwError('no result available') : result)),
+            rxMap((result) => (!result || !result.feedbacks ? throwError(() => new Error('no result available')) : result)),
             rxMap(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text).sort()),
             catchError(() => of([])),
         );

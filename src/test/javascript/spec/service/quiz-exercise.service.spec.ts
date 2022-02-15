@@ -1,5 +1,5 @@
 import { TranslateService } from '@ngx-translate/core';
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -11,7 +11,6 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { ArtemisTestModule } from '../test.module';
 
 describe('QuizExercise Service', () => {
-    let injector: TestBed;
     let service: QuizExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: QuizExercise;
@@ -23,9 +22,8 @@ describe('QuizExercise Service', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(QuizExerciseService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(QuizExerciseService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         elemDefault = new QuizExercise(new Course(), undefined);
     });

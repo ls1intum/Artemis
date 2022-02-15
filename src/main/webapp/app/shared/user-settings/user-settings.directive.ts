@@ -36,15 +36,15 @@ export abstract class UserSettingsDirective implements OnInit {
      * Fetches the settings based on the settings category, updates the currently loaded userSettingsStructure, individual settings, and HTML template
      */
     protected loadSetting(): void {
-        this.userSettingsService.loadSettings(this.userSettingsCategory).subscribe(
-            (res: HttpResponse<Setting[]>) => {
+        this.userSettingsService.loadSettings(this.userSettingsCategory).subscribe({
+            next: (res: HttpResponse<Setting[]>) => {
                 this.userSettings = this.userSettingsService.loadSettingsSuccessAsSettingsStructure(res.body!, this.userSettingsCategory);
                 this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
                 this.changeDetector.detectChanges();
                 this.alertService.clear();
             },
-            (res: HttpErrorResponse) => this.onError(res),
-        );
+            error: (res: HttpErrorResponse) => this.onError(res),
+        });
     }
 
     // methods related to saving
@@ -54,14 +54,14 @@ export abstract class UserSettingsDirective implements OnInit {
      * Sends all settings which were changed by the user to the server for saving
      */
     public saveSettings() {
-        this.userSettingsService.saveSettings(this.settings, this.userSettingsCategory).subscribe(
-            (res: HttpResponse<Setting[]>) => {
+        this.userSettingsService.saveSettings(this.settings, this.userSettingsCategory).subscribe({
+            next: (res: HttpResponse<Setting[]>) => {
                 this.userSettings = this.userSettingsService.saveSettingsSuccess(this.userSettings, res.body!);
                 this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
                 this.finishSaving();
             },
-            (res: HttpErrorResponse) => this.onError(res),
-        );
+            error: (res: HttpErrorResponse) => this.onError(res),
+        });
     }
 
     /**

@@ -208,4 +208,28 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     public void updateUserNotificationVisibility_hideUntil_asStudent_isSuccessful() throws Exception {
         userTestService.updateUserNotificationVisibilityHideUntilAsStudentIsSuccessful();
     }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void initializeUser() throws Exception {
+        userTestService.initializeUser(false);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void initializeUserWithoutFlag() throws Exception {
+        userTestService.initializeUserWithoutFlag();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void initializeUserNonLTI() throws Exception {
+        userTestService.initializeUserNonLTI();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void initializeUserExternal() throws Exception {
+        userTestService.initializeUserExternal();
+    }
 }

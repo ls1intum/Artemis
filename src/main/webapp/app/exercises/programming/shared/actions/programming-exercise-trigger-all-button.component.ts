@@ -25,7 +25,7 @@ import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
             [tooltip]="'artemisApp.programmingExercise.resubmitAllTooltip'"
             [icon]="faRedo"
             [title]="'artemisApp.programmingExercise.resubmitAll'"
-            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [featureToggle]="FeatureToggle.ProgrammingExercises"
             (onClick)="openTriggerAllModal()"
         >
         </jhi-button>

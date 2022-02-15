@@ -48,15 +48,15 @@ export class OrganizationManagementUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.organization.id) {
-            this.organizationService.update(this.organization).subscribe(
-                () => this.onSaveSuccess(),
-                () => this.onSaveError(),
-            );
+            this.organizationService.update(this.organization).subscribe({
+                next: () => this.onSaveSuccess(),
+                error: () => this.onSaveError(),
+            });
         } else {
-            this.organizationService.add(this.organization).subscribe(
-                () => this.onSaveSuccess(),
-                () => this.onSaveError(),
-            );
+            this.organizationService.add(this.organization).subscribe({
+                next: () => this.onSaveSuccess(),
+                error: () => this.onSaveError(),
+            });
         }
     }
 

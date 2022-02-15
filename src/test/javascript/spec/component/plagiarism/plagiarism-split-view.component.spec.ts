@@ -15,6 +15,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ModelingSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
 import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
+import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 
 const collapse = jest.fn();
 const setSizes = jest.fn();
@@ -37,6 +38,17 @@ describe('Plagiarism Split View Component', () => {
     const submissionA = { studentLogin: 'studentA' } as PlagiarismSubmission<TextSubmissionElement>;
     const submissionB = { studentLogin: 'studentB' } as PlagiarismSubmission<TextSubmissionElement>;
 
+    const comparison = {
+        id: 1,
+        submissionA,
+        submissionB,
+        matches: [],
+        similarity: 42,
+        status: PlagiarismStatus.DENIED,
+        statusA: PlagiarismStatus.NONE,
+        statusB: PlagiarismStatus.NONE,
+    } as PlagiarismComparison<TextSubmissionElement>;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
@@ -52,6 +64,10 @@ describe('Plagiarism Split View Component', () => {
             submissionB,
         } as PlagiarismComparison<TextSubmissionElement>;
         comp.splitControlSubject = splitControlSubject;
+    });
+
+    afterEach(() => {
+        jest.resetAllMocks();
     });
 
     it('checks type of modeling exercise', () => {
@@ -72,14 +88,27 @@ describe('Plagiarism Split View Component', () => {
         expect(comp.isModelingExercise).toEqual(false);
     });
 
-    // TODO: for some reason this test does not work
-    // it('should subscribe to the split control subject', () => {
-    //     comp.exercise = textExercise;
-    //     jest.spyOn(splitControlSubject, 'subscribe');
-    //
-    //     fixture.detectChanges();
-    //     expect(comp.splitControlSubject.subscribe).toHaveBeenCalled();
-    // });
+    it('should parse text matches for comparison', () => {
+        jest.spyOn(comp, 'parseTextMatches');
+        comp.ngOnChanges({
+            exercise: { currentValue: textExercise } as SimpleChange,
+            comparison: { currentValue: comparison } as SimpleChange,
+        });
+
+        expect(comp.isProgrammingOrTextExercise).toBe(true);
+        expect(comp.isModelingExercise).toBe(false);
+        expect(comp.parseTextMatches).toHaveBeenCalledTimes(1);
+    });
+
+    it('should subscribe to the split control subject', () => {
+        comp.exercise = textExercise;
+        jest.spyOn(splitControlSubject, 'subscribe');
+
+        comp.ngOnInit();
+
+        // eslint-disable-next-line deprecation/deprecation
+        expect(comp.splitControlSubject.subscribe).toHaveBeenCalledTimes(1);
+    });
 
     it('should collapse the left pane', () => {
         comp.exercise = textExercise;
@@ -128,14 +157,61 @@ describe('Plagiarism Split View Component', () => {
         expect(textSubmissionB).toEqual(submissionB);
     });
 
-    it('parses text matches', () => {
+    it('should parse text matches', () => {
         jest.spyOn(comp, 'mapMatchesToElements').mockReturnValue(new Map());
 
-        const matches: PlagiarismMatch[] = [];
+        const matches: PlagiarismMatch[] = [
+            { startA: 0, startB: 0, length: 5 },
+            { startA: 10, startB: 10, length: 20 },
+        ];
         comp.parseTextMatches({ submissionA, submissionB, matches } as PlagiarismComparison<TextSubmissionElement>);
 
-        expect(comp.matchesA).toBeDefined();
-        expect(comp.matchesB).toBeDefined();
         expect(comp.mapMatchesToElements).toHaveBeenCalledTimes(2);
+        expect(comp.mapMatchesToElements).toHaveBeenNthCalledWith(
+            1,
+            [
+                { start: 0, length: 5 },
+                { start: 10, length: 20 },
+            ],
+            submissionA,
+        );
+        expect(comp.mapMatchesToElements).toHaveBeenNthCalledWith(
+            2,
+            [
+                { start: 0, length: 5 },
+                { start: 10, length: 20 },
+            ],
+            submissionB,
+        );
+    });
+
+    it('should map matches to elements', () => {
+        const matches = [
+            { start: 0, length: 2 },
+            { start: 0, length: 0 },
+            { start: 3, length: 3 },
+        ];
+        const textSubmissionElements = [
+            { file: '', column: 1, line: 1 },
+            { file: '', column: 2, line: 2 },
+            { file: '', column: 3, line: 3 },
+            { file: '', column: 4, line: 4 },
+            { file: '', column: 5, line: 5 },
+            { file: '', column: 6, line: 6 },
+            { file: '', column: 7, line: 7 },
+            { file: '', column: 8, line: 8 },
+            { file: '', column: 9, line: 9 },
+            { file: '', column: 10, line: 10 },
+        ] as TextSubmissionElement[];
+        submissionA.elements = textSubmissionElements;
+        const mappedElements = new Map();
+        mappedElements.set('none', [
+            { from: { file: '', column: 1, line: 1 }, to: { file: '', column: 2, line: 2 } },
+            { from: { file: '', column: 4, line: 4 }, to: { file: '', column: 6, line: 6 } },
+        ]);
+
+        const result = comp.mapMatchesToElements(matches, submissionA);
+
+        expect(result).toEqual(mappedElements);
     });
 });

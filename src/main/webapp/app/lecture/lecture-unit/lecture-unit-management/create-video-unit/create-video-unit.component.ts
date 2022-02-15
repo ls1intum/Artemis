@@ -24,7 +24,7 @@ export class CreateVideoUnitComponent implements OnInit {
 
     ngOnInit(): void {
         const lectureRoute = this.activatedRoute.parent!.parent!;
-        combineLatest(lectureRoute.paramMap, lectureRoute.parent!.paramMap).subscribe(([params, parentParams]) => {
+        combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params, parentParams]) => {
             this.lectureId = Number(params.get('lectureId'));
             this.courseId = Number(parentParams.get('courseId'));
         });
@@ -52,11 +52,11 @@ export class CreateVideoUnitComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                () => {
+            .subscribe({
+                next: () => {
                     this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 }
