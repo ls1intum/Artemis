@@ -100,7 +100,7 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
 
     @Test
     public void testReduceToOneTask() {
-        updateProblemStatement("[task][Task 1](testClass[BubbleSort],testMethods[Context],testMethods[Policy])");
+        updateProblemStatement("[task][Task 1](testClass[BubbleSort],testMethods[Context], testMethods[Policy])");
         assertThat(programmingExerciseTaskRepository.findAll()).hasSize(1);
         var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
         assertThat(tasks).hasSize(1);

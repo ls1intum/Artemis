@@ -4,6 +4,12 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
     <property name="autoIncrement" value="true"/>
 
+    <!--
+    This changeset adds the first domain models of Hestia.
+    It contains tables for ProgrammingExerciseTask and ProgrammingExerciseSolutionEntry.
+    It also contains a new table to represent the many to many relationship between ProgrammingExerciseTask and ProgrammingExerciseTestCase.
+    Furthermore it changes the table for ExerciseHint to also support the new subclass CodeHint.
+    -->
     <changeSet author="timor-morrien" id="20211216000000-1">
         <createTable tableName="programming_exercise_task">
             <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">

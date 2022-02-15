@@ -57,16 +57,18 @@ public class ProgrammingExerciseTaskService {
      * @param exercise The programming exercise to extract the tasks from
      */
     public void updateTasksFromProblemStatement(ProgrammingExercise exercise) {
-        var tasksToBeDeleted = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId());
-        var tasksToBeAdded = extractTasks(exercise);
+        var previousTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId());
+        var extractedTasks = extractTasks(exercise);
         // No changes
-        if (tasksToBeDeleted.equals(tasksToBeAdded)) {
+        if (previousTasks.equals(extractedTasks)) {
             return;
         }
         // Add all tasks that did not change
-        var tasksToBeSaved = new HashSet<>(tasksToBeDeleted);
-        tasksToBeSaved.retainAll(tasksToBeAdded);
+        var tasksToBeSaved = new HashSet<>(previousTasks);
+        tasksToBeSaved.retainAll(extractedTasks);
+        var tasksToBeDeleted = new HashSet<>(previousTasks);
         tasksToBeDeleted.removeAll(tasksToBeSaved);
+        var tasksToBeAdded = new HashSet<>(extractedTasks);
         tasksToBeAdded.removeAll(tasksToBeSaved);
         // Check for tasks where only the name changed
         Iterator<ProgrammingExerciseTask> extractedTaskIterator = tasksToBeAdded.iterator();
