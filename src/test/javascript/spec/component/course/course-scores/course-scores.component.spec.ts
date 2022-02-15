@@ -39,6 +39,10 @@ describe('CourseScoresComponent', () => {
     const exerciseWithFutureReleaseDate = {
         title: 'exercise with future release date',
         releaseDate: dayjs().add(1, 'day'),
+        id: 6,
+        type: ExerciseType.TEXT,
+        includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED,
+        maxPoints: 10,
     } as Exercise;
 
     const overallPoints = 10 + 10 + 10;

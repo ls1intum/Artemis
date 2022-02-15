@@ -174,7 +174,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.course = course;
         this.initializeExerciseTitles();
         this.exercisesOfCourseThatAreIncludedInScoreCalculation = this.determineExercisesIncludedInScore(this.course);
-        this.numberOfReleasedExercises = this.determineNumberOfReleasedExercises(this.course);
+        this.numberOfReleasedExercises = this.determineReleasedExercises(this.course).length;
         this.calculateCourseStatistics(this.course.id!);
     }
 
@@ -260,7 +260,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             const courseScoreDTOs = courseScoresResult.body!;
             this.compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs);
             this.calculateAverageAndMedianScores();
-            // this.createChart(this.students.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course)));
             this.scoresToDisplay = this.students.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course));
             this.highlightBar(HighlightValue.AVERAGE);
         });
@@ -372,7 +371,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         studentsMap.forEach((student) => {
             this.students.push(student);
             // We need the information of not included exercises as well in order to compute the total average and median
-            for (const exercise of this.course.exercises!) {
+            for (const exercise of this.determineReleasedExercises(this.course)) {
                 this.updateStudentStatisticsWithExerciseResults(student, exercise);
             }
 
@@ -833,8 +832,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         return 0;
     }
 
-    private determineNumberOfReleasedExercises(course: Course): number {
-        return course.exercises!.filter((exercise) => !exercise.releaseDate || exercise.releaseDate.isBefore(dayjs())).length;
+    private determineReleasedExercises(course: Course): Exercise[] {
+        return course.exercises!.filter((exercise) => !exercise.releaseDate || exercise.releaseDate.isBefore(dayjs()));
     }
 
     private calculateAverageScoreIncluded(scores: number[], points: number[]) {
@@ -862,7 +861,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const includedPointsPerStudent = this.students.map((student) => student.overallPoints);
         // average points and score included
         const scores = includedPointsPerStudent.map((point) => point / this.maxNumberOfOverallPoints);
-        this.calculateAverageScoreIncluded(scores, includedPointsPerStudent);
+        // this.calculateAverageScoreIncluded(scores, includedPointsPerStudent);
+        this.averageScoreIncluded = roundScorePercentSpecifiedByCourseSettings(this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints, this.course);
 
         // average points and score total
         const achievedPointsTotal = this.students.map((student) => {
