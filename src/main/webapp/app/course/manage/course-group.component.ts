@@ -300,7 +300,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     /**
      * Method for generating the csv file containing the user information
      *
-     *@param rows  the data to export
+     * @param rows  the data to export
      * @param keys the keys of the data
      */
     exportAsCsv(rows: any[], keys: string[]) {
