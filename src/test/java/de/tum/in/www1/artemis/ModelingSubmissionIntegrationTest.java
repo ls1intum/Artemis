@@ -769,9 +769,10 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     private void checkDetailsHidden(ModelingSubmission submission, boolean isStudent) {
         assertThat(submission.getParticipation().getSubmissions()).isNullOrEmpty();
         assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
-        assertThat(((ModelingExercise) submission.getParticipation().getExercise()).getExampleSolutionModel()).isNullOrEmpty();
-        assertThat(((ModelingExercise) submission.getParticipation().getExercise()).getExampleSolutionExplanation()).isNullOrEmpty();
         if (isStudent) {
+            var modelingExercise = ((ModelingExercise) submission.getParticipation().getExercise());
+            assertThat(modelingExercise.getExampleSolutionModel()).isNullOrEmpty();
+            assertThat(modelingExercise.getExampleSolutionExplanation()).isNullOrEmpty();
             assertThat(submission.getLatestResult()).isNull();
         }
     }

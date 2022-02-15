@@ -97,17 +97,12 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         exam = examRepository.save(exam);
 
         exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
-
-        examTextExercise = (TextExercise) exam.getExerciseGroups().get(0).getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findAny().orElse(null);
-
-        examModelingExercise = (ModelingExercise) exam.getExerciseGroups().get(3).getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise).findAny()
+        examTextExercise = (TextExercise) exam.getExerciseGroups().get(0).getExercises().stream().filter(ex -> ex instanceof TextExercise).findAny().orElse(null);
+        examModelingExercise = (ModelingExercise) exam.getExerciseGroups().get(3).getExercises().stream().filter(ex -> ex instanceof ModelingExercise).findAny().orElse(null);
+        examProgrammingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findAny()
                 .orElse(null);
-        examProgrammingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
-                .findAny().orElse(null);
-
-        examFileUploadExercise = (FileUploadExercise) exam.getExerciseGroups().get(2).getExercises().stream().filter(exercise -> exercise instanceof FileUploadExercise).findAny()
+        examFileUploadExercise = (FileUploadExercise) exam.getExerciseGroups().get(2).getExercises().stream().filter(exy -> exy instanceof FileUploadExercise).findAny()
                 .orElse(null);
-
     }
 
     @AfterEach
