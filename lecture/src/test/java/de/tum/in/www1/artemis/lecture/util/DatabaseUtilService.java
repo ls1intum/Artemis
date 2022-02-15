@@ -3,21 +3,36 @@ package de.tum.in.www1.artemis.lecture.util;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
+import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.util.DatabaseCleanupService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -64,6 +79,24 @@ public class DatabaseUtilService {
 
     @Autowired
     private AuthorityRepository authorityRepository;
+
+    @Autowired
+    private AttachmentRepository attachmentRepo;
+
+    @Autowired
+    private ExerciseRepository exerciseRepo;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepo;
+
+    @Autowired
+    private TutorParticipationRepository tutorParticipationRepo;
+
+    @Autowired
+    private ResultRepository resultRepo;
 
     @Autowired
     private DatabaseCleanupService databaseCleanupService;
@@ -118,6 +151,127 @@ public class DatabaseUtilService {
             lectureRepo.save(lecture);
         }
         return lecture;
+    }
+
+    public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+        ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
+
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course2 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
+        modelingExercise.setGradingInstructions("some grading instructions");
+        modelingExercise.getCategories().add("Modeling");
+        course1.addExercises(modelingExercise);
+
+        de.tum.in.www1.artemis.domain.TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
+        textExercise.setGradingInstructions("some grading instructions");
+        textExercise.getCategories().add("Text");
+        course1.addExercises(textExercise);
+
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course1);
+        fileUploadExercise.setGradingInstructions("some grading instructions");
+        fileUploadExercise.setSampleSolution("Sample Solution");
+        fileUploadExercise.getCategories().add("File");
+        course1.addExercises(fileUploadExercise);
+
+        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExercise(pastTimestamp, futureTimestamp, course1);
+        programmingExercise.setGradingInstructions("some grading instructions");
+        programmingExercise.getCategories().add("Programming");
+        course1.addExercises(programmingExercise);
+
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(pastTimestamp, futureTimestamp, course1);
+        programmingExercise.getCategories().add("Quiz");
+        course1.addExercises(quizExercise);
+
+        Lecture lecture1 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
+        Attachment attachment1 = ModelFactory.generateAttachment(pastTimestamp, lecture1);
+        lecture1.addAttachments(attachment1);
+        course1.addLectures(lecture1);
+
+        Lecture lecture2 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
+        Attachment attachment2 = ModelFactory.generateAttachment(pastTimestamp, lecture2);
+        lecture2.addAttachments(attachment2);
+        course1.addLectures(lecture2);
+
+        course1 = courseRepo.save(course1);
+        course2 = courseRepo.save(course2);
+
+        lectureRepo.save(lecture1);
+        lectureRepo.save(lecture2);
+
+        attachmentRepo.save(attachment1);
+        attachmentRepo.save(attachment2);
+
+        modelingExercise = exerciseRepo.save(modelingExercise);
+        textExercise = exerciseRepo.save(textExercise);
+        exerciseRepo.save(fileUploadExercise);
+        exerciseRepo.save(programmingExercise);
+        exerciseRepo.save(quizExercise);
+
+        if (withParticipations) {
+
+            // create 5 tutor participations and 5 example submissions and connect all of them (to test the many-to-many relationship)
+            var tutorParticipations = new ArrayList<TutorParticipation>();
+            for (int i = 1; i < 6; i++) {
+                var tutorParticipation = new TutorParticipation().tutor(getUserByLogin("tutor" + i));
+                tutorParticipationRepo.save(tutorParticipation);
+                tutorParticipations.add(tutorParticipation);
+            }
+
+            User user = (userRepo.findOneByLogin("student1")).get();
+            StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
+            StudentParticipation participation2 = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
+            StudentParticipation participation3 = ModelFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);
+
+            Submission modelingSubmission1 = ModelFactory.generateModelingSubmission("model1", true);
+            Submission modelingSubmission2 = ModelFactory.generateModelingSubmission("model2", true);
+            Submission textSubmission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, true);
+
+            Result result1 = ModelFactory.generateResult(true, 10D);
+            Result result2 = ModelFactory.generateResult(true, 12D);
+            Result result3 = ModelFactory.generateResult(false, 0D);
+
+            participation1 = studentParticipationRepo.save(participation1);
+            participation2 = studentParticipationRepo.save(participation2);
+            participation3 = studentParticipationRepo.save(participation3);
+
+            submissionRepository.save(modelingSubmission1);
+            submissionRepository.save(modelingSubmission2);
+            submissionRepository.save(textSubmission);
+
+            modelingSubmission1.setParticipation(participation1);
+            textSubmission.setParticipation(participation2);
+            modelingSubmission2.setParticipation(participation3);
+
+            result1.setParticipation(participation1);
+            result2.setParticipation(participation3);
+            result3.setParticipation(participation2);
+
+            result1 = resultRepo.save(result1);
+            result2 = resultRepo.save(result2);
+            result3 = resultRepo.save(result3);
+
+            result1.setSubmission(modelingSubmission1);
+            result2.setSubmission(modelingSubmission2);
+            result3.setSubmission(textSubmission);
+
+            modelingSubmission1.addResult(result1);
+            modelingSubmission2.addResult(result2);
+            textSubmission.addResult(result3);
+
+            submissionRepository.save(modelingSubmission1);
+            submissionRepository.save(modelingSubmission2);
+            submissionRepository.save(textSubmission);
+        }
+
+        return Arrays.asList(course1, course2);
+    }
+
+    public User getUserByLogin(String login) {
+        return userRepo.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
     }
 
     public void resetDatabase() {

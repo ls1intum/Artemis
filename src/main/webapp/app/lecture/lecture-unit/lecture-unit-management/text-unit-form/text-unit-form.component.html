@@ -2,24 +2,24 @@
     <div class="col-12">
         <form *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
             <div class="form-group">
-                <label class="required" for="name">{{ 'artemisApp.textUnit.createTextUnit.name' | artemisTranslate }}*</label>
-                <input type="text" class="form-control" id="name" formControlName="name" [placeholder]="'artemisApp.textUnit.createTextUnit.namePlaceHolder' | artemisTranslate" />
+                <label class="required" for="name">{{ 'lectureApp.textUnit.createTextUnit.name' | artemisTranslate }}*</label>
+                <input type="text" class="form-control" id="name" formControlName="name" [placeholder]="'lectureApp.textUnit.createTextUnit.namePlaceHolder' | artemisTranslate" />
                 <div *ngIf="nameControl?.invalid && (nameControl?.dirty || nameControl?.touched)" class="alert alert-danger">
                     <div *ngIf="nameControl?.errors?.required">
-                        {{ 'artemisApp.textUnit.createTextUnit.nameRequiredValidationError' | artemisTranslate }}
+                        {{ 'lectureApp.textUnit.createTextUnit.nameRequiredValidationError' | artemisTranslate }}
                     </div>
                     <div *ngIf="nameControl?.errors?.maxlength">
-                        {{ 'artemisApp.textUnit.createTextUnit.nameMaxLengthValidationError' | artemisTranslate }}
+                        {{ 'lectureApp.textUnit.createTextUnit.nameMaxLengthValidationError' | artemisTranslate }}
                     </div>
                 </div>
             </div>
             <div class="form-group">
-                <jhi-date-time-picker id="release-date" [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate"></jhi-date-time-picker>
+                <jhi-date-time-picker id="release-date" [labelName]="'lectureApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate"></jhi-date-time-picker>
             </div>
             <div class="form-group">
-                <label class="d-block" for="content">{{ 'artemisApp.textUnit.createTextUnit.content' | artemisTranslate }}</label>
+                <label class="d-block" for="content">{{ 'lectureApp.textUnit.createTextUnit.content' | artemisTranslate }}</label>
                 <small id="contentHelp" class="form-text mb-1 text-muted">
-                    {{ 'artemisApp.textUnit.markdownHelp' | artemisTranslate }}
+                    {{ 'lectureApp.textUnit.markdownHelp' | artemisTranslate }}
                     <a href="https://guides.github.com/features/mastering-markdown/"> GitHub Markdown Guide</a>
                 </small>
                 <!-- not included in reactive form -->
