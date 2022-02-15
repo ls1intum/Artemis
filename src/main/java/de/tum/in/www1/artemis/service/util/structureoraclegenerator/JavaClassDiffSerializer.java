@@ -78,6 +78,9 @@ class JavaClassDiffSerializer {
         JsonArray attributesJSON = new JsonArray();
 
         for (JavaField attribute : javaClassDiff.attributesDiff) {
+            if (isElementToIgnore(attribute)) {
+                continue;
+            }
             JsonObject attributeJSON = SerializerUtil.createJsonObject(attribute.getName(), new HashSet<>(attribute.getModifiers()), attribute, attribute.getAnnotations());
             attributeJSON.addProperty("type", attribute.getType().getValue());
             attributesJSON.add(attributeJSON);
@@ -95,7 +98,9 @@ class JavaClassDiffSerializer {
         JsonArray enumsJSON = new JsonArray();
 
         for (JavaField javaEnum : javaClassDiff.enumsDiff) {
-            enumsJSON.add(javaEnum.getName());
+            if (!isElementToIgnore(javaEnum)) {
+                enumsJSON.add(javaEnum.getName());
+            }
         }
 
         return enumsJSON;
@@ -111,6 +116,9 @@ class JavaClassDiffSerializer {
         JsonArray constructorsJSON = new JsonArray();
 
         for (JavaConstructor constructor : javaClassDiff.constructorsDiff) {
+            if (isElementToIgnore(constructor)) {
+                continue;
+            }
             JsonObject constructorJSON = new JsonObject();
 
             if (!constructor.getModifiers().isEmpty()) {
@@ -137,6 +145,9 @@ class JavaClassDiffSerializer {
         JsonArray methodsJSON = new JsonArray();
 
         for (JavaMethod method : javaClassDiff.methodsDiff) {
+            if (isElementToIgnore(method)) {
+                continue;
+            }
             JsonObject methodJSON = SerializerUtil.createJsonObject(method.getName(), new HashSet<>(method.getModifiers()), method, method.getAnnotations());
             if (!method.getParameters().isEmpty()) {
                 methodJSON.add("parameters", SerializerUtil.serializeParameters(method.getParameters()));
@@ -145,5 +156,9 @@ class JavaClassDiffSerializer {
             methodsJSON.add(methodJSON);
         }
         return methodsJSON;
+    }
+
+    public static boolean isElementToIgnore(JavaAnnotatedElement element) {
+        return element.getTagByName("oracleIgnore") != null;
     }
 }
