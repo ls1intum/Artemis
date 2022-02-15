@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
-import static java.util.stream.Collectors.toList;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -56,7 +54,7 @@ public class TextPlagiarismDetectionService {
                 .filter(submission -> minimumSize == 0 || submission.getText() != null && submission.countWords() >= minimumSize)
                 .filter(submission -> minimumScore == 0
                         || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore)
-                .collect(toList());
+                .toList();
 
         log.info("Found {} text submissions in exercise {}", textSubmissions.size(), exerciseWithParticipationsAndSubmissions.getId());
 

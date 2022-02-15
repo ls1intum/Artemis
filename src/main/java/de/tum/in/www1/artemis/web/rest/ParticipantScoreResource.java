@@ -1,11 +1,10 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static java.util.stream.Collectors.toSet;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,9 +69,7 @@ public class ParticipantScoreResource {
         long start = System.currentTimeMillis();
         log.debug("REST request to get course scores for course : {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         List<ScoreDTO> scoreDTOS = participantScoreService.calculateCourseScores(course);
         log.info("getScoresOfCourse took {}ms", System.currentTimeMillis() - start);
         return ResponseEntity.ok().body(scoreDTOS);
@@ -98,10 +95,7 @@ public class ParticipantScoreResource {
         long start = System.currentTimeMillis();
         log.debug("REST request to get exam scores for exam : {}", examId);
         Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(exam.getCourse(), null)) {
-            return forbidden();
-        }
-
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, exam.getCourse(), null);
         List<ScoreDTO> scoreDTOS = participantScoreService.calculateExamScores(exam);
         log.info("getScoresOfExam took {}ms", System.currentTimeMillis() - start);
         return ResponseEntity.ok().body(scoreDTOS);
@@ -123,7 +117,7 @@ public class ParticipantScoreResource {
         log.debug("REST request to get participant scores for course : {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise).collect(Collectors.toSet());
+        Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise).collect(toSet());
         List<ParticipantScoreDTO> resultsOfAllExercises = participantScoreService.getParticipantScoreDTOs(getUnpaged ? Pageable.unpaged() : pageable, exercisesOfCourse);
         log.info("getParticipantScoresOfCourse took {}ms", System.currentTimeMillis() - start);
         return ResponseEntity.ok().body(resultsOfAllExercises);
@@ -143,11 +137,9 @@ public class ParticipantScoreResource {
         long start = System.currentTimeMillis();
         log.debug("REST request to get average participant scores of participants for course : {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise)
-                .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
+                .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(toSet());
         List<ParticipantScoreAverageDTO> resultsOfAllExercises = participantScoreService.getParticipantScoreAverageDTOs(exercisesOfCourse);
         log.info("getAverageScoreOfStudentInCourse took {}ms", System.currentTimeMillis() - start);
         return ResponseEntity.ok().body(resultsOfAllExercises);
@@ -173,11 +165,9 @@ public class ParticipantScoreResource {
             log.debug("REST request to get average scores for course : {}", courseId);
         }
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         Set<Exercise> includedExercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise)
-                .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
+                .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(toSet());
         Double averageScore = participantScoreService.getAverageScore(onlyConsiderRatedScores, includedExercisesOfCourse);
         log.info("getAverageScoreOfCourse took {}ms", System.currentTimeMillis() - start);
         return ResponseEntity.ok().body(averageScore);
@@ -197,14 +187,7 @@ public class ParticipantScoreResource {
             @RequestParam(value = "getUnpaged", required = false, defaultValue = "false") boolean getUnpaged) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get participant scores for exam : {}", examId);
-        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(exam.getCourse(), null)) {
-            return forbidden();
-        }
-        Set<Exercise> exercisesOfExam = new HashSet<>();
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            exercisesOfExam.addAll(exerciseGroup.getExercises());
-        }
+        Set<Exercise> exercisesOfExam = getExercisesOfExam(examId);
         Pageable page;
         if (getUnpaged) {
             page = Pageable.unpaged();
@@ -236,16 +219,7 @@ public class ParticipantScoreResource {
         else {
             log.debug("REST request to get average scores for exam : {}", examId);
         }
-        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(exam.getCourse(), null)) {
-            return forbidden();
-        }
-        Set<Exercise> exercisesOfExam = new HashSet<>();
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            exercisesOfExam.addAll(exerciseGroup.getExercises());
-        }
-        Set<Exercise> includedExercisesOfExam = exercisesOfExam.stream().filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED))
-                .collect(Collectors.toSet());
+        Set<Exercise> includedExercisesOfExam = getIncludedExercisesOfExam(examId);
 
         Double averageScore = participantScoreService.getAverageScore(onlyConsiderRatedScores, includedExercisesOfExam);
         log.info("getAverageScoreOfExam took {}ms", System.currentTimeMillis() - start);
@@ -265,19 +239,24 @@ public class ParticipantScoreResource {
     public ResponseEntity<List<ParticipantScoreAverageDTO>> getAverageScoreOfParticipantInExam(@PathVariable Long examId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get average participant scores of participants for exam : {}", examId);
+        Set<Exercise> includedExercisesOfExam = getIncludedExercisesOfExam(examId);
+        List<ParticipantScoreAverageDTO> resultsOfAllExercises = participantScoreService.getParticipantScoreAverageDTOs(includedExercisesOfExam);
+        log.info("getAverageScoreOfParticipantInExam took {}ms", System.currentTimeMillis() - start);
+        return ResponseEntity.ok().body(resultsOfAllExercises);
+    }
+
+    private Set<Exercise> getIncludedExercisesOfExam(Long examId) {
+        return getExercisesOfExam(examId).stream().filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(toSet());
+    }
+
+    private Set<Exercise> getExercisesOfExam(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(exam.getCourse(), null)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, exam.getCourse(), null);
         Set<Exercise> exercisesOfExam = new HashSet<>();
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             exercisesOfExam.addAll(exerciseGroup.getExercises());
         }
-        Set<Exercise> includedExercisesOfExam = exercisesOfExam.stream().filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED))
-                .collect(Collectors.toSet());
-        List<ParticipantScoreAverageDTO> resultsOfAllExercises = participantScoreService.getParticipantScoreAverageDTOs(includedExercisesOfExam);
-        log.info("getAverageScoreOfParticipantInExam took {}ms", System.currentTimeMillis() - start);
-        return ResponseEntity.ok().body(resultsOfAllExercises);
+        return exercisesOfExam;
     }
 
 }

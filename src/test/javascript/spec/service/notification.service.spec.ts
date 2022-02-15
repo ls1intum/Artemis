@@ -83,7 +83,7 @@ describe('Notification Service', () => {
             .then(() => {
                 notificationService = TestBed.inject(NotificationService);
                 httpMock = TestBed.inject(HttpTestingController);
-                router = TestBed.get(Router);
+                router = TestBed.inject(Router);
 
                 websocketService = TestBed.inject(JhiWebsocketService);
                 wsSubscribeStub = jest.spyOn(websocketService, 'subscribe');

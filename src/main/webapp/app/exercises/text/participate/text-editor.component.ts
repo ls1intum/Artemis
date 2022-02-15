@@ -89,10 +89,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             return this.alertService.error('artemisApp.textExercise.error');
         }
 
-        this.textService.get(participationId).subscribe(
-            (data: StudentParticipation) => this.updateParticipation(data),
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+        this.textService.get(participationId).subscribe({
+            next: (data: StudentParticipation) => this.updateParticipation(data),
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     private updateParticipation(participation: StudentParticipation) {
@@ -223,8 +223,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.submission = this.submissionForAnswer(this.answer);
         setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
 
-        this.textSubmissionService.update(this.submission, this.textExercise.id!).subscribe(
-            (response) => {
+        this.textSubmissionService.update(this.submission, this.textExercise.id!).subscribe({
+            next: (response) => {
                 this.submission = response.body!;
                 setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
                 this.submissionChange.next(this.submission);
@@ -247,11 +247,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     this.alertService.warning('entity.action.submitDeadlineMissedAlert');
                 }
             },
-            (err: HttpErrorResponse) => {
+            error: (err: HttpErrorResponse) => {
                 this.alertService.error(err.error.message);
                 this.isSaving = false;
             },
-        );
+        });
     }
 
     /**

@@ -36,15 +36,15 @@ export class OrganizationManagementComponent implements OnInit {
     }
 
     deleteOrganization(organizationId: number) {
-        this.organizationService.deleteOrganization(organizationId).subscribe(
-            () => {
+        this.organizationService.deleteOrganization(organizationId).subscribe({
+            next: () => {
                 this.dialogErrorSource.next('');
                 this.organizations = this.organizations.filter((org) => org.id !== organizationId);
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next('An error occurred while removing the organization: ' + error.message);
             },
-        );
+        });
     }
 
     /**

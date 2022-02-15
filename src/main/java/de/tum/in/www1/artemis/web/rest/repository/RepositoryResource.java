@@ -1,13 +1,17 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -16,10 +20,11 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -31,6 +36,9 @@ import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.repository.util.RepositoryExecutor;
 
 /**
@@ -262,10 +270,8 @@ public abstract class RepositoryResource {
     public ResponseEntity<RepositoryStatusDTO> getStatus(Long domainId) throws GitAPIException, InterruptedException {
         log.debug("REST request to get clean status for Repository for domainId : {}", domainId);
 
-        boolean hasPermissions = canAccessRepository(domainId);
-
-        if (!hasPermissions) {
-            return forbidden();
+        if (!canAccessRepository(domainId)) {
+            throw new AccessForbiddenException();
         }
 
         RepositoryStatusDTO repositoryStatus = new RepositoryStatusDTO();
@@ -303,16 +309,16 @@ public abstract class RepositoryResource {
             responseEntitySuccess = executor.exec();
         }
         catch (IllegalArgumentException | FileAlreadyExistsException ex) {
-            return badRequest();
+            throw new BadRequestAlertException("Illegal argument during operation or file already exists", "Repository", "illegalArgumentFileAlreadyExists");
         }
         catch (IllegalAccessException ex) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         catch (FileNotFoundException ex) {
-            return notFound();
+            throw new EntityNotFoundException("File not found");
         }
         catch (GitAPIException | IOException | InterruptedException ex) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

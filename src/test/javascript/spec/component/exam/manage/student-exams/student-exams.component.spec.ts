@@ -278,7 +278,7 @@ describe('StudentExamsComponent', () => {
         exam.startDate = dayjs().add(120, 'seconds');
 
         studentExams = [];
-        jest.spyOn(examManagementService, 'generateStudentExams').mockReturnValue(throwError(httpError));
+        jest.spyOn(examManagementService, 'generateStudentExams').mockReturnValue(throwError(() => httpError));
 
         studentExamsComponentFixture.detectChanges();
 
@@ -350,7 +350,7 @@ describe('StudentExamsComponent', () => {
         course.isAtLeastInstructor = true;
         exam.startDate = dayjs().add(120, 'seconds');
 
-        jest.spyOn(examManagementService, 'generateMissingStudentExams').mockReturnValue(throwError(httpError));
+        jest.spyOn(examManagementService, 'generateMissingStudentExams').mockReturnValue(throwError(() => httpError));
         studentExams = [studentExamOne!];
         studentExamsComponentFixture.detectChanges();
 
@@ -389,7 +389,7 @@ describe('StudentExamsComponent', () => {
         course.isAtLeastInstructor = true;
         exam.startDate = dayjs().add(120, 'seconds');
 
-        jest.spyOn(examManagementService, 'startExercises').mockReturnValue(throwError(httpError));
+        jest.spyOn(examManagementService, 'startExercises').mockReturnValue(throwError(() => httpError));
         studentExamsComponentFixture.detectChanges();
 
         const alertServiceSpy = jest.spyOn(alertService, 'error');
@@ -434,7 +434,7 @@ describe('StudentExamsComponent', () => {
         const alertService = TestBed.inject(AlertService);
         course.isAtLeastInstructor = true;
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        jest.spyOn(examManagementService, 'unlockAllRepositories').mockReturnValue(throwError(httpError));
+        jest.spyOn(examManagementService, 'unlockAllRepositories').mockReturnValue(throwError(() => httpError));
 
         studentExamsComponentFixture.detectChanges();
         expect(studentExamsComponent.isLoading).toEqual(false);
@@ -485,7 +485,7 @@ describe('StudentExamsComponent', () => {
         const alertService = TestBed.inject(AlertService);
         course.isAtLeastInstructor = true;
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        jest.spyOn(examManagementService, 'lockAllRepositories').mockReturnValue(throwError(httpError));
+        jest.spyOn(examManagementService, 'lockAllRepositories').mockReturnValue(throwError(() => httpError));
 
         studentExamsComponentFixture.detectChanges();
         expect(studentExamsComponent.isLoading).toEqual(false);

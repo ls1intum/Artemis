@@ -227,18 +227,21 @@ public class ExamRegistrationService {
     public void addAllStudentsOfCourseToExam(Long courseId, Long examId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         var students = userRepository.getStudents(course);
-        var examOpt = examRepository.findWithRegisteredUsersById(examId);
+        var exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
 
-        if (examOpt.isPresent()) {
-            Exam exam = examOpt.get();
-            students.forEach(student -> {
-                if (!exam.getRegisteredUsers().contains(student) && !student.getAuthorities().contains(ADMIN_AUTHORITY)
-                        && !student.getGroups().contains(course.getInstructorGroupName())) {
-                    exam.addRegisteredUser(student);
-                }
-            });
-            examRepository.save(exam);
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("exam", exam.getTitle());
+        for (int i = 0; i < students.size(); i++) {
+            var student = students.get(i);
+            if (!exam.getRegisteredUsers().contains(student) && !student.getAuthorities().contains(ADMIN_AUTHORITY)
+                    && !student.getGroups().contains(course.getInstructorGroupName())) {
+                exam.addRegisteredUser(student);
+                userData.put("student " + i, student.toDatabaseString());
+            }
         }
 
+        examRepository.save(exam);
+        AuditEvent auditEvent = new AuditEvent(userRepository.getUser().getLogin(), Constants.ADD_USER_TO_EXAM, userData);
+        auditEventRepository.add(auditEvent);
     }
 }

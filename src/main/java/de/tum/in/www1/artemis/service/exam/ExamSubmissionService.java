@@ -1,16 +1,16 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -44,16 +45,11 @@ public class ExamSubmissionService {
      *
      * @param exercise  the exercise for which a submission should be saved
      * @param user      the user that wants to submit
-     * @param <T>       The type of the return type of the requesting route so that the
-     *                  response can be returned there
-     * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
-    public <T> Optional<ResponseEntity<T>> checkSubmissionAllowance(Exercise exercise, User user) {
+    public void checkSubmissionAllowanceElseThrow(Exercise exercise, User user) {
         if (!isAllowedToSubmitDuringExam(exercise, user, false)) {
-            // TODO: improve the error message sent to the client
-            return Optional.of(forbidden());
+            throw new AccessForbiddenException();
         }
-        return Optional.empty();
     }
 
     /**
@@ -73,7 +69,7 @@ public class ExamSubmissionService {
             Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
             if (optionalStudentExam.isEmpty()) {
                 // We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
-                // isAllowedToSubmitDuringExam is called everytime an exercise is saved (e.g. autosave every 30 seconds for every student) therefore it is best to limit
+                // isAllowedToSubmitDuringExam is called everytime an exercise is saved (e.g. auto save every 30 seconds for every student) therefore it is best to limit
                 // unnecessary database calls
                 if (!isExamTestRunSubmission(exercise, user, exam)) {
                     throw new EntityNotFoundException("Student exam with for userId \"" + user.getId() + "\" and examId \"" + exam.getId() + "\" does not exist");

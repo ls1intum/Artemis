@@ -103,7 +103,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         resultService = TestBed.inject(ResultService);
     });
 
-    afterEach(async () => {
+    beforeEach(() => {
         jest.restoreAllMocks();
     });
 

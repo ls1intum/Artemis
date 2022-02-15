@@ -5,7 +5,7 @@ import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { roundScorePercentSpecifiedByCourseSettings, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
 export enum ScoreType {
     ABSOLUTE_SCORE = 'absoluteScore',
@@ -58,13 +58,13 @@ export class CourseScoreCalculationService {
                         // In the client, these are now displayed rounded as 1.1 points.
                         // If the student adds up the displayed points, he gets a total of 5.5 points.
                         // In order to get the same total result as the student, we have to round before summing.
-                        pointsAchievedByStudentInCourse += roundScoreSpecifiedByCourseSettings(score * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise, course);
+                        pointsAchievedByStudentInCourse += roundValueSpecifiedByCourseSettings(score * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise, course);
                     }
                     presentationScore += participation.presentationScore ? participation.presentationScore : 0;
                 }
             }
         }
-        scores.set(ScoreType.ABSOLUTE_SCORE, roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course));
+        scores.set(ScoreType.ABSOLUTE_SCORE, roundValueSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course));
         if (maxPointsInCourse > 0) {
             scores.set(ScoreType.RELATIVE_SCORE, roundScorePercentSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxPointsInCourse, course));
         } else {

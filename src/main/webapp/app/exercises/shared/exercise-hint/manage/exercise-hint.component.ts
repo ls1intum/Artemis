@@ -65,12 +65,12 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
                 filter((res: HttpResponse<ExerciseHint[]>) => res.ok),
                 map((res: HttpResponse<ExerciseHint[]>) => res.body),
             )
-            .subscribe(
-                (res: ExerciseHint[]) => {
+            .subscribe({
+                next: (res: ExerciseHint[]) => {
                     this.exerciseHints = res;
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     /**
@@ -97,15 +97,15 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
      * @param exerciseHintId the id of the exercise hint that we want to delete
      */
     deleteExerciseHint(exerciseHintId: number) {
-        this.exerciseHintService.delete(exerciseHintId).subscribe(
-            () => {
+        this.exerciseHintService.delete(exerciseHintId).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'exerciseHintListModification',
                     content: 'Deleted an exerciseHint',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 }

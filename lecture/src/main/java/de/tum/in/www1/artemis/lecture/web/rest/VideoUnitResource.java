@@ -4,6 +4,7 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.VideoUnitRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -72,9 +73,7 @@ public class VideoUnitResource {
         if (!videoUnit.getLecture().getId().equals(lectureId)) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
-        if (!authorizationCheckService.isAtLeastEditorInCourse(videoUnit.getLecture().getCourse(), null)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(videoUnit);
     }
 
@@ -106,9 +105,7 @@ public class VideoUnitResource {
             throw new BadRequestAlertException("The URL is not valid", ENTITY_NAME, "invalidurl");
         }
 
-        if (!authorizationCheckService.isAtLeastEditorInCourse(videoUnit.getLecture().getCourse(), null)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
 
         if (!videoUnit.getLecture().getId().equals(lectureId)) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -150,9 +147,7 @@ public class VideoUnitResource {
         if (lecture.getCourse() == null) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
-        if (!authorizationCheckService.isAtLeastEditorInCourse(lecture.getCourse(), null)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         videoUnit.setLecture(null);

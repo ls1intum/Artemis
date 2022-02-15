@@ -8,9 +8,9 @@
             "info": "Die Limitierung der Beschwerdenanzahl bezieht sich auf offene und abgelehnte Beschwerden. Wenn deine Beschwerde angenommen wird, wird sie nicht auf deine Gesamtzahl der Beschwerden angerechnet.",
             "description": "Du kannst insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen.",
             "descriptionExam": "Du kannst zu jeder manuell korrigierten Aufgabe der Klausur eine Beschwerde einreichen.",
-            "descriptionExtended": "Alle Studierenden dürfen jeweils insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen. Du hast noch <strong style=color:red;>{{ allowedComplaints }}</strong> Beschwerden übrig.",
+            "descriptionExtended": "Alle Studierenden dürfen genau eine Beschwerde für eine Aufgabe einreichen. Insgesamt sind {{ maxComplaintNumber }} Beschwerden in diesem Kurs möglich. Du hast noch <strong style=color:red;>{{ allowedComplaints }}</strong> Beschwerden übrig.",
             "descriptionTeam": "Ihr könnt insgesamt bis zu {{ maxComplaintNumber }} Beschwerden als Team in diesem Kurs einreichen.",
-            "descriptionTeamExtended": "Jedes Team darf insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen. Ihr habt noch <strong style=color:red;>{{ allowedComplaints }}</strong> Beschwerden übrig.",
+            "descriptionTeamExtended": "Jedes Team darf genau eine Beschwerde für eine Aufgabe einreichen. Insgesamt sind {{ maxComplaintNumber }} Beschwerden in diesem Kurs möglich. Ihr habt noch <strong style=color:red;>{{ allowedComplaints }}</strong> Beschwerden übrig.",
             "exclusivityDisclaimer": "Du kannst entweder eine Beschwerde oder eine Anfrage für weiteres Feedback einreichen.",
             "beDescriptive": "Bitte beschreibe ausführlich, warum die Bewertung falsch ist. Deine Beschwerde wird dann in einem zweiten Review von anderen Tutor:innen überprüft.",
             "beDescriptiveTeam": "Bitte beschreibt ausführlich, warum die Bewertung falsch ist. Eure Einreichung wird dann von euren Tutor:innen noch einmal neu bewertet.",
@@ -38,6 +38,7 @@
                 "actions": "Aktionen",
                 "title": "Liste der Beschwerden",
                 "dateAndTime": "Datum und Uhrzeit",
+                "responseTime": "Bearbeitungszeit",
                 "status": "Status",
                 "noReply": "Noch keine Antwort",
                 "accepted": "Angenommen",
@@ -45,7 +46,8 @@
                 "showAddressedComplaints": "Adressierte Beschwerden anzeigen",
                 "noComplaintsToShow": "Es gibt im Moment keine anzeigbaren Beschwerden."
             },
-            "review": "Beschwerde überprüfen"
+            "review": "Beschwerde überprüfen",
+            "oneWeekUnanswered": "Beschwerden sollten möglichst innerhalb von einer Woche beantwortet werden!"
         },
         "moreFeedback": {
             "title": "Weiteres Feedback anfragen",

@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_C
 
 import java.util.*;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
@@ -117,13 +118,22 @@ public class Feedback extends DomainObject {
         return detailText;
     }
 
-    public Feedback detailText(String detailText) {
-        this.detailText = detailText;
+    public Feedback detailText(@Nullable String detailText) {
+        this.setDetailText(detailText);
         return this;
     }
 
-    public void setDetailText(String detailText) {
-        this.detailText = detailText;
+    /**
+     * sets the detail text of the feedback. In case the detail text is longer than 5000 characters, the additional characters are cut off to avoid database issues
+     * @param detailText the new detail text for the feedback, can be null
+     */
+    public void setDetailText(@Nullable String detailText) {
+        if (detailText == null || detailText.length() <= FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
+            this.detailText = detailText;
+        }
+        else {
+            this.detailText = detailText.substring(0, FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
+        }
     }
 
     public String getReference() {
@@ -184,6 +194,14 @@ public class Feedback extends DomainObject {
         this.credits = credits;
     }
 
+    /**
+     * Returns if this is a positive feedback.
+     *
+     * This value can actually be {@code null} for feedbacks that are neither positive nor negative, e.g. when this is a
+     * feedback for a programming exercise test case that has not been executed for the submission.
+     *
+     * @return true, if this is a positive feedback.
+     */
     public Boolean isPositive() {
         return positive;
     }

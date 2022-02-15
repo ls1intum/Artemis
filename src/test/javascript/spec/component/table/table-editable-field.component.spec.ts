@@ -13,7 +13,7 @@ describe('TableEditableFieldComponent', () => {
 
     const tableInputValue = '.table-editable-field__input';
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisTableModule],
             declarations: [TableEditableFieldComponent],

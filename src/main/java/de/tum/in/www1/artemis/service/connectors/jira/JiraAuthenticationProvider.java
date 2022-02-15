@@ -153,7 +153,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             else {
                 // the user does not exist yet, we have to create it in the Artemis database
                 // Note: we use an empty password, so that we don't store the credentials of Jira users in the Artemis DB (Spring enforces a non null password)
-                user = userCreationService.createInternalUser(username, "", null, jiraUserDTO.getDisplayName(), "", jiraUserDTO.getEmailAddress(), null, null, "en");
+                user = userCreationService.createUser(username, "", null, jiraUserDTO.getDisplayName(), "", jiraUserDTO.getEmailAddress(), null, null, "en", false);
                 // load additional details if the ldap service is available and the user follows the allowed username pattern (if specified)
                 ldapUserService.ifPresent(service -> service.loadUserDetailsFromLdap(user));
             }

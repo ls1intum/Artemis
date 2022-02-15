@@ -10,7 +10,8 @@ import { HttpClient } from '@angular/common/http';
  * @enum {string}
  */
 export enum FeatureToggle {
-    PROGRAMMING_EXERCISES = 'PROGRAMMING_EXERCISES',
+    ProgrammingExercises = 'ProgrammingExercises',
+    PlagiarismChecks = 'PlagiarismChecks',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 

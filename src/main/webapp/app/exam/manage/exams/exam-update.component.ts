@@ -36,13 +36,13 @@ export class ExamUpdateComponent implements OnInit {
     ngOnInit(): void {
         this.route.data.subscribe(({ exam }) => {
             this.exam = exam;
-            this.courseManagementService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe(
-                (response: HttpResponse<Course>) => {
+            this.courseManagementService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
+                next: (response: HttpResponse<Course>) => {
                     this.exam.course = response.body!;
                     this.course = response.body!;
                 },
-                (err: HttpErrorResponse) => onError(this.alertService, err),
-            );
+                error: (err: HttpErrorResponse) => onError(this.alertService, err),
+            });
             if (!this.exam.gracePeriod) {
                 this.exam.gracePeriod = 180;
             }
@@ -71,10 +71,10 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     subscribeToSaveResponse(result: Observable<HttpResponse<Exam>>) {
-        result.subscribe(
-            () => this.onSaveSuccess(),
-            (err: HttpErrorResponse) => this.onSaveError(err),
-        );
+        result.subscribe({
+            next: () => this.onSaveSuccess(),
+            error: (err: HttpErrorResponse) => this.onSaveError(err),
+        });
     }
 
     private onSaveSuccess() {
